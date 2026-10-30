@@ -1,0 +1,61 @@
+{
+  "release": {
+    "releaseId": "a7bb80017084e766d68b8a1d7c6377496a16fbaa",
+    "commitSha": "a7bb80017084e766d68b8a1d7c6377496a16fbaa",
+    "builtAt": "2026-10-29T17:16:56Z",
+    "branch": "release/v1.21.40",
+    "deploymentEnvironment": "production"
+  },
+  "archiveSha256": "68095d3eed26816b8d042654ebcabc20884c7b6ded4539efbc77fcd4f7a9093b",
+  "module": {
+    "url": "https://app.raft.build/assets/app-shell-DOYrxQ-_.js",
+    "sha256": "34d6c016a7adb21831e2b24ba9b6c9bc3eb45873f35ab40815ea7e54a0ecd8a2"
+  },
+  "declarations": [
+    "Aq",
+    "BWe",
+    "jq",
+    "RWe",
+    "flt",
+    "plt",
+    "Ist",
+    "Fst",
+    "l7",
+    "Pst",
+    "Nst",
+    "Mst",
+    "kst",
+    "Ast",
+    "jst",
+    "Cft",
+    "Fft",
+    "Oft",
+    "Aft",
+    "y9",
+    "kft",
+    "_9",
+    "Dft",
+    "Nft",
+    "Pft",
+    "Wft",
+    "v9",
+    "Eft",
+    "Mft",
+    "G5"
+  ],
+  "renderReturns": [
+    "_nt",
+    "x9",
+    "qft",
+    "Jft",
+    "b9",
+    "Uft"
+  ],
+  "bindingSeams": [
+    "WorkingData: authenticated AgentHost presence joined to instance principals; native event expiry removed",
+    "Navigation: existing guarded Channel/instance-profile route",
+    "Sidebar freshness: native confirmed-stale/unavailable predicate, never a generic initial loading line or invented unread counts",
+    "Computer overview: verified local inventory and instance snapshot; unsupported remote/cloud actions omitted",
+    "Native rack unknown disk/memory/quota cells stay unknown; no fabricated measurements"
+  ]
+}

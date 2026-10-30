@@ -901,6 +901,25 @@
         "scripts/official-web/pwa-route-repair-browser.mjs",
         "scripts/official-web/role-identity-browser.mjs"
       ]
+    },
+    {
+      "id": "working-surfaces140",
+      "owner": "Complete immutable Web1.21.40 working popup/face stack/channel subtitle/stale PanelNotice/Computer rack; raft-ui0.52.2 AvatarBadge",
+      "rule": "generate-working-surfaces140.mjs owns native declarations and render returns. Loom joins observed definition IDs to stable instance principals and verified instanceChannelId. Work is not enabled membership or Task completion. No upstream event expiry/store, invented metrics, local banner, or generic blue loading line. Existing guarded routes and authoritative reads own all bindings.",
+      "sources": [
+        "frontends/raft/upstream/releases/raft-web-1.21.40-distribution.tar.gz",
+        "frontends/raft/loom/working-surfaces140.provenance.json"
+      ],
+      "bindings": [
+        "AppearanceRuntime.tsx",
+        "ChannelMembers.tsx",
+        "ComputerOverview.tsx",
+        "ChannelSidebar.tsx",
+        "MemoryPage.tsx"
+      ],
+      "guard": "scripts/official-web/working-surfaces-source.test.mjs",
+      "browser": "scripts/official-web/working-surfaces-browser.mjs",
+      "limits": "Scoped owner-requested compatibility repair; mobile compact conversation subtitles remain hidden by the separately approved touch layout, and its list header receives the native working summary. Computer overview has no fabricated local disk/memory/quota telemetry or cloud/remote controls. Not whole-site migration or native-OS validation."
     }
   ],
   "exceptions": [

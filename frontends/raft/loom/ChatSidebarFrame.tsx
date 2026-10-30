@@ -1,3 +1,4 @@
+import { LoomWorkingSummary } from "./AppearanceRuntime.tsx";
 import { layoutQueries } from "./adaptive-layout.ts";
 import { useMobilePageBack } from "./MobilePageNavigation";
 import PanelHeader from "../packages/web/src/components/ui/PanelHeader";
@@ -16,6 +17,7 @@ export default function ChatSidebarFrame({
   hideDesktopHeader = false,
   fillContent = false,
   bottomSlot,
+  notice,
   testIdPrefix,
   scrollTestId,
   children,
@@ -24,6 +26,7 @@ export default function ChatSidebarFrame({
   hideDesktopHeader?: boolean;
   fillContent?: boolean;
   bottomSlot?: ReactNode;
+  notice?: ReactNode;
   testIdPrefix: string;
   scrollTestId: string;
   children: ReactNode;
@@ -54,11 +57,15 @@ export default function ChatSidebarFrame({
             testId={`${testIdPrefix}-header`}
             trailing={
               title === "聊天" ? (
-                <SystemNotifications flavor="mobile-navbar" />
+                <>
+                  <LoomWorkingSummary onFrame />
+                  <SystemNotifications flavor="mobile-navbar" />
+                </>
               ) : undefined
             }
           />
         ))}
+      {notice}
       <div
         className={`${SIDEBAR_SCROLL_139_CLASS} min-h-0 ${fillContent ? "flex flex-col" : ""}`}
         data-testid={scrollTestId}

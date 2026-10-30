@@ -1,0 +1,30 @@
+✔ computer selection cancellation has an outline and detail retains native auto scrolling (0.860334ms)
+✔ both entry points use the same role creation flow without implicit DM creation (0.359541ms)
+✔ the owner whole-release target is distinct from the historical selected-closure plan (0.881292ms)
+✔ migration inventory covers every navigation destination and only cites existing implementation owners (1.117ms)
+✔ remaining presentation work is enumerated separately from permanent Loom bindings (0.192209ms)
+✔ fixed-source migration closure accounts for all reviewed composition groups (0.56025ms)
+✔ live activity imports presentation without upstream connected state (0.79825ms)
+✔ older official source matches original intake hash and generated port has no connected store (128.074542ms)
+✔ member presentation is generated from locked official strip, page and picker source (65.732375ms)
+✔ the retained Web dependency is one complete immutable 1.21.40 graph (1208.820417ms)
+✔ the UI reference archive retains the entire official 0.52.2 Git tree (38.673291ms)
+✔ RolePresence.tsx suspends background polling, aborts stale reads and refreshes on return (34.184125ms)
+✔ InstancePresence.tsx suspends background polling, aborts stale reads and refreshes on return (6.713625ms)
+✔ local detail dismissals reuse official CloseButton including Side and loading/error branches (17.321167ms)
+✔ local official CloseButton calls carry an explicit semantic mobile target marker (119.547333ms)
+✔ header touch adaptation uses semantic controls rather than SVG/span nesting (0.1245ms)
+✔ adoption registry references existing source owners, bindings and checks (0.655375ms)
+✔ new local close affordances cannot silently bypass scenario owners (81.109166ms)
+✔ working, channel summary, stale notice and Computer rack reproduce the complete pinned release (1557.953666ms)
+✔ working UI joins observed definition IDs to instance principals; enabled membership alone is not work (1.35875ms)
+✔ all busy instances are retained, including several instances of the same Role (0.118833ms)
+✔ legacy catalog entries without a verified instance Channel never become inert working targets (0.058625ms)
+ℹ tests 22
+ℹ suites 0
+ℹ pass 22
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1781.994

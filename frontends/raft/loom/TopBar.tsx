@@ -1,3 +1,4 @@
+import { LoomWorkingSummary } from "./AppearanceRuntime.tsx";
 import { OfficialTopBar } from "./OfficialTopBar.generated";
 import { useTopbarSearchWidth } from "./useTopbarSearchWidth.ts";
 import AvatarSlot from "../packages/web/src/components/ui/AvatarSlot.tsx";
@@ -60,7 +61,12 @@ export default function TopBar({
       shortcut={
         <Kbd>{navigator.platform.includes("Mac") ? "⌘ K" : "Ctrl K"}</Kbd>
       }
-      trailing={<SystemNotifications flavor="top-bar" />}
+      trailing={
+        <>
+          <LoomWorkingSummary onFrame />
+          <SystemNotifications flavor="top-bar" />
+        </>
+      }
       identity={
         <div className="relative flex min-w-0 w-fit shrink">
           {/* Single-workspace adaptation: omit the unsupported organization switch action. */}

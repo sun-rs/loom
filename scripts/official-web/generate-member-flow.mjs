@@ -80,7 +80,20 @@ export function generateMemberFlow() {
     .join("\n");
   rows = rows.replace(
     /badge=\{type === "agent" && agentId \? \([\s\S]*?\) : undefined\}/,
-    "badge={undefined}",
+    "presence={presence}",
+  );
+  rows = rows
+    .replace(
+      "  agentFallbackActivity,",
+      "  agentFallbackActivity,\n  presence,",
+    )
+    .replace(
+      "  agentFallbackActivity?: AgentActivity;",
+      "  agentFallbackActivity?: AgentActivity;\n  presence?: Presence;",
+    );
+  stripCode = stripCode.replace(
+    /badge=\{\s*\(?\s*<>\{agent.badge\}<\/>\s*\)?\s*\}/g,
+    "presence={agent.presence}",
   );
   const pure = [
     "MemberPageSection",
@@ -124,6 +137,7 @@ import {useCallback,useState,useSyncExternalStore} from 'react';
 import type {ReactNode,ReactElement,ChangeEvent,MouseEvent} from 'react';
 import {useIntl} from 'react-intl';
 import {AlertTriangle,ArrowLeft,ChevronRight,Plus,Search,Users,UserMinus,X} from 'lucide-react';
+import type {Presence} from 'raft-ui';
 import {Badge,Button,Card,Spinner,Skeleton,TooltipProvider,PanelHeader,PanelAction,InputGroup,InputGroupAddon,InputGroupInput,CheckboxIndicator,SidebarSection,SidebarSectionHeader,SidebarSectionDisclosure,SidebarSectionChevron,SidebarSectionTitle,SidebarSectionCount,SidebarList} from 'raft-ui';
 import AvatarSlot from '../packages/web/src/components/ui/AvatarSlot.tsx';
 import SectionEyebrow from '@loom/raft-web-source/SectionEyebrow';
@@ -131,7 +145,7 @@ import Tooltip from '@loom/raft-web-source/Tooltip';
 import Banner from '@loom/raft-web-source/Banner';
 import EmptyState from '@loom/raft-web-source/EmptyState';
 import FormField from '../packages/web/src/components/ui/FormField.tsx';
-export type Member={id:string;name:string;displayName?:string;description?:string;avatarUrl?:string|null;gravatarHash?:string|null;badge?:ReactNode;userId?:string;handles?:string[]};
+export type Member={id:string;name:string;displayName?:string;description?:string;avatarUrl?:string|null;gravatarHash?:string|null;badge?:ReactNode;presence?:Presence;userId?:string;handles?:string[]};
 type ChannelAgent=Member;type ChannelHuman=Member;type ChannelExternalMember=Member & {displayName:string};
 ${stripCode}
 ${pure}

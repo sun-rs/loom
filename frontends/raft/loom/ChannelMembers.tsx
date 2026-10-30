@@ -1,3 +1,5 @@
+import { useLoomPresence } from "./AppearanceRuntime.tsx";
+import { instanceActivity } from "./working-state.ts";
 import { DirectMessageIcon } from "raft-ui";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
@@ -56,6 +58,7 @@ export default function ChannelMembers({
     [create, setCreate] = useState(false),
     [remove, setRemove] = useState<Member>();
   const busy = state !== "idle";
+  const presence = useLoomPresence();
   const alive = useRef(true);
   useEffect(() => {
     alive.current = true;
@@ -115,14 +118,24 @@ export default function ChannelMembers({
       });
     return () => abort.abort();
   }, [bridge, controlRoomId, tick, setError]);
-  const identified = (members ?? []).map((m) => {
+  const identified: (Member & { kind: string })[] = (members ?? []).map((m) => {
     const principal = bridge.view().members.find((p) => p.principalId === m.id);
     const instance = catalog?.instances.find((i) => i.instanceId === m.id);
     const avatar = agentEntries.find(
       (a) => a.definition.agentId === instance?.agentId,
     )?.currentRevision.avatarKey;
+    const activity =
+      m.kind === "agent"
+        ? instanceActivity(m.id, agentEntries, presence)
+        : undefined;
     return {
       ...m,
+      presence:
+        m.kind === "agent"
+          ? activity === "working" || activity === "thinking"
+            ? "busy"
+            : (activity ?? "offline")
+          : undefined,
       avatarUrl:
         m.kind === "human"
           ? principal?.avatarKey
@@ -172,7 +185,20 @@ export default function ChannelMembers({
   };
   const renderRow = (m: Member) => {
     const agent = agents.some((a) => a.id === m.id);
-    const detail = members?.find((a) => a.id === m.id)?.detail;
+    const observed = agent
+      ? instanceActivity(m.id, agentEntries, presence)
+      : undefined;
+    const detail = agent
+      ? observed
+        ? {
+            working: "工作中",
+            thinking: "思考中…",
+            online: "在线",
+            offline: "离线",
+            error: "异常",
+          }[observed]
+        : "状态未知"
+      : members?.find((a) => a.id === m.id)?.detail;
     return (
       <ChannelMemberRow
         key={m.id}
@@ -180,6 +206,7 @@ export default function ChannelMembers({
         name={m.name}
         humanAvatarUrl={m.avatarUrl}
         agentAvatarUrl={m.avatarUrl}
+        presence={m.presence}
         secondary={detail}
         onRowClick={
           agent && onOpenProfile ? () => onOpenProfile(m.id) : undefined

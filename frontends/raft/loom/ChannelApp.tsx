@@ -1,3 +1,4 @@
+import { useLoomChannelSubtitle } from "./AppearanceRuntime.tsx";
 import { useThreadCover } from "./useThreadCover";
 import "./thread-cover.css";
 import { DirectMessageIcon } from "raft-ui";
@@ -37,10 +38,7 @@ import { useSearchDestination } from "./useSearchDestination.ts";
 import TopBarSearch from "./TopBarSearch.tsx";
 import { searchBackground } from "./useSearchPresentation.ts";
 import { useLocation, Routes, Route } from "react-router-dom";
-import {
-  AppearanceRuntimeProvider,
-  LoomLiveActivity,
-} from "./AppearanceRuntime.tsx";
+import { AppearanceRuntimeProvider } from "./AppearanceRuntime.tsx";
 import { ChannelTasksContext, useChannelTasks } from "./ChannelTasks.tsx";
 import { LazyTasksPage as TasksPage } from "./LazyPages.tsx";
 import ThreadContentSlot from "./ThreadContentSlot.tsx";
@@ -188,6 +186,12 @@ function Channel({
   }, []);
 
   const [view, setView] = useState(() => bridge.view());
+  const workingSubtitle = useLoomChannelSubtitle({
+    memberIds: view.members
+      .filter((m) => m.kind === "agent")
+      .map((m) => m.principalId),
+    description: channel.description,
+  });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const [writeState, setWriteState] = useState(bridge.writes.state);
@@ -235,6 +239,23 @@ function Channel({
       : undefined;
   // Keep the write-intent owner mounted through transient conversation failure.
   // This is only the selected identity; diagnostic reads still clear on denial.
+  const requestedInstance = panelParams.get("instance");
+  useEffect(() => {
+    if (loading || error || !requestedInstance || hasUnresolvedIntents())
+      return;
+    const member = view.members.find(
+      (m) => m.kind === "agent" && m.principalId === requestedInstance,
+    );
+    if (!member) return;
+    profileSnapshot.current = member;
+    setProfileSource("channel");
+    setProfileId(requestedInstance);
+    setPanelParams((previous) => {
+      const next = new URLSearchParams(previous);
+      next.delete("instance");
+      return next;
+    });
+  }, [requestedInstance, view.members, loading, error, setPanelParams]);
   const profileMember =
     currentProfileMember ??
     (hasUnresolvedIntents() ? profileSnapshot.current : undefined);
@@ -361,7 +382,7 @@ function Channel({
                       ? `私聊 · ${channel.name}`
                       : channel.name
                 }
-                subtitle={channel.description}
+                subtitle={workingSubtitle}
                 onMobileBack={onBack}
                 mobileBackProps={
                   isPrivate || channel.side
@@ -848,6 +869,7 @@ export default function ChannelApp() {
         "detail",
         "channelId",
         "presentation",
+        "instance",
       ])
         next.delete(key);
       if (id === "channels") {
@@ -1060,6 +1082,10 @@ export default function ChannelApp() {
       workspaceId={directory?.workspace.workspaceId}
       controlRoomId={directory?.workspace.controlRoomId}
       roomId={selected?.roomId}
+      onOpenInstance={(instance) => {
+        if (hasRouteBoundIntent()) return;
+        setParams({ room: instance.channelId, instance: instance.instanceId });
+      }}
     >
       {bootstrapping && (
         <div
@@ -1655,9 +1681,9 @@ export default function ChannelApp() {
           </MobilePageNavigation.Provider>
           {showMobileRootNavigation(destination, params, mobileList) && (
             <MobileBottomBarStack
+              showLiveActivity={false}
+              liveActivity={null}
               floating
-              showLiveActivity
-              liveActivity={<LoomLiveActivity />}
               tabBar={
                 <MobileNavigation
                   unread={

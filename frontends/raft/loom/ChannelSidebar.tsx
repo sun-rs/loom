@@ -12,7 +12,7 @@ import { useMediaQuery } from "../packages/web/src/hooks/effectPrimitives.ts";
 import SavedNav from "./SavedNav.tsx";
 import { useAppearanceStore } from "../packages/web/src/store/appearanceStore.ts";
 import { shouldHideEmptySidebarSection } from "../packages/web/src/components/layout/sidebarEmptySectionVisibility.ts";
-import { LoomLiveActivity } from "./AppearanceRuntime.tsx";
+import { NativeSidebarFreshness } from "./OfficialWorkingSurfaces140.generated.js";
 import DirectChatRow from "./DirectChatRow.tsx";
 import AttentionDot from "../packages/web/src/components/ui/AttentionDot.tsx";
 import { hasUnresolvedIntents } from "@rah-os/client-core/write-intent";
@@ -342,7 +342,7 @@ export default function ChannelSidebar({
     <Frame
       fillContent={emptyList}
       hideDesktopHeader
-      bottomSlot={<LoomLiveActivity />}
+      notice={<NativeSidebarFreshness visible={Boolean(readError)} />}
       title="聊天"
       testIdPrefix="public-server-channel-sidebar"
       scrollTestId="public-server-channel-list"
@@ -374,11 +374,7 @@ export default function ChannelSidebar({
         ]}
       >
         {!edit && !archiveTarget && (
-          <OperationStatus
-            manager={manager}
-            error={error || readError}
-            quietPending
-          />
+          <OperationStatus manager={manager} error={error} quietPending />
         )}
         {readError && (
           <Button {...uiActionProps.recovery} onClick={() => void refresh()}>

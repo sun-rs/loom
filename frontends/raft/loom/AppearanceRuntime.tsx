@@ -7,20 +7,28 @@ import {
   createContext,
   useContext,
   useEffect,
+  useMemo,
   useState,
   type ReactNode,
 } from "react";
 import type { RahClient } from "@rah-os/client-sdk";
-import type { AgentCatalogEntry } from "@rah-os/protocol";
+import type { AgentCatalogEntry, AgentPresence } from "@rah-os/protocol";
 import { useAppearanceStore } from "../packages/web/src/store/appearanceStore.ts";
-import { LiveAgentActivityBarPresentation } from "./OfficialLiveActivity.generated";
-import type { LiveAgentActivityItem } from "../packages/web/src/utils/liveAgentActivity.ts";
+import {
+  NativeWorkingSummary,
+  NativeChannelWorking,
+  type WorkingItem,
+} from "./OfficialWorkingSurfaces140.generated.js";
+import { useInstancePresence } from "./InstancePresence.tsx";
+import { projectWorkingInstances } from "./working-state.ts";
 const AppearanceRuntime = createContext<{
   facts?: MessageStatusFacts;
   expandedRooms?: readonly string[];
   models: Record<string, string>;
-  latest: LiveAgentActivityItem | null;
-}>({ models: {}, latest: null });
+  presence: AgentPresence[];
+  working: WorkingItem[];
+  onOpen: (id: string) => void;
+}>({ models: {}, presence: [], working: [], onOpen: () => {} });
 export const useLoomModelLabel = (id: string) =>
   useContext(AppearanceRuntime).models[id];
 export const useLoomMessageState = (roomId: string, id: string) =>
@@ -34,26 +42,41 @@ export function AppearanceRuntimeProvider({
   workspaceId,
   roomId,
   children,
+  onOpenInstance,
 }: {
   client: RahClient;
   controlRoomId?: string;
   workspaceId?: string;
   roomId?: string;
   children: ReactNode;
+  onOpenInstance?: (instance: {
+    instanceId: string;
+    channelId: string;
+  }) => void;
 }) {
   const { preferences } = useSidebarPreferences(client, workspaceId);
   const showModels = useAppearanceStore((s) => s.showAgentModelName);
-  const showActivity = useAppearanceStore((s) => s.showLiveAgentActivityBar);
   const [facts, setFacts] = useState<MessageStatusFacts>();
   const [catalog, setCatalog] = useState<AgentCatalogEntry[]>([]);
   const [models, setModels] = useState<Record<string, string>>({});
-  const [latest, setLatest] = useState<LiveAgentActivityItem | null>(null);
+  const presence = useInstancePresence(client, controlRoomId, true, 3000);
+  const working = useMemo(
+    () => projectWorkingInstances(catalog, presence),
+    [catalog, presence],
+  );
+  const unknown = presence
+    .filter((p) => !catalog.some((a) => a.definition.agentId === p.agentId))
+    .map((p) => p.agentId)
+    .sort()
+    .join("\0");
+  useEffect(() => {
+    setCatalog([]);
+    setModels({});
+  }, [client, controlRoomId]);
   useEffect(() => {
     const controller = new AbortController();
     let timer: ReturnType<typeof setTimeout>;
-    setCatalog([]);
-    setModels({});
-    if (!controlRoomId || (!showModels && !showActivity)) return;
+    if (!controlRoomId) return;
     const read = async () => {
       try {
         const [agents, inventory] = await Promise.all([
@@ -103,11 +126,10 @@ export function AppearanceRuntimeProvider({
       controller.abort();
       clearTimeout(timer);
     };
-  }, [client, controlRoomId, showModels, showActivity]);
+  }, [client, controlRoomId, showModels, unknown]);
   useEffect(() => {
     const controller = new AbortController();
     let timer: ReturnType<typeof setTimeout>;
-    setLatest(null);
     setFacts(undefined);
     if (!roomId) return;
     const read = async () => {
@@ -130,37 +152,8 @@ export function AppearanceRuntimeProvider({
           members: membership.memberships.map((m) => m.principalId),
           activities: state.agents,
         });
-        const entry = state.agents
-          .filter((a) => a.roomId === roomId && a.state !== "idle")
-          .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))[0];
-        const agent =
-          entry &&
-          catalog.find(
-            (a) => a.definition.participantId === entry.participantId,
-          );
-        const name =
-          agent?.currentRevision.displayName ?? agent?.handle ?? "实例";
-        setLatest(
-          entry
-            ? {
-                id:
-                  entry.runAttemptId ??
-                  entry.activationId ??
-                  entry.participantId,
-                kind: "activity",
-                agentId: entry.participantId,
-                agentName: name,
-                agentAvatarUrl: null,
-                text: `${name} · ${{ working: "运行中", waking: "排队或启动中", error: "错误", idle: "空闲" }[entry.state]}`,
-                context: roomId,
-                activity: entry.state === "error" ? "error" : "working",
-                createdAt: Date.parse(entry.updatedAt),
-              }
-            : null,
-        );
       } catch {
         if (!controller.signal.aborted) {
-          setLatest(null);
           setFacts(undefined);
         }
       } finally {
@@ -173,13 +166,22 @@ export function AppearanceRuntimeProvider({
       controller.abort();
       clearTimeout(timer);
     };
-  }, [client, roomId, showActivity, catalog]);
+  }, [client, roomId]);
   return (
     <AppearanceRuntime.Provider
       value={{
         models,
         expandedRooms: preferences?.expandedLongMessages,
-        latest,
+        presence,
+        working,
+        onOpen: (id) => {
+          const agent = catalog.find((a) => a.definition.participantId === id);
+          if (agent?.instanceChannelId)
+            onOpenInstance?.({
+              instanceId: id,
+              channelId: agent.instanceChannelId,
+            });
+        },
         facts: facts?.roomId === roomId ? facts : undefined,
       }}
     >
@@ -187,12 +189,48 @@ export function AppearanceRuntimeProvider({
     </AppearanceRuntime.Provider>
   );
 }
-export function LoomLiveActivity() {
-  const { latest } = useContext(AppearanceRuntime);
-  const visible = useAppearanceStore((s) => s.showLiveAgentActivityBar);
-  return visible && latest ? (
-    <div data-testid="loom-live-agent-activity">
-      <LiveAgentActivityBarPresentation latest={latest} />
-    </div>
-  ) : null;
+export function useLoomPresence() {
+  return useContext(AppearanceRuntime).presence;
+}
+export function LoomWorkingSummary({
+  onFrame = false,
+  variant = "count",
+}: {
+  onFrame?: boolean;
+  variant?: "count" | "full";
+}) {
+  const { working, onOpen } = useContext(AppearanceRuntime);
+  const enabled = useAppearanceStore((s) => s.showLiveAgentActivityBar);
+  return (
+    <NativeWorkingSummary
+      items={working}
+      enabled={enabled}
+      onOpen={onOpen}
+      onFrame={onFrame}
+      variant={variant}
+    />
+  );
+}
+export function useLoomChannelSubtitle({
+  memberIds,
+  description,
+}: {
+  memberIds: string[];
+  description?: string;
+}) {
+  const { working } = useContext(AppearanceRuntime);
+  const enabled = useAppearanceStore((s) => s.showLiveAgentActivityBar);
+  if (
+    !description &&
+    (!enabled || !working.some((item) => memberIds.includes(item.agentId)))
+  )
+    return undefined;
+  return (
+    <NativeChannelWorking
+      items={working}
+      enabled={enabled}
+      memberIds={memberIds}
+      description={description}
+    />
+  );
 }

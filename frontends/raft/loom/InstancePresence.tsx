@@ -7,6 +7,7 @@ export function useInstancePresence(
   client: RahClient,
   controlRoomId: string | undefined,
   active = true,
+  intervalMs = 10000,
 ) {
   const visible = usePageVisible();
   const [states, setStates] = useState<AgentPresence[]>([]);
@@ -26,7 +27,7 @@ export function useInstancePresence(
       } catch {
         if (!abort.signal.aborted) setStates([]);
       } finally {
-        if (!abort.signal.aborted) timer = setTimeout(read, 10000);
+        if (!abort.signal.aborted) timer = setTimeout(read, intervalMs);
       }
     };
     void read();
@@ -34,7 +35,7 @@ export function useInstancePresence(
       abort.abort();
       clearTimeout(timer);
     };
-  }, [client, controlRoomId, active, visible]);
+  }, [client, controlRoomId, active, visible, intervalMs]);
   return states;
 }
 export default function InstancePresence({

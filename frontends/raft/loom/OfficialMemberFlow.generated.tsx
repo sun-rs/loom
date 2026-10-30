@@ -4,6 +4,7 @@ import {useCallback,useState,useSyncExternalStore} from 'react';
 import type {ReactNode,ReactElement,ChangeEvent,MouseEvent} from 'react';
 import {useIntl} from 'react-intl';
 import {AlertTriangle,ArrowLeft,ChevronRight,Plus,Search,Users,UserMinus,X} from 'lucide-react';
+import type {Presence} from 'raft-ui';
 import {Badge,Button,Card,Spinner,Skeleton,TooltipProvider,PanelHeader,PanelAction,InputGroup,InputGroupAddon,InputGroupInput,CheckboxIndicator,SidebarSection,SidebarSectionHeader,SidebarSectionDisclosure,SidebarSectionChevron,SidebarSectionTitle,SidebarSectionCount,SidebarList} from 'raft-ui';
 import AvatarSlot from '../packages/web/src/components/ui/AvatarSlot.tsx';
 import SectionEyebrow from '@loom/raft-web-source/SectionEyebrow';
@@ -11,7 +12,7 @@ import Tooltip from '@loom/raft-web-source/Tooltip';
 import Banner from '@loom/raft-web-source/Banner';
 import EmptyState from '@loom/raft-web-source/EmptyState';
 import FormField from '../packages/web/src/components/ui/FormField.tsx';
-export type Member={id:string;name:string;displayName?:string;description?:string;avatarUrl?:string|null;gravatarHash?:string|null;badge?:ReactNode;userId?:string;handles?:string[]};
+export type Member={id:string;name:string;displayName?:string;description?:string;avatarUrl?:string|null;gravatarHash?:string|null;badge?:ReactNode;presence?:Presence;userId?:string;handles?:string[]};
 type ChannelAgent=Member;type ChannelHuman=Member;type ChannelExternalMember=Member & {displayName:string};
 const STRIP_MAX_ROWS = 3;
 const STRIP_TILE_SIZE_PX = 35;
@@ -207,9 +208,7 @@ export function MembersStrip({
                     context="panel-header"
                     type="agent"
                     agentAvatarUrl={agent.avatarUrl}
-                    badge={(
-                      <>{agent.badge}</>
-                    )}
+                    presence={agent.presence}
                   />
                 </button>
               </MemberStripTooltip>
@@ -354,6 +353,7 @@ export function ChannelMemberRow({
   agentId,
   agentAvatarUrl,
   agentFallbackActivity,
+  presence,
   humanAvatarUrl,
   gravatarHash,
   onAvatarClick,
@@ -366,6 +366,7 @@ export function ChannelMemberRow({
   agentId?: string;
   agentAvatarUrl?: string | null;
   agentFallbackActivity?: AgentActivity;
+  presence?: Presence;
   humanAvatarUrl?: string | null;
   gravatarHash?: string | null;
   onAvatarClick?: () => void;
@@ -382,7 +383,7 @@ export function ChannelMemberRow({
       agentAvatarUrl={agentAvatarUrl}
       humanAvatarUrl={humanAvatarUrl}
       gravatarHash={gravatarHash}
-      badge={undefined}
+      presence={presence}
     />
   );
 

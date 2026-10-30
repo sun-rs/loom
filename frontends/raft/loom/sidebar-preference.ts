@@ -1,5 +1,13 @@
 import { create } from "zustand";
 const key = "loom:device:sidebar-hidden";
+const computerRackKey = "loom:device:computer-rack-view";
+function readComputerRackView(): "list" | "cards" {
+  try {
+    return localStorage.getItem(computerRackKey) === "cards" ? "cards" : "list";
+  } catch {
+    return "list";
+  }
+}
 const activityKey = "loom:device:activity-list-hidden";
 function read(storageKey = key) {
   try {
@@ -9,11 +17,22 @@ function read(storageKey = key) {
   }
 }
 export const useSidebarPreference = create<{
+  computerRackView: "list" | "cards";
+  setComputerRackView: (view: "list" | "cards") => void;
   sidebarHidden: boolean;
   activityListHidden: boolean;
   setActivityListHidden: (hidden: boolean) => void;
   setSidebarHidden: (hidden: boolean) => void;
 }>((set) => ({
+  computerRackView: readComputerRackView(),
+  setComputerRackView: (view) => {
+    try {
+      localStorage.setItem(computerRackKey, view);
+    } catch {
+      /* Session only. */
+    }
+    set({ computerRackView: view });
+  },
   sidebarHidden: read(),
   activityListHidden: read(activityKey),
   setActivityListHidden: (activityListHidden) => {

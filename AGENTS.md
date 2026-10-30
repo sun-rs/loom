@@ -159,6 +159,23 @@ and query loading; all writes still use the existing task owner. Role-to-member
 bindings must pass avatarUrl from the current Role revision; existing member
 avatars continue to come from their frozen instance configuration.
 
+Owner-requested Web1.21.40 working-surface repair uses the complete release
+archive via `generate-working-surfaces140.mjs`; generated declarations/render
+returns and all data/capability seams are recorded in
+`loom/working-surfaces140.provenance.json`. The shared diagnostic read joins
+AgentHost definition IDs to stable instance principals and verified
+`instanceChannelId` from the existing catalog. Do not poll full Role revisions
+per work tick, infer work from enabled membership, revive the bottom activity
+banner, or make these observations own business completion. Native AvatarBadge
+owns member-status geometry. Desktop topbar and mobile chat-list header share
+the native working popup; Channel summary filters actual member IDs. Retain the
+separate approved compact touch-header policy. Native blue sidebar notice means
+confirmed stale/unavailable counts, not every healthy refresh. Memory content
+uses `bg-layer-canvas`; cream remains a sidebar token. Computer overview uses
+native list/card frames with verified inventory/instances; absent resource and
+quota telemetry remains unknown, with unsupported cloud/remote controls omitted.
+This explicitly scoped repair does not close the pending whole-Web migration.
+
 Executable upgrade practice and the current change matrix:
 `docs/design/official-ui-upgrade-workflow.zh-CN.md`. Commit/push active product
 work to `main`; `docs/evo` and `com.loom.evo` are retained paths/labels, not active

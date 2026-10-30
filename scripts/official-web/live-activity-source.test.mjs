@@ -6,7 +6,11 @@ const read = (p) => readFileSync(p, "utf8");
 test("live activity imports presentation without upstream connected state", () => {
   assert.match(
     read("frontends/raft/loom/AppearanceRuntime.tsx"),
-    /OfficialLiveActivity.generated/,
+    /OfficialWorkingSurfaces140.generated/,
+  );
+  assert.doesNotMatch(
+    read("frontends/raft/loom/ChannelSidebar.tsx"),
+    /LoomLiveActivity/,
   );
 });
 test("older official source matches original intake hash and generated port has no connected store", async () => {

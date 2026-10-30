@@ -1,0 +1,59 @@
+{
+  "fixture": "real Core with deterministic read-only AgentHost observations; no paid providers or production writes",
+  "results": [
+    {
+      "width": 1440,
+      "presenceReads": 9,
+      "catalogReads": 19,
+      "stripBadges": [
+        {
+          "presence": "busy",
+          "background": "oklch(0.8829 0.1623 91.900002)",
+          "box": "{\"x\":1353.415771484375,\"y\":145,\"width\":11,\"height\":11,\"top\":145,\"right\":1364.415771484375,\"bottom\":156,\"left\":1353.415771484375}"
+        },
+        {
+          "presence": "online",
+          "background": "oklch(0.8272 0.1354 130.070007)",
+          "box": "{\"x\":1396.415771484375,\"y\":145,\"width\":11,\"height\":11,\"top\":145,\"right\":1407.415771484375,\"bottom\":156,\"left\":1396.415771484375}"
+        }
+      ],
+      "memoryBackgrounds": {
+        "list": "oklch(1 0 0)",
+        "canvas": "oklch(1 0 0)"
+      },
+      "noticeColor": "oklch(0.9452 0.0326 226.300003)",
+      "workingTransitions": true,
+      "globalNavigation": true,
+      "overviewViewsPersist": true,
+      "failureClearsWork": true,
+      "healthyReadsHaveNoStaleNotice": true
+    },
+    {
+      "width": 390,
+      "presenceReads": 11,
+      "catalogReads": 25,
+      "stripBadges": [
+        {
+          "presence": "busy",
+          "background": "oklch(0.8829 0.1623 91.900002)",
+          "box": "{\"x\":295.8778076171875,\"y\":145,\"width\":11,\"height\":11,\"top\":145,\"right\":306.8778076171875,\"bottom\":156,\"left\":295.8778076171875}"
+        },
+        {
+          "presence": "online",
+          "background": "oklch(0.8272 0.1354 130.070007)",
+          "box": "{\"x\":338.8778076171875,\"y\":145,\"width\":11,\"height\":11,\"top\":145,\"right\":349.8778076171875,\"bottom\":156,\"left\":338.8778076171875}"
+        }
+      ],
+      "memoryBackgrounds": {
+        "list": "oklch(1 0 0)",
+        "canvas": "oklch(1 0 0)"
+      },
+      "noticeColor": "oklch(0.9452 0.0326 226.300003)",
+      "workingTransitions": true,
+      "globalNavigation": true,
+      "overviewViewsPersist": true,
+      "failureClearsWork": true,
+      "healthyReadsHaveNoStaleNotice": true
+    }
+  ]
+}

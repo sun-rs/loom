@@ -234,7 +234,7 @@ export default function MemoryPage({
           />
           <div
             data-testid="loom-memory-list"
-            className="scrollbar-quiet relative min-h-0 flex-1 overflow-y-auto bg-layer-canvas-muted p-4 mobile-nav-clearance "
+            className="scrollbar-quiet relative min-h-0 flex-1 overflow-y-auto bg-layer-canvas p-4 mobile-nav-clearance "
           >
             {query.trim() && (
               <p className="px-2 mb-2 text-xs text-foreground-muted">

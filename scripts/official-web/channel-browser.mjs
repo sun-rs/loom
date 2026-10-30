@@ -1,3 +1,4 @@
+import { verifyWorkingSurfaces } from "./working-surfaces-browser.mjs";
 import { verifyRoleProfileAffordances } from "./role-profile-affordances-browser.mjs";
 import { verifyRuntimeSidebar } from "./runtime-sidebar-browser.mjs";
 import { auditSidebarPixels } from "./sidebar-pixel-audit.mjs";
@@ -231,7 +232,20 @@ try {
         ? firefox
         : chromium
   ).launch({ headless: true });
-  if (process.env.LOOM_BROWSER_SLICE === "ui-state-repair") {
+  if (process.env.LOOM_BROWSER_SLICE === "working-surfaces") {
+    console.log(
+      JSON.stringify(
+        await verifyWorkingSurfaces({
+          browser,
+          origin,
+          client,
+          workspace,
+          channels,
+          instances,
+        }),
+      ),
+    );
+  } else if (process.env.LOOM_BROWSER_SLICE === "ui-state-repair") {
     console.log(
       JSON.stringify(
         await verifyUiStateRepair({
