@@ -1,0 +1,29 @@
+{
+  "at": "2026-10-30T18:01:23.891Z",
+  "sourceRevision": "d1bc067f17a268477d3d3f60714adafdb30332b3",
+  "webBuildId": "1d21b61b6d6e624638ee4da81efb29fd7fa8186463f39fb321305843a6caae67",
+  "pid": 16284,
+  "protectedTablesAfterBrowserSmoke": [
+    "room_events",
+    "messages",
+    "role_templates",
+    "role_revisions",
+    "role_instances",
+    "human_sidebar_preferences",
+    "human_saved_messages",
+    "human_thread_follows",
+    "human_activity_frontiers",
+    "human_activity_manual_unread",
+    "agent_definitions",
+    "agent_definition_revisions",
+    "profile_image_objects",
+    "profile_image_upload_intents"
+  ],
+  "unchanged": true,
+  "servedParserOrder": {
+    "appleMetadataBeforeBlockingScript": true,
+    "criticalCssBeforeBlockingScript": true,
+    "edgeBeforeReactRoot": true
+  },
+  "strictScriptCspRetained": true
+}

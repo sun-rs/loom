@@ -1,0 +1,118 @@
+{
+  "at": "2026-10-30T17:58:17.667Z",
+  "sourceRevision": "d1bc067f17a268477d3d3f60714adafdb30332b3",
+  "pushedBeforeRestart": true,
+  "oldPid": 9578,
+  "newPid": 16284,
+  "backup": "/Users/sun/.loom/evo/backups/pre-pwa-presence-repair-2026-10-30T17-58-01.931Z",
+  "backupVerified": true,
+  "migrationPreflight": true,
+  "fromSchema": 91,
+  "toSchema": 91,
+  "protectedTables": {
+    "room_events": {
+      "count": 948,
+      "sha256": "df4ffd5230c6fde585e8e1d6e48998ea749bd3c4b799e6b79d04d4b4c3e52552"
+    },
+    "messages": {
+      "count": 11,
+      "sha256": "b1f42cd3271c903d4a532baf963b8b4a58f79e96c1398e19e4115bf5b82036c7"
+    },
+    "role_templates": {
+      "count": 56,
+      "sha256": "daad7dec4fb1d94565fbe7dc5b46c269411fa36b8089a204e6231f1e5b5a9432"
+    },
+    "role_revisions": {
+      "count": 75,
+      "sha256": "2de5df3d89b3e94ddd727aac0c1a846270fae7b2c942cb6e6c24430d036b06e9"
+    },
+    "role_instances": {
+      "count": 3,
+      "sha256": "71fae78b886643d189797aa959511addbf0124c2f7f7ea70f4efcff283b99ecc"
+    },
+    "human_sidebar_preferences": {
+      "count": 1,
+      "sha256": "e818e7e62cb18fb1738d48db6ea93bf6ca243ca09a1e264e943ff16f24df27f5"
+    },
+    "human_saved_messages": {
+      "count": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "human_thread_follows": {
+      "count": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "human_activity_frontiers": {
+      "count": 3,
+      "sha256": "a4cfd3806b55ce8e261b9ca464bce146ad467127ac6f96ad6669559f46685efa"
+    },
+    "human_activity_manual_unread": {
+      "count": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "agent_definitions": {
+      "count": 86,
+      "sha256": "9af57ae48d413b969e940b53cb1bd65906855f31ef1057ce5dc805ddcaf5a211"
+    },
+    "agent_definition_revisions": {
+      "count": 103,
+      "sha256": "02d74fae0906c49c91181dfcb38a6f3e968618b94293c840463582dfd0b37328"
+    },
+    "profile_image_objects": {
+      "count": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "profile_image_upload_intents": {
+      "count": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    }
+  },
+  "ledgerRolesInstancesPreferencesUnchanged": true,
+  "protectedNotificationMemoryFilesChecked": 3,
+  "newWebSnapshot": "/Users/sun/Code/repos/rah_os/.workbench-web/b477c70b9c5e27ec15b3f1ab749879e83be0f7162aac4c216e4c1a760eb44828",
+  "webBuildId": "1d21b61b6d6e624638ee4da81efb29fd7fa8186463f39fb321305843a6caae67",
+  "buildIdentity": {
+    "schemaVersion": 1,
+    "kind": "development",
+    "version": "0.0.0-dev+d1bc067",
+    "commit": "d1bc067f17a268477d3d3f60714adafdb30332b3",
+    "shortCommit": "d1bc067",
+    "builtAt": "2026-10-30T17:57:47.747Z",
+    "buildId": "1116e087357536c2"
+  },
+  "networkModeUnchanged": true,
+  "edges": [
+    {
+      "origin": "http://127.0.0.1:4176",
+      "status": 200,
+      "indexMatchesTarget": true,
+      "tlsVerifiedWithOriginalCA": false
+    },
+    {
+      "origin": "http://192.168.1.86:4176",
+      "status": 200,
+      "indexMatchesTarget": true,
+      "tlsVerifiedWithOriginalCA": false
+    },
+    {
+      "origin": "http://100.101.107.87:4176",
+      "status": 200,
+      "indexMatchesTarget": true,
+      "tlsVerifiedWithOriginalCA": false
+    },
+    {
+      "origin": "https://192.168.1.86:4178",
+      "status": 200,
+      "indexMatchesTarget": true,
+      "tlsVerifiedWithOriginalCA": true
+    },
+    {
+      "origin": "https://100.101.107.87:4178",
+      "status": 200,
+      "indexMatchesTarget": true,
+      "tlsVerifiedWithOriginalCA": true
+    }
+  ],
+  "candidate123Deployed": false,
+  "scope": "PWA parser-time frame and installed-mode fallback plus shared Host avatar presence repair. Existing mobile density and complete product capabilities retained; Web1.21.23 candidate remains isolated. No production test objects or paid calls."
+}

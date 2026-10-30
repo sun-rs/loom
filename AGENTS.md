@@ -208,8 +208,16 @@ by `generate-pwa140.mjs` (JS and declarations). Do not write raw OKLCH/CSS vars
 to theme-color or restore locally styled preset buttons. WorkspaceTheme is
 the single chrome writer; the persistent PWA edge paints only the safe top
 (5px minimum when native inset is zero), with a matching compact root reserve;
-there is no pointer hit area. This is a Loom browser adapter,
-not native OS validation. Global Tasks retain their bounded UI projection while
+there is no pointer hit area. Apple capability/status metadata and critical
+frame CSS must precede the parser-blocking theme bootstrap; the unique edge
+belongs to the HTML shell, not React startup or a page transition. Installed
+mode observes both display-mode and navigator.standalone and survives rotation;
+ordinary browser geometry stays unchanged. This is a Loom browser adapter,
+not native OS validation. Message and member-avatar connectivity colors share
+the existing Host presence owner and stable definition/instance mapping; Room
+idle is work state, not proof of being offline. Missing observation stays
+unknown and current membership still gates the badge.
+Global Tasks retain their bounded UI projection while
 hidden/inert, stop inactive reads, and revalidate on return without replacing
 same-query content with initial skeletons. Other workspace/filter results must
 not leak through that retention. Native Tasks loading primitives serve module

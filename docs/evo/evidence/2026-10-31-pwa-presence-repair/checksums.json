@@ -1,0 +1,85 @@
+{
+  "algorithm": "SHA-256",
+  "artifacts": [
+    {
+      "file": "README.md",
+      "bytes": 4824,
+      "sha256": "47ef4eb93b51d6519606bf1a82f0af58b41d53d0cceff3cfb74cd48973d27043"
+    },
+    {
+      "file": "baseline-fonts.json",
+      "bytes": 356,
+      "sha256": "bb4f94ca4c1270df56f8a06a80099bde5c67f2bcdfdf30078493d390423ce420"
+    },
+    {
+      "file": "body-presence-1440.png",
+      "bytes": 56621,
+      "sha256": "ed7903ba0354997838831f29a2588a1a56230ed2c1ef115dd38bb2782a86b9fc"
+    },
+    {
+      "file": "body-presence-390.png",
+      "bytes": 25017,
+      "sha256": "da42afb0a7f2390cba26b15663eed98766faa011999f37d92c2713e505cd6167"
+    },
+    {
+      "file": "chromium.json",
+      "bytes": 4832,
+      "sha256": "49cb657693cc85c045c15b6547565c4addf8a83fb0dc91e118139d8e6d0755c6"
+    },
+    {
+      "file": "deployment.json",
+      "bytes": 4011,
+      "sha256": "26a909b49db8e3a2796da128c4718c3ee63957bef74d39d78c96f81ecef92854"
+    },
+    {
+      "file": "formal-browser.json",
+      "bytes": 4740,
+      "sha256": "9c4016b1a3680aece25597ec3a0585419bdc2d3e9cd2e9ac23ed68426fbd0529"
+    },
+    {
+      "file": "message-browser.json",
+      "bytes": 276,
+      "sha256": "0309220c7a4e69920c05f26b05b451922ec994d7a77bb3f7aa2072e3c70749b9"
+    },
+    {
+      "file": "message-gate-stale-font-failure.txt",
+      "bytes": 732,
+      "sha256": "686c015e1532fab6afe245da8c9af7327f05fb50b1875f727ed94e7cf709a1d0"
+    },
+    {
+      "file": "postdeploy.json",
+      "bytes": 839,
+      "sha256": "437c5bc169b5b171a6597971306a525130f6d9dc0a143d79f69a5ade90704419"
+    },
+    {
+      "file": "red-invariants.txt",
+      "bytes": 2999,
+      "sha256": "77701c542e6ace107a313ff05fd26a21493f016e7d17b24c747f81de721d76f2"
+    },
+    {
+      "file": "red-parser-order.txt",
+      "bytes": 1302,
+      "sha256": "f3a71c30494fb4280b64e5ab055c2b982654d574ebc7f767a131f54f05bb3bd5"
+    },
+    {
+      "file": "red-room-work-independent.txt",
+      "bytes": 1648,
+      "sha256": "c82efedb1c3266dfc140fe07a643446a76b534162a646f9f95812a1798042ded"
+    },
+    {
+      "file": "typecheck.txt",
+      "bytes": 62,
+      "sha256": "571e66ebb0018043b95769c39132dc24c1ab9215744415ec734898058f30ba54"
+    },
+    {
+      "file": "unit.txt",
+      "bytes": 3219,
+      "sha256": "7bda2a3605559e9b7515efb33b145eb6e7dc1648e323ad77526de13752762a2d"
+    },
+    {
+      "file": "webkit.json",
+      "bytes": 4975,
+      "sha256": "6d231fcec0ef25205b2765a8f91986337d17f098e13388288183699cc1a5d8d7"
+    }
+  ]
+}
