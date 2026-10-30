@@ -71,7 +71,7 @@ Read the target contract before changing behavior; this map is not a replacement
   Compare each retained page's empty/default/selected state and its sidebar/list
   width policy (default, persisted drag, min/max and narrow-screen transition).
   A component-package upgrade never closes these page-level checks.
-- **Current package:** `@botiverse/raft-ui@0.52.0` via alias `raft-ui`.
+- **Current package:** `@botiverse/raft-ui@0.52.2` via alias `raft-ui`.
   Selected page source remains `db5e399` (Web 1.21.23 source); resource ports retain
   their original provenance. A package upgrade alone does not prove latest
   whole-site parity; Theme/swipe bindings have separate source records.
@@ -118,6 +118,20 @@ See `docs/evo/evidence/2026-10-30-sidebar139-alignment/README.md`.
 Pin one Web release and its actual loaded vendor/CSS per batch; compare page
 wrappers and semantic icon callsites as well as package classes. If upstream
 changes during work, record it as a new candidate instead of mixing releases.
+
+Web1.21.40 scoped intake `upstream/published-2026-10-30-pwa140` supplies the
+native browser-chrome hex resolver and avatar preset/grid classes, generated
+by `generate-pwa140.mjs` (JS and declarations). Do not write raw OKLCH/CSS vars
+to theme-color or restore locally styled preset buttons. WorkspaceTheme is
+the single chrome writer; the persistent PWA edge paints only the safe top
+(one-pixel minimum), consumes no layout/hit area and is a Loom browser adapter,
+not native OS validation. Global Tasks retain their bounded UI projection while
+hidden/inert, stop inactive reads, and revalidate on return without replacing
+same-query content with initial skeletons. Other workspace/filter results must
+not leak through that retention. Native Tasks loading primitives serve module
+and query loading; all writes still use the existing task owner. Role-to-member
+bindings must pass avatarUrl from the current Role revision; existing member
+avatars continue to come from their frozen instance configuration.
 
 Executable upgrade practice and the current change matrix:
 `docs/design/official-ui-upgrade-workflow.zh-CN.md`. Commit/push active product
@@ -636,9 +650,9 @@ neither an old reference fixture nor a visible tab proves product completeness.
   never connect an enabled production button to fixture success.
 
 Current source upgrade (owner requested 2026-10-21): the official component package
-is now `@botiverse/raft-ui`, pinned at `0.52.0` through npm alias `raft-ui`.
+is now `@botiverse/raft-ui`, pinned at `0.52.2` through npm alias `raft-ui`.
 The obsolete unscoped package stopped at `0.6.0`; do not mistake that old
-package version for the current official release. The package was upgraded on 2026-10-29; retained resource ports keep their individual provenance.
+package version for the current official release. The package was upgraded on 2026-10-29 and patched to0.52.2 on2026-10-30; retained resource ports keep their individual provenance.
 The 1.21.35 resource refresh is locked under `upstream/published-2026-10-28`,
 not relabeled as newer original TSX. Prefer its exported primitives over local compatibility
 recipes; keep existing owner-approved compact mobile exceptions explicit.

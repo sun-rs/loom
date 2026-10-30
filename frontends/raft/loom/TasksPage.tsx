@@ -28,8 +28,8 @@ import {
   TasksPanelRoot,
   TasksPanelViewport,
   Button,
-  Card,
 } from "raft-ui";
+import TaskLoading from "./TaskLoading";
 import { ListTodo } from "lucide-react";
 import type { RahClient } from "@rah-os/client-sdk";
 import type {
@@ -42,7 +42,6 @@ import {
   DroppableColumn,
 } from "./OfficialTaskBoard.generated.tsx";
 import { TaskVirtualLayout } from "../packages/web/src/components/task/VirtualizedTaskStack.tsx";
-import { SkeletonRow } from "../packages/web/src/components/ui/Skeleton.tsx";
 import EmptyState from "../packages/web/src/components/ui/EmptyState.tsx";
 import { useMediaQuery } from "../packages/web/src/hooks/effectPrimitives.ts";
 import type { Task } from "../packages/web/src/store/taskStore.ts";
@@ -62,7 +61,9 @@ export default function TasksPage({
   workspaceId,
   rooms,
   channelTasks,
+  active = true,
 }: {
+  active?: boolean;
   channelTasks?: ChannelTaskClient;
   client: RahClient;
   workspaceId: string;
@@ -87,6 +88,8 @@ export default function TasksPage({
     () => JSON.parse(filterKey) as ReturnType<typeof taskFilterRequest>,
     [filterKey],
   );
+  const queryKey = JSON.stringify([workspaceId, filterKey]);
+  const [loadedKey, setLoadedKey] = useState<string>();
   const [rows, setRows] = useState<GlobalTasksResponse["tasks"]>([]),
     [next, setNext] = useState<string>(),
     [total, setTotal] = useState(0),
@@ -114,9 +117,10 @@ export default function TasksPage({
     setParams((previous) => changeTaskFilter(previous, key, values));
   };
   useEffect(() => {
+    if (!active) return;
     const id = ++generation.current,
       abort = new AbortController();
-    setRows([]);
+    if (loadedKey !== queryKey) setRows([]);
     setNext(undefined);
     setLoading(true);
     setLoadingMore(false);
@@ -132,6 +136,7 @@ export default function TasksPage({
         setRows(result.tasks);
         setNext(result.nextCursor);
         setTotal(result.total);
+        setLoadedKey(queryKey);
       })
       .catch(() => {
         if (!abort.signal.aborted) setError("任务列表读取失败，请重试。");
@@ -143,7 +148,7 @@ export default function TasksPage({
       abort.abort();
       generation.current++;
     };
-  }, [client, workspaceId, filters, tick]);
+  }, [active, client, workspaceId, filters, tick]);
   const more = async () => {
     if (!next || loadingMore || rows.length >= 500) return;
     const id = generation.current;
@@ -172,8 +177,11 @@ export default function TasksPage({
     }
   };
   const tasks = useMemo(
-    () => rows.map((r) => toOfficialTask(r.task, r.roomName, [])),
-    [rows],
+    () =>
+      loadedKey === queryKey
+        ? rows.map((r) => toOfficialTask(r.task, r.roomName, []))
+        : [],
+    [rows, loadedKey, queryKey],
   );
   const board = useTaskBoard(client, channelTasks, rows, (task) => {
     setRows((old) =>
@@ -276,20 +284,8 @@ export default function TasksPage({
               </Button>
             </div>
           )}
-          {loading ? (
-            <div
-              role="status"
-              aria-label="正在读取任务"
-              className="flex flex-col gap-2"
-            >
-              {[0, 1, 2, 3, 4].map((i) => (
-                <Card
-                  key={i}
-                  render={<SkeletonRow lineWidths={["w-1/2", "w-3/4"]} />}
-                  className="flex-row items-center gap-2 p-3"
-                />
-              ))}
-            </div>
+          {loadedKey !== queryKey && !error ? (
+            <TaskLoading />
           ) : !error && !tasks.length ? (
             <EmptyState
               className="flex h-full flex-col items-center justify-center"
@@ -394,27 +390,30 @@ export default function TasksPage({
             </Button>
           )}
         </TasksPanelViewport>
-        {creating && channelTasks && (
+        {active && creating && channelTasks && (
           <TaskCreate
             facade={channelTasks}
             changed={() => setTick((v) => v + 1)}
             onClose={() => setCreating(false)}
           />
         )}
-        {!channelTasks && params.get("task") && params.get("taskChannel") && (
-          <TaskDetail
-            key={`${params.get("taskChannel")}:${params.get("task")}`}
-            client={client}
-            roomId={params.get("taskChannel")!}
-            taskId={params.get("task")!}
-            canManage={
-              rows.find((r) => r.task.taskId === params.get("task"))
-                ?.canManageAnyTask ?? false
-            }
-            onClose={close}
-            onChanged={() => setTick((v) => v + 1)}
-          />
-        )}
+        {active &&
+          !channelTasks &&
+          params.get("task") &&
+          params.get("taskChannel") && (
+            <TaskDetail
+              key={`${params.get("taskChannel")}:${params.get("task")}`}
+              client={client}
+              roomId={params.get("taskChannel")!}
+              taskId={params.get("task")!}
+              canManage={
+                rows.find((r) => r.task.taskId === params.get("task"))
+                  ?.canManageAnyTask ?? false
+              }
+              onClose={close}
+              onChanged={() => setTick((v) => v + 1)}
+            />
+          )}
       </TasksPanelRoot>
     </TaskBoardProvider>
   );

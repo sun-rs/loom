@@ -94,6 +94,7 @@ export default function AddInstanceDialog({
             <ChannelMemberRow
               key={role.roleId}
               type="agent"
+              agentAvatarUrl={role.configuration.avatarKey}
               name={role.configuration.displayName ?? role.configuration.handle}
               onRowClick={
                 state === "idle" ? () => setRoleId(role.roleId) : undefined

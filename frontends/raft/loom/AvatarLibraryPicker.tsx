@@ -1,10 +1,13 @@
 import { useState } from "react";
-import { Button, Input } from "raft-ui";
+import { Button, Input, Text } from "raft-ui";
 import { Dices } from "lucide-react";
 import AvatarSlot from "../packages/web/src/components/ui/AvatarSlot.tsx";
 import Tooltip from "../packages/web/src/components/ui/Tooltip.tsx";
-import SectionEyebrow from "@loom/raft-web-source/SectionEyebrow";
 import { avatarGroups, randomAvatarKey } from "./pixel-avatar-library";
+import {
+  avatarPickerClasses,
+  presetButtonClass,
+} from "./OfficialPwa140.generated.js";
 /** Native preview/preset controls; the full catalogue is searchable, images load in batches. */
 export default function AvatarLibraryPicker({
   value,
@@ -29,13 +32,11 @@ export default function AvatarLibraryPicker({
   return (
     <div className="space-y-4" data-testid="role-avatar-library">
       <div className="flex items-start gap-4">
-        <div className="size-16 shrink-0">
-          <AvatarSlot
-            context="profile-tile"
-            type="agent"
-            agentAvatarUrl={value}
-          />
-        </div>
+        <AvatarSlot
+          context="profile-tile"
+          type="agent"
+          agentAvatarUrl={value}
+        />
         <Button
           variant="outline"
           size="sm"
@@ -56,37 +57,49 @@ export default function AvatarLibraryPicker({
           setLimit(60);
         }}
       />
-      {filtered.map((group) => {
-        const entries = group.avatars.slice(0, remaining);
-        remaining -= entries.length;
-        return entries.length ? (
-          <section key={group.id} data-avatar-group={group.id}>
-            <SectionEyebrow as="div" className="mb-2">
-              {group.name}
-            </SectionEyebrow>
-            <div className="flex flex-wrap gap-2">
-              {entries.map((a) => (
-                <Tooltip key={a.id} content={a.name}>
-                  <button
-                    type="button"
-                    aria-label={`头像 ${a.name}`}
-                    aria-pressed={value === `pixel:${a.id}`}
-                    disabled={disabled}
-                    onClick={() => onChange(`pixel:${a.id}`)}
-                    className={`flex size-10 items-center justify-center overflow-hidden rounded-md border transition-colors ${value === `pixel:${a.id}` ? "border-accent bg-accent-soft" : "border-line-muted hover:border-line-strong"}`}
-                  >
-                    <AvatarSlot
-                      context="panel-header"
-                      type="agent"
-                      agentAvatarUrl={`pixel:${a.id}`}
-                    />
-                  </button>
-                </Tooltip>
-              ))}
-            </div>
-          </section>
-        ) : null;
-      })}
+      <div className={avatarPickerClasses.root}>
+        {filtered.map((group) => {
+          const entries = group.avatars.slice(0, remaining);
+          remaining -= entries.length;
+          return entries.length ? (
+            <section
+              key={group.id}
+              data-avatar-group={group.id}
+              role="group"
+              aria-labelledby={`avatar-group-${group.id}`}
+              className={avatarPickerClasses.series}
+            >
+              <Text.Sans
+                size="group"
+                id={`avatar-group-${group.id}`}
+                render={<h3 />}
+              >
+                {group.name}
+              </Text.Sans>
+              <div className={avatarPickerClasses.grid}>
+                {entries.map((a) => (
+                  <Tooltip key={a.id} content={a.name}>
+                    <button
+                      type="button"
+                      aria-label={`头像 ${a.name}`}
+                      aria-pressed={value === `pixel:${a.id}`}
+                      disabled={disabled}
+                      onClick={() => onChange(`pixel:${a.id}`)}
+                      className={presetButtonClass(value === `pixel:${a.id}`)}
+                    >
+                      <AvatarSlot
+                        context="panel-header"
+                        type="agent"
+                        agentAvatarUrl={`pixel:${a.id}`}
+                      />
+                    </button>
+                  </Tooltip>
+                ))}
+              </div>
+            </section>
+          ) : null;
+        })}
+      </div>
       {total > limit && (
         <Button
           type="button"

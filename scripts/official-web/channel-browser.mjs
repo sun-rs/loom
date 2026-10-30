@@ -2,6 +2,7 @@ import { verifyRoleProfileAffordances } from "./role-profile-affordances-browser
 import { verifyRuntimeSidebar } from "./runtime-sidebar-browser.mjs";
 import { auditSidebarPixels } from "./sidebar-pixel-audit.mjs";
 import { verifyUiStateRepair } from "./ui-state-repair-browser.mjs";
+import { verifyPwaRoutes } from "./pwa-route-repair-browser.mjs";
 import { verifyRoleSidebarAlignment } from "./role-sidebar-alignment-browser.mjs";
 import { verifyChannelRoleUsability } from "./channel-role-usability-browser.mjs";
 import { verifyRemaining138 } from "./remaining138-browser.mjs";
@@ -297,6 +298,20 @@ try {
           workspace,
           head,
           role,
+        }),
+      ),
+    );
+  } else if (process.env.LOOM_BROWSER_SLICE === "pwa-route-repair") {
+    console.log(
+      JSON.stringify(
+        await verifyPwaRoutes({
+          browser,
+          origin,
+          client,
+          workspace,
+          role,
+          head,
+          channel: channels[0],
         }),
       ),
     );

@@ -1,0 +1,40 @@
+{
+  "release": {
+    "releaseId": "a7bb80017084e766d68b8a1d7c6377496a16fbaa",
+    "commitSha": "a7bb80017084e766d68b8a1d7c6377496a16fbaa",
+    "builtAt": "2026-10-29T17:16:56Z",
+    "branch": "release/v1.21.40",
+    "deploymentEnvironment": "production"
+  },
+  "license": "FSL-1.1-ALv2; owner-authorized reuse",
+  "scope": "Selected native browser-chrome color resolver and avatar-preset geometry. Not a whole Web source upgrade.",
+  "files": {
+    "chrome.js": "8ce55f4add44241cdba4d7da0736b14d3864089f3e959cb81dfc6295de9d89a0",
+    "avatar.js": "f6943af1c05f155228dc5cd480fb8aa5143a6685ddc272b7b4edfff02b59569a",
+    "avatar-classes.json": "90cfadd16a6f3c5be242835372ac18823e78abd4ceb7ad81ef87d6dbff69cca4"
+  },
+  "parents": [
+    {
+      "url": "https://app.raft.build/assets/app-shell-DOYrxQ-_.js",
+      "sha256": "34d6c016a7adb21831e2b24ba9b6c9bc3eb45873f35ab40815ea7e54a0ecd8a2",
+      "bytes": 2569038
+    },
+    {
+      "url": "https://app.raft.build/assets/AgentDetailPanel-IaqbfbtM.js",
+      "sha256": "09640015597009dda7148408986e521c9ba2283725a89ae945bbf6f3087018bf",
+      "bytes": 202609
+    }
+  ],
+  "chromeDeclarations": [
+    "Jpe",
+    "Zpe",
+    "Qpe",
+    "q_",
+    "$pe",
+    "eme",
+    "tme",
+    "rme"
+  ],
+  "chromeWasAlreadyPresentInWeb139": true,
+  "localChanges": "Import/export names only; CSS strings and selected native declarations are preserved. Application state, uploads, catalog data and PWA edge painting are Loom bindings."
+}

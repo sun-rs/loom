@@ -30,6 +30,9 @@ test("task viewport and loading preserve native panel composition without stale 
   assert.doesNotMatch(s, /bg-layer-canvas-muted|box-border h-8 min-h-8/);
   assert.match(s, /py-4 safe-bottom/);
   assert.match(s, /channelTasks \? "" : " mobile-nav-clearance"/);
-  assert.match(s, /render=\{<SkeletonRow/);
-  assert.match(s, /flex-row items-center gap-2 p-3/);
+  assert.match(s, /<TaskLoading \/>/);
+  const loading = read("loom/TaskLoading.tsx");
+  assert.match(loading, /<TaskLoadingList/);
+  assert.match(loading, /<TaskLoadingRow/);
+  assert.doesNotMatch(loading, /border-2|bg-black|SkeletonRow/);
 });

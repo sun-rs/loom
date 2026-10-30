@@ -163,6 +163,20 @@ export async function verifyRoleIdentity({
           60,
           "opening the picker does not mount/download all 539 portraits",
         );
+        const geometry = await choices.first().evaluate((el) => {
+          const grid = el.parentElement,
+            container = grid.closest(".\\@container");
+          return {
+            width: el.getBoundingClientRect().width,
+            height: el.getBoundingClientRect().height,
+            columns:
+              getComputedStyle(grid).gridTemplateColumns.split(" ").length,
+            containerWidth: container.getBoundingClientRect().width,
+          };
+        });
+        assert.equal(geometry.width, 44);
+        assert.equal(geometry.height, 44);
+        assert.equal(geometry.columns, geometry.containerWidth >= 408 ? 8 : 4);
         if (name === "皮卡丘") {
           await picker.getByTestId("avatar-library-more").click();
           assert.equal(await choices.count(), 120);

@@ -2,6 +2,7 @@ import { useLayoutEffect } from "react";
 import { useTheme } from "raft-ui";
 import type { RahClient } from "@rah-os/client-sdk";
 import { useSidebarPreferences } from "./useSidebarPreferences";
+import { resolveBrowserChromeColor } from "./OfficialPwa140.generated.js";
 /** Canonical Human × Workspace preference projection. Device mode has its own owner. */
 export default function WorkspaceTheme({
   client,
@@ -23,10 +24,11 @@ export default function WorkspaceTheme({
       'meta[name="theme-color"]',
     );
     const syncChrome = () => {
-      const color = getComputedStyle(root)
-        .getPropertyValue("--layer-frame")
-        .trim();
-      if (meta && color && meta.content !== color) meta.content = color;
+      const chrome = resolveBrowserChromeColor(
+        "frame",
+        root.classList.contains("dark") ? "dark" : "light",
+      );
+      if (meta && meta.content !== chrome) meta.content = chrome;
     };
     syncChrome();
     // Native ThemeProvider commits its mode class in a passive effect after

@@ -1,0 +1,28 @@
+{
+  "coldTask": {
+    "visibleHeaders": [
+      "任务加载中…"
+    ],
+    "shellSame": true,
+    "documentSame": true
+  },
+  "themeTrace": [],
+  "themeCanvasWrites": [],
+  "modeChrome": [
+    {
+      "mode": "notranslate dark",
+      "meta": "#0D0D0B",
+      "frame": "oklch(15.82% .0041 106.86)",
+      "frameHex": "#0d0d0b"
+    },
+    {
+      "mode": "notranslate light",
+      "meta": "#FFD440",
+      "frame": "oklch(88.29% .1623 91.9)",
+      "frameHex": "#ffd440"
+    }
+  ],
+  "discardAfterConfirmedSave": false,
+  "rejectedSaveRetainsDraft": true,
+  "errors": []
+}

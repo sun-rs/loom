@@ -1,0 +1,5 @@
+{
+  "root": "@container grid gap-3",
+  "series": "grid gap-1.5",
+  "grid": "grid w-fit grid-cols-4 gap-2 @min-[408px]:grid-cols-8"
+}

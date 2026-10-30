@@ -9,7 +9,7 @@ test("device mode does not overwrite canonical frame chrome with canvas color", 
   assert.doesNotMatch(mode, /theme-color|--layer-canvas/);
   const frame = readFileSync("frontends/raft/loom/WorkspaceTheme.tsx", "utf8");
   assert.match(frame, /theme-color/);
-  assert.match(frame, /--layer-frame/);
+  assert.match(frame, /resolveBrowserChromeColor\(\s*"frame"/);
 });
 test("PWA underlay and safe top use the same frame token without changing page geometry", () => {
   const css = readFileSync("frontends/raft/loom/mobile.css", "utf8");

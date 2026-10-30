@@ -1,6 +1,6 @@
 # 官方前端依赖化：现状与验收边界
 
-2026-10-29：组件包为 0.52.0，选取页面源码仍为 db5e399；Web1.21.38 资源切片包含消息选择、任务头、菜单行与手工未读标识、窄列 cover tabs。历史段落的旧包尺寸不代表当前运行时。执行方法与范围见[官方 UI 升级流程](official-ui-upgrade-workflow.zh-CN.md)和[收尾证据](../evo/evidence/2026-10-29-ui-closeout/README.md)。
+2026-10-30：组件包为0.52.2，选取页面源码仍为db5e399／Web1.21.23；后续资源切片分别记录到Web1.21.40的chrome与头像样式，不能宣称全站最新版依赖。历史段落的旧包尺寸不代表当前运行时。见[本轮差异与修复](../evo/evidence/2026-10-30-pwa-member-repair/README.md)及[官方UI升级流程](official-ui-upgrade-workflow.zh-CN.md)。
 
 ## 当前结论（2026-10-22）
 

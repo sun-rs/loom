@@ -1,5 +1,5 @@
 {
-  "scope": "Raft single design system, pinned @botiverse/raft-ui 0.52.0 (import alias raft-ui); modes light/dark/system. Semantic recipes owned by official package.",
+  "scope": "Raft single design system, pinned @botiverse/raft-ui 0.52.2 (import alias raft-ui); modes light/dark/system. Semantic recipes owned by official package.",
   "sourceVersions": {
     "pageSource": "frontends/raft/adoption.json",
     "primitiveSource": "frontends/raft/node_modules/raft-ui/package.json",
@@ -874,6 +874,32 @@
       "evidence": [
         "scripts/official-web/chrome-draft-lifetime.test.mjs",
         "scripts/official-web/ui-state-repair-browser.mjs"
+      ]
+    },
+    {
+      "id": "pwa140-chrome-avatar-task-lifetime",
+      "owner": "selected Web1.21.40 chrome/preset declarations + native Tasks loading primitives; Loom PWA/route/data bindings",
+      "rule": "One chrome writer uses official six-digit hex including named themes. A stable standalone/fullscreen safe-top surface has no layout or pointer footprint. Global Tasks retain bounded projection while hidden/inert, abort inactive query work and revalidate without resetting same-query body; changed workspace/filter keys hide prior results. Native TaskLoadingList/Row and shared task header serve cold loading. Role candidate avatars use current Role snapshots, existing members retain frozen instance avatar semantics. Preset buttons and 4/8 container grid use selected official classes; PNG catalogue/search/batch policy stays Loom-owned. Physical mobile system bars remain unverified by viewport/fullscreen tests.",
+      "sources": [
+        "frontends/raft/upstream/published-2026-10-30-pwa140/manifest.json",
+        "frontends/raft/node_modules/raft-ui/dist/components/tasks/task-loading.mjs"
+      ],
+      "bindings": [
+        "OfficialPwa140.generated.js",
+        "OfficialPwa140.generated.d.ts",
+        "WorkspaceTheme.tsx",
+        "AvatarLibraryPicker.tsx",
+        "ChannelMembers.tsx",
+        "AddInstanceDialog.tsx",
+        "ChannelApp.tsx",
+        "TasksPage.tsx",
+        "TaskLoading.tsx",
+        "mobile.css"
+      ],
+      "evidence": [
+        "scripts/official-web/pwa-member-repair.test.ts",
+        "scripts/official-web/pwa-route-repair-browser.mjs",
+        "scripts/official-web/role-identity-browser.mjs"
       ]
     }
   ],

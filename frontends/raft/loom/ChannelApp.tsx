@@ -804,6 +804,8 @@ export default function ChannelApp() {
   const destination = params.get("view") ?? "channels";
   const agentsVisited = useRef(false);
   if (destination === "agents") agentsVisited.current = true;
+  const tasksVisited = useRef(false);
+  if (destination === "tasks") tasksVisited.current = true;
   const [navigationUnread, setNavigationUnread] = useState<NavigationUnread>();
   const activityNavigation = useRef(0);
   const activityFocusSequence = useRef(0);
@@ -1077,6 +1079,7 @@ export default function ChannelApp() {
           client={client}
           workspaceId={directory?.workspace.workspaceId}
         />
+        <div aria-hidden="true" data-testid="pwa-status-bar-surface" />
         <LoomShellRoot
           destination={destination}
           inert={bootstrapping ? true : undefined}
@@ -1379,12 +1382,22 @@ export default function ChannelApp() {
                     {directory && destination === "memory" && (
                       <MemoryPage client={client} rooms={directory.channels} />
                     )}
-                    {directory && destination === "tasks" && (
-                      <TasksPage
-                        client={client}
-                        workspaceId={directory.workspace.workspaceId}
-                        rooms={directory.channels}
-                      />
+                    {directory && tasksVisited.current && (
+                      <div
+                        data-testid="tasks-route-slot"
+                        className={
+                          destination === "tasks" ? "contents" : "hidden"
+                        }
+                        hidden={destination !== "tasks"}
+                        inert={destination !== "tasks" || undefined}
+                      >
+                        <TasksPage
+                          active={destination === "tasks"}
+                          client={client}
+                          workspaceId={directory.workspace.workspaceId}
+                          rooms={directory.channels}
+                        />
+                      </div>
                     )}
                     {directory &&
                       (destination === "search" ||

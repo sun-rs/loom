@@ -9,8 +9,9 @@ import {
   type ComponentProps,
 } from "react";
 import { useIntl } from "react-intl";
-import { TasksPanelRoot } from "raft-ui";
+import { TasksPanelRoot, TasksPanelViewport } from "raft-ui";
 import { OfficialTasksHeader } from "./OfficialTasksHeader.generated";
+import TaskLoading from "./TaskLoading";
 /** Official MainLayout.tsx PanelFallback, unchanged classes and localized label. */
 function PanelFallback() {
   const { formatMessage } = useIntl();
@@ -30,7 +31,9 @@ function TasksLoading() {
       <OfficialTasksHeader
         meta={formatMessage({ id: "layout.main.loading" })}
       />
-      <PanelFallback />
+      <TasksPanelViewport className="flex-1 overflow-auto py-4 safe-bottom mobile-nav-clearance">
+        <TaskLoading />
+      </TasksPanelViewport>
     </TasksPanelRoot>
   );
 }

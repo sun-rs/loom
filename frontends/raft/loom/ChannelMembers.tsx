@@ -213,7 +213,8 @@ export default function ChannelMembers({
   const roles = (catalog?.roles ?? []).map((r) => ({
     id: r.roleId,
     name: r.configuration.displayName ?? r.configuration.handle,
-    description: r.configuration.role,
+    description: r.configuration.description,
+    avatarUrl: r.configuration.avatarKey,
   }));
   const page = (
     <MemberPage

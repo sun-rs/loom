@@ -1,0 +1,131 @@
+✖ product pins the single Raft design system (1.509042ms)
+✔ existing device mode survives removal of visual families (31.967417ms)
+✖ installed official resources match the reviewed immutable lock (4.181042ms)
+✖ first paint migrates mode without restoring a removed family (0.807041ms)
+✔ Loom and adopted pages resolve the same official component installation (2.37025ms)
+✖ reviewed official package upgrade has one exact runtime (1.527583ms)
+✔ workspace theme owns device mode; Appearance retains font and visibility preferences (0.231042ms)
+✔ activity uses the official menu and a clearable selected-filter chip (0.090375ms)
+✔ workspace mute is a separate settings destination, not mixed into browser permission (0.132416ms)
+✔ Role list groups by authenticated Computer inventory and preserves retired group (0.130375ms)
+✔ empty Computer has no empty list border; blank pages and conversations use official empty states (0.637ms)
+✔ compact chat root has a real empty state after bootstrap; desktop sidebar keeps native compact descriptions (0.139625ms)
+✔ Role catalog render does not wait for CLI discovery to resolve Computer headings (0.08525ms)
+✔ a misspelled browser slice cannot silently launch the broad default acceptance run (0.125209ms)
+✔ a workspace with only retired Roles opens the empty active-role page until a retired Role is selected (0.141ms)
+✖ the reviewed 1.21.38 intake uses the exact tree-shakable UI release (3.063458ms)
+✔ Chat, DM and follow controls use the official semantic icons (0.372333ms)
+✔ search list cells do not retain a competing wrapper divider (0.0785ms)
+✔ touch message text selection uses the acquired native Drawer, copy and quote composition (0.41075ms)
+✔ task header disclosure follows observed visibility and reuses the acquired overlay (0.120125ms)
+✔ official Chat icon retains its own geometry rather than a locally drawn replacement (438.052875ms)
+✔ acquired declarations and generated type surfaces reproduce exactly (1.722875ms)
+✔ touch text uses the new menu path while external links retain browser ownership (0.3745ms)
+✔ task channel reference adopts the new native mono metadata recipe (0.088167ms)
+✔ native context event and timeout share one shielded touch-menu opener (0.384458ms)
+ℹ tests 25
+ℹ suites 0
+ℹ pass 20
+ℹ fail 5
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 528.262958
+
+✖ failing tests:
+
+test at scripts/official-web/raft-v6.test.mjs:5:1
+✖ product pins the single Raft design system (1.509042ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'npm:@botiverse/raft-ui@0.52.0'
+  - 'npm:@botiverse/raft-ui@0.52.2'
+                                 ^
+  
+      at TestContext.<anonymous> (file:///Users/sun/Code/repos/rah_os/scripts/official-web/raft-v6.test.mjs:6:10)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at Test.start (node:internal/test_runner/test:1096:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:385:17) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'npm:@botiverse/raft-ui@0.52.0',
+    expected: 'npm:@botiverse/raft-ui@0.52.2',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/official-web/raft-v6.test.mjs:35:1
+✖ installed official resources match the reviewed immutable lock (4.181042ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  '0.52.0' !== '0.52.2'
+  
+      at TestContext.<anonymous> (file:///Users/sun/Code/repos/rah_os/scripts/official-web/raft-v6.test.mjs:38:10)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '0.52.0',
+    expected: '0.52.2',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/official-web/raft-v6.test.mjs:51:1
+✖ first paint migrates mode without restoring a removed family (0.807041ms)
+  evalmachine.<anonymous>:2
+  (()=>{let mode='system';try{const saved=localStorage.getItem('loom-raft-mode-v3');const old=JSON.parse(localStorage.getItem('slock-theme-preferences-v2')||'null');const legacy=localStorage.getItem('slock-theme-preset');mode=saved||old?.mode||(legacy==='elegant-dark'?'dark':legacy==='brutal'||legacy==='elegant-light'?'light':'system');}catch{}if(!['light','dark'].includes(mode))mode=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';const root=document.documentElement;root.removeAttribute('data-theme');root.classList.toggle('dark',mode==='dark');root.classList.toggle('light',mode==='light');root.style.colorScheme=mode;const chrome=document.querySelector('meta[name="theme-color"]');if(chrome)chrome.content=mode==='dark'?'#0D0D0B':'#FFD440';})();
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        ^
+  
+  TypeError: document.querySelector is not a function
+      at evalmachine.<anonymous>:2:663
+      at evalmachine.<anonymous>:2:766
+      at Script.runInContext (node:vm:149:12)
+      at Script.runInNewContext (node:vm:154:17)
+      at runInNewContext (node:vm:310:38)
+      at TestContext.<anonymous> (file:///Users/sun/Code/repos/rah_os/scripts/official-web/raft-v6.test.mjs:62:5)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7)
+
+test at scripts/official-web/ui-refresh135.test.mjs:5:1
+✖ reviewed official package upgrade has one exact runtime (1.527583ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'npm:@botiverse/raft-ui@0.52.0'
+  - 'npm:@botiverse/raft-ui@0.52.2'
+                                 ^
+  
+      at TestContext.<anonymous> (file:///Users/sun/Code/repos/rah_os/scripts/official-web/ui-refresh135.test.mjs:6:10)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at Test.start (node:internal/test_runner/test:1096:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:385:17) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'npm:@botiverse/raft-ui@0.52.0',
+    expected: 'npm:@botiverse/raft-ui@0.52.2',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/official-web/ui-refresh138.test.mjs:6:1
+✖ the reviewed 1.21.38 intake uses the exact tree-shakable UI release (3.063458ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  '0.52.0' !== '0.52.2'
+  
+      at TestContext.<anonymous> (file:///Users/sun/Code/repos/rah_os/scripts/official-web/ui-refresh138.test.mjs:11:10)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at Test.start (node:internal/test_runner/test:1096:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:385:17) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '0.52.0',
+    expected: '0.52.2',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

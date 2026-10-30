@@ -5,7 +5,7 @@
   "files": {
     "packages/web/public/app-theme-bootstrap.js": {
       "upstreamSha256": "a34c0756beb311fbe70fa888c8001bead75971911ce85edf89e2c994a1428f51",
-      "portedSha256": "b6c49e814ca102ffeb7ecf42982d1bfda09ee9db6c901e3dea46e802267cc417"
+      "portedSha256": "a7a0c995fd247aef50f45aa8d05585a3931fe64f11ecba832c5c382969dd2ac4"
     },
     "packages/web/src/App.tsx": {
       "upstreamSha256": "b4a935b4b5559c7e6cabd44bd652d0a7858d0121672a2c88e08c78e2fb6dc420",

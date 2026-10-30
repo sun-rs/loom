@@ -1,0 +1,1 @@
+export const presetButtonClass=(e,t=!1)=>`flex size-11 items-center justify-center overflow-hidden rounded-control border-[1.5px] text-foreground-muted outline-none focus-visible:shadow-focus ${e?`border-sticker-ink bg-selected text-sticker-ink hover:overlay-sticker-medium`:t?`border-dashed border-line-strong hover:bg-fill-medium`:`border-transparent hover:bg-fill-medium`}`;

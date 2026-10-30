@@ -4,10 +4,24 @@
  */
 /* Installed PWA chrome uses the actual frame, including while bootstrapping or
  * loading a route. Paint the existing safe inset; do not add padding/overlays. */
-@media (display-mode: standalone) {
+[data-testid="pwa-status-bar-surface"] {
+  display: none;
+}
+@media (display-mode: standalone), (display-mode: fullscreen) {
   html,
   body {
     background-color: var(--layer-frame);
+  }
+  /* A real, stable viewport edge paints the OS-safe top independently of the
+   * Search input/route's sticky layer. It occupies no document layout space. */
+  [data-testid="pwa-status-bar-surface"] {
+    display: block;
+    position: fixed;
+    inset: 0 0 auto;
+    height: max(1px, env(safe-area-inset-top, 0px));
+    background-color: var(--layer-frame);
+    pointer-events: none;
+    z-index: 100;
   }
   [data-testid="loom-channel-app"],
   [data-testid="loom-bootstrap-loading"] {

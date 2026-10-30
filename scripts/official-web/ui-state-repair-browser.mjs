@@ -138,6 +138,22 @@ export async function verifyUiStateRepair({
           frame: getComputedStyle(document.documentElement)
             .getPropertyValue("--layer-frame")
             .trim(),
+          frameHex: (() => {
+            const c = document.createElement("canvas");
+            c.width = c.height = 1;
+            const ctx = c.getContext("2d");
+            ctx.fillStyle = getComputedStyle(document.documentElement)
+              .getPropertyValue("--layer-frame")
+              .trim();
+            ctx.fillRect(0, 0, 1, 1);
+            return (
+              "#" +
+              [...ctx.getImageData(0, 0, 1, 1).data]
+                .slice(0, 3)
+                .map((n) => n.toString(16).padStart(2, "0"))
+                .join("")
+            );
+          })(),
         })),
       );
     }
@@ -212,8 +228,8 @@ export async function verifyUiStateRepair({
       assert.equal(result.rejectedSaveRetainsDraft, true);
       for (const mode of result.modeChrome)
         assert.equal(
-          mode.meta,
-          mode.frame,
+          mode.meta.toLowerCase(),
+          mode.frameHex,
           "chrome must follow the native provider's committed DOM mode",
         );
       assert.deepEqual(errors, []);

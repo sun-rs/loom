@@ -8,7 +8,7 @@ test("the reviewed 1.21.38 intake uses the exact tree-shakable UI release", () =
     new URL("../../frontends/raft/package.json", import.meta.url),
   );
   const pkg = requireUi("raft-ui/package.json");
-  assert.equal(pkg.version, "0.52.0");
+  assert.equal(pkg.version, "0.52.2");
   assert.ok(pkg.sideEffects.includes("**/*.css"));
 });
 test("Chat, DM and follow controls use the official semantic icons", () => {

@@ -3,9 +3,9 @@
   "wholeSiteDependencyComplete": false,
   "meaning": "迁移单元清单，不是所有函数的验收清单；不按文件数或组件数计算完成率。",
   "versions": {
-    "foundation": "@botiverse/raft-ui@0.52.0",
+    "foundation": "@botiverse/raft-ui@0.52.2",
     "source": "db5e399f017d584e49597e3a28757645d6807893 / v1.21.23-source.1",
-    "productionResourceReference": "Selected Web1.21.26/34/35 ports plus Web1.21.38 messages/task-head/menu/marker/cover slices; not whole-site current-source parity; Web1.21.39 sidebar/settings leaves and native list composition"
+    "productionResourceReference": "Selected Web1.21.26/34/35 ports plus Web1.21.38 messages/task-head/menu/marker/cover slices; not whole-site current-source parity; Web1.21.39 sidebar/settings leaves and native list composition; selected Web1.21.40 chrome/preset declarations"
   },
   "completedBoundaries": {
     "directExports": "upstream/raft-web-source/package.json#exports",
@@ -77,7 +77,9 @@
       "loom/OfficialThreadCover138.generated.js",
       "loom/OfficialThreadCover138.generated.d.ts",
       "loom/OfficialClipboard138.generated.js",
-      "loom/OfficialClipboard138.generated.d.ts"
+      "loom/OfficialClipboard138.generated.d.ts",
+      "loom/OfficialPwa140.generated.js",
+      "loom/OfficialPwa140.generated.d.ts"
     ],
     "foundation": "package.json#dependencies.raft-ui"
   },
@@ -388,13 +390,14 @@
     "asOf": "2026-10-30",
     "evidence": "docs/evo/evidence/2026-10-29-ui-refresh138/README.md",
     "wholeSiteParity": false,
-    "candidateWeb": "1.21.39",
-    "adoptedPackage": "0.52.0",
+    "candidateWeb": "1.21.40",
+    "adoptedPackage": "0.52.2",
     "closeoutEvidence": "docs/evo/evidence/2026-10-29-ui-closeout/README.md",
     "roleIdentityEvidence": "docs/evo/evidence/2026-10-29-role-identity/README.md",
     "sidebar139Evidence": "docs/evo/evidence/2026-10-30-sidebar139-alignment/README.md",
     "sidebar139Manifest": "frontends/raft/upstream/published-2026-10-30-sidebar/manifest.json",
     "activeSettingsSidebar": "OfficialSidebar139.generated.js#OfficialSettingsSidebar139",
-    "superseded": "Web138 Role geometry and db5e399 generated settings list are historical reproducible artifacts, not active bindings."
+    "superseded": "Web138 Role geometry and db5e399 generated settings list are historical reproducible artifacts, not active bindings.",
+    "pwa140Evidence": "docs/evo/evidence/2026-10-30-pwa-member-repair/README.md"
   }
 }

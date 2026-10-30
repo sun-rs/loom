@@ -1,0 +1,34 @@
+✔ product pins the single Raft design system (0.852625ms)
+✔ existing device mode survives removal of visual families (38.864083ms)
+✔ installed official resources match the reviewed immutable lock (5.016542ms)
+✔ first paint migrates mode without restoring a removed family (0.996958ms)
+✔ Loom and adopted pages resolve the same official component installation (2.312417ms)
+✔ reviewed official package upgrade has one exact runtime (0.715959ms)
+✔ workspace theme owns device mode; Appearance retains font and visibility preferences (0.179041ms)
+✔ activity uses the official menu and a clearable selected-filter chip (0.089166ms)
+✔ workspace mute is a separate settings destination, not mixed into browser permission (0.126916ms)
+✔ Role list groups by authenticated Computer inventory and preserves retired group (0.130125ms)
+✔ empty Computer has no empty list border; blank pages and conversations use official empty states (0.611041ms)
+✔ compact chat root has a real empty state after bootstrap; desktop sidebar keeps native compact descriptions (0.183375ms)
+✔ Role catalog render does not wait for CLI discovery to resolve Computer headings (0.100834ms)
+✔ a misspelled browser slice cannot silently launch the broad default acceptance run (0.132ms)
+✔ a workspace with only retired Roles opens the empty active-role page until a retired Role is selected (0.137125ms)
+✔ the reviewed 1.21.38 intake uses the exact tree-shakable UI release (2.150083ms)
+✔ Chat, DM and follow controls use the official semantic icons (0.324792ms)
+✔ search list cells do not retain a competing wrapper divider (0.072333ms)
+✔ touch message text selection uses the acquired native Drawer, copy and quote composition (0.38375ms)
+✔ task header disclosure follows observed visibility and reuses the acquired overlay (0.116ms)
+✔ official Chat icon retains its own geometry rather than a locally drawn replacement (410.980416ms)
+✔ acquired declarations and generated type surfaces reproduce exactly (1.446417ms)
+✔ touch text uses the new menu path while external links retain browser ownership (0.450958ms)
+✔ task channel reference adopts the new native mono metadata recipe (0.081708ms)
+✔ native context event and timeout share one shielded touch-menu opener (0.368708ms)
+✔ product UI alias binds JS and CSS to the same pinned package without intercepting other libraries (3.967417ms)
+ℹ tests 26
+ℹ suites 0
+ℹ pass 26
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 497.570667

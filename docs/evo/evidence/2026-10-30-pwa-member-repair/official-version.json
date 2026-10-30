@@ -1,0 +1,303 @@
+{
+  "sampledAt": "2026-10-30",
+  "web": {
+    "releaseId": "a7bb80017084e766d68b8a1d7c6377496a16fbaa",
+    "commitSha": "a7bb80017084e766d68b8a1d7c6377496a16fbaa",
+    "builtAt": "2026-10-29T17:16:56Z",
+    "branch": "release/v1.21.40",
+    "deploymentEnvironment": "production"
+  },
+  "latestNpmUi": "0.52.2",
+  "loomNpmUi": "0.52.2",
+  "publishedSourceHead": "db5e399f017d584e49597e3a28757645d6807893\tHEAD",
+  "loomSelectedSource": "db5e399 / v1.21.23-source.1",
+  "priorResourceReference": "Web 1.21.39",
+  "officialLoadedVendor": "vendor-raft-ui-BHAojVZQ.js",
+  "officialLoadedCss": "app-shell-DuvkFUT-.css",
+  "vendorAndCssSameAsWeb139": true,
+  "newNpmPackageChangedFiles": [
+    "CHANGELOG.md",
+    "package.json",
+    "dist/components/panel/panel-action.recipe.mjs",
+    "dist/components/panel/panel-split-action.recipe.mjs",
+    "dist/components/badge/badge.mjs"
+  ],
+  "npmPatchMeaning": "0.52.1: PanelAction/PanelSplitAction touch extension reaches 44px; 0.52.2: button Badge 44px touch extension. Not typography/page rewrite. Independently compared first; this batch promotes the exact patch and locks all three changed runtime files.",
+  "avatarSeriesGeometryAlreadyInWeb139": true,
+  "changedChunkPaths": [
+    {
+      "module": "assets/AddMachineDialog.js",
+      "old": "assets/AddMachineDialog-Ch8u2K1F.js",
+      "new": "assets/AddMachineDialog-DU_-hzGx.js",
+      "semanticStatus": "unreviewed; filename propagation is not visual proof"
+    },
+    {
+      "module": "assets/AddSeatsDialog.js",
+      "old": "assets/AddSeatsDialog-DcA5GN3U.js",
+      "new": "assets/AddSeatsDialog-CKVpzcDZ.js",
+      "semanticStatus": "unreviewed; filename propagation is not visual proof"
+    },
+    {
+      "module": "assets/AgentDetailPanel.js",
+      "old": "assets/AgentDetailPanel-BifCr5DZ.js",
+      "new": "assets/AgentDetailPanel-IaqbfbtM.js",
+      "semanticStatus": "unreviewed; filename propagation is not visual proof"
+    },
+    {
+      "module": "assets/AgentUnavailablePanel.js",
+      "old": "assets/AgentUnavailablePanel-Ch4K-yTC.js",
+      "new": "assets/AgentUnavailablePanel-BI-9UHXL.js",
+      "semanticStatus": "unreviewed; filename propagation is not visual proof"
+    },
+    {
+      "module": "assets/AppsPage.js",
+      "old": "assets/AppsPage-RjyG1ifK.js",
+      "new": "assets/AppsPage-BtHiYoWM.js",
+      "semanticStatus": "unreviewed; filename propagation is not visual proof"
+    },
+    {
+      "module": "assets/ArtifactActivityViewer.js",
+      "old": "assets/ArtifactActivityViewer-PvrIQ9KK.js",
+      "new": "assets/ArtifactActivityViewer-COAMmp2W.js",
+      "semanticStatus": "unreviewed; filename propagation is not visual proof"
+    },
+    {
+      "module": "assets/ArtifactForwardDialog.js",
+      "old": "assets/ArtifactForwardDialog-D8i1wFTm.js",
+      "new": "assets/ArtifactForwardDialog-Bpz6ncLZ.js",
+      "semanticStatus": "unreviewed; filename propagation is not visual proof"
+    },
+    {
+      "module": "assets/ArtifactFrame.js",
+      "old": "assets/ArtifactFrame-DJe5Zdod.js",
+      "new": "assets/ArtifactFrame-CXtVS_qc.js",
+      "semanticStatus": "unreviewed; filename propagation is not visual proof"
+    },
+    {
+      "module": "assets/ArtifactPermalink.js",
+      "old": "assets/ArtifactPermalink-B49hK8sV.js",
+      "new": "assets/ArtifactPermalink-Bu7TNKJY.js",
+      "semanticStatus": "unreviewed; filename propagation is not visual proof"
+    },
+    {
+      "module": "assets/ArtifactReviewContext.js",
+      "old": "assets/ArtifactReviewContext-Cn8vjnnC.js",
+      "new": "assets/ArtifactReviewContext-Cxpf9ya-.js",
+      "semanticStatus": "unreviewed; filename propagation is not visual proof"
+    },
+    {
+      "module": "assets/ArtifactSurface.js",
+      "old": "assets/ArtifactSurface-G0_1WLoD.js",
+      "new": "assets/ArtifactSurface-e64AtLJo.js",
+      "semanticStatus": "unreviewed; filename propagation is not visual proof"
+    },
+    {
+      "module": "assets/ArtifactViewer.js",
+      "old": "assets/ArtifactViewer-CWtxWk38.js",
+      "new": "assets/ArtifactViewer-BKivyv2f.js",
+      "semanticStatus": "unreviewed; filename propagation is not visual proof"
+    },
+    {
+      "module": "assets/ArtifactsDashboard.js",
+      "old": "assets/ArtifactsDashboard-DWYmKBdm.js",
+      "new": "assets/ArtifactsDashboard-CI8ofC5b.js",
+      "semanticStatus": "unreviewed; filename propagation is not visual proof"
+    },
+    {
+      "module": "assets/AssistantConversation.js",
+      "old": "assets/AssistantConversation-D3v45bqq.js",
+      "new": "assets/AssistantConversation-CcGi2si8.js",
+      "semanticStatus": "unreviewed; filename propagation is not visual proof"
+    },
+    {
+      "module": "assets/AssistantOtterPanel.js",
+      "old": "assets/AssistantOtterPanel-Crnw81cW.js",
+      "new": "assets/AssistantOtterPanel-BrenDRVk.js",
+      "semanticStatus": "unreviewed; filename propagation is not visual proof"
+    },
+    {
+      "module": "assets/AssistantRoute.js",
+      "old": "assets/AssistantRoute-B2dvolJA.js",
+      "new": "assets/AssistantRoute-okpR6wx4.js",
+      "semanticStatus": "unreviewed; filename propagation is not visual proof"
+    },
+    {
+      "module": "assets/CreateAgentDialog.js",
+      "old": "assets/CreateAgentDialog-Dc7u-oOG.js",
+      "new": "assets/CreateAgentDialog-DIO0DILd.js",
+      "semanticStatus": "unreviewed; filename propagation is not visual proof"
+    },
+    {
+      "module": "assets/DisplayStylePreviewPage.js",
+      "old": "assets/DisplayStylePreviewPage-rtkkjMQh.js",
+      "new": "assets/DisplayStylePreviewPage-Cf2UlJls.js",
+      "semanticStatus": "unreviewed; filename propagation is not visual proof"
+    },
+    {
+      "module": "assets/EditChannelDialog.js",
+      "old": "assets/EditChannelDialog-C9V1JVfE.js",
+      "new": "assets/EditChannelDialog-CuUdrvLX.js",
+      "semanticStatus": "unreviewed; filename propagation is not visual proof"
+    },
+    {
+      "module": "assets/ForwardComposerDialog.js",
+      "old": "assets/ForwardComposerDialog-LWCFdGGS.js",
+      "new": "assets/ForwardComposerDialog-jmh2e6Bs.js",
+      "semanticStatus": "unreviewed; filename propagation is not visual proof"
+    },
+    {
+      "module": "assets/HandoffDialog.js",
+      "old": "assets/HandoffDialog-82ARaRJW.js",
+      "new": "assets/HandoffDialog-Bt02lpom.js",
+      "semanticStatus": "unreviewed; filename propagation is not visual proof"
+    },
+    {
+      "module": "assets/HumanDetailPanel.js",
+      "old": "assets/HumanDetailPanel-BPeiTyyc.js",
+      "new": "assets/HumanDetailPanel-CTUZ9c5p.js",
+      "semanticStatus": "unreviewed; filename propagation is not visual proof"
+    },
+    {
+      "module": "assets/MachineDetailPanel.js",
+      "old": "assets/MachineDetailPanel-B_c9Ltm9.js",
+      "new": "assets/MachineDetailPanel-D2froJNu.js",
+      "semanticStatus": "unreviewed; filename propagation is not visual proof"
+    },
+    {
+      "module": "assets/MachineRuntimeChips.js",
+      "old": "assets/MachineRuntimeChips-dnU3ha2_.js",
+      "new": "assets/MachineRuntimeChips-DvoqUTLE.js",
+      "semanticStatus": "unreviewed; filename propagation is not visual proof"
+    },
+    {
+      "module": "assets/MemberGraphSection.js",
+      "old": "assets/MemberGraphSection-CHzjd2PZ.js",
+      "new": "assets/MemberGraphSection-DXg3uz4-.js",
+      "semanticStatus": "unreviewed; filename propagation is not visual proof"
+    },
+    {
+      "module": "assets/MessageSearchPage.js",
+      "old": "assets/MessageSearchPage-DcZm-uu-.js",
+      "new": "assets/MessageSearchPage-C4i20NU4.js",
+      "semanticStatus": "unreviewed; filename propagation is not visual proof"
+    },
+    {
+      "module": "assets/MigrationLogPage.js",
+      "old": "assets/MigrationLogPage-ZYYmI_2m.js",
+      "new": "assets/MigrationLogPage-Dq8JWR8v.js",
+      "semanticStatus": "unreviewed; filename propagation is not visual proof"
+    },
+    {
+      "module": "assets/PaletteAuditPage.js",
+      "old": "assets/PaletteAuditPage-B-S9BBLX.js",
+      "new": "assets/PaletteAuditPage-UgaYK27y.js",
+      "semanticStatus": "unreviewed; filename propagation is not visual proof"
+    },
+    {
+      "module": "assets/ProfilePanel.js",
+      "old": "assets/ProfilePanel-GSF-P1gW.js",
+      "new": "assets/ProfilePanel-CyGr94Yn.js",
+      "semanticStatus": "unreviewed; filename propagation is not visual proof"
+    },
+    {
+      "module": "assets/PublicArtifactPage.js",
+      "old": "assets/PublicArtifactPage-DTHTB3a8.js",
+      "new": "assets/PublicArtifactPage-BpozH0T8.js",
+      "semanticStatus": "unreviewed; filename propagation is not visual proof"
+    },
+    {
+      "module": "assets/RaftBenchPage.js",
+      "old": "assets/RaftBenchPage-C7xMNLax.js",
+      "new": "assets/RaftBenchPage-CF2agDsh.js",
+      "semanticStatus": "unreviewed; filename propagation is not visual proof"
+    },
+    {
+      "module": "assets/ReleaseNotesPanel.js",
+      "old": "assets/ReleaseNotesPanel-CPW8ciVB.js",
+      "new": "assets/ReleaseNotesPanel-Cp8r9sjH.js",
+      "semanticStatus": "unreviewed; filename propagation is not visual proof"
+    },
+    {
+      "module": "assets/RolePermissionHelpDialog.js",
+      "old": "assets/RolePermissionHelpDialog-dwxfVzsy.js",
+      "new": "assets/RolePermissionHelpDialog-nzgHI35F.js",
+      "semanticStatus": "unreviewed; filename propagation is not visual proof"
+    },
+    {
+      "module": "assets/RuntimeConfigFields.js",
+      "old": "assets/RuntimeConfigFields-BqaQPyc1.js",
+      "new": "assets/RuntimeConfigFields-CXVT-nWb.js",
+      "semanticStatus": "unreviewed; filename propagation is not visual proof"
+    },
+    {
+      "module": "assets/RuntimeSignInNotice.js",
+      "old": "assets/RuntimeSignInNotice-weQclRwj.js",
+      "new": "assets/RuntimeSignInNotice-DyEdDrVw.js",
+      "semanticStatus": "unreviewed; filename propagation is not visual proof"
+    },
+    {
+      "module": "assets/SavedPanel.js",
+      "old": "assets/SavedPanel-Dz224EXX.js",
+      "new": "assets/SavedPanel-Bp16l8Jm.js",
+      "semanticStatus": "unreviewed; filename propagation is not visual proof"
+    },
+    {
+      "module": "assets/SearchOverlay.js",
+      "old": "assets/SearchOverlay-Dd2xBJGT.js",
+      "new": "assets/SearchOverlay-b-BRNo09.js",
+      "semanticStatus": "unreviewed; filename propagation is not visual proof"
+    },
+    {
+      "module": "assets/SectionHeader.js",
+      "old": "assets/SectionHeader-CcclPo1Y.js",
+      "new": "assets/SectionHeader-zmGb3THo.js",
+      "semanticStatus": "unreviewed; filename propagation is not visual proof"
+    },
+    {
+      "module": "assets/ServerSetupComputerRuntimePreviewPage.js",
+      "old": "assets/ServerSetupComputerRuntimePreviewPage-BvlgzV9G.js",
+      "new": "assets/ServerSetupComputerRuntimePreviewPage-GnzXHznf.js",
+      "semanticStatus": "unreviewed; filename propagation is not visual proof"
+    },
+    {
+      "module": "assets/SettingsPanel.js",
+      "old": "assets/SettingsPanel-B3eE71aY.js",
+      "new": "assets/SettingsPanel-DbqyF5kZ.js",
+      "semanticStatus": "unreviewed; filename propagation is not visual proof"
+    },
+    {
+      "module": "assets/TasksPanel.js",
+      "old": "assets/TasksPanel-5c15N5tx.js",
+      "new": "assets/TasksPanel-Be_ryFhx.js",
+      "semanticStatus": "unreviewed; filename propagation is not visual proof"
+    },
+    {
+      "module": "assets/ThreadsInbox.js",
+      "old": "assets/ThreadsInbox-1R8cWm1X.js",
+      "new": "assets/ThreadsInbox-zsbhN2jU.js",
+      "semanticStatus": "unreviewed; filename propagation is not visual proof"
+    },
+    {
+      "module": "assets/reasoningEffortOptions.js",
+      "old": "assets/reasoningEffortOptions-D4oHKxL1.js",
+      "new": "assets/reasoningEffortOptions-D6Zqw6aV.js",
+      "semanticStatus": "unreviewed; filename propagation is not visual proof"
+    },
+    {
+      "module": "assets/shikiHighlighter.js",
+      "old": "assets/shikiHighlighter-CGEpYrPz.js",
+      "new": "assets/shikiHighlighter-BpLFeFYR.js",
+      "semanticStatus": "unreviewed; filename propagation is not visual proof"
+    },
+    {
+      "module": "assets/useProviderConnections.js",
+      "old": "assets/useProviderConnections-BHGDgDM8.js",
+      "new": "assets/useProviderConnections-BRqJCWZ-.js",
+      "semanticStatus": "unreviewed; filename propagation is not visual proof"
+    }
+  ],
+  "newAppShellSha256": "34d6c016a7adb21831e2b24ba9b6c9bc3eb45873f35ab40815ea7e54a0ecd8a2",
+  "indexSha256": "ef93a87e903108ae7bd601170cc60710a41803363dbaac53a857484394655fd2",
+  "adoptedSlices": "Native chrome resolver + preset button/classes only; not all 45 changed chunks or whole-site UI parity.",
+  "loomNpmUiBefore": "0.52.0"
+}

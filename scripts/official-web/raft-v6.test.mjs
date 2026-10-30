@@ -5,13 +5,13 @@ const read = (p) => readFileSync(p, "utf8");
 test("product pins the single Raft design system", () => {
   assert.equal(
     JSON.parse(read("frontends/raft/package.json")).dependencies["raft-ui"],
-    "npm:@botiverse/raft-ui@0.52.0",
+    "npm:@botiverse/raft-ui@0.52.2",
   );
   assert.equal(
     JSON.parse(read("frontends/raft/packages/web/package.json")).dependencies[
       "raft-ui"
     ],
-    "npm:@botiverse/raft-ui@0.52.0",
+    "npm:@botiverse/raft-ui@0.52.2",
   );
 });
 test("existing device mode survives removal of visual families", async () => {
@@ -35,7 +35,7 @@ test("existing device mode survives removal of visual families", async () => {
 test("installed official resources match the reviewed immutable lock", async () => {
   const { createHash } = await import("node:crypto");
   const lock = JSON.parse(read("frontends/raft/rui-resources.lock.json"));
-  assert.equal(lock.version, "0.52.0");
+  assert.equal(lock.version, "0.52.2");
   for (const [path, expected] of Object.entries({
     ...lock.files,
     ...lock.guides,
@@ -52,6 +52,7 @@ test("first paint migrates mode without restoring a removed family", async () =>
   const { runInNewContext } = await import("node:vm");
   for (const dark of [false, true]) {
     const classes = new Set(),
+      meta = { content: "#FFD440" },
       root = {
         style: {},
         removeAttribute: (name) => assert.equal(name, "data-theme"),
@@ -62,13 +63,14 @@ test("first paint migrates mode without restoring a removed family", async () =>
     runInNewContext(
       read("frontends/raft/packages/web/public/app-theme-bootstrap.js"),
       {
-        document: { documentElement: root },
+        document: { documentElement: root, querySelector: () => meta },
         localStorage: { getItem: () => null },
         matchMedia: () => ({ matches: dark }),
       },
     );
     assert.ok(classes.has(dark ? "dark" : "light"));
     assert.equal(root.style.colorScheme, dark ? "dark" : "light");
+    assert.equal(meta.content, dark ? "#0D0D0B" : "#FFD440");
   }
 });
 test("Loom and adopted pages resolve the same official component installation", async () => {
