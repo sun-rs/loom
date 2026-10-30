@@ -661,6 +661,8 @@ export class RoomKernel {
       transaction: (operation) => this.#transaction(operation),
     });
     const humanCommands = createHumanCommandServices({
+      bindProfileImageReference: (actorId, avatarKey, intentId) =>
+        this.profileImages.bindReference(actorId, avatarKey, intentId),
       requireMemoryWorker: (worker) =>
         this.#requireAuthenticatedWorkerExecution(worker, true),
       assertFreshContext: (roomId, actorId, seq) =>

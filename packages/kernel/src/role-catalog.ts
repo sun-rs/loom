@@ -44,6 +44,11 @@ type Context = {
   createId(prefix: string): string;
   requireActor(actor: AuthenticatedActorContext): string;
   transaction<T>(operation: () => T): T;
+  bindProfileImageReference(
+    actorId: string,
+    avatarKey: string | undefined,
+    intentId?: string,
+  ): void;
 };
 /** First vertical Role path. Reuses provisioning and Room delivery, not a new scheduler. */
 export class RoleCatalog {
@@ -248,6 +253,11 @@ export class RoleCatalog {
         updatedAt: c.now().toISOString(),
         roleRevisionId: c.createId("role_revision"),
       });
+      c.bindProfileImageReference(
+        actorId,
+        role.configuration.avatarKey,
+        input.avatarUploadIntentId,
+      );
       this.saveSnapshot(role);
       c.database
         .prepare(
@@ -385,6 +395,16 @@ export class RoleCatalog {
         input.controlRoomId,
         input.configuration.displayName,
       );
+      const avatarPool = P.availableAgentAvatarKeys(
+        c.database
+          .prepare(
+            "SELECT json_extract(configuration_json, '$.avatarKey') AS avatar_key FROM role_templates WHERE control_room_id=? AND deleted_at IS NULL",
+          )
+          .all(input.controlRoomId)
+          .map((row) =>
+            typeof row.avatar_key === "string" ? row.avatar_key : undefined,
+          ),
+      );
       const role = P.RoleTemplateSchema.parse({
         roleId: c.createId("role"),
         roleRevisionId: c.createId("role_revision"),
@@ -393,10 +413,15 @@ export class RoleCatalog {
           ...input.configuration,
           avatarKey:
             input.configuration.avatarKey ??
-            `pixel:${P.SELECTABLE_AGENT_AVATAR_KEYS[randomInt(P.SELECTABLE_AGENT_AVATAR_KEYS.length)]}`,
+            `pixel:${avatarPool[randomInt(avatarPool.length)]}`,
         },
         createdAt: c.now().toISOString(),
       });
+      c.bindProfileImageReference(
+        actorId,
+        role.configuration.avatarKey,
+        input.avatarUploadIntentId,
+      );
       c.database
         .prepare(
           "INSERT INTO role_templates(role_id,role_revision_id,control_room_id,configuration_json,created_at) VALUES(?,?,?,?,?)",

@@ -7,6 +7,19 @@ export { LOOM_EXTRA_AGENT_AVATAR_KEYS } from "./loom-agent-avatar-keys.ts";
 /** Current allocation/picker pool; old identities remain accepted for stored history. */
 export const OFFICIAL_AGENT_AVATAR_KEYS = RAFT_AGENT_AVATAR_KEYS;
 export const SELECTABLE_AGENT_AVATAR_KEYS = OFFICIAL_AGENT_AVATAR_KEYS;
+/** Automatic selection excludes occupied current presets; manual selection is unrestricted.
+ * Once every preset is occupied the owner permits recycling the complete pool. */
+export function availableAgentAvatarKeys(
+  used: Iterable<string | undefined>,
+): readonly string[] {
+  const occupied = new Set(
+    Array.from(used, (key) => key?.replace(/^pixel:/u, "")),
+  );
+  const unused = SELECTABLE_AGENT_AVATAR_KEYS.filter(
+    (key) => !occupied.has(key),
+  );
+  return unused.length ? unused : SELECTABLE_AGENT_AVATAR_KEYS;
+}
 // Keep unknown legacy presentation deterministic across this catalogue upgrade.
 const LEGACY_FALLBACK_AVATAR_KEYS: readonly string[] = [
   "robot",

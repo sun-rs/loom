@@ -164,6 +164,15 @@ Executable upgrade practice and the current change matrix:
 work to `main`; `docs/evo` and `com.loom.evo` are retained paths/labels, not active
 Git branch names. Chatbox has its own branch and engineering contract.
 
+Sidebar spacing checks must cover the complete retained hierarchy, not only
+one row: scroll origin, group header, title-to-list, adjacent rows and adjacent
+groups, including several Computer groups. The full Web1.21.40 desktop probe
+is `native-sidebar-spacing-browser.mjs`; Loom's matching gate is
+`LOOM_PIXEL_AUDIT_EXPECT=140 LOOM_BROWSER_SLICE=sidebar-pixel-audit`.
+Record deliberately omitted native modules separately (e.g. the54px Graph entry
+above the Agent group); do not recreate their empty space with arbitrary padding.
+Desktop measurements do not certify mobile-app parity or the whole-Web migration.
+
 ## Reading map
 
 - Current documentation index: `docs/README.md`.
@@ -267,6 +276,21 @@ never installs them or configures their accounts.
   footer inside the scrolling body or inherit the primitive's 448px default.
   Phone width/90dvh remain owned by the native sheet recipe. This owner-requested
   catalog switch does not certify the pending whole-Web business adapter.
+  Owner follow-up: automatic creation and the explicit random-avatar action
+  exclude the distinct current avatars of active Roles in the same workspace;
+  `availableAgentAvatarKeys` is the shared pool rule. Kernel chooses within the
+  creation transaction, after replay; creation forms must not preselect a key.
+  Manual selection still exposes all72 and allows duplicates. When the entire
+  pool is occupied, recycle the complete pool as owner requested. An unsaved
+  draft must not trigger this fallback early. Existing/deleted revisions and
+  instances are never rewritten or counted as additional active Role choices.
+  The native upload tile uses the existing authenticated profile-image transport
+  (JPEG/PNG/GIF/WebP,5MiB). Store an uploaded identity key in configuration and
+  carry `avatarUploadIntentId` separately on Role create/revise; consume it in
+  the same transaction. All immutable Role revisions retain image GC references.
+  Resolve keys to same-origin URLs only at the resource adapter. Selecting or
+  uploading an image is a draft; only Save creates the revision. Cancelled
+  unreferenced uploads use the existing lifecycle owner, not a second cleanup job.
   Runtime info uses the independently pinned official badge/card/mobile-sheet
   composition. Its status square reports Host CLI detection, not account health.
   Version/path/model count/probe time come from inventory; quota remains unknown

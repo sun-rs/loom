@@ -1,4 +1,5 @@
 import original from "@loom/raft-web-source/pixelAvatars" with { type: "json" };
+import { availableAgentAvatarKeys } from "@rah-os/protocol";
 import additions from "./avatars/presets.json" with { type: "json" };
 import pokemon from "./avatars/pokemon.json" with { type: "json" };
 import official from "./avatars/official.json" with { type: "json" };
@@ -34,10 +35,11 @@ export function libraryAvatarUrl(key: string): string | null {
 export function randomAvatarKey(
   current?: string,
   random: () => number = Math.random,
+  occupied?: Iterable<string | undefined>,
 ) {
-  const keys = avatarGroups
-    .flatMap((g) => g.avatars.map((a) => a.id))
-    .filter((k) => `pixel:${k}` !== current);
+  // A draft is not an occupied Role. Never recycle occupied presets merely
+  // because the sole unused preset is already selected in this draft.
+  const keys = availableAgentAvatarKeys(occupied ?? [current]);
   const index = Math.floor(random() * keys.length);
   if (index < 0 || index >= keys.length)
     throw Error("Invalid avatar random choice");

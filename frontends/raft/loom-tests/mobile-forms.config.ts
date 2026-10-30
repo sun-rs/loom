@@ -7,6 +7,7 @@ export default defineConfig({
     environment: "jsdom",
     include: [
       "loom-tests/mobile-forms.dom.test.tsx",
+      "loom-tests/avatar-picker.dom.test.tsx",
       "loom-tests/adaptive-layout.dom.test.tsx",
     ],
     maxWorkers: 1,

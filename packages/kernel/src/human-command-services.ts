@@ -40,6 +40,11 @@ export function createHumanCommandServices(options: {
   now: () => Date;
   requireActor: (actor: AuthenticatedActorContext) => string;
   transaction: <Result>(operation: () => Result) => Result;
+  bindProfileImageReference: (
+    actorId: string,
+    avatarKey: string | undefined,
+    intentId?: string,
+  ) => void;
 }) {
   const humanActivity = new HumanActivity(options.database);
   const context = {

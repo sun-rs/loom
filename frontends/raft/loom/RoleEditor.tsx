@@ -1,5 +1,4 @@
 import { runtimePickerOptions } from "./runtime-picker";
-import { randomAvatarKey } from "./pixel-avatar-library";
 import type { LocalRuntimeInventoryEntry } from "@rah-os/protocol";
 import { DialogCommit } from "raft-ui/wip";
 import { uiActionProps } from "./ui-action-props.ts";
@@ -54,7 +53,6 @@ export default function RoleEditor({
     role
       ? roleFormFrom(role.configuration)
       : {
-          avatarKey: randomAvatarKey(),
           description: "",
           displayName: "",
           handle: `role-${crypto.randomUUID()}`,

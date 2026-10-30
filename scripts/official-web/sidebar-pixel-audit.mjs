@@ -1,6 +1,7 @@
 // Read-only UI measurement on a disposable Core; reports differences, never certifies parity.
 import { writeFile } from "node:fs/promises";
 import assert from "node:assert/strict";
+import { readSidebarSpacing } from "./sidebar-spacing-metrics.mjs";
 export async function auditSidebarPixels({
   browser,
   origin,
@@ -30,6 +31,17 @@ export async function auditSidebarPixels({
       handle: "FixtureSecond",
     },
   });
+  await client.request("role.create", {
+    controlRoomId: workspace.controlRoomId,
+    basedOnRoomSeq: await head(workspace.controlRoomId),
+    idempotencyKey: "pixel-unbound-role",
+    configuration: {
+      ...role.configuration,
+      displayName: "FixtureUnbound",
+      handle: "FixtureUnbound",
+      runtimeOfferId: "fixture-unknown-offer",
+    },
+  });
   const context = await browser.newContext({
       viewport: { width: 1440, height: 1000 },
       deviceScaleFactor: 1,
@@ -38,8 +50,12 @@ export async function auditSidebarPixels({
     }),
     page = await context.newPage();
   try {
+    const spacing = {};
     await page.goto(origin + "/?view=agents");
     await page.locator(`[data-role-id="${role.roleId}"]`).waitFor();
+    spacing.roles = await page
+      .getByTestId("agent-sidebar-root")
+      .evaluate(readSidebarSpacing);
     const roles = await page
       .getByTestId("agent-sidebar-root")
       .evaluate((root) => {
@@ -106,6 +122,9 @@ export async function auditSidebarPixels({
         };
       });
     await page.screenshot({ path: `${prefix}-channels.png` });
+    spacing.chat = await page
+      .getByTestId("public-server-channel-sidebar-root")
+      .evaluate(readSidebarSpacing);
     await page.goto(origin + "/?view=computers");
     await page.getByTestId("computer-desktop-row").waitFor();
     const computers = await page
@@ -133,6 +152,17 @@ export async function auditSidebarPixels({
         };
       });
     await page.screenshot({ path: `${prefix}-computers.png` });
+    spacing.computers = await page
+      .getByTestId("computer-desktop-row")
+      .first()
+      .locator("xpath=ancestor::*[@data-slot='sidebar-root'][1]")
+      .evaluate(readSidebarSpacing);
+    await page.goto(origin + "/?view=settings");
+    await page.getByTestId("settings-sidebar-root").waitFor();
+    spacing.settings = await page
+      .getByTestId("settings-sidebar-root")
+      .evaluate(readSidebarSpacing);
+    await page.screenshot({ path: `${prefix}-settings.png` });
     const interactions = {};
     if (process.env.LOOM_PIXEL_AUDIT_EXPECT === "139") {
       await page.goto(origin + "/?view=agents");
@@ -259,6 +289,7 @@ export async function auditSidebarPixels({
       channels: channelsMetrics,
       computers,
       interactions,
+      spacing,
     };
     if (process.env.LOOM_PIXEL_AUDIT_OUTPUT)
       await writeFile(
@@ -284,6 +315,36 @@ export async function auditSidebarPixels({
       assert.equal(computers.headerInset, 20);
       assert.equal(computers.hoverInset, 8);
       assert.equal(computers.headerToHover, 8);
+    }
+    if (process.env.LOOM_PIXEL_AUDIT_EXPECT === "140") {
+      assert.equal(channelsMetrics.rowGap, 2);
+      assert.equal(channelsMetrics.rowHeight, 38);
+      assert.equal(roles.rowHeight, 38);
+      assert.equal(computers.rowHeight, 60);
+      for (const [page, values] of Object.entries(spacing)) {
+        assert.ok(values.headers.length, page + " has native group headers");
+        assert.equal(
+          values.headers[0].top,
+          page === "chat" ? 54 : 0,
+          page +
+            " first group container offset (Role graph deliberately omitted)",
+        );
+        for (const header of values.headers)
+          assert.equal(header.paddingTop, 16, page + " title inset");
+        for (const gap of values.withinListGaps)
+          assert.equal(gap, 2, page + " item spacing");
+        for (const gap of values.titleToFirstRow)
+          assert.equal(gap, 8, page + " title to first item");
+        for (const gap of values.groupToFirstRow)
+          assert.equal(gap, 8, page + " Computer group to first item");
+        for (const gap of values.rowToFollowingHeader)
+          assert.equal(gap, 24, page + " row to following group title");
+      }
+      assert.deepEqual(
+        spacing.roles.betweenComputerGroups,
+        [14],
+        "multiple Computer groups keep native vertical rhythm",
+      );
     }
     return result;
   } finally {

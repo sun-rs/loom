@@ -43,12 +43,14 @@ export class ManagementClient {
     configuration: RoleCreateRequest["configuration"],
     role: RoleTemplate | undefined,
     done: Done,
+    avatarUploadIntentId?: string,
   ) {
     return this.writes.submit({
       action: role ? "role-revise" : "role-create",
       session: this.control,
       payload: {
         configuration,
+        ...(avatarUploadIntentId ? { avatarUploadIntentId } : {}),
         ...(role
           ? { roleId: role.roleId, expectedRoleRevisionId: role.roleRevisionId }
           : { controlRoomId: this.controlRoomId }),
@@ -57,6 +59,9 @@ export class ManagementClient {
         "roleId" in p
           ? this.client.request("role.revise", {
               configuration: p.configuration,
+              ...(p.avatarUploadIntentId
+                ? { avatarUploadIntentId: p.avatarUploadIntentId }
+                : {}),
               roleId: p.roleId!,
               expectedRoleRevisionId: p.expectedRoleRevisionId!,
               basedOnRoomSeq,
@@ -64,6 +69,9 @@ export class ManagementClient {
             })
           : this.client.request("role.create", {
               configuration: p.configuration,
+              ...(p.avatarUploadIntentId
+                ? { avatarUploadIntentId: p.avatarUploadIntentId }
+                : {}),
               controlRoomId: this.controlRoomId,
               basedOnRoomSeq,
               idempotencyKey,

@@ -1,8 +1,20 @@
 // FIXTURE ONLY: isolated Core and fake providers. No product state or paid CLI.
 import assert from "node:assert/strict";
 import { chooseOption } from "./select-browser.mjs";
-export async function verifyRoleCreation({ browser, origin }) {
+export async function verifyRoleCreation({
+  browser,
+  origin,
+  client,
+  workspace,
+}) {
   const results = [];
+  const occupied = new Set(
+    (
+      await client.request("role.list", {
+        controlRoomId: workspace.controlRoomId,
+      })
+    ).roles.map((role) => role.configuration.avatarKey),
+  );
   for (const width of [1440, 390]) {
     const context = await browser.newContext({
         viewport: { width, height: 844 },
@@ -80,14 +92,28 @@ export async function verifyRoleCreation({ browser, origin }) {
     assert.equal(writes.filter((w) => w.path.endsWith("/create")).length, 1);
     assert.equal(
       writes.find((w) => w.path.endsWith("/create")).body.configuration
+        .avatarKey,
+      undefined,
+      "creation leaves avatar allocation to the Kernel transaction, never a preselected first/random preset",
+    );
+    assert.equal(
+      writes.find((w) => w.path.endsWith("/create")).body.configuration
         .description,
       "FIXTURE remark only",
     );
-    assert.match(
-      writes.find((w) => w.path.endsWith("/create")).body.configuration
-        .avatarKey,
-      /^pixel:/,
+    const persisted = (
+      await client.request("role.list", {
+        controlRoomId: workspace.controlRoomId,
+      })
+    ).roles.find(
+      (role) => role.configuration.displayName === `CreationFixture${width}`,
     );
+    assert.match(persisted.configuration.avatarKey, /^pixel:/);
+    assert.ok(
+      !occupied.has(persisted.configuration.avatarKey),
+      "GUI creation persists an unused avatar, not merely an uncommitted form value",
+    );
+    occupied.add(persisted.configuration.avatarKey);
     await page.goto(`${origin}/?view=agents`);
     await page
       .locator("[data-role-id]")

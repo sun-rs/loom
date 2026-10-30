@@ -4,18 +4,21 @@ import {
   patchRoleDescription,
 } from "./role-profile-values.ts";
 // Loom Revision binding around official AgentProfileEditDialog field/preset composition.
-import { useState, useEffect, useId, type RefObject } from "react";
+import { useState, useEffect, useId, useRef, type RefObject } from "react";
 import { DialogCommit } from "raft-ui/wip";
 import { Button, Input, Textarea, DialogBody, DialogFooter } from "raft-ui";
 import type { RahClient } from "@rah-os/client-sdk";
 import {
   RoleConfigurationSchema,
+  PROFILE_IMAGE_MAX_BYTES,
+  ProfileImageMimeTypeSchema,
   type RoleTemplate,
   type RoleCreateRequest,
 } from "@rah-os/protocol";
 import RoleEditor from "./RoleEditor.tsx";
 import { useDraftNavigation } from "./DraftNavigation.tsx";
 import AvatarLibraryPicker from "./AvatarLibraryPicker";
+import { randomAvatarKey } from "./pixel-avatar-library";
 import FormField from "../packages/web/src/components/ui/FormField.tsx";
 export type RoleField =
   | "displayName"
@@ -40,7 +43,10 @@ export default function RoleFieldEditor({
   role: RoleTemplate;
   client: RahClient;
   disabled: boolean;
-  onSave: (config: RoleCreateRequest["configuration"]) => void;
+  onSave: (
+    config: RoleCreateRequest["configuration"],
+    avatarUploadIntentId?: string,
+  ) => void;
   onCancel: () => void;
   onDirtyChange: (dirty: boolean) => void;
   descriptionPlaceholder?: string;
@@ -64,6 +70,73 @@ export default function RoleFieldEditor({
   );
   const combined = field === "description" || field === "instructions";
   const formId = useId();
+  const [uploadIntentId, setUploadIntentId] = useState<string>();
+  const [selecting, setSelecting] = useState(false);
+  const selectionAbort = useRef<AbortController | null>(null);
+  useEffect(() => () => selectionAbort.current?.abort(), []);
+  const blocked = disabled || selecting;
+  const selectPreset = (key: string) => {
+    setValue(key);
+    setUploadIntentId(undefined);
+    setError("");
+  };
+  const randomize = async () => {
+    if (blocked) return;
+    const abort = new AbortController();
+    selectionAbort.current = abort;
+    setSelecting(true);
+    setError("");
+    try {
+      const catalog = await client.request(
+        "role.list",
+        { controlRoomId: role.controlRoomId },
+        { signal: abort.signal },
+      );
+      if (!abort.signal.aborted)
+        selectPreset(
+          randomAvatarKey(
+            value,
+            Math.random,
+            catalog.roles.map((item) => item.configuration.avatarKey),
+          ),
+        );
+    } catch {
+      if (!abort.signal.aborted) setError("无法读取角色头像，请重试。");
+    } finally {
+      if (!abort.signal.aborted) setSelecting(false);
+    }
+  };
+  const upload = async (file: File) => {
+    if (blocked) return;
+    if (file.size > PROFILE_IMAGE_MAX_BYTES) {
+      setError("图片不能超过 5 MB。");
+      return;
+    }
+    if (!ProfileImageMimeTypeSchema.safeParse(file.type).success) {
+      setError("请选择 JPEG、PNG、GIF 或 WebP 图片。");
+      return;
+    }
+    if (!client.profileImages) {
+      setError("当前连接不支持头像上传。");
+      return;
+    }
+    const abort = new AbortController();
+    selectionAbort.current = abort;
+    setSelecting(true);
+    setError("");
+    try {
+      const receipt = await client.profileImages.upload(file, abort.signal);
+      if (!abort.signal.aborted) {
+        setValue(receipt.avatarKey);
+        setUploadIntentId(receipt.uploadIntentId);
+      }
+    } catch {
+      if (!abort.signal.aborted)
+        setError("图片上传未确认，请重新选择；角色尚未修改。");
+    } finally {
+      if (!abort.signal.aborted) setSelecting(false);
+    }
+  };
   const Commit = combined || field === "avatarKey" ? DialogCommit : Button;
   const dirty =
     textual &&
@@ -98,7 +171,7 @@ export default function RoleFieldEditor({
       </>
     );
   const save = () => {
-    if (disabled) return;
+    if (blocked) return;
     const config = combined
       ? patchRoleDescription(role.configuration, description, value)
       : patchRoleText(
@@ -107,7 +180,7 @@ export default function RoleFieldEditor({
           value,
         );
     const parsed = RoleConfigurationSchema.safeParse(config);
-    if (parsed.success) onSave(parsed.data);
+    if (parsed.success) onSave(parsed.data, uploadIntentId);
     else setError("请输入有效内容。");
   };
   const body = (
@@ -115,8 +188,10 @@ export default function RoleFieldEditor({
       {field === "avatarKey" ? (
         <AvatarLibraryPicker
           value={value}
-          disabled={disabled}
-          onChange={setValue}
+          disabled={blocked}
+          onChange={selectPreset}
+          onUpload={(file) => void upload(file)}
+          onRandom={() => void randomize()}
         />
       ) : combined ? (
         <>
@@ -155,6 +230,7 @@ export default function RoleFieldEditor({
         />
       )}
       {error && <p role="alert">{error}</p>}
+      {field === "avatarKey" && selecting && <p role="status">正在准备头像…</p>}
     </>
   );
   return (
@@ -192,7 +268,7 @@ export default function RoleFieldEditor({
           type="submit"
           variant="accent"
           size={combined || field === "avatarKey" ? "lg" : "sm"}
-          disabled={disabled || !dirty}
+          disabled={blocked || !dirty}
         >
           保存
         </Commit>

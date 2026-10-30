@@ -31,6 +31,9 @@ const PROFILE_IMAGE_REFERENCE_SQL = `
   SELECT 1 FROM agent_definition_revisions
     WHERE json_extract(definition_json, '$.avatarKey')=?
   UNION ALL
+  SELECT 1 FROM role_revisions
+    WHERE json_extract(snapshot_json, '$.configuration.avatarKey')=?
+  UNION ALL
   SELECT 1 FROM messages
   JOIN json_tree(
     CASE WHEN json_valid(messages.forwarded_bundle_json)
@@ -280,8 +283,13 @@ export class ProfileImageLifecycleService {
           throw new Error("profile image inventory timestamp is invalid");
         }
         if (
-          findReference.get(avatarKey, avatarKey, avatarKey, avatarKey) !==
-          undefined
+          findReference.get(
+            avatarKey,
+            avatarKey,
+            avatarKey,
+            avatarKey,
+            avatarKey,
+          ) !== undefined
         ) {
           continue;
         }
@@ -395,7 +403,8 @@ export class ProfileImageLifecycleService {
     return (
       this.#database
         .prepare(PROFILE_IMAGE_REFERENCE_SQL)
-        .get(avatarKey, avatarKey, avatarKey, avatarKey) !== undefined
+        .get(avatarKey, avatarKey, avatarKey, avatarKey, avatarKey) !==
+      undefined
     );
   }
 

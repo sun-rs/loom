@@ -6,13 +6,43 @@ import {
   ClientAgentProfileRequestSchema,
   WorkerSelfProfilePatchSchema,
 } from "@rah-os/protocol";
-import { AGENT_AVATAR_PRESET_KEYS } from "@rah-os/protocol";
+import {
+  AGENT_AVATAR_PRESET_KEYS,
+  OFFICIAL_AGENT_AVATAR_KEYS,
+  availableAgentAvatarKeys,
+} from "@rah-os/protocol";
 import library, {
   randomAvatarKey,
 } from "../../frontends/raft/loom/pixel-avatar-library.ts";
 const extra = JSON.parse(
   readFileSync("frontends/raft/loom/avatars/presets.json", "utf8"),
 );
+test("random button and server defaults share the distinct unoccupied pool; exhaustion reuses the full catalog", () => {
+  const used = ["pixel:robot", "pixel:robot", "pixel:cat"];
+  const pool = availableAgentAvatarKeys(used);
+  assert.equal(pool.length, OFFICIAL_AGENT_AVATAR_KEYS.length - 2);
+  assert.ok(!pool.includes("robot") && !pool.includes("cat"));
+  for (const n of [0, 0.25, 0.5, 0.99999])
+    assert.ok(!used.includes(randomAvatarKey(undefined, () => n, used)));
+  assert.deepEqual(
+    availableAgentAvatarKeys(OFFICIAL_AGENT_AVATAR_KEYS),
+    OFFICIAL_AGENT_AVATAR_KEYS,
+  );
+  const soleUnused = OFFICIAL_AGENT_AVATAR_KEYS.at(-1)!;
+  assert.equal(
+    randomAvatarKey("pixel:robot", () => 0, OFFICIAL_AGENT_AVATAR_KEYS),
+    "pixel:" + OFFICIAL_AGENT_AVATAR_KEYS[0],
+    "exhaustion uses the whole pool, including the current preset",
+  );
+  assert.equal(
+    randomAvatarKey(
+      `pixel:${soleUnused}`,
+      () => 0,
+      OFFICIAL_AGENT_AVATAR_KEYS.slice(0, -1),
+    ),
+    `pixel:${soleUnused}`,
+  );
+});
 test("legacy grids stay immutable; random creation uses only the current official library", () => {
   const native = JSON.parse(
     readFileSync(

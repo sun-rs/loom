@@ -1,0 +1,318 @@
+{
+  "fixtureOnly": true,
+  "paidProviders": false,
+  "browser": "chromium",
+  "viewport": {
+    "width": 1440,
+    "height": 1000,
+    "dpr": 1,
+    "zoom": 1
+  },
+  "roles": {
+    "avatarInset": 20,
+    "headerInset": 20,
+    "headerBottomPadding": 0,
+    "rowHeight": 38,
+    "rowGap": 2,
+    "groupInset": 20,
+    "groupToFirstRow": 8,
+    "hoverInset": 8
+  },
+  "channels": {
+    "rowHeight": 38,
+    "rowGap": 2,
+    "headerBottomPadding": 0,
+    "headerToHover": 8,
+    "hoverInset": 8,
+    "lastPinnedRowToNextHeaderBox": 8,
+    "lastPinnedRowToNextHeaderContent": 24,
+    "sectionMarginBottom": 0
+  },
+  "computers": {
+    "iconInset": 20,
+    "headerInset": 20,
+    "headerBottomPadding": 0,
+    "headerToHover": 8,
+    "hoverInset": 8,
+    "rowHeight": 60
+  },
+  "interactions": {},
+  "spacing": {
+    "roles": {
+      "headers": [
+        {
+          "top": 0,
+          "bottom": 34,
+          "height": 34,
+          "paddingTop": 16,
+          "paddingBottom": 0
+        }
+      ],
+      "rows": [
+        {
+          "top": 66,
+          "bottom": 104,
+          "height": 38,
+          "paddingTop": 0,
+          "paddingBottom": 0
+        },
+        {
+          "top": 106,
+          "bottom": 144,
+          "height": 38,
+          "paddingTop": 0,
+          "paddingBottom": 0
+        },
+        {
+          "top": 184,
+          "bottom": 222,
+          "height": 38,
+          "paddingTop": 0,
+          "paddingBottom": 0
+        }
+      ],
+      "groups": [
+        {
+          "top": 40,
+          "bottom": 58,
+          "height": 18,
+          "paddingTop": 0,
+          "paddingBottom": 0
+        },
+        {
+          "top": 158,
+          "bottom": 176,
+          "height": 18,
+          "paddingTop": 0,
+          "paddingBottom": 0
+        }
+      ],
+      "withinListGaps": [
+        2
+      ],
+      "titleToFirstRow": [],
+      "groupToFirstRow": [
+        8,
+        8
+      ],
+      "betweenComputerGroups": [
+        14
+      ],
+      "rowToFollowingHeader": []
+    },
+    "chat": {
+      "headers": [
+        {
+          "top": 54,
+          "bottom": 88,
+          "height": 34,
+          "paddingTop": 16,
+          "paddingBottom": 0
+        },
+        {
+          "top": 142,
+          "bottom": 176,
+          "height": 34,
+          "paddingTop": 16,
+          "paddingBottom": 0
+        }
+      ],
+      "rows": [
+        {
+          "top": 8,
+          "bottom": 46,
+          "height": 38,
+          "paddingTop": 0,
+          "paddingBottom": 0
+        },
+        {
+          "top": 96,
+          "bottom": 134,
+          "height": 38,
+          "paddingTop": 0,
+          "paddingBottom": 0
+        },
+        {
+          "top": 184,
+          "bottom": 222,
+          "height": 38,
+          "paddingTop": 0,
+          "paddingBottom": 0
+        },
+        {
+          "top": 224,
+          "bottom": 262,
+          "height": 38,
+          "paddingTop": 0,
+          "paddingBottom": 0
+        }
+      ],
+      "groups": [],
+      "withinListGaps": [],
+      "titleToFirstRow": [
+        8,
+        8
+      ],
+      "groupToFirstRow": [],
+      "betweenComputerGroups": [],
+      "rowToFollowingHeader": [
+        24,
+        24
+      ]
+    },
+    "computers": {
+      "headers": [
+        {
+          "top": 0,
+          "bottom": 34,
+          "height": 34,
+          "paddingTop": 16,
+          "paddingBottom": 0
+        }
+      ],
+      "rows": [
+        {
+          "top": 42,
+          "bottom": 102,
+          "height": 60,
+          "paddingTop": 9,
+          "paddingBottom": 9
+        }
+      ],
+      "groups": [],
+      "withinListGaps": [],
+      "titleToFirstRow": [
+        8
+      ],
+      "groupToFirstRow": [],
+      "betweenComputerGroups": [],
+      "rowToFollowingHeader": []
+    },
+    "settings": {
+      "headers": [
+        {
+          "top": 0,
+          "bottom": 34,
+          "height": 34,
+          "paddingTop": 16,
+          "paddingBottom": 0
+        },
+        {
+          "top": 208,
+          "bottom": 242,
+          "height": 34,
+          "paddingTop": 16,
+          "paddingBottom": 0
+        },
+        {
+          "top": 336,
+          "bottom": 370,
+          "height": 34,
+          "paddingTop": 16,
+          "paddingBottom": 0
+        },
+        {
+          "top": 464,
+          "bottom": 498,
+          "height": 34,
+          "paddingTop": 16,
+          "paddingBottom": 0
+        }
+      ],
+      "rows": [
+        {
+          "top": 42,
+          "bottom": 80,
+          "height": 38,
+          "paddingTop": 0,
+          "paddingBottom": 0
+        },
+        {
+          "top": 82,
+          "bottom": 120,
+          "height": 38,
+          "paddingTop": 0,
+          "paddingBottom": 0
+        },
+        {
+          "top": 122,
+          "bottom": 160,
+          "height": 38,
+          "paddingTop": 0,
+          "paddingBottom": 0
+        },
+        {
+          "top": 162,
+          "bottom": 200,
+          "height": 38,
+          "paddingTop": 0,
+          "paddingBottom": 0
+        },
+        {
+          "top": 250,
+          "bottom": 288,
+          "height": 38,
+          "paddingTop": 0,
+          "paddingBottom": 0
+        },
+        {
+          "top": 290,
+          "bottom": 328,
+          "height": 38,
+          "paddingTop": 0,
+          "paddingBottom": 0
+        },
+        {
+          "top": 378,
+          "bottom": 416,
+          "height": 38,
+          "paddingTop": 0,
+          "paddingBottom": 0
+        },
+        {
+          "top": 418,
+          "bottom": 456,
+          "height": 38,
+          "paddingTop": 0,
+          "paddingBottom": 0
+        },
+        {
+          "top": 506,
+          "bottom": 544,
+          "height": 38,
+          "paddingTop": 0,
+          "paddingBottom": 0
+        },
+        {
+          "top": 546,
+          "bottom": 584,
+          "height": 38,
+          "paddingTop": 0,
+          "paddingBottom": 0
+        }
+      ],
+      "groups": [],
+      "withinListGaps": [
+        2,
+        2,
+        2,
+        2,
+        2,
+        2
+      ],
+      "titleToFirstRow": [
+        8,
+        8,
+        8,
+        8
+      ],
+      "groupToFirstRow": [],
+      "betweenComputerGroups": [],
+      "rowToFollowingHeader": [
+        24,
+        24,
+        24
+      ]
+    }
+  }
+}

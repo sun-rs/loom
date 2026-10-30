@@ -352,7 +352,11 @@ try {
       JSON.stringify(await verifyUIRefresh135({ browser, origin, channels })),
     );
   } else if (process.env.LOOM_BROWSER_SLICE === "role-form") {
-    console.log(JSON.stringify(await verifyRoleCreation({ browser, origin })));
+    console.log(
+      JSON.stringify(
+        await verifyRoleCreation({ browser, origin, client, workspace }),
+      ),
+    );
   } else if (process.env.LOOM_BROWSER_SLICE === "standalone") {
     const { verifyStandalone } = await import("./standalone-browser.mjs");
     console.log(

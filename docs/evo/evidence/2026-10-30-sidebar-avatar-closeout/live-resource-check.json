@@ -1,0 +1,37 @@
+{
+  "at": "2026-10-30T06:35:24.391Z",
+  "items": [
+    {
+      "url": "https://app.raft.build/index.html",
+      "status": 200,
+      "bytes": 224194,
+      "sha256": "ef93a87e903108ae7bd601170cc60710a41803363dbaac53a857484394655fd2",
+      "pinnedSha256": "ef93a87e903108ae7bd601170cc60710a41803363dbaac53a857484394655fd2",
+      "matchesPinned": true
+    },
+    {
+      "url": "https://app.raft.build/assets/app-shell-DOYrxQ-_.js",
+      "status": 200,
+      "bytes": 2569038,
+      "sha256": "34d6c016a7adb21831e2b24ba9b6c9bc3eb45873f35ab40815ea7e54a0ecd8a2",
+      "pinnedSha256": "34d6c016a7adb21831e2b24ba9b6c9bc3eb45873f35ab40815ea7e54a0ecd8a2",
+      "matchesPinned": true
+    },
+    {
+      "url": "https://app.raft.build/assets/vendor-raft-ui-BHAojVZQ.js",
+      "status": 200,
+      "bytes": 621128,
+      "sha256": "2b2511c047310b4013432b173719b979f9be71421697e83b56a1288397006adc",
+      "pinnedSha256": "2b2511c047310b4013432b173719b979f9be71421697e83b56a1288397006adc",
+      "matchesPinned": true
+    },
+    {
+      "url": "https://app.raft.build/assets/app-shell-DuvkFUT-.css",
+      "status": 200,
+      "bytes": 507906,
+      "sha256": "2746cdd540841dfcb7a5d21e608a1266264e4f953e72fe76ee612209d52560ce",
+      "pinnedSha256": "2746cdd540841dfcb7a5d21e608a1266264e4f953e72fe76ee612209d52560ce",
+      "matchesPinned": true
+    }
+  ]
+}

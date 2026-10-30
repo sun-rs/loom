@@ -441,8 +441,13 @@ export default function AgentPage({
                     role={role}
                     disabled={busy}
                     onDirtyChange={setDirty}
-                    onSave={(configuration) =>
-                      void manager.save(configuration, role, done)
+                    onSave={(configuration, avatarUploadIntentId) =>
+                      void manager.save(
+                        configuration,
+                        role,
+                        done,
+                        avatarUploadIntentId,
+                      )
                     }
                   />
                 </>

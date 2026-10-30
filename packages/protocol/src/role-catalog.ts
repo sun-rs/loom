@@ -25,6 +25,7 @@ export const RoleCreateRequestSchema = z
     basedOnRoomSeq: z.number().int().nonnegative(),
     idempotencyKey: IdentifierSchema,
     configuration: RoleConfigurationSchema,
+    avatarUploadIntentId: IdentifierSchema.optional(),
   })
   .strict();
 export const RoleCreateResponseSchema = z
@@ -76,6 +77,7 @@ export const RoleReviseRequestSchema = RoleCreateRequestSchema.omit({
 export type RoleReviseRequest = z.infer<typeof RoleReviseRequestSchema>;
 export const RoleDeleteRequestSchema = RoleReviseRequestSchema.omit({
   configuration: true,
+  avatarUploadIntentId: true,
 });
 export const RoleDeleteResponseSchema = z
   .object({

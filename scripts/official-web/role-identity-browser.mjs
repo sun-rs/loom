@@ -193,6 +193,12 @@ export async function verifyRoleIdentity({
         const library = picker.getByTestId("role-avatar-library");
         const choices = library.locator("button[aria-pressed]");
         assert.equal(await choices.count(), 72);
+        await library
+          .getByRole("button", { name: "上传图片", exact: true })
+          .waitFor();
+        await library
+          .getByRole("button", { name: "随机头像", exact: true })
+          .waitFor();
         assert.deepEqual(
           await library
             .locator("[data-avatar-series]")
@@ -263,6 +269,99 @@ export async function verifyRoleIdentity({
       await page.reload();
       await profile.waitFor();
       assert.equal((await current()).configuration.avatarKey, "pixel:spider");
+      const beforeUpload = (await current()).roleRevisionId;
+      await profile
+        .getByRole("button", { name: "更换头像", exact: true })
+        .click();
+      const uploadDialog = page.getByTestId("role-avatar-dialog");
+      const occupied = new Set(
+        (
+          await client.request("role.list", {
+            controlRoomId: workspace.controlRoomId,
+          })
+        ).roles.map((r) => r.configuration.avatarKey),
+      );
+      await uploadDialog
+        .getByRole("button", { name: "随机头像", exact: true })
+        .click();
+      await uploadDialog
+        .getByRole("button", { name: "保存", exact: true })
+        .waitFor({ state: "visible" });
+      await page.waitForFunction(
+        () =>
+          !document.querySelector(
+            '[data-testid="role-avatar-dialog"] [role="status"]',
+          ),
+      );
+      const randomSelected =
+        "pixel:" +
+        (await uploadDialog
+          .locator('button[aria-pressed="true"]')
+          .getAttribute("aria-label"));
+      assert.ok(
+        !occupied.has(randomSelected),
+        "random action excludes the distinct active Role avatars",
+      );
+      await uploadDialog.getByTestId("avatar-upload-input").setInputFiles({
+        name: "invalid.txt",
+        mimeType: "text/plain",
+        buffer: Buffer.from("not an image"),
+      });
+      await uploadDialog.getByRole("alert").waitFor();
+      assert.equal((await current()).roleRevisionId, beforeUpload);
+      await uploadDialog.getByTestId("avatar-upload-input").setInputFiles({
+        name: "role-avatar.png",
+        mimeType: "image/png",
+        buffer: Buffer.from(
+          "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGP4f4bhPwAHZALLB0SopwAAAABJRU5ErkJggg==",
+          "base64",
+        ),
+      });
+      const preview = uploadDialog.locator(
+        'img[src*="/v3/client/profile-images/content/upload_"]',
+      );
+      await preview.waitFor();
+      const uploadSrc = await preview.getAttribute("src");
+      assert.equal(
+        (await current()).roleRevisionId,
+        beforeUpload,
+        "upload/preview does not revise the Role before Save",
+      );
+      await uploadDialog
+        .getByRole("button", { name: "保存", exact: true })
+        .click();
+      await uploadDialog.waitFor({ state: "hidden" });
+      const uploaded = await current();
+      assert.match(
+        uploaded.configuration.avatarKey,
+        /^upload_png_[a-f0-9]{40}$/,
+      );
+      assert.ok(
+        writes.at(-1).avatarUploadIntentId,
+        "the revision carries an upload receipt outside configuration",
+      );
+      assert.equal(writes.at(-1).configuration.avatarUploadIntentId, undefined);
+      await page.reload();
+      await profile.waitFor();
+      const persistedImage = profile
+        .getByRole("button", { name: "更换头像", exact: true })
+        .locator("img");
+      assert.equal(await persistedImage.getAttribute("src"), uploadSrc);
+      assert.equal(
+        await row.locator("img").first().getAttribute("src"),
+        uploadSrc,
+        "the Role list uses the same uploaded identity after reload",
+      );
+      await persistedImage.evaluate(async (image) => {
+        if (!image.complete)
+          await new Promise((ok, no) => {
+            image.onload = ok;
+            image.onerror = no;
+          });
+      });
+      assert.ok(
+        await persistedImage.evaluate((image) => image.naturalWidth > 0),
+      );
       assert.equal(
         (await current()).configuration.instructions,
         "FIXTURE revised prompt",
@@ -284,6 +383,8 @@ export async function verifyRoleIdentity({
         requestedImages: imageRequests.size,
         reload: true,
         nativeRuntimeColumn: true,
+        uploadSavedAndReloaded: true,
+        randomExcludesOccupiedPresets: true,
         errors,
       });
     } catch (error) {

@@ -41,7 +41,10 @@ export default function RoleProfile({
   client: RahClient;
   role: RoleTemplate;
   disabled: boolean;
-  onSave: (configuration: RoleCreateRequest["configuration"]) => void;
+  onSave: (
+    configuration: RoleCreateRequest["configuration"],
+    avatarUploadIntentId?: string,
+  ) => void;
   onDirtyChange: (dirty: boolean) => void;
 }) {
   const textFocus = useRef<HTMLTextAreaElement | null>(null);
