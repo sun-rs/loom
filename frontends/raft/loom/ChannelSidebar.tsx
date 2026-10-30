@@ -16,16 +16,21 @@ import { LoomLiveActivity } from "./AppearanceRuntime.tsx";
 import DirectChatRow from "./DirectChatRow.tsx";
 import AttentionDot from "../packages/web/src/components/ui/AttentionDot.tsx";
 import { hasUnresolvedIntents } from "@rah-os/client-core/write-intent";
-import { SidebarDrag, DragSection, DragRow } from "./SidebarDrag.tsx";
+import {
+  SidebarDrag,
+  DragSection,
+  DragRow,
+  DragList,
+  SectionToggle,
+} from "./SidebarDrag.tsx";
+import { NativePinnedEmptyHint } from "./OfficialSidebarDrag140.generated.js";
 import ChannelArchiveDialog from "./ChannelArchiveDialog.tsx";
 import { markChannelActivity } from "./sidebar-activity.ts";
 import { useCallback, useEffect, useMemo, useState, useRef } from "react";
 import {
   Button,
   Input,
-  SidebarList,
   SidebarSectionHeader,
-  SidebarSectionDisclosure,
   SidebarSectionControl,
   SidebarSectionCount,
 } from "raft-ui";
@@ -48,6 +53,7 @@ import {
 } from "lucide-react";
 import { SidebarContextMenu, SidebarSortMenu } from "./SidebarMenus.tsx";
 import type { RahClient } from "@rah-os/client-sdk";
+import { SidebarResponseSchema } from "@rah-os/protocol";
 import type {
   Room,
   SidebarPreferences,
@@ -209,6 +215,8 @@ export default function ChannelSidebar({
   }, [refresh, manager]);
   const done = (outcome: IntentOutcome<unknown>) => {
     if (outcome.kind === "ok") {
+      const sidebar = SidebarResponseSchema.safeParse(outcome.result);
+      if (sidebar.success) setData(sidebar.data);
       setEdit(undefined);
       setError("");
       void refresh();
@@ -366,7 +374,11 @@ export default function ChannelSidebar({
         ]}
       >
         {!edit && !archiveTarget && (
-          <OperationStatus manager={manager} error={error || readError} />
+          <OperationStatus
+            manager={manager}
+            error={error || readError}
+            quietPending
+          />
         )}
         {readError && (
           <Button {...uiActionProps.recovery} onClick={() => void refresh()}>
@@ -380,314 +392,356 @@ export default function ChannelSidebar({
           onOpen={onOpenSaved}
         />
         <SidebarDrag
-          groups={visibleGroups}
+          groups={groups}
+          visibleIds={visibleGroups.map((g) => g.id)}
           prefs={prefs}
           disabled={busy}
-          onDrop={(value, version) => {
-            if (!busy) void manager.sidebar(value, version, done);
+          onDrop={(value, version, settled) => {
+            if (busy) {
+              settled("rejected");
+              return;
+            }
+            void manager
+              .sidebar(value, version, (outcome) => {
+                done(outcome);
+                settled(
+                  outcome.kind === "ok"
+                    ? "ok"
+                    : outcome.kind === "unknown"
+                      ? "unknown"
+                      : "rejected",
+                );
+              })
+              .then((outcome) => {
+                if (outcome.kind === "busy") settled("rejected");
+              });
           }}
         >
-          {visibleGroups.map((group) => (
-            <DragSection
-              key={group.id}
-              id={group.id}
-              items={group.rooms.map((r) => r.roomId)}
-              disabled={busy}
-            >
-              <SidebarSectionHeader>
-                <SidebarContextMenu
-                  label={`分组操作 ${group.name}`}
-                  disabled={busy}
-                  items={[
-                    ...(group.id === "dms"
-                      ? []
-                      : [
-                          {
-                            label: "新建频道",
-                            icon: <Hash size={14} />,
-                            run: () => open({ kind: "channel" }),
-                          },
-                        ]),
-                    ...(
-                      [
-                        ["manual", "手动排序"],
-                        ["az", "按名称排序"],
-                        ["recent", "按最近活动排序"],
-                      ] as const
-                    ).map(([mode, label]) => ({
-                      label,
-                      checked: groupSortMode(prefs!, group.id) === mode,
-                      run: () => patch(groupSortPatch(group.id, mode)),
-                    })),
-                    {
-                      label: "新建分组",
-                      icon: <FolderPlus size={14} />,
-                      run: () => open({ kind: "group" }),
-                    },
-                    ...(group.id.startsWith("custom:")
-                      ? [
-                          {
-                            label: "重命名分组",
-                            icon: <Pencil size={14} />,
-                            run: () =>
-                              open(
-                                { kind: "group", id: group.id.slice(7) },
-                                group.name,
-                              ),
-                          },
-                          {
-                            label: "删除分组",
-                            icon: <Trash2 size={14} />,
-                            run: () =>
-                              open(
-                                { kind: "delete-group", id: group.id.slice(7) },
-                                group.name,
-                              ),
-                          },
-                        ]
-                      : []),
-                  ]}
-                >
-                  <SidebarSectionDisclosure
-                    render={<button type="button" />}
-                    className="cursor-default"
-                    data-section-handle
-                    aria-expanded={!collapsed.includes(group.id)}
-                    onClick={() =>
-                      setCollapsed((current) =>
-                        current.includes(group.id)
-                          ? current.filter((id) => id !== group.id)
-                          : [...current, group.id],
-                      )
-                    }
-                  >
-                    <ChevronRight
-                      size={14}
-                      className={`shrink-0 transition-transform ${collapsed.includes(group.id) ? "" : "rotate-90"}`}
-                    />
-                    <span className="truncate">{group.name}</span>
-                    <SidebarSectionCount>
-                      {group.rooms.length}
-                    </SidebarSectionCount>
-                    {group.id === "dms" &&
-                      collapsed.includes(group.id) &&
-                      group.rooms.some((r) => hasUnread(r.roomId)) && (
-                        <AttentionDot size="lg" className="ml-1" />
-                      )}
-                  </SidebarSectionDisclosure>
-                </SidebarContextMenu>
-                <div className="flex shrink-0 items-center gap-1">
-                  <SidebarSortMenu
-                    name={group.name}
-                    disabled={busy}
-                    value={groupSortMode(prefs!, group.id)}
-                    onChange={(mode) => patch(groupSortPatch(group.id, mode))}
-                  />
-                  {group.id === "channels" && (
-                    <Tooltip content="新建频道">
-                      <SidebarSectionControl
-                        type="button"
-                        aria-label="新建频道"
-                        disabled={busy}
-                        onClick={() => open({ kind: "channel" })}
-                      >
-                        <Plus size={16} />
-                      </SidebarSectionControl>
-                    </Tooltip>
-                  )}
-                </div>
-              </SidebarSectionHeader>
-              {!collapsed.includes(group.id) && (
-                <SidebarList className="relative isolate">
-                  {group.rooms.map((room) => (
-                    <DragRow
-                      key={room.roomId}
-                      id={room.roomId}
-                      disabled={
-                        busy || groupSortMode(prefs!, group.id) !== "manual"
-                      }
+          {(dragGroups, drag) =>
+            dragGroups
+              .filter(
+                (group) =>
+                  group.id === "channels" ||
+                  !shouldHideEmptySidebarSection({
+                    hideEmptySections: mobile || hideEmpty,
+                    loading: !data,
+                    itemCount: group.rooms.length,
+                    dragActive: drag.active,
+                    dragStartedInSection: drag.origin === group.id,
+                    revealWhileDragging: true,
+                  }),
+              )
+              .map((group) => (
+                <DragSection key={group.id} id={group.id}>
+                  <SidebarSectionHeader>
+                    <SidebarContextMenu
+                      label={`分组操作 ${group.name}`}
+                      disabled={busy}
+                      items={[
+                        ...(group.id === "dms"
+                          ? []
+                          : [
+                              {
+                                label: "新建频道",
+                                icon: <Hash size={14} />,
+                                run: () => open({ kind: "channel" }),
+                              },
+                            ]),
+                        ...(
+                          [
+                            ["manual", "手动排序"],
+                            ["az", "按名称排序"],
+                            ["recent", "按最近活动排序"],
+                          ] as const
+                        ).map(([mode, label]) => ({
+                          label,
+                          checked: groupSortMode(prefs!, group.id) === mode,
+                          run: () => patch(groupSortPatch(group.id, mode)),
+                        })),
+                        {
+                          label: "新建分组",
+                          icon: <FolderPlus size={14} />,
+                          run: () => open({ kind: "group" }),
+                        },
+                        ...(group.id.startsWith("custom:")
+                          ? [
+                              {
+                                label: "重命名分组",
+                                icon: <Pencil size={14} />,
+                                run: () =>
+                                  open(
+                                    { kind: "group", id: group.id.slice(7) },
+                                    group.name,
+                                  ),
+                              },
+                              {
+                                label: "删除分组",
+                                icon: <Trash2 size={14} />,
+                                run: () =>
+                                  open(
+                                    {
+                                      kind: "delete-group",
+                                      id: group.id.slice(7),
+                                    },
+                                    group.name,
+                                  ),
+                              },
+                            ]
+                          : []),
+                      ]}
                     >
-                      <SidebarContextMenu
-                        label={`${isStandaloneChat(room, prefs!) ? "私聊" : "频道"}操作 ${room.name}`}
-                        onOpenChange={(open) =>
-                          setMenuRoom((current) =>
-                            open
-                              ? room.roomId
-                              : current === room.roomId
-                                ? undefined
-                                : current,
+                      <SectionToggle
+                        sectionKey={group.id}
+                        onToggleSection={() =>
+                          setCollapsed((current) =>
+                            current.includes(group.id)
+                              ? current.filter((id) => id !== group.id)
+                              : [...current, group.id],
                           )
                         }
+                        className="cursor-default"
+                        data-section-handle
+                        aria-expanded={!collapsed.includes(group.id)}
+                      >
+                        <ChevronRight
+                          size={14}
+                          className={`shrink-0 transition-transform ${collapsed.includes(group.id) ? "" : "rotate-90"}`}
+                        />
+                        <span className="truncate">{group.name}</span>
+                        <SidebarSectionCount>
+                          {group.rooms.length}
+                        </SidebarSectionCount>
+                        {group.id === "dms" &&
+                          collapsed.includes(group.id) &&
+                          group.rooms.some((r) => hasUnread(r.roomId)) && (
+                            <AttentionDot size="lg" className="ml-1" />
+                          )}
+                      </SectionToggle>
+                    </SidebarContextMenu>
+                    <div className="flex shrink-0 items-center gap-1">
+                      <SidebarSortMenu
+                        name={group.name}
                         disabled={busy}
-                        items={[
-                          {
-                            label: "移动到分区",
-                            icon: <FolderInput size={14} />,
-                            children: [
-                              ...groups
-                                .filter((g) =>
-                                  isStandaloneChat(room, prefs!)
-                                    ? g.id !== "channels"
-                                    : g.id !== "dms",
-                                )
-                                .map((g) => ({
-                                  label: g.name,
-                                  checked: g.id === group.id,
-                                  disabled: g.id === group.id,
-                                  run: () =>
-                                    patch(moveSidebarItem(prefs!, room, g.id)),
-                                })),
+                        value={groupSortMode(prefs!, group.id)}
+                        onChange={(mode) =>
+                          patch(groupSortPatch(group.id, mode))
+                        }
+                      />
+                      {group.id === "channels" && (
+                        <Tooltip content="新建频道">
+                          <SidebarSectionControl
+                            type="button"
+                            aria-label="新建频道"
+                            disabled={busy}
+                            onClick={() => open({ kind: "channel" })}
+                          >
+                            <Plus size={16} />
+                          </SidebarSectionControl>
+                        </Tooltip>
+                      )}
+                    </div>
+                  </SidebarSectionHeader>
+                  {!collapsed.includes(group.id) && (
+                    <DragList
+                      id={group.id}
+                      manual={groupSortMode(prefs!, group.id) === "manual"}
+                      items={group.rooms.map((r) => r.roomId)}
+                    >
+                      {group.rooms.map((room) => (
+                        <DragRow
+                          key={room.roomId}
+                          id={room.roomId}
+                          groupId={group.id}
+                        >
+                          <SidebarContextMenu
+                            label={`${isStandaloneChat(room, prefs!) ? "私聊" : "频道"}操作 ${room.name}`}
+                            onOpenChange={(open) =>
+                              setMenuRoom((current) =>
+                                open
+                                  ? room.roomId
+                                  : current === room.roomId
+                                    ? undefined
+                                    : current,
+                              )
+                            }
+                            disabled={busy}
+                            items={[
                               {
-                                label: "新建分组",
-                                icon: <FolderPlus size={14} />,
-                                run: () =>
-                                  open({
-                                    kind: "group",
-                                    moveKey: sidebarKey(room),
-                                  }),
-                              },
-                            ],
-                          },
-                          {
-                            separatorBefore: true,
-                            icon: hasUnread(room.roomId) ? (
-                              <MessageSquareCheck size={14} />
-                            ) : (
-                              <MessageSquareDot size={14} />
-                            ),
-                            label: hasUnread(room.roomId)
-                              ? "标记已读"
-                              : "标记未读",
-                            disabled: !activity,
-                            run: () => void mark(room),
-                          },
-                          {
-                            icon: prefs!.pinned.includes(sidebarKey(room)) ? (
-                              <PinOff size={14} />
-                            ) : (
-                              <Pin size={14} />
-                            ),
-                            label: prefs!.pinned.includes(sidebarKey(room))
-                              ? "取消置顶"
-                              : "置顶",
-                            run: () =>
-                              patch(
-                                prefs!.pinned.includes(sidebarKey(room))
-                                  ? {
-                                      pinned: prefs!.pinned.filter(
-                                        (k) => k !== sidebarKey(room),
-                                      ),
-                                    }
-                                  : moveSidebarItem(prefs!, room, "pinned"),
-                              ),
-                          },
-                          ...(isStandaloneChat(room, prefs!)
-                            ? [
-                                {
-                                  label: "关闭会话",
-                                  icon: <X size={14} />,
-                                  separatorBefore: true,
-                                  disabled: hasUnresolvedIntents(),
-                                  run: () => closePrivate(room),
-                                },
-                              ]
-                            : [
-                                {
-                                  icon: prefs!.mutedActivity.includes(
-                                    sidebarKey(room),
-                                  ) ? (
-                                    <Bell size={14} />
-                                  ) : (
-                                    <BellOff size={14} />
-                                  ),
-                                  label: prefs!.mutedActivity.includes(
-                                    sidebarKey(room),
-                                  )
-                                    ? "取消静音"
-                                    : "静音",
-                                  run: () =>
-                                    patch({
-                                      mutedActivity:
-                                        prefs!.mutedActivity.includes(
-                                          sidebarKey(room),
-                                        )
-                                          ? prefs!.mutedActivity.filter(
-                                              (k) => k !== sidebarKey(room),
-                                            )
-                                          : [
-                                              ...prefs!.mutedActivity,
-                                              sidebarKey(room),
-                                            ],
-                                    }),
-                                },
-                                ...[
+                                label: "移动到分区",
+                                icon: <FolderInput size={14} />,
+                                children: [
+                                  ...groups
+                                    .filter((g) =>
+                                      isStandaloneChat(room, prefs!)
+                                        ? g.id !== "channels"
+                                        : g.id !== "dms",
+                                    )
+                                    .map((g) => ({
+                                      label: g.name,
+                                      checked: g.id === group.id,
+                                      disabled: g.id === group.id,
+                                      run: () =>
+                                        patch(
+                                          moveSidebarItem(prefs!, room, g.id),
+                                        ),
+                                    })),
                                   {
-                                    label: "归档",
-                                    icon: <Archive size={14} />,
-                                    separatorBefore: true,
-                                    run: () => {
-                                      setError("");
-                                      setArchiveTarget(room);
-                                    },
+                                    label: "新建分组",
+                                    icon: <FolderPlus size={14} />,
+                                    run: () =>
+                                      open({
+                                        kind: "group",
+                                        moveKey: sidebarKey(room),
+                                      }),
                                   },
                                 ],
-                              ]),
-                        ]}
-                      >
-                        {isStandaloneChat(room, prefs!) ? (
-                          <DirectChatRow
-                            roomId={room.roomId}
-                            name={room.name}
-                            description={
-                              group.id === "pinned"
-                                ? undefined
-                                : room.description
-                            }
-                            selected={selected === room.roomId}
-                            menuOpen={menuRoom === room.roomId}
-                            unread={activity?.[room.roomId] ?? 0}
-                            markedUnread={manualUnread.has(room.roomId)}
-                            allowWrap={group.id === "pinned"}
-                            onSelect={() => {
-                              if (
-                                onSelect(room.roomId) &&
-                                hasUnread(room.roomId)
-                              )
-                                void mark(room, "read");
-                            }}
-                          />
-                        ) : (
-                          <Row
-                            channelId={room.roomId}
-                            name={room.name}
-                            selected={selected === room.roomId}
-                            menuOpen={menuRoom === room.roomId}
-                            unread={activity?.[room.roomId] ?? 0}
-                            markedUnread={manualUnread.has(room.roomId)}
-                            muted={prefs!.mutedActivity.includes(
-                              sidebarKey(room),
+                              },
+                              {
+                                separatorBefore: true,
+                                icon: hasUnread(room.roomId) ? (
+                                  <MessageSquareCheck size={14} />
+                                ) : (
+                                  <MessageSquareDot size={14} />
+                                ),
+                                label: hasUnread(room.roomId)
+                                  ? "标记已读"
+                                  : "标记未读",
+                                disabled: !activity,
+                                run: () => void mark(room),
+                              },
+                              {
+                                icon: prefs!.pinned.includes(
+                                  sidebarKey(room),
+                                ) ? (
+                                  <PinOff size={14} />
+                                ) : (
+                                  <Pin size={14} />
+                                ),
+                                label: prefs!.pinned.includes(sidebarKey(room))
+                                  ? "取消置顶"
+                                  : "置顶",
+                                run: () =>
+                                  patch(
+                                    prefs!.pinned.includes(sidebarKey(room))
+                                      ? {
+                                          pinned: prefs!.pinned.filter(
+                                            (k) => k !== sidebarKey(room),
+                                          ),
+                                        }
+                                      : moveSidebarItem(prefs!, room, "pinned"),
+                                  ),
+                              },
+                              ...(isStandaloneChat(room, prefs!)
+                                ? [
+                                    {
+                                      label: "关闭会话",
+                                      icon: <X size={14} />,
+                                      separatorBefore: true,
+                                      disabled: hasUnresolvedIntents(),
+                                      run: () => closePrivate(room),
+                                    },
+                                  ]
+                                : [
+                                    {
+                                      icon: prefs!.mutedActivity.includes(
+                                        sidebarKey(room),
+                                      ) ? (
+                                        <Bell size={14} />
+                                      ) : (
+                                        <BellOff size={14} />
+                                      ),
+                                      label: prefs!.mutedActivity.includes(
+                                        sidebarKey(room),
+                                      )
+                                        ? "取消静音"
+                                        : "静音",
+                                      run: () =>
+                                        patch({
+                                          mutedActivity:
+                                            prefs!.mutedActivity.includes(
+                                              sidebarKey(room),
+                                            )
+                                              ? prefs!.mutedActivity.filter(
+                                                  (k) => k !== sidebarKey(room),
+                                                )
+                                              : [
+                                                  ...prefs!.mutedActivity,
+                                                  sidebarKey(room),
+                                                ],
+                                        }),
+                                    },
+                                    ...[
+                                      {
+                                        label: "归档",
+                                        icon: <Archive size={14} />,
+                                        separatorBefore: true,
+                                        run: () => {
+                                          setError("");
+                                          setArchiveTarget(room);
+                                        },
+                                      },
+                                    ],
+                                  ]),
+                            ]}
+                          >
+                            {isStandaloneChat(room, prefs!) ? (
+                              <DirectChatRow
+                                roomId={room.roomId}
+                                name={room.name}
+                                description={
+                                  group.id === "pinned"
+                                    ? undefined
+                                    : room.description
+                                }
+                                selected={selected === room.roomId}
+                                menuOpen={menuRoom === room.roomId}
+                                unread={activity?.[room.roomId] ?? 0}
+                                markedUnread={manualUnread.has(room.roomId)}
+                                allowWrap={group.id === "pinned"}
+                                onSelect={() => {
+                                  if (
+                                    onSelect(room.roomId) &&
+                                    hasUnread(room.roomId)
+                                  )
+                                    void mark(room, "read");
+                                }}
+                              />
+                            ) : (
+                              <Row
+                                channelId={room.roomId}
+                                name={room.name}
+                                selected={selected === room.roomId}
+                                menuOpen={menuRoom === room.roomId}
+                                unread={activity?.[room.roomId] ?? 0}
+                                markedUnread={manualUnread.has(room.roomId)}
+                                muted={prefs!.mutedActivity.includes(
+                                  sidebarKey(room),
+                                )}
+                                onSelectChannel={(id) => {
+                                  if (onSelect(id) && hasUnread(id))
+                                    void mark(room, "read");
+                                }}
+                              />
                             )}
-                            onSelectChannel={(id) => {
-                              if (onSelect(id) && hasUnread(id))
-                                void mark(room, "read");
-                            }}
-                          />
+                          </SidebarContextMenu>
+                        </DragRow>
+                      ))}
+                      {!group.rooms.length && group.id === "pinned" && (
+                        <NativePinnedEmptyHint />
+                      )}
+                      {!collapsed.includes(group.id) &&
+                        !group.rooms.length &&
+                        group.id === "channels" &&
+                        !mobile && (
+                          <OfficialSidebarDescription>
+                            还没有频道
+                          </OfficialSidebarDescription>
                         )}
-                      </SidebarContextMenu>
-                    </DragRow>
-                  ))}
-                  {!collapsed.includes(group.id) &&
-                    !group.rooms.length &&
-                    group.id === "channels" &&
-                    !mobile && (
-                      <OfficialSidebarDescription>
-                        还没有频道
-                      </OfficialSidebarDescription>
-                    )}
-                </SidebarList>
-              )}
-            </DragSection>
-          ))}
+                    </DragList>
+                  )}
+                </DragSection>
+              ))
+          }
         </SidebarDrag>
         {emptyList && <PageEmpty kind="channels" testId="empty-channel-list" />}
       </SidebarContextMenu>

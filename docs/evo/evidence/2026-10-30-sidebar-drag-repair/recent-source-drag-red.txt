@@ -1,0 +1,17 @@
+[loom instance-prewarm] prewarm of principal_f9d7f441-c972-429d-a5a8-eb8157652c21 skipped: disabled
+[loom instance-prewarm] prewarm of principal_275d9c6e-d8fe-4169-b92d-a5c4b91a8a4e skipped: disabled
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+locator.waitFor: Timeout 6000ms exceeded.
+Call log:
+[2m  - waiting for getByTestId('sidebar-drag-overlay') to be visible[22m
+
+    at start (/Users/sun/Code/repos/rah_os/scripts/official-web/sidebar-drag-browser.mjs:15:237)
+    at async verifySidebarDrag (/Users/sun/Code/repos/rah_os/scripts/official-web/sidebar-drag-browser.mjs:29:31)
+    at async file:///Users/sun/Code/repos/rah_os/scripts/official-web/channel-browser.mjs:248:32 {
+  name: 'TimeoutError'
+}
+
+Node.js v25.9.0

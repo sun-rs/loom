@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 export async function verifySidebarInteractions(page) {
   const sidebar = page.getByTestId("public-server-channel-sidebar-root");
   const heading = page
-    .locator('[data-sidebar-section="channels"]')
+    .locator('[data-testid="sidebar-section-block-channels"]')
     .locator("[data-section-handle]");
   // Composer geometry is measured in detail, then sidebar controls in the root.
   if (

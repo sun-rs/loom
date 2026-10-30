@@ -197,7 +197,10 @@ export async function verifyAppearance({ browser, origin, channels }) {
       await page.goto(origin + "/?chat=list");
       const sidebar = page.getByTestId("public-server-channel-list");
       await sidebar.waitFor();
-      assert.equal(await sidebar.getByText("置顶", { exact: true }).count(), 0);
+      assert.equal(
+        await sidebar.getByText("已置顶", { exact: true }).count(),
+        0,
+      );
       await page.goto(origin + "/?view=settings&settings=appearance");
       await page
         .getByRole("switch", { name: "隐藏空的侧栏分区", exact: true })
@@ -205,11 +208,11 @@ export async function verifyAppearance({ browser, origin, channels }) {
       await page.goto(origin + "/?chat=list");
       if (width < 768)
         assert.equal(
-          await sidebar.getByText("置顶", { exact: true }).count(),
+          await sidebar.getByText("已置顶", { exact: true }).count(),
           0,
           "mobile always hides empty sections",
         );
-      else await sidebar.getByText("置顶", { exact: true }).waitFor();
+      else await sidebar.getByText("已置顶", { exact: true }).waitFor();
       let fixtureWorking = true;
       // UI-only status projection over a temporary Core; no fake-provider run or paid call.
       await page.route(

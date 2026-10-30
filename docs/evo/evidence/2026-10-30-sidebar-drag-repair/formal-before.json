@@ -1,0 +1,15 @@
+{
+  "at": "2026-10-30T07:17:01.813Z",
+  "phase": "before",
+  "pinned": {
+    "text": "置顶0",
+    "hasHint": false,
+    "dropZoneHeight": 16,
+    "rows": 0
+  },
+  "cancelledDrag": false,
+  "protectedTablesUnchanged": true,
+  "sidebarWrites": 0,
+  "blockedReadOnlyGuard": ["/v3/client/rooms/acknowledge"],
+  "errors": []
+}

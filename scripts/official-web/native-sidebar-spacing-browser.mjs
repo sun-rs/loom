@@ -61,7 +61,9 @@ function fixtureResponse(request) {
           agentOrder: agents.map((a) => a.id),
           dmOrder: [],
           customSections: [],
-          pinned: [{ kind: "channel", id: "fixture-channel-0" }],
+          pinned: process.env.LOOM_NATIVE_SIDEBAR_EMPTY
+            ? []
+            : [{ kind: "channel", id: "fixture-channel-0" }],
           hiddenDmIds: [],
         },
       ],
@@ -282,7 +284,23 @@ try {
           const root = page.locator('[data-slot="sidebar-root"]').first();
           const spacing = await root.evaluate(readSidebarSpacing);
           await page.screenshot({ path: resolve(out, state + ".png") });
-          report.states.push({ state, spacing });
+          const hint = page.getByTestId("sidebar-pinned-empty-hint");
+          const emptyPinned =
+            state === "chat" && (await hint.count())
+              ? await hint.evaluate((el) => ({
+                  text: el.textContent,
+                  height: el.getBoundingClientRect().height,
+                  dropZoneHeight:
+                    el.parentElement.getBoundingClientRect().height,
+                  marginBottom: getComputedStyle(el).marginBottom,
+                  paddingTop: getComputedStyle(el).paddingTop,
+                }))
+              : undefined;
+          report.states.push({
+            state,
+            spacing,
+            ...(emptyPinned ? { emptyPinned } : {}),
+          });
         }
         assert.deepEqual(
           staticMisses,

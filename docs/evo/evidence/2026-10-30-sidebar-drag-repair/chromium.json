@@ -1,0 +1,72 @@
+{
+  "browser": "chromium",
+  "emptyHint": true,
+  "emptyPinnedHeight": 56,
+  "sourceRecentCanPin": true,
+  "liveProjection": true,
+  "dragOverlay": true,
+  "noSnapWhileWaiting": true,
+  "oneWritePerDrop": true,
+  "persistence": true,
+  "cancelDoesNotWrite": true,
+  "rejectionRollsBack": true,
+  "contextMenu": true,
+  "sameListSort": true,
+  "emptyCustomDrop": true,
+  "sectionHandleDrag": true,
+  "standaloneDmDrop": true,
+  "hiddenEmptyTargetRevealed": true,
+  "duringDragRows": [
+    {
+      "id": "sidebar:container:pinned",
+      "height": 56,
+      "gap": "2px",
+      "rows": [
+        {
+          "id": "room_c3b03816-a05d-4ebc-9245-a22f3f6e605e",
+          "top": 144,
+          "height": 38,
+          "style": "transition: transform 200ms; opacity: 0.12; z-index: 10; transform: translate3d(0px, 0px, 0px) scaleX(1) scaleY(1);",
+          "display": "block",
+          "margin": "0px",
+          "transform": "matrix(1, 0, 0, 1, 0, 0)",
+          "flex": "0 1 auto"
+        }
+      ]
+    },
+    {
+      "id": "sidebar:container:channels",
+      "height": 134,
+      "gap": "2px",
+      "rows": [
+        {
+          "id": "room_38a1bb17-738f-47d7-95c9-b918871caded",
+          "top": 234,
+          "height": 38,
+          "style": "opacity: 1; transition: transform 200ms;",
+          "display": "block",
+          "margin": "0px",
+          "transform": "none",
+          "flex": "0 1 auto"
+        },
+        {
+          "id": "room_71188712-19e4-4a73-b1c4-a7ea4bfca176",
+          "top": 309.9316101074219,
+          "height": 38,
+          "style": "opacity: 1; transition: transform 200ms;",
+          "display": "block",
+          "margin": "0px",
+          "transform": "matrix(1, 0, 0, 1, 0, 35.9316)",
+          "flex": "0 1 auto"
+        }
+      ]
+    },
+    {
+      "id": "sidebar:container:custom:fixture",
+      "height": 28,
+      "gap": "2px",
+      "rows": []
+    }
+  ],
+  "errors": []
+}

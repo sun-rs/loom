@@ -22,11 +22,12 @@ test("Web139 Computer sidebar delegates frame and list geometry to official reci
   assert.doesNotMatch(desktop, /\bpx-2\b|\bpt-2\b/);
   assert.match(desktop, /<SidebarList[\s>]/);
 });
-test("Web139 channel DnD containers own list spacing, not section margins", () => {
+test("Web140 native channel drop zones own list spacing, not section margins", () => {
   assert.doesNotMatch(read("SidebarDrag.tsx"), /className="mb-3"/);
+  assert.match(read("ChannelSidebar.tsx"), /<DragList[\s>]/);
   assert.match(
-    read("ChannelSidebar.tsx"),
-    /<SidebarList[^>]*className="relative isolate"/,
+    read("OfficialSidebarDrag140.generated.js"),
+    /relative isolate flex flex-col gap-0\.5 py-2/,
   );
   assert.match(read("SavedNav.tsx"), /<SidebarList[\s>]/);
   assert.match(read("SavedNav.tsx"), /<SidebarItemIcon>/);

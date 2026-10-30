@@ -1,6 +1,7 @@
 import { verifyRoleProfileAffordances } from "./role-profile-affordances-browser.mjs";
 import { verifyRuntimeSidebar } from "./runtime-sidebar-browser.mjs";
 import { auditSidebarPixels } from "./sidebar-pixel-audit.mjs";
+import { verifySidebarDrag } from "./sidebar-drag-browser.mjs";
 import { verifyUiStateRepair } from "./ui-state-repair-browser.mjs";
 import { verifyPwaRoutes } from "./pwa-route-repair-browser.mjs";
 import { verifyRoleSidebarAlignment } from "./role-sidebar-alignment-browser.mjs";
@@ -240,6 +241,18 @@ try {
           client,
           workspace,
           head,
+        }),
+      ),
+    );
+  } else if (process.env.LOOM_BROWSER_SLICE === "sidebar-drag") {
+    console.log(
+      JSON.stringify(
+        await verifySidebarDrag({
+          browser,
+          origin,
+          client,
+          workspace,
+          channels,
         }),
       ),
     );

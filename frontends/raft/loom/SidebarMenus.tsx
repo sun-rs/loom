@@ -92,7 +92,10 @@ export function SidebarContextMenu({
         data-testid={surface ? "sidebar-surface" : undefined}
         onContextMenu={(event) => event.stopPropagation()}
         onPointerDown={(event) => {
-          if (!surface) event.stopPropagation();
+          // Native sortable rows listen in the bubble phase. Let the primary
+          // mouse/pen press reach them; retain nested-context-menu isolation.
+          if (!surface && (event.pointerType === "touch" || event.button !== 0))
+            event.stopPropagation();
         }}
         onKeyDown={(event) => {
           if (

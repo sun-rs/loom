@@ -338,7 +338,7 @@ export async function verifyManagement({
     assert.ok(created);
     await showChatList(page);
     await page
-      .locator('[data-sidebar-section="channels"]')
+      .locator('[data-testid="sidebar-section-block-channels"]')
       .locator("[data-section-handle]")
       .click({ button: "right" });
     await page.getByRole("menuitem", { name: "新建分组", exact: true }).click();
@@ -372,7 +372,7 @@ export async function verifyManagement({
       .click();
     await page
       .locator(
-        `[data-sidebar-section="pinned"] [data-public-channel-id="${created.roomId}"]`,
+        `[data-testid="sidebar-section-block-pinned"] [data-public-channel-id="${created.roomId}"]`,
       )
       .waitFor();
     assert.deepEqual(sidebarRequests[0], sidebarRequests[1]);
@@ -380,7 +380,7 @@ export async function verifyManagement({
     await page.reload();
     await page
       .locator(
-        `[data-sidebar-section="pinned"] [data-public-channel-id="${created.roomId}"]`,
+        `[data-testid="sidebar-section-block-pinned"] [data-public-channel-id="${created.roomId}"]`,
       )
       .waitFor();
     const preferences = (
@@ -400,7 +400,7 @@ export async function verifyManagement({
     await page.getByRole("menuitem", { name: "取消置顶", exact: true }).click();
     await page
       .locator(
-        `[data-sidebar-section^="custom:"] [data-public-channel-id="${created.roomId}"]`,
+        `[data-testid^="sidebar-section-block-custom:"] [data-public-channel-id="${created.roomId}"]`,
       )
       .waitFor();
     await page.getByRole("button", { name: "排序 频道", exact: true }).click();
@@ -465,7 +465,7 @@ export async function verifyManagement({
     await page.getByRole("menuitem", { name: "手动排序", exact: true }).click();
     // Keep both drag endpoints in the mobile scroll viewport as private rows grow.
     const dmHeading = page.locator(
-      '[data-sidebar-section="dms"] [data-section-handle]',
+      '[data-testid="sidebar-section-block-dms"] [data-section-handle]',
     );
     if (
       viewport.width < 768 &&
@@ -510,32 +510,36 @@ export async function verifyManagement({
     const customId = `custom:${(await client.request("sidebar.get", { workspaceId: workspace.workspaceId })).preferences.customSections.find((g) => g.name === `${groupName}Renamed`).id}`;
     await drag(
       section(`${groupName}Renamed`),
-      page.locator('[data-sidebar-section="channels"] [data-section-handle]'),
+      page.locator(
+        '[data-testid="sidebar-section-block-channels"] [data-section-handle]',
+      ),
     );
     await page.waitForFunction((id) => {
       const sections = [
-        ...document.querySelectorAll("[data-sidebar-section]"),
-      ].map((e) => e.dataset.sidebarSection);
+        ...document.querySelectorAll('[data-testid^="sidebar-section-block-"]'),
+      ].map((e) => e.dataset.testid.replace("sidebar-section-block-", ""));
       return sections.indexOf(id) < sections.indexOf("channels");
     }, customId);
     await drag(
-      page.locator(`[data-channel-row="${created.roomId}"]`),
-      page.locator('[data-sidebar-section="channels"] [data-section-handle]'),
-    );
-    await page
-      .locator(
-        `[data-sidebar-section="channels"] [data-channel-row="${created.roomId}"]`,
-      )
-      .waitFor();
-    await drag(
-      page.locator(`[data-channel-row="${created.roomId}"]`),
+      page.locator(`[data-sidebar-drag-item="${created.roomId}"]`),
       page.locator(
-        `[data-sidebar-section="${customId}"] [data-section-handle]`,
+        '[data-testid="sidebar-section-block-channels"] [data-sidebar-dnd-container]',
       ),
     );
     await page
       .locator(
-        `[data-sidebar-section="${customId}"] [data-channel-row="${created.roomId}"]`,
+        `[data-testid="sidebar-section-block-channels"] [data-sidebar-drag-item="${created.roomId}"]`,
+      )
+      .waitFor();
+    await drag(
+      page.locator(`[data-sidebar-drag-item="${created.roomId}"]`),
+      page.locator(
+        `[data-testid="sidebar-section-block-${customId}"] [data-sidebar-dnd-container]`,
+      ),
+    );
+    await page
+      .locator(
+        `[data-testid="sidebar-section-block-${customId}"] [data-sidebar-drag-item="${created.roomId}"]`,
       )
       .waitFor();
     await section(`${groupName}Renamed`).click({ button: "right" });
@@ -546,13 +550,13 @@ export async function verifyManagement({
     await dialog.waitFor({ state: "hidden" });
     await page
       .locator(
-        `[data-sidebar-section="channels"] [data-public-channel-id="${created.roomId}"]`,
+        `[data-testid="sidebar-section-block-channels"] [data-public-channel-id="${created.roomId}"]`,
       )
       .waitFor();
     await page.reload();
     await page
       .locator(
-        `[data-sidebar-section="channels"] [data-public-channel-id="${created.roomId}"]`,
+        `[data-testid="sidebar-section-block-channels"] [data-public-channel-id="${created.roomId}"]`,
       )
       .waitFor();
     assert.equal(
@@ -564,7 +568,7 @@ export async function verifyManagement({
       1,
     );
     const channelRows = page.locator(
-      '[data-sidebar-section="channels"] [data-channel-row]',
+      '[data-testid="sidebar-section-block-channels"] [data-sidebar-drag-item]',
     );
     const before = await channelRows.evaluateAll((rows) =>
       rows.map((r) => r.getAttribute("data-channel-row")),
@@ -583,7 +587,7 @@ export async function verifyManagement({
         JSON.stringify(
           [
             ...document.querySelectorAll(
-              '[data-sidebar-section="channels"] [data-channel-row]',
+              '[data-testid="sidebar-section-block-channels"] [data-sidebar-drag-item]',
             ),
           ].map((r) => r.getAttribute("data-channel-row")),
         ) === JSON.stringify(ids),
@@ -595,7 +599,7 @@ export async function verifyManagement({
         JSON.stringify(
           [
             ...document.querySelectorAll(
-              '[data-sidebar-section="channels"] [data-channel-row]',
+              '[data-testid="sidebar-section-block-channels"] [data-sidebar-drag-item]',
             ),
           ].map((r) => r.getAttribute("data-channel-row")),
         ) === JSON.stringify(ids),

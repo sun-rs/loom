@@ -172,6 +172,20 @@ is `native-sidebar-spacing-browser.mjs`; Loom's matching gate is
 Record deliberately omitted native modules separately (e.g. the54px Graph entry
 above the Agent group); do not recreate their empty space with arbitrary padding.
 Desktop measurements do not certify mobile-app parity or the whole-Web migration.
+Owner correction2026-10-30: the earlier static sidebar report missed empty
+Pinned and actual drag behavior. Sidebar acceptance must include empty/expanded/
+collapsed, populated, dragging, cancel, delayed confirmation, rejection and reload;
+numeric populated-row checks alone cannot establish parity. The complete pinned
+Web1.21.40 drag declarations, collision/projection, stable geometry, overlay and
+empty hint now come from `generate-sidebar-drag140.mjs`, with source hashes in
+`loom/sidebar-drag.provenance.json`. Never restore the simplified local sortable
+substitute or disable an entire row because its source group uses recent/az:
+native policy governs valid destinations. Section IDs and list-drop-zone IDs
+must remain distinct. Native visibility reveals empty destinations while dragging
+and retains the source zone. Loom binds IDs and the existing WriteIntent/Kernel
+preference owner; pending presentation is transient, rolls back on refusal and
+never grants another write queue. A pending status line must not shift the list.
+Use the real-mouse `sidebar-drag` browser slice, including both Channels and DMs.
 
 ## Reading map
 

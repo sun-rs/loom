@@ -127,9 +127,11 @@ export function ActionDialog({
 export function OperationStatus({
   manager,
   error,
+  quietPending = false,
 }: {
   manager: ManagementClient;
   error: string;
+  quietPending?: boolean;
 }) {
   return (
     <>
@@ -138,7 +140,11 @@ export function OperationStatus({
           {error}
         </p>
       )}
-      {manager.writes.state === "pending" && <p role="status">正在处理…</p>}
+      {manager.writes.state === "pending" && (
+        <p role="status" className={quietPending ? "sr-only" : undefined}>
+          正在处理…
+        </p>
+      )}
       {manager.writes.state === "unknown" && (
         <div role="alert" className="mt-3">
           结果未知，核实前暂停其他操作。

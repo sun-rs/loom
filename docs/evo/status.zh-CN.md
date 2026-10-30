@@ -18,7 +18,7 @@
 
 本地单 Human 后端 MVP 已冻结；维护现有 Room-first、独立实例执行 lane、连续原生 session、权限、幂等和因果围栏。冻结证据见[2026-10-14记录](evidence/2026-10-14-backend-freeze/summary.json)。冻结不等于所有 CLI、真实模型、故障时序和效率门禁全部通过。
 
-- Owner2026-10-30的[侧栏／头像接线](evidence/2026-10-30-sidebar-avatar-closeout/README.md)：完整官方分发包与Loom四类桌面侧栏实测间距一致，Role顶部“关系图”省略单独记录，未追加猜测性的间距补丁。新建／随机头像排除有效Role已用款，手选可重复、用尽后复用全库；头像上传复用既有图片服务和修订写入，历史Role修订进入原GC引用检查。未完成的整版Web业务迁移状态不变。
+- Owner2026-10-30的[头像接线](evidence/2026-10-30-sidebar-avatar-closeout/README.md)完成未占用随机分配、手选重复、上传／保存及历史图片保留。该批静态侧栏报告漏验空置顶和实际拖动，不能证明完整侧栏对齐；已在[后续修复](evidence/2026-10-30-sidebar-drag-repair/README.md)明确纠正，改用完整锁定发布中的原生拖动声明／算法和真实鼠标验收。整版Web业务迁移仍不能据此宣称完成。
 
 - Role 配置修订、实例、频道、独立单聊/频道私密消息、任务、记忆及文件能力沿既有合同运行；模型回复不自动证明 Task 完成。
 - UI兼容修复将Human手动未读注意标记与精确消息数量分离，Kernel schema90→91；刷新/重启保持，旧viewport确认不能覆盖后来的手动标记，不改实例投递或任务状态。[迁移与收尾证据](evidence/2026-10-29-ui-closeout/README.md)。

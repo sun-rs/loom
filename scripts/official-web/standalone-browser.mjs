@@ -76,7 +76,7 @@ export async function verifyStandalone({
       await page.screenshot({ path: `/tmp/loom-standalone-chat-${width}.png` });
       await showChatList(page);
       const row = page.locator(
-        `[data-sidebar-section="dms"] [data-sidebar-channel-id="${roomId}"]`,
+        `[data-testid="sidebar-section-block-dms"] [data-sidebar-channel-id="${roomId}"]`,
       );
       await row.waitFor();
       assert.equal(

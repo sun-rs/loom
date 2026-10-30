@@ -1,4 +1,5 @@
 import { replaceSidebarSubsetOrder } from "../packages/web/src/components/layout/sidebarDnd.ts";
+import captions from "./sidebar-drag-captions.json" with { type: "json" };
 import type { SidebarPreferences, SidebarPatchRequest } from "@rah-os/protocol";
 export type SidebarRoom = {
   roomId: string;
@@ -65,7 +66,7 @@ export function sidebarGroups<T extends Channel>(
   const groups = [
     {
       id: "pinned",
-      name: "置顶",
+      name: captions.pinned,
       rooms: sort(
         rooms.filter((r) => pinned.has(key(r))),
         prefs.pinned,

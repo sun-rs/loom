@@ -1,0 +1,900 @@
+{
+  "fixtureOnly": true,
+  "productionDataAccessed": false,
+  "externalNetworkAllowed": false,
+  "backendAcceptance": false,
+  "syntheticMemberStoreProjection": true,
+  "states": [
+    {
+      "state": "chat",
+      "spacing": {
+        "headers": [
+          {
+            "top": 54,
+            "bottom": 88,
+            "height": 34,
+            "paddingTop": 16,
+            "paddingBottom": 0
+          },
+          {
+            "top": 144,
+            "bottom": 178,
+            "height": 34,
+            "paddingTop": 16,
+            "paddingBottom": 0
+          },
+          {
+            "top": 212,
+            "bottom": 246,
+            "height": 34,
+            "paddingTop": 16,
+            "paddingBottom": 0
+          },
+          {
+            "top": 420,
+            "bottom": 454,
+            "height": 34,
+            "paddingTop": 16,
+            "paddingBottom": 0
+          }
+        ],
+        "rows": [
+          {
+            "top": 8,
+            "bottom": 46,
+            "height": 38,
+            "paddingTop": 0,
+            "paddingBottom": 0
+          },
+          {
+            "top": 254,
+            "bottom": 292,
+            "height": 38,
+            "paddingTop": 0,
+            "paddingBottom": 0
+          },
+          {
+            "top": 294,
+            "bottom": 332,
+            "height": 38,
+            "paddingTop": 0,
+            "paddingBottom": 0
+          },
+          {
+            "top": 334,
+            "bottom": 372,
+            "height": 38,
+            "paddingTop": 0,
+            "paddingBottom": 0
+          },
+          {
+            "top": 374,
+            "bottom": 412,
+            "height": 38,
+            "paddingTop": 0,
+            "paddingBottom": 0
+          }
+        ],
+        "groups": [],
+        "withinListGaps": [],
+        "titleToFirstRow": [8],
+        "groupToFirstRow": [],
+        "betweenComputerGroups": [],
+        "rowToFollowingHeader": [24, 24]
+      },
+      "emptyPinned": {
+        "text": "将频道或私信拖到这里置顶",
+        "height": 36,
+        "dropZoneHeight": 56,
+        "marginBottom": "4px",
+        "paddingTop": "6px"
+      }
+    },
+    {
+      "state": "roles",
+      "spacing": {
+        "headers": [
+          {
+            "top": 54,
+            "bottom": 88,
+            "height": 34,
+            "paddingTop": 16,
+            "paddingBottom": 0
+          },
+          {
+            "top": 284,
+            "bottom": 318,
+            "height": 34,
+            "paddingTop": 16,
+            "paddingBottom": 0
+          }
+        ],
+        "rows": [
+          {
+            "top": 8,
+            "bottom": 46,
+            "height": 38,
+            "paddingTop": 0,
+            "paddingBottom": 0
+          },
+          {
+            "top": 120,
+            "bottom": 158,
+            "height": 38,
+            "paddingTop": 0,
+            "paddingBottom": 0
+          },
+          {
+            "top": 160,
+            "bottom": 198,
+            "height": 38,
+            "paddingTop": 0,
+            "paddingBottom": 0
+          },
+          {
+            "top": 238,
+            "bottom": 276,
+            "height": 38,
+            "paddingTop": 0,
+            "paddingBottom": 0
+          },
+          {
+            "top": 326,
+            "bottom": 364,
+            "height": 38,
+            "paddingTop": 0,
+            "paddingBottom": 0
+          }
+        ],
+        "groups": [
+          {
+            "top": 94,
+            "bottom": 112,
+            "height": 18,
+            "paddingTop": 0,
+            "paddingBottom": 0
+          },
+          {
+            "top": 212,
+            "bottom": 230,
+            "height": 18,
+            "paddingTop": 0,
+            "paddingBottom": 0
+          }
+        ],
+        "withinListGaps": [2],
+        "titleToFirstRow": [8],
+        "groupToFirstRow": [8, 8],
+        "betweenComputerGroups": [14],
+        "rowToFollowingHeader": [24, 24]
+      }
+    },
+    {
+      "state": "computers",
+      "spacing": {
+        "headers": [
+          {
+            "top": 0,
+            "bottom": 34,
+            "height": 34,
+            "paddingTop": 16,
+            "paddingBottom": 0
+          }
+        ],
+        "rows": [
+          {
+            "top": 42,
+            "bottom": 102,
+            "height": 60,
+            "paddingTop": 9,
+            "paddingBottom": 9
+          },
+          {
+            "top": 104,
+            "bottom": 164,
+            "height": 60,
+            "paddingTop": 9,
+            "paddingBottom": 9
+          }
+        ],
+        "groups": [],
+        "withinListGaps": [2],
+        "titleToFirstRow": [8],
+        "groupToFirstRow": [],
+        "betweenComputerGroups": [],
+        "rowToFollowingHeader": []
+      }
+    },
+    {
+      "state": "settings",
+      "spacing": {
+        "headers": [
+          {
+            "top": 0,
+            "bottom": 34,
+            "height": 34,
+            "paddingTop": 16,
+            "paddingBottom": 0
+          },
+          {
+            "top": 208,
+            "bottom": 242,
+            "height": 34,
+            "paddingTop": 16,
+            "paddingBottom": 0
+          },
+          {
+            "top": 336,
+            "bottom": 370,
+            "height": 34,
+            "paddingTop": 16,
+            "paddingBottom": 0
+          },
+          {
+            "top": 544,
+            "bottom": 578,
+            "height": 34,
+            "paddingTop": 16,
+            "paddingBottom": 0
+          }
+        ],
+        "rows": [
+          {
+            "top": 42,
+            "bottom": 80,
+            "height": 38,
+            "paddingTop": 0,
+            "paddingBottom": 0
+          },
+          {
+            "top": 82,
+            "bottom": 120,
+            "height": 38,
+            "paddingTop": 0,
+            "paddingBottom": 0
+          },
+          {
+            "top": 122,
+            "bottom": 160,
+            "height": 38,
+            "paddingTop": 0,
+            "paddingBottom": 0
+          },
+          {
+            "top": 162,
+            "bottom": 200,
+            "height": 38,
+            "paddingTop": 0,
+            "paddingBottom": 0
+          },
+          {
+            "top": 250,
+            "bottom": 288,
+            "height": 38,
+            "paddingTop": 0,
+            "paddingBottom": 0
+          },
+          {
+            "top": 290,
+            "bottom": 328,
+            "height": 38,
+            "paddingTop": 0,
+            "paddingBottom": 0
+          },
+          {
+            "top": 378,
+            "bottom": 416,
+            "height": 38,
+            "paddingTop": 0,
+            "paddingBottom": 0
+          },
+          {
+            "top": 418,
+            "bottom": 456,
+            "height": 38,
+            "paddingTop": 0,
+            "paddingBottom": 0
+          },
+          {
+            "top": 458,
+            "bottom": 496,
+            "height": 38,
+            "paddingTop": 0,
+            "paddingBottom": 0
+          },
+          {
+            "top": 498,
+            "bottom": 536,
+            "height": 38,
+            "paddingTop": 0,
+            "paddingBottom": 0
+          },
+          {
+            "top": 586,
+            "bottom": 624,
+            "height": 38,
+            "paddingTop": 0,
+            "paddingBottom": 0
+          },
+          {
+            "top": 626,
+            "bottom": 664,
+            "height": 38,
+            "paddingTop": 0,
+            "paddingBottom": 0
+          },
+          {
+            "top": 666,
+            "bottom": 704,
+            "height": 38,
+            "paddingTop": 0,
+            "paddingBottom": 0
+          },
+          {
+            "top": 706,
+            "bottom": 744,
+            "height": 38,
+            "paddingTop": 0,
+            "paddingBottom": 0
+          }
+        ],
+        "groups": [],
+        "withinListGaps": [2, 2, 2, 2, 2, 2, 2, 2, 2, 2],
+        "titleToFirstRow": [8, 8, 8, 8],
+        "groupToFirstRow": [],
+        "betweenComputerGroups": [],
+        "rowToFollowingHeader": [24, 24, 24]
+      }
+    }
+  ],
+  "release": {
+    "releaseId": "a7bb80017084e766d68b8a1d7c6377496a16fbaa",
+    "commitSha": "a7bb80017084e766d68b8a1d7c6377496a16fbaa",
+    "builtAt": "2026-10-29T17:16:56Z",
+    "branch": "release/v1.21.40",
+    "deploymentEnvironment": "production"
+  },
+  "integrity": {
+    "release": {
+      "releaseId": "a7bb80017084e766d68b8a1d7c6377496a16fbaa",
+      "commitSha": "a7bb80017084e766d68b8a1d7c6377496a16fbaa",
+      "builtAt": "2026-10-29T17:16:56Z",
+      "branch": "release/v1.21.40",
+      "deploymentEnvironment": "production"
+    },
+    "files": 316,
+    "modules": 219,
+    "totalBytes": 19538241,
+    "nonliteralImports": [
+      {
+        "url": "https://app.raft.build/assets/vendor-react-B99DtKrr.js",
+        "expressions": ["import(e.module)"]
+      }
+    ],
+    "originalBytesVerified": true,
+    "staticClosureComplete": true
+  },
+  "chromium-desktop": {
+    "loadedResources": 43,
+    "staticMisses": [],
+    "errors": [],
+    "requests": [
+      {
+        "method": "GET",
+        "url": "https://app.raft.build/s/loom-intake-fixture/",
+        "type": "document"
+      },
+      {
+        "method": "GET",
+        "url": "https://app.raft.build/reactions/reaction-sprite.svg",
+        "type": "image"
+      },
+      {
+        "method": "GET",
+        "url": "https://app.raft.build/assets/index-Dx3oNLwS.js",
+        "type": "script"
+      },
+      {
+        "method": "GET",
+        "url": "https://app.raft.build/assets/rolldown-runtime-hePW80VL.js",
+        "type": "script"
+      },
+      {
+        "method": "GET",
+        "url": "https://app.raft.build/assets/vendor-react-B99DtKrr.js",
+        "type": "script"
+      },
+      {
+        "method": "GET",
+        "url": "https://app.raft.build/assets/vendor-markdown-B_k5TMGW.js",
+        "type": "script"
+      },
+      {
+        "method": "GET",
+        "url": "https://app.raft.build/assets/vendor-startup-nzzTMCKK.js",
+        "type": "script"
+      },
+      {
+        "method": "GET",
+        "url": "https://app.raft.build/assets/vendor-raft-ui-BHAojVZQ.js",
+        "type": "script"
+      },
+      {
+        "method": "GET",
+        "url": "https://app.raft.build/assets/vendor-socketio-DWoewfxI.js",
+        "type": "script"
+      },
+      {
+        "method": "GET",
+        "url": "https://app.raft.build/assets/app-shell-DOYrxQ-_.js",
+        "type": "script"
+      },
+      {
+        "method": "GET",
+        "url": "https://app.raft.build/assets/app-shell-DuvkFUT-.css",
+        "type": "stylesheet"
+      },
+      {
+        "method": "GET",
+        "url": "https://static.cloudflareinsights.com/beacon.min.js",
+        "type": "script"
+      },
+      {
+        "method": "GET",
+        "url": "https://app.raft.build/assets/zh-cn-zgUfP7tb.js",
+        "type": "script"
+      },
+      {
+        "method": "GET",
+        "url": "https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300..700&family=Space+Mono:wght@400;700&display=swap",
+        "type": "stylesheet"
+      },
+      {
+        "method": "GET",
+        "url": "https://fonts.gstatic.com/s/spacegrotesk/v22/V8mQoQDjQSkFtoMM3T6r8E7mF71Q-gOoraIAEj7oUUsj.ttf",
+        "type": "font"
+      },
+      {
+        "method": "GET",
+        "url": "https://fonts.gstatic.com/s/spacemono/v17/i7dPIFZifjKcF5UAWdDRUEY.ttf",
+        "type": "font"
+      },
+      {
+        "method": "GET",
+        "url": "https://fonts.gstatic.com/s/spacegrotesk/v22/V8mQoQDjQSkFtoMM3T6r8E7mF71Q-gOoraIAEj4PVksj.ttf",
+        "type": "font"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/auth/me",
+        "type": "xhr"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/public/client-config",
+        "type": "xhr"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/servers",
+        "type": "xhr"
+      },
+      {
+        "method": "GET",
+        "url": "https://fonts.gstatic.com/s/spacegrotesk/v22/V8mQoQDjQSkFtoMM3T6r8E7mF71Q-gOoraIAEj7aUUsj.ttf",
+        "type": "font"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/announcements/active?server_id=isolated-fixture-workspace&sidebar_limit=5",
+        "type": "xhr"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/servers/isolated-fixture-workspace/members",
+        "type": "xhr"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/servers/isolated-fixture-workspace/sidebar-order",
+        "type": "xhr"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/servers/isolated-fixture-workspace/settings",
+        "type": "xhr"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/servers/unread-summary",
+        "type": "xhr"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/integrations/permission-updates",
+        "type": "xhr"
+      },
+      {
+        "method": "POST",
+        "url": "https://api.raft.build/api/feature-flags/evaluate",
+        "type": "xhr"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/integrations/permission-updates",
+        "type": "xhr"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/product-feedback/tickets?limit=1",
+        "type": "xhr"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/servers/isolated-fixture-workspace/machines",
+        "type": "xhr"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/servers/isolated-fixture-workspace/setup-projection",
+        "type": "xhr"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/servers/isolated-fixture-workspace/model-label-catalog",
+        "type": "xhr"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/channels?archived=include",
+        "type": "xhr"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/channels/dm",
+        "type": "xhr"
+      },
+      {
+        "method": "GET",
+        "url": "https://fonts.gstatic.com/s/spacegrotesk/v22/V8mQoQDjQSkFtoMM3T6r8E7mF71Q-gOoraIAEj42Vksj.ttf",
+        "type": "font"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/servers/isolated-fixture-workspace/translation-settings",
+        "type": "xhr"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/billing/subscription",
+        "type": "xhr"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/messages/channel/fixture-channel-0?limit=50",
+        "type": "xhr"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/tasks/channel/fixture-channel-0",
+        "type": "xhr"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/messages/attachment-preview/enabled",
+        "type": "xhr"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/channels/fixture-channel-0/members",
+        "type": "xhr"
+      },
+      {
+        "method": "GET",
+        "url": "https://app.raft.build/assets/ArtifactFrame-CXtVS_qc.js",
+        "type": "script"
+      },
+      {
+        "method": "GET",
+        "url": "https://app.raft.build/assets/ArtifactReviewContext-Cxpf9ya-.js",
+        "type": "script"
+      },
+      {
+        "method": "GET",
+        "url": "https://app.raft.build/assets/ArtifactViewer-BKivyv2f.js",
+        "type": "script"
+      },
+      {
+        "method": "GET",
+        "url": "https://app.raft.build/assets/ArtifactSurface-e64AtLJo.js",
+        "type": "script"
+      },
+      {
+        "method": "GET",
+        "url": "https://app.raft.build/assets/CreateAgentDialog-DIO0DILd.js",
+        "type": "script"
+      },
+      {
+        "method": "GET",
+        "url": "https://app.raft.build/assets/useProviderConnections-BRqJCWZ-.js",
+        "type": "script"
+      },
+      {
+        "method": "GET",
+        "url": "https://app.raft.build/assets/RuntimeConfigFields-CXVT-nWb.js",
+        "type": "script"
+      },
+      {
+        "method": "GET",
+        "url": "https://app.raft.build/assets/RuntimeSignInNotice-DyEdDrVw.js",
+        "type": "script"
+      },
+      {
+        "method": "GET",
+        "url": "https://app.raft.build/assets/AddSeatsDialog-CKVpzcDZ.js",
+        "type": "script"
+      },
+      {
+        "method": "GET",
+        "url": "https://app.raft.build/assets/formatBillingAmount-CjqvcTmb.js",
+        "type": "script"
+      },
+      {
+        "method": "GET",
+        "url": "https://app.raft.build/assets/ForwardComposerDialog-jmh2e6Bs.js",
+        "type": "script"
+      },
+      {
+        "method": "GET",
+        "url": "https://app.raft.build/assets/HandoffDialog-Bt02lpom.js",
+        "type": "script"
+      },
+      {
+        "method": "GET",
+        "url": "https://app.raft.build/assets/EditChannelDialog-CuUdrvLX.js",
+        "type": "script"
+      },
+      {
+        "method": "GET",
+        "url": "https://app.raft.build/assets/ArtifactForwardDialog-Bpz6ncLZ.js",
+        "type": "script"
+      },
+      {
+        "method": "GET",
+        "url": "https://app.raft.build/assets/TasksPanel-Be_ryFhx.js",
+        "type": "script"
+      },
+      {
+        "method": "GET",
+        "url": "https://app.raft.build/assets/MessageSearchPage-C4i20NU4.js",
+        "type": "script"
+      },
+      {
+        "method": "GET",
+        "url": "https://app.raft.build/assets/searchGrouping-XsfXJAUE.js",
+        "type": "script"
+      },
+      {
+        "method": "GET",
+        "url": "https://app.raft.build/assets/SearchOverlay-b-BRNo09.js",
+        "type": "script"
+      },
+      {
+        "method": "GET",
+        "url": "https://app.raft.build/assets/AddMachineDialog-DU_-hzGx.js",
+        "type": "script"
+      },
+      {
+        "method": "GET",
+        "url": "https://app.raft.build/assets/KeyValueRow-D5s8XK3g.js",
+        "type": "script"
+      },
+      {
+        "method": "GET",
+        "url": "https://app.raft.build/assets/MachineRuntimeChips-DvoqUTLE.js",
+        "type": "script"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/channels/saved?limit=50&offset=0&sort=desc",
+        "type": "xhr"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/announcements/active?server_id=isolated-fixture-workspace&sidebar_limit=5",
+        "type": "xhr"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/product-feedback/tickets?limit=1",
+        "type": "xhr"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/channels/joint-invites",
+        "type": "xhr"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/integrations/permission-updates",
+        "type": "xhr"
+      },
+      {
+        "method": "POST",
+        "url": "https://api.raft.build/api/feature-flags/evaluate",
+        "type": "xhr"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/billing/subscription",
+        "type": "xhr"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/billing/subscription",
+        "type": "xhr"
+      },
+      {
+        "method": "GET",
+        "url": "https://app.raft.build/assets/SettingsPanel-DbqyF5kZ.js",
+        "type": "script"
+      },
+      {
+        "method": "GET",
+        "url": "https://app.raft.build/assets/SectionHeader-zmGb3THo.js",
+        "type": "script"
+      },
+      {
+        "method": "GET",
+        "url": "https://app.raft.build/assets/AvatarEditVeil-DsDQ4OGe.js",
+        "type": "script"
+      },
+      {
+        "method": "GET",
+        "url": "https://app.raft.build/assets/usdAmount-COW27Fwo.js",
+        "type": "script"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/auth/providers",
+        "type": "xhr"
+      },
+      {
+        "method": "GET",
+        "url": "https://www.gravatar.com/avatar/cc6d96611cffa9f02c3626f0b9ee897dc171e2d540a5cae349d4ec316104997b?s=52&d=404",
+        "type": "image"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/auth/identities",
+        "type": "xhr"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/channels/inbox?filter=all&sort=desc&limit=50&offset=0",
+        "type": "xhr"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/channels/unread?summary=1",
+        "type": "xhr"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/servers/isolated-fixture-workspace/machines",
+        "type": "xhr"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/agents",
+        "type": "xhr"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/channels/threads/followed?unreadOnly=1",
+        "type": "xhr"
+      }
+    ],
+    "unsupported": [
+      {
+        "method": "GET",
+        "url": "https://static.cloudflareinsights.com/beacon.min.js"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/public/client-config"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/announcements/active?server_id=isolated-fixture-workspace&sidebar_limit=5"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/integrations/permission-updates"
+      },
+      {
+        "method": "POST",
+        "url": "https://api.raft.build/api/feature-flags/evaluate"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/integrations/permission-updates"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/product-feedback/tickets?limit=1"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/servers/isolated-fixture-workspace/setup-projection"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/servers/isolated-fixture-workspace/translation-settings"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/billing/subscription"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/messages/channel/fixture-channel-0?limit=50"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/tasks/channel/fixture-channel-0"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/channels/fixture-channel-0/members"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/channels/saved?limit=50&offset=0&sort=desc"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/announcements/active?server_id=isolated-fixture-workspace&sidebar_limit=5"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/product-feedback/tickets?limit=1"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/channels/joint-invites"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/integrations/permission-updates"
+      },
+      {
+        "method": "POST",
+        "url": "https://api.raft.build/api/feature-flags/evaluate"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/billing/subscription"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/billing/subscription"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/auth/providers"
+      },
+      {
+        "method": "GET",
+        "url": "https://www.gravatar.com/avatar/cc6d96611cffa9f02c3626f0b9ee897dc171e2d540a5cae349d4ec316104997b?s=52&d=404"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/auth/identities"
+      }
+    ],
+    "blockedWebSockets": [
+      "wss://api.raft.build/socket.io/?EIO=4&transport=websocket"
+    ]
+  }
+}

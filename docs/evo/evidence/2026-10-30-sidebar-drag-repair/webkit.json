@@ -1,0 +1,20 @@
+{
+  "browser": "webkit",
+  "emptyHint": true,
+  "emptyPinnedHeight": 56,
+  "sourceRecentCanPin": true,
+  "liveProjection": true,
+  "dragOverlay": true,
+  "noSnapWhileWaiting": true,
+  "oneWritePerDrop": true,
+  "persistence": true,
+  "cancelDoesNotWrite": true,
+  "rejectionRollsBack": true,
+  "contextMenu": true,
+  "sameListSort": true,
+  "emptyCustomDrop": true,
+  "sectionHandleDrag": true,
+  "standaloneDmDrop": true,
+  "hiddenEmptyTargetRevealed": true,
+  "errors": []
+}

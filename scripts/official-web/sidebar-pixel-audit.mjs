@@ -97,8 +97,12 @@ export async function auditSidebarPixels({
       .getByTestId("public-server-channel-sidebar-root")
       .evaluate((root) => {
         const base = root.getBoundingClientRect(),
-          pin = root.querySelector('[data-sidebar-section="pinned"]'),
-          section = root.querySelector('[data-sidebar-section="channels"]'),
+          pin = root.querySelector(
+            '[data-testid="sidebar-section-block-pinned"]',
+          ),
+          section = root.querySelector(
+            '[data-testid="sidebar-section-block-channels"]',
+          ),
           h = section.querySelector('[data-slot="sidebar-section-header"]'),
           r = section.querySelector("[data-public-channel-id]"),
           last = pin.querySelector("[data-public-channel-id]"),
@@ -206,7 +210,9 @@ export async function auditSidebarPixels({
         /before:bg-fill-cell-hover/,
       );
       await page.keyboard.press("Escape");
-      const section = page.locator('[data-sidebar-section="channels"]');
+      const section = page.locator(
+        '[data-testid="sidebar-section-block-channels"]',
+      );
       const heading = section.locator("[data-section-handle]");
       await heading.click();
       assert.equal(await beta.isVisible(), false);
@@ -248,7 +254,7 @@ export async function auditSidebarPixels({
           JSON.stringify(
             [
               ...document.querySelectorAll(
-                `[data-sidebar-section="${id}"] [data-public-channel-id]`,
+                `[data-testid="sidebar-section-block-${id}"] [data-public-channel-id]`,
               ),
             ].map((el) => el.getAttribute("data-public-channel-id")),
           ) !== JSON.stringify(original),
