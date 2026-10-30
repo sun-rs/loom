@@ -1,9 +1,10 @@
 import original from "@loom/raft-web-source/pixelAvatars" with { type: "json" };
 import additions from "./avatars/presets.json" with { type: "json" };
-/** Official bytes stay immutable; this is the explicit Loom-owned data extension seam. */
+import pokemon from "./avatars/pokemon.json" with { type: "json" };
+/** Legacy grids stay readable; only the owner-supplied image library is selectable. */
 const pixelAvatars = {
   ...original,
-  palette: {...original.palette, ...additions.palette},
+  palette: { ...original.palette, ...additions.palette },
   avatars: {
     ...original.avatars,
     ...Object.fromEntries(
@@ -14,19 +15,16 @@ const pixelAvatars = {
     ),
   },
 };
-export const avatarGroups = [
-  {
-    id: "raft",
-    name: "Raft 原生",
-    avatars: Object.keys(original.avatars)
-      .filter((key) => !original.reservedKeys.includes(key))
-      .map((key) => ({ id: key, name: key })),
-  },
-  ...additions.groups.map((group) => ({
-    ...group,
-    avatars: additions.avatars.filter((a) => a.group === group.id),
-  })),
-];
+export const avatarGroups = pokemon.groups.map((group) => ({
+  ...group,
+  avatars: pokemon.avatars.filter((a) => a.group === group.id),
+}));
+export const selectableAvatarKeys = pokemon.avatars.map((a) => a.id);
+const imageUrls = new Map(pokemon.avatars.map((a) => [a.id, a.url]));
+/** Same-origin content-addressed files, never bundled/base64 or external URLs. */
+export function libraryAvatarUrl(key: string): string | null {
+  return imageUrls.get(key) ?? null;
+}
 export function randomAvatarKey(
   current?: string,
   random: () => number = Math.random,

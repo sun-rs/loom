@@ -66,10 +66,28 @@ export function generateSharedContent() {
           '<rect width="8" height="8" fill="${data.bg}"',
           '<rect width="${data.grid[0]!.length}" height="${data.grid.length}" fill="${data.bg}"',
         );
+      // Owner-supplied immutable PNGs reuse the native single-image/frame path.
+      // Legacy pixel identities keep their byte-identical SVG renderer.
+      source =
+        'import {libraryAvatarUrl, selectableAvatarKeys} from "./pixel-avatar-library";\n' +
+        source;
+      source = source
+        .replace(
+          /export const AVATAR_KEYS = Object.keys\(AVATARS\).filter\([\s\S]*?\n\);/,
+          "export const AVATAR_KEYS = selectableAvatarKeys;",
+        )
+        .replace(
+          "export function pixelAvatarDataUrl(avatarKey: string): string | null {",
+          "export function pixelAvatarDataUrl(avatarKey: string): string | null {\n  const imageUrl = libraryAvatarUrl(avatarKey);\n  if (imageUrl) return imageUrl;",
+        )
+        .replace(
+          'style={{ imageRendering: "pixelated" }}',
+          'loading={libraryAvatarUrl(avatarKey) ? "lazy" : undefined}\n      decoding="async"\n      style={{ imageRendering: libraryAvatarUrl(avatarKey) ? "auto" : "pixelated" }}',
+        );
     }
     output["Official" + posix.basename(name) + ".generated.tsx"] =
       (name === "agent/PixelAvatar"
-        ? "// GENERATED from immutable Raft db5e399. Import bindings and explicit Loom detailed-grid seam; do not edit.\n"
+        ? "// GENERATED from immutable Raft db5e399. Import bindings, legacy-grid and owner PNG seams; do not edit.\n"
         : "// GENERATED from immutable Raft db5e399 module. Import-only bindings to the shared Loom presentation graph; do not edit.\n") +
       source;
   }

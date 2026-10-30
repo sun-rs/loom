@@ -5,7 +5,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
 import {
-  OFFICIAL_AGENT_AVATAR_KEYS,
+  SELECTABLE_AGENT_AVATAR_KEYS,
   type RuntimeOffer,
 } from "@rah-os/protocol";
 import { RoomKernel } from "../src/index.ts";
@@ -106,7 +106,11 @@ test("automatic Agent avatars are unique, canonical, replay-stable and survive r
       .events.filter((event) => event.type === "agent.first_run_requested");
     assert.equal(firstRun.length, 0, "Role instances do not auto-greet");
     const firstKey = first.agent.currentRevision.avatarKey!;
-    assert.ok(OFFICIAL_AGENT_AVATAR_KEYS.includes(firstKey));
+    assert.match(firstKey, /^pixel:pokemon-/);
+    assert.ok(
+      SELECTABLE_AGENT_AVATAR_KEYS.includes(firstKey.slice(6)),
+      firstKey,
+    );
     const replay = provisionRoleFixture(
       kernel,
       actor,
@@ -123,7 +127,8 @@ test("automatic Agent avatars are unique, canonical, replay-stable and survive r
       idempotencyKey: "create-kimi",
     });
     const secondKey = second.agent.currentRevision.avatarKey!;
-    assert.ok(OFFICIAL_AGENT_AVATAR_KEYS.includes(secondKey));
+    assert.match(secondKey, /^pixel:pokemon-/);
+    assert.ok(SELECTABLE_AGENT_AVATAR_KEYS.includes(secondKey.slice(6)));
     assert.notDeepEqual(firstKey, secondKey);
     const manual = provisionRoleFixture(kernel, actor, {
       ...request,

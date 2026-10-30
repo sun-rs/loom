@@ -211,12 +211,18 @@ never installs them or configures their accounts.
   Role `instructions` may be empty; create/revise/instantiate and the editor must
   preserve an empty prompt without manufacturing instructions.
   New Role avatars are sampled once and stored after idempotency replay; never
-  randomize existing Roles on read/restart. Official source/original 8x8 presets
-  and palette remain immutable; `loom/pixel-avatar-library.ts` merges Loom-authored
-  detailed 32x32 data and extra colors. The generator records the dimension/run-length
-  compatibility seam, preserving original 8x8 SVG output and one cached image per avatar.
-  Protocol owns preset identity keys, frontend owns grids/group labels; contract
-  tests keep them synchronized. Reserved original art remains excluded.
+  randomize existing Roles on read/restart. Owner 2026-10-30 replaces the entire
+  selectable/random library with 539 supplied named Pokémon PNGs. Original bytes
+  live under `packages/web/public/avatars/pokemon`, with content-addressed URLs;
+  `loom/avatars/pokemon.json` is the lightweight runtime catalog and
+  `pokemon.provenance.json` records archive/entry hashes. Re-import only through
+  `scripts/official-web/import-pokemon-avatars.py`. Protocol's selectable keys
+  and frontend entries must agree. The picker searches all entries but mounts
+  batches of 60; images load on demand, never embedded into JS or fetched from a CDN.
+  Old 8x8/32x32 grids, palettes and accepted identities are read compatibility
+  for stored Roles/frozen instances/history only, not selectable presets. The
+  shared-content generator owns the PNG URL seam; native frames and original
+  SVG output stay unchanged. Never rewrite existing revisions for an art upgrade.
   Runtime info uses the independently pinned official badge/card/mobile-sheet
   composition. Its status square reports Host CLI detection, not account health.
   Version/path/model count/probe time come from inventory; quota remains unknown

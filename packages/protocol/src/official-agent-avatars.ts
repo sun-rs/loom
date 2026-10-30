@@ -1,7 +1,10 @@
 // Raft JI/Z6, index-BoAC7nSE.js @1855376. Keys only: exact visual grids/palette
 // remain frontend assets. finch/mug are upstream reserved, not auto-allocated.
 import { LOOM_EXTRA_AGENT_AVATAR_KEYS } from "./loom-agent-avatar-keys.ts";
+import { POKEMON_AGENT_AVATAR_KEYS } from "./pokemon-agent-avatar-keys.ts";
 export { LOOM_EXTRA_AGENT_AVATAR_KEYS } from "./loom-agent-avatar-keys.ts";
+/** Current allocation/picker pool; old identities remain accepted for stored history. */
+export const SELECTABLE_AGENT_AVATAR_KEYS = POKEMON_AGENT_AVATAR_KEYS;
 export const OFFICIAL_AGENT_AVATAR_KEYS: readonly string[] = [
   "robot",
   "cat",
@@ -27,6 +30,7 @@ export const OFFICIAL_RESERVED_AVATAR_KEYS: readonly string[] = [
 export const AGENT_AVATAR_PRESET_KEYS: readonly string[] = [
   ...OFFICIAL_AGENT_AVATAR_KEYS,
   ...LOOM_EXTRA_AGENT_AVATAR_KEYS,
+  ...SELECTABLE_AGENT_AVATAR_KEYS,
 ];
 export function officialAgentAvatarKey(
   key: string | undefined,

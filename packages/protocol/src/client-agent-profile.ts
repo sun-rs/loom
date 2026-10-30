@@ -33,7 +33,7 @@ export const ClientAgentProfileRequestSchema = z
       context.addIssue({
         code: "custom",
         path: ["value"],
-        message: "头像须来自内置像素头像库或已验证的上传图片",
+        message: "头像须来自内置头像库或已验证的上传图片",
       });
   });
 export type ClientAgentProfileRequest = z.infer<

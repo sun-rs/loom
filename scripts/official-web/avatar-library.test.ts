@@ -13,7 +13,7 @@ import library, {
 const extra = JSON.parse(
   readFileSync("frontends/raft/loom/avatars/presets.json", "utf8"),
 );
-test("library extends immutable originals; random creation picks a staged selectable preset and never reserved art", () => {
+test("legacy grids stay immutable; random creation uses only the current supplied library", () => {
   const native = JSON.parse(
     readFileSync(
       "frontends/raft/upstream/raft-web-source/packages/web/assets/avatars/pixelAvatars.json",
@@ -26,7 +26,7 @@ test("library extends immutable originals; random creation picks a staged select
     assert.deepEqual(library.avatars[id], data);
   assert.equal(
     AGENT_AVATAR_PRESET_KEYS.length,
-    Object.keys(library.avatars).length - native.reservedKeys.length,
+    Object.keys(library.avatars).length - native.reservedKeys.length + 539,
   );
   const first = randomAvatarKey(undefined, () => 0),
     last = randomAvatarKey(undefined, () => 0.99999);
@@ -40,7 +40,7 @@ test("library extends immutable originals; random creation picks a staged select
     assert.ok(!native.reservedKeys.includes(value.slice(6)));
   }
 });
-test("all requested avatar families use unique detailed 32x32 palette sprites", () => {
+test("historical 32x32 identities remain renderable for stored Roles and frozen instances", () => {
   const native = JSON.parse(
     readFileSync(
       "frontends/raft/upstream/raft-web-source/packages/web/assets/avatars/pixelAvatars.json",

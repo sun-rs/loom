@@ -142,17 +142,32 @@ export async function verifyRoleIdentity({
       await page.getByRole("button", { name: "放弃修改", exact: true }).click();
       await dialog.waitFor({ state: "hidden" });
       assert.equal(writes.length, 2);
+      const imageRequests = new Set();
+      page.on("request", (r) => {
+        if (r.url().includes("/avatars/pokemon/")) imageRequests.add(r.url());
+      });
       for (const [name, key] of [
-        ["Gemini", "loom-gemini"],
-        ["初号机", "loom-eva-unit01"],
-        ["皮卡丘", "loom-pikachu"],
+        ["皮卡丘", "pokemon-025"],
+        ["未知图腾-？", "pokemon-201-question"],
+        ["代欧奇希斯-防御形态", "pokemon-386-defense"],
+        ["小约克", "pokemon-506"],
       ]) {
         await profile
           .getByRole("button", { name: "更换头像", exact: true })
           .click();
         const picker = page.getByTestId("role-avatar-dialog");
         await picker.waitFor();
-        assert.equal(await picker.locator("[data-avatar-group]").count(), 6);
+        const choices = picker.locator('button[aria-label^="头像 "]');
+        assert.equal(
+          await choices.count(),
+          60,
+          "opening the picker does not mount/download all 539 portraits",
+        );
+        if (name === "皮卡丘") {
+          await picker.getByTestId("avatar-library-more").click();
+          assert.equal(await choices.count(), 120);
+          assert.ok(imageRequests.size < 539);
+        }
         await picker.getByLabel("搜索头像", { exact: true }).fill(name);
         const choice = picker.getByRole("button", {
           name: `头像 ${name}`,
@@ -165,9 +180,19 @@ export async function verifyRoleIdentity({
           1,
           "one image per sprite, native rendering stays bounded",
         );
-        if (name === "初号机")
+        const img = choice.locator("img");
+        await img.waitFor();
+        await page.waitForFunction(
+          (src) =>
+            [...document.images].some(
+              (i) => i.src === src && i.complete && i.naturalWidth === 512,
+            ),
+          await img.getAttribute("src").then((s) => new URL(s, origin).href),
+        );
+        assert.match(await img.getAttribute("src"), /\/avatars\/pokemon\//);
+        if (name === "皮卡丘")
           await page.screenshot({
-            path: `/tmp/loom-role-avatar-${width}.png`,
+            path: `/tmp/loom-pokemon-avatar-${width}.png`,
             animations: "disabled",
           });
         await picker.getByRole("button", { name: "保存", exact: true }).click();
@@ -178,7 +203,7 @@ export async function verifyRoleIdentity({
       await profile.waitFor();
       assert.equal(
         (await current()).configuration.avatarKey,
-        "pixel:loom-pikachu",
+        "pixel:pokemon-506",
       );
       assert.equal(
         (await current()).configuration.instructions,
@@ -196,7 +221,9 @@ export async function verifyRoleIdentity({
         oneRevision: true,
         grayPlaceholderNotStored: true,
         discardGuard: true,
-        providerEvaPokemonSelection: true,
+        pokemonSelectionAndDistinctForms: true,
+        incrementalImages: imageRequests.size < 539,
+        requestedImages: imageRequests.size,
         reload: true,
         nativeRuntimeColumn: true,
         errors,

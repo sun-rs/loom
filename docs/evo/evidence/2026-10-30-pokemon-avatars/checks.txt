@@ -1,0 +1,32 @@
+✔ automatic avatars choose unused official presets and stay Workspace scoped (1.130458ms)
+✔ an official avatar profile revision is atomic, stale-safe, and persistent (176.395458ms)
+✔ avatar profile input accepts official or authenticated upload keys (0.395708ms)
+✔ automatic Agent avatars are unique, canonical, replay-stable and survive reopening (181.524791ms)
+✔ Role creation chooses and persists an avatar once after idempotency replay; explicit avatars stay intact (135.030333ms)
+✔ Role remarks/prompt/avatar revisions preserve frozen instances and reach only new instances (62.993084ms)
+✔ blank Role prompt creates, revises and instantiates without manufacturing instructions (60.421333ms)
+✔ built md rail utilities carry touch 840 boundary, not bare desktop 768 (37.191125ms)
+✔ legacy grids stay immutable; random creation uses only the current supplied library (1.594417ms)
+✔ historical 32x32 identities remain renderable for stored Roles and frozen instances (3.668917ms)
+✔ new presets survive instance presentation and the existing profile authority contract (2.017542ms)
+✔ all product paired dialog actions put cancel before primary in DOM; native recipes own visual stacking (346.851625ms)
+✔ native Computer inline editor intentionally retains save before cancel (216.609167ms)
+✔ official source intake preserves recorded upstream source bytes and license (472.321875ms)
+✔ the selectable library fully replaces the former groups with all 539 supplied named PNGs (5.284375ms)
+✔ all original image bytes are shipped as separate same-origin content-addressed assets (21.865208ms)
+✔ every new identity survives profile authority validation and old stored keys stay readable (5.448542ms)
+✔ Native avatar accepts only Loom's root-scoped uploaded image endpoint (3.47175ms)
+✔ shared content module bodies are reproducible import-only official bindings (25.294542ms)
+✔ local detail dismissals reuse official CloseButton including Side and loading/error branches (23.195208ms)
+✔ local official CloseButton calls carry an explicit semantic mobile target marker (131.659666ms)
+✔ header touch adaptation uses semantic controls rather than SVG/span nesting (0.128666ms)
+✔ adoption registry references existing source owners, bindings and checks (0.68875ms)
+✔ new local close affordances cannot silently bypass scenario owners (77.901667ms)
+ℹ tests 24
+ℹ suites 0
+ℹ pass 24
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 777.708125

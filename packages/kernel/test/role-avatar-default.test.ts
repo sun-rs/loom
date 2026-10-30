@@ -14,7 +14,7 @@ test("Role creation chooses and persists an avatar once after idempotency replay
     const created = f.kernel.roles.create(f.actor, input);
     assert.match(
       created.role.configuration.avatarKey ?? "",
-      /^pixel:[a-z0-9-]+$/,
+      /^pixel:pokemon-[a-z0-9-]+$/,
     );
     assert.deepEqual(f.kernel.roles.create(f.actor, input).role, created.role);
     assert.equal(

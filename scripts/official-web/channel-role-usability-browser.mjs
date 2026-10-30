@@ -202,16 +202,16 @@ export async function verifyChannelRoleUsability({
       );
       await page.getByRole("button", { name: "更换头像", exact: true }).click();
       const avatars = page.getByTestId("role-avatar-dialog");
-      await avatars.getByLabel("搜索头像").fill("初号机");
+      await avatars.getByLabel("搜索头像").fill("皮卡丘");
       const image = avatars
-        .getByRole("button", { name: "头像 初号机", exact: true })
+        .getByRole("button", { name: "头像 皮卡丘", exact: true })
         .locator("img");
       await image.waitFor();
       assert.match(
-        decodeURIComponent((await image.getAttribute("src")).split(",")[1]),
-        /viewBox="0 0 32 32"/,
+        await image.getAttribute("src"),
+        /\/avatars\/pokemon\/pokemon-025-/,
       );
-      await page.screenshot({ path: `/tmp/loom-detailed-avatar-${width}.png` });
+      await page.screenshot({ path: `/tmp/loom-pokemon-avatar-${width}.png` });
       assert.deepEqual(errors, []);
       results.push({
         width,
@@ -220,7 +220,7 @@ export async function verifyChannelRoleUsability({
         optionalMemberExactlyOnceAfterLostResponse: true,
         blankPromptCreatedAndRevised: true,
         fixedEffortRetainedWithoutPicker: true,
-        detailedAvatar32: true,
+        suppliedPokemonAvatar: true,
       });
       await client.request("room.delete", {
         roomId: room.roomId,

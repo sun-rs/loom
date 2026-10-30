@@ -393,7 +393,7 @@ export class RoleCatalog {
           ...input.configuration,
           avatarKey:
             input.configuration.avatarKey ??
-            `pixel:${P.AGENT_AVATAR_PRESET_KEYS[randomInt(P.AGENT_AVATAR_PRESET_KEYS.length)]}`,
+            `pixel:${P.SELECTABLE_AGENT_AVATAR_KEYS[randomInt(P.SELECTABLE_AGENT_AVATAR_KEYS.length)]}`,
         },
         createdAt: c.now().toISOString(),
       });

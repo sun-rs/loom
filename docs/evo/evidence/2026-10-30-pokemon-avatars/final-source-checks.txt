@@ -1,0 +1,17 @@
+✔ the selectable library fully replaces the former groups with all 539 supplied named PNGs (1.635125ms)
+✔ all original image bytes are shipped as separate same-origin content-addressed assets (22.301167ms)
+✔ every new identity survives profile authority validation and old stored keys stay readable (7.773625ms)
+✔ shared content module bodies are reproducible import-only official bindings (19.811625ms)
+✔ local detail dismissals reuse official CloseButton including Side and loading/error branches (16.458583ms)
+✔ local official CloseButton calls carry an explicit semantic mobile target marker (112.954625ms)
+✔ header touch adaptation uses semantic controls rather than SVG/span nesting (0.133417ms)
+✔ adoption registry references existing source owners, bindings and checks (0.616417ms)
+✔ new local close affordances cannot silently bypass scenario owners (79.072375ms)
+ℹ tests 9
+ℹ suites 0
+ℹ pass 9
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 400.833

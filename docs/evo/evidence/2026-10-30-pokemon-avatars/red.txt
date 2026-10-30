@@ -1,0 +1,92 @@
+✖ Role creation chooses and persists an avatar once after idempotency replay; explicit avatars stay intact (130.166917ms)
+✔ Role remarks/prompt/avatar revisions preserve frozen instances and reach only new instances (62.298083ms)
+✔ blank Role prompt creates, revises and instantiates without manufacturing instructions (70.475334ms)
+✖ the selectable library fully replaces the former groups with all 539 supplied named PNGs (1.197458ms)
+✖ all original image bytes are shipped as separate same-origin content-addressed assets (0.148167ms)
+✖ every new identity survives profile authority validation and old stored keys stay readable (5.707792ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 2
+ℹ fail 4
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 582.593583
+
+✖ failing tests:
+
+test at packages/kernel/test/role-avatar-default.test.ts:4:1
+✖ Role creation chooses and persists an avatar once after idempotency replay; explicit avatars stay intact (130.166917ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /^pixel:pokemon-[a-z0-9-]+$/. Input:
+  
+  'pixel:loom-pikachu'
+  
+      at TestContext.<anonymous> (file:///Users/sun/Code/repos/rah_os/packages/kernel/test/role-avatar-default.test.ts:15:12)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at Test.start (node:internal/test_runner/test:1096:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:385:17) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'pixel:loom-pikachu',
+    expected: /^pixel:pokemon-[a-z0-9-]+$/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at scripts/official-web/pokemon-avatars.test.ts:13:1
+✖ the selectable library fully replaces the former groups with all 539 supplied named PNGs (1.197458ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  74 !== 539
+  
+      at TestContext.<anonymous> (file:///Users/sun/Code/repos/rah_os/scripts/official-web/pokemon-avatars.test.ts:15:10)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at Test.start (node:internal/test_runner/test:1096:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:385:17) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 74,
+    expected: 539,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/official-web/pokemon-avatars.test.ts:27:1
+✖ all original image bytes are shipped as separate same-origin content-addressed assets (0.148167ms)
+  Error: ENOENT: no such file or directory, open 'frontends/raft/loom/avatars/pokemon.json'
+      at readFileSync (node:fs:436:20)
+      at TestContext.<anonymous> (file:///Users/sun/Code/repos/rah_os/scripts/official-web/pokemon-avatars.test.ts:28:31)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:831:18)
+      at Test.postRun (node:internal/test_runner/test:1330:19)
+      at Test.run (node:internal/test_runner/test:1258:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'open',
+    path: 'frontends/raft/loom/avatars/pokemon.json'
+  }
+
+test at scripts/official-web/pokemon-avatars.test.ts:43:1
+✖ every new identity survives profile authority validation and old stored keys stay readable (5.707792ms)
+  AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:
+  
+    assert.ok(AGENT_AVATAR_PRESET_KEYS.includes("pokemon-025"))
+  
+      at TestContext.<anonymous> (file:///Users/sun/Code/repos/rah_os/scripts/official-web/pokemon-avatars.test.ts:54:10)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:831:18)
+      at Test.postRun (node:internal/test_runner/test:1330:19)
+      at Test.run (node:internal/test_runner/test:1258:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }

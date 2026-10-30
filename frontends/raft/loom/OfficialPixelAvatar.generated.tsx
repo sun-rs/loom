@@ -1,4 +1,5 @@
-// GENERATED from immutable Raft db5e399. Import bindings and explicit Loom detailed-grid seam; do not edit.
+// GENERATED from immutable Raft db5e399. Import bindings, legacy-grid and owner PNG seams; do not edit.
+import {libraryAvatarUrl, selectableAvatarKeys} from "./pixel-avatar-library";
 import {detailedAvatarCells} from "./detailed-avatar-svg";
 import { memo, useContext, useMemo, useState } from "react";
 import type { Context } from "react";
@@ -58,9 +59,7 @@ const AVATARS: Record<string, { grid: PaletteKey[][]; bg: string }> = Object.fro
 // 2026-07-01, supersedes the earlier orange mugWink shipped in #3616).
 export const RESERVED_AVATAR_KEYS: readonly string[] = pixelAvatars.reservedKeys;
 
-export const AVATAR_KEYS = Object.keys(AVATARS).filter(
-  (k) => !RESERVED_AVATAR_KEYS.includes(k),
-);
+export const AVATAR_KEYS = selectableAvatarKeys;
 
 /** Default avatar key used when agent has no avatar set */
 export const DEFAULT_AVATAR_KEY = pixelAvatars.defaultKey;
@@ -162,6 +161,8 @@ const dataUrlCache = new Map<string, string | null>();
  * immutable and palette colors are fixed (not theme tokens).
  */
 export function pixelAvatarDataUrl(avatarKey: string): string | null {
+  const imageUrl = libraryAvatarUrl(avatarKey);
+  if (imageUrl) return imageUrl;
   const cached = dataUrlCache.get(avatarKey);
   if (cached !== undefined) return cached;
   const data = getPixelAvatarData(avatarKey);
@@ -204,7 +205,9 @@ const PixelAvatar = memo(function PixelAvatar({
       alt=""
       draggable={false}
       className={`size-full shrink-0 ${className}`.trim()}
-      style={{ imageRendering: "pixelated" }}
+      loading={libraryAvatarUrl(avatarKey) ? "lazy" : undefined}
+      decoding="async"
+      style={{ imageRendering: libraryAvatarUrl(avatarKey) ? "auto" : "pixelated" }}
       data-agent-pixel-avatar="true"
     />
   );
