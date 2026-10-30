@@ -1,3 +1,4 @@
+import { openRoleConversation } from "./conversations.ts";
 import { nativeRandomAvatar } from "./avatars.ts";
 import { type RoomMutationSequenceSession } from "@rah-os/client-core";
 import {
@@ -36,7 +37,10 @@ export class NativeCommands {
   verify() {
     return this.projectionRetry ? this.projectionRetry() : this.writes.retry();
   }
-  private present<T>(read: () => Promise<T>): Promise<T> {
+  private present<T>(
+    read: () => Promise<T>,
+    message = "操作已保存，展示数据尚未读到。请重新读取；不会重复写入。",
+  ): Promise<T> {
     return read().catch(
       () =>
         new Promise<T>((resolve) => {
@@ -47,19 +51,16 @@ export class NativeCommands {
               resolve(value);
               return value;
             } catch {
-              this.notice(
-                "操作已保存，展示数据尚未读到。请重新读取；不会重复写入。",
-                retry,
-              );
+              this.notice(message, retry);
             }
           };
           this.projectionRetry = retry;
-          this.notice(
-            "操作已保存，展示数据尚未读到。请重新读取；不会重复写入。",
-            retry,
-          );
+          this.notice(message, retry);
         }),
     );
+  }
+  observe<T>(read: () => Promise<T>, message?: string) {
+    return this.present(read, message);
   }
   private perform<Payload, Result>(
     spec: Omit<IntentSpec<Payload, Result>, "onSettled">,
@@ -142,6 +143,8 @@ export class NativeCommands {
       throw Error("仍在处理上一项操作，请先核实结果。");
     const { workspace, user, server } = await this.bridge.identity(),
       client = this.bridge.client;
+    if (method === "post" && path === "/channels/dm")
+      return openRoleConversation(this, input);
     const managed = await managementCommand(this, method, path, input);
     if (managed) return managed.data;
     if (method === "patch" && path === `/servers/${server.id}/sidebar-order`) {

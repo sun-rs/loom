@@ -7,6 +7,8 @@ function fixture() {
   const bridge = new NativeReadBridge({
     request: async (op: string, input: any) => {
       calls.push([op, input]);
+      if (op === "room.member.list")
+        return { memberships: [{ principalId: "human" }] };
       if (op !== "room.timeline") throw Error("unexpected " + op);
       return {
         items: [
@@ -51,17 +53,23 @@ test("native history paging maps before/after only within the requested Room and
   const older = await bridge.read(
     "/messages/channel/room-A?before=80&limit=5000",
   );
-  assert.deepEqual(calls[0], [
+  assert.deepEqual(calls.filter(([op]) => op === "room.timeline")[0], [
     "room.timeline",
     { roomId: "room-A", beforeSeq: 80, limit: 200 },
   ]);
   assert.equal(older.messages[0].id, "m17");
   assert.equal(older.hasMore, true);
   await bridge.read("/messages/channel/room-B", { after: 7, limit: 25 });
-  assert.deepEqual(calls[1], [
+  assert.deepEqual(calls.filter(([op]) => op === "room.timeline")[1], [
     "room.timeline",
     { roomId: "room-B", afterSeq: 7, limit: 25 },
   ]);
+  assert.deepEqual(
+    calls
+      .filter(([op]) => op === "room.member.list")
+      .map(([, input]) => input.roomId),
+    ["room-A", "room-B"],
+  );
   await assert.rejects(
     () => bridge.read("/messages/channel/room-A?before=9&after=4"),
     /either|同时|方向/,
@@ -77,7 +85,7 @@ test("native sync cannot treat independent Room sequences as a global stream", a
   const messages = await bridge.read(
     "/messages/sync?channel_id=room-B&since_seq=12&limit=100",
   );
-  assert.deepEqual(calls[0], [
+  assert.deepEqual(calls.filter(([op]) => op === "room.timeline")[0], [
     "room.timeline",
     { roomId: "room-B", afterSeq: 12, limit: 100 },
   ]);

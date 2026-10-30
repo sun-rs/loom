@@ -1,5 +1,17 @@
 /** Single-release semantic seams and named Loom-only slots; no native CSS or size overrides. */
 export function adaptNativeCapabilities(code: string, path: string) {
+  if (path.endsWith("/hooks/useChannelMembers.ts")) {
+    const marker =
+      "console.error(`Failed to remove agent ${agentId} from channel ${channelId}:`, err);";
+    if (code.split(marker).length !== 2)
+      throw Error("Native member-removal error seam changed");
+    return code.replace(marker, marker + "\n      throw err;");
+  }
+  if (path.endsWith("/components/message/SOSDialog.tsx")) {
+    const markers = code.match(/const prompt = `\[SOS\][\s\S]*?`;/g);
+    if (markers?.length !== 1) throw Error("Native SOS guidance seam changed");
+    return code.replace(markers[0]!, "const prompt = guidance.trim();");
+  }
   const preferenceMarkers: [string, string][] = path.endsWith(
     "/components/layout/Sidebar.tsx",
   )
@@ -51,9 +63,11 @@ export function adaptNativeCapabilities(code: string, path: string) {
   const promptSlot = "          {/* Skills */}";
   const descriptionSlot =
     "      {showOperationalInfo && isExternalAgent && canManageAgent && (";
+  const dmMarker = "const ch = await openDM(agent.id);";
   const activeMarker =
     'const isActive = displayState.isOnline || agent.status === "active";';
   if (
+    code.split(dmMarker).length !== 2 ||
     code.split(promptSlot).length !== 2 ||
     code.split(activeMarker).length !== 2 ||
     code.split(descriptionSlot).length !== 2
@@ -62,6 +76,10 @@ export function adaptNativeCapabilities(code: string, path: string) {
   code =
     'import {RoleInstructions as LoomRoleInstructions} from "loom:role-profile";\nimport LoomRoleInstances from "loom:role-instances";\nimport {InstanceStartStop as LoomInstanceStartStop} from "loom:role-lifecycle";\n' +
     code
+      .replace(
+        dmMarker,
+        "const ch = await openDM(agent.id).catch((error) => { setStartError(error instanceof Error ? error.message : String(error)); return null; });",
+      )
       .replace(
         promptSlot,
         "          <LoomRoleInstances agent={agent as any} />\n" + promptSlot,

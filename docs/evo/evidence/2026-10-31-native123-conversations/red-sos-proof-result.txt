@@ -1,0 +1,33 @@
+✔ native stop-all and resume use the existing durable SOS owner and exact Human guidance, never per-Agent toggles (4.070625ms)
+✖ native stopping acknowledgement cannot become an all-stopped success until matching terminal proof is read (2.020583ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 1
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 234.806292
+
+✖ failing tests:
+
+test at scripts/official-web123/sos.test.ts:62:1
+✖ native stopping acknowledgement cannot become an all-stopped success until matching terminal proof is read (2.020583ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+
+  + 'stopping'
+  - 'stopped'
+          ^
+
+      at file:///Users/sun/Code/repos/rah_os/scripts/official-web123/sos.test.ts:68:14
+      at async TestContext.<anonymous> (file:///Users/sun/Code/repos/rah_os/scripts/official-web123/sos.test.ts:82:3)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'stopping',
+    expected: 'stopped',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

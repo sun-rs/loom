@@ -1,0 +1,38 @@
+✔ Loom omits incompatible Agent tabs through one explicit capability seam; other native presentation remains intact (2.386208ms)
+✔ Role prompt is a named extension slot and config edits never restart live instances (0.728833ms)
+✔ native local creation is not blocked by an unrelated Raft subscription quota (0.361083ms)
+✔ native preference writes carry the exact displayed revision without changing native controls (2.144166ms)
+✔ native member-removal confirmation retains known SDK rejection; no other hook logic is changed (0.10675ms)
+✔ native Role message action displays known creation failures in its existing PanelNotice (0.757334ms)
+✖ native SOS sends only Human guidance, without unavailable Raft tools or model-side restart instructions (3.782209ms)
+ℹ tests 7
+ℹ suites 0
+ℹ pass 6
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 119.323042
+
+✖ failing tests:
+
+test at scripts/official-web123/policy.test.ts:114:1
+✖ native SOS sends only Human guidance, without unavailable Raft tools or model-side restart instructions (3.782209ms)
+  AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:
+
+    assert.ok(out.includes("const prompt = guidance.trim();"))
+
+      at TestContext.<anonymous> (file:///Users/sun/Code/repos/rah_os/scripts/official-web123/policy.test.ts:116:9)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:831:18)
+      at Test.postRun (node:internal/test_runner/test:1330:19)
+      at Test.run (node:internal/test_runner/test:1258:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }

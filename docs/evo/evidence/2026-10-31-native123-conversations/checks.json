@@ -1,0 +1,58 @@
+{
+  "officialSourceChanged": false,
+  "sourceFiles": 2463,
+  "productionReplaced": false,
+  "productionRestarted": false,
+  "paidProviderCalls": 0,
+  "checks": {
+    "nativeTests": 49,
+    "candidateTypeAndBuild": true,
+    "rootTypecheck": true,
+    "currentMembershipSchema": true,
+    "channelCoreWidths": [
+      1440,
+      390
+    ],
+    "conversationCoreWidths": [
+      1440,
+      390
+    ],
+    "pixelPairs": 14,
+    "interactionPairs": 21,
+    "differingCommonPixels": 0
+  },
+  "formalServiceReadOnly": {
+    "http": 200,
+    "pid": 34735,
+    "candidateServed": false
+  },
+  "limits": [
+    "No active paid Runtime termination test",
+    "Pending stop proof uses explicit read verification",
+    "No instance-private/thread/branch UI acceptance",
+    "No full retained-business, physical PWA, performance or token claim"
+  ],
+  "artifacts": {
+    "README.md": "2fcfaacdcd4d9dcebf978b767bda322acaf7e75b695acfe5345cc03e35b3bd82",
+    "candidate-build.txt": "c964cf9cc31614b396aa2e569955082b430129aead13160433a0543fc33701d7",
+    "core-channel.json": "1daed141bbf29bde4e4df6f4224747ecfbee3323b5e968837ee6ef753ea9c132",
+    "core-conversations.json": "c245e41a183c84eb00d6ae2e55c04543003af55ffaac5b82c75607df0812d9cc",
+    "failed-removal-confirm-before-fix.json": "07a4149e70ac01bc272397d06ace2029f7ead65749477e76283fd31a6586cb66",
+    "failed-stale-roster-before-fix.json": "0d9b931819734a29e3a09739aff7be65978a28b3dbed2aa833228dc45827f672",
+    "interaction-regression.json": "090d6fc9d783f56911dd139fea59dd84b382cde498cfa5fa33a64c8b85d638b8",
+    "members-1440.png": "a51f135f8cfc1ea6766ec691853b4077e225281d671bd9eaa9f7756c3e528987",
+    "members-390.png": "95f40ec74f50dadfafe5c4b953f898f8b08c11f5f4cf3f8f83c17d7afc860610",
+    "native-boundary.json": "c9ceb778849e250c9a07c237f5d07ea6145a1cc8e26fcfbef65bafade0f6b359",
+    "pixel-regression.json": "2f2899e7b0c8a9de1353da0183e90ceb9f72af7ebdf85569dc9b3d82d8ae3e63",
+    "red-conversations.txt": "cf39c53af681de90d16f114f966d42e220b4b152af486c3635db138396ae6bce",
+    "red-current-members.txt": "93cf024edd1f797668b9c41c598dfb1de82085154a473b2f11c0c262fa578252",
+    "red-removal-rejection.txt": "d26d2a3ea297c8a678f327f153d2b91731cfc646ee8c4a734faa360efe4fc026",
+    "red-sos-policy.txt": "e40327cde4e941976325af4ef307e70380853aadbbd6e7780639aa2565f6b280",
+    "red-sos-proof-result.txt": "f201765b6d2ce9568de10a202061a7acfd8f904776fec8a2152249f6c03cc1ad",
+    "red-sos.txt": "750d4baaf57ffd2b7f64b84e1b49019f9c09a2b0bdcae127e89d2103993c90cf",
+    "root-typecheck.txt": "7d022786d2a7b342a870dcb7d736df0dfdb3f265e837f625cbaa83649ffe7410",
+    "standalone-1440.png": "f5812f9a89b7c7711af57a6dfabb01e3538c3616b834b0489d3418bb5dc25c5c",
+    "standalone-390.png": "416e50b3dd0aa0cd4ebe345fcfd69d3253297f42e43c69528fe93ac8b7ded093",
+    "unit.txt": "ce92ca3147c5709d4e2a4e45120c4f0922d980f0b32a931a4825e74272b9e905"
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "temporaryCore": true,
+  "paidCalls": 0,
+  "results": [
+    {
+      "width": 1440,
+      "roleCreatesSeparateChannelAndInstance": true,
+      "knownPartialFailureContinuesWithoutDuplicates": true,
+      "nativeDmMessagePersists": true,
+      "reopenAndRefreshRetainSameInstance": true,
+      "errors": []
+    },
+    {
+      "width": 390,
+      "roleCreatesSeparateChannelAndInstance": true,
+      "knownPartialFailureContinuesWithoutDuplicates": true,
+      "nativeDmMessagePersists": true,
+      "reopenAndRefreshRetainSameInstance": true,
+      "errors": []
+    }
+  ]
+}

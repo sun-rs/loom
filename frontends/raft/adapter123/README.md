@@ -31,3 +31,7 @@ LOOM_BROWSER_SLICE=native123-interactions LOOM_BROWSER_STATIC_DIRECTORY=frontend
 双边交互的夹具与真实Core证明分列在[交互记录](../../../docs/evo/evidence/2026-10-30-native123-interactions/README.md)。参考版仍是未修改的官方构建，只替换HTTP夹具；这些测试服务器随验收结束关闭，不是正式产品地址。
 
 Role／实例与频道管理的真实Core验收、保留的失败及剩余限制见[管理接线](../../../docs/evo/evidence/2026-10-31-native123-management/README.md)。
+
+`conversations.ts`将Role私信入口接成独立Channel＋新Instance＋显式HumanSidebar分类；确认的步骤在当前文档生命周期保留，已知部分失败可继续，未知结果用同一幂等请求核实。重新加载后未完成分类的频道仍是普通频道，不按名字猜成私信。频道实例私密box尚未接通，也不能借此入口创建全局DM。
+
+频道成员／归档／永久删除及SOS、独立单聊的两尺寸真实Core证明见[本批接线](../../../docs/evo/evidence/2026-10-31-native123-conversations/README.md)。SOS接受请求不等于停止完成；尚缺terminal proof时原生Promise保持等待，由既有核实入口只读确认，不能重新发停止命令或宣布已停止。此候选的异步停止尚保留人工核实限制，现役CLI停止质量不由Fake运行时测试证明。

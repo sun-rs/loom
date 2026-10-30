@@ -103,6 +103,12 @@ export function nativePopulated(path, method = "GET") {
   return nativeRead(path);
 }
 export function sdkPopulated(path, input = {}) {
+  if (path === "/v3/client/rooms/members/list")
+    return {
+      memberships: [
+        { roomId, principalId: humanId, role: "owner", joinedAt: instant },
+      ],
+    };
   if (path === "/v3/client/rooms/list") return { rooms: [room] };
   if (path === "/v3/client/rooms/sync")
     return {

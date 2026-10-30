@@ -1,0 +1,38 @@
+✔ native Agent list projects Role IDs while channel senders remain instance IDs; read bridge cannot execute writes (2.025ms)
+✖ native member reads use current membership rather than an old Room bootstrap, without replay or read acknowledgement (1.745666ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 1
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 232.554583
+
+✖ failing tests:
+
+test at scripts/official-web123/bridge.test.ts:112:1
+✖ native member reads use current membership rather than an old Room bootstrap, without replay or read acknowledgement (1.745666ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+
+    [
+      {
+  +     handle: 'Old',
+  -     handle: 'New',
+        kind: 'agent',
+  +     principalId: 'old'
+  -     principalId: 'new'
+      }
+    ]
+
+      at TestContext.<anonymous> (file:///Users/sun/Code/repos/rah_os/scripts/official-web123/bridge.test.ts:124:10)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ { principalId: 'old', handle: 'Old', kind: 'agent' } ],
+    expected: [ { principalId: 'new', handle: 'New', kind: 'agent' } ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }

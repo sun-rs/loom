@@ -1,0 +1,6 @@
+{
+  "width": 1440,
+  "error": "locator.waitFor: Timeout 12000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-slot=\"dialog-content\"]').filter({ visible: true }).getByText(/成员移除被拒绝/) to be visible\u001b[22m\n\n    at verifyNativeChannelLifecycle (/Users/sun/Code/repos/rah_os/scripts/official-web123/channel-core-browser.mjs:48:42)\n    at async file:///Users/sun/Code/repos/rah_os/scripts/official-web/channel-browser.mjs:252:32",
+  "body": "M\nMac-Studio.local\n搜索\n⌘K\n聊天\n动态\n任务\n成员\n计算机\n帮助\n帮助\n设置\n已保存\n已置顶\n0\n将频道或私信拖到这里置顶\n联合频道\n0\n还没有联合频道\n频道\n4\nFIXTURE Alpha\nFIXTURE Beta\nFIXTURE Members\n2\nlifecycle-1440\n1\n私信\n0\nlifecycle-1440\n聊天\n任务\n文件\n暂无消息\n开始对话吧。\n作为任务\n#lifecycle-1440\n公开\n\n频道详情与设置\n\n成员\n2\n人类\n· 1\nowner\n频道管理员\nAgent\n· 1\nFixtureTom-3\n在线\n添加成员",
+  "errors": []
+}

@@ -109,3 +109,33 @@ test("native Agent list projects Role IDs while channel senders remain instance 
     ),
   );
 });
+test("native member reads use current membership rather than an old Room bootstrap, without replay or read acknowledgement", async () => {
+  const calls: any[] = [];
+  const old = { principalId: "old", handle: "Old", kind: "agent" };
+  const fresh = { principalId: "new", handle: "New", kind: "agent" };
+  const bridge = new NativeReadBridge({
+    request: async (op: string, input: any) => {
+      calls.push([op, input]);
+      if (op === "room.member.list")
+        return { memberships: [{ principalId: "new" }] };
+      if (op === "room.sync") return { snapshot: { members: [fresh] } };
+      throw Error(op);
+    },
+  } as any);
+  const state = {
+    snapshot: { members: [old] },
+    cursor: 27,
+    acknowledgedThrough: 19,
+  };
+  bridge.channel = () =>
+    ({ room: { state, syncUntilCurrent: async () => {} } }) as any;
+  assert.deepEqual((await bridge.channelView("channel")).members, [fresh]);
+  assert.deepEqual(
+    calls.map(([op]) => op),
+    ["room.member.list", "room.sync"],
+  );
+  assert.equal(calls[1][1].bootstrap, "latest");
+  assert.equal(calls[1][1].limit, 1);
+  assert.equal(state.cursor, 27);
+  assert.equal(state.acknowledgedThrough, 19);
+});

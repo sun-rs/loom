@@ -1,3 +1,4 @@
+import { readCurrentChannelMembers } from "../loom/current-channel-members.ts";
 import { nativePresence } from "./presence.ts";
 import { nativeRuntimeId, nativeRuntimeGroups } from "./runtime-models.ts";
 import { nativeMessage } from "./message-projection.ts";
@@ -384,7 +385,13 @@ export class NativeReadBridge {
   async channelView(id: string) {
     const channel = this.channel(id);
     await channel.room.syncUntilCurrent({ maxPages: 10 });
-    return { members: channel.room.state.snapshot?.members ?? [] };
+    return {
+      members: await readCurrentChannelMembers(
+        this.client,
+        id,
+        channel.room.state.snapshot?.members ?? [],
+      ),
+    };
   }
   async messagePage(
     id: string,

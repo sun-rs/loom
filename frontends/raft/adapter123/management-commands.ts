@@ -9,6 +9,53 @@ export async function managementCommand(
   const { bridge } = c,
     { client } = bridge,
     { workspace, server } = await bridge.identity();
+  const sos = path.match(
+    /^\/channels\/([^/]+)\/(stop-all-agents|resume-all-agents)$/,
+  );
+  if (method === "post" && sos) {
+    const stop = sos[2] === "stop-all-agents";
+    const guidance =
+      typeof input.prompt === "string" ? input.prompt.trim() : "";
+    if (!stop && (!guidance || input.agentIds?.length))
+      throw Error("请提供完整频道的恢复指导，不支持逐 Agent 重发。");
+    const result = await c.mutate(
+      stop ? "sos-stop" : "sos-resume",
+      sos[1]!,
+      stop
+        ? { roomId: sos[1]!, resumeOnMessage: false }
+        : { roomId: sos[1]!, guidance },
+      (p, basedOnRoomSeq, idempotencyKey) =>
+        stop
+          ? client.request("room.sos.stop", {
+              ...p,
+              basedOnRoomSeq,
+              idempotencyKey,
+            } as any)
+          : client.request("room.sos.resume", {
+              ...p,
+              basedOnRoomSeq,
+              idempotencyKey,
+            } as any),
+    );
+    let operation = result.operation;
+    if (stop && result.operation.state !== "stopped") {
+      operation = await c.observe(async () => {
+        const current = await client.request("room.execution.read", {
+          roomId: sos[1]!,
+        });
+        if (
+          current.operation?.operationId !== result.operation.operationId ||
+          current.operation.state !== "stopped" ||
+          current.operation.pendingTargetCount !== 0
+        )
+          throw Error("尚未取得全部 Runtime 的停止证明");
+        return current.operation;
+      }, "停止请求已保存，尚未确认全部执行结束。请核实状态；不会重新发送停止请求。");
+    }
+    return {
+      data: stop ? { operation } : { results: [], operation },
+    };
+  }
   const member = path.match(
     /^\/channels\/([^/]+)\/members(?:\/(batch)|\/agent\/([^/]+))?$/,
   );

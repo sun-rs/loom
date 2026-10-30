@@ -1,0 +1,1887 @@
+{
+  "source": "db5e399",
+  "ui": "0.7.0",
+  "fixtureOnly": true,
+  "productionData": false,
+  "unmodifiedReference": true,
+  "unmasked": true,
+  "fixedClock": "2026-10-30T00:00:00Z",
+  "locale": "zh-CN",
+  "dpr": 1,
+  "arms": {
+    "reference": {
+      "captures": {
+        "default": "/tmp/loom-web123-channel-interactions/reference-default.png",
+        "background-menu": "/tmp/loom-web123-channel-interactions/reference-background-menu.png",
+        "channel-menu": "/tmp/loom-web123-channel-interactions/reference-channel-menu.png",
+        "pinned": "/tmp/loom-web123-channel-interactions/reference-pinned.png",
+        "group-menu": "/tmp/loom-web123-channel-interactions/reference-group-menu.png",
+        "drag-pinned": "/tmp/loom-web123-channel-interactions/reference-drag-pinned.png",
+        "drag-custom": "/tmp/loom-web123-channel-interactions/reference-drag-custom.png",
+        "persisted": "/tmp/loom-web123-channel-interactions/reference-persisted.png",
+        "move-submenu": "/tmp/loom-web123-channel-interactions/reference-move-submenu.png",
+        "create-section-form": "/tmp/loom-web123-channel-interactions/reference-create-section-form.png",
+        "renamed-section": "/tmp/loom-web123-channel-interactions/reference-renamed-section.png",
+        "delete-section-confirm": "/tmp/loom-web123-channel-interactions/reference-delete-section-confirm.png",
+        "manual-channel-order": "/tmp/loom-web123-channel-interactions/reference-manual-channel-order.png",
+        "resized-persisted": "/tmp/loom-web123-channel-interactions/reference-resized-persisted.png",
+        "width-390": "/tmp/loom-web123-channel-interactions/reference-width-390.png",
+        "width-767": "/tmp/loom-web123-channel-interactions/reference-width-767.png",
+        "width-768": "/tmp/loom-web123-channel-interactions/reference-width-768.png",
+        "width-1023": "/tmp/loom-web123-channel-interactions/reference-width-1023.png",
+        "width-1024": "/tmp/loom-web123-channel-interactions/reference-width-1024.png",
+        "width-1440": "/tmp/loom-web123-channel-interactions/reference-width-1440.png",
+        "activity-default": "/tmp/loom-web123-channel-interactions/reference-activity-default.png"
+      },
+      "states": {
+        "default": {
+          "pinned": [],
+          "channelOrder": [
+            "fixture-alpha",
+            "fixture-beta",
+            "fixture-gamma"
+          ],
+          "sections": [
+            {
+              "id": "section:Work",
+              "name": "Work",
+              "emoji": null,
+              "sortMode": "manual",
+              "items": []
+            }
+          ],
+          "sectionOrder": [
+            "system:pinned",
+            "section:Work",
+            "system:channels",
+            "system:dms"
+          ],
+          "sort": "manual"
+        },
+        "background-menu": {
+          "pinned": [],
+          "channelOrder": [
+            "fixture-alpha",
+            "fixture-beta",
+            "fixture-gamma"
+          ],
+          "sections": [
+            {
+              "id": "section:Work",
+              "name": "Work",
+              "emoji": null,
+              "sortMode": "manual",
+              "items": []
+            }
+          ],
+          "sectionOrder": [
+            "system:pinned",
+            "section:Work",
+            "system:channels",
+            "system:dms"
+          ],
+          "sort": "manual"
+        },
+        "channel-menu": {
+          "pinned": [],
+          "channelOrder": [
+            "fixture-alpha",
+            "fixture-beta",
+            "fixture-gamma"
+          ],
+          "sections": [
+            {
+              "id": "section:Work",
+              "name": "Work",
+              "emoji": null,
+              "sortMode": "manual",
+              "items": []
+            }
+          ],
+          "sectionOrder": [
+            "system:pinned",
+            "section:Work",
+            "system:channels",
+            "system:dms"
+          ],
+          "sort": "manual"
+        },
+        "pinned": {
+          "pinned": [
+            {
+              "kind": "channel",
+              "id": "fixture-alpha"
+            }
+          ],
+          "channelOrder": [
+            "fixture-alpha",
+            "fixture-beta",
+            "fixture-gamma"
+          ],
+          "sections": [
+            {
+              "id": "section:Work",
+              "name": "Work",
+              "emoji": null,
+              "sortMode": "manual",
+              "items": []
+            }
+          ],
+          "sectionOrder": [
+            "system:pinned",
+            "section:Work",
+            "system:channels",
+            "system:dms"
+          ],
+          "sort": "manual"
+        },
+        "group-menu": {
+          "pinned": [],
+          "channelOrder": [
+            "fixture-alpha",
+            "fixture-beta",
+            "fixture-gamma"
+          ],
+          "sections": [
+            {
+              "id": "section:Work",
+              "name": "Work",
+              "emoji": null,
+              "sortMode": "manual",
+              "items": []
+            }
+          ],
+          "sectionOrder": [
+            "system:pinned",
+            "section:Work",
+            "system:channels",
+            "system:dms"
+          ],
+          "sort": "manual"
+        },
+        "drag-pinned": {
+          "pinned": [
+            {
+              "kind": "channel",
+              "id": "fixture-beta"
+            }
+          ],
+          "channelOrder": [
+            "fixture-alpha",
+            "fixture-beta",
+            "fixture-gamma"
+          ],
+          "sections": [
+            {
+              "id": "section:Work",
+              "name": "Work",
+              "emoji": null,
+              "sortMode": "manual",
+              "items": []
+            }
+          ],
+          "sectionOrder": [
+            "system:pinned",
+            "section:Work",
+            "system:channels",
+            "system:dms"
+          ],
+          "sort": "manual"
+        },
+        "drag-custom": {
+          "pinned": [],
+          "channelOrder": [
+            "fixture-alpha",
+            "fixture-beta",
+            "fixture-gamma"
+          ],
+          "sections": [
+            {
+              "id": "section:Work",
+              "name": "Work",
+              "emoji": null,
+              "sortMode": "manual",
+              "items": [
+                "fixture-beta"
+              ]
+            }
+          ],
+          "sectionOrder": [
+            "system:pinned",
+            "section:Work",
+            "system:channels",
+            "system:dms"
+          ],
+          "sort": "manual"
+        },
+        "persisted": {
+          "pinned": [],
+          "channelOrder": [
+            "fixture-alpha",
+            "fixture-beta",
+            "fixture-gamma"
+          ],
+          "sections": [
+            {
+              "id": "section:Work",
+              "name": "Work",
+              "emoji": null,
+              "sortMode": "manual",
+              "items": [
+                "fixture-beta"
+              ]
+            }
+          ],
+          "sectionOrder": [
+            "system:pinned",
+            "section:Work",
+            "system:channels",
+            "system:dms"
+          ],
+          "sort": "manual"
+        },
+        "move-submenu": {
+          "pinned": [],
+          "channelOrder": [
+            "fixture-alpha",
+            "fixture-beta",
+            "fixture-gamma"
+          ],
+          "sections": [
+            {
+              "id": "section:Work",
+              "name": "Work",
+              "emoji": null,
+              "sortMode": "manual",
+              "items": [
+                "fixture-beta"
+              ]
+            }
+          ],
+          "sectionOrder": [
+            "system:pinned",
+            "section:Work",
+            "system:channels",
+            "system:dms"
+          ],
+          "sort": "manual"
+        },
+        "create-section-form": {
+          "pinned": [],
+          "channelOrder": [
+            "fixture-alpha",
+            "fixture-beta",
+            "fixture-gamma"
+          ],
+          "sections": [
+            {
+              "id": "section:Work",
+              "name": "Work",
+              "emoji": null,
+              "sortMode": "manual",
+              "items": []
+            }
+          ],
+          "sectionOrder": [
+            "system:pinned",
+            "section:Work",
+            "system:channels",
+            "system:dms"
+          ],
+          "sort": "manual"
+        },
+        "renamed-section": {
+          "pinned": [],
+          "channelOrder": [
+            "fixture-alpha",
+            "fixture-beta",
+            "fixture-gamma"
+          ],
+          "sections": [
+            {
+              "id": "section:Work",
+              "name": "Work",
+              "emoji": null,
+              "sortMode": "manual",
+              "items": []
+            },
+            {
+              "id": "section:Research",
+              "name": "Research",
+              "emoji": null,
+              "sortMode": "manual",
+              "items": []
+            }
+          ],
+          "sectionOrder": [
+            "system:pinned",
+            "section:Work",
+            "system:channels",
+            "system:dms",
+            "system:joint",
+            "section:Research"
+          ],
+          "sort": "manual"
+        },
+        "delete-section-confirm": {
+          "pinned": [],
+          "channelOrder": [
+            "fixture-alpha",
+            "fixture-beta",
+            "fixture-gamma"
+          ],
+          "sections": [
+            {
+              "id": "section:Work",
+              "name": "Work",
+              "emoji": null,
+              "sortMode": "manual",
+              "items": []
+            },
+            {
+              "id": "section:Research",
+              "name": "Research",
+              "emoji": null,
+              "sortMode": "manual",
+              "items": []
+            }
+          ],
+          "sectionOrder": [
+            "system:pinned",
+            "section:Work",
+            "system:channels",
+            "system:dms",
+            "system:joint",
+            "section:Research"
+          ],
+          "sort": "manual"
+        },
+        "manual-channel-order": {
+          "pinned": [],
+          "channelOrder": [
+            "fixture-alpha",
+            "fixture-gamma",
+            "fixture-beta"
+          ],
+          "sections": [
+            {
+              "id": "section:Work",
+              "name": "Work",
+              "emoji": null,
+              "sortMode": "manual",
+              "items": []
+            }
+          ],
+          "sectionOrder": [
+            "system:pinned",
+            "section:Work",
+            "system:channels",
+            "system:dms",
+            "system:joint"
+          ],
+          "sort": "manual"
+        },
+        "resized-persisted": {
+          "pinned": [],
+          "channelOrder": [
+            "fixture-alpha",
+            "fixture-gamma",
+            "fixture-beta"
+          ],
+          "sections": [
+            {
+              "id": "section:Work",
+              "name": "Work",
+              "emoji": null,
+              "sortMode": "manual",
+              "items": []
+            }
+          ],
+          "sectionOrder": [
+            "system:pinned",
+            "section:Work",
+            "system:channels",
+            "system:dms",
+            "system:joint"
+          ],
+          "sort": "manual"
+        },
+        "width-390": {
+          "pinned": [],
+          "channelOrder": [
+            "fixture-alpha",
+            "fixture-gamma",
+            "fixture-beta"
+          ],
+          "sections": [
+            {
+              "id": "section:Work",
+              "name": "Work",
+              "emoji": null,
+              "sortMode": "manual",
+              "items": []
+            }
+          ],
+          "sectionOrder": [
+            "system:pinned",
+            "section:Work",
+            "system:channels",
+            "system:dms",
+            "system:joint"
+          ],
+          "sort": "manual"
+        },
+        "width-767": {
+          "pinned": [],
+          "channelOrder": [
+            "fixture-alpha",
+            "fixture-gamma",
+            "fixture-beta"
+          ],
+          "sections": [
+            {
+              "id": "section:Work",
+              "name": "Work",
+              "emoji": null,
+              "sortMode": "manual",
+              "items": []
+            }
+          ],
+          "sectionOrder": [
+            "system:pinned",
+            "section:Work",
+            "system:channels",
+            "system:dms",
+            "system:joint"
+          ],
+          "sort": "manual"
+        },
+        "width-768": {
+          "pinned": [],
+          "channelOrder": [
+            "fixture-alpha",
+            "fixture-gamma",
+            "fixture-beta"
+          ],
+          "sections": [
+            {
+              "id": "section:Work",
+              "name": "Work",
+              "emoji": null,
+              "sortMode": "manual",
+              "items": []
+            }
+          ],
+          "sectionOrder": [
+            "system:pinned",
+            "section:Work",
+            "system:channels",
+            "system:dms",
+            "system:joint"
+          ],
+          "sort": "manual"
+        },
+        "width-1023": {
+          "pinned": [],
+          "channelOrder": [
+            "fixture-alpha",
+            "fixture-gamma",
+            "fixture-beta"
+          ],
+          "sections": [
+            {
+              "id": "section:Work",
+              "name": "Work",
+              "emoji": null,
+              "sortMode": "manual",
+              "items": []
+            }
+          ],
+          "sectionOrder": [
+            "system:pinned",
+            "section:Work",
+            "system:channels",
+            "system:dms",
+            "system:joint"
+          ],
+          "sort": "manual"
+        },
+        "width-1024": {
+          "pinned": [],
+          "channelOrder": [
+            "fixture-alpha",
+            "fixture-gamma",
+            "fixture-beta"
+          ],
+          "sections": [
+            {
+              "id": "section:Work",
+              "name": "Work",
+              "emoji": null,
+              "sortMode": "manual",
+              "items": []
+            }
+          ],
+          "sectionOrder": [
+            "system:pinned",
+            "section:Work",
+            "system:channels",
+            "system:dms",
+            "system:joint"
+          ],
+          "sort": "manual"
+        },
+        "width-1440": {
+          "pinned": [],
+          "channelOrder": [
+            "fixture-alpha",
+            "fixture-gamma",
+            "fixture-beta"
+          ],
+          "sections": [
+            {
+              "id": "section:Work",
+              "name": "Work",
+              "emoji": null,
+              "sortMode": "manual",
+              "items": []
+            }
+          ],
+          "sectionOrder": [
+            "system:pinned",
+            "section:Work",
+            "system:channels",
+            "system:dms",
+            "system:joint"
+          ],
+          "sort": "manual"
+        },
+        "activity-default": {
+          "pinned": [],
+          "channelOrder": [
+            "fixture-alpha",
+            "fixture-gamma",
+            "fixture-beta"
+          ],
+          "sections": [
+            {
+              "id": "section:Work",
+              "name": "Work",
+              "emoji": null,
+              "sortMode": "manual",
+              "items": []
+            }
+          ],
+          "sectionOrder": [
+            "system:pinned",
+            "section:Work",
+            "system:channels",
+            "system:dms",
+            "system:joint"
+          ],
+          "sort": "manual"
+        }
+      },
+      "metrics": {
+        "defaultWidth": 240,
+        "minimum": 180,
+        "maximum": 320,
+        "saved": 270,
+        "reloaded": 270,
+        "breakpoints": [
+          {
+            "width": 390,
+            "sidebar": null,
+            "main": {
+              "x": 0,
+              "y": 0,
+              "width": 390,
+              "height": 1000
+            },
+            "resizerVisible": false
+          },
+          {
+            "width": 767,
+            "sidebar": null,
+            "main": {
+              "x": 0,
+              "y": 0,
+              "width": 767,
+              "height": 1000
+            },
+            "resizerVisible": false
+          },
+          {
+            "width": 768,
+            "sidebar": {
+              "x": 57,
+              "y": 48,
+              "width": 270,
+              "height": 952
+            },
+            "main": {
+              "x": 327,
+              "y": 48,
+              "width": 441,
+              "height": 952
+            },
+            "resizerVisible": true
+          },
+          {
+            "width": 1023,
+            "sidebar": {
+              "x": 57,
+              "y": 48,
+              "width": 270,
+              "height": 952
+            },
+            "main": {
+              "x": 327,
+              "y": 48,
+              "width": 696,
+              "height": 952
+            },
+            "resizerVisible": true
+          },
+          {
+            "width": 1024,
+            "sidebar": {
+              "x": 57,
+              "y": 48,
+              "width": 270,
+              "height": 952
+            },
+            "main": {
+              "x": 327,
+              "y": 48,
+              "width": 697,
+              "height": 952
+            },
+            "resizerVisible": true
+          },
+          {
+            "width": 1440,
+            "sidebar": {
+              "x": 57,
+              "y": 48,
+              "width": 270,
+              "height": 952
+            },
+            "main": {
+              "x": 327,
+              "y": 48,
+              "width": 1113,
+              "height": 952
+            },
+            "resizerVisible": true
+          }
+        ],
+        "activity": {
+          "emptyMainWidth": 1383,
+          "visibleResizers": 0
+        }
+      },
+      "writes": [
+        {
+          "pinned": [
+            {
+              "kind": "channel",
+              "id": "fixture-alpha"
+            }
+          ]
+        },
+        {
+          "pinned": []
+        },
+        {
+          "customSections": [
+            {
+              "id": "work",
+              "name": "Work",
+              "emoji": null,
+              "sortMode": "az"
+            }
+          ],
+          "sectionsVersion": 2
+        },
+        {
+          "customSections": [
+            {
+              "id": "work",
+              "name": "Work",
+              "emoji": null,
+              "sortMode": "manual"
+            }
+          ],
+          "sectionsVersion": 3
+        },
+        {
+          "pinned": [
+            {
+              "kind": "channel",
+              "id": "fixture-beta"
+            }
+          ],
+          "sectionPlacements": [],
+          "sectionsVersion": 4
+        },
+        {
+          "sectionPlacements": [
+            {
+              "kind": "channel",
+              "id": "fixture-beta",
+              "sectionId": "work",
+              "position": 0
+            }
+          ],
+          "pinned": [],
+          "sectionsVersion": 5
+        },
+        {
+          "sectionPlacements": [],
+          "sectionsVersion": 6
+        },
+        {
+          "customSections": [
+            {
+              "id": "work",
+              "name": "Work",
+              "emoji": null,
+              "sortMode": "manual"
+            },
+            {
+              "id": "7a10dc87-e41b-433a-acd1-cf360c0ab3e0",
+              "name": "Study",
+              "emoji": null,
+              "sortMode": "manual"
+            }
+          ],
+          "sectionOrder": [
+            "system:pinned",
+            "work",
+            "system:channels",
+            "system:dms",
+            "system:joint",
+            "7a10dc87-e41b-433a-acd1-cf360c0ab3e0"
+          ],
+          "sectionPlacements": [],
+          "pinned": [],
+          "sectionsVersion": 7
+        },
+        {
+          "customSections": [
+            {
+              "id": "work",
+              "name": "Work",
+              "emoji": null,
+              "sortMode": "manual"
+            },
+            {
+              "id": "7a10dc87-e41b-433a-acd1-cf360c0ab3e0",
+              "name": "Research",
+              "emoji": null,
+              "sortMode": "manual"
+            }
+          ],
+          "sectionsVersion": 8
+        },
+        {
+          "customSections": [
+            {
+              "id": "work",
+              "name": "Work",
+              "emoji": null,
+              "sortMode": "manual"
+            }
+          ],
+          "sectionOrder": [
+            "system:pinned",
+            "work",
+            "system:channels",
+            "system:dms",
+            "system:joint"
+          ],
+          "sectionPlacements": [],
+          "sectionsVersion": 9
+        },
+        {
+          "channelOrder": [
+            "fixture-alpha",
+            "fixture-gamma",
+            "fixture-beta"
+          ],
+          "pinned": [],
+          "sectionPlacements": [],
+          "sectionsVersion": 10
+        }
+      ],
+      "gaps": [
+        {
+          "path": "/api/billing/subscription",
+          "method": "GET"
+        },
+        {
+          "path": "/api/billing/subscription",
+          "method": "GET"
+        },
+        {
+          "path": "/api/billing/subscription",
+          "method": "GET"
+        },
+        {
+          "path": "/api/billing/subscription",
+          "method": "GET"
+        }
+      ],
+      "errors": [],
+      "consoleErrors": [
+        "[Push] Failed to register service worker: TypeError: Cannot read properties of undefined (reading 'update')\n    at alt (http://127.0.0.1:63379/assets/app-shell-DosyLPyu.js:300:57513)",
+        "Failed to load resource: the server responded with a status of 501 (Not Implemented)",
+        "[Push] Failed to register service worker: TypeError: Cannot read properties of undefined (reading 'update')\n    at alt (http://127.0.0.1:63379/assets/app-shell-DosyLPyu.js:300:57513)",
+        "Failed to load resource: the server responded with a status of 501 (Not Implemented)",
+        "[Push] Failed to register service worker: TypeError: Cannot read properties of undefined (reading 'update')\n    at alt (http://127.0.0.1:63379/assets/app-shell-DosyLPyu.js:300:57513)",
+        "Failed to load resource: the server responded with a status of 501 (Not Implemented)",
+        "[Push] Failed to register service worker: TypeError: Cannot read properties of undefined (reading 'update')\n    at alt (http://127.0.0.1:63379/assets/app-shell-DosyLPyu.js:300:57513)",
+        "Failed to load resource: the server responded with a status of 501 (Not Implemented)",
+        "[Push] Failed to register service worker: TypeError: Cannot read properties of undefined (reading 'update')\n    at alt (http://127.0.0.1:63379/assets/app-shell-DosyLPyu.js:300:57513)"
+      ]
+    },
+    "loom": {
+      "captures": {
+        "default": "/tmp/loom-web123-channel-interactions/loom-default.png",
+        "background-menu": "/tmp/loom-web123-channel-interactions/loom-background-menu.png",
+        "channel-menu": "/tmp/loom-web123-channel-interactions/loom-channel-menu.png",
+        "pinned": "/tmp/loom-web123-channel-interactions/loom-pinned.png",
+        "group-menu": "/tmp/loom-web123-channel-interactions/loom-group-menu.png",
+        "drag-pinned": "/tmp/loom-web123-channel-interactions/loom-drag-pinned.png",
+        "drag-custom": "/tmp/loom-web123-channel-interactions/loom-drag-custom.png",
+        "persisted": "/tmp/loom-web123-channel-interactions/loom-persisted.png",
+        "move-submenu": "/tmp/loom-web123-channel-interactions/loom-move-submenu.png",
+        "create-section-form": "/tmp/loom-web123-channel-interactions/loom-create-section-form.png",
+        "renamed-section": "/tmp/loom-web123-channel-interactions/loom-renamed-section.png",
+        "delete-section-confirm": "/tmp/loom-web123-channel-interactions/loom-delete-section-confirm.png",
+        "manual-channel-order": "/tmp/loom-web123-channel-interactions/loom-manual-channel-order.png",
+        "resized-persisted": "/tmp/loom-web123-channel-interactions/loom-resized-persisted.png",
+        "width-390": "/tmp/loom-web123-channel-interactions/loom-width-390.png",
+        "width-767": "/tmp/loom-web123-channel-interactions/loom-width-767.png",
+        "width-768": "/tmp/loom-web123-channel-interactions/loom-width-768.png",
+        "width-1023": "/tmp/loom-web123-channel-interactions/loom-width-1023.png",
+        "width-1024": "/tmp/loom-web123-channel-interactions/loom-width-1024.png",
+        "width-1440": "/tmp/loom-web123-channel-interactions/loom-width-1440.png",
+        "activity-default": "/tmp/loom-web123-channel-interactions/loom-activity-default.png"
+      },
+      "states": {
+        "default": {
+          "pinned": [],
+          "channelOrder": [
+            "fixture-alpha",
+            "fixture-beta",
+            "fixture-gamma"
+          ],
+          "sections": [
+            {
+              "id": "section:Work",
+              "name": "Work",
+              "emoji": null,
+              "sortMode": "manual",
+              "items": []
+            }
+          ],
+          "sectionOrder": [
+            "system:pinned",
+            "section:Work",
+            "system:channels",
+            "system:dms"
+          ],
+          "sort": "manual"
+        },
+        "background-menu": {
+          "pinned": [],
+          "channelOrder": [
+            "fixture-alpha",
+            "fixture-beta",
+            "fixture-gamma"
+          ],
+          "sections": [
+            {
+              "id": "section:Work",
+              "name": "Work",
+              "emoji": null,
+              "sortMode": "manual",
+              "items": []
+            }
+          ],
+          "sectionOrder": [
+            "system:pinned",
+            "section:Work",
+            "system:channels",
+            "system:dms"
+          ],
+          "sort": "manual"
+        },
+        "channel-menu": {
+          "pinned": [],
+          "channelOrder": [
+            "fixture-alpha",
+            "fixture-beta",
+            "fixture-gamma"
+          ],
+          "sections": [
+            {
+              "id": "section:Work",
+              "name": "Work",
+              "emoji": null,
+              "sortMode": "manual",
+              "items": []
+            }
+          ],
+          "sectionOrder": [
+            "system:pinned",
+            "section:Work",
+            "system:channels",
+            "system:dms"
+          ],
+          "sort": "manual"
+        },
+        "pinned": {
+          "pinned": [
+            {
+              "kind": "channel",
+              "id": "fixture-alpha"
+            }
+          ],
+          "channelOrder": [
+            "fixture-alpha",
+            "fixture-beta",
+            "fixture-gamma"
+          ],
+          "sections": [
+            {
+              "id": "section:Work",
+              "name": "Work",
+              "emoji": null,
+              "items": [],
+              "sortMode": "manual"
+            }
+          ],
+          "sectionOrder": [
+            "system:pinned",
+            "section:Work",
+            "system:channels",
+            "system:dms"
+          ],
+          "sort": "manual"
+        },
+        "group-menu": {
+          "pinned": [],
+          "channelOrder": [
+            "fixture-alpha",
+            "fixture-beta",
+            "fixture-gamma"
+          ],
+          "sections": [
+            {
+              "id": "section:Work",
+              "name": "Work",
+              "emoji": null,
+              "items": [],
+              "sortMode": "manual"
+            }
+          ],
+          "sectionOrder": [
+            "system:pinned",
+            "section:Work",
+            "system:channels",
+            "system:dms"
+          ],
+          "sort": "manual"
+        },
+        "drag-pinned": {
+          "pinned": [
+            {
+              "kind": "channel",
+              "id": "fixture-beta"
+            }
+          ],
+          "channelOrder": [
+            "fixture-alpha",
+            "fixture-beta",
+            "fixture-gamma"
+          ],
+          "sections": [
+            {
+              "id": "section:Work",
+              "name": "Work",
+              "emoji": null,
+              "items": [],
+              "sortMode": "manual"
+            }
+          ],
+          "sectionOrder": [
+            "system:pinned",
+            "section:Work",
+            "system:channels",
+            "system:dms"
+          ],
+          "sort": "manual"
+        },
+        "drag-custom": {
+          "pinned": [],
+          "channelOrder": [
+            "fixture-alpha",
+            "fixture-beta",
+            "fixture-gamma"
+          ],
+          "sections": [
+            {
+              "id": "section:Work",
+              "name": "Work",
+              "emoji": null,
+              "items": [
+                "fixture-beta"
+              ],
+              "sortMode": "manual"
+            }
+          ],
+          "sectionOrder": [
+            "system:pinned",
+            "section:Work",
+            "system:channels",
+            "system:dms"
+          ],
+          "sort": "manual"
+        },
+        "persisted": {
+          "pinned": [],
+          "channelOrder": [
+            "fixture-alpha",
+            "fixture-beta",
+            "fixture-gamma"
+          ],
+          "sections": [
+            {
+              "id": "section:Work",
+              "name": "Work",
+              "emoji": null,
+              "items": [
+                "fixture-beta"
+              ],
+              "sortMode": "manual"
+            }
+          ],
+          "sectionOrder": [
+            "system:pinned",
+            "section:Work",
+            "system:channels",
+            "system:dms"
+          ],
+          "sort": "manual"
+        },
+        "move-submenu": {
+          "pinned": [],
+          "channelOrder": [
+            "fixture-alpha",
+            "fixture-beta",
+            "fixture-gamma"
+          ],
+          "sections": [
+            {
+              "id": "section:Work",
+              "name": "Work",
+              "emoji": null,
+              "items": [
+                "fixture-beta"
+              ],
+              "sortMode": "manual"
+            }
+          ],
+          "sectionOrder": [
+            "system:pinned",
+            "section:Work",
+            "system:channels",
+            "system:dms"
+          ],
+          "sort": "manual"
+        },
+        "create-section-form": {
+          "pinned": [],
+          "channelOrder": [
+            "fixture-alpha",
+            "fixture-beta",
+            "fixture-gamma"
+          ],
+          "sections": [
+            {
+              "id": "section:Work",
+              "name": "Work",
+              "emoji": null,
+              "items": [],
+              "sortMode": "manual"
+            }
+          ],
+          "sectionOrder": [
+            "system:pinned",
+            "section:Work",
+            "system:channels",
+            "system:dms"
+          ],
+          "sort": "manual"
+        },
+        "renamed-section": {
+          "pinned": [],
+          "channelOrder": [
+            "fixture-alpha",
+            "fixture-beta",
+            "fixture-gamma"
+          ],
+          "sections": [
+            {
+              "id": "section:Work",
+              "name": "Work",
+              "emoji": null,
+              "items": [],
+              "sortMode": "manual"
+            },
+            {
+              "id": "section:Research",
+              "name": "Research",
+              "emoji": null,
+              "items": [],
+              "sortMode": "manual"
+            }
+          ],
+          "sectionOrder": [
+            "system:pinned",
+            "section:Work",
+            "system:channels",
+            "system:dms",
+            "system:joint",
+            "section:Research"
+          ],
+          "sort": "manual"
+        },
+        "delete-section-confirm": {
+          "pinned": [],
+          "channelOrder": [
+            "fixture-alpha",
+            "fixture-beta",
+            "fixture-gamma"
+          ],
+          "sections": [
+            {
+              "id": "section:Work",
+              "name": "Work",
+              "emoji": null,
+              "items": [],
+              "sortMode": "manual"
+            },
+            {
+              "id": "section:Research",
+              "name": "Research",
+              "emoji": null,
+              "items": [],
+              "sortMode": "manual"
+            }
+          ],
+          "sectionOrder": [
+            "system:pinned",
+            "section:Work",
+            "system:channels",
+            "system:dms",
+            "system:joint",
+            "section:Research"
+          ],
+          "sort": "manual"
+        },
+        "manual-channel-order": {
+          "pinned": [],
+          "channelOrder": [
+            "fixture-alpha",
+            "fixture-gamma",
+            "fixture-beta"
+          ],
+          "sections": [
+            {
+              "id": "section:Work",
+              "name": "Work",
+              "emoji": null,
+              "items": [],
+              "sortMode": "manual"
+            }
+          ],
+          "sectionOrder": [
+            "system:pinned",
+            "section:Work",
+            "system:channels",
+            "system:dms",
+            "system:joint"
+          ],
+          "sort": "manual"
+        },
+        "resized-persisted": {
+          "pinned": [],
+          "channelOrder": [
+            "fixture-alpha",
+            "fixture-gamma",
+            "fixture-beta"
+          ],
+          "sections": [
+            {
+              "id": "section:Work",
+              "name": "Work",
+              "emoji": null,
+              "items": [],
+              "sortMode": "manual"
+            }
+          ],
+          "sectionOrder": [
+            "system:pinned",
+            "section:Work",
+            "system:channels",
+            "system:dms",
+            "system:joint"
+          ],
+          "sort": "manual"
+        },
+        "width-390": {
+          "pinned": [],
+          "channelOrder": [
+            "fixture-alpha",
+            "fixture-gamma",
+            "fixture-beta"
+          ],
+          "sections": [
+            {
+              "id": "section:Work",
+              "name": "Work",
+              "emoji": null,
+              "items": [],
+              "sortMode": "manual"
+            }
+          ],
+          "sectionOrder": [
+            "system:pinned",
+            "section:Work",
+            "system:channels",
+            "system:dms",
+            "system:joint"
+          ],
+          "sort": "manual"
+        },
+        "width-767": {
+          "pinned": [],
+          "channelOrder": [
+            "fixture-alpha",
+            "fixture-gamma",
+            "fixture-beta"
+          ],
+          "sections": [
+            {
+              "id": "section:Work",
+              "name": "Work",
+              "emoji": null,
+              "items": [],
+              "sortMode": "manual"
+            }
+          ],
+          "sectionOrder": [
+            "system:pinned",
+            "section:Work",
+            "system:channels",
+            "system:dms",
+            "system:joint"
+          ],
+          "sort": "manual"
+        },
+        "width-768": {
+          "pinned": [],
+          "channelOrder": [
+            "fixture-alpha",
+            "fixture-gamma",
+            "fixture-beta"
+          ],
+          "sections": [
+            {
+              "id": "section:Work",
+              "name": "Work",
+              "emoji": null,
+              "items": [],
+              "sortMode": "manual"
+            }
+          ],
+          "sectionOrder": [
+            "system:pinned",
+            "section:Work",
+            "system:channels",
+            "system:dms",
+            "system:joint"
+          ],
+          "sort": "manual"
+        },
+        "width-1023": {
+          "pinned": [],
+          "channelOrder": [
+            "fixture-alpha",
+            "fixture-gamma",
+            "fixture-beta"
+          ],
+          "sections": [
+            {
+              "id": "section:Work",
+              "name": "Work",
+              "emoji": null,
+              "items": [],
+              "sortMode": "manual"
+            }
+          ],
+          "sectionOrder": [
+            "system:pinned",
+            "section:Work",
+            "system:channels",
+            "system:dms",
+            "system:joint"
+          ],
+          "sort": "manual"
+        },
+        "width-1024": {
+          "pinned": [],
+          "channelOrder": [
+            "fixture-alpha",
+            "fixture-gamma",
+            "fixture-beta"
+          ],
+          "sections": [
+            {
+              "id": "section:Work",
+              "name": "Work",
+              "emoji": null,
+              "items": [],
+              "sortMode": "manual"
+            }
+          ],
+          "sectionOrder": [
+            "system:pinned",
+            "section:Work",
+            "system:channels",
+            "system:dms",
+            "system:joint"
+          ],
+          "sort": "manual"
+        },
+        "width-1440": {
+          "pinned": [],
+          "channelOrder": [
+            "fixture-alpha",
+            "fixture-gamma",
+            "fixture-beta"
+          ],
+          "sections": [
+            {
+              "id": "section:Work",
+              "name": "Work",
+              "emoji": null,
+              "items": [],
+              "sortMode": "manual"
+            }
+          ],
+          "sectionOrder": [
+            "system:pinned",
+            "section:Work",
+            "system:channels",
+            "system:dms",
+            "system:joint"
+          ],
+          "sort": "manual"
+        },
+        "activity-default": {
+          "pinned": [],
+          "channelOrder": [
+            "fixture-alpha",
+            "fixture-gamma",
+            "fixture-beta"
+          ],
+          "sections": [
+            {
+              "id": "section:Work",
+              "name": "Work",
+              "emoji": null,
+              "items": [],
+              "sortMode": "manual"
+            }
+          ],
+          "sectionOrder": [
+            "system:pinned",
+            "section:Work",
+            "system:channels",
+            "system:dms",
+            "system:joint"
+          ],
+          "sort": "manual"
+        }
+      },
+      "metrics": {
+        "defaultWidth": 240,
+        "minimum": 180,
+        "maximum": 320,
+        "saved": 270,
+        "reloaded": 270,
+        "breakpoints": [
+          {
+            "width": 390,
+            "sidebar": null,
+            "main": {
+              "x": 0,
+              "y": 0,
+              "width": 390,
+              "height": 1000
+            },
+            "resizerVisible": false
+          },
+          {
+            "width": 767,
+            "sidebar": null,
+            "main": {
+              "x": 0,
+              "y": 0,
+              "width": 767,
+              "height": 1000
+            },
+            "resizerVisible": false
+          },
+          {
+            "width": 768,
+            "sidebar": {
+              "x": 57,
+              "y": 48,
+              "width": 270,
+              "height": 952
+            },
+            "main": {
+              "x": 327,
+              "y": 48,
+              "width": 441,
+              "height": 952
+            },
+            "resizerVisible": true
+          },
+          {
+            "width": 1023,
+            "sidebar": {
+              "x": 57,
+              "y": 48,
+              "width": 270,
+              "height": 952
+            },
+            "main": {
+              "x": 327,
+              "y": 48,
+              "width": 696,
+              "height": 952
+            },
+            "resizerVisible": true
+          },
+          {
+            "width": 1024,
+            "sidebar": {
+              "x": 57,
+              "y": 48,
+              "width": 270,
+              "height": 952
+            },
+            "main": {
+              "x": 327,
+              "y": 48,
+              "width": 697,
+              "height": 952
+            },
+            "resizerVisible": true
+          },
+          {
+            "width": 1440,
+            "sidebar": {
+              "x": 57,
+              "y": 48,
+              "width": 270,
+              "height": 952
+            },
+            "main": {
+              "x": 327,
+              "y": 48,
+              "width": 1113,
+              "height": 952
+            },
+            "resizerVisible": true
+          }
+        ],
+        "activity": {
+          "emptyMainWidth": 1383,
+          "visibleResizers": 0
+        }
+      },
+      "writes": [
+        {
+          "workspaceId": "fixture-workspace",
+          "expectedVersion": 0,
+          "idempotencyKey": "console-sidebar-ad9f74ef-3e11-4409-90fd-b7478a20d759",
+          "patch": {
+            "pinned": [
+              "room:fixture-alpha"
+            ]
+          }
+        },
+        {
+          "workspaceId": "fixture-workspace",
+          "expectedVersion": 1,
+          "idempotencyKey": "console-sidebar-e34aecab-8aa3-483e-8f7f-821d658a7c3b",
+          "patch": {
+            "pinned": []
+          }
+        },
+        {
+          "workspaceId": "fixture-workspace",
+          "expectedVersion": 2,
+          "idempotencyKey": "console-sidebar-b891f7a1-1554-449e-9c8a-a21db82e99b3",
+          "patch": {
+            "customSections": [
+              {
+                "id": "work",
+                "name": "Work",
+                "emoji": null,
+                "items": [],
+                "sortMode": "az"
+              }
+            ]
+          }
+        },
+        {
+          "workspaceId": "fixture-workspace",
+          "expectedVersion": 3,
+          "idempotencyKey": "console-sidebar-d8fd25e0-cc60-40b5-b597-ddd61d082fe0",
+          "patch": {
+            "customSections": [
+              {
+                "id": "work",
+                "name": "Work",
+                "emoji": null,
+                "items": [],
+                "sortMode": "manual"
+              }
+            ]
+          }
+        },
+        {
+          "workspaceId": "fixture-workspace",
+          "expectedVersion": 4,
+          "idempotencyKey": "console-sidebar-f10a3238-8436-48c9-ba3a-f08e1851ddb5",
+          "patch": {
+            "pinned": [
+              "room:fixture-beta"
+            ],
+            "customSections": [
+              {
+                "id": "work",
+                "name": "Work",
+                "emoji": null,
+                "items": [],
+                "sortMode": "manual"
+              }
+            ]
+          }
+        },
+        {
+          "workspaceId": "fixture-workspace",
+          "expectedVersion": 5,
+          "idempotencyKey": "console-sidebar-fae42a3c-a5ab-4510-b36c-7295555e25d9",
+          "patch": {
+            "pinned": [],
+            "customSections": [
+              {
+                "id": "work",
+                "name": "Work",
+                "emoji": null,
+                "items": [
+                  "room:fixture-beta"
+                ],
+                "sortMode": "manual"
+              }
+            ]
+          }
+        },
+        {
+          "workspaceId": "fixture-workspace",
+          "expectedVersion": 6,
+          "idempotencyKey": "console-sidebar-4b36dedb-b82b-439d-ac17-9bce7063e6eb",
+          "patch": {
+            "customSections": [
+              {
+                "id": "work",
+                "name": "Work",
+                "emoji": null,
+                "items": [],
+                "sortMode": "manual"
+              }
+            ]
+          }
+        },
+        {
+          "workspaceId": "fixture-workspace",
+          "expectedVersion": 7,
+          "idempotencyKey": "console-sidebar-a801dcfa-db1a-4200-be95-a8648f3a386f",
+          "patch": {
+            "pinned": [],
+            "customSections": [
+              {
+                "id": "work",
+                "name": "Work",
+                "emoji": null,
+                "items": [],
+                "sortMode": "manual"
+              },
+              {
+                "id": "02db85d7-fbc6-42d2-9e9f-86a6c482d876",
+                "name": "Study",
+                "emoji": null,
+                "items": [],
+                "sortMode": "manual"
+              }
+            ],
+            "sectionOrder": [
+              "pinned",
+              "custom:work",
+              "channels",
+              "dms",
+              "joint",
+              "custom:02db85d7-fbc6-42d2-9e9f-86a6c482d876"
+            ]
+          }
+        },
+        {
+          "workspaceId": "fixture-workspace",
+          "expectedVersion": 8,
+          "idempotencyKey": "console-sidebar-ed6ea591-e919-4697-8893-e9ac7fad3d02",
+          "patch": {
+            "customSections": [
+              {
+                "id": "work",
+                "name": "Work",
+                "emoji": null,
+                "items": [],
+                "sortMode": "manual"
+              },
+              {
+                "id": "02db85d7-fbc6-42d2-9e9f-86a6c482d876",
+                "name": "Research",
+                "emoji": null,
+                "items": [],
+                "sortMode": "manual"
+              }
+            ]
+          }
+        },
+        {
+          "workspaceId": "fixture-workspace",
+          "expectedVersion": 9,
+          "idempotencyKey": "console-sidebar-b4bb1ff9-9c6c-463d-a38a-9f90fe66de24",
+          "patch": {
+            "customSections": [
+              {
+                "id": "work",
+                "name": "Work",
+                "emoji": null,
+                "items": [],
+                "sortMode": "manual"
+              }
+            ],
+            "sectionOrder": [
+              "pinned",
+              "custom:work",
+              "channels",
+              "dms",
+              "joint"
+            ]
+          }
+        },
+        {
+          "workspaceId": "fixture-workspace",
+          "expectedVersion": 10,
+          "idempotencyKey": "console-sidebar-6a478a2e-2d63-496c-ab8c-ea7dcf970e05",
+          "patch": {
+            "pinned": [],
+            "channelOrder": [
+              "room:fixture-alpha",
+              "room:fixture-gamma",
+              "room:fixture-beta"
+            ],
+            "customSections": [
+              {
+                "id": "work",
+                "name": "Work",
+                "emoji": null,
+                "items": [],
+                "sortMode": "manual"
+              }
+            ]
+          }
+        }
+      ],
+      "gaps": [],
+      "errors": [],
+      "consoleErrors": [
+        "[Push] Failed to register service worker: TypeError: Cannot read properties of undefined (reading 'update')\n    at Upt (http://127.0.0.1:63380/assets/app-shell-DqkMcAgl.js:354:95014)",
+        "[Push] Failed to register service worker: TypeError: Cannot read properties of undefined (reading 'update')\n    at Upt (http://127.0.0.1:63380/assets/app-shell-DqkMcAgl.js:354:95014)",
+        "[Push] Failed to register service worker: TypeError: Cannot read properties of undefined (reading 'update')\n    at Upt (http://127.0.0.1:63380/assets/app-shell-DqkMcAgl.js:354:95014)",
+        "[Push] Failed to register service worker: TypeError: Cannot read properties of undefined (reading 'update')\n    at Upt (http://127.0.0.1:63380/assets/app-shell-DqkMcAgl.js:354:95014)",
+        "[Push] Failed to register service worker: TypeError: Cannot read properties of undefined (reading 'update')\n    at Upt (http://127.0.0.1:63380/assets/app-shell-DqkMcAgl.js:354:95014)"
+      ]
+    }
+  },
+  "pixels": [
+    {
+      "name": "default",
+      "differingPixels": 0,
+      "totalPixels": 1440000,
+      "maxDelta": 0,
+      "ratio": 0
+    },
+    {
+      "name": "background-menu",
+      "differingPixels": 0,
+      "totalPixels": 1440000,
+      "maxDelta": 0,
+      "ratio": 0
+    },
+    {
+      "name": "channel-menu",
+      "differingPixels": 0,
+      "totalPixels": 1440000,
+      "maxDelta": 0,
+      "ratio": 0
+    },
+    {
+      "name": "pinned",
+      "differingPixels": 0,
+      "totalPixels": 1440000,
+      "maxDelta": 0,
+      "ratio": 0
+    },
+    {
+      "name": "group-menu",
+      "differingPixels": 0,
+      "totalPixels": 1440000,
+      "maxDelta": 0,
+      "ratio": 0
+    },
+    {
+      "name": "drag-pinned",
+      "differingPixels": 0,
+      "totalPixels": 1440000,
+      "maxDelta": 0,
+      "ratio": 0
+    },
+    {
+      "name": "drag-custom",
+      "differingPixels": 0,
+      "totalPixels": 1440000,
+      "maxDelta": 0,
+      "ratio": 0
+    },
+    {
+      "name": "persisted",
+      "differingPixels": 0,
+      "totalPixels": 1440000,
+      "maxDelta": 0,
+      "ratio": 0
+    },
+    {
+      "name": "move-submenu",
+      "differingPixels": 0,
+      "totalPixels": 1440000,
+      "maxDelta": 0,
+      "ratio": 0
+    },
+    {
+      "name": "create-section-form",
+      "differingPixels": 0,
+      "totalPixels": 1440000,
+      "maxDelta": 0,
+      "ratio": 0
+    },
+    {
+      "name": "renamed-section",
+      "differingPixels": 0,
+      "totalPixels": 1440000,
+      "maxDelta": 0,
+      "ratio": 0
+    },
+    {
+      "name": "delete-section-confirm",
+      "differingPixels": 0,
+      "totalPixels": 1440000,
+      "maxDelta": 0,
+      "ratio": 0
+    },
+    {
+      "name": "manual-channel-order",
+      "differingPixels": 0,
+      "totalPixels": 1440000,
+      "maxDelta": 0,
+      "ratio": 0
+    },
+    {
+      "name": "resized-persisted",
+      "differingPixels": 0,
+      "totalPixels": 1440000,
+      "maxDelta": 0,
+      "ratio": 0
+    },
+    {
+      "name": "width-390",
+      "differingPixels": 0,
+      "totalPixels": 390000,
+      "maxDelta": 0,
+      "ratio": 0
+    },
+    {
+      "name": "width-767",
+      "differingPixels": 0,
+      "totalPixels": 767000,
+      "maxDelta": 0,
+      "ratio": 0
+    },
+    {
+      "name": "width-768",
+      "differingPixels": 0,
+      "totalPixels": 768000,
+      "maxDelta": 0,
+      "ratio": 0
+    },
+    {
+      "name": "width-1023",
+      "differingPixels": 0,
+      "totalPixels": 1023000,
+      "maxDelta": 0,
+      "ratio": 0
+    },
+    {
+      "name": "width-1024",
+      "differingPixels": 0,
+      "totalPixels": 1024000,
+      "maxDelta": 0,
+      "ratio": 0
+    },
+    {
+      "name": "width-1440",
+      "differingPixels": 0,
+      "totalPixels": 1440000,
+      "maxDelta": 0,
+      "ratio": 0
+    },
+    {
+      "name": "activity-default",
+      "differingPixels": 0,
+      "totalPixels": 1440000,
+      "maxDelta": 0,
+      "ratio": 0
+    }
+  ]
+}

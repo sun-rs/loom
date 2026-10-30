@@ -58,6 +58,18 @@ the Role ID. Prompt/remarks are separate private profile fields, not list text.
 The named Role-only slots reuse original forms/rows/confirmation components;
 they are declared exceptions, not proof that all product adaptation is complete.
 
+Native Role DM is an ordinary Channel with a new frozen Instance and explicit
+HumanSidebar dmOrder placement. `adapter123/conversations.ts` retains confirmed
+creation steps only for the current UI action lifetime; known partial failure
+continues those steps, while unknown sends keep the original WriteIntentSlot.
+Never infer an unclassified Channel by its name, or expose an Instance-private
+box as a global DM. Roster reads must use current SDK membership, not the chat
+session's initial snapshot. Native member-removal errors must reach the original
+confirmation dialog. Native SOS guidance is the Human's exact text; Raft tool
+instructions are omitted. Only matching terminal proof permits all-stopped UI;
+an accepted stopping request alone does not. The candidate retains explicit
+verification for pending stops; see the current dated acceptance limits.
+
 Preserve the current production service and data until the whole-release adapter
 passes its vertical business and visual gates. Do not switch deployment merely
 because intake/build succeeds. Upgrade future versions as complete snapshots

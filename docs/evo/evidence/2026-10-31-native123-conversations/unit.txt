@@ -1,0 +1,61 @@
+
+> rah-os@0.0.0 test:official-web:native123
+> node --test scripts/official-web123/*.test.mjs scripts/official-web123/*.test.ts
+
+✔ Role sidebar and Computer member list are different facets of one native read cache, without identity inference or unstable snapshots (1.198208ms)
+✔ new native Roles use the whole pinned preset pool excluding occupied avatars, with an exhausted-pool fallback (0.717291ms)
+✔ native avatars retain original rendering and legacy saved keys remain readable without joining the new picker (8.524083ms)
+✔ native Agent list projects Role IDs while channel senders remain instance IDs; read bridge cannot execute writes (2.203167ms)
+✔ native member reads use current membership rather than an old Room bootstrap, without replay or read acknowledgement (0.817125ms)
+✔ native send holds the same UI promise on unknown, never sends a replacement, and verifies the frozen SDK intent explicitly (7.814833ms)
+✔ native viewport acknowledgment sends its observed Room frontier; it never marks unseen messages or deliveries read (0.307125ms)
+✔ native sidebar writes keep the UI revision and unknown intent, and refuse a stale view before overwriting (20.101333ms)
+✔ native Role DM creates a normal Channel plus one new instance and explicitly classifies it, preserving unrelated preferences (4.567458ms)
+✔ reopening Role DM reuses only an explicitly placed single-instance Channel, including a hidden DM (0.281083ms)
+✔ known placement failure retains confirmed creation steps for explicit continuation; never creates a second room or instance (0.591292ms)
+✔ unknown accepted instance creation holds the original native request and exact key; placement waits for verification (17.551208ms)
+✔ native root DM refuses Instance and other-Human identities instead of leaking a Channel-private box into global DM (0.6285ms)
+✔ standalone chats use explicit sidebar placement; instance-private boxes never leak into the root DM list (1.756625ms)
+✔ pixel reference SDK fixtures obey real Room snapshot/timeline schemas, including canonical mention spans (2.552875ms)
+✔ pixel sidebar fixture satisfies its entire SDK response and cold/warm Room reads follow the actual replay contract (15.624459ms)
+✔ interaction SDK fixture enforces real sidebar schema, CAS and same-intent replay (2.052583ms)
+✔ temporary Core cleanup keeps attached/user directories and only selects recorded platform homes (0.126166ms)
+✔ current membership oracle uses the real SDK schema independently of the native HTTP roster (0.239041ms)
+✔ native channel edit/archive/delete preserve Room identity and historical visibility and use the Room causal owner (8.861916ms)
+✔ native notification/display preferences keep unrelated keys and reject stale observed versions (0.571541ms)
+✔ Role deletion only deletes configuration; instance deletion removes its actual membership (0.31675ms)
+✔ Role start/stop targets frozen instances' real Agent IDs; reset modes never discard workspaces (0.370375ms)
+✔ lifecycle cache refresh waits for the authoritative result and never synthesizes working/offline presence (0.11275ms)
+✔ a Role editor cannot overwrite a newer immutable revision (0.106333ms)
+✔ native member selection creates distinct instances from Roles, while removal checks the actual channel (0.198166ms)
+✔ Role batch controls skip removed instances and stop after a confirmed rejection (0.257958ms)
+✔ preserving-session restart uses the instance state lane and never the forbidden legacy Agent reset (0.110459ms)
+✔ native history paging maps before/after only within the requested Room and stays bounded (2.602833ms)
+✔ native sync cannot treat independent Room sequences as a global stream (0.175583ms)
+✔ unmasked pixel gate detects a single color or alpha pixel difference (1.307125ms)
+✔ Loom omits incompatible Agent tabs through one explicit capability seam; other native presentation remains intact (21.5345ms)
+✔ Role prompt is a named extension slot and config edits never restart live instances (0.815042ms)
+✔ native local creation is not blocked by an unrelated Raft subscription quota (0.402916ms)
+✔ native preference writes carry the exact displayed revision without changing native controls (2.021459ms)
+✔ native member-removal confirmation retains known SDK rejection; no other hook logic is changed (0.130917ms)
+✔ native Role message action displays known creation failures in its existing PanelNotice (0.871042ms)
+✔ native SOS sends only Human guidance, without unavailable Raft tools or model-side restart instructions (0.131083ms)
+✔ native mute and collapse settings reflect existing per-Human workspace preferences, never invented message frontiers (1.600333ms)
+✔ native instance and aggregate Role lights use verified Host observations rather than enabled definitions or reused display names (0.684791ms)
+✔ read recovery coalesces visibility/focus hints and never refreshes hidden or disposed views (11.491666ms)
+✔ native model form groups AGY choices but writes exact published model/effort; remarks preserve the executable prompt (11.35425ms)
+✔ native sidebar uses kind refs and lossless section/order projections, retaining exact SDK revision (2.469459ms)
+✔ native custom-section sort and section order preserve their source semantics (0.392583ms)
+✔ only verified standalone instance peers map to DM Rooms; native file tabs retain SDK workspace identity (0.202208ms)
+✔ an accepted preference snapshot reconciles mute and display flags at one real revision (0.074583ms)
+✔ native stop-all and resume use the existing durable SOS owner and exact Human guidance, never per-Agent toggles (4.44725ms)
+✔ native stopping acknowledgement cannot become an all-stopped success until matching terminal proof is read (1.614709ms)
+✔ complete Web1.21.23 source and official workspace closure are immutable and use their original dependency lock (86.453667ms)
+ℹ tests 49
+ℹ suites 0
+ℹ pass 49
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 491.418416

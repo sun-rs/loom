@@ -1,0 +1,84 @@
+✖ native Role DM creates a normal Channel plus one new instance and explicitly classifies it, preserving unrelated preferences (1.226417ms)
+✖ reopening Role DM reuses only an explicitly placed single-instance Channel, including a hidden DM (0.198209ms)
+✖ known placement failure retains confirmed creation steps for explicit continuation; never creates a second room or instance (0.805125ms)
+✖ unknown accepted instance creation holds the original native request and exact key; placement waits for verification (2.102958ms)
+✖ native root DM refuses Instance and other-Human identities instead of leaking a Channel-private box into global DM (0.24825ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 0
+ℹ fail 5
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 215.47025
+
+✖ failing tests:
+
+test at scripts/official-web123/conversations.test.ts:34:1
+✖ native Role DM creates a normal Channel plus one new instance and explicitly classifies it, preserving unrelated preferences (1.226417ms)
+  Error: UNBOUND_NATIVE_WRITE post /channels/dm
+      at NativeCommands.write (file:///Users/sun/Code/repos/rah_os/frontends/raft/adapter123/commands.ts:384:11)
+      at async TestContext.<anonymous> (file:///Users/sun/Code/repos/rah_os/scripts/official-web123/conversations.test.ts:35:27)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3)
+
+test at scripts/official-web123/conversations.test.ts:43:1
+✖ reopening Role DM reuses only an explicitly placed single-instance Channel, including a hidden DM (0.198209ms)
+  Error: UNBOUND_NATIVE_WRITE post /channels/dm
+      at NativeCommands.write (file:///Users/sun/Code/repos/rah_os/frontends/raft/adapter123/commands.ts:384:11)
+      at async TestContext.<anonymous> (file:///Users/sun/Code/repos/rah_os/scripts/official-web123/conversations.test.ts:47:15)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7)
+
+test at scripts/official-web123/conversations.test.ts:51:1
+✖ known placement failure retains confirmed creation steps for explicit continuation; never creates a second room or instance (0.805125ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /sidebar changed/. Input:
+
+  'Error: UNBOUND_NATIVE_WRITE post /channels/dm'
+
+      at async TestContext.<anonymous> (file:///Users/sun/Code/repos/rah_os/scripts/official-web123/conversations.test.ts:53:3)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: Error: UNBOUND_NATIVE_WRITE post /channels/dm
+        at NativeCommands.write (file:///Users/sun/Code/repos/rah_os/frontends/raft/adapter123/commands.ts:384:11)
+        at async waitForActual (node:assert:621:5)
+        at async strict.rejects (node:assert:744:25)
+        at async TestContext.<anonymous> (file:///Users/sun/Code/repos/rah_os/scripts/official-web123/conversations.test.ts:53:3)
+        at async Test.run (node:internal/test_runner/test:1208:7)
+        at async Test.processPendingSubtests (node:internal/test_runner/test:831:7),
+    expected: /sidebar changed/,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at scripts/official-web123/conversations.test.ts:57:1
+✖ unknown accepted instance creation holds the original native request and exact key; placement waits for verification (2.102958ms)
+  Error: UNBOUND_NATIVE_WRITE post /channels/dm
+      at NativeCommands.write (file:///Users/sun/Code/repos/rah_os/frontends/raft/adapter123/commands.ts:384:11)
+
+test at scripts/official-web123/conversations.test.ts:65:1
+✖ native root DM refuses Instance and other-Human identities instead of leaking a Channel-private box into global DM (0.24825ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /Role/. Input:
+
+  'Error: UNBOUND_NATIVE_WRITE post /channels/dm'
+
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async TestContext.<anonymous> (file:///Users/sun/Code/repos/rah_os/scripts/official-web123/conversations.test.ts:67:3)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: Error: UNBOUND_NATIVE_WRITE post /channels/dm
+        at NativeCommands.write (file:///Users/sun/Code/repos/rah_os/frontends/raft/adapter123/commands.ts:384:11)
+        at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+        at async waitForActual (node:assert:621:5)
+        at async strict.rejects (node:assert:744:25)
+        at async TestContext.<anonymous> (file:///Users/sun/Code/repos/rah_os/scripts/official-web123/conversations.test.ts:67:3)
+        at async Test.run (node:internal/test_runner/test:1208:7)
+        at async Test.processPendingSubtests (node:internal/test_runner/test:831:7),
+    expected: /Role/,
+    operator: 'rejects',
+    diff: 'simple'
+  }

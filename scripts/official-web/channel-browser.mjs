@@ -1,3 +1,5 @@
+import { verifyNativeConversations } from "../official-web123/conversation-core-browser.mjs";
+import { verifyNativeChannelLifecycle } from "../official-web123/channel-core-browser.mjs";
 import { verifyNativeLoom } from "../official-web123/loom-browser.mjs";
 import { verifyNativeSidebar } from "../official-web123/sidebar-core-browser.mjs";
 import { verifyNativeManagement } from "../official-web123/management-core-browser.mjs";
@@ -247,7 +249,33 @@ try {
         ? firefox
         : chromium
   ).launch({ headless: true });
-  if (process.env.LOOM_BROWSER_SLICE === "native123-management") {
+  if (process.env.LOOM_BROWSER_SLICE === "native123-conversations") {
+    console.log(
+      JSON.stringify(
+        await verifyNativeConversations({
+          browser,
+          origin,
+          workspace,
+          client,
+          role,
+          head,
+        }),
+      ),
+    );
+  } else if (process.env.LOOM_BROWSER_SLICE === "native123-channel-lifecycle") {
+    console.log(
+      JSON.stringify(
+        await verifyNativeChannelLifecycle({
+          browser,
+          origin,
+          workspace,
+          client,
+          role,
+          head,
+        }),
+      ),
+    );
+  } else if (process.env.LOOM_BROWSER_SLICE === "native123-management") {
     console.log(
       JSON.stringify(
         await verifyNativeManagement({

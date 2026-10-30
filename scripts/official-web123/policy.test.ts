@@ -11,6 +11,10 @@ test("Loom omits incompatible Agent tabs through one explicit capability seam; o
   assert.equal(
     out
       .replace(
+        "const ch = await openDM(agent.id).catch((error) => { setStartError(error instanceof Error ? error.message : String(error)); return null; });",
+        "const ch = await openDM(agent.id);",
+      )
+      .replace(
         '\n      // Loom has no Raft-managed MCP, integrations, reminders or global Agent session.\n      if (tab !== "profile" && tab !== "activity") return false;',
         "",
       )
@@ -99,4 +103,46 @@ test("native preference writes carry the exact displayed revision without changi
     assert.equal((out.match(/loomPrefsVersion:/g) ?? []).length, expected);
     assert.equal(out.replaceAll(/\n\s*loomPrefsVersion: [^,\n]+,/g, ""), code);
   }
+});
+test("native member-removal confirmation retains known SDK rejection; no other hook logic is changed", () => {
+  const path = "/hooks/useChannelMembers.ts",
+    code = readFileSync(
+      "frontends/raft/upstream/web-1.21.23/packages/web/src" + path,
+      "utf8",
+    ),
+    out = adaptNativeCapabilities(code, path);
+  const marker =
+    "console.error(`Failed to remove agent ${agentId} from channel ${channelId}:`, err);";
+  assert.ok(out.includes(marker + "\n      throw err;"));
+  assert.equal(out.replace(marker + "\n      throw err;", marker), code);
+});
+test("native Role message action displays known creation failures in its existing PanelNotice", () => {
+  const path = "/components/agent/AgentDetailPanel.tsx",
+    code = readFileSync(
+      "frontends/raft/upstream/web-1.21.23/packages/web/src" + path,
+      "utf8",
+    ),
+    out = adaptNativeCapabilities(code, path);
+  assert.ok(
+    out.includes(
+      "const ch = await openDM(agent.id).catch((error) => { setStartError(error instanceof Error ? error.message : String(error)); return null; });",
+    ),
+  );
+});
+test("native SOS sends only Human guidance, without unavailable Raft tools or model-side restart instructions", () => {
+  const path = "/components/message/SOSDialog.tsx",
+    code = readFileSync(
+      "frontends/raft/upstream/web-1.21.23/packages/web/src" + path,
+      "utf8",
+    ),
+    out = adaptNativeCapabilities(code, path);
+  assert.ok(out.includes("const prompt = guidance.trim();"));
+  assert.ok(!out.includes("Use check_messages and read_history"));
+  assert.equal(
+    out.replace(
+      "const prompt = guidance.trim();",
+      code.match(/const prompt = `\[SOS\][\s\S]*?`;/)![0],
+    ),
+    code,
+  );
 });

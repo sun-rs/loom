@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
+  ClientRoomMembersListResponseSchema,
   ClientRoomTimelineResponseSchema,
   ClientRoomSyncResponseSchema,
   SidebarResponseSchema,
@@ -92,5 +93,21 @@ test("temporary Core cleanup keeps attached/user directories and only selects re
       { roomId: "none" },
     ]),
     ["/tmp/platform/room-a"],
+  );
+});
+
+test("current membership oracle uses the real SDK schema independently of the native HTTP roster", () => {
+  assert.doesNotThrow(() =>
+    ClientRoomMembersListResponseSchema.parse(
+      sdkPopulated("/v3/client/rooms/members/list"),
+    ),
+  );
+  const f = interactionFixture("loom");
+  assert.doesNotThrow(() =>
+    ClientRoomMembersListResponseSchema.parse(
+      f.handle("/v3/client/rooms/members/list", "POST", {
+        roomId: channels[0].id,
+      }).json,
+    ),
   );
 });

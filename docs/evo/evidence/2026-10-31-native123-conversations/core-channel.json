@@ -1,0 +1,32 @@
+{
+  "temporaryCore": true,
+  "paidCalls": 0,
+  "results": [
+    {
+      "width": 1440,
+      "nativeMemberAdd": true,
+      "rejectedRemovalKeepsConfirmation": true,
+      "memberRemoval": true,
+      "durableSosStopAndResume": true,
+      "exactHumanGuidance": true,
+      "archiveAndReload": true,
+      "unarchive": true,
+      "permanentDelete": true,
+      "reusableRoleRetained": true,
+      "errors": []
+    },
+    {
+      "width": 390,
+      "nativeMemberAdd": true,
+      "rejectedRemovalKeepsConfirmation": true,
+      "memberRemoval": true,
+      "durableSosStopAndResume": true,
+      "exactHumanGuidance": true,
+      "archiveAndReload": true,
+      "unarchive": true,
+      "permanentDelete": true,
+      "reusableRoleRetained": true,
+      "errors": []
+    }
+  ]
+}

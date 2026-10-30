@@ -187,6 +187,19 @@ export function interactionFixture(arm) {
         }
         if (path === "/v3/client/rooms/list")
           return { json: { rooms: channels.map(sdkRoom) } };
+        if (path === "/v3/client/rooms/members/list")
+          return {
+            json: {
+              memberships: [
+                {
+                  roomId: input.roomId,
+                  principalId: humanId,
+                  role: "owner",
+                  joinedAt: instant,
+                },
+              ],
+            },
+          };
         if (path === "/v3/client/rooms/sync")
           return {
             json: {
