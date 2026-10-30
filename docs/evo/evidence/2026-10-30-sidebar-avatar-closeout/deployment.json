@@ -1,0 +1,94 @@
+{
+  "at": "2026-10-30T06:42:43.989Z",
+  "sourceRevision": "1f36f183a7a1726b7c2865ef5c7e891a5be089fe",
+  "remoteMainBeforeRestart": "1f36f183a7a1726b7c2865ef5c7e891a5be089fe",
+  "pushedBeforeServiceRestart": true,
+  "sourceWorktreeDirty": false,
+  "oldPid": 99709,
+  "newPid": 33765,
+  "backup": "/Users/sun/.loom/evo/backups/pre-sidebar-avatar-1793342546773",
+  "backupVerified": true,
+  "migrationPreflight": true,
+  "fromSchema": 91,
+  "toSchema": 91,
+  "protectedTables": {
+    "room_events": {
+      "count": 913,
+      "sha256": "16d03733c3062e47afd4ce60da63e76e094926779b4ca2de09036a807be1146e"
+    },
+    "messages": {
+      "count": 5,
+      "sha256": "65b123d4f0f459b644e24dac33448af6d4cfd6ee06ae7035764dfa2c976043fd"
+    },
+    "role_templates": {
+      "count": 56,
+      "sha256": "5824f33356358e7522845fd9237f829c3da7e9c50b8e8da65563e51fe58f30a7"
+    },
+    "role_revisions": {
+      "count": 74,
+      "sha256": "b2320328958bc6affade83e1a74ece8a1c5b9e330e6981728dbccb93897888e3"
+    },
+    "role_instances": {
+      "count": 3,
+      "sha256": "71fae78b886643d189797aa959511addbf0124c2f7f7ea70f4efcff283b99ecc"
+    },
+    "human_sidebar_preferences": {
+      "count": 1,
+      "sha256": "ded264b510608bcc4506f0b7d57323f510e63c1cd9e06b5b7d5f5630067ac6f7"
+    },
+    "human_saved_messages": {
+      "count": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "human_thread_follows": {
+      "count": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "human_activity_frontiers": {
+      "count": 2,
+      "sha256": "8bc83b5b7b2f60f3000a44faeaa3c85120cbb57c763757be3af90fefebe6f32b"
+    },
+    "human_activity_manual_unread": {
+      "count": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "agent_definitions": {
+      "count": 86,
+      "sha256": "9af57ae48d413b969e940b53cb1bd65906855f31ef1057ce5dc805ddcaf5a211"
+    },
+    "agent_definition_revisions": {
+      "count": 103,
+      "sha256": "02d74fae0906c49c91181dfcb38a6f3e968618b94293c840463582dfd0b37328"
+    },
+    "profile_image_objects": {
+      "count": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "profile_image_upload_intents": {
+      "count": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    }
+  },
+  "ledgerRoleInstancesPreferencesUnchanged": true,
+  "protectedNotificationMemoryFilesChecked": 3,
+  "newWebSnapshot": "/Users/sun/Code/repos/rah_os/.workbench-web/bc066249feb20e9abb6f1a36578aa7fb611957dae3b49af7be8daf9f2e243a3c",
+  "webBuildId": "8382d6bcb5aa17d685b124e0dc5d1d01f8561e4cdf4996159bae035a9bb758d1",
+  "indexSha256": "20e06141bbe186296d2c095ade8ff027b2420a0ce8c7612aaac643e20ea3632b",
+  "networkModeUnchanged": true,
+  "notificationTransportUnchanged": true,
+  "edges": [
+    {
+      "origin": "https://192.168.1.86:4178",
+      "status": 200,
+      "tlsVerifiedWithOriginalCA": true,
+      "webIndexMatches": true
+    },
+    {
+      "origin": "https://100.101.107.87:4178",
+      "status": 200,
+      "tlsVerifiedWithOriginalCA": true,
+      "webIndexMatches": true
+    }
+  ],
+  "scope": "Role avatar upload through existing profile-image lifecycle with immutable Role revision GC references; transactional unused-preset allocation; manual duplicates and exhausted-pool recycling; four narrow desktop sidebars measured against the whole pinned Web1.21.40 release, with no speculative spacing CSS changes. No formal business or avatar uploads and no provider generation. Schema91, ledger, frozen instances, notifications, network and TLS remain unchanged."
+}

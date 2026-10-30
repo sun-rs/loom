@@ -1,0 +1,60 @@
+{
+  "at": "2026-10-30T06:43:29.843Z",
+  "sourceRevision": "1f36f183a7a1726b7c2865ef5c7e891a5be089fe",
+  "webBuildId": "8382d6bcb5aa17d685b124e0dc5d1d01f8561e4cdf4996159bae035a9bb758d1",
+  "protectedTablesUnchanged": true,
+  "results": [
+    {
+      "width": 1440,
+      "officialSeries": 9,
+      "spritesVerifiedAgainstCanonicalData": 72,
+      "geometry": {
+        "width": 44,
+        "height": 44,
+        "columns": 8,
+        "containerWidth": 472
+      },
+      "frame": {
+        "width": 512,
+        "height": 688,
+        "top": 16,
+        "bodyHeight": 592,
+        "bodyScrollHeight": 815,
+        "bodyCount": 1,
+        "footerInBody": false,
+        "footerBottom": 704,
+        "footerVisible": true
+      },
+      "configurationWrites": 0,
+      "uploadTilePresent": true,
+      "randomTilePresent": true,
+      "errors": []
+    },
+    {
+      "width": 390,
+      "officialSeries": 9,
+      "spritesVerifiedAgainstCanonicalData": 72,
+      "geometry": {
+        "width": 44,
+        "height": 44,
+        "columns": 4,
+        "containerWidth": 358
+      },
+      "frame": {
+        "width": 390,
+        "height": 759.59375,
+        "top": 84.40625,
+        "bodyHeight": 704,
+        "bodyScrollHeight": 1275,
+        "bodyCount": 1,
+        "footerInBody": false,
+        "footerBottom": 0,
+        "footerVisible": false
+      },
+      "configurationWrites": 0,
+      "uploadTilePresent": true,
+      "randomTilePresent": true,
+      "errors": []
+    }
+  ]
+}
