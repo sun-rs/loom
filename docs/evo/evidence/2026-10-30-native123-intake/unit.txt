@@ -1,0 +1,31 @@
+
+> rah-os@0.0.0 test:official-web:native123
+> node --test scripts/official-web123/*.test.mjs scripts/official-web123/*.test.ts
+
+✔ Role sidebar and Computer member list are different facets of one native read cache, without identity inference or unstable snapshots (1.1805ms)
+✔ new native Roles use the whole pinned preset pool excluding occupied avatars, with an exhausted-pool fallback (0.673708ms)
+✔ native avatars retain original rendering and legacy saved keys remain readable without joining the new picker (0.553375ms)
+✔ native Agent list projects Role IDs while channel senders remain instance IDs; read bridge cannot execute writes (2.106583ms)
+✔ native send holds the same UI promise on unknown, never sends a replacement, and verifies the frozen SDK intent explicitly (6.171333ms)
+✔ native viewport acknowledgment sends its observed Room frontier; it never marks unseen messages or deliveries read (0.186459ms)
+✔ standalone chats use explicit sidebar placement; instance-private boxes never leak into the root DM list (1.676583ms)
+✔ pixel reference SDK fixtures obey real Room snapshot/timeline schemas, including canonical mention spans (2.822917ms)
+✔ pixel sidebar fixture satisfies its entire SDK response and cold/warm Room reads follow the actual replay contract (1.654959ms)
+✔ native history paging maps before/after only within the requested Room and stays bounded (2.4125ms)
+✔ native sync cannot treat independent Room sequences as a global stream (0.166042ms)
+✔ unmasked pixel gate detects a single color or alpha pixel difference (1.313625ms)
+✔ Loom omits incompatible Agent tabs through one explicit capability seam; other native presentation remains intact (1.179208ms)
+✔ native local creation is not blocked by an unrelated Raft subscription quota (0.416916ms)
+✔ native mute and collapse settings reflect existing per-Human workspace preferences, never invented message frontiers (1.601417ms)
+✔ native instance and aggregate Role lights use verified Host observations rather than enabled definitions or reused display names (0.613041ms)
+✔ read recovery coalesces visibility/focus hints and never refreshes hidden or disposed views (2.385291ms)
+✔ native model form groups AGY choices but writes exact published model/effort; remarks preserve the executable prompt (3.363125ms)
+✔ complete Web1.21.23 source and official workspace closure are immutable and use their original dependency lock (119.277166ms)
+ℹ tests 19
+ℹ suites 0
+ℹ pass 19
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 331.229291

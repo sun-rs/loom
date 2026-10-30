@@ -60,7 +60,10 @@
     "build:official-web": "npm run typecheck:loom --prefix frontends/raft && npm run build --prefix frontends/raft",
     "test:official-web:browser": "node scripts/official-web/browser-baseline.mjs",
     "build:official-web:channel": "npm run typecheck:loom --prefix frontends/raft && npm run build:web:workbench",
-    "test:official-web:channel": "node scripts/official-web/channel-browser.mjs"
+    "test:official-web:channel": "node scripts/official-web/channel-browser.mjs",
+    "build:official-web:native123": "node scripts/official-web123/build.mjs",
+    "test:official-web:native123": "node --test scripts/official-web123/*.test.mjs scripts/official-web123/*.test.ts",
+    "test:official-web:native123:pixel": "node scripts/official-web123/pixel-compare.mjs"
   },
   "devDependencies": {
     "@types/node": "^24.3.0",

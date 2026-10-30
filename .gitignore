@@ -11,3 +11,6 @@ coverage/
 .env
 .env.*
 !.env.example
+
+# Isolated complete-source frontend candidate; never confuse with deployed assets.
+/frontends/raft/dist-native123/

@@ -1,0 +1,21 @@
+{
+  "kind": "whole-release-frontend-candidate",
+  "web": "1.21.23",
+  "revision": "db5e399f017d584e49597e3a28757645d6807893",
+  "ui": "0.7.0",
+  "sourceLock": "../upstream/web-1.21.23/source-lock.json",
+  "entry": "entry.ts -> unchanged original main.tsx / App / MainLayout",
+  "productConnected": false,
+  "productionReplacementAccepted": false,
+  "reason": "Basic real-Core vertical paths are connected; retained lifecycle, sidebar mutations, conversation/file/memory/notification/mobile capabilities still require adapters and acceptance. Do not deploy this as the complete product.",
+  "exceptionOwners": {
+    "policy.ts": "Explicit omission of incompatible Raft Agent tabs and cloud subscription limits. No new UI dimensions or recipes.",
+    "api.ts / commands.ts / read-bridge.ts / read-resources.ts": "Loom typed SDK and canonical identity/causal/idempotency boundaries; native read caches are presentation only.",
+    "agent-facets.ts": "Native single Agent read cache split into verified Role and Instance views; no business identity inference.",
+    "runtime-shared.ts / runtime-models.ts": "Loom's six installed native CLI families and Host-published model choices, not Raft's hosted providers/Kimi SDK.",
+    "avatars.ts / legacy-avatar-assets.ts": "Native sixteen-preset selection; existing saved newer/uploaded/history artwork remains readable without changing Role revisions.",
+    "fonts.ts": "Local delivery of exactly matching native fonts; no font-size or typography substitutions.",
+    "realtime-driver.ts": "Visible-view durable SDK reads with per-Room sync; no invented global message sequence, socket completion or delivery ACK."
+  },
+  "evidence": "../../../docs/evo/evidence/2026-10-30-native123-intake/README.md"
+}

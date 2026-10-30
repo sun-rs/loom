@@ -1,0 +1,8 @@
+{
+  "purpose": "Local delivery of the exact quote-font URL present in the pinned official UI stylesheet; no font-family, weight or glyph substitution.",
+  "file": "quote.woff2",
+  "url": "https://fonts.gstatic.com/s/hankengrotesk/v12/ieVn2YZDLWuGJpnzaiwFXS9tYtpd59CxCis4.woff2",
+  "license": "Hanken Grotesk OFL; retained at frontends/raft/loom/fonts/hankengrotesk-OFL.txt",
+  "otherFonts": "Original matching Space Grotesk / Space Mono URLs and preserved bytes are recorded in frontends/raft/loom/fonts/provenance.json. The native reference and candidate tests use these same bytes.",
+  "sha256": "1f21c6eaa0000f3329cfcfac966b43d5bebf5aa610303e33294ac31bc6f4bb59"
+}

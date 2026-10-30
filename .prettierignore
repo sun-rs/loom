@@ -23,3 +23,6 @@ packages/application-service/vendor/raft/attachmentPreviewBridge.ts
 
 # Adopted official table/diff parsers; provenance pins source and type-only edits.
 packages/application-service/vendor/raft/previews/{csv,xlsx,text,diffPatch,shared}.ts
+
+# Complete pinned official Web and workspace source: preserve original bytes.
+frontends/raft/upstream/web-1.21.23/

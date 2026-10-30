@@ -1,0 +1,42 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import {
+  ClientRoomTimelineResponseSchema,
+  ClientRoomSyncResponseSchema,
+  SidebarResponseSchema,
+} from "@rah-os/protocol";
+import { sdkPopulated } from "./populated-fixture.mjs";
+import { sdkRead } from "./pixel-fixture.mjs";
+import { FakeRahClient } from "@rah-os/client-sdk";
+import { RoomSession } from "@rah-os/client-core";
+test("pixel reference SDK fixtures obey real Room snapshot/timeline schemas, including canonical mention spans", () => {
+  assert.doesNotThrow(() =>
+    ClientRoomSyncResponseSchema.parse(sdkPopulated("/v3/client/rooms/sync")),
+  );
+  assert.doesNotThrow(() =>
+    ClientRoomTimelineResponseSchema.parse(
+      sdkPopulated("/v3/client/rooms/timeline"),
+    ),
+  );
+});
+test("pixel sidebar fixture satisfies its entire SDK response and cold/warm Room reads follow the actual replay contract", async () => {
+  assert.doesNotThrow(() =>
+    SidebarResponseSchema.parse(sdkRead("/v3/client/sidebar/get")),
+  );
+  const client = new FakeRahClient(async (op, input: any) =>
+    sdkPopulated(
+      op === "room.sync"
+        ? "/v3/client/rooms/sync"
+        : "/v3/client/rooms/acknowledge",
+      input,
+    ),
+  );
+  const room = new RoomSession({
+    client,
+    consumerId: "fixture",
+    roomId: "fixture-conversation",
+  });
+  await room.syncUntilCurrent();
+  await room.syncUntilCurrent();
+  assert.equal(room.state.cursor, 3);
+});

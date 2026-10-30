@@ -1,0 +1,12 @@
+{
+  "extends": "../upstream/web-1.21.23/packages/web/tsconfig.json",
+  "compilerOptions": {
+    "rootDir": "../../..",
+    "typeRoots": ["../upstream/web-1.21.23/packages/web/node_modules/@types"]
+  },
+  "include": [
+    "./*.ts",
+    "./*.tsx",
+    "../upstream/web-1.21.23/packages/web/src/vite-env.d.ts"
+  ]
+}

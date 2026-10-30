@@ -1,3 +1,4 @@
+import {verifyNativeLoom}from"../official-web123/loom-browser.mjs";
 import { verifyAvatarRepair } from "./avatar-repair-browser.mjs";
 import { verifyWorkingSurfaces } from "./working-surfaces-browser.mjs";
 import { verifyRoleProfileAffordances } from "./role-profile-affordances-browser.mjs";
@@ -241,7 +242,9 @@ try {
         ? firefox
         : chromium
   ).launch({ headless: true });
-  if (process.env.LOOM_BROWSER_SLICE === "avatar-repair") {
+  if (process.env.LOOM_BROWSER_SLICE === "native123") {
+   console.log(JSON.stringify(await verifyNativeLoom({browser,origin,workspace,role,channels,client,instances,head})));
+  } else if (process.env.LOOM_BROWSER_SLICE === "avatar-repair") {
     console.log(
       JSON.stringify(
         await verifyAvatarRepair({

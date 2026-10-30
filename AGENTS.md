@@ -5,30 +5,44 @@ from `evo` on 2026-10-23), not the
 legacy sibling `rah` repository. There is no `HANDOVER.md`. Do not import the
 legacy project's Session-first rules or obsolete roadmap restrictions.
 
-## Owner directive: complete official frontend baseline (2026-10-30)
+## Owner directive: stable complete official frontend baseline (2026-10-30)
 
-The next accepted frontend baseline is the **complete official Web1.21.40
-source plus raft-ui0.52.2**, not old page source with newer resource patches.
-This directive supersedes the selected-closure/resource-port upgrade recipes
-below for future frontend migration. Existing ports describe the deployed
-legacy implementation and historical evidence; they do not authorize adding
-another cross-version UI slice or declaring the migration complete.
+Owner now chooses **GitHub Web1.21.23 (`db5e399`) and its own frozen
+workspace/dependency lock** as the next complete UI baseline. This supersedes
+the earlier Web1.21.40+UI0.52.2 target and all incremental resource-port upgrade
+recipes below. Web1.21.23 publishes raft-ui0.7.0; do not mix it with0.52.2 or
+newer website fragments. Old port instructions and dated evidence describe the
+legacy deployed implementation, not an authorization to extend it.
 
-Acquire and verify the complete target release before replacing the frontend.
-Owner explicitly authorized extracting the deployed release: the complete,
-immutable executable module/resource closure is an accepted intake, separately
-identified from the original authored TSX checkout. Do not wait for a public
-source mirror or describe compiled code as recovered original TSX. Preserve
-official files unchanged; SDK/data/identity/capability and delivery bindings live
-outside that source. Selected fragments, the UI npm package alone, screenshot
-matches or a changed version label do not prove a complete Web intake.
-Verify the entire graph, dynamic resource seams, actual bundled UI implementation
-and offline native-page boot. Acquisition does not certify backend adaptation
-or visual/behavioral acceptance. Preserve current service/data until the new
-whole-release adapter passes; never mix old page implementations into the new
-runtime. Backend Role/Instance/Session/Channel owners and approved Loom-only
-capabilities remain intact. See
-`docs/design/full-official-frontend-baseline.zh-CN.md`.
+Keep the complete Web source and required official workspace packages immutable,
+with license, revision, all-file hashes and original lockfile. Loom owns explicit
+SDK/data/identity/route/capability adapters outside that source; retained native
+pages, composition, CSS, fonts, menus and responsive behavior come from this one
+release. The full immutable candidate is `frontends/raft/upstream/web-1.21.23`;
+its external adapter is `frontends/raft/adapter123`. The candidate's own
+`adoption.json` is explicitly not production-ready; the older root adoption
+manifest still describes the running legacy build. See the evidence matrix at
+`docs/evo/evidence/2026-10-30-native123-intake/README.md` before selecting the
+next vertical slice. Upstream UI stores may cache projections but never become another
+business owner. Role/Instance/Session/Channel owners, execution fences and
+approved Loom-only capabilities remain intact. Do not restore Raft's server,
+account, billing, agent-session architecture or central relay as Loom owners.
+
+Build the original in isolation first. Compare the original and adapted builds
+with identical deterministic fixture content, locale/time/viewport/DPR/theme and
+loaded fonts. Verify empty/default/selected/loading/menu/form and responsive
+states; screenshot equality alone does not prove real SDK operations. Explicit
+Loom-only surfaces and owner-approved mobile policies require named exceptions,
+not silent pixel masks. Keep official source/hash checks separate from visual,
+behavioral and production acceptance. Never compare two copies of a locally
+rewritten component and call that official parity.
+
+Preserve the current production service and data until the whole-release adapter
+passes its vertical business and visual gates. Do not switch deployment merely
+because intake/build succeeds. Upgrade future versions as complete snapshots
+with their matching dependency lock, review interface differences and run
+registered regressions; website changes are candidates, not a continuous patch
+queue. See `docs/design/full-official-frontend-baseline.zh-CN.md`.
 
 - `chatbox` now contains the independently imported `rah/main` workbench
   (initial source `871ace825954750a546a027a832d76332cbd467e`). It is a separate
