@@ -1,0 +1,21 @@
+{
+  "productSource": "3e86f88a2567b27e54bbe8de2a9be0d6298d0b44",
+  "officialPinsChanged": false,
+  "candidate123Deployed": false,
+  "paidProviderCalls": 0,
+  "checks": {
+    "launchTests": 24,
+    "formalPageLoads": 18,
+    "protectedTables": 14,
+    "verifiedNetworkEdges": 5,
+    "originalCaHttpsEdges": 2,
+    "protectedTablesUnchangedAfterBrowser": true
+  },
+  "artifacts": {
+    "README.md": "9ea22844989bb51e82184870af130945ddd5451f6dda5bf631b31d2d00acbe8d",
+    "deployment.json": "4346add1f9f27f920029535631fb61bdf7007be3f78d1a4d3e1c462a21fe5169",
+    "formal-pages.json": "98ad6fec10124480b7a764f7944c3c9b52600bcd773640a74f7b5ab1f8ccc048",
+    "launch-tests.txt": "abfef2f01ebcfc09fbde823f08873204713f58b337fc1d62d9e1d65d92805403",
+    "upstream-versions.json": "d7646c19cb85e79e74827efd3fd5b14c0a6e3b4fbb41d0a2471dc1ef5c080fc5"
+  }
+}

@@ -1,0 +1,32 @@
+✔ default keeps local access (1.311625ms)
+✔ explicit LAN uses authenticated HTTPS edge configuration (0.106375ms)
+✔ explicit Tailnet HTTP binds only its address without pairing (0.345333ms)
+✔ Tailnet alone authorizes no ordinary LAN interface (0.069708ms)
+✔ a new or removed interface never changes the authorized set (0.137125ms)
+✔ explicit trusted LAN hosts bind exactly the configured addresses (0.058125ms)
+✔ duplicate, public, malformed or loopback trusted LAN hosts are refused (6.266583ms)
+✔ trusted LAN hosts are never derived outside an explicit Tailnet entry (0.230042ms)
+✔ the Tailnet variable never accepts an ordinary LAN, loopback or public address (0.20025ms)
+✔ the Tailnet variable accepts the CGNAT range it owns (0.1205ms)
+✔ supplemental LAN HTTPS keeps incumbent HTTP bindings and rejects implicit exposure (0.332042ms)
+✔ Tailnet HTTPS explicitly joins the existing HTTP and LAN HTTPS entries (0.385334ms)
+✔ a restart from a plain shell preserves the running Tailnet and LAN discovery mode (1.927333ms)
+✔ LAN HTTPS retains origin, binding and certificate paths without storing keys or credentials (0.120959ms)
+✔ missing, stale or invalid receipts fail before a restart can silently change access (0.764291ms)
+✔ explicit loopback receipt clears inherited remote launch variables (0.065333ms)
+✔ successful startup receipt is private, round-trips and is replaced with the new PID (9.46ms)
+✔ a Tailnet receipt carries its trusted LAN entries into an empty shell restart (0.2575ms)
+✔ a Tailnet-only receipt does not reintroduce LAN entries on restart (0.075625ms)
+✔ a corrupted network entry list fails closed instead of narrowing or widening (1.880209ms)
+✔ writing a receipt refuses a network entry set the launcher could not reproduce (4.935584ms)
+✔ a receipt whose Tailnet entry left the CGNAT range fails closed (0.277833ms)
+✔ restart preserves explicit supplemental HTTPS and clears inherited additions (0.279958ms)
+✔ restart preserves both explicit HTTPS edges and clears unrecorded Tailnet TLS (0.11975ms)
+ℹ tests 24
+ℹ suites 0
+ℹ pass 24
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 278.219416

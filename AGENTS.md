@@ -70,6 +70,17 @@ instructions are omitted. Only matching terminal proof permits all-stopped UI;
 an accepted stopping request alone does not. The candidate retains explicit
 verification for pending stops; see the current dated acceptance limits.
 
+Owner clarification (2026-10-31): Loom's existing compact mobile navigation,
+touch/tablet/foldable and low-height landscape display-area policies are product
+extensions to migrate and regress, with the same body-font scale across
+orientations. Preserve native desktop geometry. Fork/Side, the global memory management UI (retaining Channel memory isolation),
+Role/Instance semantics, independent Role conversations and Channel-instance
+private boxes are Loom-owned business capabilities; reuse official components,
+icons and layout primitives through named slots, without substituting Raft's
+business model. Full-source replacement cannot drop these capabilities or the
+approved mobile optimizations. A routine deployment uses the accepted product
+entry until the complete-source candidate meets those retained-capability gates.
+
 Preserve the current production service and data until the whole-release adapter
 passes its vertical business and visual gates. Do not switch deployment merely
 because intake/build succeeds. Upgrade future versions as complete snapshots

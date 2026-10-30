@@ -1,6 +1,6 @@
 # Loom 当前主线现状（原 evo）
 
-更新日期：2026-10-30。本页区分当前结论与历史试验，不改变目标合同或补判未通过的验收。文档整理基线为 `fe5d65fc`；当前部署及真实模型验收以下文和对应的 dated evidence 为准。
+更新日期：2026-10-31。本页区分当前结论与历史试验，不改变目标合同或补判未通过的验收。文档整理基线为 `fe5d65fc`；当前部署及真实模型验收以下文和对应的 dated evidence 为准。
 
 完整原文保留在[截至本日的状态快照](status-history-through-2026-10-27.zh-CN.md)。其中过时的 main 冻结、控制台在用、临时监听地址和早期“下一步”均不再作为当前指令；历史失败及限制仍可追溯。第一至六十五节另见[九月日志](log/status-history-2026-09.zh-CN.md)。
 
@@ -9,7 +9,7 @@
 - `main` 是当前 Loom；`evo` 已晋升并移除；`chatbox` 独立承载 `rah/main` 导入，不参与 Loom 构建。见[分支记录](branch-promotion.zh-CN.md)。
 - 唯一产品前端为 `frontends/raft`。旧复刻 UI 和 `apps/console` 已退役，不恢复其路由、构建或测试入口。
 - 保留部署标签 `com.loom.evo`、数据目录 `~/.loom/evo`、日志目录及频道主目录 `~/.loom/channel-workspaces/`。这些名称不是旧分支残留任务，不能为整洁搬迁数据。
-- 正式服务已在`b9854006`推送后备份并平滑重启，schema91；[部署收据](evidence/2026-10-30-avatar-consistency/deployment.json)确认14个保护表及通知／记忆文件保持，LAN/Tailnet原CA验证通过。[正式Firefox页面](evidence/2026-10-30-avatar-consistency/formal-page.json)在1440与390宽度打开既有Role并连续随机5次：零新增请求、几何稳定、图库保持启用；未保存草稿、无业务写入。保存后消息／成员一致性及冻结执行修订由隔离Core的三引擎流程证明。此前[工作动态／计算机概览](evidence/2026-10-30-working-surfaces140/README.md)、[空置顶／实际拖动](evidence/2026-10-30-sidebar-drag-repair/README.md)、[弹窗尺寸](evidence/2026-10-30-avatar-window/README.md)和[PWA真机限制](evidence/2026-10-30-pwa-member-repair/README.md)保留。
+- 正式服务已从推送后的main `3e86f88a`重建现役产品入口并备份／平滑重启，schema91；[部署与来源核查](evidence/2026-10-31-deployment-source-audit/README.md)确认14个保护表及通知／记忆文件保持，五个网络入口构建匹配、原CA校验通过。桌面／手机／触控横屏共18个真实页面状态通过，原移动优化及原创业务入口保留；**adapter123完整候选尚未上线**。此前[头像修复](evidence/2026-10-30-avatar-consistency/README.md)、[工作动态／计算机概览](evidence/2026-10-30-working-surfaces140/README.md)和[PWA真机限制](evidence/2026-10-30-pwa-member-repair/README.md)仍可追溯。
 - HTTP 4176、LAN HTTPS 4178 与 Tailnet HTTPS 4178 在既有明确地址监听；同一 Core、原本地 CA、无配对、保留 Host/Origin 校验。本轮两个 HTTPS 首页经原 CA 校验，三个 HTTP 入口均200；页面/API/Service Worker及负向校验见此前[Tailnet入口证据](evidence/2026-10-28-tailnet-https/README.md)。远端实体手机与关闭页面后的推送未在本批重验；部署前仍须读取实际配置。
 
 ## 2. 当前状态

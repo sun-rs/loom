@@ -1,0 +1,113 @@
+{
+  "at": "2026-10-30T17:23:58.519211+00:00",
+  "officialSource": {
+    "url": "https://github.com/botiverse/raft-source",
+    "head": "db5e399f017d584e49597e3a28757645d6807893",
+    "release": "Release v1.21.23-source.1",
+    "commitDate": "2026-10-19T23:55:13Z",
+    "branches": [
+      {
+        "name": "main",
+        "sha": "db5e399f017d584e49597e3a28757645d6807893"
+      }
+    ],
+    "latestTags": [
+      {
+        "name": "v1.21.23-source.1",
+        "commitSha": "db5e399f017d584e49597e3a28757645d6807893"
+      },
+      {
+        "name": "v1.21.12-source.1",
+        "commitSha": "a98ae003246a0360872a77d76dec2fccd0347ef7"
+      },
+      {
+        "name": "v1.21.2-source.1",
+        "commitSha": "26f77ef97c40d3d91aa2c5e42b0fd66b8bf39fe6"
+      },
+      {
+        "name": "v1.21.0-source.1",
+        "commitSha": "5f775a9ec3d01cc4951522a7ab313d2ec7e2ae4d"
+      },
+      {
+        "name": "v1.13.0-source.1",
+        "commitSha": "05f7d8fd77d2535f993d5d90b85118438bc18216"
+      }
+    ],
+    "packageVersions": {
+      "web": "1.21.23",
+      "server": "1.21.23",
+      "computer": "1.0.49",
+      "daemon": "1.0.49",
+      "cli": "0.0.38"
+    },
+    "matchesCompleteCandidatePin": true,
+    "tagObject": "fad87e269f2393a8fdd11b10633cb44b3788ffcc",
+    "peeledTagCommit": "db5e399f017d584e49597e3a28757645d6807893"
+  },
+  "officialWeb": {
+    "url": "https://app.raft.build/s/hakasemac/",
+    "version": "1.21.41",
+    "build": {
+      "releaseId": "3dfdfaf070b92145669aea1dc8dd3076b0c877fa",
+      "commitSha": "3dfdfaf070b92145669aea1dc8dd3076b0c877fa",
+      "builtAt": "2026-10-30T08:08:04Z",
+      "branch": "release/v1.21.41",
+      "deploymentEnvironment": "production"
+    },
+    "previousObservedVersion": "1.21.40",
+    "scope": "Published HTML/JS/CSS, not newly published TSX or a complete-source upgrade"
+  },
+  "uiPackage": {
+    "url": "https://registry.npmjs.org/@botiverse/raft-ui",
+    "latest": "0.54.0",
+    "publishedAt": "2026-10-30T16:40:53.657Z",
+    "liveLoomPackage": "0.52.2",
+    "completeCandidatePackage": "0.7.0",
+    "tarball": "https://registry.npmjs.org/@botiverse/raft-ui/-/raft-ui-0.54.0.tgz",
+    "integrity": "sha512-Vf/pnEtKtjLyPxUGxevp2s55fBfCDTOq/fKueXaPJV1Dlk1SWQcZV7GHMXPT3hCfr6+HPHqapzm2TH8JLqB65Q==",
+    "integrityVerified": true,
+    "fileCount": 620,
+    "tsxSourceFiles": 0,
+    "changesSince0522": [
+      "disabled Select placeholder/chevron inherit disabled styling",
+      "0.52.4 reverts accidental unrelated 0.52.3 class rewrites",
+      "ChatIcon aliases the plain MessageIcon without internal dots",
+      "SaveStatus reserves a footnote line 4px below an immediate-apply control",
+      "Activity thread/task leading mark uses its own icon with channel corner badge",
+      "Revised icon semantics; CreateTaskIcon deprecated; consent RadioGroup has no default selection"
+    ],
+    "loadedWebsiteUiVersion": "not inferred from the npm latest tag"
+  },
+  "backend": {
+    "publicServerSourceVersion": "1.21.23",
+    "deployedHealthUrl": "https://api.raft.build/health",
+    "deployedHealthStatus": 200,
+    "deployedHealthBody": {
+      "status": "ok"
+    },
+    "deployedServerVersion": null,
+    "reason": "Public health gives no build identity; /version is 404. Web release does not prove server version.",
+    "computerPublicSourceVersion": "1.0.49",
+    "computerUnversionedCdnManifest": {
+      "url": "https://cdn.raft.build/computer/manifest.json",
+      "observedVersion": "1.0.32",
+      "isLatestVersionProof": false
+    },
+    "computerLatestDownloadManifestProbe": "/latest.json 404; install.sh 403; no latest release inferred from older unversioned manifest or stale npm package"
+  },
+  "pinsMoved": false,
+  "packagesInstalledOrUpgraded": false,
+  "rawResponseSha256": {
+    "commits.json": "e15b58b960b6cc6303db9e27d20a56449130f7132b0f69d9ea5c93cfa553ddc2",
+    "tags.json": "f982aa776057c7e949f014c9287b8ae3e0eeadd5d0acc2f735632cac7d4e9bdc",
+    "branches.json": "6bba59cdbfccd3391c67961a0b23701f1bc16233e0510d3549dfcd4bb405ffbd",
+    "npm-ui.json": "7908543e9614e6cae4eb6c8c6acc769f040b8651242c64c32dc7c254a3ea4cf9",
+    "app.html": "3f63774c216a3f744ecd444df96f7fe1edb8755a89cad7ad233b9ebd5ca7758f",
+    "index-FQZL9br8.js": "317cfb1275ffa63265efbf3b9d2953fbb9e2b22b7abfefe83f298ccf10ae48f4",
+    "app-shell-CNk2LoJm.js": "1751a5e9b7b993cd11ed9e612f34007e611b7807b072b6824e12161ab57b7c10",
+    "vendor-raft-ui-DhAXy39M.js": "232f4ce22f5654cb4beb386a758012306f4f064e82e242ea9ea0e1edd48b3998",
+    "app-shell-YFXJGurH.css": "fc343853c8b4321d940f2f76ff939593cb43d6dc5f5473eee8904861432f2b4a",
+    "raft-ui-0.54.0.tgz": "d2f99adde259c681b9808715c536d764c05b4215e96d202d955a0741d9a0d0b0",
+    "cdn-computer-manifest.json": "2503e72b51702e5cb43c78ead5b3006e28ee5f5dcb36686c9c759e88314239ce"
+  }
+}

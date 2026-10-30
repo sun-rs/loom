@@ -1,0 +1,167 @@
+{
+  "at": "2026-10-30T17:21:28.376Z",
+  "webBuildId": "d1b6ec88550a9b38913fd705da3d1ed6cbe0f2cd90645aca2af172393fc5e9e0",
+  "scope": "Real deployed product, page load and layout smoke; ordinary canonical delivery read receipts allowed, content/configuration mutations blocked. Browser ignores TLS only in test context; original CA is separately verified by curl. No test objects or paid calls. Not a fresh pixel parity or physical-device certificate.",
+  "results": [
+    {
+      "engine": "firefox",
+      "width": 1440,
+      "height": 1000,
+      "touch": false,
+      "httpsOrigin": "https://100.101.107.87:4178",
+      "pages": [
+        {
+          "view": "channels",
+          "loaded": true,
+          "horizontalOverflow": false,
+          "mobileNav": null
+        },
+        {
+          "view": "agents",
+          "loaded": true,
+          "horizontalOverflow": false,
+          "mobileNav": null
+        },
+        {
+          "view": "computers",
+          "loaded": true,
+          "horizontalOverflow": false,
+          "mobileNav": null
+        },
+        {
+          "view": "memory",
+          "loaded": true,
+          "horizontalOverflow": false,
+          "mobileNav": null
+        },
+        {
+          "view": "tasks",
+          "loaded": true,
+          "horizontalOverflow": false,
+          "mobileNav": null
+        },
+        {
+          "view": "settings",
+          "loaded": true,
+          "horizontalOverflow": false,
+          "mobileNav": null
+        }
+      ],
+      "pageErrors": [],
+      "failedApi": [],
+      "blockedMutations": [],
+      "allowedCanonicalReadReceipts": 1
+    },
+    {
+      "engine": "firefox",
+      "width": 390,
+      "height": 844,
+      "touch": true,
+      "httpsOrigin": "https://100.101.107.87:4178",
+      "pages": [
+        {
+          "view": "channels",
+          "loaded": true,
+          "horizontalOverflow": false,
+          "mobileNav": {
+            "x": 16,
+            "y": 786,
+            "width": 358,
+            "height": 50
+          }
+        },
+        {
+          "view": "agents",
+          "loaded": true,
+          "horizontalOverflow": false,
+          "mobileNav": null
+        },
+        {
+          "view": "computers",
+          "loaded": true,
+          "horizontalOverflow": false,
+          "mobileNav": null
+        },
+        {
+          "view": "memory",
+          "loaded": true,
+          "horizontalOverflow": false,
+          "mobileNav": null
+        },
+        {
+          "view": "tasks",
+          "loaded": true,
+          "horizontalOverflow": false,
+          "mobileNav": {
+            "x": 16,
+            "y": 786,
+            "width": 358,
+            "height": 50
+          }
+        },
+        {
+          "view": "settings",
+          "loaded": true,
+          "horizontalOverflow": false,
+          "mobileNav": null
+        }
+      ],
+      "pageErrors": [],
+      "failedApi": [],
+      "blockedMutations": [],
+      "allowedCanonicalReadReceipts": 1
+    },
+    {
+      "engine": "chromium",
+      "width": 1130,
+      "height": 712,
+      "touch": true,
+      "httpsOrigin": "https://100.101.107.87:4178",
+      "pages": [
+        {
+          "view": "channels",
+          "loaded": true,
+          "horizontalOverflow": false,
+          "mobileNav": null
+        },
+        {
+          "view": "agents",
+          "loaded": true,
+          "horizontalOverflow": false,
+          "mobileNav": null
+        },
+        {
+          "view": "computers",
+          "loaded": true,
+          "horizontalOverflow": false,
+          "mobileNav": null
+        },
+        {
+          "view": "memory",
+          "loaded": true,
+          "horizontalOverflow": false,
+          "mobileNav": null
+        },
+        {
+          "view": "tasks",
+          "loaded": true,
+          "horizontalOverflow": false,
+          "mobileNav": null
+        },
+        {
+          "view": "settings",
+          "loaded": true,
+          "horizontalOverflow": false,
+          "mobileNav": null
+        }
+      ],
+      "pageErrors": [],
+      "failedApi": [],
+      "blockedMutations": [],
+      "allowedCanonicalReadReceipts": 1
+    }
+  ],
+  "protectedTableHashesUnchangedAfterBrowser": true,
+  "productionTestObjectsCreated": 0,
+  "paidCalls": 0
+}
