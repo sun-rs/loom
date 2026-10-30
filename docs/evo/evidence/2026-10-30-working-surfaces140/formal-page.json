@@ -1,0 +1,30 @@
+{
+  "at": "2026-10-30T08:09:47.348Z",
+  "origin": "http://127.0.0.1:4176",
+  "readOnlyAllowlist": true,
+  "protectedTableHashesUnchanged": true,
+  "productionTestObjectsCreated": 0,
+  "productionBusinessWrites": 0,
+  "results": [
+    {
+      "width": 1440,
+      "counts": "1 台 Computer · 1 台在线 · 3 个 实例",
+      "memoryCanvas": "oklch(1 0 0)",
+      "legacyBannerRemoved": true,
+      "observedWorkingSummaryControls": 0,
+      "syntheticProductionObservations": false,
+      "blocked": [],
+      "errors": []
+    },
+    {
+      "width": 390,
+      "counts": "1 台 Computer · 1 台在线 · 3 个 实例",
+      "memoryCanvas": "oklch(1 0 0)",
+      "legacyBannerRemoved": true,
+      "observedWorkingSummaryControls": 0,
+      "syntheticProductionObservations": false,
+      "blocked": [],
+      "errors": []
+    }
+  ]
+}

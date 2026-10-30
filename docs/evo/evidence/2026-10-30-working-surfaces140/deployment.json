@@ -1,0 +1,94 @@
+{
+  "at": "2026-10-30T08:09:19.876Z",
+  "sourceRevision": "52742a6c080700bfd61868932f68cfd1dea84c93",
+  "remoteMainBeforeRestart": "52742a6c080700bfd61868932f68cfd1dea84c93",
+  "pushedBeforeServiceRestart": true,
+  "sourceWorktreeDirty": false,
+  "oldPid": 69470,
+  "newPid": 65707,
+  "backup": "/Users/sun/.loom/evo/backups/pre-working-surfaces140-1793347744207",
+  "backupVerified": true,
+  "migrationPreflight": true,
+  "fromSchema": 91,
+  "toSchema": 91,
+  "protectedTables": {
+    "room_events": {
+      "count": 930,
+      "sha256": "a740123d39d13fd63959818427d5f147dc820d5746e40c62235f8770e1bd5287"
+    },
+    "messages": {
+      "count": 8,
+      "sha256": "53cf7ba183f2b0cf2372cefec5deaa58bbd0db1f2dfa504dc048427ba0d04216"
+    },
+    "role_templates": {
+      "count": 56,
+      "sha256": "5824f33356358e7522845fd9237f829c3da7e9c50b8e8da65563e51fe58f30a7"
+    },
+    "role_revisions": {
+      "count": 74,
+      "sha256": "b2320328958bc6affade83e1a74ece8a1c5b9e330e6981728dbccb93897888e3"
+    },
+    "role_instances": {
+      "count": 3,
+      "sha256": "71fae78b886643d189797aa959511addbf0124c2f7f7ea70f4efcff283b99ecc"
+    },
+    "human_sidebar_preferences": {
+      "count": 1,
+      "sha256": "e818e7e62cb18fb1738d48db6ea93bf6ca243ca09a1e264e943ff16f24df27f5"
+    },
+    "human_saved_messages": {
+      "count": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "human_thread_follows": {
+      "count": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "human_activity_frontiers": {
+      "count": 2,
+      "sha256": "8bc83b5b7b2f60f3000a44faeaa3c85120cbb57c763757be3af90fefebe6f32b"
+    },
+    "human_activity_manual_unread": {
+      "count": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "agent_definitions": {
+      "count": 86,
+      "sha256": "9af57ae48d413b969e940b53cb1bd65906855f31ef1057ce5dc805ddcaf5a211"
+    },
+    "agent_definition_revisions": {
+      "count": 103,
+      "sha256": "02d74fae0906c49c91181dfcb38a6f3e968618b94293c840463582dfd0b37328"
+    },
+    "profile_image_objects": {
+      "count": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "profile_image_upload_intents": {
+      "count": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    }
+  },
+  "ledgerRoleInstancesPreferencesUnchanged": true,
+  "protectedNotificationMemoryFilesChecked": 3,
+  "newWebSnapshot": "/Users/sun/Code/repos/rah_os/.workbench-web/8b9ecee6be632ca97f426c94dc3a6fdc711c6d545720cd856e2702c5d4cdc10a",
+  "webBuildId": "3ce2a4480ac51bdf0dc9580ded75320d15f52442a4773a46abf3e37bad298144",
+  "indexSha256": "6851f5c308309ec12fdffc4425d543c80aad0150d932c3edd299b81b1438dd03",
+  "networkModeUnchanged": true,
+  "notificationTransportUnchanged": true,
+  "edges": [
+    {
+      "origin": "https://192.168.1.86:4178",
+      "status": 200,
+      "tlsVerifiedWithOriginalCA": true,
+      "webIndexMatches": true
+    },
+    {
+      "origin": "https://100.101.107.87:4178",
+      "status": 200,
+      "tlsVerifiedWithOriginalCA": true,
+      "webIndexMatches": true
+    }
+  ],
+  "scope": "Owner-requested working-surface repair: native Web1.21.40 global working popup, Channel subtitle, observed member AvatarBadge, Computer overview, canvas memory content and stale-count notice. Existing business and observation owners only; schema91 and all protected business/profile tables, network, original TLS and notification transport retained. No paid providers or production test objects."
+}
