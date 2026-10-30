@@ -107,3 +107,16 @@ chrome与avatar网格在139已经有，说明我们的既有消费链也有缺�
 临时部署调用器最初还因省略当前BackupReceipt的omittedRuntimeCredentials元数据字段而在stop前失败；
 根据原API补齐完整比较后成功重试，未删除备份/执行检查，旧进程直到正确重启前一直正常运行。
 [探针失败摘要](deployment-probe-red.txt)保留，不将工具错误记成产品数据故障。
+
+## 最终正式部署
+
+产品代码`bb5305e4`已先推送main再在干净工作区构建、冻结资源、备份校验/预演、平滑重启。
+[最终部署收据](deployment.json)记录schema91保持、账本/Role/实例/偏好及通知/记忆文件保护、
+原CA校验LAN与Tailnet入口一致。未向正式Role或模型发送测试任务。
+
+[正式只读页面](formal-page.json)：390视口实际Fullscreen media下meta为#FFD440、顶边5px、
+搜索框起点7.5px；root切换仅1个document请求，同document/shell/Tasks对象，返回无初始loader。
+1440与390视口的preset均44×44，容器分别8/4列，原图实际加载512px；浏览/搜索不产生dirty，
+无配置写入、无页面异常，复核后保护表hash仍一致。
+[正式搜索截图](formal-search-390.png)、[任务截图](formal-tasks-390.png)、
+[桌面头像截图](formal-avatar-1440.png)。这仍不是鸿蒙/iOS系统状态栏实机验收。

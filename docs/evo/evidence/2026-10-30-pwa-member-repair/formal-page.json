@@ -1,7 +1,7 @@
 {
-  "at": "2026-10-30T02:25:11.628Z",
-  "sourceRevision": "87415872a129bee2244a9a0fdf36c84ff19f3501",
-  "webBuildId": "f56de7a9c1b685a33f998dadaa1d02bf070e01da94c69a0759b471a557c551b9",
+  "at": "2026-10-30T02:30:20.325Z",
+  "sourceRevision": "bb5305e4aebc1183d60be95189d437bef5bdcedf",
+  "webBuildId": "1f8f755d0cb5a404fc032f94ef7f057a2879e70a1e3e6bd091b7043418276fed",
   "productionProtectedTablesUnchanged": true,
   "browser": "Chromium",
   "paidCalls": false,
@@ -12,7 +12,8 @@
         "chrome": {
           "meta": "#FFD440",
           "fullscreen": true,
-          "height": 1,
+          "height": 5,
+          "inputTop": 7.5,
           "top": 0,
           "position": "fixed",
           "pointerEvents": "none",
