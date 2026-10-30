@@ -1,0 +1,13 @@
+[loom instance-prewarm] prewarm of principal_33d256ab-9a0d-464c-a79a-b188c31bb63f skipped: disabled
+[loom instance-prewarm] prewarm of principal_1ca25b7b-170b-4fe4-b3c3-cdd89649d8b2 skipped: disabled
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+browser.newContext: options.isMobile is not supported in Firefox
+    at async verifyRoleIdentity (/Users/sun/Code/repos/rah_os/scripts/official-web/role-identity-browser.mjs:31:21)
+    at async file:///Users/sun/Code/repos/rah_os/scripts/official-web/channel-browser.mjs:321:9 {
+  name: 'Error'
+}
+
+Node.js v25.9.0

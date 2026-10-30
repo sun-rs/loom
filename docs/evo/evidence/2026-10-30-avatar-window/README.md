@@ -14,7 +14,9 @@ Loom此前没有传调用点的宽度参数，继承npm原语的`md`默认448px�
 
 - [浏览器先失败](red.txt)复现448≠512；[DOM先失败](dom-red.txt)复现宽度参数丢失。
 - [7个DOM检查](dom.txt)、[7项调用点／数据／焦点检查](checks.txt)、[类型](types.txt)与[产品构建](build.txt)通过。保留原有大chunk提示；不跑无关后端或付费CLI套件。
-- [Chromium](browser.txt)和[WebKit](webkit.txt)：1440×720窄高度桌面确认512px宽、最大688px高、底部按钮独立且在视口内；390×844手机确认全宽、90%高，选择／保存／刷新及描述／prompt不串改。一个DialogBody，Footer不在Body内，无页面异常。
+- [Chromium](browser.txt)、[WebKit](webkit.txt)和[Firefox](firefox.txt)：1440×720窄高度桌面确认512px宽、最大688px高、底部按钮独立且在视口内；390×844手机确认全宽、90%高，选择／保存／刷新及描述／prompt不串改。一个DialogBody，Footer不在Body内，无页面异常。
 - 同尺寸截图：[之前1440×720](before-1440x720.png)、[修复后1440×720](after-1440x720.png)、[手机](after-390.png)。均为真实临时Core的fixture页面，不是正式用户入口。
 
 正式部署与只读页面核验在安全重启后记录；不把临时检查当作已部署。
+
+Firefox首次运行因Playwright不支持isMobile模拟而[中止](firefox-harness-failure.txt)，并非产品失败；改用其支持的viewport／touch参数后同尺寸检查通过，不把它当作实体移动Firefox或iOS模拟。

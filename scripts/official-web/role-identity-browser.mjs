@@ -32,7 +32,10 @@ export async function verifyRoleIdentity({
         viewport: { width, height: width === 390 ? 844 : 1000 },
         locale: "zh-CN",
         hasTouch: width === 390,
-        isMobile: width === 390,
+        // Firefox supports responsive viewport/touch checks, not isMobile emulation.
+        ...(browser.browserType().name() === "firefox"
+          ? {}
+          : { isMobile: width === 390 }),
       }),
       page = await context.newPage(),
       errors = [],
