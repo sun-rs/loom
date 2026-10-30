@@ -1,3 +1,4 @@
+import { useLoomAvatarMap } from "./AppearanceRuntime.tsx";
 import { copyTextWithFeedback } from "./copy-text";
 import { localMessagePermalink } from "./message-links";
 import { uiActionProps } from "./ui-action-props.ts";
@@ -211,7 +212,8 @@ export default function SavedPanel({
     writes,
     state,
   } = useSavedMessages(client, workspaceId);
-  const saved = (result?.items ?? []).map(savedEntry);
+  const avatars = useLoomAvatarMap();
+  const saved = (result?.items ?? []).map((row) => savedEntry(row, avatars));
   const savedTotal = result?.globalTotal ?? 0;
   const hasMore = !!result?.nextCursor;
   const loadMore = useCallback(() => read(true), [read]);

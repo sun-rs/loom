@@ -74,3 +74,15 @@ test("disposing an older mounted reader cannot remove its replacement", async ()
   }
   await assert.rejects(api.get("/channels/same/members"));
 });
+
+test("member avatars are preserved through the message identity projection", () => {
+  const result = projectMentionMembers([
+    {
+      principalId: "instance",
+      kind: "agent",
+      handle: "Tom-1",
+      avatarKey: "pixel:spider",
+    },
+  ]);
+  assert.equal(result.agents[0].avatarUrl, "pixel:spider");
+});

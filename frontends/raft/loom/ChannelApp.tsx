@@ -1,4 +1,7 @@
-import { useLoomChannelSubtitle } from "./AppearanceRuntime.tsx";
+import {
+  useLoomChannelSubtitle,
+  useLoomDisplayMembers,
+} from "./AppearanceRuntime.tsx";
 import { useThreadCover } from "./useThreadCover";
 import "./thread-cover.css";
 import { DirectMessageIcon } from "raft-ui";
@@ -186,6 +189,7 @@ function Channel({
   }, []);
 
   const [view, setView] = useState(() => bridge.view());
+  const displayMembers = useLoomDisplayMembers(view.members);
   const workingSubtitle = useLoomChannelSubtitle({
     memberIds: view.members
       .filter((m) => m.kind === "agent")
@@ -224,13 +228,13 @@ function Channel({
   useLayoutEffect(() => {
     const release =
       !loading && !error
-        ? bindMemberRoster(channel.roomId, () => view.members)
+        ? bindMemberRoster(channel.roomId, () => displayMembers)
         : undefined;
     notifyChannelMembersChanged(channel.roomId);
     return () => {
       release?.();
     };
-  }, [channel.roomId, view.members, loading, error]);
+  }, [channel.roomId, displayMembers, loading, error]);
   const currentProfileMember =
     !error && !loading
       ? view.members.find(

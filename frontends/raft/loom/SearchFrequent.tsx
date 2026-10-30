@@ -1,3 +1,4 @@
+import { useLoomAvatarMap } from "./AppearanceRuntime.tsx";
 import { SearchFrequentSection } from "./OfficialSearchSections.generated";
 import { useMemo } from "react";
 
@@ -58,6 +59,7 @@ export default function SearchFrequent({
   entities: SearchEntity[];
   onOpen: (entity: SearchEntity, full: boolean) => void;
 }) {
+  const avatars = useLoomAvatarMap();
   return (
     <SearchFrequentSection
       frequentSearchEntities={entities}
@@ -67,7 +69,11 @@ export default function SearchFrequent({
           result={
             entity.type === "agentDm" ? { ...entity, agentId: null } : entity
           }
-          agentAvatarUrl={null}
+          agentAvatarUrl={
+            entity.type === "agentDm" && entity.agentId
+              ? (avatars[entity.agentId] ?? null)
+              : null
+          }
           humanMember={undefined}
           onActivate={() => onOpen(entity, false)}
         />

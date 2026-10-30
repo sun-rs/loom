@@ -21,12 +21,14 @@ export default function AvatarLibraryPicker({
   onChange,
   onUpload,
   onRandom,
+  randomDisabled = false,
 }: {
   value: string;
   disabled: boolean;
   onChange: (value: string) => void;
   onUpload: (file: File) => void;
   onRandom: () => void;
+  randomDisabled?: boolean;
 }) {
   const id = useId();
   const input = useRef<HTMLInputElement>(null);
@@ -69,7 +71,7 @@ export default function AvatarLibraryPicker({
           <button
             type="button"
             aria-label="随机头像"
-            disabled={disabled}
+            disabled={disabled || randomDisabled}
             className={presetButtonClass(false, true)}
             onClick={onRandom}
           >

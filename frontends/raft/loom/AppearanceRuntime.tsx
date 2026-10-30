@@ -1,3 +1,7 @@
+import {
+  projectRoleAvatars,
+  type InstanceAvatarMap,
+} from "./role-avatar-projection.ts";
 import { useSidebarPreferences } from "./useSidebarPreferences";
 import {
   messageInstanceState,
@@ -6,6 +10,7 @@ import {
 import {
   createContext,
   useContext,
+  useCallback,
   useEffect,
   useMemo,
   useState,
@@ -27,8 +32,17 @@ const AppearanceRuntime = createContext<{
   models: Record<string, string>;
   presence: AgentPresence[];
   working: WorkingItem[];
+  avatars: InstanceAvatarMap;
+  refreshIdentity: () => void;
   onOpen: (id: string) => void;
-}>({ models: {}, presence: [], working: [], onOpen: () => {} });
+}>({
+  models: {},
+  presence: [],
+  working: [],
+  avatars: {},
+  refreshIdentity: () => {},
+  onOpen: () => {},
+});
 export const useLoomModelLabel = (id: string) =>
   useContext(AppearanceRuntime).models[id];
 export const useLoomMessageState = (roomId: string, id: string) =>
@@ -59,10 +73,20 @@ export function AppearanceRuntimeProvider({
   const [facts, setFacts] = useState<MessageStatusFacts>();
   const [catalog, setCatalog] = useState<AgentCatalogEntry[]>([]);
   const [models, setModels] = useState<Record<string, string>>({});
+  const [avatars, setAvatars] = useState<InstanceAvatarMap>({});
+  const [identityRevision, setIdentityRevision] = useState(0);
+  const refreshIdentity = useCallback(
+    () => setIdentityRevision((r) => r + 1),
+    [],
+  );
   const presence = useInstancePresence(client, controlRoomId, true, 3000);
   const working = useMemo(
-    () => projectWorkingInstances(catalog, presence),
-    [catalog, presence],
+    () =>
+      projectWorkingInstances(catalog, presence).map((item) => ({
+        ...item,
+        agentAvatarUrl: avatars[item.agentId] ?? item.agentAvatarUrl,
+      })),
+    [catalog, presence, avatars],
   );
   const unknown = presence
     .filter((p) => !catalog.some((a) => a.definition.agentId === p.agentId))
@@ -72,6 +96,7 @@ export function AppearanceRuntimeProvider({
   useEffect(() => {
     setCatalog([]);
     setModels({});
+    setAvatars({});
   }, [client, controlRoomId]);
   useEffect(() => {
     const controller = new AbortController();
@@ -79,7 +104,7 @@ export function AppearanceRuntimeProvider({
     if (!controlRoomId) return;
     const read = async () => {
       try {
-        const [agents, inventory] = await Promise.all([
+        const [agents, inventory, roles] = await Promise.all([
           client.request(
             "agent.list",
             { controlRoomId },
@@ -92,9 +117,15 @@ export function AppearanceRuntimeProvider({
                 { signal: controller.signal },
               )
             : Promise.resolve(null),
+          client.request(
+            "role.list",
+            { controlRoomId },
+            { signal: controller.signal },
+          ),
         ]);
         if (controller.signal.aborted) return;
         setCatalog(agents.agents);
+        setAvatars(projectRoleAvatars(roles, agents.agents));
         const labels = new Map(
           inventory?.runtimes.flatMap((r) =>
             r.modelBindingDescriptors.map(
@@ -116,17 +147,28 @@ export function AppearanceRuntimeProvider({
         if (!controller.signal.aborted) {
           setCatalog([]);
           setModels({});
+          setAvatars({});
         }
       } finally {
         if (!controller.signal.aborted) timer = setTimeout(read, 60000);
       }
     };
+    const onFocus = () => refreshIdentity();
+    window.addEventListener("focus", onFocus);
     void read();
     return () => {
+      window.removeEventListener("focus", onFocus);
       controller.abort();
       clearTimeout(timer);
     };
-  }, [client, controlRoomId, showModels, unknown]);
+  }, [
+    client,
+    controlRoomId,
+    showModels,
+    unknown,
+    identityRevision,
+    refreshIdentity,
+  ]);
   useEffect(() => {
     const controller = new AbortController();
     let timer: ReturnType<typeof setTimeout>;
@@ -171,6 +213,8 @@ export function AppearanceRuntimeProvider({
     <AppearanceRuntime.Provider
       value={{
         models,
+        avatars,
+        refreshIdentity,
         expandedRooms: preferences?.expandedLongMessages,
         presence,
         working,
@@ -232,5 +276,23 @@ export function useLoomChannelSubtitle({
       memberIds={memberIds}
       description={description}
     />
+  );
+}
+
+export const useLoomAvatarMap = () => useContext(AppearanceRuntime).avatars;
+export const useLoomIdentityRefresh = () =>
+  useContext(AppearanceRuntime).refreshIdentity;
+export function useLoomDisplayMembers(
+  members: readonly import("@rah-os/protocol").Principal[],
+) {
+  const avatars = useLoomAvatarMap();
+  return useMemo(
+    () =>
+      members.map((m) =>
+        m.kind === "agent" && Object.hasOwn(avatars, m.principalId)
+          ? { ...m, avatarKey: avatars[m.principalId] }
+          : m,
+      ),
+    [members, avatars],
   );
 }

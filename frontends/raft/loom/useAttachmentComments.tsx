@@ -1,3 +1,4 @@
+import { useLoomAvatarMap } from "./AppearanceRuntime.tsx";
 import { pageFetch } from "./page-fetch.ts";
 import {
   createContext,
@@ -30,6 +31,7 @@ function useCommentsOwner({
   parentMessage,
   wholeFileOnly = false,
 }: Scope) {
+  const avatars = useLoomAvatarMap();
   const bridge = useMemo(
     () =>
       new AttachmentCommentsClient(
@@ -92,7 +94,7 @@ function useCommentsOwner({
       channelId: c.roomId,
       senderType:
         c.senderType === "human" ? ("user" as const) : ("agent" as const),
-      senderAvatarUrl: null,
+      senderAvatarUrl: avatars[c.senderId] ?? null,
       senderGravatarHash: null,
     })) ?? null;
   const controls = (

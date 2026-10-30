@@ -1,4 +1,5 @@
-import { useLoomMessageState } from "./AppearanceRuntime.tsx";
+import { roleAvatarUrl } from "./profile-avatar.ts";
+import { useLoomMessageState, useLoomAvatarMap } from "./AppearanceRuntime.tsx";
 import { Status } from "raft-ui";
 export { boundMessageMentions } from "./member-roster.ts";
 import { projectMessageMentions } from "./member-roster.ts";
@@ -61,6 +62,7 @@ export default function MessageProfile({
   fallbackLabel?: string;
 }) {
   const members = useContext(MessageProfileMembers);
+  const avatars = useLoomAvatarMap();
   const member = members.find(
     (p) =>
       p.principalId === mentionId &&
@@ -73,6 +75,8 @@ export default function MessageProfile({
         <AvatarSlot
           context="mention-card"
           type={mentionType === "agent" ? "agent" : "human"}
+          agentAvatarUrl={avatars[mentionId] ?? member?.avatarKey}
+          humanAvatarUrl={roleAvatarUrl(member?.avatarKey ?? null)}
           humanPlaceholder={mentionType === "user"}
           className="mt-0.5 self-start"
         />

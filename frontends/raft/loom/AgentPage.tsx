@@ -1,3 +1,7 @@
+import {
+  useLoomIdentityRefresh,
+  useLoomAvatarMap,
+} from "./AppearanceRuntime.tsx";
 import PageEmpty from "./PageEmpty";
 import { roleComputer } from "./role-computer-groups";
 import type { LocalRuntimeInventoryResponse } from "@rah-os/protocol";
@@ -89,6 +93,8 @@ export default function AgentPage({
     [client, workspaceId, controlRoomId],
   );
   const { state, error, setError } = useManagement(manager);
+  const refreshIdentity = useLoomIdentityRefresh();
+  const avatars = useLoomAvatarMap();
   const [catalog, setCatalog] = useState<Catalog>();
   const [inventory, setInventory] = useState<LocalRuntimeInventoryResponse>();
   const [tab, setTab] = useState("roles");
@@ -178,6 +184,7 @@ export default function AgentPage({
   };
   const done = (outcome: IntentOutcome<unknown>) => {
     if (outcome.kind === "ok") {
+      refreshIdentity();
       setDirty(false);
       setEdit(undefined);
       setError("");
@@ -518,7 +525,10 @@ export default function AgentPage({
                             <AvatarSlot
                               context="list-row"
                               type="agent"
-                              agentAvatarUrl={agent?.currentRevision.avatarKey}
+                              agentAvatarUrl={
+                                avatars[instance.instanceId] ??
+                                agent?.currentRevision.avatarKey
+                              }
                             />
                           }
                           name={name}

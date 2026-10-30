@@ -1,0 +1,24 @@
+[loom instance-prewarm] prewarm of principal_9b6ce403-f387-4753-8846-bacbb869dbc9 skipped: disabled
+[loom instance-prewarm] prewarm of principal_b30309cc-84cb-41b2-98b4-b036d032e95c skipped: disabled
+[loom warm-runtime] [instrt_0271b77e-0d11-4966-8e0b-971afda4e946] fatal: Codex user MCP servers could not be resolved (/private/var/folders/ln/kr9m4x0d2bg353zcd3mzx_jr0000gn/T/loom-official-channel-5Vcy1Q/bin/codex mcp list --json exited 2: ); a Loom instance does not start while a user MCP server might stay enabled
+[loom warm-runtime] [instrt_0271b77e-0d11-4966-8e0b-971afda4e946] [loom codex-warm] Codex user MCP servers could not be resolved (/private/var/folders/ln/kr9m4x0d2bg353zcd3mzx_jr0000gn/T/loom-official-channel-5Vcy1Q/bin/codex mcp list --json exited 2: ); a Loom instance does not start while a user MCP server might stay enabled
+[loom warm-runtime] [instrt_2d6cab9d-a2e2-49b6-84ba-24d98c6e3982] fatal: Codex user MCP servers could not be resolved (/private/var/folders/ln/kr9m4x0d2bg353zcd3mzx_jr0000gn/T/loom-official-channel-5Vcy1Q/bin/codex mcp list --json exited 2: ); a Loom instance does not start while a user MCP server might stay enabled
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: random is local after the initial occupancy read
+
+6 !== 1
+
+    at verifyAvatarRepair (file:///Users/sun/Code/repos/rah_os/scripts/official-web/avatar-repair-browser.mjs:33:11)
+    at async file:///Users/sun/Code/repos/rah_os/scripts/official-web/channel-browser.mjs:236:85 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: 6,
+  expected: 1,
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v25.9.0

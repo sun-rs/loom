@@ -1,3 +1,4 @@
+import { useLoomAvatarMap } from "./AppearanceRuntime.tsx";
 import { useOfficialThreadCoverOffset } from "./OfficialThreadCover138.generated.js";
 import { uiActionProps } from "./ui-action-props.ts";
 import CloseButton from "../packages/web/src/components/ui/CloseButton.tsx";
@@ -69,6 +70,7 @@ export default function ThreadWorkspace({
   onChanged: () => void;
   onOpenProfile?: (member: Principal) => void;
 }) {
+  const avatars = useLoomAvatarMap();
   const bridge = useMemo(
     () => new LoomThreadClient(client, room.roomId, rootMessageId),
     [client, room.roomId, rootMessageId],
@@ -301,7 +303,11 @@ export default function ThreadWorkspace({
                       m.id,
                       {
                         displayName: m.senderDisplayName ?? "成员",
-                        avatarUrl: null,
+                        avatarUrl:
+                          avatars[m.senderId] ??
+                          data.members.find((p) => p.principalId === m.senderId)
+                            ?.avatarKey ??
+                          null,
                         description: null,
                       },
                     ]),

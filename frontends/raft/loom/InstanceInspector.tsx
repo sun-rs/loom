@@ -1,3 +1,4 @@
+import { useLoomAvatarMap } from "./AppearanceRuntime.tsx";
 import { DirectMessageIcon } from "raft-ui";
 import InstanceProfile from "./InstanceProfile.tsx";
 import { User } from "lucide-react";
@@ -59,6 +60,7 @@ export default function InstanceInspector({
     inline?: boolean;
   }[];
 }) {
+  const avatars = useLoomAvatarMap();
   const [tab, setTab] = useState("activity");
   const panel = useResizablePanel({
     storageKey: "loom:profilePanelWidth",
@@ -169,7 +171,13 @@ export default function InstanceInspector({
           title={member.displayName ?? member.handle}
           subtitle={`@${member.handle}`}
           subtitleClassName={PROFILE_HANDLE_SIZE_CLASS}
-          iconSlot={<AvatarSlot context="panel-header" type="agent" />}
+          iconSlot={
+            <AvatarSlot
+              context="panel-header"
+              type="agent"
+              agentAvatarUrl={avatars[member.principalId] ?? member.avatarKey}
+            />
+          }
           iconAlwaysVisible
           iconKind="avatar"
           onMobileBack={onClose}

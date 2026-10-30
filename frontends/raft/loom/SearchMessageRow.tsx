@@ -1,3 +1,4 @@
+import { useLoomAvatarMap } from "./AppearanceRuntime.tsx";
 // Data adapter only: render the unchanged official MessageHitRow.
 import { useEffect, useRef } from "react";
 import { MessageHitRow } from "../packages/web/src/components/search/MessageHitRow.tsx";
@@ -15,6 +16,7 @@ export default function SearchMessageRow({
   nested?: boolean;
   onOpen: (full: boolean) => void;
 }) {
+  const avatars = useLoomAvatarMap();
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
   useEffect(() => () => clearTimeout(timer.current), []);
   return (
@@ -33,7 +35,7 @@ export default function SearchMessageRow({
         senderId: row.message.actorId,
         senderType: row.senderType ?? "user",
         senderName: row.senderName,
-        senderAvatarUrl: null,
+        senderAvatarUrl: avatars[row.message.actorId] ?? null,
         channelName: row.roomName,
         channelType: row.message.threadId
           ? "thread"
@@ -46,7 +48,7 @@ export default function SearchMessageRow({
       nested={nested}
       selected={selected}
       sourceLabel={`${row.channelType === "dm" ? "@" : "#"}${row.roomName}`}
-      agentAvatarUrl={null}
+      agentAvatarUrl={avatars[row.message.actorId] ?? null}
       senderMember={null}
       historyCutoffMs={null}
       query={query}

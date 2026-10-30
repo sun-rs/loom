@@ -1,4 +1,4 @@
-import { useLoomPresence } from "./AppearanceRuntime.tsx";
+import { useLoomPresence, useLoomAvatarMap } from "./AppearanceRuntime.tsx";
 import { instanceActivity } from "./working-state.ts";
 import { DirectMessageIcon } from "raft-ui";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -59,6 +59,7 @@ export default function ChannelMembers({
     [remove, setRemove] = useState<Member>();
   const busy = state !== "idle";
   const presence = useLoomPresence();
+  const avatars = useLoomAvatarMap();
   const alive = useRef(true);
   useEffect(() => {
     alive.current = true;
@@ -121,9 +122,10 @@ export default function ChannelMembers({
   const identified: (Member & { kind: string })[] = (members ?? []).map((m) => {
     const principal = bridge.view().members.find((p) => p.principalId === m.id);
     const instance = catalog?.instances.find((i) => i.instanceId === m.id);
-    const avatar = agentEntries.find(
-      (a) => a.definition.agentId === instance?.agentId,
-    )?.currentRevision.avatarKey;
+    const avatar =
+      avatars[m.id] ??
+      agentEntries.find((a) => a.definition.agentId === instance?.agentId)
+        ?.currentRevision.avatarKey;
     const activity =
       m.kind === "agent"
         ? instanceActivity(m.id, agentEntries, presence)

@@ -156,8 +156,15 @@ hidden/inert, stop inactive reads, and revalidate on return without replacing
 same-query content with initial skeletons. Other workspace/filter results must
 not leak through that retention. Native Tasks loading primitives serve module
 and query loading; all writes still use the existing task owner. Role-to-member
-bindings must pass avatarUrl from the current Role revision; existing member
-avatars continue to come from their frozen instance configuration.
+bindings must pass avatarUrl from the current Role revision. Owner follow-up
+2026-10-30: existing-instance presentation also resolves the current avatar by
+stable Role ID. This visual identity projection never adopts or rewrites the
+frozen execution revision, prompt, runtime, model, name or session. Missing Role
+definitions fall back to the retained instance avatar; deleted/recreated names
+never rebind identity. Successful Role edits invalidate the shared presentation
+read, including mounted messages and Channel members. Random-avatar previews
+use one occupancy read on editor open, then local selection: never refetch,
+disable the whole grid or insert a layout-changing status row per click.
 
 Owner-requested Web1.21.40 working-surface repair uses the complete release
 archive via `generate-working-surfaces140.mjs`; generated declarations/render

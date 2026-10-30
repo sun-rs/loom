@@ -6,7 +6,7 @@ import { OfficialComputerInstancesEmpty } from "./OfficialRefresh135.generated";
 import { layoutQueries } from "./adaptive-layout.ts";
 import { SidebarResize, useSidebarColumn } from "./SidebarLayout";
 import CreateInstanceDialog from "./CreateInstanceDialog.tsx";
-import { useLoomPresence } from "./AppearanceRuntime.tsx";
+import { useLoomPresence, useLoomAvatarMap } from "./AppearanceRuntime.tsx";
 import { LoomSidebarSlot } from "./SidebarLayout.tsx";
 import { OfficialComputerRow } from "./OfficialIdentityRows.generated";
 import {
@@ -78,6 +78,7 @@ export default function ComputersPage({
   onSettings: () => void;
 }) {
   const presences = useLoomPresence();
+  const avatars = useLoomAvatarMap();
   const [creatingInstance, setCreatingInstance] = useState(false);
   const [creating, setCreating] = useState(false);
   const [selectedInstances, setSelectedInstances] = useState<string[] | null>(
@@ -159,7 +160,15 @@ export default function ComputersPage({
   }, [selectedId, inventory?.hostId, onSelect]);
   const rows =
     inventory && instances
-      ? computerInstanceRows(inventory.runtimes, instances, agents, presences)
+      ? computerInstanceRows(
+          inventory.runtimes,
+          instances,
+          agents,
+          presences,
+        ).map((row) => ({
+          ...row,
+          avatarKey: avatars[row.instanceId] ?? row.avatarKey,
+        }))
       : [];
   const computer = inventory?.computer;
   const name = computer?.displayName ?? "Loom 主机";

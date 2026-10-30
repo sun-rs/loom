@@ -1,3 +1,4 @@
+import { useLoomAvatarMap } from "./AppearanceRuntime.tsx";
 import { createPortal } from "react-dom";
 import { FolderOpen } from "lucide-react";
 import DismissBackdrop from "../packages/web/src/components/ui/DismissBackdrop.tsx";
@@ -25,6 +26,7 @@ export function SearchEntityRow({
   selected: boolean;
   onOpen: (entity: SearchEntity, full: boolean) => void;
 }) {
+  const avatars = useLoomAvatarMap();
   const { formatMessage } = useIntl();
   const row = useRef<HTMLDivElement>(null);
   const floatingRef = useRef<HTMLDivElement>(null);
@@ -66,7 +68,11 @@ export function SearchEntityRow({
         }
         selected={selected || Boolean(menu)}
         returnHint={returnHint}
-        agentAvatarUrl={null}
+        agentAvatarUrl={
+          entity.type === "agentDm" && entity.agentId
+            ? (avatars[entity.agentId] ?? null)
+            : null
+        }
         humanMember={undefined}
         onResultContextMenu={(event) => {
           clearTimeout(timer.current);

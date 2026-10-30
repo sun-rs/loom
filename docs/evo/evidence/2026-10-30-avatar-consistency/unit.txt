@@ -1,0 +1,25 @@
+✔ random button and server defaults share the distinct unoccupied pool; exhaustion reuses the full catalog (1.385708ms)
+✔ legacy grids stay immutable; random creation uses only the current official library (0.4625ms)
+✔ historical 32x32 identities remain renderable for stored Roles and frozen instances (5.381625ms)
+✔ new presets survive instance presentation and the existing profile authority contract (2.011542ms)
+✔ composer projects its own room snapshot without relying on another mounted roster reader (1.235166ms)
+✔ native composer data import binds scoped projection while both hosts supply current members (0.59ms)
+✔ native roster reads only the mounted Room owner and rejects other endpoints or writes (2.736333ms)
+✔ mention projection retains canonical handles and instance IDs without inventing execution state (0.110416ms)
+✔ disposing an older mounted reader cannot remove its replacement (0.215041ms)
+✔ member avatars are preserved through the message identity projection (0.36ms)
+✔ persisted Role upload keys resolve through the existing same-origin content endpoint (1.233458ms)
+✔ Native avatar accepts only Loom's root-scoped uploaded image endpoint (0.134917ms)
+✔ current Role avatar is a visual projection; frozen execution snapshots and replaced Role names are untouched (1.311708ms)
+✔ deleted Role IDs retain their own visual identity after the same name is reused (0.073583ms)
+✔ working UI joins observed definition IDs to instance principals; enabled membership alone is not work (1.246958ms)
+✔ all busy instances are retained, including several instances of the same Role (0.105292ms)
+✔ legacy catalog entries without a verified instance Channel never become inert working targets (0.051791ms)
+ℹ tests 17
+ℹ suites 0
+ℹ pass 17
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 277.078625

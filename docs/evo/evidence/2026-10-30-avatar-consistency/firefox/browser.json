@@ -1,0 +1,33 @@
+{
+  "fixture": "isolated real Core, read-only fixture message author, no paid provider",
+  "results": [
+    {
+      "width": 1440,
+      "randomStable": true,
+      "randomNetworkReads": 0,
+      "dialogGeometry": {
+        "x": 464,
+        "y": 44.5,
+        "width": 512,
+        "height": 911
+      },
+      "channelAndRosterUpdated": true,
+      "sameSpa": true,
+      "frozenExecutionRevisionsUnchanged": true
+    },
+    {
+      "width": 390,
+      "randomStable": true,
+      "randomNetworkReads": 0,
+      "dialogGeometry": {
+        "x": 0,
+        "y": 84.4000015258789,
+        "width": 390,
+        "height": 759.5999984741211
+      },
+      "channelAndRosterUpdated": true,
+      "sameSpa": false,
+      "frozenExecutionRevisionsUnchanged": true
+    }
+  ]
+}

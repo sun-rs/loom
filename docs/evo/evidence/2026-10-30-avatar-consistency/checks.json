@@ -1,0 +1,31 @@
+{
+  "at": "2026-10-30T09:23:39.337074+00:00",
+  "typecheck": "npm run typecheck:loom --prefix frontends/raft: passed",
+  "build": "npm run build:web:workbench: passed",
+  "unit": {
+    "passed": 17,
+    "failed": 0,
+    "files": [
+      "member-roster.test.ts",
+      "role-avatar-projection.test.ts",
+      "avatar-library.test.ts",
+      "profile-avatar.test.ts",
+      "working-surfaces.test.ts",
+      "composer-members.test.ts"
+    ]
+  },
+  "browsers": [
+    "Chromium: 1440x1000,390x844",
+    "Firefox: 1440x1000,390x844",
+    "WebKit: 1440x1000,390x844"
+  ],
+  "format": "changed source and documentation passed",
+  "immutableSourceAndGeneratedFilesChanged": false,
+  "paidProviders": 0,
+  "limitations": [
+    "No full frontend/backend suite",
+    "No full-site Web1.21.40 migration acceptance",
+    "No physical mobile/PWA system-chrome validation",
+    "Additional avatar callsites have data/type coverage; focused browser checks exercise message and Channel-member flow"
+  ]
+}

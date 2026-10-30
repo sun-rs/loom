@@ -1,3 +1,4 @@
+import { verifyAvatarRepair } from "./avatar-repair-browser.mjs";
 import { verifyWorkingSurfaces } from "./working-surfaces-browser.mjs";
 import { verifyRoleProfileAffordances } from "./role-profile-affordances-browser.mjs";
 import { verifyRuntimeSidebar } from "./runtime-sidebar-browser.mjs";
@@ -185,6 +186,14 @@ try {
       idempotencyKey: `history-${i}`,
       recipients: [],
     });
+  if (process.env.LOOM_BROWSER_SLICE === "avatar-repair")
+    await client.request("message.post", {
+      roomId: channels[2].roomId,
+      body: "FIXTURE avatar propagation",
+      recipients: [],
+      basedOnRoomSeq: await head(channels[2].roomId),
+      idempotencyKey: "avatar-propagation",
+    });
   const inventory = await client.request("host.runtime.list", {});
   const offer = inventory.runtimes.find(
     (item) =>
@@ -232,7 +241,22 @@ try {
         ? firefox
         : chromium
   ).launch({ headless: true });
-  if (process.env.LOOM_BROWSER_SLICE === "working-surfaces") {
+  if (process.env.LOOM_BROWSER_SLICE === "avatar-repair") {
+    console.log(
+      JSON.stringify(
+        await verifyAvatarRepair({
+          browser,
+          origin,
+          client,
+          workspace,
+          role,
+          instances,
+          channels,
+          head,
+        }),
+      ),
+    );
+  } else if (process.env.LOOM_BROWSER_SLICE === "working-surfaces") {
     console.log(
       JSON.stringify(
         await verifyWorkingSurfaces({

@@ -1,3 +1,5 @@
+import { useLoomAvatarMap } from "./AppearanceRuntime.tsx";
+import { roleAvatarUrl } from "./profile-avatar.ts";
 // Loom directory projection and picker state; original JSX lives in the generated source view.
 import { useState, type RefObject } from "react";
 import type { ComboboxProps } from "raft-ui";
@@ -26,6 +28,7 @@ export function useSearchIdentityController({
   setOpenFilterMenu: (value: string | null) => void;
   filtersPortalRef: RefObject<HTMLDivElement | null>;
 }) {
+  const avatars = useLoomAvatarMap();
   const filtersPortalProps = { container: filtersPortalRef };
   const [senderFilterQuery, setSenderFilterQuery] = useState("");
   const [channelFilterQuery, setChannelFilterQuery] = useState("");
@@ -38,7 +41,7 @@ export function useSearchIdentityController({
       handle: p.handle,
       type: p.kind === "agent" ? "agent" : "user",
       isSelf: p.principalId === selfId,
-      avatarUrl: null,
+      avatarUrl: roleAvatarUrl(avatars[p.principalId] ?? p.avatarKey ?? null),
       gravatarHash: null,
       email: null,
     }))

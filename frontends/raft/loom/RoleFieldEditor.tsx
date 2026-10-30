@@ -72,39 +72,40 @@ export default function RoleFieldEditor({
   const formId = useId();
   const [uploadIntentId, setUploadIntentId] = useState<string>();
   const [selecting, setSelecting] = useState(false);
+  const [occupiedAvatars, setOccupiedAvatars] =
+    useState<(string | undefined)[]>();
   const selectionAbort = useRef<AbortController | null>(null);
   useEffect(() => () => selectionAbort.current?.abort(), []);
+  useEffect(() => {
+    if (field !== "avatarKey") return;
+    const abort = new AbortController();
+    void client
+      .request(
+        "role.list",
+        { controlRoomId: role.controlRoomId },
+        { signal: abort.signal },
+      )
+      .then((catalog) => {
+        if (!abort.signal.aborted)
+          setOccupiedAvatars(
+            catalog.roles.map((r) => r.configuration.avatarKey),
+          );
+      })
+      .catch(() => {
+        if (!abort.signal.aborted)
+          setError("无法读取角色头像，请关闭后重新打开。");
+      });
+    return () => abort.abort();
+  }, [client, role.controlRoomId, field]);
   const blocked = disabled || selecting;
   const selectPreset = (key: string) => {
     setValue(key);
     setUploadIntentId(undefined);
     setError("");
   };
-  const randomize = async () => {
-    if (blocked) return;
-    const abort = new AbortController();
-    selectionAbort.current = abort;
-    setSelecting(true);
-    setError("");
-    try {
-      const catalog = await client.request(
-        "role.list",
-        { controlRoomId: role.controlRoomId },
-        { signal: abort.signal },
-      );
-      if (!abort.signal.aborted)
-        selectPreset(
-          randomAvatarKey(
-            value,
-            Math.random,
-            catalog.roles.map((item) => item.configuration.avatarKey),
-          ),
-        );
-    } catch {
-      if (!abort.signal.aborted) setError("无法读取角色头像，请重试。");
-    } finally {
-      if (!abort.signal.aborted) setSelecting(false);
-    }
+  const randomize = () => {
+    if (blocked || !occupiedAvatars) return;
+    selectPreset(randomAvatarKey(value, Math.random, occupiedAvatars));
   };
   const upload = async (file: File) => {
     if (blocked) return;
@@ -192,6 +193,7 @@ export default function RoleFieldEditor({
           onChange={selectPreset}
           onUpload={(file) => void upload(file)}
           onRandom={() => void randomize()}
+          randomDisabled={!occupiedAvatars}
         />
       ) : combined ? (
         <>
@@ -230,7 +232,11 @@ export default function RoleFieldEditor({
         />
       )}
       {error && <p role="alert">{error}</p>}
-      {field === "avatarKey" && selecting && <p role="status">正在准备头像…</p>}
+      {field === "avatarKey" && selecting && (
+        <p role="status" className="sr-only">
+          正在准备头像…
+        </p>
+      )}
     </>
   );
   return (

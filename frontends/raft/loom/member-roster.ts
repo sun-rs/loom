@@ -1,4 +1,5 @@
 import type { Principal } from "@rah-os/protocol";
+import { roleAvatarUrl } from "./profile-avatar.ts";
 // Borrow the mounted RoomSession's read projection. No roster cache or cursor.
 const readers = new Map<string, () => readonly Principal[]>();
 export function bindMemberRoster(
@@ -16,7 +17,7 @@ export function projectMentionMembers(members: readonly Principal[]) {
     name: p.handle,
     displayName: p.displayName ?? p.handle,
     description: p.description ?? null,
-    avatarUrl: null,
+    avatarUrl: roleAvatarUrl(p.avatarKey ?? null),
   });
   return {
     agents: members.filter((p) => p.kind === "agent").map(profile),

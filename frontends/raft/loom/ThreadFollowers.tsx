@@ -1,3 +1,5 @@
+import { useLoomAvatarMap } from "./AppearanceRuntime.tsx";
+import { roleAvatarUrl } from "./profile-avatar.ts";
 import {
   createContext,
   useContext,
@@ -38,6 +40,7 @@ export function useLoomFollowerProfile() {
 }
 export function useLoomThreadFollowers(threadId: string) {
   const host = useContext(Context);
+  const avatars = useLoomAvatarMap();
   if (!host || host.threadId !== threadId)
     throw Error("消息列关注成员作用域缺失");
   const bridge = useMemo(
@@ -65,7 +68,7 @@ export function useLoomThreadFollowers(threadId: string) {
           name: member.handle,
           displayName: member.displayName ?? member.handle,
           status: "unknown",
-          avatarUrl: null,
+          avatarUrl: roleAvatarUrl(member.avatarKey ?? null),
           canRemove: true,
         };
       });
@@ -101,7 +104,17 @@ export function useLoomThreadFollowers(threadId: string) {
     };
   }, [bridge]);
   return {
-    roster,
+    roster: roster
+      ? {
+          ...roster,
+          agents: roster.agents.map((agent) => ({
+            ...agent,
+            avatarUrl: Object.hasOwn(avatars, agent.id)
+              ? roleAvatarUrl(avatars[agent.id] ?? null)
+              : agent.avatarUrl,
+          })),
+        }
+      : roster,
     load,
     remove: async (_threadId: string, id: string) => {
       if (

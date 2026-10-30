@@ -1,3 +1,4 @@
+import { useLoomDisplayMembers } from "./AppearanceRuntime.tsx";
 import { useComposerChannels } from "./ComposerDirectory.tsx";
 import { useIntentRoute, hasRouteBoundIntent } from "./useIntentRoute.ts";
 import { MessageProfileMembers, MessageStatusRoom } from "./MessageProfile.tsx";
@@ -33,7 +34,7 @@ export default function ChannelTimeline({
   hasNewer = false,
   loadNewer = async () => {},
   messages,
-  members,
+  members: rawMembers,
   hasOlder,
   loading,
   loadOlder,
@@ -55,6 +56,7 @@ export default function ChannelTimeline({
   onOpenThread?: (rootMessageId: string, focusedMessageId?: string) => void;
   onOpenProfile?: (type: "agent" | "human", id: string) => void;
 }) {
+  const members = useLoomDisplayMembers(rawMembers);
   const channels = useComposerChannels();
   const [, setParams] = useIntentRoute();
   const mentionMap = useMemo(() => projectMessageMentions(members), [members]);
@@ -109,7 +111,10 @@ export default function ChannelTimeline({
       })()}
       readOnlySender={{
         displayName: message.senderDisplayName ?? "成员",
-        avatarUrl: null,
+        avatarUrl:
+          [...roster.agents, ...roster.humans].find(
+            (p) => p.id === message.senderId,
+          )?.avatarUrl ?? null,
         description: null,
       }}
       onOpenThread={
