@@ -1,0 +1,21 @@
+[loom instance-prewarm] prewarm of principal_e0b23caf-390e-4184-8ec6-5554192313dd skipped: disabled
+[loom instance-prewarm] prewarm of principal_7ba3bc29-409d-491b-afca-8a25bae8f0c5 skipped: disabled
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+'14px' !== '16px'
+
+    at verifyMessageStatus (file:///Users/sun/Code/repos/rah_os/scripts/official-web/message-status-browser.mjs:109:14)
+    at async file:///Users/sun/Code/repos/rah_os/scripts/official-web/channel-browser.mjs:796:9 {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: '14px',
+  expected: '16px',
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v25.9.0

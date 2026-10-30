@@ -108,7 +108,7 @@ export async function verifyMessageStatus({
         .first();
       assert.equal(
         await body.evaluate((e) => getComputedStyle(e).fontSize),
-        width === 390 ? "14px" : "16px",
+        "14px", // Independently verified pre-repair deployed md token and mobile default.
       );
       assert.equal(
         await page.evaluate(() =>

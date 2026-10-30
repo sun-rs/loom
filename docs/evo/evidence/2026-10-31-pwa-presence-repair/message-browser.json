@@ -1,0 +1,16 @@
+[
+  {
+    "width": 390,
+    "activityStates": true,
+    "leftNotDeleted": true,
+    "failureClears": true,
+    "mobileDefault": true
+  },
+  {
+    "width": 1440,
+    "activityStates": true,
+    "leftNotDeleted": true,
+    "failureClears": true,
+    "mobileDefault": true
+  }
+]

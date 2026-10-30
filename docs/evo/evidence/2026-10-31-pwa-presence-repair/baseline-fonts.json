@@ -1,0 +1,18 @@
+[
+  {
+    "width": 1440,
+    "webBuild": "d1b6ec88550a9b38913fd705da3d1ed6cbe0f2cd90645aca2af172393fc5e9e0",
+    "font": {
+      "fontSize": "14px",
+      "size": "md"
+    }
+  },
+  {
+    "width": 390,
+    "webBuild": "d1b6ec88550a9b38913fd705da3d1ed6cbe0f2cd90645aca2af172393fc5e9e0",
+    "font": {
+      "fontSize": "14px",
+      "size": "sm"
+    }
+  }
+]
