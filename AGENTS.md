@@ -261,7 +261,11 @@ never installs them or configures their accounts.
   Existing 539 PNGs and older 32x32 artwork remain read compatibility for stored
   Roles, frozen instances/history only; they are not selectable or randomized.
   Never rewrite revisions to replace artwork. The picker uses native series,
-  tiles and 4/8-column rules without Pokémon search/pagination. This owner-requested
+  tiles and 4/8-column rules without Pokémon search/pagination. The avatar editor
+  forwards AgentProfileEditDialog's native `max-w-lg` policy (512px desktop);
+  retain one scrolling DialogBody and its sibling DialogFooter. Never put the
+  footer inside the scrolling body or inherit the primitive's 448px default.
+  Phone width/90dvh remain owned by the native sheet recipe. This owner-requested
   catalog switch does not certify the pending whole-Web business adapter.
   Runtime info uses the independently pinned official badge/card/mobile-sheet
   composition. Its status square reports Host CLI detection, not account health.

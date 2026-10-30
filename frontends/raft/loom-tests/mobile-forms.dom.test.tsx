@@ -7,7 +7,7 @@ import {
   screen,
   waitFor,
 } from "@testing-library/react";
-import { DialogFooter, Input } from "raft-ui";
+import { DialogBody, DialogFooter, Input } from "raft-ui";
 import { DialogCommit } from "raft-ui/wip";
 import MobileFormDialog from "../loom/MobileFormDialog";
 afterEach(cleanup);
@@ -122,4 +122,43 @@ test("sheet exposes its container for nested runtime pickers", async () => {
   );
   const dialog = await screen.findByRole("dialog");
   expect(container.current).toBe(dialog);
+});
+
+test("native avatar dialog width and separate body/footer keep form ownership", async () => {
+  media(false);
+  const submit = vi.fn();
+  render(
+    <MobileFormDialog
+      title="更换头像"
+      onClose={() => {}}
+      contentClassName="max-w-lg"
+      wrapBody={false}
+    >
+      <form
+        id="avatar-form"
+        className="contents"
+        onSubmit={(e) => {
+          e.preventDefault();
+          submit();
+        }}
+      >
+        <DialogBody>图库</DialogBody>
+        <DialogFooter>
+          <DialogCommit type="submit" form="avatar-form">
+            保存头像
+          </DialogCommit>
+        </DialogFooter>
+      </form>
+    </MobileFormDialog>,
+  );
+  const dialog = await screen.findByRole("dialog");
+  expect(dialog.className.split(" ")).toContain("max-w-lg");
+  expect(dialog.querySelectorAll('[data-slot="dialog-body"]').length).toBe(1);
+  expect(
+    dialog
+      .querySelector('[data-slot="dialog-footer"]')
+      ?.closest('[data-slot="dialog-body"]'),
+  ).toBeNull();
+  fireEvent.click(screen.getByRole("button", { name: "保存头像" }));
+  expect(submit).toHaveBeenCalledTimes(1);
 });

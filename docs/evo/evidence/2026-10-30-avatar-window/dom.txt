@@ -1,0 +1,11 @@
+
+ RUN  v5.0.4 /Users/sun/Code/repos/rah_os/frontends/raft
+
+
+ Test Files  2 passed (2)
+      Tests  7 passed (7)
+   Start at  13:49:59
+   Duration  1.30s (environment 40%, import 39%, tests 18%, transform 2%)
+
+    Isolate  2 workers spawned · ~307ms startup each (spawn + environment, per file)
+             at least ~307ms faster with isolate: false — reuses workers across files instead of one per file

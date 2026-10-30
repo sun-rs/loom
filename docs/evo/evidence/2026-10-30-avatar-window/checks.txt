@@ -1,0 +1,15 @@
+✔ computer selection cancellation has an outline and detail retains native auto scrolling (0.793792ms)
+✔ both entry points use the same role creation flow without implicit DM creation (0.284916ms)
+✔ the official avatar data and identities are reproducible from the whole pinned Web release (1.250875ms)
+✔ the active picker uses native series order, native Chinese labels and all 72 original sprites (1.077083ms)
+✔ both text pencils use the same revision editor with native initial-focus ownership (0.798125ms)
+✔ runtime info binds observed facts, never treats installation as remaining quota (0.149959ms)
+✔ runtime frame regenerates from independently acquired immutable source (134.84975ms)
+ℹ tests 7
+ℹ suites 0
+ℹ pass 7
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1805.804791

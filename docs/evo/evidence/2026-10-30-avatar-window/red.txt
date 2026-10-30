@@ -1,0 +1,23 @@
+[loom instance-prewarm] prewarm of principal_9c39c3f2-ff60-4fa7-b8c5-587bbc066994 skipped: disabled
+[loom instance-prewarm] prewarm of principal_3d028e5d-c7eb-43f8-9944-2fcc339e039e skipped: disabled
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: native AgentProfileEditDialog has max-w-lg on desktop and full-width phone sheet
+
+448 !== 512
+
+    at verifyRoleIdentity (file:///Users/sun/Code/repos/rah_os/scripts/official-web/role-identity-browser.mjs:174:16)
+    at runNextTicks (node:internal/process/task_queues:65:5)
+    at process.processImmediate (node:internal/timers:472:9)
+    at async file:///Users/sun/Code/repos/rah_os/scripts/official-web/channel-browser.mjs:321:9 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: 448,
+  expected: 512,
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v25.9.0

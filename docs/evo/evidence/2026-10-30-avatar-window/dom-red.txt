@@ -1,0 +1,28 @@
+
+ RUN  v5.0.4 /Users/sun/Code/repos/rah_os/frontends/raft
+
+ ❯ loom-tests/mobile-forms.dom.test.tsx (6 tests | 1 failed) 153ms
+   × native avatar dialog width and separate body/footer keep form ownership 11ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  loom-tests/mobile-forms.dom.test.tsx > native avatar dialog width and separate body/footer keep form ownership
+AssertionError: expected [ 'fixed', 'top-1/2', …(16) ] to include 'max-w-lg'
+ ❯ loom-tests/mobile-forms.dom.test.tsx:137:39
+    135|   </MobileFormDialog>);
+    136|   const dialog=await screen.findByRole("dialog");
+    137|   expect(dialog.className.split(" ")).toContain("max-w-lg");
+       |                                       ^
+    138|   expect(dialog.querySelectorAll('[data-slot="dialog-body"]').length).…
+    139|   expect(dialog.querySelector('[data-slot="dialog-footer"]')?.closest(…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  1 failed | 6 passed (7)
+   Start at  13:48:54
+   Duration  1.98s (environment 46%, import 39%, tests 13%, transform 2%)
+
+    Isolate  2 workers spawned · ~499ms startup each (spawn + environment, per file)
+             at least ~499ms faster with isolate: false — reuses workers across files instead of one per file

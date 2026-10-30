@@ -7,7 +7,7 @@ import {
   DialogClose,
 } from "raft-ui";
 import { DialogSheetContent } from "raft-ui/wip";
-/** Official 0.35.1 multi-field/long-content scenario. No sizing or keyboard owner here.
+/** Official multi-field/long-content scenario; callsite width policy is forwarded.
  * Native counterpart: Mobile eff0472 RaftDialogSheet. Simple confirmations keep DialogContent. */
 export default function MobileFormDialog({
   title,
@@ -17,6 +17,8 @@ export default function MobileFormDialog({
   children,
   containerRef,
   initialFocus,
+  contentClassName,
+  wrapBody = true,
 }: {
   title: string;
   busy?: boolean;
@@ -25,6 +27,10 @@ export default function MobileFormDialog({
   children: ReactNode;
   containerRef?: RefObject<HTMLDivElement | null>;
   initialFocus?: RefObject<HTMLElement | null>;
+  /** Explicit native callsite policy, e.g. AgentProfileEditDialog's max-w-lg. */
+  contentClassName?: string;
+  /** A form may provide its own native body/footer as siblings. */
+  wrapBody?: boolean;
 }) {
   return (
     <Dialog
@@ -38,12 +44,13 @@ export default function MobileFormDialog({
         ref={containerRef}
         data-testid={testId}
         initialFocus={initialFocus}
+        className={contentClassName}
       >
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           <DialogClose disabled={busy} aria-label="关闭" />
         </DialogHeader>
-        <DialogBody>{children}</DialogBody>
+        {wrapBody ? <DialogBody>{children}</DialogBody> : children}
       </DialogSheetContent>
     </Dialog>
   );

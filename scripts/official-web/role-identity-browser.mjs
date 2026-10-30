@@ -150,12 +150,43 @@ export async function verifyRoleIdentity({
         created.configuration.avatarKey === "pixel:antenna"
           ? "visor"
           : "antenna";
+      if (width === 1440) await page.setViewportSize({ width, height: 720 });
       for (const key of [firstKey, "owl", "rocket", "spider"]) {
         await profile
           .getByRole("button", { name: "更换头像", exact: true })
           .click();
         const picker = page.getByTestId("role-avatar-dialog");
         await picker.waitFor();
+        const frame = await picker.evaluate((el) => {
+          const r = el.getBoundingClientRect(),
+            footer = el.querySelector('[data-slot="dialog-footer"]'),
+            f = footer.getBoundingClientRect();
+          return {
+            width: r.width,
+            height: r.height,
+            top: r.top,
+            footerInBody: !!footer.closest('[data-slot="dialog-body"]'),
+            footerBottom: f.bottom,
+            footerVisible: getComputedStyle(footer).display !== "none",
+            bodyCount: el.querySelectorAll('[data-slot="dialog-body"]').length,
+          };
+        });
+        assert.equal(
+          frame.width,
+          width === 390 ? 390 : 512,
+          "native AgentProfileEditDialog has max-w-lg on desktop and full-width phone sheet",
+        );
+        assert.equal(frame.bodyCount, 1);
+        assert.equal(
+          frame.footerInBody,
+          false,
+          "the native footer is outside the scrolling body",
+        );
+        if (width === 1440) {
+          assert.ok(frame.height <= 688);
+          assert.ok(frame.footerVisible);
+          assert.ok(frame.footerBottom <= 704);
+        } else assert.ok(Math.abs(frame.height - 844 * 0.9) < 1);
         const library = picker.getByTestId("role-avatar-library");
         const choices = library.locator("button[aria-pressed]");
         assert.equal(await choices.count(), 72);

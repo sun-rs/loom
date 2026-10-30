@@ -6,7 +6,7 @@ import {
 // Loom Revision binding around official AgentProfileEditDialog field/preset composition.
 import { useState, useEffect, useId, type RefObject } from "react";
 import { DialogCommit } from "raft-ui/wip";
-import { Button, Input, Textarea, DialogFooter } from "raft-ui";
+import { Button, Input, Textarea, DialogBody, DialogFooter } from "raft-ui";
 import type { RahClient } from "@rah-os/client-sdk";
 import {
   RoleConfigurationSchema,
@@ -110,21 +110,8 @@ export default function RoleFieldEditor({
     if (parsed.success) onSave(parsed.data);
     else setError("请输入有效内容。");
   };
-  return (
-    <form
-      id={formId}
-      onKeyDown={(e) => {
-        if (e.key === "Escape" && !e.nativeEvent.isComposing && !disabled) {
-          e.preventDefault();
-          onCancel();
-        }
-      }}
-      onSubmit={(e) => {
-        e.preventDefault();
-        save();
-      }}
-      className="space-y-3"
-    >
+  const body = (
+    <>
       {field === "avatarKey" ? (
         <AvatarLibraryPicker
           value={value}
@@ -168,6 +155,28 @@ export default function RoleFieldEditor({
         />
       )}
       {error && <p role="alert">{error}</p>}
+    </>
+  );
+  return (
+    <form
+      id={formId}
+      onKeyDown={(e) => {
+        if (e.key === "Escape" && !e.nativeEvent.isComposing && !disabled) {
+          e.preventDefault();
+          onCancel();
+        }
+      }}
+      onSubmit={(e) => {
+        e.preventDefault();
+        save();
+      }}
+      className={field === "avatarKey" ? "contents" : "space-y-3"}
+    >
+      {field === "avatarKey" ? (
+        <DialogBody className="grid gap-5">{body}</DialogBody>
+      ) : (
+        body
+      )}
       <DialogFooter>
         <Button
           type="button"

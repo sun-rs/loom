@@ -243,6 +243,8 @@ export default function RoleProfile({
           }
           busy={disabled}
           initialFocus={textFocus}
+          contentClassName={field === "avatarKey" ? "max-w-lg" : undefined}
+          wrapBody={field !== "avatarKey"}
           onClose={requestCloseField}
         >
           {editor(field)}

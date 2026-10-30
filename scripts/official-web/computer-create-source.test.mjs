@@ -17,7 +17,8 @@ test("both entry points use the same role creation flow without implicit DM crea
   assert.match(s, /<MobileFormDialog/);
   const frame = read("MobileFormDialog.tsx");
   assert.match(frame, /DialogSheetContent.*raft-ui\/wip/s);
-  assert.doesNotMatch(frame, /className=|style=/);
+  assert.match(frame, /className=\{contentClassName\}/);
+  assert.doesNotMatch(frame, /className="|style=/);
   assert.doesNotMatch(s, /standalone\.create|private\.create/);
   assert.match(s, /savedRole/);
   assert.match(s, /保存后添加到频道/);
