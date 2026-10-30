@@ -191,9 +191,12 @@
         "loom/OfficialAvatarSlot.generated.tsx",
         "loom/AvatarLibraryPicker.tsx",
         "loom/pixel-avatar-library.ts",
-        "loom/role-profile-values.ts"
+        "loom/role-profile-values.ts",
+        "loom/avatars/official.json",
+        "loom/avatars/official-series-labels.json",
+        "loom/avatars/official.provenance.json"
       ],
-      "adopted": "名称/属性行/时间线原声明提取，Role和实例轨迹共用官方LogItem；Role资料hero和identity布局按AgentDetailPanel原JSX提取，AvatarSlot/像素头像完整模块生成，保留角色/实例语义与默认资料入口; owner2026-10-29恢复原始MemberAgentRow尾部Meta并接配置CLI标签；描述独立于提示词，双字段共用官方Sheet/DialogCommit；头像渲染原件通过显式generator兼容缝接入owner提供的PNG图库；旧像素图仅保留读取兼容，官方frame不变",
+      "adopted": "名称/属性行/时间线原声明提取，Role和实例轨迹共用官方LogItem；Role资料hero和identity布局按AgentDetailPanel原JSX提取，AvatarSlot/像素头像完整模块生成，保留角色/实例语义与默认资料入口; owner2026-10-29恢复原始MemberAgentRow尾部Meta并接配置CLI标签；描述独立于提示词，双字段共用官方Sheet/DialogCommit；owner2026-10-30将选择／随机库恢复为完整Web1.21.40的9组72款原始图案与中文标题；539 PNG与旧32×32仅保留历史读取，官方frame和选择格规则不变",
       "retainedBoundaries": [
         "Role configuration, frozen revisions, aggregate presence, instance lifecycle and activity filters are Loom semantics; official Agent stores are not adopted."
       ]

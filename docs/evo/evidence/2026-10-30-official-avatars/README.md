@@ -23,4 +23,4 @@ Owner要求头像系统的组织结构和图片使用Raft原版，取代此前53
 - [前端类型](types.txt)、[全仓类型](backend-types.txt)、[产品构建](build.txt)通过；原有大chunk提示保留。
 - [Chromium](browser.txt)与[WebKit](webkit.txt)均在真实临时Core、1440×1000与390×844验证9组72项、原生44px格及4／8列、跨组选择保存、刷新保持、正文备注／prompt不串改；无页面异常，新选择流程未请求宝可梦PNG。无真实provider调用，无生产配置修改。截图：[桌面](picker-1440.png)、[手机视口](picker-390.png)。这不是实体PWA系统栏验收。
 
-正式部署收据与只读页面核验在完成安全重启后记录，不以临时Core或构建成功代替。
+产品提交`1231a896`已推送main，完成备份验证、空闲检查与平滑重启。[部署收据](deployment.json)确认schema91、12个保护表及通知／记忆文件保持，LAN和Tailnet HTTPS沿用原CA且首页一致。[正式只读页面](formal-page.json)在1440与390视口逐项比较72个实际SVG与原始官方图案／配色／顺序，全部相同，9组、44px格、8／4列、无配置写入和页面异常；[正式桌面](formal-1440.png)、[正式手机视口](formal-390.png)。未批量更新任何既有头像修订。
