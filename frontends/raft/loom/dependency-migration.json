@@ -1,5 +1,5 @@
 {
-  "asOf": "2026-10-29",
+  "asOf": "2026-10-30",
   "wholeSiteDependencyComplete": false,
   "meaning": "迁移单元清单，不是所有函数的验收清单；不按文件数或组件数计算完成率。",
   "versions": {
@@ -399,5 +399,18 @@
     "activeSettingsSidebar": "OfficialSidebar139.generated.js#OfficialSettingsSidebar139",
     "superseded": "Web138 Role geometry and db5e399 generated settings list are historical reproducible artifacts, not active bindings.",
     "pwa140Evidence": "docs/evo/evidence/2026-10-30-pwa-member-repair/README.md"
+  },
+  "plannedMigrationScope": "Historical selected-source/resource-port plan only; superseded by the owner whole-release directive.",
+  "currentOwnerBaseline": {
+    "web": "1.21.40",
+    "ui": "0.52.2",
+    "intake": "complete immutable executable distribution; original authored TSX not recovered",
+    "webArchive": "upstream/releases/raft-web-1.21.40-distribution.json",
+    "uiArchive": "upstream/releases/raft-design-0.52.2-source.json",
+    "phase": "whole-release capture and isolated native bootstrap",
+    "businessAdapterComplete": false,
+    "singleUiRuntimeReplacementVerified": false,
+    "productionEntryChanged": false,
+    "contract": "../../docs/design/full-official-frontend-baseline.zh-CN.md"
   }
 }

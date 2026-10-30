@@ -1,5 +1,11 @@
 # Official source dependency
 
+**Historical deployed selected closure, not the next accepted frontend baseline.**
+Owner 2026-10-30 requires complete Web1.21.40 source plus raft-ui0.52.2.
+The upgrade/extraction recipes below describe the legacy implementation only;
+do not add cross-version patches or extend this old closure as a substitute.
+See `docs/design/full-official-frontend-baseline.zh-CN.md` at repository root.
+
 Private local distribution of selected byte-exact Raft Web components, **not** an npm package published by Raft and **not** the complete Raft Web application. `source-lock.json` pins the authorized source commit, paths, license and hashes. Upstream paths and notices are preserved. The exported components, `embed.ts` and theme helpers form the selected runtime closure. The complete original `SettingsPanel.tsx` is retained as source evidence and extraction input, **never imported as a module**; its account/billing/store imports are not executed.
 
 Product import chain: Loom data/events → compatibility entries in `packages/web/src/components/ui` → this dependency → official `@botiverse/raft-ui` recipes. `PanelHeader` preserves approved compact mobile placement using container data attributes; `SectionEyebrow` drops the retired `uppercase` parameter. Neither adapter renders a second copy of native presentation.

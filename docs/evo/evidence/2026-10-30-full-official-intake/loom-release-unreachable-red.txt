@@ -1,0 +1,33 @@
+✔ whole release accepts the original graph and rejects missing, changed or foreign files (7.90325ms)
+✔ a self-consistent lock cannot silently drop an actual lazy module (1.357542ms)
+✔ a release identity mismatch or unsafe path never becomes a new baseline (1.529291ms)
+✔ unlocked candidate files are reported rather than silently omitted (1.590875ms)
+✖ a locked but unreachable old-release file cannot be mixed into the graph (2.192417ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 4
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 208.769209
+
+✖ failing tests:
+
+test at scripts/official-web/release-integrity.test.mjs:66:1
+✖ a locked but unreachable old-release file cannot be mixed into the graph (2.192417ms)
+  AssertionError [ERR_ASSERTION]: Missing expected exception.
+      at TestContext.<anonymous> (file:///Users/sun/Code/repos/rah_os/scripts/official-web/release-integrity.test.mjs:73:10)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:831:18)
+      at Test.postRun (node:internal/test_runner/test:1330:19)
+      at Test.run (node:internal/test_runner/test:1258:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /unreachable/i,
+    operator: 'throws',
+    diff: 'simple'
+  }

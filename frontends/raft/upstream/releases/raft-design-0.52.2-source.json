@@ -1,0 +1,17 @@
+{
+  "kind": "complete official UI source Git tree export; not Web source",
+  "repository": "https://github.com/botiverse/raft-design",
+  "tag": "v0.52.2",
+  "commit": "3c992b50d747cf00b022d8b1c1817a6aca3626b6",
+  "tree": "a671f1e35b64163b4cf0e8a2e7aa57b33eac54df",
+  "archive": "raft-design-0.52.2-source.tar.gz",
+  "sha256": "1734c0ad97a3a82af7af2bc7318d6605c36e1b998d61d257ab51450fdbc89dd7",
+  "bytes": 2376134,
+  "trackedFiles": 1839,
+  "archiveFiles": 1839,
+  "allArchiveBlobsMatchGitTree": true,
+  "gitLfsPointers": 0,
+  "includesLicense": true,
+  "runtime": "existing exact npm alias raft-ui@npm:@botiverse/raft-ui@0.52.2; this archive is the complete immutable source reference",
+  "retrieved": "2026-10-30"
+}

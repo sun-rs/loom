@@ -1,0 +1,14 @@
+{
+  "targetPackage": "@botiverse/raft-ui@0.52.2",
+  "observedVendor": "vendor-raft-ui-BHAojVZQ.js",
+  "productionVendor": {
+    "panel0521HitInset": true,
+    "badge0522AnchorScope": false
+  },
+  "targetNpm": {
+    "panel0521HitInset": true,
+    "badge0522AnchorScope": true
+  },
+  "exactVendorPackageVersionVerified": false,
+  "wholeReplacementWithOneUiRuntimeVerified": false
+}

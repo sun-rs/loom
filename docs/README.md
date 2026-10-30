@@ -11,6 +11,7 @@
 
 ## 前端维护
 
+- [完整官方源码基线](design/full-official-frontend-baseline.zh-CN.md)：当前owner要求Web1.21.40＋UI0.52.2整版依赖；完整发布代码已提取并隔离启动，业务适配尚未完成。
 - [官方 UI 升级工作流](design/official-ui-upgrade-workflow.zh-CN.md)：版本确认、上游 diff、影响范围、适配和验证。
 - [依赖边界与迁移合同](design/official-dependency-migration.zh-CN.md)：组件包、不可变选定源码、生成呈现、兼容移植与 Loom 接线分开记录。
 - [Web 1.21.35 指定页面刷新与空态核对](evo/evidence/2026-10-28-ui-refresh/README.md)：当前批次的发布资源、原始源码差距、变化与验证边界。

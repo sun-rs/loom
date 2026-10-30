@@ -1,0 +1,1253 @@
+{
+  "fixtureOnly": true,
+  "productionDataAccessed": false,
+  "externalNetworkAllowed": false,
+  "backendAcceptance": false,
+  "states": [
+    {
+      "engine": "chromium-desktop",
+      "state": "chat",
+      "url": "https://app.raft.build/s/loom-intake-fixture/",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "screenshot": "chromium-desktop-chat.png",
+      "text": "整\n整版代码隔离验收\n搜索\n⌘K\n聊天\n动态\n任务\n成员\n计算机\n应用\n帮助\n帮助\n设置\n已保存\n已置顶\n0\n将频道或私信拖到这里置顶\n联合频道\n0\n还没有联合频道\n频道\n0\n还没有频道\n私信\n0\n选择一个频道",
+      "documentPreserved": true
+    },
+    {
+      "engine": "chromium-desktop",
+      "state": "activity",
+      "url": "https://app.raft.build/s/loom-intake-fixture/activity",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "screenshot": "chromium-desktop-activity.png",
+      "text": "整\n整版代码隔离验收\n搜索\n⌘K\n聊天\n动态\n任务\n成员\n计算机\n应用\n帮助\n帮助\n设置\n动态\n\n0 条进行中 · 0 条未读\n\n筛选\n没有会话\n频道、私信和已关注的消息列会一直保留在这里，直到处理完成。\n没有打开的对话\n从列表里选一个。",
+      "documentPreserved": true
+    },
+    {
+      "engine": "chromium-desktop",
+      "state": "tasks",
+      "url": "https://app.raft.build/s/loom-intake-fixture/tasks",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "screenshot": "chromium-desktop-tasks.png",
+      "text": "整\n整版代码隔离验收\n搜索\n⌘K\n聊天\n动态\n任务\n成员\n计算机\n应用\n帮助\n帮助\n设置\n任务\n\n0 个频道任务\n\n频道\n创建者\n负责人\n看板\n列表\n待办\n0\n没有待办的任务\n进行中\n0\n没有进行中的任务\n待确认\n0\n没有待确认的任务\n完成\n0\n已关闭\n0",
+      "documentPreserved": true
+    },
+    {
+      "engine": "chromium-desktop",
+      "state": "members",
+      "url": "https://app.raft.build/s/loom-intake-fixture/members",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "screenshot": "chromium-desktop-members.png",
+      "text": "整\n整版代码隔离验收\n搜索\n⌘K\n聊天\n动态\n任务\n成员\n计算机\n应用\n帮助\n帮助\n设置\n关系图\nAgent\n0\n人类\n1\nLoom（你）\n选择一个频道",
+      "documentPreserved": true
+    },
+    {
+      "engine": "chromium-desktop",
+      "state": "computers",
+      "url": "https://app.raft.build/s/loom-intake-fixture/computers",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "screenshot": "chromium-desktop-computers.png",
+      "text": "整\n整版代码隔离验收\n搜索\n⌘K\n聊天\n动态\n任务\n成员\n计算机\n应用\n帮助\n帮助\n设置\n计算机\n0\n还没有计算机\n选择一个频道",
+      "documentPreserved": true
+    },
+    {
+      "engine": "chromium-desktop",
+      "state": "settings",
+      "url": "https://app.raft.build/s/loom-intake-fixture/settings/account",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "screenshot": "chromium-desktop-settings.png",
+      "text": "整\n整版代码隔离验收\n搜索\n⌘K\n聊天\n动态\n任务\n成员\n计算机\n应用\n帮助\n帮助\n设置\n个人\n账户\n语言与区域\n外观\n通知\n我在 整版代码隔离验收\n主题\n通知\n工作空间\n服务器资料\n套餐与账单\n管理\n应用\n资源\n关于\n文档\n（在新标签页打开）\n反馈\n更新日志\n账户\n账户\nLoom\n@Loom\n显示名称\n用户名\n@\n邮箱\nfixture@example.invalid\n已验证\n保存资料\n修改密码\n会话\n退出登录\n\n退出当前浏览器的登录状态。你的账户和数据会保留，随时可以重新登录。\n\n退出登录\n共享使用数据\n帮助我们改进 Raft：记录你使用了哪些页面和功能，不包含消息或其他内容。 了解更多\n（在新标签页打开）",
+      "documentPreserved": true
+    },
+    {
+      "engine": "chromium-mobile",
+      "state": "chat",
+      "url": "https://app.raft.build/s/loom-intake-fixture/",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "screenshot": "chromium-mobile-chat.png",
+      "text": "主页\n整\n整版代码隔离验收\n已保存\n已置顶\n0\n将频道或私信拖到这里置顶\n联合频道\n0\n还没有联合频道\n频道\n0\n还没有频道\n私信\n0\n主页\n动态\n任务\n搜索\n整\n整版代码隔离验收",
+      "documentPreserved": true
+    },
+    {
+      "engine": "chromium-mobile",
+      "state": "activity",
+      "url": "https://app.raft.build/s/loom-intake-fixture/activity",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "screenshot": "chromium-mobile-activity.png",
+      "text": "动态\n\n0 条进行中 · 0 条未读\n\n筛选\n没有会话\n频道、私信和已关注的消息列会一直保留在这里，直到处理完成。\n主页\n动态\n任务\n搜索\n整\n整版代码隔离验收",
+      "documentPreserved": true
+    },
+    {
+      "engine": "chromium-mobile",
+      "state": "tasks",
+      "url": "https://app.raft.build/s/loom-intake-fixture/tasks",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "screenshot": "chromium-mobile-tasks.png",
+      "text": "任务\n\n0 个频道任务\n\n频道\n创建者\n负责人\n看板\n列表\n待办\n0\n没有待办的任务\n进行中\n0\n没有进行中的任务\n待确认\n0\n没有待确认的任务\n完成\n0\n已关闭\n0\n主页\n动态\n任务\n搜索\n整\n整版代码隔离验收",
+      "documentPreserved": true
+    },
+    {
+      "engine": "chromium-mobile",
+      "state": "appearance",
+      "url": "https://app.raft.build/s/loom-intake-fixture/settings/appearance",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "screenshot": "chromium-mobile-appearance.png",
+      "text": "外观\n整版代码隔离验收 的主题\n每个服务器可以用不同的主题。\n外观\n消息字号\n\n调整此设备上渲染的消息文本，包括标题、代码块、内联代码和引用标签。按钮、标签和侧栏保持其固定的界面尺寸。\n\n小\n中\n大\n已保存到此设备。\n预览\nCindy\npreview\n11:08\n\n@Joy #proj-uiux 新设计很棒 — 正在 git pull 本地试用。\n\n实时 Agent 动态\n在窗口顶部和首页顶栏显示正在工作的 Agent 及其在做的事。\n已保存到此设备。\n显示 Agent 模型\n在聊天里 Agent 名字旁显示它使用的模型。\n已保存到此设备。\n隐藏空的侧栏分区\n当侧栏某个分区没有内容时（例如置顶、私信为空），整块隐藏不显示。只要你可以创建联合频道，联合频道分区就会保留显示。\n已保存到此设备。",
+      "documentPreserved": true
+    },
+    {
+      "engine": "webkit-mobile",
+      "state": "chat",
+      "url": "https://app.raft.build/s/loom-intake-fixture/",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "screenshot": "webkit-mobile-chat.png",
+      "text": "主页\n整\n整版代码隔离验收\n\n已保存\n已置顶\n0\n将频道或私信拖到这里置顶\n联合频道\n0\n还没有联合频道\n频道\n0\n还没有频道\n私信\n0\n主页\n动态\n任务\n搜索\n整\n整版代码隔离验收",
+      "documentPreserved": true
+    },
+    {
+      "engine": "webkit-mobile",
+      "state": "activity",
+      "url": "https://app.raft.build/s/loom-intake-fixture/activity",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "screenshot": "webkit-mobile-activity.png",
+      "text": "动态\n\n0 条进行中 · 0 条未读\n\n筛选\n没有会话\n频道、私信和已关注的消息列会一直保留在这里，直到处理完成。\n主页\n动态\n任务\n搜索\n整\n整版代码隔离验收",
+      "documentPreserved": true
+    },
+    {
+      "engine": "webkit-mobile",
+      "state": "tasks",
+      "url": "https://app.raft.build/s/loom-intake-fixture/tasks",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "screenshot": "webkit-mobile-tasks.png",
+      "text": "任务\n\n0 个频道任务\n\n频道\n创建者\n负责人\n看板\n列表\n待办\n0\n没有待办的任务\n进行中\n0\n没有进行中的任务\n待确认\n0\n没有待确认的任务\n完成\n0\n已关闭\n0\n主页\n动态\n任务\n搜索\n整\n整版代码隔离验收",
+      "documentPreserved": true
+    },
+    {
+      "engine": "webkit-mobile",
+      "state": "appearance",
+      "url": "https://app.raft.build/s/loom-intake-fixture/settings/appearance",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "screenshot": "webkit-mobile-appearance.png",
+      "text": "外观\n整版代码隔离验收 的主题\n每个服务器可以用不同的主题。\n外观\n消息字号\n\n调整此设备上渲染的消息文本，包括标题、代码块、内联代码和引用标签。按钮、标签和侧栏保持其固定的界面尺寸。\n\n小\n中\n大\n已保存到此设备。\n预览\nCindy\npreview\n11:08\n\n@Joy #proj-uiux 新设计很棒 — 正在 git pull 本地试用。\n\n实时 Agent 动态\n在窗口顶部和首页顶栏显示正在工作的 Agent 及其在做的事。\n已保存到此设备。\n显示 Agent 模型\n在聊天里 Agent 名字旁显示它使用的模型。\n已保存到此设备。\n隐藏空的侧栏分区\n当侧栏某个分区没有内容时（例如置顶、私信为空），整块隐藏不显示。只要你可以创建联合频道，联合频道分区就会保留显示。\n已保存到此设备。",
+      "documentPreserved": true
+    }
+  ],
+  "release": {
+    "releaseId": "a7bb80017084e766d68b8a1d7c6377496a16fbaa",
+    "commitSha": "a7bb80017084e766d68b8a1d7c6377496a16fbaa",
+    "builtAt": "2026-10-29T17:16:56Z",
+    "branch": "release/v1.21.40",
+    "deploymentEnvironment": "production"
+  },
+  "integrity": {
+    "release": {
+      "releaseId": "a7bb80017084e766d68b8a1d7c6377496a16fbaa",
+      "commitSha": "a7bb80017084e766d68b8a1d7c6377496a16fbaa",
+      "builtAt": "2026-10-29T17:16:56Z",
+      "branch": "release/v1.21.40",
+      "deploymentEnvironment": "production"
+    },
+    "files": 316,
+    "modules": 219,
+    "totalBytes": 19538241,
+    "nonliteralImports": [
+      {
+        "url": "https://app.raft.build/assets/vendor-react-B99DtKrr.js",
+        "expressions": [
+          "import(e.module)"
+        ]
+      }
+    ],
+    "originalBytesVerified": true,
+    "staticClosureComplete": true
+  },
+  "chromium-desktop": {
+    "loadedResources": 26,
+    "staticMisses": [],
+    "errors": [],
+    "requests": [
+      {
+        "method": "GET",
+        "url": "https://app.raft.build/s/loom-intake-fixture/",
+        "type": "document"
+      },
+      {
+        "method": "GET",
+        "url": "https://app.raft.build/reactions/reaction-sprite.svg",
+        "type": "image"
+      },
+      {
+        "method": "GET",
+        "url": "https://app.raft.build/assets/index-Dx3oNLwS.js",
+        "type": "script"
+      },
+      {
+        "method": "GET",
+        "url": "https://app.raft.build/assets/rolldown-runtime-hePW80VL.js",
+        "type": "script"
+      },
+      {
+        "method": "GET",
+        "url": "https://app.raft.build/assets/vendor-react-B99DtKrr.js",
+        "type": "script"
+      },
+      {
+        "method": "GET",
+        "url": "https://app.raft.build/assets/vendor-markdown-B_k5TMGW.js",
+        "type": "script"
+      },
+      {
+        "method": "GET",
+        "url": "https://app.raft.build/assets/vendor-startup-nzzTMCKK.js",
+        "type": "script"
+      },
+      {
+        "method": "GET",
+        "url": "https://app.raft.build/assets/vendor-raft-ui-BHAojVZQ.js",
+        "type": "script"
+      },
+      {
+        "method": "GET",
+        "url": "https://app.raft.build/assets/vendor-socketio-DWoewfxI.js",
+        "type": "script"
+      },
+      {
+        "method": "GET",
+        "url": "https://app.raft.build/assets/app-shell-DOYrxQ-_.js",
+        "type": "script"
+      },
+      {
+        "method": "GET",
+        "url": "https://app.raft.build/assets/app-shell-DuvkFUT-.css",
+        "type": "stylesheet"
+      },
+      {
+        "method": "GET",
+        "url": "https://static.cloudflareinsights.com/beacon.min.js",
+        "type": "script"
+      },
+      {
+        "method": "GET",
+        "url": "https://app.raft.build/assets/zh-cn-zgUfP7tb.js",
+        "type": "script"
+      },
+      {
+        "method": "GET",
+        "url": "https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300..700&family=Space+Mono:wght@400;700&display=swap",
+        "type": "stylesheet"
+      },
+      {
+        "method": "GET",
+        "url": "https://fonts.gstatic.com/s/spacegrotesk/v22/V8mQoQDjQSkFtoMM3T6r8E7mF71Q-gOoraIAEj7oUUsj.ttf",
+        "type": "font"
+      },
+      {
+        "method": "GET",
+        "url": "https://fonts.gstatic.com/s/spacemono/v17/i7dPIFZifjKcF5UAWdDRUEY.ttf",
+        "type": "font"
+      },
+      {
+        "method": "GET",
+        "url": "https://fonts.gstatic.com/s/spacegrotesk/v22/V8mQoQDjQSkFtoMM3T6r8E7mF71Q-gOoraIAEj4PVksj.ttf",
+        "type": "font"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/auth/me",
+        "type": "xhr"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/public/client-config",
+        "type": "xhr"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/servers",
+        "type": "xhr"
+      },
+      {
+        "method": "GET",
+        "url": "https://fonts.gstatic.com/s/spacegrotesk/v22/V8mQoQDjQSkFtoMM3T6r8E7mF71Q-gOoraIAEj7aUUsj.ttf",
+        "type": "font"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/announcements/active?server_id=isolated-fixture-workspace&sidebar_limit=5",
+        "type": "xhr"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/servers/isolated-fixture-workspace/members",
+        "type": "xhr"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/servers/isolated-fixture-workspace/sidebar-order",
+        "type": "xhr"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/servers/isolated-fixture-workspace/settings",
+        "type": "xhr"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/servers/unread-summary",
+        "type": "xhr"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/integrations/permission-updates",
+        "type": "xhr"
+      },
+      {
+        "method": "POST",
+        "url": "https://api.raft.build/api/feature-flags/evaluate",
+        "type": "xhr"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/integrations/permission-updates",
+        "type": "xhr"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/product-feedback/tickets?limit=1",
+        "type": "xhr"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/servers/isolated-fixture-workspace/machines",
+        "type": "xhr"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/servers/isolated-fixture-workspace/setup-projection",
+        "type": "xhr"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/servers/isolated-fixture-workspace/model-label-catalog",
+        "type": "xhr"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/channels?archived=include",
+        "type": "xhr"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/channels/dm",
+        "type": "xhr"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/billing/subscription",
+        "type": "xhr"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/messages/attachment-preview/enabled",
+        "type": "xhr"
+      },
+      {
+        "method": "GET",
+        "url": "https://app.raft.build/assets/ThreadsInbox-zsbhN2jU.js",
+        "type": "script"
+      },
+      {
+        "method": "GET",
+        "url": "https://fonts.gstatic.com/s/spacegrotesk/v22/V8mQoQDjQSkFtoMM3T6r8E7mF71Q-gOoraIAEj42Vksj.ttf",
+        "type": "font"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/channels/inbox?filter=all&sort=desc&limit=50&offset=0",
+        "type": "xhr"
+      },
+      {
+        "method": "GET",
+        "url": "https://app.raft.build/assets/TasksPanel-Be_ryFhx.js",
+        "type": "script"
+      },
+      {
+        "method": "POST",
+        "url": "https://api.raft.build/api/feature-flags/evaluate",
+        "type": "xhr"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/tasks/server?detail=summary&status=todo&limit=100",
+        "type": "xhr"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/tasks/server?detail=summary&status=in_progress&limit=100",
+        "type": "xhr"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/tasks/server?detail=summary&status=in_review&limit=100",
+        "type": "xhr"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/billing/subscription",
+        "type": "xhr"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/billing/subscription",
+        "type": "xhr"
+      },
+      {
+        "method": "GET",
+        "url": "https://app.raft.build/assets/SettingsPanel-DbqyF5kZ.js",
+        "type": "script"
+      },
+      {
+        "method": "GET",
+        "url": "https://app.raft.build/assets/useProviderConnections-BRqJCWZ-.js",
+        "type": "script"
+      },
+      {
+        "method": "GET",
+        "url": "https://app.raft.build/assets/SectionHeader-zmGb3THo.js",
+        "type": "script"
+      },
+      {
+        "method": "GET",
+        "url": "https://app.raft.build/assets/AvatarEditVeil-DsDQ4OGe.js",
+        "type": "script"
+      },
+      {
+        "method": "GET",
+        "url": "https://app.raft.build/assets/usdAmount-COW27Fwo.js",
+        "type": "script"
+      },
+      {
+        "method": "GET",
+        "url": "https://app.raft.build/assets/formatBillingAmount-CjqvcTmb.js",
+        "type": "script"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/product-feedback/tickets?limit=1",
+        "type": "xhr"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/auth/providers",
+        "type": "xhr"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/auth/identities",
+        "type": "xhr"
+      },
+      {
+        "method": "GET",
+        "url": "https://www.gravatar.com/avatar/cc6d96611cffa9f02c3626f0b9ee897dc171e2d540a5cae349d4ec316104997b?s=52&d=404",
+        "type": "image"
+      }
+    ],
+    "unsupported": [
+      {
+        "method": "GET",
+        "url": "https://static.cloudflareinsights.com/beacon.min.js"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/public/client-config"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/announcements/active?server_id=isolated-fixture-workspace&sidebar_limit=5"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/integrations/permission-updates"
+      },
+      {
+        "method": "POST",
+        "url": "https://api.raft.build/api/feature-flags/evaluate"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/integrations/permission-updates"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/product-feedback/tickets?limit=1"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/servers/isolated-fixture-workspace/setup-projection"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/billing/subscription"
+      },
+      {
+        "method": "POST",
+        "url": "https://api.raft.build/api/feature-flags/evaluate"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/billing/subscription"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/billing/subscription"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/product-feedback/tickets?limit=1"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/auth/providers"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/auth/identities"
+      },
+      {
+        "method": "GET",
+        "url": "https://www.gravatar.com/avatar/cc6d96611cffa9f02c3626f0b9ee897dc171e2d540a5cae349d4ec316104997b?s=52&d=404"
+      }
+    ],
+    "blockedWebSockets": [
+      "wss://api.raft.build/socket.io/?EIO=4&transport=websocket"
+    ]
+  },
+  "chromium-mobile": {
+    "loadedResources": 26,
+    "staticMisses": [],
+    "errors": [],
+    "requests": [
+      {
+        "method": "GET",
+        "url": "https://app.raft.build/s/loom-intake-fixture/",
+        "type": "document"
+      },
+      {
+        "method": "GET",
+        "url": "https://app.raft.build/reactions/reaction-sprite.svg",
+        "type": "image"
+      },
+      {
+        "method": "GET",
+        "url": "https://app.raft.build/assets/index-Dx3oNLwS.js",
+        "type": "script"
+      },
+      {
+        "method": "GET",
+        "url": "https://app.raft.build/assets/rolldown-runtime-hePW80VL.js",
+        "type": "script"
+      },
+      {
+        "method": "GET",
+        "url": "https://app.raft.build/assets/vendor-react-B99DtKrr.js",
+        "type": "script"
+      },
+      {
+        "method": "GET",
+        "url": "https://app.raft.build/assets/vendor-markdown-B_k5TMGW.js",
+        "type": "script"
+      },
+      {
+        "method": "GET",
+        "url": "https://app.raft.build/assets/vendor-startup-nzzTMCKK.js",
+        "type": "script"
+      },
+      {
+        "method": "GET",
+        "url": "https://app.raft.build/assets/vendor-raft-ui-BHAojVZQ.js",
+        "type": "script"
+      },
+      {
+        "method": "GET",
+        "url": "https://app.raft.build/assets/vendor-socketio-DWoewfxI.js",
+        "type": "script"
+      },
+      {
+        "method": "GET",
+        "url": "https://app.raft.build/assets/app-shell-DOYrxQ-_.js",
+        "type": "script"
+      },
+      {
+        "method": "GET",
+        "url": "https://app.raft.build/assets/app-shell-DuvkFUT-.css",
+        "type": "stylesheet"
+      },
+      {
+        "method": "GET",
+        "url": "https://static.cloudflareinsights.com/beacon.min.js",
+        "type": "script"
+      },
+      {
+        "method": "GET",
+        "url": "https://app.raft.build/assets/zh-cn-zgUfP7tb.js",
+        "type": "script"
+      },
+      {
+        "method": "GET",
+        "url": "https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300..700&family=Space+Mono:wght@400;700&display=swap",
+        "type": "stylesheet"
+      },
+      {
+        "method": "GET",
+        "url": "https://fonts.gstatic.com/s/spacegrotesk/v22/V8mQoQDjQSkFtoMM3T6r8E7mF71Q-gOoraIAEj7oUUsj.ttf",
+        "type": "font"
+      },
+      {
+        "method": "GET",
+        "url": "https://fonts.gstatic.com/s/spacegrotesk/v22/V8mQoQDjQSkFtoMM3T6r8E7mF71Q-gOoraIAEj4PVksj.ttf",
+        "type": "font"
+      },
+      {
+        "method": "GET",
+        "url": "https://fonts.gstatic.com/s/spacegrotesk/v22/V8mQoQDjQSkFtoMM3T6r8E7mF71Q-gOoraIAEj42Vksj.ttf",
+        "type": "font"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/auth/me",
+        "type": "xhr"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/public/client-config",
+        "type": "xhr"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/servers",
+        "type": "xhr"
+      },
+      {
+        "method": "GET",
+        "url": "https://fonts.gstatic.com/s/spacemono/v17/i7dPIFZifjKcF5UAWdDRUEY.ttf",
+        "type": "font"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/announcements/active?server_id=isolated-fixture-workspace&sidebar_limit=5",
+        "type": "xhr"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/servers/isolated-fixture-workspace/members",
+        "type": "xhr"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/servers/isolated-fixture-workspace/sidebar-order",
+        "type": "xhr"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/servers/isolated-fixture-workspace/settings",
+        "type": "xhr"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/servers/unread-summary",
+        "type": "xhr"
+      },
+      {
+        "method": "POST",
+        "url": "https://api.raft.build/api/feature-flags/evaluate",
+        "type": "xhr"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/integrations/permission-updates",
+        "type": "xhr"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/product-feedback/tickets?limit=1",
+        "type": "xhr"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/servers/isolated-fixture-workspace/machines",
+        "type": "xhr"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/servers/isolated-fixture-workspace/setup-projection",
+        "type": "xhr"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/servers/isolated-fixture-workspace/model-label-catalog",
+        "type": "xhr"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/channels?archived=include",
+        "type": "xhr"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/channels/dm",
+        "type": "xhr"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/billing/subscription",
+        "type": "xhr"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/messages/attachment-preview/enabled",
+        "type": "xhr"
+      },
+      {
+        "method": "GET",
+        "url": "https://app.raft.build/assets/ThreadsInbox-zsbhN2jU.js",
+        "type": "script"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/integrations/permission-updates",
+        "type": "xhr"
+      },
+      {
+        "method": "POST",
+        "url": "https://api.raft.build/api/feature-flags/evaluate",
+        "type": "xhr"
+      },
+      {
+        "method": "GET",
+        "url": "https://fonts.gstatic.com/s/spacegrotesk/v22/V8mQoQDjQSkFtoMM3T6r8E7mF71Q-gOoraIAEj7aUUsj.ttf",
+        "type": "font"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/channels/inbox?filter=all&sort=desc&limit=50&offset=0",
+        "type": "xhr"
+      },
+      {
+        "method": "GET",
+        "url": "https://app.raft.build/assets/TasksPanel-Be_ryFhx.js",
+        "type": "script"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/tasks/server?detail=summary&status=todo&limit=100",
+        "type": "xhr"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/tasks/server?detail=summary&status=in_progress&limit=100",
+        "type": "xhr"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/tasks/server?detail=summary&status=in_review&limit=100",
+        "type": "xhr"
+      },
+      {
+        "method": "GET",
+        "url": "https://app.raft.build/assets/SettingsPanel-DbqyF5kZ.js",
+        "type": "script"
+      },
+      {
+        "method": "GET",
+        "url": "https://app.raft.build/assets/useProviderConnections-BRqJCWZ-.js",
+        "type": "script"
+      },
+      {
+        "method": "GET",
+        "url": "https://app.raft.build/assets/SectionHeader-zmGb3THo.js",
+        "type": "script"
+      },
+      {
+        "method": "GET",
+        "url": "https://app.raft.build/assets/AvatarEditVeil-DsDQ4OGe.js",
+        "type": "script"
+      },
+      {
+        "method": "GET",
+        "url": "https://app.raft.build/assets/usdAmount-COW27Fwo.js",
+        "type": "script"
+      },
+      {
+        "method": "GET",
+        "url": "https://app.raft.build/assets/formatBillingAmount-CjqvcTmb.js",
+        "type": "script"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/product-feedback/tickets?limit=1",
+        "type": "xhr"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/channels/inbox?filter=all&sort=desc&limit=50&offset=0",
+        "type": "xhr"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/channels/unread?summary=1",
+        "type": "xhr"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/servers/isolated-fixture-workspace/machines",
+        "type": "xhr"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/agents",
+        "type": "xhr"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/channels/threads/followed?unreadOnly=1",
+        "type": "xhr"
+      }
+    ],
+    "unsupported": [
+      {
+        "method": "GET",
+        "url": "https://static.cloudflareinsights.com/beacon.min.js"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/public/client-config"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/announcements/active?server_id=isolated-fixture-workspace&sidebar_limit=5"
+      },
+      {
+        "method": "POST",
+        "url": "https://api.raft.build/api/feature-flags/evaluate"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/integrations/permission-updates"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/product-feedback/tickets?limit=1"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/servers/isolated-fixture-workspace/setup-projection"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/billing/subscription"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/integrations/permission-updates"
+      },
+      {
+        "method": "POST",
+        "url": "https://api.raft.build/api/feature-flags/evaluate"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/product-feedback/tickets?limit=1"
+      }
+    ],
+    "blockedWebSockets": [
+      "wss://api.raft.build/socket.io/?EIO=4&transport=websocket"
+    ]
+  },
+  "webkit-mobile": {
+    "loadedResources": 27,
+    "staticMisses": [],
+    "errors": [],
+    "requests": [
+      {
+        "method": "GET",
+        "url": "https://app.raft.build/s/loom-intake-fixture/",
+        "type": "document"
+      },
+      {
+        "method": "GET",
+        "url": "https://app.raft.build/assets/zh-cn-zgUfP7tb.js",
+        "type": "script"
+      },
+      {
+        "method": "GET",
+        "url": "https://app.raft.build/site.webmanifest?v=20260628",
+        "type": "other"
+      },
+      {
+        "method": "GET",
+        "url": "https://app.raft.build/reactions/reaction-sprite.svg",
+        "type": "image"
+      },
+      {
+        "method": "GET",
+        "url": "https://app.raft.build/assets/index-Dx3oNLwS.js",
+        "type": "script"
+      },
+      {
+        "method": "GET",
+        "url": "https://app.raft.build/assets/rolldown-runtime-hePW80VL.js",
+        "type": "script"
+      },
+      {
+        "method": "GET",
+        "url": "https://app.raft.build/assets/vendor-react-B99DtKrr.js",
+        "type": "script"
+      },
+      {
+        "method": "GET",
+        "url": "https://app.raft.build/assets/vendor-markdown-B_k5TMGW.js",
+        "type": "script"
+      },
+      {
+        "method": "GET",
+        "url": "https://app.raft.build/assets/vendor-startup-nzzTMCKK.js",
+        "type": "script"
+      },
+      {
+        "method": "GET",
+        "url": "https://app.raft.build/assets/vendor-raft-ui-BHAojVZQ.js",
+        "type": "script"
+      },
+      {
+        "method": "GET",
+        "url": "https://app.raft.build/assets/vendor-socketio-DWoewfxI.js",
+        "type": "script"
+      },
+      {
+        "method": "GET",
+        "url": "https://app.raft.build/assets/app-shell-DOYrxQ-_.js",
+        "type": "script"
+      },
+      {
+        "method": "GET",
+        "url": "https://app.raft.build/assets/app-shell-DuvkFUT-.css",
+        "type": "stylesheet"
+      },
+      {
+        "method": "GET",
+        "url": "https://static.cloudflareinsights.com/beacon.min.js",
+        "type": "script"
+      },
+      {
+        "method": "GET",
+        "url": "https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300..700&family=Space+Mono:wght@400;700&display=swap",
+        "type": "stylesheet"
+      },
+      {
+        "method": "GET",
+        "url": "https://fonts.gstatic.com/s/spacegrotesk/v22/V8mQoQDjQSkFtoMM3T6r8E7mF71Q-gOoraIAEj7oUUsj.ttf",
+        "type": "font"
+      },
+      {
+        "method": "GET",
+        "url": "https://fonts.gstatic.com/s/spacegrotesk/v22/V8mQoQDjQSkFtoMM3T6r8E7mF71Q-gOoraIAEj4PVksj.ttf",
+        "type": "font"
+      },
+      {
+        "method": "GET",
+        "url": "https://fonts.gstatic.com/s/spacegrotesk/v22/V8mQoQDjQSkFtoMM3T6r8E7mF71Q-gOoraIAEj42Vksj.ttf",
+        "type": "font"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/auth/me",
+        "type": "xhr"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/public/client-config",
+        "type": "xhr"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/servers",
+        "type": "xhr"
+      },
+      {
+        "method": "GET",
+        "url": "https://fonts.gstatic.com/s/spacemono/v17/i7dPIFZifjKcF5UAWdDRUEY.ttf",
+        "type": "font"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/announcements/active?server_id=isolated-fixture-workspace&sidebar_limit=5",
+        "type": "xhr"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/servers/isolated-fixture-workspace/members",
+        "type": "xhr"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/servers/isolated-fixture-workspace/sidebar-order",
+        "type": "xhr"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/servers/isolated-fixture-workspace/settings",
+        "type": "xhr"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/servers/unread-summary",
+        "type": "xhr"
+      },
+      {
+        "method": "POST",
+        "url": "https://api.raft.build/api/feature-flags/evaluate",
+        "type": "xhr"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/integrations/permission-updates",
+        "type": "xhr"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/product-feedback/tickets?limit=1",
+        "type": "xhr"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/servers/isolated-fixture-workspace/machines",
+        "type": "xhr"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/servers/isolated-fixture-workspace/setup-projection",
+        "type": "xhr"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/servers/isolated-fixture-workspace/model-label-catalog",
+        "type": "xhr"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/channels?archived=include",
+        "type": "xhr"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/channels/dm",
+        "type": "xhr"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/billing/subscription",
+        "type": "xhr"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/messages/attachment-preview/enabled",
+        "type": "xhr"
+      },
+      {
+        "method": "GET",
+        "url": "https://app.raft.build/assets/ThreadsInbox-zsbhN2jU.js",
+        "type": "script"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/integrations/permission-updates",
+        "type": "xhr"
+      },
+      {
+        "method": "POST",
+        "url": "https://api.raft.build/api/feature-flags/evaluate",
+        "type": "xhr"
+      },
+      {
+        "method": "GET",
+        "url": "https://fonts.gstatic.com/s/spacegrotesk/v22/V8mQoQDjQSkFtoMM3T6r8E7mF71Q-gOoraIAEj7aUUsj.ttf",
+        "type": "font"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/channels/inbox?filter=all&sort=desc&limit=50&offset=0",
+        "type": "xhr"
+      },
+      {
+        "method": "GET",
+        "url": "https://app.raft.build/assets/TasksPanel-Be_ryFhx.js",
+        "type": "script"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/tasks/server?detail=summary&status=todo&limit=100",
+        "type": "xhr"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/tasks/server?detail=summary&status=in_progress&limit=100",
+        "type": "xhr"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/tasks/server?detail=summary&status=in_review&limit=100",
+        "type": "xhr"
+      },
+      {
+        "method": "GET",
+        "url": "https://app.raft.build/assets/SettingsPanel-DbqyF5kZ.js",
+        "type": "script"
+      },
+      {
+        "method": "GET",
+        "url": "https://app.raft.build/assets/useProviderConnections-BRqJCWZ-.js",
+        "type": "script"
+      },
+      {
+        "method": "GET",
+        "url": "https://app.raft.build/assets/SectionHeader-zmGb3THo.js",
+        "type": "script"
+      },
+      {
+        "method": "GET",
+        "url": "https://app.raft.build/assets/AvatarEditVeil-DsDQ4OGe.js",
+        "type": "script"
+      },
+      {
+        "method": "GET",
+        "url": "https://app.raft.build/assets/usdAmount-COW27Fwo.js",
+        "type": "script"
+      },
+      {
+        "method": "GET",
+        "url": "https://app.raft.build/assets/formatBillingAmount-CjqvcTmb.js",
+        "type": "script"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/product-feedback/tickets?limit=1",
+        "type": "xhr"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/channels/inbox?filter=all&sort=desc&limit=50&offset=0",
+        "type": "xhr"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/channels/unread?summary=1",
+        "type": "xhr"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/servers/isolated-fixture-workspace/machines",
+        "type": "xhr"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/agents",
+        "type": "xhr"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/channels/threads/followed?unreadOnly=1",
+        "type": "xhr"
+      }
+    ],
+    "unsupported": [
+      {
+        "method": "GET",
+        "url": "https://static.cloudflareinsights.com/beacon.min.js"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/public/client-config"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/announcements/active?server_id=isolated-fixture-workspace&sidebar_limit=5"
+      },
+      {
+        "method": "POST",
+        "url": "https://api.raft.build/api/feature-flags/evaluate"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/integrations/permission-updates"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/product-feedback/tickets?limit=1"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/servers/isolated-fixture-workspace/setup-projection"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/billing/subscription"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/integrations/permission-updates"
+      },
+      {
+        "method": "POST",
+        "url": "https://api.raft.build/api/feature-flags/evaluate"
+      },
+      {
+        "method": "GET",
+        "url": "https://api.raft.build/api/product-feedback/tickets?limit=1"
+      }
+    ],
+    "blockedWebSockets": [
+      "wss://api.raft.build/socket.io/?EIO=4&transport=websocket"
+    ]
+  }
+}

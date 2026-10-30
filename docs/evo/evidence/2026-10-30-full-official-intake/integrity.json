@@ -1,0 +1,65 @@
+{
+  "metadata": {
+    "kind": "complete captured executable distribution, not original authored TSX",
+    "version": "1.21.40",
+    "release": {
+      "releaseId": "a7bb80017084e766d68b8a1d7c6377496a16fbaa",
+      "commitSha": "a7bb80017084e766d68b8a1d7c6377496a16fbaa",
+      "builtAt": "2026-10-29T17:16:56Z",
+      "branch": "release/v1.21.40",
+      "deploymentEnvironment": "production"
+    },
+    "archive": "raft-web-1.21.40-distribution.tar.gz",
+    "sha256": "68095d3eed26816b8d042654ebcabc20884c7b6ded4539efbc77fcd4f7a9093b",
+    "bytes": 5753170,
+    "lockSha256": "9b9fa839393f1a6e6f1f6b465a4ccfb6bca1520538a510f150be996d006b0fb2",
+    "files": 316,
+    "modules": 219,
+    "uncompressedResourceBytes": 19538241,
+    "staticClosureComplete": true,
+    "allResourcesReachableFromEntry": true,
+    "dynamicModuleSeams": [
+      {
+        "url": "https://app.raft.build/assets/vendor-react-B99DtKrr.js",
+        "expressions": [
+          "import(e.module)"
+        ]
+      }
+    ],
+    "actualBundledUi": {
+      "identifiedVersion": null,
+      "panelAction0521RulesPresent": true,
+      "badge0522RulesPresent": false,
+      "targetPackage": "@botiverse/raft-ui@0.52.2",
+      "singleRuntimeReplacementVerified": false
+    },
+    "thirdPartyTelemetryIncluded": false,
+    "businessAdapterComplete": false,
+    "productionEntryChanged": false,
+    "retrieved": "2026-10-30",
+    "licenseReference": "../raft-web-source/LICENSE",
+    "ownerAuthorizedDeployedExtraction": true
+  },
+  "verification": {
+    "release": {
+      "releaseId": "a7bb80017084e766d68b8a1d7c6377496a16fbaa",
+      "commitSha": "a7bb80017084e766d68b8a1d7c6377496a16fbaa",
+      "builtAt": "2026-10-29T17:16:56Z",
+      "branch": "release/v1.21.40",
+      "deploymentEnvironment": "production"
+    },
+    "files": 316,
+    "modules": 219,
+    "totalBytes": 19538241,
+    "nonliteralImports": [
+      {
+        "url": "https://app.raft.build/assets/vendor-react-B99DtKrr.js",
+        "expressions": [
+          "import(e.module)"
+        ]
+      }
+    ],
+    "originalBytesVerified": true,
+    "staticClosureComplete": true
+  }
+}

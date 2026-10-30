@@ -5,6 +5,31 @@ from `evo` on 2026-10-23), not the
 legacy sibling `rah` repository. There is no `HANDOVER.md`. Do not import the
 legacy project's Session-first rules or obsolete roadmap restrictions.
 
+## Owner directive: complete official frontend baseline (2026-10-30)
+
+The next accepted frontend baseline is the **complete official Web1.21.40
+source plus raft-ui0.52.2**, not old page source with newer resource patches.
+This directive supersedes the selected-closure/resource-port upgrade recipes
+below for future frontend migration. Existing ports describe the deployed
+legacy implementation and historical evidence; they do not authorize adding
+another cross-version UI slice or declaring the migration complete.
+
+Acquire and verify the complete target release before replacing the frontend.
+Owner explicitly authorized extracting the deployed release: the complete,
+immutable executable module/resource closure is an accepted intake, separately
+identified from the original authored TSX checkout. Do not wait for a public
+source mirror or describe compiled code as recovered original TSX. Preserve
+official files unchanged; SDK/data/identity/capability and delivery bindings live
+outside that source. Selected fragments, the UI npm package alone, screenshot
+matches or a changed version label do not prove a complete Web intake.
+Verify the entire graph, dynamic resource seams, actual bundled UI implementation
+and offline native-page boot. Acquisition does not certify backend adaptation
+or visual/behavioral acceptance. Preserve current service/data until the new
+whole-release adapter passes; never mix old page implementations into the new
+runtime. Backend Role/Instance/Session/Channel owners and approved Loom-only
+capabilities remain intact. See
+`docs/design/full-official-frontend-baseline.zh-CN.md`.
+
 - `chatbox` now contains the independently imported `rah/main` workbench
   (initial source `871ace825954750a546a027a832d76332cbd467e`). It is a separate
   product branch with its own engineering contract; never merge its Session-first

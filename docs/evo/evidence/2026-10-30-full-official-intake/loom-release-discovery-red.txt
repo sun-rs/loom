@@ -1,0 +1,58 @@
+✔ whole-release discovery includes lazy chunks, exports, workers and Vite dependency tables (4.828333ms)
+✔ HTML captures all language catalogs and static entrypoints, excluding data URLs and business links (0.206917ms)
+✔ CSS follows imports and font resources without reading inline SVG as network paths (0.134667ms)
+✖ static capture never follows user data, traversal, external application endpoints or placeholder routes (0.680917ms)
+✖ bundler require-scope debug labels are not executable network imports (0.931583ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 3
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 203.067416
+
+✖ failing tests:
+
+test at scripts/official-web/capture-release.test.mjs:18:1
+✖ static capture never follows user data, traversal, external application endpoints or placeholder routes (0.680917ms)
+  AssertionError [ERR_ASSERTION]: Missing expected exception.
+      at TestContext.<anonymous> (file:///Users/sun/Code/repos/rah_os/scripts/official-web/capture-release.test.mjs:22:9)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:831:18)
+      at Test.postRun (node:internal/test_runner/test:1330:19)
+      at Test.run (node:internal/test_runner/test:1258:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: undefined,
+    operator: 'throws',
+    diff: 'simple'
+  }
+
+test at scripts/official-web/capture-release.test.mjs:25:1
+✖ bundler require-scope debug labels are not executable network imports (0.931583ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+
+    [
+  +   'https://app.raft.build/node_modules/.pnpm/debug/lib/main.js',
+      'https://app.raft.build/assets/real.js'
+    ]
+
+      at TestContext.<anonymous> (file:///Users/sun/Code/repos/rah_os/scripts/official-web/capture-release.test.mjs:27:9)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:831:18)
+      at Test.postRun (node:internal/test_runner/test:1330:19)
+      at Test.run (node:internal/test_runner/test:1258:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ 'https://app.raft.build/node_modules/.pnpm/debug/lib/main.js', 'https://app.raft.build/assets/real.js' ],
+    expected: [ 'https://app.raft.build/assets/real.js' ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }

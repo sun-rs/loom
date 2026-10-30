@@ -1,6 +1,21 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync, existsSync } from "node:fs";
+test("the owner whole-release target is distinct from the historical selected-closure plan", () => {
+  const inventory = JSON.parse(
+    readFileSync("frontends/raft/loom/dependency-migration.json", "utf8"),
+  );
+  assert.match(inventory.plannedMigrationScope, /Historical/);
+  const target = inventory.currentOwnerBaseline;
+  assert.equal(target.web, "1.21.40");
+  assert.equal(target.ui, "0.52.2");
+  assert.match(target.intake, /not recovered/);
+  assert.equal(target.businessAdapterComplete, false);
+  assert.equal(target.singleUiRuntimeReplacementVerified, false);
+  assert.equal(target.productionEntryChanged, false);
+  for (const path of [target.webArchive, target.uiArchive, target.contract])
+    assert.ok(existsSync("frontends/raft/" + path), path);
+});
 test("migration inventory covers every navigation destination and only cites existing implementation owners", () => {
   const inventory = JSON.parse(
     readFileSync("frontends/raft/loom/dependency-migration.json", "utf8"),

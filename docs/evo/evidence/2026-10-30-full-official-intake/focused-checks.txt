@@ -1,0 +1,24 @@
+✔ whole-release discovery includes lazy chunks, exports, workers and Vite dependency tables (5.1605ms)
+✔ HTML captures all language catalogs and static entrypoints, excluding data URLs and business links (0.21ms)
+✔ CSS follows imports and font resources without reading inline SVG as network paths (0.156708ms)
+✔ static capture never follows user data, traversal, external application endpoints or placeholder routes (0.471666ms)
+✔ bundler require-scope debug labels are not executable network imports (0.218667ms)
+✔ the owner whole-release target is distinct from the historical selected-closure plan (0.85525ms)
+✔ migration inventory covers every navigation destination and only cites existing implementation owners (0.971625ms)
+✔ remaining presentation work is enumerated separately from permanent Loom bindings (0.147083ms)
+✔ fixed-source migration closure accounts for all reviewed composition groups (0.45425ms)
+✔ the retained Web dependency is one complete immutable 1.21.40 graph (1186.679125ms)
+✔ the UI reference archive retains the entire official 0.52.2 Git tree (36.761666ms)
+✔ whole release accepts the original graph and rejects missing, changed or foreign files (7.080375ms)
+✔ a self-consistent lock cannot silently drop an actual lazy module (1.631833ms)
+✔ a release identity mismatch or unsafe path never becomes a new baseline (1.340333ms)
+✔ unlocked candidate files are reported rather than silently omitted (1.602375ms)
+✔ a locked but unreachable old-release file cannot be mixed into the graph (1.724959ms)
+ℹ tests 16
+ℹ suites 0
+ℹ pass 16
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1423.401417

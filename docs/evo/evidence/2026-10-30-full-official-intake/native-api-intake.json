@@ -1,0 +1,187 @@
+{
+  "scope": "Observed boot and empty-route fixture API needs; not complete endpoint coverage or a product adapter",
+  "productionRequests": 0,
+  "endpoints": [
+    {
+      "method": "GET",
+      "path": "/api/agents",
+      "seenIn": ["chromium-mobile", "webkit-mobile"],
+      "queryExamples": [],
+      "unbound": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/announcements/active",
+      "seenIn": ["chromium-desktop", "chromium-mobile", "webkit-mobile"],
+      "queryExamples": [
+        "?server_id=isolated-fixture-workspace&sidebar_limit=5"
+      ],
+      "unbound": true
+    },
+    {
+      "method": "GET",
+      "path": "/api/auth/identities",
+      "seenIn": ["chromium-desktop"],
+      "queryExamples": [],
+      "unbound": true
+    },
+    {
+      "method": "GET",
+      "path": "/api/auth/me",
+      "seenIn": ["chromium-desktop", "chromium-mobile", "webkit-mobile"],
+      "queryExamples": [],
+      "unbound": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/auth/providers",
+      "seenIn": ["chromium-desktop"],
+      "queryExamples": [],
+      "unbound": true
+    },
+    {
+      "method": "GET",
+      "path": "/api/billing/subscription",
+      "seenIn": ["chromium-desktop", "chromium-mobile", "webkit-mobile"],
+      "queryExamples": [],
+      "unbound": true
+    },
+    {
+      "method": "GET",
+      "path": "/api/channels",
+      "seenIn": ["chromium-desktop", "chromium-mobile", "webkit-mobile"],
+      "queryExamples": ["?archived=include"],
+      "unbound": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/channels/dm",
+      "seenIn": ["chromium-desktop", "chromium-mobile", "webkit-mobile"],
+      "queryExamples": [],
+      "unbound": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/channels/inbox",
+      "seenIn": ["chromium-desktop", "chromium-mobile", "webkit-mobile"],
+      "queryExamples": ["?filter=all&sort=desc&limit=50&offset=0"],
+      "unbound": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/channels/threads/followed",
+      "seenIn": ["chromium-mobile", "webkit-mobile"],
+      "queryExamples": ["?unreadOnly=1"],
+      "unbound": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/channels/unread",
+      "seenIn": ["chromium-mobile", "webkit-mobile"],
+      "queryExamples": ["?summary=1"],
+      "unbound": false
+    },
+    {
+      "method": "POST",
+      "path": "/api/feature-flags/evaluate",
+      "seenIn": ["chromium-desktop", "chromium-mobile", "webkit-mobile"],
+      "queryExamples": [],
+      "unbound": true
+    },
+    {
+      "method": "GET",
+      "path": "/api/integrations/permission-updates",
+      "seenIn": ["chromium-desktop", "chromium-mobile", "webkit-mobile"],
+      "queryExamples": [],
+      "unbound": true
+    },
+    {
+      "method": "GET",
+      "path": "/api/messages/attachment-preview/enabled",
+      "seenIn": ["chromium-desktop", "chromium-mobile", "webkit-mobile"],
+      "queryExamples": [],
+      "unbound": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/product-feedback/tickets",
+      "seenIn": ["chromium-desktop", "chromium-mobile", "webkit-mobile"],
+      "queryExamples": ["?limit=1"],
+      "unbound": true
+    },
+    {
+      "method": "GET",
+      "path": "/api/public/client-config",
+      "seenIn": ["chromium-desktop", "chromium-mobile", "webkit-mobile"],
+      "queryExamples": [],
+      "unbound": true
+    },
+    {
+      "method": "GET",
+      "path": "/api/servers",
+      "seenIn": ["chromium-desktop", "chromium-mobile", "webkit-mobile"],
+      "queryExamples": [],
+      "unbound": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/servers/isolated-fixture-workspace/machines",
+      "seenIn": ["chromium-desktop", "chromium-mobile", "webkit-mobile"],
+      "queryExamples": [],
+      "unbound": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/servers/isolated-fixture-workspace/members",
+      "seenIn": ["chromium-desktop", "chromium-mobile", "webkit-mobile"],
+      "queryExamples": [],
+      "unbound": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/servers/isolated-fixture-workspace/model-label-catalog",
+      "seenIn": ["chromium-desktop", "chromium-mobile", "webkit-mobile"],
+      "queryExamples": [],
+      "unbound": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/servers/isolated-fixture-workspace/settings",
+      "seenIn": ["chromium-desktop", "chromium-mobile", "webkit-mobile"],
+      "queryExamples": [],
+      "unbound": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/servers/isolated-fixture-workspace/setup-projection",
+      "seenIn": ["chromium-desktop", "chromium-mobile", "webkit-mobile"],
+      "queryExamples": [],
+      "unbound": true
+    },
+    {
+      "method": "GET",
+      "path": "/api/servers/isolated-fixture-workspace/sidebar-order",
+      "seenIn": ["chromium-desktop", "chromium-mobile", "webkit-mobile"],
+      "queryExamples": [],
+      "unbound": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/servers/unread-summary",
+      "seenIn": ["chromium-desktop", "chromium-mobile", "webkit-mobile"],
+      "queryExamples": [],
+      "unbound": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/tasks/server",
+      "seenIn": ["chromium-desktop", "chromium-mobile", "webkit-mobile"],
+      "queryExamples": [
+        "?detail=summary&status=todo&limit=100",
+        "?detail=summary&status=in_progress&limit=100",
+        "?detail=summary&status=in_review&limit=100"
+      ],
+      "unbound": false
+    }
+  ]
+}
