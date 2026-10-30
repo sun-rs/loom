@@ -11,6 +11,7 @@ import { MessageSchema, type SidebarPreferences } from "@rah-os/protocol";
 import type { NativeReadBridge } from "./read-bridge.ts";
 import { nativeMessage } from "./message-projection.ts";
 import { nativeRoleConfiguration } from "./role-config.ts";
+import { managementCommand } from "./management-commands.ts";
 export class NativeCommands {
   readonly writes = new WriteIntentSlot();
   readonly bridge: NativeReadBridge;
@@ -86,11 +87,63 @@ export class NativeCommands {
       }).catch(reject);
     });
   }
+  mutate<Payload, Result>(
+    action: string,
+    roomId: string,
+    payload: Payload,
+    send: IntentSpec<Payload, Result>["send"],
+  ) {
+    return this.perform({
+      action,
+      session: this.session(roomId),
+      payload,
+      send,
+    });
+  }
+  async preferences(
+    expectedVersion: number,
+    build: (p: SidebarPreferences) => Record<string, unknown>,
+  ) {
+    const { workspace } = await this.bridge.identity();
+    const { preferences } = await this.bridge.client.request("sidebar.get", {
+      workspaceId: workspace.workspaceId,
+    });
+    if (
+      !Number.isSafeInteger(expectedVersion) ||
+      expectedVersion !== preferences.version
+    )
+      throw new RahClientError(
+        "stale_sidebar",
+        "偏好已更新，请重新读取后操作。",
+        409,
+      );
+    const result = await this.settle<{ preferences: SidebarPreferences }>(
+      "sidebar",
+      (onSettled) =>
+        this.writes.submitRevisioned({
+          action: "sidebar",
+          payload: {
+            workspaceId: workspace.workspaceId,
+            expectedVersion,
+            patch: build(preferences),
+          },
+          send: (p, idempotencyKey) =>
+            this.bridge.client.request("sidebar.patch", {
+              ...p,
+              idempotencyKey,
+            } as any),
+          onSettled,
+        }),
+    );
+    return result.preferences;
+  }
   async write(method: string, path: string, input: any = {}) {
     if (this.writes.state !== "idle" || this.projectionRetry)
       throw Error("仍在处理上一项操作，请先核实结果。");
     const { workspace, user, server } = await this.bridge.identity(),
       client = this.bridge.client;
+    const managed = await managementCommand(this, method, path, input);
+    if (managed) return managed.data;
     if (method === "patch" && path === `/servers/${server.id}/sidebar-order`) {
       const { preferences } = await client.request("sidebar.get", {
         workspaceId: workspace.workspaceId,
@@ -211,6 +264,15 @@ export class NativeCommands {
         role = c.roles.find((r: any) => r.roleId === id);
       if (!role)
         throw Error("实例配置必须通过显式重启选择修订；不能当作Role直接编辑");
+      if (
+        input.loomExpectedRoleRevisionId &&
+        input.loomExpectedRoleRevisionId !== role.roleRevisionId
+      )
+        throw new RahClientError(
+          "stale_role",
+          "角色配置已更新，请重新打开编辑器。",
+          409,
+        );
       const configuration = nativeRoleConfiguration(
         input,
         c.inventory,

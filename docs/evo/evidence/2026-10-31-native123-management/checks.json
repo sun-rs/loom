@@ -1,0 +1,49 @@
+{
+  "officialSourceChanged": false,
+  "sourceFiles": 2463,
+  "productionReplaced": false,
+  "productionRestarted": false,
+  "paidProviderCalls": 0,
+  "checks": {
+    "nativeTests": 37,
+    "candidateTypeAndBuild": true,
+    "rootTypecheck": true,
+    "stableProductBuild": true,
+    "realTemporaryCoreWidths": [
+      1440,
+      390
+    ],
+    "pixelRegressionPairs": 14,
+    "interactionRegressionPairs": 21,
+    "commonPixelDifference": 0
+  },
+  "limits": [
+    "Role-only slots are declared Loom extensions, not native Agent pixel parity",
+    "Member/archive/delete browser workflows not yet accepted",
+    "No full retained-business, physical device, PWA or paid-provider acceptance"
+  ],
+  "artifacts": {
+    "README.md": "f84f4a9957172c21c1fa319290075654369c3a561327273dba759c41f636a730",
+    "candidate-build.txt": "354f62615c909135d6bb5d0711537ce9e0018649b421ee9e517fe7aeee302357",
+    "channel-settings-1440.png": "2382175b6d05bd326b321c7167e657bead2d54b653cd581df8ad347499e84328",
+    "channel-settings-390.png": "70e8fa0edae18ccd52164e1d2cacdd0ff1f6fc97e1f1b9099850796a0395b947",
+    "core-management.json": "174292461e9a12f09182431c97d1cef03ed260ca8bddc022bf11596c2f1a2116",
+    "core-regression.json": "c2ca7d80d7e230f6348f3093434852a455a3e42e8d220b6c520275e3a3607586",
+    "failed-generic-reset-before-fix.json": "e4297ae3eea77e8a346adb0fb172480ea889e26905a32f571e7448f1d4e97bd2",
+    "interaction-regression.json": "4080ca7b74ed5966efa7eaa0fa22d99397c7aa88cf3a7c129e7c26c03b5ce4c8",
+    "native-boundary.json": "c9ceb778849e250c9a07c237f5d07ea6145a1cc8e26fcfbef65bafade0f6b359",
+    "pixel-regression.json": "2547ac9d0693059ac7bedc3f8261b82d89e2f4058b57ddb29eb2066174e5631a",
+    "red-instance-restart.txt": "e57f55aaa637bb6ae90fd747cdc7cd5b2db52342910fb397914cfceb03d2ead7",
+    "red-management.txt": "d6444a3f88a506ac55e7ef69abfafbd0d255523e7b0fb36d12aa1abe6c5d6da6",
+    "red-members.txt": "a35a80e1803d68e46857472c6f60cc6a0cf407b18fa0b34e99ace3e2052db108",
+    "red-policy.txt": "b631ad4d9360d9713dfa999b17ae7a6f41ea02e4edec7e46bbd438ee18dcec11",
+    "red-preference-projection.txt": "68fc257d69665e70d39d53986f4661545261a0d26692b6d6268f6ef516e555ea",
+    "red-removed-instance.txt": "27654e0f40cf7f95e38416d0335d9a4493de88bb0240e4869bc9aac1d4dd0774",
+    "red-role-revision.txt": "9cf0a02c49a327a2b8799476550df2a89b9f5754e5ca276955c61ede9b61648d",
+    "role-1440.png": "f70acb80348f112d5fb7b491e8a1c55a31af35eddc01cb6db1da99bb73f9d319",
+    "role-390.png": "570f9df1b408daeba11dd45d2e2eaff0b07e8e2b4ccf43a5b6e6a694e5444cf2",
+    "root-typecheck.txt": "a820689f12c47c62cb8a31cf7a4d1c613058257a8aaa2fcec2c10a80b347a04a",
+    "stable-build.txt": "7fb4804bd7bebe64427c75bdeef15e473e1a6e58264c79a2426532da546b64b4",
+    "unit.txt": "0cb68321100273b7a72ea754da4b899d73005f28525bf3d6a564f2968ce3887b"
+  }
+}

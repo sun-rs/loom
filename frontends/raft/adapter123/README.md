@@ -8,6 +8,7 @@
 - `sidebar.ts`：原生侧栏偏好的稀疏DTO转换；复用HumanSidebar版本及WriteIntentSlot。公共频道的置顶、分区增改删、排序和拖放已跑双边及真实Core验收；单聊关闭和tab换序仍只完成映射，不能外推为完整页面验收。
 - `agent-facets.ts`：一个原生展示缓存的 Role/Instance 视图，分类来自稳定 ID 的真实目录。没有第二份业务状态。
 - `runtime-*`、`avatars.ts`、`presence.ts`：已验证 Host 目录、头像资源兼容和工作状态投影。备注不是提示词，Role 不是有运行 lane 的 Agent。
+- `management-commands.ts`、`runtime-agent-store.ts`：Role／实例生命周期与原生频道管理到既有SDK的绑定，接受后读取真实状态。`role-profile.tsx`、`role-instances.tsx`、`role-lifecycle.tsx`为命名的Loom专属槽，复用原生表单／列表／确认组件；不是独立重绘页面。
 - `policy.ts`：明确的能力省略点，当前省略不兼容 Agent tab 和 Raft 云账户配额。精确源位置改变即失败，不改官方尺寸、字体、类名或配色。
 - `realtime-driver.ts`：可见页面通过 SDK 有界读恢复；只允许按 Room 同步，不模拟原版 Socket.IO 全局序号或业务 ACK。
 - `fonts.ts`：原字体的本地传输，字体族、字重和字形不变。
@@ -28,3 +29,5 @@ LOOM_BROWSER_SLICE=native123-interactions LOOM_BROWSER_STATIC_DIRECTORY=frontend
 验证与迁移缺口见[本批记录](../../../docs/evo/evidence/2026-10-30-native123-intake/README.md)。未接通的原生界面操作不代表后端缺少相应能力；不为配合原界面重写 Loom 后端。
 
 双边交互的夹具与真实Core证明分列在[交互记录](../../../docs/evo/evidence/2026-10-30-native123-interactions/README.md)。参考版仍是未修改的官方构建，只替换HTTP夹具；这些测试服务器随验收结束关闭，不是正式产品地址。
+
+Role／实例与频道管理的真实Core验收、保留的失败及剩余限制见[管理接线](../../../docs/evo/evidence/2026-10-31-native123-management/README.md)。

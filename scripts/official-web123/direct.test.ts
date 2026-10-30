@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { NativeReadBridge } from "../../frontends/raft/adapter123/read-bridge.ts";
+import { DEFAULT_SIDEBAR_PREFERENCES } from "@rah-os/protocol";
 test("standalone chats use explicit sidebar placement; instance-private boxes never leak into the root DM list", async () => {
   const rooms = [
     { roomId: "group", kind: "channel", name: "Group" },
@@ -20,7 +21,12 @@ test("standalone chats use explicit sidebar placement; instance-private boxes ne
     request: async (op: string) => {
       if (op === "room.list") return { rooms };
       if (op === "sidebar.get")
-        return { preferences: { dmOrder: ["room:standalone"] } };
+        return {
+          preferences: {
+            ...DEFAULT_SIDEBAR_PREFERENCES,
+            dmOrder: ["room:standalone"],
+          },
+        };
       throw Error(op);
     },
   } as any);

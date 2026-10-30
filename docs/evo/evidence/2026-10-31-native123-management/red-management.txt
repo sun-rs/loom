@@ -1,0 +1,46 @@
+✖ native channel edit/archive/delete preserve Room identity and historical visibility and use the Room causal owner (0.903375ms)
+✖ native notification/display preferences keep unrelated keys and reject stale observed versions (0.144416ms)
+✖ Role deletion only deletes configuration; instance deletion removes its actual membership (0.070375ms)
+✖ Role start/stop targets frozen instances' real Agent IDs; reset modes never discard workspaces (0.066625ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 0
+ℹ fail 4
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 231.485
+
+✖ failing tests:
+
+test at scripts/official-web123/management.test.ts:15:1
+✖ native channel edit/archive/delete preserve Room identity and historical visibility and use the Room causal owner (0.903375ms)
+  Error: UNBOUND_NATIVE_WRITE patch /channels/channel
+      at NativeCommands.write (file:///Users/sun/Code/repos/rah_os/frontends/raft/adapter123/commands.ts:322:11)
+      at async TestContext.<anonymous> (file:///Users/sun/Code/repos/rah_os/scripts/official-web123/management.test.ts:16:37)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3)
+
+test at scripts/official-web123/management.test.ts:21:1
+✖ native notification/display preferences keep unrelated keys and reject stale observed versions (0.144416ms)
+  Error: UNBOUND_NATIVE_WRITE patch /channels/channel/notification-settings
+      at NativeCommands.write (file:///Users/sun/Code/repos/rah_os/frontends/raft/adapter123/commands.ts:322:11)
+      at async TestContext.<anonymous> (file:///Users/sun/Code/repos/rah_os/scripts/official-web123/management.test.ts:23:19)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7)
+
+test at scripts/official-web123/management.test.ts:29:1
+✖ Role deletion only deletes configuration; instance deletion removes its actual membership (0.070375ms)
+  Error: UNBOUND_NATIVE_WRITE delete /agents/role
+      at NativeCommands.write (file:///Users/sun/Code/repos/rah_os/frontends/raft/adapter123/commands.ts:322:11)
+      at async TestContext.<anonymous> (file:///Users/sun/Code/repos/rah_os/scripts/official-web123/management.test.ts:30:20)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7)
+
+test at scripts/official-web123/management.test.ts:35:1
+✖ Role start/stop targets frozen instances' real Agent IDs; reset modes never discard workspaces (0.066625ms)
+  Error: UNBOUND_NATIVE_WRITE post /agents/role/stop
+      at NativeCommands.write (file:///Users/sun/Code/repos/rah_os/frontends/raft/adapter123/commands.ts:322:11)
+      at async TestContext.<anonymous> (file:///Users/sun/Code/repos/rah_os/scripts/official-web123/management.test.ts:36:20)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7)

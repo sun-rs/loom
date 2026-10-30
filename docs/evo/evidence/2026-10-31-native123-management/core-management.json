@@ -1,0 +1,38 @@
+{
+  "temporaryCore": true,
+  "paidCalls": 0,
+  "results": [
+    {
+      "width": 1440,
+      "rolePromptAndRemarks": true,
+      "emptyPrompt": true,
+      "fieldInitialFocus": true,
+      "frozenInstancesUnchanged": true,
+      "createInstance": true,
+      "roleBatchStopStart": true,
+      "explicitSessionReset": true,
+      "preservingSessionRestart": true,
+      "deleteRetainsInstances": true,
+      "restoreStableRoleId": true,
+      "muteAndCollapsePersistence": true,
+      "channelMetadataSave": true,
+      "errors": []
+    },
+    {
+      "width": 390,
+      "rolePromptAndRemarks": true,
+      "emptyPrompt": true,
+      "fieldInitialFocus": true,
+      "frozenInstancesUnchanged": true,
+      "createInstance": true,
+      "roleBatchStopStart": true,
+      "explicitSessionReset": true,
+      "preservingSessionRestart": true,
+      "deleteRetainsInstances": true,
+      "restoreStableRoleId": true,
+      "muteAndCollapsePersistence": true,
+      "channelMetadataSave": true,
+      "errors": []
+    }
+  ]
+}

@@ -1,0 +1,777 @@
+
+> rah-os@0.0.0 build:official-web:native123
+> node scripts/official-web123/build.mjs
+
+✔ complete Web1.21.23 source and official workspace closure are immutable and use their original dependency lock (83.202458ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 154.889375
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - import "./scripts/pwaManifestName" without a file extension (frontends/raft/upstream/web-1.21.23/packages/web/vite.config.ts:6:33). Add the file extension
+  - import "./scripts/webProxyTarget" without a file extension (frontends/raft/upstream/web-1.21.23/packages/web/vite.config.ts:7:39). Add the file extension
+  - import "./scripts/frontendReleaseIdentity" without a file extension (frontends/raft/upstream/web-1.21.23/packages/web/vite.config.ts:13:8). Add the file extension
+  - import "../src/buildIdentity" without a file extension (frontends/raft/upstream/web-1.21.23/packages/web/scripts/frontendReleaseIdentity.ts:10:46). Add the file extension
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+vite v8.3.4 building client environment for production...
+transforming...
+✓ 6604 modules transformed.
+rendering chunks...
+computing gzip size...
+frontends/raft/dist-native123/index.html                                                        2.04 kB │ gzip:     0.76 kB
+frontends/raft/dist-native123/assets/V8mDoQDjQSkFtoMM3T6r8E7mPb54C-s0-D0rl6rjA.woff2            6.71 kB
+frontends/raft/dist-native123/assets/i7dPIFZifjKcF5UAWdDRYE58RWq7-BNOj0Qhp.woff2                7.27 kB
+frontends/raft/dist-native123/assets/i7dMIFZifjKcF5UAWdDRaPpZUFqaHjyV-DWQgDHuA.woff2            7.33 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-201-exclamation-8fdccea8da71121b.png      9.18 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-201-i-6bcf3c66b25b6b81.png                9.22 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-201-p-fa02d21eaf90a37a.png                9.62 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-201-r-fbf3bc0dcdb6a63d.png               10.63 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-201-q-56afaa4b8bf6aa16.png               10.91 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-201-w-e430fdecf5424145.png               11.48 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-201-l-94d5c09f006ac7a8.png               11.56 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-201-z-755399ec28972f0c.png               11.69 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-201-j-3eee1560d20fd9ef.png               11.78 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-201-t-ab050cc4af9d3c32.png               11.81 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-201-x-a15de0e738714229.png               11.91 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-201-k-d2a62323197e0c2a.png               12.03 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-201-y-f80cd6f53d67a5e5.png               12.37 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-201-a-3a6148f8ebb9e764.png               12.50 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-201-question-13aea9976ed735f0.png        12.56 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-201-g-d64c17142f442a98.png               13.25 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-201-e-02b7819caad28200.png               13.29 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-304-5db87b14043b4b0e.png                 13.63 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-100-86f45391ade230f1.png                 13.85 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-201-f-cde6b9b76d2085b2.png               13.94 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-101-37bec6b870d12e85.png                 14.02 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-351-normal-05ca9b963d3dd575.png          14.07 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-201-v-859213d46ff1dcd6.png               14.54 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-201-n-cb5c49419a01a85f.png               14.86 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-201-b-0a99e930971ab972.png               14.89 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-011-5ba2343d833f7abb.png                 14.90 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-201-s-5d66697583e05793.png               15.12 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-050-e3272c9fa830e211.png                 15.13 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-370-26464431b83de85f.png                 15.59 kB
+frontends/raft/dist-native123/assets/i7dMIFZifjKcF5UAWdDRaPpZUFuaHjyV-B2s3bDs2.woff2           15.80 kB
+frontends/raft/dist-native123/assets/i7dPIFZifjKcF5UAWdDRYE98RWq7-DTLbW2xa.woff2               15.83 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-201-u-232ee63edf70f05d.png               15.84 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-069-864cfc4543041f45.png                 16.00 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-223-e421d56848b793a5.png                 16.10 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-201-c-b001a0eba2f23a94.png               16.21 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-431-0bb8db439e9b5faf.png                 16.24 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-201-d-6a3a72735d87ee5a.png               16.44 kB
+frontends/raft/dist-native123/assets/i7dPIFZifjKcF5UAWdDRYEF8RQ-Rg4St2Dn.woff2                 16.52 kB
+frontends/raft/dist-native123/assets/i7dMIFZifjKcF5UAWdDRaPpZUFWaHg-mWgeinG7.woff2             16.72 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-132-af1167a6cf2d6de9.png                 16.83 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-013-d90a2308402d78b8.png                 17.07 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-176-c753965a4e77d576.png                 17.22 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-278-89fe48dcc6ceb1f0.png                 17.40 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-406-efab6c76f929d8d7.png                 17.44 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-325-607cee1aa9a09ecf.png                 17.67 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-010-21ccaa43294b2fe9.png                 17.69 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-220-3a3df9a48992ef40.png                 17.72 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-140-37f03014afa61a0b.png                 17.83 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-446-bd9500b4292291e7.png                 17.94 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-280-b5640500bd54dc9e.png                 18.03 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-424-b214f0aeabbc9e14.png                 18.31 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-014-7e67e06e86d429a3.png                 18.35 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-444-91b9313f302b9b38.png                 18.46 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-465-6701f7f35b3465b2.png                 18.51 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-453-33a303ea83f256fa.png                 18.53 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-333-1ed1499abeee951d.png                 18.54 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-081-6a369f5d2039b7fb.png                 18.56 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-445-293111f6a6fcbd96.png                 18.67 kB
+frontends/raft/dist-native123/assets/V8mDoQDjQSkFtoMM3T6r8E7mPb94C-s0-D9tNdqV9.woff2           18.94 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-442-b08a79a0e6dcd46c.png                 19.23 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-316-76c384ea01f810a4.png                 19.26 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-172-6718793752e2045c.png                 19.30 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-410-98869559d6d4301c.png                 19.33 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-293-ffed597650fc70fb.png                 19.35 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-396-b2316a84128c9f34.png                 19.42 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-147-a3f65a139fce03c8.png                 19.44 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-355-ae063230e606067e.png                 19.54 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-464-32b754bc39ac5ef7.png                 19.72 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-339-d37db7cd5748d34b.png                 19.78 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-201-h-1948a91c9baf5d5c.png               19.82 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-452-bdcb52080ff8dd73.png                 19.89 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-173-9ff10ed37c1d8622.png                 19.92 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-361-57431224641111fa.png                 19.93 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-177-494db5618cde7695.png                 20.00 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-174-39d0481796b14796.png                 20.08 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-290-5f77d945d6edf5c8.png                 20.27 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-276-61ed363418ade8b5.png                 20.41 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-104-0e16972ec96ce071.png                 20.46 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-273-f77d0bcc55bcab95.png                 20.52 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-353-6fd0b61d7eb70a71.png                 20.64 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-283-7ad11c5d7a09e948.png                 20.76 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-459-ac8090ee17b61fcf.png                 20.82 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-261-6720b690689bddc7.png                 20.95 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-251-6ee81ac45e02e398.png                 20.97 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-228-edbb9cf2d3b02056.png                 21.09 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-372-095c9c06fd532aa3.png                 21.17 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-074-5f02cc2391c895e7.png                 21.21 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-120-b943a2d750179343.png                 21.26 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-305-17a970f8251a3336.png                 21.32 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-255-b182bef371fe5e81.png                 21.36 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-408-a74b20632d2e36d7.png                 21.42 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-447-b2c3f82cd69067bd.png                 21.48 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-041-a106573bb5ab442e.png                 21.49 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-358-db28c631be4a9918.png                 21.60 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-201-o-b5ed524dd3d6d50d.png               21.62 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-393-25f64ef281793dfa.png                 21.68 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-270-8084b9c66bbb5a99.png                 21.77 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-285-a1806f5414c89a4b.png                 21.85 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-194-eb60fad43be1c622.png                 21.95 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-201-m-028bfea8173ec94d.png               22.09 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-116-5685676a6f7ab9f3.png                 22.11 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-397-67c1baf35f1bb958.png                 22.17 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-371-953b64415e7fc29f.png                 22.18 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-351-rainy-24c8c451b37425b8.png           22.19 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-433-3a8f6bd941ab8cc9.png                 22.23 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-060-400846bd402a0bd2.png                 22.25 kB
+frontends/raft/dist-native123/assets/V8mDoQDjQSkFtoMM3T6r8E7mPbF4Cw-BhU9QXUp.woff2             22.28 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-449-c3a4140b4e81a34d.png                 22.33 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-163-ca05c66b35472c5e.png                 22.34 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-247-16436747b320f558.png                 22.37 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-312-9989b78535fa1731.png                 22.42 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-019-9de300c2adc7f1ce.png                 22.59 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-066-f39d5151cef969e3.png                 22.70 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-138-8cfb8fe2aba15e33.png                 22.71 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-246-3fb78b13da01b73c.png                 22.73 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-504-df2ac4aa788316b8.png                 22.78 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-043-cd06b8ff8700bce2.png                 22.79 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-426-4824e8c893a31b15.png                 22.84 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-262-2da6e853a7c61ab4.png                 22.89 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-299-42485ab195e75a62.png                 22.92 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-229-350657f5f892ecb0.png                 23.05 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-236-ed8fea97cea0b7a0.png                 23.05 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-265-09c9226e54b54ce6.png                 23.07 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-298-b095888be8054b99.png                 23.07 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-175-94fdf8b7e58fe535.png                 23.10 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-501-daeca1fe9cfc352e.png                 23.16 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-363-7f8ce6a49670e29c.png                 23.17 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-016-65d00a9493668ac8.png                 23.21 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-266-d9f3ef459fcc26a6.png                 23.22 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-414-919e270210a3fb5a.png                 23.28 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-307-4dadb912bcf8b5f1.png                 23.31 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-191-c8e0689ddc11a885.png                 23.41 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-167-26bc97e9a26436fb.png                 23.54 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-317-2588d4af8a964f80.png                 23.56 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-343-952c1efb0bf055bf.png                 23.59 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-311-28c8f134eee06a1f.png                 23.60 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-004-b7a47aa364a69d68.png                 23.60 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-035-4e8587d80286706f.png                 23.61 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-231-1aa98473c213fefa.png                 23.65 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-328-bdc2adaee7c3d9ff.png                 23.65 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-399-39fa32708adb122c.png                 23.74 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-238-9a200e653b41cab7.png                 23.75 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-263-4bc4e2d979688717.png                 23.76 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-419-624b2a3a4ce51404.png                 23.77 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-084-7d6f47f943d45d51.png                 23.82 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-152-80b00ffbcdac5e19.png                 23.89 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-412-b596726a7993999e.png                 23.97 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-413-860d08bbb9828df9.png                 24.00 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-368-1aef89bdc19544a1.png                 24.04 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-165-56ad3f5ad51ae2d9.png                 24.08 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-021-1b9287b36b516df1.png                 24.09 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-439-11ee6dbde8e96f8d.png                 24.09 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-505-b6ebaa58729003b0.png                 24.26 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-309-10edd2e5ffb16ba9.png                 24.29 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-374-c0a818eaa414aee5.png                 24.34 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-455-d4495a4c6338da5b.png                 24.34 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-161-5ea7b570f4af4d54.png                 24.43 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-258-620cbac777a9601e.png                 24.44 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-079-df20ce55c311d1f5.png                 24.60 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-133-6ce5406c49722c99.png                 24.66 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-326-f3c2c4a07e8ccd83.png                 24.68 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-502-5ce7b4be0b96eca6.png                 24.68 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-411-d91ed1ffe252190b.png                 24.76 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-427-a01bdb82e8de0111.png                 24.90 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-170-9f6387449232c457.png                 24.90 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-329-43ba2739a4560ea2.png                 24.96 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-118-defb4ebd5c6a7328.png                 25.02 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-440-b5d2b42c887049cd.png                 25.04 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-387-221cab26141e95cd.png                 25.04 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-048-c66194567a13c3ce.png                 25.04 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-070-62cc26cba5edd569.png                 25.11 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-029-1301d545994f55cf.png                 25.16 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-032-6404602bba702dba.png                 25.19 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-039-cfaf05fa943dc10e.png                 25.38 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-092-a3e9ddb63389143b.png                 25.42 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-308-6f11ebe6ff8dc34a.png                 25.45 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-274-f0c5e56a991bd518.png                 25.45 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-109-192ee8b2dd79360d.png                 25.57 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-001-e54804fadcd7a136.png                 25.63 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-137-6a426fffbcc39d7e.png                 25.66 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-111-6160e3f861534ad5.png                 25.69 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-183-cb3d807de34d4aed.png                 25.78 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-086-8a7b079f337a5cbd.png                 25.81 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-221-f01d865cf5b0091d.png                 25.94 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-437-90a8cf649872ee21.png                 25.94 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-113-844ca77dc30dfbd2.png                 25.97 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-088-6c8ec5dd0bc57243.png                 26.02 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-385-338ddae10b4dcdf7.png                 26.03 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-264-654be1329019119e.png                 26.08 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-288-e182ede07b6877b4.png                 26.08 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-462-2dcbb3266d9eda3a.png                 26.09 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-090-dc7b4fcbf57e2d5f.png                 26.10 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-403-b3b56f134d97963d.png                 26.17 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-025-083241c4190d5958.png                 26.21 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-349-7ac6e1497d63ebb6.png                 26.23 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-061-0176a24fc881235a.png                 26.32 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-296-61d42e3b91e66dcf.png                 26.37 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-394-661b523d7d53b0ea.png                 26.40 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-287-5b80d531965e487a.png                 26.49 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-027-4cb6961c5d219dc1.png                 26.50 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-007-cc161365ee5c803b.png                 26.51 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-415-176cd814ac2957c0.png                 26.52 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-268-9de0ae4842a86206.png                 26.57 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-401-370cca2c65fd280f.png                 26.68 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-240-c32e64e930c32fd8.png                 26.73 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-158-38f8a7c795ac0a63.png                 26.79 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-356-4d5af060537aeef9.png                 26.95 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-354-3015e0bb898098fa.png                 26.97 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-281-c611ef81b8472611.png                 27.01 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-204-73206dc23be8686d.png                 27.03 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-188-4bd1cf8435ac09e8.png                 27.08 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-023-8cf4a397cc25d7c8.png                 27.11 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-314-ab6bb0553af4b923.png                 27.11 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-166-1249619b784bb847.png                 27.14 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-345-06e3d4ac328a6da7.png                 27.15 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-421-b23989e18194571d.png                 27.20 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-051-3ffb8a6c72356891.png                 27.23 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-485-dd0c1d2adbb599ea.png                 27.24 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-198-cb6f062e99087f34.png                 27.24 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-351-sunny-516a5704f9f6dbd7.png           27.25 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-216-2042b18447422a07.png                 27.26 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-474-c43385bce796031f.png                 27.28 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-417-64adaee2d17af89c.png                 27.38 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-151-94aa6d28c6582977.png                 27.40 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-072-9eb9ca5f563d37b0.png                 27.41 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-327-6390407dc076408e.png                 27.43 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-148-5fe5e3b4572f6ebf.png                 27.47 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-457-39d788dabdc73265.png                 27.48 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-054-8d313a7b89c731fe.png                 27.49 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-252-9858bd7831581d75.png                 27.50 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-422-ad38e7ca52a6a7d6.png                 27.56 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-215-cc76df4cd74b1b6c.png                 27.56 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-335-1b388dcfc61d6aa2.png                 27.68 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-331-643e3f28d2ef16f7.png                 27.69 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-425-35c3fe2e78472086.png                 27.72 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-347-a67b4faf376b61d2.png                 27.75 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-015-24fa04535633b7be.png                 27.77 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-222-5c5219b03485a6ec.png                 27.84 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-200-af666d7a1d2f49f3.png                 27.92 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-364-af4acc3b040a87b3.png                 27.99 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-322-8ea724c98efdf3cf.png                 28.08 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-017-b600696e36b19dd2.png                 28.12 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-218-272ee2df919a97ba.png                 28.18 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-409-f70d1b92b1731a9d.png                 28.22 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-033-b10afe01e6d3766f.png                 28.30 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-155-629ae84da86816dc.png                 28.32 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-300-301e7f5f0d584291.png                 28.35 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-083-01a6ea31c0652c2f.png                 28.39 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-418-35f712532c655a65.png                 28.43 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-332-3dc1df9d83d75239.png                 28.62 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-046-da0fc6f5157c2959.png                 28.66 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-398-583310d125b35eec.png                 28.67 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-416-c67844b56d1ee688.png                 28.68 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-438-261265ee262a5613.png                 28.86 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-256-f22338b765838b95.png                 28.86 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-259-a666f128fb9b1ed8.png                 28.91 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-360-3eb34568c97f6f81.png                 29.04 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-187-9debce655d1f2376.png                 29.09 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-002-415599561dcffdf4.png                 29.17 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-341-956edeb8e67f3063.png                 29.22 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-056-063de3f71fd9898a.png                 29.30 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-351-snowy-30e94ba3c46918de.png           29.33 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-390-c68c7997510b6f26.png                 29.36 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-318-24f62fa4cc7275bb.png                 29.39 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-030-4abe6a341659e50c.png                 29.41 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-435-f4f7bdd2fd617c5a.png                 29.46 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-108-39b587c4f2d043a5.png                 29.47 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-436-3b791ad4c3d5fb2f.png                 29.56 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-277-18a4126e1c96aa9b.png                 29.56 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-404-d18ff6fb5bb35c0d.png                 29.74 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-352-fe46353503de54ff.png                 29.88 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-239-0ee3c2861f3b564b.png                 29.88 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-189-485be10d0bedb180.png                 29.94 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-052-57b6dd8925dbf321.png                 29.98 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-503-e11775e9dbcc11fa.png                 30.02 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-193-37f8731813536a80.png                 30.03 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-313-b08e0da92da252b6.png                 30.11 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-102-c00500b9f179ec3e.png                 30.23 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-336-50e569b106f76b44.png                 30.27 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-205-d009e2b03efdbbfd.png                 30.29 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-475-e4f3e2b4652f97d9.png                 30.37 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-114-ef905070466dc4ff.png                 30.42 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-337-69473529de797f15.png                 30.49 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-067-9a82efea04fa3fd9.png                 30.50 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-162-136f0ae0452e50e6.png                 30.51 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-226-1d8378959b01c6bc.png                 30.53 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-117-ee97970d9a3f242f.png                 30.56 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-463-f1af16e6245ea96c.png                 30.57 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-037-3312d279992a1eec.png                 30.61 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-180-3c9ef530417686dd.png                 30.70 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-461-1ddc38501d051a45.png                 30.72 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-063-a2e0defd0f8b2144.png                 30.76 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-402-12ff8c8cd0ff514b.png                 30.77 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-047-e88b64d5547276e7.png                 30.78 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-395-18befeb2da9c7ee3.png                 30.85 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-096-8a980336273a68cf.png                 30.88 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-179-eb31a7f5a3c8b031.png                 30.90 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-450-f07e507acd9992cd.png                 30.92 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-203-05930d81ed8f5511.png                 31.01 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-058-6858b17cee336a28.png                 31.07 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-008-52c0f24bfe918f7f.png                 31.17 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-423-a4b7b6d5532afe08.png                 31.18 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-181-d2e61bbc12c78d29.png                 31.22 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-481-54108d05b3e41ca9.png                 31.29 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-400-21997a33531b62be.png                 31.31 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-044-44d6ad8efcaae76b.png                 31.46 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-129-3c62d0cff0d90d0a.png                 31.52 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-153-12717d7e4664f555.png                 31.54 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-506-5f73f4abbc25bdf9.png                 31.61 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-020-10a21911a525ebdd.png                 31.67 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-190-400ae38372132ac8.png                 31.75 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-366-4e4a5043cb7475e9.png                 31.82 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-234-9cda3fde8cde1cfe.png                 31.85 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-209-0653658f8254f2e4.png                 31.86 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-480-05936132c7491bb8.png                 31.86 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-271-90221caa064b131f.png                 31.86 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-095-584f827864661989.png                 31.91 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-315-b191b588c738173e.png                 32.06 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-301-0a4dfd989bb972f3.png                 32.17 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-407-ca851373e92d313c.png                 32.26 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-005-7046360f33a55c8e.png                 32.39 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-075-47ae55a28b7218f8.png                 32.54 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-156-d61f0522230a4af5.png                 32.63 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-253-4125d777ac9771c6.png                 32.63 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-441-ee72e206a8193477.png                 32.72 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-217-6b60cd219f59e975.png                 32.79 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-443-d8a6d879e2a28608.png                 32.91 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-168-426a72581ac868d6.png                 33.02 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-057-91acaad84a8b76a6.png                 33.08 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-235-bd92dea5959c42fc.png                 33.22 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-482-6df8254ef680992a.png                 33.27 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-267-e7d696dc7fa87fdf.png                 33.40 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-169-13c799280614abd2.png                 33.47 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-284-efd7078bfd0a0224.png                 33.53 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-294-dca3de6078630b4f.png                 33.61 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-206-018947f4ba27aeca.png                 33.76 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-320-efbb03e8133b7e86.png                 33.76 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-210-d6371d42b7148a22.png                 33.80 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-321-1ec10ee8fb00da5e.png                 33.84 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-159-762024570d9145a2.png                 33.95 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-375-ef63f148b9d6319e.png                 33.97 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-157-9b0dc79cd205bdf5.png                 34.17 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-269-3f3a083985f69fb4.png                 34.36 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-391-79e7d02f39f2bee1.png                 34.50 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-386-speed-0394e28895bc7d9e.png           34.63 kB
+frontends/raft/dist-native123/assets/quote-KjBMhMia.woff2                                      34.66 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-382-7c963344b0067743.png                 34.67 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-279-e3ea52f80e439ddf.png                 34.85 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-077-dc4b3eeae9ccabc0.png                 34.91 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-192-ebb3daa5d7b19acb.png                 34.93 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-089-2e669b1f29bdf1cf.png                 34.98 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-388-3c7ac01275f9ca12.png                 34.98 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-496-db43e751967397ef.png                 35.06 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-042-38089e919498d139.png                 35.12 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-432-30314b0745e94b72.png                 35.12 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-207-7f6682e2691bd950.png                 35.15 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-098-58ef177a40b68584.png                 35.15 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-093-f03a20bf37853ff4.png                 35.18 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-219-cb4e13d76fbddeca.png                 35.26 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-211-9b051aef297b1e14.png                 35.27 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-213-41b4dc51988a9b4d.png                 35.35 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-468-8c5dddee6c2a7c71.png                 35.40 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-286-0d3adc6f1f387100.png                 35.40 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-232-4199c61feb8801cf.png                 35.57 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-466-86bf4fc24118c235.png                 35.63 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-484-6adb442830d86f7a.png                 35.75 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-386-defense-2533f8ece983f49c.png         35.86 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-233-45de9a0a68110dc1.png                 35.93 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-362-c2701bf0bf38e93d.png                 35.95 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-197-28b6a4cf678bf2e7.png                 36.10 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-087-c21ad84de7706d0a.png                 36.14 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-022-b355a4c48578df20.png                 36.14 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-386-normal-3b6e0537127dbee0.png          36.19 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-142-c777a522f80541d3.png                 36.25 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-171-c9a2ad7b3910d2df.png                 36.50 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-105-f70dd9c3eeb5b094.png                 36.62 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-454-6ca0f9ff1252b449.png                 36.80 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-297-041c1399423ace6d.png                 37.17 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-334-df4404477f5c7f8f.png                 37.22 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-389-6fab1f8ade5daf7b.png                 37.27 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-319-8480fcd1db3c47ea.png                 37.32 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-323-6d7c37e8c54d53cf.png                 37.38 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-405-faf5604a396f91d3.png                 37.40 kB
+frontends/raft/dist-native123/native-boundary.json                                             37.48 kB │ gzip:     7.47 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-483-42a1655d5a5dc1f9.png                 37.49 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-154-f4fce0a661d29442.png                 37.77 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-386-attack-386d72096cf901ac.png          37.99 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-036-156546ba0fe32729.png                 38.03 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-456-f0b00b87223f728b.png                 38.21 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-458-8bb3eade4daa7fcb.png                 38.29 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-224-f386ee0ffe8846bf.png                 38.45 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-292-58ffb3e12506164b.png                 38.48 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-150-744e5ee42fedcde9.png                 38.55 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-306-42651f62087b05fa.png                 38.73 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-392-a5130c04eecdb3a9.png                 38.73 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-469-298bb564c314ef0a.png                 38.89 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-064-6be8a1d0662444b0.png                 38.95 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-369-5413ff934a1e7f34.png                 39.02 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-381-c133dd91bd94eafb.png                 39.02 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-324-6aa571a38ed15d09.png                 39.05 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-134-bf95669309068f99.png                 39.05 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-430-db4c3332d556b91f.png                 39.21 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-477-99de7d063e525d65.png                 39.25 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-196-f09d36bebed10c90.png                 39.25 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-303-e702ca60c73f0d07.png                 39.28 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-040-f6caa1095538418d.png                 39.28 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-225-1801e3852908ff25.png                 39.40 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-479-95261c441511973d.png                 39.61 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-227-f9e85be55d9ad301.png                 40.01 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-185-feb6b1fccefb4080.png                 40.09 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-024-f1d7a61480f59d22.png                 40.31 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-275-2b99655935e6dfe0.png                 40.39 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-302-e41b61ddf8f72043.png                 40.40 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-127-609d79012fb1a44f.png                 40.46 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-367-f7bf97e5b5b4acf8.png                 40.50 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-478-c89da9ddfeed7822.png                 40.50 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-164-3a3da23b2c71deff.png                 40.51 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-471-fbac470088d15e6f.png                 40.64 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-344-ac257b6a6a97b431.png                 40.78 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-380-a52d1c89880f4c3b.png                 41.00 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-106-f8125ba7de3bedbc.png                 41.02 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-119-aa7d7257b3c86016.png                 41.02 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-429-35645da9f7601880.png                 41.09 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-249-6980b363ef8fd2fb.png                 41.31 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-428-27dc41c24f775b80.png                 41.58 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-202-e36c930ceac0b0c3.png                 41.58 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-379-9906df47a44f444b.png                 41.60 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-097-2a259a1ec8edf830.png                 41.63 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-346-aa75d30393040b8b.png                 41.66 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-497-1184a284ff908a14.png                 42.02 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-357-a6f65e2802ebfa7a.png                 42.10 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-062-fe366a4ce2985d2d.png                 42.10 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-359-0c2ab9b8283316bb.png                 42.19 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-434-82dec756e8ba563a.png                 42.23 kB
+frontends/raft/dist-native123/assets/composerSuggestion.worker-C5SfRA0Q.js                     42.48 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-291-7eed3e358ab086d7.png                 42.50 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-178-78592dc8f3c3c9ba.png                 42.54 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-195-b959d84e0ee0c37b.png                 42.72 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-094-5e3eacd91c939529.png                 42.97 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-460-5360108a4dccf2af.png                 43.70 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-214-49b79544e3406eea.png                 43.87 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-110-0b4d344afbcae112.png                 44.09 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-141-1d3ad02750cc92b0.png                 44.13 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-184-6b50c8a56b0c6cdc.png                 44.16 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-282-1335041246970488.png                 44.34 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-091-cf7b993ec74bc5bb.png                 44.36 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-289-6b883e85678d4bcc.png                 44.44 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-237-0d14afc78784bf80.png                 44.64 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-230-366bcbf65e9ba174.png                 44.66 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-376-bb9f811b1cbebae8.png                 44.68 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-107-4c2e898e23d685dc.png                 44.85 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-071-292a960267e24427.png                 44.87 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-208-9b6c6a96a753cfcd.png                 44.88 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-338-13707442cf085ea4.png                 45.00 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-448-fc6a87d3e17d3028.png                 45.22 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-310-7a39eb0b36c5fcf5.png                 45.28 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-049-1b27062daa496aa6.png                 45.42 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-135-af3f65cb7438f3cf.png                 45.44 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-467-c082ccd6fcbeb3d2.png                 45.53 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-186-ecffa07a0b138194.png                 45.59 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-112-a9fa7f5f69579279.png                 45.86 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-012-1004610add45d551.png                 45.92 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-340-16e7adc7e7eb9f90.png                 46.18 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-160-d559d58b994c2ff3.png                 46.32 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-053-fa8e3c41dbb2757d.png                 46.38 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-476-1a47f1d78564ceb4.png                 46.41 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-492-75b2db2a2c545888.png                 46.42 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-500-7d5966f18af92351.png                 46.53 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-182-822dbbb2252940d8.png                 46.60 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-085-6fcb7eb87d19f806.png                 46.94 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-143-621300ba1996d0fb.png                 46.96 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-242-d999887f6b02e83c.png                 47.28 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-131-4bdde47dc92174a4.png                 47.30 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-373-09a5ff18f8bc17ae.png                 47.32 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-122-1346fc9890705f13.png                 47.66 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-199-adcc8d0fed4f8125.png                 47.75 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-128-55bc17ac4a22d063.png                 47.79 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-493-9af3e1160e517f44.png                 47.95 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-241-c068fda1d55b2666.png                 48.24 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-149-1445e1fdf8872c65.png                 48.26 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-055-9da11ea6961b5627.png                 48.47 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-495-e28f3902277ce724.png                 48.63 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-420-6a79af6f29efe090.png                 49.04 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-136-d2df4ebac7f60718.png                 49.24 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-330-6db7d9fa3fbc72c6.png                 49.44 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-490-8534f28325e6f443.png                 49.69 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-491-099a02eeeb29de0c.png                 49.92 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-080-c740b20069a74a8e.png                 50.00 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-470-53f5fd95d7101614.png                 50.01 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-254-7965f7c06f890bcf.png                 50.05 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-045-a1ab50285abc013f.png                 50.17 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-212-00877867b6f45ebb.png                 50.28 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-494-18c4768ff686ec49.png                 50.82 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-103-2252a69129826ada.png                 50.87 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-489-5f9480c5a26f1ff5.png                 50.96 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-365-bc988032b24f5d92.png                 51.04 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-451-0f66c1e1ebb4e590.png                 51.17 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-378-f1b200832b5c1925.png                 51.43 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-248-81fadf938921c395.png                 51.50 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-078-c70cced6f5c94133.png                 51.73 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-473-0965a320f9bdbf94.png                 52.04 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-026-9bc1cf058fdb8f57.png                 52.11 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-350-67594300d59d32aa.png                 52.12 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-342-0a1104e429bc535b.png                 52.47 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-146-9cb970efa3b04c2d.png                 52.51 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-124-201d410efae6a60b.png                 52.81 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-487-74146667a8b3badb.png                 52.91 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-018-a5e0c2e2bf0e27d0.png                 52.99 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-486-f353cb3798922a66.png                 53.15 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-115-d8e420b6e08881e1.png                 53.27 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-488-aed316491d52665c.png                 53.29 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-068-4393280fb260dd38.png                 53.33 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-123-1f8bffddcb7d5fd9.png                 53.48 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-121-8d14ee8f97b3bb8e.png                 53.75 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-034-d20847782569b354.png                 54.04 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-082-51def7953592b26e.png                 54.12 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-139-4ef16ccfaafb29de.png                 54.19 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-145-fbe01723cb7701f3.png                 54.26 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-028-f6677e6c73217a87.png                 54.58 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-099-95e6b2dc8f93b7f8.png                 54.60 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-144-71e12b1c3e198177.png                 55.05 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-126-2f411859d7699f57.png                 55.06 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-348-df7f5af0ca626774.png                 55.20 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-076-6648e65246abd2ef.png                 55.23 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-073-65eb8cab121df053.png                 55.25 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-243-f914c459edd460f9.png                 55.94 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-498-cf22bb427f4ddd89.png                 56.86 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-009-d9972ee0a65f97a7.png                 56.97 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-383-c51e8c8ee3062845.png                 57.80 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-295-759b844424b007a2.png                 58.01 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-245-b64e91e158f6d496.png                 58.19 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-499-3fde48db4a23f7c4.png                 58.26 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-257-4ce4d8ec1d39273c.png                 58.30 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-130-db1cbad634135c71.png                 58.30 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-059-2c2224e55997fcde.png                 58.64 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-244-fa3a5ddc6a52b93b.png                 58.70 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-006-ad14fcc01a32e125.png                 58.79 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-377-7269922ed7a10874.png                 59.06 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-472-e62092495f9a564d.png                 60.21 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-125-9018c435bf42b0fc.png                 60.52 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-031-2bf6a2c3bd6f4e5c.png                 60.94 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-065-e45430a6d206e028.png                 61.01 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-384-ab08aee75fa22b6f.png                 61.28 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-250-3d98c16244f5b4ea.png                 61.48 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-260-6f349a4c080d1328.png                 61.64 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-038-093a4769598a9b67.png                 62.08 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-272-c349ec2b6c10db27.png                 65.55 kB
+frontends/raft/dist-native123/avatars/pokemon/pokemon-003-0cf1531eb68001e8.png                 70.86 kB
+frontends/raft/dist-native123/.vite/manifest.json                                              86.54 kB │ gzip:     8.15 kB
+frontends/raft/dist-native123/assets/styles-C1w1BrZ-.css                                       10.62 kB │ gzip:     2.58 kB
+frontends/raft/dist-native123/assets/app-shell-DT2KxXQV.css                                   797.40 kB │ gzip:    97.16 kB
+frontends/raft/dist-native123/assets/c-Cz4nF6n_.js                                              0.04 kB │ gzip:     0.06 kB
+frontends/raft/dist-native123/assets/cpp-DzjeI0uH.js                                            0.04 kB │ gzip:     0.06 kB
+frontends/raft/dist-native123/assets/css-DgaLhXQH.js                                            0.04 kB │ gzip:     0.06 kB
+frontends/raft/dist-native123/assets/jsx-C4yDKi0A.js                                            0.04 kB │ gzip:     0.06 kB
+frontends/raft/dist-native123/assets/lua-fPRBWD-V.js                                            0.04 kB │ gzip:     0.06 kB
+frontends/raft/dist-native123/assets/sql-CfM2IJm3.js                                            0.04 kB │ gzip:     0.06 kB
+frontends/raft/dist-native123/assets/tsx-CGosfAUg.js                                            0.04 kB │ gzip:     0.06 kB
+frontends/raft/dist-native123/assets/xml-DuKfbPI6.js                                            0.04 kB │ gzip:     0.06 kB
+frontends/raft/dist-native123/assets/html-BWDvXlHg.js                                           0.04 kB │ gzip:     0.06 kB
+frontends/raft/dist-native123/assets/java-_ATy9zCa.js                                           0.04 kB │ gzip:     0.06 kB
+frontends/raft/dist-native123/assets/json-C3WlssX3.js                                           0.04 kB │ gzip:     0.06 kB
+frontends/raft/dist-native123/assets/yaml-DDA_XMNu.js                                           0.04 kB │ gzip:     0.06 kB
+frontends/raft/dist-native123/assets/graphql-BHtseKAV.js                                        0.04 kB │ gzip:     0.06 kB
+frontends/raft/dist-native123/assets/javascript-CpIGwZ_Y.js                                     0.05 kB │ gzip:     0.07 kB
+frontends/raft/dist-native123/assets/typescript-Bb1J8qyy.js                                     0.05 kB │ gzip:     0.07 kB
+frontends/raft/dist-native123/assets/bash-CVTB3cr6.js                                           0.05 kB │ gzip:     0.07 kB
+frontends/raft/dist-native123/assets/shellscript-CVTB3cr6.js                                    0.05 kB │ gzip:     0.07 kB
+frontends/raft/dist-native123/assets/array-BifhSqXX.js                                          0.10 kB │ gzip:     0.11 kB
+frontends/raft/dist-native123/assets/pie-WAS4IAKB-qoBp0Yvh.js                                   0.10 kB │ gzip:     0.12 kB
+frontends/raft/dist-native123/assets/info-A6RAGUB7-BChjDUhM.js                                  0.10 kB │ gzip:     0.12 kB
+frontends/raft/dist-native123/assets/radar-RG4KPBEZ-BRf9hWtz.js                                 0.10 kB │ gzip:     0.12 kB
+frontends/raft/dist-native123/assets/packet-AYTQ26CC-Bw_nJXxi.js                                0.11 kB │ gzip:     0.12 kB
+frontends/raft/dist-native123/assets/cynefin-OW5HDTMX-sy7Yep9e.js                               0.11 kB │ gzip:     0.12 kB
+frontends/raft/dist-native123/assets/treemap-WGGIJYW6-BP2AinzR.js                               0.11 kB │ gzip:     0.12 kB
+frontends/raft/dist-native123/assets/wardley-WFR3VGLG-OaCzbtVK.js                               0.11 kB │ gzip:     0.12 kB
+frontends/raft/dist-native123/assets/gitGraph-4MIJSDKK-B_hhAG9i.js                              0.11 kB │ gzip:     0.12 kB
+frontends/raft/dist-native123/assets/railroad-74A4TZTK-C_bY-3Se.js                              0.11 kB │ gzip:     0.12 kB
+frontends/raft/dist-native123/assets/treeView-Q6P3EWNA-DFpiZG3n.js                              0.11 kB │ gzip:     0.12 kB
+frontends/raft/dist-native123/assets/channel-T5xlELRe.js                                        0.11 kB │ gzip:     0.12 kB
+frontends/raft/dist-native123/assets/railroad-peg-WCYAUIDC-CcH-bg51.js                          0.11 kB │ gzip:     0.12 kB
+frontends/raft/dist-native123/assets/architecture-7GRP2DOG-nwLrxwr7.js                          0.11 kB │ gzip:     0.12 kB
+frontends/raft/dist-native123/assets/railroad-abnf-HS5TGJTU-C_-yj_SE.js                         0.11 kB │ gzip:     0.13 kB
+frontends/raft/dist-native123/assets/railroad-ebnf-LZEXJU2U-Cu3Zf5zj.js                         0.11 kB │ gzip:     0.13 kB
+frontends/raft/dist-native123/assets/eventmodeling-NTZA5JFV-BIaHjXkP.js                         0.11 kB │ gzip:     0.13 kB
+frontends/raft/dist-native123/assets/init-C-OQMol4.js                                           0.14 kB │ gzip:     0.12 kB
+frontends/raft/dist-native123/assets/chunk-Y2CYZVJY-DsF7k-Jl.js                                 0.15 kB │ gzip:     0.14 kB
+frontends/raft/dist-native123/assets/chunk-2Q5K7J3B-C1jixKkw.js                                 0.19 kB │ gzip:     0.16 kB
+frontends/raft/dist-native123/assets/chunk-JWPE2WC7-DVXcaiue.js                                 0.22 kB │ gzip:     0.17 kB
+frontends/raft/dist-native123/assets/chunk-XXDRQBXY-Ot-ljUf0.js                                 0.28 kB │ gzip:     0.24 kB
+frontends/raft/dist-native123/assets/chunk-5VM5RSS4-ZNzvKenW.js                                 0.36 kB │ gzip:     0.27 kB
+frontends/raft/dist-native123/assets/flowDiagram-HODETNUW-CFtrlayU.js                           0.56 kB │ gzip:     0.31 kB
+frontends/raft/dist-native123/assets/chunk-POPQ4Y6H-CircPVTK.js                                 0.56 kB │ gzip:     0.39 kB
+frontends/raft/dist-native123/assets/KeyValueRow-DtKKvEA0.js                                    0.62 kB │ gzip:     0.35 kB
+frontends/raft/dist-native123/assets/agentIssueTicket-BK5_LW2v.js                               0.63 kB │ gzip:     0.40 kB
+frontends/raft/dist-native123/assets/infoDiagram-27XIBGKW-CSWs1QDQ.js                           0.65 kB │ gzip:     0.41 kB
+frontends/raft/dist-native123/assets/classDiagram-ZZMXUADV-_1913lvm.js                          0.77 kB │ gzip:     0.45 kB
+frontends/raft/dist-native123/assets/classDiagram-v2-VYDZK3BY-_1913lvm.js                       0.77 kB │ gzip:     0.45 kB
+frontends/raft/dist-native123/assets/stateDiagram-v2-MP3YSRHH-DEK_VT8f.js                       0.78 kB │ gzip:     0.45 kB
+frontends/raft/dist-native123/assets/swimlanesDiagram-VR7AAH4N-C6jFZxOm.js                      0.83 kB │ gzip:     0.48 kB
+frontends/raft/dist-native123/assets/sizeCapture-INFHLROL-3uHXrFqA.js                           0.87 kB │ gzip:     0.51 kB
+frontends/raft/dist-native123/assets/rolldown-runtime-B0Z9INg1.js                               0.90 kB │ gzip:     0.51 kB
+frontends/raft/dist-native123/assets/line-BVTxlfUQ.js                                           0.94 kB │ gzip:     0.47 kB
+frontends/raft/dist-native123/assets/AgentUnavailablePanel-C_dpwuDm.js                          1.10 kB │ gzip:     0.60 kB
+frontends/raft/dist-native123/assets/ordinal-BDEzSJ7C.js                                        1.17 kB │ gzip:     0.56 kB
+frontends/raft/dist-native123/assets/chunk-GVQU2GXP-Dq2SjNQx.js                                 1.41 kB │ gzip:     0.79 kB
+frontends/raft/dist-native123/assets/RolePermissionHelpDialog-C-hq7c2r.js                       1.47 kB │ gzip:     0.53 kB
+frontends/raft/dist-native123/assets/railroadDiagram-O6MQD6OU-D0j9qP3F.js                       1.65 kB │ gzip:     0.76 kB
+frontends/raft/dist-native123/assets/MarkdownRenderer-BugygP2T.js                               1.66 kB │ gzip:     0.66 kB
+frontends/raft/dist-native123/assets/dockerfile-IyjqRm3v.js                                     1.73 kB │ gzip:     0.59 kB
+frontends/raft/dist-native123/assets/abnfDiagram-VCTEODGH-CgoGUJVh.js                           1.84 kB │ gzip:     0.89 kB
+frontends/raft/dist-native123/assets/chunk-P2QGCYS3-D6BUcbgS.js                                 1.94 kB │ gzip:     0.95 kB
+frontends/raft/dist-native123/assets/chunk-F27PBJKO-BwbEzbic.js                                 1.99 kB │ gzip:     0.90 kB
+frontends/raft/dist-native123/assets/pegDiagram-XKGWAZYB-BD-anwGC.js                            2.01 kB │ gzip:     0.94 kB
+frontends/raft/dist-native123/assets/ebnfDiagram-PWID7BFC-DvdNhu0-.js                           2.05 kB │ gzip:     0.88 kB
+frontends/raft/dist-native123/assets/index-ocYF7fBC.js                                          2.06 kB │ gzip:     1.11 kB
+frontends/raft/dist-native123/assets/dist-BDCdLWk4.js                                           2.17 kB │ gzip:     0.98 kB
+frontends/raft/dist-native123/assets/path-fybaL0A-.js                                           2.27 kB │ gzip:     0.98 kB
+frontends/raft/dist-native123/assets/diff-woXpYk--.js                                           2.56 kB │ gzip:     0.68 kB
+frontends/raft/dist-native123/assets/json-B88Oqtu5.js                                           2.81 kB │ gzip:     0.76 kB
+frontends/raft/dist-native123/assets/jsonc-CYpm1nAK.js                                          3.10 kB │ gzip:     0.78 kB
+frontends/raft/dist-native123/assets/arc-3UKfLtkz.js                                            3.47 kB │ gzip:     1.46 kB
+frontends/raft/dist-native123/assets/diagram-Z3DM3KII-BdYosbYo.js                               4.28 kB │ gzip:     1.84 kB
+frontends/raft/dist-native123/assets/main-BgszMONj.js                                           4.34 kB │ gzip:     1.51 kB
+frontends/raft/dist-native123/assets/defaultLocale-BFoDCU3G.js                                  4.63 kB │ gzip:     2.12 kB
+frontends/raft/dist-native123/assets/xml-WY0zc4PG.js                                            5.38 kB │ gzip:     1.20 kB
+frontends/raft/dist-native123/assets/linear-DX85eJZq.js                                         5.52 kB │ gzip:     2.25 kB
+frontends/raft/dist-native123/assets/SavedPanel-BMMQtZLi.js                                     5.69 kB │ gzip:     2.16 kB
+frontends/raft/dist-native123/assets/chunk-PWAF6VOD-aNMJUoo1.js                                 5.82 kB │ gzip:     2.68 kB
+frontends/raft/dist-native123/assets/ReleaseNotesPanel-DO3fxRr0.js                              6.00 kB │ gzip:     2.14 kB
+frontends/raft/dist-native123/assets/diagram-UQ7AKVKN-4LlB0iHM.js                               6.07 kB │ gzip:     2.56 kB
+frontends/raft/dist-native123/assets/pieDiagram-E7YTZNPT-Cq1bRmdm.js                            6.22 kB │ gzip:     2.59 kB
+frontends/raft/dist-native123/assets/clojure-DqKBuwfJ.js                                        6.40 kB │ gzip:     1.41 kB
+frontends/raft/dist-native123/assets/ProfilePanel-CMaWZ6R9.js                                   6.73 kB │ gzip:     2.50 kB
+frontends/raft/dist-native123/assets/diagram-S7CK7UJ4-CcjrpHfQ.js                               8.12 kB │ gzip:     3.64 kB
+frontends/raft/dist-native123/assets/dart-CHZY9Xhz.js                                           8.60 kB │ gzip:     1.99 kB
+frontends/raft/dist-native123/assets/src-DhOtnkEv.js                                            8.75 kB │ gzip:     3.64 kB
+frontends/raft/dist-native123/assets/kotlin-DhhofPvG.js                                         8.77 kB │ gzip:     2.12 kB
+frontends/raft/dist-native123/assets/chunk-L3NEJ4N5-DyexstWD.js                                 9.71 kB │ gzip:     2.94 kB
+frontends/raft/dist-native123/assets/cynefinDiagram-5FMLGOSQ-D_pfXCg9.js                        9.94 kB │ gzip:     3.50 kB
+frontends/raft/dist-native123/assets/dist-BsbcV6pe.js                                          10.07 kB │ gzip:     3.75 kB
+frontends/raft/dist-native123/assets/yaml-DijMHRDA.js                                          10.49 kB │ gzip:     2.26 kB
+frontends/raft/dist-native123/assets/stateDiagram-D77RDMKH-A4Fc60H6.js                         10.67 kB │ gzip:     3.74 kB
+frontends/raft/dist-native123/assets/diagram-VSXAHHWV-CgDTVtyE.js                              10.68 kB │ gzip:     4.12 kB
+frontends/raft/dist-native123/assets/dagre-GXQ25YYZ-CsMHOtl6.js                                10.96 kB │ gzip:     4.14 kB
+frontends/raft/dist-native123/assets/github-light-EUqPIrTm.js                                  11.18 kB │ gzip:     2.49 kB
+frontends/raft/dist-native123/assets/MemberGraphSection-p4W1MzMY.js                            12.20 kB │ gzip:     4.80 kB
+frontends/raft/dist-native123/assets/HumanDetailPanel-8cFoAagW.js                              14.27 kB │ gzip:     4.29 kB
+frontends/raft/dist-native123/assets/github-dark-high-contrast-B_tTalzw.js                     14.59 kB │ gzip:     3.07 kB
+frontends/raft/dist-native123/assets/rust-DpiIf5JO.js                                          15.16 kB │ gzip:     2.72 kB
+frontends/raft/dist-native123/assets/lua-DjuecEsk.js                                           15.53 kB │ gzip:     3.15 kB
+frontends/raft/dist-native123/assets/chunk-SVP7TREG-CV4jQFzS.js                                15.63 kB │ gzip:     4.35 kB
+frontends/raft/dist-native123/assets/diagram-VX7I27RA-BKJ0MSEx.js                              15.78 kB │ gzip:     5.52 kB
+frontends/raft/dist-native123/assets/elixir-BHBpp1Ew.js                                        16.26 kB │ gzip:     2.76 kB
+frontends/raft/dist-native123/assets/mermaid-parser.core-bL8nbknW.js                           16.58 kB │ gzip:     3.92 kB
+frontends/raft/dist-native123/assets/machineRuntimeUsageVisibility-B7RjJLY_.js                 16.93 kB │ gzip:     5.43 kB
+frontends/raft/dist-native123/assets/ishikawaDiagram-5VMMS53U-CXr8hSqt.js                      17.30 kB │ gzip:     6.53 kB
+frontends/raft/dist-native123/assets/graphql-f69H1Mm0.js                                       18.00 kB │ gzip:     2.49 kB
+frontends/raft/dist-native123/assets/kanban-definition-UXKFOSKX-C13oHHR3.js                    20.25 kB │ gzip:     7.14 kB
+frontends/raft/dist-native123/assets/sankeyDiagram-P5KCCOFB-CZROcByM.js                        22.80 kB │ gzip:     8.26 kB
+frontends/raft/dist-native123/assets/journeyDiagram-3NMN7TZE-D-vdp1q1.js                       23.18 kB │ gzip:     8.17 kB
+frontends/raft/dist-native123/assets/sql-CNu3Or2W.js                                           23.65 kB │ gzip:     7.51 kB
+frontends/raft/dist-native123/assets/mindmap-definition-YA3MSWOX-DSGeg7rh.js                   23.70 kB │ gzip:     8.11 kB
+frontends/raft/dist-native123/assets/graphlib-DS17s2tU.js                                      23.90 kB │ gzip:     8.31 kB
+frontends/raft/dist-native123/assets/ThreadsInbox-OsDuH2KG.js                                  24.35 kB │ gzip:     7.34 kB
+frontends/raft/dist-native123/assets/wardleyDiagram-VM6X3IG4-YS2B8e5Z.js                       25.20 kB │ gzip:     6.54 kB
+frontends/raft/dist-native123/assets/rough.esm-Dy-Kn_BL.js                                     27.10 kB │ gzip:     8.85 kB
+frontends/raft/dist-native123/assets/java-BtIQNnN0.js                                          27.20 kB │ gzip:     4.25 kB
+frontends/raft/dist-native123/assets/scala-BiFt_7mu.js                                         28.88 kB │ gzip:     3.93 kB
+frontends/raft/dist-native123/assets/gitGraphDiagram-WWUBYQGX-CSlEeQmI.js                      29.03 kB │ gzip:     8.55 kB
+frontends/raft/dist-native123/assets/timeline-definition-24CTP7MA-Bi1z4-Pv.js                  30.40 kB │ gzip:     9.95 kB
+frontends/raft/dist-native123/assets/erDiagram-RLTQ6QDP-BGASTatT.js                            30.72 kB │ gzip:    10.57 kB
+frontends/raft/dist-native123/assets/chunk-75Z2AOVW-BvEAu808.js                                30.78 kB │ gzip:     8.52 kB
+frontends/raft/dist-native123/assets/requirementDiagram-BXWQKSXE-BAu4sjlE.js                   31.00 kB │ gzip:     9.77 kB
+frontends/raft/dist-native123/assets/quadrantDiagram-AXDQQJYC-D2U-PDGv.js                      33.54 kB │ gzip:     9.74 kB
+frontends/raft/dist-native123/assets/chunk-OSK3NFVY-DU044ZXH.js                                36.49 kB │ gzip:     7.96 kB
+frontends/raft/dist-native123/assets/dagre-D7JM2Yhv.js                                         36.84 kB │ gzip:    13.23 kB
+frontends/raft/dist-native123/assets/chunk-IMKFNOWR-DivvVzdK.js                                37.66 kB │ gzip:    12.27 kB
+frontends/raft/dist-native123/assets/vennDiagram-4TSXK5OY-C5hhh_te.js                          41.18 kB │ gzip:    15.12 kB
+frontends/raft/dist-native123/assets/blockDiagram-I7D4REHJ-Bm4182Vn.js                         41.46 kB │ gzip:    13.36 kB
+frontends/raft/dist-native123/assets/shellscript-CqHdAlCp.js                                   41.46 kB │ gzip:     6.07 kB
+frontends/raft/dist-native123/assets/haskell-D8IpX4py.js                                       41.48 kB │ gzip:     6.41 kB
+frontends/raft/dist-native123/assets/perl-CF-HqRMk.js                                          43.14 kB │ gzip:     4.64 kB
+frontends/raft/dist-native123/assets/xychartDiagram-S5SC5T6Z-SnXZtaET.js                       44.14 kB │ gzip:    12.21 kB
+frontends/raft/dist-native123/assets/go-rLFTqkRN.js                                            46.81 kB │ gzip:     5.14 kB
+frontends/raft/dist-native123/assets/src-CdxfVXFI.js                                           46.92 kB │ gzip:    15.84 kB
+frontends/raft/dist-native123/assets/RaftBenchPage-CvLbYQnI.js                                 48.33 kB │ gzip:    12.31 kB
+frontends/raft/dist-native123/assets/chunk-TICWLB2K-C4PpSntz.js                                48.80 kB │ gzip:    15.75 kB
+frontends/raft/dist-native123/assets/chunk-GMAD6QVW-Bs2YethO.js                                51.23 kB │ gzip:    16.69 kB
+frontends/raft/dist-native123/assets/css-BGIxQoYs.js                                           53.35 kB │ gzip:    12.47 kB
+frontends/raft/dist-native123/assets/AboutFeedbackDialog-CF2KXYS1.js                           53.99 kB │ gzip:    16.95 kB
+frontends/raft/dist-native123/assets/ruby-2GzLUemz.js                                          54.76 kB │ gzip:     7.10 kB
+frontends/raft/dist-native123/assets/html-BMn1ogTm.js                                          57.24 kB │ gzip:    11.74 kB
+frontends/raft/dist-native123/assets/markdown-BYOwaDjH.js                                      59.32 kB │ gzip:     5.66 kB
+frontends/raft/dist-native123/assets/chunk-SHT3W25Y-jNK6NtLe.js                                61.22 kB │ gzip:    19.82 kB
+frontends/raft/dist-native123/assets/MachineDetailPanel-BzTPeq6v.js                            64.06 kB │ gzip:    15.98 kB
+frontends/raft/dist-native123/assets/c4Diagram-7LVT6UL2-BEFQ6XEk.js                            64.77 kB │ gzip:    18.54 kB
+frontends/raft/dist-native123/assets/ganttDiagram-EL5Y4UJY-C_CWD51W.js                         69.38 kB │ gzip:    22.79 kB
+frontends/raft/dist-native123/assets/python-gzcpVVnB.js                                        69.94 kB │ gzip:     9.09 kB
+frontends/raft/dist-native123/assets/c-SSSlmE39.js                                             72.10 kB │ gzip:    10.49 kB
+frontends/raft/dist-native123/assets/cose-bilkent-JH36ORCC-DFzKYYNS.js                         81.25 kB │ gzip:    21.53 kB
+frontends/raft/dist-native123/assets/swift-CyEgAFGc.js                                         87.22 kB │ gzip:    14.79 kB
+frontends/raft/dist-native123/assets/csharp-dmMxLVLW.js                                        91.43 kB │ gzip:    10.79 kB
+frontends/raft/dist-native123/assets/mermaid.core-CsHa6b3q.js                                  94.43 kB │ gzip:    32.54 kB
+frontends/raft/dist-native123/assets/chunk-4HAMMTFA-CbYdkuIG.js                               104.88 kB │ gzip:    25.62 kB
+frontends/raft/dist-native123/assets/swimlanes-42K2YHIH-C6bv59Pf.js                           111.06 kB │ gzip:    38.00 kB
+frontends/raft/dist-native123/assets/php-CUj1wjLQ.js                                          113.12 kB │ gzip:    28.84 kB
+frontends/raft/dist-native123/assets/sequenceDiagram-WJ2MYXX4-1oudviq5.js                     115.77 kB │ gzip:    30.59 kB
+frontends/raft/dist-native123/assets/architectureDiagram-5GKGNRK7-BHIK07he.js                 148.90 kB │ gzip:    41.11 kB
+frontends/raft/dist-native123/assets/shikiHighlighter-Bt99_ByE.js                             149.98 kB │ gzip:    49.63 kB
+frontends/raft/dist-native123/assets/vendor-markdown-BPp5vDGa.js                              158.34 kB │ gzip:    47.38 kB
+frontends/raft/dist-native123/assets/javascript-BzbQS41l.js                                   174.81 kB │ gzip:    16.62 kB
+frontends/raft/dist-native123/assets/tsx-BOvsFOI6.js                                          175.52 kB │ gzip:    16.61 kB
+frontends/raft/dist-native123/assets/jsx-D3KKoC5L.js                                          177.77 kB │ gzip:    16.70 kB
+frontends/raft/dist-native123/assets/typescript-j_1H8WHN.js                                   181.06 kB │ gzip:    16.23 kB
+frontends/raft/dist-native123/assets/runtime-DEhPAeuQ.js                                      184.63 kB │ gzip:    48.21 kB
+frontends/raft/dist-native123/assets/AgentDetailPanel-Da52whm4.js                             207.11 kB │ gzip:    54.94 kB
+frontends/raft/dist-native123/assets/chunk-DU6HZSFF-na8j3nHJ.js                               236.70 kB │ gzip:    38.62 kB
+frontends/raft/dist-native123/assets/katex-nLxf_RlZ.js                                        258.93 kB │ gzip:    77.67 kB
+frontends/raft/dist-native123/assets/vendor-react-DYGlx1X_.js                                 259.37 kB │ gzip:    82.80 kB
+frontends/raft/dist-native123/assets/emoji-picker-react.esm-DQ4MkYw7.js                       307.08 kB │ gzip:    74.47 kB
+frontends/raft/dist-native123/assets/cytoscape.esm-BqcnQL-a.js                                434.45 kB │ gzip:   137.69 kB
+frontends/raft/dist-native123/assets/chunk-FOHPRMQF-DD4dKubD.js                               662.08 kB │ gzip:   143.15 kB
+frontends/raft/dist-native123/assets/cpp-Cts1PyIS.js                                          796.95 kB │ gzip:    60.65 kB
+frontends/raft/dist-native123/assets/app-shell-D4_dL4bl.js                                  4,455.56 kB │ gzip: 1,208.94 kB
+
+[plugin builtin:vite-reporter] 
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rolldownOptions.output.codeSplitting to improve chunking: https://rolldown.rs/reference/OutputOptions.codeSplitting
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+[33m[INEFFECTIVE_DYNAMIC_IMPORT] [0mfrontends/raft/upstream/web-1.21.23/packages/web/src/store/channelStore.ts is dynamically imported by frontends/raft/upstream/web-1.21.23/packages/web/src/store/messageStore.ts but also statically imported by frontends/raft/adapter123/api.ts, frontends/raft/adapter123/entry.ts, frontends/raft/adapter123/realtime-driver.ts, frontends/raft/adapter123/role-instances.tsx, frontends/raft/upstream/web-1.21.23/packages/web/src/App.tsx, ..., dynamic import will not move module into another chunk.
+
+[33m[INEFFECTIVE_DYNAMIC_IMPORT] [0mfrontends/raft/adapter123/socket.ts is dynamically imported by frontends/raft/upstream/web-1.21.23/packages/web/src/store/channelStore.ts but also statically imported by frontends/raft/upstream/web-1.21.23/packages/web/src/components/agent/AgentActivityLog.tsx, frontends/raft/upstream/web-1.21.23/packages/web/src/components/agent/AgentActivityOverview.tsx, frontends/raft/upstream/web-1.21.23/packages/web/src/components/agent/AgentDetailPanel.tsx, frontends/raft/upstream/web-1.21.23/packages/web/src/components/agentMigration/useAgentMigrationStatus.ts, frontends/raft/upstream/web-1.21.23/packages/web/src/components/message/AttachmentCommentsPanel.tsx, ..., dynamic import will not move module into another chunk.
+
+[33m[INEFFECTIVE_DYNAMIC_IMPORT] [0mfrontends/raft/upstream/web-1.21.23/packages/web/src/components/message/ForwardComposerDialog.tsx is dynamically imported by frontends/raft/upstream/web-1.21.23/packages/web/src/components/message/ChatPanel.tsx but also statically imported by frontends/raft/upstream/web-1.21.23/packages/web/src/components/message/ThreadPanel.tsx, dynamic import will not move module into another chunk.
+
+[33m[INEFFECTIVE_DYNAMIC_IMPORT] [0mfrontends/raft/upstream/web-1.21.23/packages/web/src/components/settings/SettingsPanel.tsx is dynamically imported by frontends/raft/upstream/web-1.21.23/packages/web/src/components/layout/MainLayout.tsx but also statically imported by frontends/raft/upstream/web-1.21.23/packages/web/src/components/settings/AdminPrincipalRow.tsx, frontends/raft/upstream/web-1.21.23/packages/web/src/components/settings/InstalledConnectedAppItem.tsx, frontends/raft/upstream/web-1.21.23/packages/web/src/components/settings/JoinLinkRow.tsx, frontends/raft/upstream/web-1.21.23/packages/web/src/components/settings/PlanSectionContent.tsx, frontends/raft/upstream/web-1.21.23/packages/web/src/components/settings/ProviderAccountRow.tsx, ..., dynamic import will not move module into another chunk.
+
+[33m[INEFFECTIVE_DYNAMIC_IMPORT] [0mfrontends/raft/upstream/web-1.21.23/packages/web/src/components/task/LegacyTaskPanel.tsx is dynamically imported by frontends/raft/upstream/web-1.21.23/packages/web/src/components/layout/MainLayout.tsx but also statically imported by frontends/raft/upstream/web-1.21.23/packages/web/src/components/window/ThreadWindowRoute.tsx, dynamic import will not move module into another chunk.
+
+[33m[INEFFECTIVE_DYNAMIC_IMPORT] [0mfrontends/raft/upstream/web-1.21.23/packages/web/src/components/task/TaskModalHead.tsx is dynamically imported by frontends/raft/upstream/web-1.21.23/packages/web/src/components/layout/MainLayout.tsx but also statically imported by frontends/raft/upstream/web-1.21.23/packages/web/src/components/window/ThreadWindowRoute.tsx, dynamic import will not move module into another chunk.
+
+[33m[INEFFECTIVE_DYNAMIC_IMPORT] [0mfrontends/raft/upstream/web-1.21.23/packages/web/src/components/task/TasksPanel.tsx is dynamically imported by frontends/raft/upstream/web-1.21.23/packages/web/src/components/layout/MainLayout.tsx but also statically imported by frontends/raft/upstream/web-1.21.23/packages/web/src/components/message/ChatPanel.tsx, dynamic import will not move module into another chunk.
+
+[33m[INEFFECTIVE_DYNAMIC_IMPORT] [0mfrontends/raft/upstream/web-1.21.23/packages/web/src/store/applyReadStateUpdate.ts is dynamically imported by frontends/raft/upstream/web-1.21.23/packages/web/src/store/messageStore.ts but also statically imported by frontends/raft/upstream/web-1.21.23/packages/web/src/store/socketBridge.ts, dynamic import will not move module into another chunk.
+
+✓ built in 2.41s
+Candidate only: original Web1.21.23 / UI0.7.0. This command does not change the deployed product.

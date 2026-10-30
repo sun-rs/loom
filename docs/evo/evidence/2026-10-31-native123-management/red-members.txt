@@ -1,0 +1,25 @@
+✔ native channel edit/archive/delete preserve Room identity and historical visibility and use the Room causal owner (5.907625ms)
+✔ native notification/display preferences keep unrelated keys and reject stale observed versions (0.453917ms)
+✔ Role deletion only deletes configuration; instance deletion removes its actual membership (0.238084ms)
+✔ Role start/stop targets frozen instances' real Agent IDs; reset modes never discard workspaces (0.325208ms)
+✔ lifecycle cache refresh waits for the authoritative result and never synthesizes working/offline presence (0.097542ms)
+✔ a Role editor cannot overwrite a newer immutable revision (0.080625ms)
+✖ native member selection creates distinct instances from Roles, while removal checks the actual channel (0.1615ms)
+ℹ tests 7
+ℹ suites 0
+ℹ pass 6
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 215.872542
+
+✖ failing tests:
+
+test at scripts/official-web123/management.test.ts:228:1
+✖ native member selection creates distinct instances from Roles, while removal checks the actual channel (0.1615ms)
+  Error: UNBOUND_NATIVE_WRITE post /channels/channel/members/batch
+      at NativeCommands.write (file:///Users/sun/Code/repos/rah_os/frontends/raft/adapter123/commands.ts:384:11)
+      at async TestContext.<anonymous> (file:///Users/sun/Code/repos/rah_os/scripts/official-web123/management.test.ts:229:37)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7)

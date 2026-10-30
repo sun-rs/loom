@@ -1,0 +1,37 @@
+{
+  "isolatedCore": true,
+  "paidProviders": 0,
+  "readOnlyIntake": false,
+  "results": [
+    {
+      "width": 1440,
+      "channelRead": true,
+      "boundedOlderPage": true,
+      "nativeComposerSend": true,
+      "roleRead": true,
+      "roleEditPreservesPrompt": true,
+      "avatarFollowsStableRoleId": true,
+      "nativeChannelCreateWithInstance": true,
+      "nativeRoleCreateWithoutInstance": true,
+      "executionRevisionUnchanged": true,
+      "errors": [],
+      "consoleErrors": [],
+      "blockedExternal": []
+    },
+    {
+      "width": 390,
+      "channelRead": true,
+      "boundedOlderPage": true,
+      "nativeComposerSend": true,
+      "roleRead": true,
+      "roleEditPreservesPrompt": true,
+      "avatarFollowsStableRoleId": true,
+      "nativeChannelCreateWithInstance": true,
+      "nativeRoleCreateWithoutInstance": true,
+      "executionRevisionUnchanged": true,
+      "errors": [],
+      "consoleErrors": [],
+      "blockedExternal": []
+    }
+  ]
+}

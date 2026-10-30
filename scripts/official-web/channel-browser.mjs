@@ -1,5 +1,7 @@
 import { verifyNativeLoom } from "../official-web123/loom-browser.mjs";
 import { verifyNativeSidebar } from "../official-web123/sidebar-core-browser.mjs";
+import { verifyNativeManagement } from "../official-web123/management-core-browser.mjs";
+import { fixtureDirectories } from "../official-web123/fixture-directories.mjs";
 import { verifyAvatarRepair } from "./avatar-repair-browser.mjs";
 import { verifyWorkingSurfaces } from "./working-surfaces-browser.mjs";
 import { verifyRoleProfileAffordances } from "./role-profile-affordances-browser.mjs";
@@ -124,6 +126,7 @@ if (process.env.LOOM_BROWSER_SLICE === "runtime-sidebar") {
   );
 }
 let browser;
+let cleanupClient;
 const results = [];
 const workspaceFixtureRoots = [];
 try {
@@ -153,6 +156,7 @@ try {
     fetch: (url, init) =>
       fetch(url, { ...init, headers: { ...init.headers, cookie, origin } }),
   });
+  cleanupClient = client;
   const workspace = (await client.request("workspace.list", {})).workspaces[0];
   const head = async (roomId) =>
     (
@@ -243,7 +247,21 @@ try {
         ? firefox
         : chromium
   ).launch({ headless: true });
-  if (process.env.LOOM_BROWSER_SLICE === "native123-interactions") {
+  if (process.env.LOOM_BROWSER_SLICE === "native123-management") {
+    console.log(
+      JSON.stringify(
+        await verifyNativeManagement({
+          browser,
+          origin,
+          workspace,
+          channels,
+          client,
+          role,
+          head,
+        }),
+      ),
+    );
+  } else if (process.env.LOOM_BROWSER_SLICE === "native123-interactions") {
     console.log(
       JSON.stringify(
         await verifyNativeSidebar({
@@ -1655,6 +1673,20 @@ try {
   }
 } finally {
   await browser?.close();
+  if (cleanupClient && running) {
+    try {
+      const { rooms } = await cleanupClient.request("room.list", {
+        workspaceId: running.descriptor.workspaceId,
+      });
+      workspaceFixtureRoots.push(...fixtureDirectories(rooms));
+    } catch (error) {
+      process.stderr.write(
+        "Temporary Core fixture-home enumeration failed: " +
+          String(error) +
+          "\n",
+      );
+    }
+  }
   await running?.stop();
   for (const root of workspaceFixtureRoots)
     rmSync(root, { recursive: true, force: true });

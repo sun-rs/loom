@@ -1,0 +1,25 @@
+file:///Users/sun/Code/repos/rah_os/scripts/official-web123/sidebar.test.ts:6
+  conversationPreferences,
+  ^^^^^^^^^^^^^^^^^^^^^^^
+SyntaxError: The requested module '../../frontends/raft/adapter123/sidebar.ts' does not provide an export named 'conversationPreferences'
+    at #asyncInstantiate (node:internal/modules/esm/module_job:326:21)
+    at async ModuleJob.run (node:internal/modules/esm/module_job:429:5)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:639:26)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5)
+
+Node.js v25.9.0
+✖ scripts/official-web123/sidebar.test.ts (180.307083ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 185.256792
+
+✖ failing tests:
+
+test at scripts/official-web123/sidebar.test.ts:1:1
+✖ scripts/official-web123/sidebar.test.ts (180.307083ms)
+  'test failed'

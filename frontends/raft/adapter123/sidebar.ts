@@ -8,6 +8,18 @@ type Ref = { kind: "channel" | "agent" | "human"; id: string };
 /** Only verified single-instance standalone Channels may act as native DM peers. */
 export type SidebarPeers = ReadonlyMap<string, string>; // instance ID -> Room ID
 const roomKey = (id: string) => "room:" + id;
+export function conversationPreferences<T extends { id: string }>(
+  rows: readonly T[],
+  p: SidebarPreferences,
+) {
+  return rows.map((row) => ({
+    ...row,
+    activityMuted: p.mutedActivity.includes(roomKey(row.id)),
+    collapseLongMessages: !p.expandedLongMessages.includes(roomKey(row.id)),
+    prefsVersion: p.version,
+    displayPrefsVersion: p.version,
+  }));
+}
 function ref(key: string, peers: SidebarPeers): Ref {
   if (key.startsWith("peer:")) {
     if (peers.has(key.slice(5))) return { kind: "agent", id: key.slice(5) };

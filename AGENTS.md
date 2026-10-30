@@ -48,6 +48,16 @@ keyboard dismissal/form commit and resized/reloaded widths with an independent
 native HTTP oracle; separately prove real SDK persistence and unknown-result
 verification. See `docs/evo/evidence/2026-10-30-native123-interactions/README.md`.
 
+The candidate's native Agent lifecycle store is an SDK command/read-cache port:
+Role IDs fan out only to their retained live Instance IDs, and instance commands
+resolve the real Agent ID. Never copy Raft's optimistic working/offline state as
+Host evidence. An Instance cannot use legacy `agent.execution.reset`: preserving
+its native session uses an explicit disable/enable cycle; a new native session
+uses `instance.session.reset`. Role deletion retains Instances; restoration keeps
+the Role ID. Prompt/remarks are separate private profile fields, not list text.
+The named Role-only slots reuse original forms/rows/confirmation components;
+they are declared exceptions, not proof that all product adaptation is complete.
+
 Preserve the current production service and data until the whole-release adapter
 passes its vertical business and visual gates. Do not switch deployment merely
 because intake/build succeeds. Upgrade future versions as complete snapshots

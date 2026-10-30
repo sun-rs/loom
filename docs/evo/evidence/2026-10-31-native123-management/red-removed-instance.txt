@@ -1,0 +1,39 @@
+✔ native channel edit/archive/delete preserve Room identity and historical visibility and use the Room causal owner (4.281416ms)
+✔ native notification/display preferences keep unrelated keys and reject stale observed versions (0.482542ms)
+✔ Role deletion only deletes configuration; instance deletion removes its actual membership (0.258333ms)
+✔ Role start/stop targets frozen instances' real Agent IDs; reset modes never discard workspaces (0.3425ms)
+✔ lifecycle cache refresh waits for the authoritative result and never synthesizes working/offline presence (0.102709ms)
+✔ a Role editor cannot overwrite a newer immutable revision (0.089459ms)
+✔ native member selection creates distinct instances from Roles, while removal checks the actual channel (0.172292ms)
+✖ Role batch controls skip removed instances and stop after a confirmed rejection (1.0735ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 7
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 236.646917
+
+✖ failing tests:
+
+test at scripts/official-web123/management.test.ts:249:1
+✖ Role batch controls skip removed instances and stop after a confirmed rejection (1.0735ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    [
+  +   'agent-a',
+      'agent-b'
+    ]
+  
+      at TestContext.<anonymous> (file:///Users/sun/Code/repos/rah_os/scripts/official-web123/management.test.ts:250:128)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ 'agent-a', 'agent-b' ],
+    expected: [ 'agent-b' ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }

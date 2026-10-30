@@ -149,6 +149,12 @@ export default defineConfig({
       },
       resolveId(source, importer) {
         if (!importer?.startsWith(root + "/src/")) return;
+        if (source === "loom:role-profile")
+          return resolve(import.meta.dirname, "role-profile.tsx");
+        if (source === "loom:role-instances")
+          return resolve(import.meta.dirname, "role-instances.tsx");
+        if (source === "loom:role-lifecycle")
+          return resolve(import.meta.dirname, "role-lifecycle.tsx");
         if (source === "@botiverse/raft-shared")
           return resolve(import.meta.dirname, "runtime-shared.ts");
         const path = source.startsWith(".")
@@ -167,8 +173,18 @@ export default defineConfig({
           importer.includes("/components/machine/")
         )
           return resolve(import.meta.dirname, "instance-agent-store.ts");
+        if (path === root + "/src/store/agentStore")
+          return resolve(import.meta.dirname, "runtime-agent-store.ts");
         if (path === root + "/src/components/agent/AgentSkills")
           return resolve(import.meta.dirname, "absent-skill-section.tsx");
+        if (path === root + "/src/components/agent/AgentProfileEditDialog")
+          return resolve(import.meta.dirname, "role-profile.tsx");
+        if (
+          path === root + "/src/components/agent/ResetAgentDialog" ||
+          path === root + "/src/components/agentArchive/AgentArchiveDialog" ||
+          path === root + "/src/components/agentArchive/AgentArchiveSection"
+        )
+          return resolve(import.meta.dirname, "role-lifecycle.tsx");
         if (path === root + "/src/store/mainLayoutRealtimeBridgeDriver")
           return resolve(import.meta.dirname, "realtime-driver.ts");
         if (path === root + "/src/api/client")

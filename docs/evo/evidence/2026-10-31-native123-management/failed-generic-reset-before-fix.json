@@ -1,0 +1,806 @@
+{
+  "width": 1440,
+  "error": "locator.waitFor: Timeout 14000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-slot=\"dialog-content\"]').filter({ visible: true }) to be hidden\u001b[22m\n\u001b[2m    32 × locator resolved to visible <div id=\"_r_3v_\" data-open=\"\" role=\"dialog\" tabindex=\"-1\" aria-busy=\"true\" aria-modal=\"true\" data-base-ui-focusable=\"\" data-slot=\"dialog-content\" aria-labelledby=\"base-ui-_r_41_\" class=\"fixed top-1/2 left-1/2 z-50 flex w-[calc(100%-2rem)] -translate-1/2 flex-col max-h-[calc(100dvh-2rem)] outline-none overflow-clip rounded-dialog bg-layer-popover text-foreground shadow-float ring-1 ring-line-seam max-w-md\">…</div>\u001b[22m\n\n    at verifyNativeManagement (/Users/sun/Code/repos/rah_os/scripts/official-web123/management-core-browser.mjs:198:21)\n    at async file:///Users/sun/Code/repos/rah_os/scripts/official-web/channel-browser.mjs:250:9",
+  "body": "M\nMac-Studio.local\n搜索\n⌘K\n聊天\n聊天\n动态\n任务\n成员\n计算机\n帮助\n帮助\n设置\n关系图\nAgent\n2\nMac-Studio\n2\nFixtureTom\nCodex CLI\nManageRole1440\nUPDATED REMARK\nCodex CLI\n人类\n1\nowner（你）\nManageRole1440\n\n@ManageRole1440\n\n资料\n动态\nManageRole1440\n@ManageRole1440\nAgent\nCodex CLI\n在线\n描述\n\nUPDATED REMARK\n\n提示词\n\n未设置提示词\n\n信息\n角色\n计算机\nMac-Studio\nComputer 状态\n已连接\nComputer 版本\nComputer 在线\n创建时间\n2026年10月30日\n创建者\n未分配创建者\n运行时配置\n运行时\nCodex CLI\n模型\ngpt-members-fixture\n推理强度\n默认\n模式\n默认\n实例3\n实例\nManageRole1440-1\nCodex CLI · gpt-members-fixture\n离线\nManageRole1440-2\nCodex CLI · gpt-members-fixture\n在线\nManageRole1440-3\nCodex CLI · gpt-members-fixture\n在线\n操作\n停止所有实例\n重启 / 重置\n复制诊断信息\n归档 Agent\n重新启动或重置 ManageRole1440\n重新启动\n停止并重新启动 agent 进程，保留运行时会话和工作区文件。\n重置会话并重启\n清除运行时会话并重启。工作区文件（MEMORY.md、notes/）会保留。\n取消\n重启中…",
+  "errors": [],
+  "writes": [
+    {
+      "path": "/v3/client/workspaces/list",
+      "input": {}
+    },
+    {
+      "path": "/v3/client/principals/me",
+      "input": {}
+    },
+    {
+      "path": "/v3/client/sidebar/get",
+      "input": {
+        "workspaceId": "workspace_d96775c8-f6fb-4bfd-bfe9-2744fa58ca46"
+      }
+    },
+    {
+      "path": "/v3/client/sidebar/get",
+      "input": {
+        "workspaceId": "workspace_d96775c8-f6fb-4bfd-bfe9-2744fa58ca46"
+      }
+    },
+    {
+      "path": "/v3/client/rooms/list",
+      "input": {
+        "workspaceId": "workspace_d96775c8-f6fb-4bfd-bfe9-2744fa58ca46"
+      }
+    },
+    {
+      "path": "/v3/client/rooms/list",
+      "input": {
+        "workspaceId": "workspace_d96775c8-f6fb-4bfd-bfe9-2744fa58ca46"
+      }
+    },
+    {
+      "path": "/v3/client/roles/list",
+      "input": {
+        "controlRoomId": "room_3be70c21-4237-4b1b-98c5-e9240df64800"
+      }
+    },
+    {
+      "path": "/v3/client/agents/list",
+      "input": {
+        "controlRoomId": "room_3be70c21-4237-4b1b-98c5-e9240df64800"
+      }
+    },
+    {
+      "path": "/v3/client/agents/presence/list",
+      "input": {
+        "controlRoomId": "room_3be70c21-4237-4b1b-98c5-e9240df64800"
+      }
+    },
+    {
+      "path": "/v3/client/activity/list",
+      "input": {
+        "limit": 1,
+        "workspaceId": "workspace_d96775c8-f6fb-4bfd-bfe9-2744fa58ca46"
+      }
+    },
+    {
+      "path": "/v3/client/activity/list",
+      "input": {
+        "limit": 1,
+        "workspaceId": "workspace_d96775c8-f6fb-4bfd-bfe9-2744fa58ca46"
+      }
+    },
+    {
+      "path": "/v3/client/sidebar/get",
+      "input": {
+        "workspaceId": "workspace_d96775c8-f6fb-4bfd-bfe9-2744fa58ca46"
+      }
+    },
+    {
+      "path": "/v3/client/sidebar/get",
+      "input": {
+        "workspaceId": "workspace_d96775c8-f6fb-4bfd-bfe9-2744fa58ca46"
+      }
+    },
+    {
+      "path": "/v3/client/activity/list",
+      "input": {
+        "limit": 1,
+        "workspaceId": "workspace_d96775c8-f6fb-4bfd-bfe9-2744fa58ca46"
+      }
+    },
+    {
+      "path": "/v3/client/sidebar/get",
+      "input": {
+        "workspaceId": "workspace_d96775c8-f6fb-4bfd-bfe9-2744fa58ca46"
+      }
+    },
+    {
+      "path": "/v3/client/roles/list",
+      "input": {
+        "controlRoomId": "room_3be70c21-4237-4b1b-98c5-e9240df64800"
+      }
+    },
+    {
+      "path": "/v3/client/agents/list",
+      "input": {
+        "controlRoomId": "room_3be70c21-4237-4b1b-98c5-e9240df64800"
+      }
+    },
+    {
+      "path": "/v3/client/agents/presence/list",
+      "input": {
+        "controlRoomId": "room_3be70c21-4237-4b1b-98c5-e9240df64800"
+      }
+    },
+    {
+      "path": "/v3/client/roles/list",
+      "input": {
+        "controlRoomId": "room_3be70c21-4237-4b1b-98c5-e9240df64800"
+      }
+    },
+    {
+      "path": "/v3/client/agents/list",
+      "input": {
+        "controlRoomId": "room_3be70c21-4237-4b1b-98c5-e9240df64800"
+      }
+    },
+    {
+      "path": "/v3/client/agents/presence/list",
+      "input": {
+        "controlRoomId": "room_3be70c21-4237-4b1b-98c5-e9240df64800"
+      }
+    },
+    {
+      "path": "/v3/client/roles/list",
+      "input": {
+        "controlRoomId": "room_3be70c21-4237-4b1b-98c5-e9240df64800"
+      }
+    },
+    {
+      "path": "/v3/client/agents/list",
+      "input": {
+        "controlRoomId": "room_3be70c21-4237-4b1b-98c5-e9240df64800"
+      }
+    },
+    {
+      "path": "/v3/client/agents/presence/list",
+      "input": {
+        "controlRoomId": "room_3be70c21-4237-4b1b-98c5-e9240df64800"
+      }
+    },
+    {
+      "path": "/v3/client/rooms/sync",
+      "input": {
+        "bootstrap": "latest",
+        "consumerId": "loom-native123-room_3be70c21-4237-4b1b-98c5-e9240df64800",
+        "roomId": "room_3be70c21-4237-4b1b-98c5-e9240df64800"
+      }
+    },
+    {
+      "path": "/v3/client/rooms/acknowledge",
+      "input": {
+        "consumerId": "loom-native123-room_3be70c21-4237-4b1b-98c5-e9240df64800",
+        "roomId": "room_3be70c21-4237-4b1b-98c5-e9240df64800",
+        "throughSeq": 22
+      }
+    },
+    {
+      "path": "/v3/client/roles/revise",
+      "input": {
+        "basedOnRoomSeq": 22,
+        "idempotencyKey": "console-role-revise-9f3beaf1-ed49-4374-908c-d500af925ad9",
+        "configuration": {
+          "avatarKey": "pixel:bat",
+          "description": "UPDATED REMARK",
+          "displayName": "ManageRole1440",
+          "handle": "ManageRole1440",
+          "instructions": "UPDATED PROMPT",
+          "modelIntent": {
+            "exactBindingIds": [
+              "local:codex-cli/v1:gpt-members-fixture"
+            ],
+            "fallback": "disabled"
+          },
+          "role": "FIXTURE ONLY",
+          "runtimeOfferId": "local-workbench-offer-codex:runtime_profile_revision_1db4e9a2-5ea3-420d-baa9-9f4cb6239291"
+        },
+        "roleId": "role_98d452d6-fcd1-4554-94a4-df9fa62aa884",
+        "expectedRoleRevisionId": "role_revision_e797015e-9c70-4ee0-9f04-30d70704e219"
+      }
+    },
+    {
+      "path": "/v3/client/roles/list",
+      "input": {
+        "controlRoomId": "room_3be70c21-4237-4b1b-98c5-e9240df64800"
+      }
+    },
+    {
+      "path": "/v3/client/agents/list",
+      "input": {
+        "controlRoomId": "room_3be70c21-4237-4b1b-98c5-e9240df64800"
+      }
+    },
+    {
+      "path": "/v3/client/agents/presence/list",
+      "input": {
+        "controlRoomId": "room_3be70c21-4237-4b1b-98c5-e9240df64800"
+      }
+    },
+    {
+      "path": "/v3/client/roles/list",
+      "input": {
+        "controlRoomId": "room_3be70c21-4237-4b1b-98c5-e9240df64800"
+      }
+    },
+    {
+      "path": "/v3/client/agents/list",
+      "input": {
+        "controlRoomId": "room_3be70c21-4237-4b1b-98c5-e9240df64800"
+      }
+    },
+    {
+      "path": "/v3/client/agents/presence/list",
+      "input": {
+        "controlRoomId": "room_3be70c21-4237-4b1b-98c5-e9240df64800"
+      }
+    },
+    {
+      "path": "/v3/client/roles/list",
+      "input": {
+        "controlRoomId": "room_3be70c21-4237-4b1b-98c5-e9240df64800"
+      }
+    },
+    {
+      "path": "/v3/client/agents/list",
+      "input": {
+        "controlRoomId": "room_3be70c21-4237-4b1b-98c5-e9240df64800"
+      }
+    },
+    {
+      "path": "/v3/client/agents/presence/list",
+      "input": {
+        "controlRoomId": "room_3be70c21-4237-4b1b-98c5-e9240df64800"
+      }
+    },
+    {
+      "path": "/v3/client/rooms/sync",
+      "input": {
+        "afterSeq": 22,
+        "consumerId": "loom-native123-room_3be70c21-4237-4b1b-98c5-e9240df64800",
+        "roomId": "room_3be70c21-4237-4b1b-98c5-e9240df64800"
+      }
+    },
+    {
+      "path": "/v3/client/rooms/acknowledge",
+      "input": {
+        "consumerId": "loom-native123-room_3be70c21-4237-4b1b-98c5-e9240df64800",
+        "roomId": "room_3be70c21-4237-4b1b-98c5-e9240df64800",
+        "throughSeq": 23
+      }
+    },
+    {
+      "path": "/v3/client/roles/revise",
+      "input": {
+        "basedOnRoomSeq": 23,
+        "idempotencyKey": "console-role-revise-9ccfa0fb-1a21-4bd3-a774-850fa72ae275",
+        "configuration": {
+          "avatarKey": "pixel:bat",
+          "description": "UPDATED REMARK",
+          "displayName": "ManageRole1440",
+          "handle": "ManageRole1440",
+          "instructions": "",
+          "modelIntent": {
+            "exactBindingIds": [
+              "local:codex-cli/v1:gpt-members-fixture"
+            ],
+            "fallback": "disabled"
+          },
+          "role": "FIXTURE ONLY",
+          "runtimeOfferId": "local-workbench-offer-codex:runtime_profile_revision_1db4e9a2-5ea3-420d-baa9-9f4cb6239291"
+        },
+        "roleId": "role_98d452d6-fcd1-4554-94a4-df9fa62aa884",
+        "expectedRoleRevisionId": "role_revision_c22cd716-88c7-42be-900c-1a5279c39ba4"
+      }
+    },
+    {
+      "path": "/v3/client/roles/list",
+      "input": {
+        "controlRoomId": "room_3be70c21-4237-4b1b-98c5-e9240df64800"
+      }
+    },
+    {
+      "path": "/v3/client/agents/list",
+      "input": {
+        "controlRoomId": "room_3be70c21-4237-4b1b-98c5-e9240df64800"
+      }
+    },
+    {
+      "path": "/v3/client/agents/presence/list",
+      "input": {
+        "controlRoomId": "room_3be70c21-4237-4b1b-98c5-e9240df64800"
+      }
+    },
+    {
+      "path": "/v3/client/roles/list",
+      "input": {
+        "controlRoomId": "room_3be70c21-4237-4b1b-98c5-e9240df64800"
+      }
+    },
+    {
+      "path": "/v3/client/agents/list",
+      "input": {
+        "controlRoomId": "room_3be70c21-4237-4b1b-98c5-e9240df64800"
+      }
+    },
+    {
+      "path": "/v3/client/agents/presence/list",
+      "input": {
+        "controlRoomId": "room_3be70c21-4237-4b1b-98c5-e9240df64800"
+      }
+    },
+    {
+      "path": "/v3/client/rooms/sync",
+      "input": {
+        "bootstrap": "latest",
+        "consumerId": "loom-native123-room_8f75de43-ee36-4902-b9f6-32bdefb727ef",
+        "roomId": "room_8f75de43-ee36-4902-b9f6-32bdefb727ef"
+      }
+    },
+    {
+      "path": "/v3/client/rooms/acknowledge",
+      "input": {
+        "consumerId": "loom-native123-room_8f75de43-ee36-4902-b9f6-32bdefb727ef",
+        "roomId": "room_8f75de43-ee36-4902-b9f6-32bdefb727ef",
+        "throughSeq": 56
+      }
+    },
+    {
+      "path": "/v3/client/roles/instantiate",
+      "input": {
+        "roleId": "role_98d452d6-fcd1-4554-94a4-df9fa62aa884",
+        "channelId": "room_8f75de43-ee36-4902-b9f6-32bdefb727ef",
+        "basedOnRoomSeq": 56,
+        "idempotencyKey": "console-instantiate-0dbc3332-f394-43b3-945b-10e7e1b996f9"
+      }
+    },
+    {
+      "path": "/v3/client/roles/list",
+      "input": {
+        "controlRoomId": "room_3be70c21-4237-4b1b-98c5-e9240df64800"
+      }
+    },
+    {
+      "path": "/v3/client/agents/list",
+      "input": {
+        "controlRoomId": "room_3be70c21-4237-4b1b-98c5-e9240df64800"
+      }
+    },
+    {
+      "path": "/v3/client/agents/presence/list",
+      "input": {
+        "controlRoomId": "room_3be70c21-4237-4b1b-98c5-e9240df64800"
+      }
+    },
+    {
+      "path": "/v3/client/agents/get",
+      "input": {
+        "agentId": "agent_definition_f84e3091-42a4-4912-947c-224828f40d76"
+      }
+    },
+    {
+      "path": "/v3/client/roles/list",
+      "input": {
+        "controlRoomId": "room_3be70c21-4237-4b1b-98c5-e9240df64800"
+      }
+    },
+    {
+      "path": "/v3/client/agents/list",
+      "input": {
+        "controlRoomId": "room_3be70c21-4237-4b1b-98c5-e9240df64800"
+      }
+    },
+    {
+      "path": "/v3/client/agents/presence/list",
+      "input": {
+        "controlRoomId": "room_3be70c21-4237-4b1b-98c5-e9240df64800"
+      }
+    },
+    {
+      "path": "/v3/client/roles/list",
+      "input": {
+        "controlRoomId": "room_3be70c21-4237-4b1b-98c5-e9240df64800"
+      }
+    },
+    {
+      "path": "/v3/client/agents/list",
+      "input": {
+        "controlRoomId": "room_3be70c21-4237-4b1b-98c5-e9240df64800"
+      }
+    },
+    {
+      "path": "/v3/client/agents/presence/list",
+      "input": {
+        "controlRoomId": "room_3be70c21-4237-4b1b-98c5-e9240df64800"
+      }
+    },
+    {
+      "path": "/v3/client/rooms/sync",
+      "input": {
+        "afterSeq": 23,
+        "consumerId": "loom-native123-room_3be70c21-4237-4b1b-98c5-e9240df64800",
+        "roomId": "room_3be70c21-4237-4b1b-98c5-e9240df64800"
+      }
+    },
+    {
+      "path": "/v3/client/rooms/acknowledge",
+      "input": {
+        "consumerId": "loom-native123-room_3be70c21-4237-4b1b-98c5-e9240df64800",
+        "roomId": "room_3be70c21-4237-4b1b-98c5-e9240df64800",
+        "throughSeq": 28
+      }
+    },
+    {
+      "path": "/v3/client/agents/manage",
+      "input": {
+        "action": "set_state",
+        "agentId": "agent_definition_fa342ef4-13ef-48c6-8f31-12edd1ad1928",
+        "basedOnRoomSeq": 28,
+        "idempotencyKey": "console-instance-state-2c4c6d55-0599-4a9a-9c97-dd7147ec5780",
+        "state": "disabled"
+      }
+    },
+    {
+      "path": "/v3/client/rooms/sync",
+      "input": {
+        "afterSeq": 28,
+        "consumerId": "loom-native123-room_3be70c21-4237-4b1b-98c5-e9240df64800",
+        "roomId": "room_3be70c21-4237-4b1b-98c5-e9240df64800"
+      }
+    },
+    {
+      "path": "/v3/client/rooms/acknowledge",
+      "input": {
+        "consumerId": "loom-native123-room_3be70c21-4237-4b1b-98c5-e9240df64800",
+        "roomId": "room_3be70c21-4237-4b1b-98c5-e9240df64800",
+        "throughSeq": 29
+      }
+    },
+    {
+      "path": "/v3/client/agents/manage",
+      "input": {
+        "action": "set_state",
+        "agentId": "agent_definition_f84e3091-42a4-4912-947c-224828f40d76",
+        "basedOnRoomSeq": 29,
+        "idempotencyKey": "console-instance-state-2e9916bc-78eb-4c42-ad67-786308a20731",
+        "state": "disabled"
+      }
+    },
+    {
+      "path": "/v3/client/rooms/sync",
+      "input": {
+        "afterSeq": 29,
+        "consumerId": "loom-native123-room_3be70c21-4237-4b1b-98c5-e9240df64800",
+        "roomId": "room_3be70c21-4237-4b1b-98c5-e9240df64800"
+      }
+    },
+    {
+      "path": "/v3/client/rooms/acknowledge",
+      "input": {
+        "consumerId": "loom-native123-room_3be70c21-4237-4b1b-98c5-e9240df64800",
+        "roomId": "room_3be70c21-4237-4b1b-98c5-e9240df64800",
+        "throughSeq": 30
+      }
+    },
+    {
+      "path": "/v3/client/agents/manage",
+      "input": {
+        "action": "set_state",
+        "agentId": "agent_definition_50fbd5f7-5857-48ca-bb29-910da31af957",
+        "basedOnRoomSeq": 30,
+        "idempotencyKey": "console-instance-state-6d94aa62-da48-4f53-a080-28aa0a740508",
+        "state": "disabled"
+      }
+    },
+    {
+      "path": "/v3/client/roles/list",
+      "input": {
+        "controlRoomId": "room_3be70c21-4237-4b1b-98c5-e9240df64800"
+      }
+    },
+    {
+      "path": "/v3/client/agents/list",
+      "input": {
+        "controlRoomId": "room_3be70c21-4237-4b1b-98c5-e9240df64800"
+      }
+    },
+    {
+      "path": "/v3/client/agents/presence/list",
+      "input": {
+        "controlRoomId": "room_3be70c21-4237-4b1b-98c5-e9240df64800"
+      }
+    },
+    {
+      "path": "/v3/client/roles/list",
+      "input": {
+        "controlRoomId": "room_3be70c21-4237-4b1b-98c5-e9240df64800"
+      }
+    },
+    {
+      "path": "/v3/client/agents/list",
+      "input": {
+        "controlRoomId": "room_3be70c21-4237-4b1b-98c5-e9240df64800"
+      }
+    },
+    {
+      "path": "/v3/client/agents/presence/list",
+      "input": {
+        "controlRoomId": "room_3be70c21-4237-4b1b-98c5-e9240df64800"
+      }
+    },
+    {
+      "path": "/v3/client/rooms/sync",
+      "input": {
+        "afterSeq": 30,
+        "consumerId": "loom-native123-room_3be70c21-4237-4b1b-98c5-e9240df64800",
+        "roomId": "room_3be70c21-4237-4b1b-98c5-e9240df64800"
+      }
+    },
+    {
+      "path": "/v3/client/rooms/acknowledge",
+      "input": {
+        "consumerId": "loom-native123-room_3be70c21-4237-4b1b-98c5-e9240df64800",
+        "roomId": "room_3be70c21-4237-4b1b-98c5-e9240df64800",
+        "throughSeq": 31
+      }
+    },
+    {
+      "path": "/v3/client/agents/manage",
+      "input": {
+        "action": "set_state",
+        "agentId": "agent_definition_fa342ef4-13ef-48c6-8f31-12edd1ad1928",
+        "basedOnRoomSeq": 31,
+        "idempotencyKey": "console-instance-state-efd4d69e-0b61-4fc2-9fea-213246744fcd",
+        "state": "enabled"
+      }
+    },
+    {
+      "path": "/v3/client/rooms/sync",
+      "input": {
+        "afterSeq": 31,
+        "consumerId": "loom-native123-room_3be70c21-4237-4b1b-98c5-e9240df64800",
+        "roomId": "room_3be70c21-4237-4b1b-98c5-e9240df64800"
+      }
+    },
+    {
+      "path": "/v3/client/rooms/acknowledge",
+      "input": {
+        "consumerId": "loom-native123-room_3be70c21-4237-4b1b-98c5-e9240df64800",
+        "roomId": "room_3be70c21-4237-4b1b-98c5-e9240df64800",
+        "throughSeq": 32
+      }
+    },
+    {
+      "path": "/v3/client/agents/manage",
+      "input": {
+        "action": "set_state",
+        "agentId": "agent_definition_f84e3091-42a4-4912-947c-224828f40d76",
+        "basedOnRoomSeq": 32,
+        "idempotencyKey": "console-instance-state-320a1ca5-c20d-4d72-804e-f43102594913",
+        "state": "enabled"
+      }
+    },
+    {
+      "path": "/v3/client/rooms/sync",
+      "input": {
+        "afterSeq": 32,
+        "consumerId": "loom-native123-room_3be70c21-4237-4b1b-98c5-e9240df64800",
+        "roomId": "room_3be70c21-4237-4b1b-98c5-e9240df64800"
+      }
+    },
+    {
+      "path": "/v3/client/rooms/acknowledge",
+      "input": {
+        "consumerId": "loom-native123-room_3be70c21-4237-4b1b-98c5-e9240df64800",
+        "roomId": "room_3be70c21-4237-4b1b-98c5-e9240df64800",
+        "throughSeq": 33
+      }
+    },
+    {
+      "path": "/v3/client/agents/manage",
+      "input": {
+        "action": "set_state",
+        "agentId": "agent_definition_50fbd5f7-5857-48ca-bb29-910da31af957",
+        "basedOnRoomSeq": 33,
+        "idempotencyKey": "console-instance-state-99b72aba-b855-4a99-b912-5a8b6e24009b",
+        "state": "enabled"
+      }
+    },
+    {
+      "path": "/v3/client/roles/list",
+      "input": {
+        "controlRoomId": "room_3be70c21-4237-4b1b-98c5-e9240df64800"
+      }
+    },
+    {
+      "path": "/v3/client/agents/list",
+      "input": {
+        "controlRoomId": "room_3be70c21-4237-4b1b-98c5-e9240df64800"
+      }
+    },
+    {
+      "path": "/v3/client/agents/presence/list",
+      "input": {
+        "controlRoomId": "room_3be70c21-4237-4b1b-98c5-e9240df64800"
+      }
+    },
+    {
+      "path": "/v3/client/roles/list",
+      "input": {
+        "controlRoomId": "room_3be70c21-4237-4b1b-98c5-e9240df64800"
+      }
+    },
+    {
+      "path": "/v3/client/agents/list",
+      "input": {
+        "controlRoomId": "room_3be70c21-4237-4b1b-98c5-e9240df64800"
+      }
+    },
+    {
+      "path": "/v3/client/agents/presence/list",
+      "input": {
+        "controlRoomId": "room_3be70c21-4237-4b1b-98c5-e9240df64800"
+      }
+    },
+    {
+      "path": "/v3/client/rooms/sync",
+      "input": {
+        "afterSeq": 33,
+        "consumerId": "loom-native123-room_3be70c21-4237-4b1b-98c5-e9240df64800",
+        "roomId": "room_3be70c21-4237-4b1b-98c5-e9240df64800"
+      }
+    },
+    {
+      "path": "/v3/client/rooms/acknowledge",
+      "input": {
+        "consumerId": "loom-native123-room_3be70c21-4237-4b1b-98c5-e9240df64800",
+        "roomId": "room_3be70c21-4237-4b1b-98c5-e9240df64800",
+        "throughSeq": 34
+      }
+    },
+    {
+      "path": "/v3/client/agents/execution/reset",
+      "input": {
+        "agentId": "agent_definition_fa342ef4-13ef-48c6-8f31-12edd1ad1928",
+        "basedOnRoomSeq": 34,
+        "idempotencyKey": "console-execution-restart-98985ef1-113a-4042-a925-ca7746da9e20",
+        "mode": "restart"
+      }
+    },
+    {
+      "path": "/v3/client/sidebar/get",
+      "input": {
+        "workspaceId": "workspace_d96775c8-f6fb-4bfd-bfe9-2744fa58ca46"
+      }
+    },
+    {
+      "path": "/v3/client/sidebar/get",
+      "input": {
+        "workspaceId": "workspace_d96775c8-f6fb-4bfd-bfe9-2744fa58ca46"
+      }
+    },
+    {
+      "path": "/v3/client/rooms/list",
+      "input": {
+        "workspaceId": "workspace_d96775c8-f6fb-4bfd-bfe9-2744fa58ca46"
+      }
+    },
+    {
+      "path": "/v3/client/rooms/list",
+      "input": {
+        "workspaceId": "workspace_d96775c8-f6fb-4bfd-bfe9-2744fa58ca46"
+      }
+    },
+    {
+      "path": "/v3/client/roles/list",
+      "input": {
+        "controlRoomId": "room_3be70c21-4237-4b1b-98c5-e9240df64800"
+      }
+    },
+    {
+      "path": "/v3/client/agents/list",
+      "input": {
+        "controlRoomId": "room_3be70c21-4237-4b1b-98c5-e9240df64800"
+      }
+    },
+    {
+      "path": "/v3/client/agents/presence/list",
+      "input": {
+        "controlRoomId": "room_3be70c21-4237-4b1b-98c5-e9240df64800"
+      }
+    },
+    {
+      "path": "/v3/client/activity/list",
+      "input": {
+        "limit": 1,
+        "workspaceId": "workspace_d96775c8-f6fb-4bfd-bfe9-2744fa58ca46"
+      }
+    },
+    {
+      "path": "/v3/client/sidebar/get",
+      "input": {
+        "workspaceId": "workspace_d96775c8-f6fb-4bfd-bfe9-2744fa58ca46"
+      }
+    },
+    {
+      "path": "/v3/client/sidebar/get",
+      "input": {
+        "workspaceId": "workspace_d96775c8-f6fb-4bfd-bfe9-2744fa58ca46"
+      }
+    },
+    {
+      "path": "/v3/client/rooms/list",
+      "input": {
+        "workspaceId": "workspace_d96775c8-f6fb-4bfd-bfe9-2744fa58ca46"
+      }
+    },
+    {
+      "path": "/v3/client/rooms/list",
+      "input": {
+        "workspaceId": "workspace_d96775c8-f6fb-4bfd-bfe9-2744fa58ca46"
+      }
+    },
+    {
+      "path": "/v3/client/roles/list",
+      "input": {
+        "controlRoomId": "room_3be70c21-4237-4b1b-98c5-e9240df64800"
+      }
+    },
+    {
+      "path": "/v3/client/agents/list",
+      "input": {
+        "controlRoomId": "room_3be70c21-4237-4b1b-98c5-e9240df64800"
+      }
+    },
+    {
+      "path": "/v3/client/agents/presence/list",
+      "input": {
+        "controlRoomId": "room_3be70c21-4237-4b1b-98c5-e9240df64800"
+      }
+    },
+    {
+      "path": "/v3/client/activity/list",
+      "input": {
+        "limit": 1,
+        "workspaceId": "workspace_d96775c8-f6fb-4bfd-bfe9-2744fa58ca46"
+      }
+    },
+    {
+      "path": "/v3/client/sidebar/get",
+      "input": {
+        "workspaceId": "workspace_d96775c8-f6fb-4bfd-bfe9-2744fa58ca46"
+      }
+    },
+    {
+      "path": "/v3/client/sidebar/get",
+      "input": {
+        "workspaceId": "workspace_d96775c8-f6fb-4bfd-bfe9-2744fa58ca46"
+      }
+    },
+    {
+      "path": "/v3/client/rooms/list",
+      "input": {
+        "workspaceId": "workspace_d96775c8-f6fb-4bfd-bfe9-2744fa58ca46"
+      }
+    },
+    {
+      "path": "/v3/client/rooms/list",
+      "input": {
+        "workspaceId": "workspace_d96775c8-f6fb-4bfd-bfe9-2744fa58ca46"
+      }
+    },
+    {
+      "path": "/v3/client/roles/list",
+      "input": {
+        "controlRoomId": "room_3be70c21-4237-4b1b-98c5-e9240df64800"
+      }
+    },
+    {
+      "path": "/v3/client/agents/list",
+      "input": {
+        "controlRoomId": "room_3be70c21-4237-4b1b-98c5-e9240df64800"
+      }
+    },
+    {
+      "path": "/v3/client/agents/presence/list",
+      "input": {
+        "controlRoomId": "room_3be70c21-4237-4b1b-98c5-e9240df64800"
+      }
+    },
+    {
+      "path": "/v3/client/activity/list",
+      "input": {
+        "limit": 1,
+        "workspaceId": "workspace_d96775c8-f6fb-4bfd-bfe9-2744fa58ca46"
+      }
+    }
+  ]
+}

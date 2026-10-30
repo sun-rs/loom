@@ -1,0 +1,245 @@
+{
+  "source": "db5e399",
+  "ui": "0.7.0",
+  "reference": "Unchanged original full App build",
+  "loom": "Original full App + SDK boundary; independent SDK fixture DTOs",
+  "fixtureOnly": true,
+  "productionData": false,
+  "unmasked": true,
+  "fixedClock": "2026-10-30T00:00:00Z",
+  "calibrations": [
+    {
+      "width": 1440,
+      "displacement": 1,
+      "differingPixels": 14478
+    },
+    {
+      "width": 390,
+      "displacement": 1,
+      "differingPixels": 9830
+    }
+  ],
+  "results": [
+    {
+      "width": 1440,
+      "state": "chat",
+      "differingPixels": 0,
+      "totalPixels": 1440000,
+      "maxDelta": 0,
+      "ratio": 0
+    },
+    {
+      "width": 1440,
+      "state": "activity",
+      "differingPixels": 0,
+      "totalPixels": 1440000,
+      "maxDelta": 0,
+      "ratio": 0
+    },
+    {
+      "width": 1440,
+      "state": "tasks",
+      "differingPixels": 0,
+      "totalPixels": 1440000,
+      "maxDelta": 0,
+      "ratio": 0
+    },
+    {
+      "width": 1440,
+      "state": "members",
+      "differingPixels": 0,
+      "totalPixels": 1440000,
+      "maxDelta": 0,
+      "ratio": 0
+    },
+    {
+      "width": 1440,
+      "state": "computers",
+      "differingPixels": 0,
+      "totalPixels": 1440000,
+      "maxDelta": 0,
+      "ratio": 0
+    },
+    {
+      "width": 1440,
+      "state": "appearance",
+      "differingPixels": 0,
+      "totalPixels": 1440000,
+      "maxDelta": 0,
+      "ratio": 0
+    },
+    {
+      "width": 1440,
+      "state": "conversation",
+      "differingPixels": 0,
+      "totalPixels": 1440000,
+      "maxDelta": 0,
+      "ratio": 0
+    },
+    {
+      "width": 390,
+      "state": "chat",
+      "differingPixels": 0,
+      "totalPixels": 329160,
+      "maxDelta": 0,
+      "ratio": 0
+    },
+    {
+      "width": 390,
+      "state": "activity",
+      "differingPixels": 0,
+      "totalPixels": 329160,
+      "maxDelta": 0,
+      "ratio": 0
+    },
+    {
+      "width": 390,
+      "state": "tasks",
+      "differingPixels": 0,
+      "totalPixels": 329160,
+      "maxDelta": 0,
+      "ratio": 0
+    },
+    {
+      "width": 390,
+      "state": "members",
+      "differingPixels": 0,
+      "totalPixels": 329160,
+      "maxDelta": 0,
+      "ratio": 0
+    },
+    {
+      "width": 390,
+      "state": "computers",
+      "differingPixels": 0,
+      "totalPixels": 329160,
+      "maxDelta": 0,
+      "ratio": 0
+    },
+    {
+      "width": 390,
+      "state": "appearance",
+      "differingPixels": 0,
+      "totalPixels": 329160,
+      "maxDelta": 0,
+      "ratio": 0
+    },
+    {
+      "width": 390,
+      "state": "conversation",
+      "differingPixels": 0,
+      "totalPixels": 329160,
+      "maxDelta": 0,
+      "ratio": 0
+    }
+  ],
+  "gaps": [
+    {
+      "arm": "reference",
+      "width": 1440,
+      "errors": [],
+      "unbound": [
+        {
+          "path": "/api/billing/subscription",
+          "method": "GET"
+        },
+        {
+          "path": "/api/billing/subscription",
+          "method": "GET"
+        },
+        {
+          "path": "/api/billing/subscription",
+          "method": "GET"
+        },
+        {
+          "path": "/api/billing/subscription",
+          "method": "GET"
+        },
+        {
+          "path": "/api/attachments/upload-sessions/fixture-conversation/active",
+          "method": "GET"
+        }
+      ],
+      "consoleErrors": [
+        "[Push] Failed to register service worker: TypeError: Cannot read properties of undefined (reading 'update')\n    at alt (http://127.0.0.1:62545/assets/app-shell-DosyLPyu.js:300:57513)",
+        "Failed to load resource: the server responded with a status of 501 (Not Implemented)",
+        "[Push] Failed to register service worker: TypeError: Cannot read properties of undefined (reading 'update')\n    at alt (http://127.0.0.1:62545/assets/app-shell-DosyLPyu.js:300:57513)",
+        "[Push] Failed to register service worker: TypeError: Cannot read properties of undefined (reading 'update')\n    at alt (http://127.0.0.1:62545/assets/app-shell-DosyLPyu.js:300:57513)",
+        "[Push] Failed to register service worker: TypeError: Cannot read properties of undefined (reading 'update')\n    at alt (http://127.0.0.1:62545/assets/app-shell-DosyLPyu.js:300:57513)",
+        "Failed to load resource: the server responded with a status of 501 (Not Implemented)",
+        "[Push] Failed to register service worker: TypeError: Cannot read properties of undefined (reading 'update')\n    at alt (http://127.0.0.1:62545/assets/app-shell-DosyLPyu.js:300:57513)",
+        "Failed to load resource: the server responded with a status of 501 (Not Implemented)",
+        "[Push] Failed to register service worker: TypeError: Cannot read properties of undefined (reading 'update')\n    at alt (http://127.0.0.1:62545/assets/app-shell-DosyLPyu.js:300:57513)",
+        "[Push] Failed to register service worker: TypeError: Cannot read properties of undefined (reading 'update')\n    at alt (http://127.0.0.1:62545/assets/app-shell-DosyLPyu.js:300:57513)",
+        "Failed to load resource: the server responded with a status of 501 (Not Implemented)",
+        "Failed to load resource: the server responded with a status of 501 (Not Implemented)"
+      ]
+    },
+    {
+      "arm": "loom",
+      "width": 1440,
+      "errors": [],
+      "unbound": [],
+      "consoleErrors": [
+        "[Push] Failed to register service worker: TypeError: Cannot read properties of undefined (reading 'update')\n    at Bpt (http://127.0.0.1:62546/assets/app-shell-Bh8RR-CC.js:354:94989)",
+        "[Push] Failed to register service worker: TypeError: Cannot read properties of undefined (reading 'update')\n    at Bpt (http://127.0.0.1:62546/assets/app-shell-Bh8RR-CC.js:354:94989)",
+        "[Push] Failed to register service worker: TypeError: Cannot read properties of undefined (reading 'update')\n    at Bpt (http://127.0.0.1:62546/assets/app-shell-Bh8RR-CC.js:354:94989)",
+        "[Push] Failed to register service worker: TypeError: Cannot read properties of undefined (reading 'update')\n    at Bpt (http://127.0.0.1:62546/assets/app-shell-Bh8RR-CC.js:354:94989)",
+        "[Push] Failed to register service worker: TypeError: Cannot read properties of undefined (reading 'update')\n    at Bpt (http://127.0.0.1:62546/assets/app-shell-Bh8RR-CC.js:354:94989)",
+        "[Push] Failed to register service worker: TypeError: Cannot read properties of undefined (reading 'update')\n    at Bpt (http://127.0.0.1:62546/assets/app-shell-Bh8RR-CC.js:354:94989)",
+        "[Push] Failed to register service worker: TypeError: Cannot read properties of undefined (reading 'update')\n    at Bpt (http://127.0.0.1:62546/assets/app-shell-Bh8RR-CC.js:354:94989)"
+      ]
+    },
+    {
+      "arm": "reference",
+      "width": 390,
+      "errors": [],
+      "unbound": [
+        {
+          "path": "/api/billing/subscription",
+          "method": "GET"
+        },
+        {
+          "path": "/api/billing/subscription",
+          "method": "GET"
+        },
+        {
+          "path": "/api/billing/subscription",
+          "method": "GET"
+        },
+        {
+          "path": "/api/attachments/upload-sessions/fixture-conversation/active",
+          "method": "GET"
+        }
+      ],
+      "consoleErrors": [
+        "[Push] Failed to register service worker: TypeError: Cannot read properties of undefined (reading 'update')\n    at alt (http://127.0.0.1:62545/assets/app-shell-DosyLPyu.js:300:57513)",
+        "Failed to load resource: the server responded with a status of 501 (Not Implemented)",
+        "[Push] Failed to register service worker: TypeError: Cannot read properties of undefined (reading 'update')\n    at alt (http://127.0.0.1:62545/assets/app-shell-DosyLPyu.js:300:57513)",
+        "[Push] Failed to register service worker: TypeError: Cannot read properties of undefined (reading 'update')\n    at alt (http://127.0.0.1:62545/assets/app-shell-DosyLPyu.js:300:57513)",
+        "[Push] Failed to register service worker: TypeError: Cannot read properties of undefined (reading 'update')\n    at alt (http://127.0.0.1:62545/assets/app-shell-DosyLPyu.js:300:57513)",
+        "Failed to load resource: the server responded with a status of 501 (Not Implemented)",
+        "[Push] Failed to register service worker: TypeError: Cannot read properties of undefined (reading 'update')\n    at alt (http://127.0.0.1:62545/assets/app-shell-DosyLPyu.js:300:57513)",
+        "[Push] Failed to register service worker: TypeError: Cannot read properties of undefined (reading 'update')\n    at alt (http://127.0.0.1:62545/assets/app-shell-DosyLPyu.js:300:57513)",
+        "[Push] Failed to register service worker: TypeError: Cannot read properties of undefined (reading 'update')\n    at alt (http://127.0.0.1:62545/assets/app-shell-DosyLPyu.js:300:57513)",
+        "Failed to load resource: the server responded with a status of 501 (Not Implemented)",
+        "Failed to load resource: the server responded with a status of 501 (Not Implemented)"
+      ]
+    },
+    {
+      "arm": "loom",
+      "width": 390,
+      "errors": [],
+      "unbound": [],
+      "consoleErrors": [
+        "[Push] Failed to register service worker: TypeError: Cannot read properties of undefined (reading 'update')\n    at Bpt (http://127.0.0.1:62546/assets/app-shell-Bh8RR-CC.js:354:94989)",
+        "[Push] Failed to register service worker: TypeError: Cannot read properties of undefined (reading 'update')\n    at Bpt (http://127.0.0.1:62546/assets/app-shell-Bh8RR-CC.js:354:94989)",
+        "[Push] Failed to register service worker: TypeError: Cannot read properties of undefined (reading 'update')\n    at Bpt (http://127.0.0.1:62546/assets/app-shell-Bh8RR-CC.js:354:94989)",
+        "[Push] Failed to register service worker: TypeError: Cannot read properties of undefined (reading 'update')\n    at Bpt (http://127.0.0.1:62546/assets/app-shell-Bh8RR-CC.js:354:94989)",
+        "[Push] Failed to register service worker: TypeError: Cannot read properties of undefined (reading 'update')\n    at Bpt (http://127.0.0.1:62546/assets/app-shell-Bh8RR-CC.js:354:94989)",
+        "[Push] Failed to register service worker: TypeError: Cannot read properties of undefined (reading 'update')\n    at Bpt (http://127.0.0.1:62546/assets/app-shell-Bh8RR-CC.js:354:94989)",
+        "[Push] Failed to register service worker: TypeError: Cannot read properties of undefined (reading 'update')\n    at Bpt (http://127.0.0.1:62546/assets/app-shell-Bh8RR-CC.js:354:94989)"
+      ]
+    }
+  ]
+}

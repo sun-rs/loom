@@ -1,0 +1,49 @@
+
+> rah-os@0.0.0 test:official-web:native123
+> node --test scripts/official-web123/*.test.mjs scripts/official-web123/*.test.ts
+
+✔ Role sidebar and Computer member list are different facets of one native read cache, without identity inference or unstable snapshots (1.173ms)
+✔ new native Roles use the whole pinned preset pool excluding occupied avatars, with an exhausted-pool fallback (0.671708ms)
+✔ native avatars retain original rendering and legacy saved keys remain readable without joining the new picker (0.551791ms)
+✔ native Agent list projects Role IDs while channel senders remain instance IDs; read bridge cannot execute writes (2.020083ms)
+✔ native send holds the same UI promise on unknown, never sends a replacement, and verifies the frozen SDK intent explicitly (6.5445ms)
+✔ native viewport acknowledgment sends its observed Room frontier; it never marks unseen messages or deliveries read (0.256958ms)
+✔ native sidebar writes keep the UI revision and unknown intent, and refuse a stale view before overwriting (22.287541ms)
+✔ standalone chats use explicit sidebar placement; instance-private boxes never leak into the root DM list (1.697625ms)
+✔ pixel reference SDK fixtures obey real Room snapshot/timeline schemas, including canonical mention spans (2.626375ms)
+✔ pixel sidebar fixture satisfies its entire SDK response and cold/warm Room reads follow the actual replay contract (1.548667ms)
+✔ interaction SDK fixture enforces real sidebar schema, CAS and same-intent replay (1.848125ms)
+✔ temporary Core cleanup keeps attached/user directories and only selects recorded platform homes (0.114084ms)
+✔ native channel edit/archive/delete preserve Room identity and historical visibility and use the Room causal owner (4.495167ms)
+✔ native notification/display preferences keep unrelated keys and reject stale observed versions (0.518875ms)
+✔ Role deletion only deletes configuration; instance deletion removes its actual membership (0.2795ms)
+✔ Role start/stop targets frozen instances' real Agent IDs; reset modes never discard workspaces (0.3425ms)
+✔ lifecycle cache refresh waits for the authoritative result and never synthesizes working/offline presence (0.109792ms)
+✔ a Role editor cannot overwrite a newer immutable revision (0.109291ms)
+✔ native member selection creates distinct instances from Roles, while removal checks the actual channel (0.187375ms)
+✔ Role batch controls skip removed instances and stop after a confirmed rejection (0.273292ms)
+✔ preserving-session restart uses the instance state lane and never the forbidden legacy Agent reset (0.134833ms)
+✔ native history paging maps before/after only within the requested Room and stays bounded (2.438334ms)
+✔ native sync cannot treat independent Room sequences as a global stream (0.159458ms)
+✔ unmasked pixel gate detects a single color or alpha pixel difference (1.325625ms)
+✔ Loom omits incompatible Agent tabs through one explicit capability seam; other native presentation remains intact (2.359167ms)
+✔ Role prompt is a named extension slot and config edits never restart live instances (20.109125ms)
+✔ native local creation is not blocked by an unrelated Raft subscription quota (0.464583ms)
+✔ native preference writes carry the exact displayed revision without changing native controls (2.105084ms)
+✔ native mute and collapse settings reflect existing per-Human workspace preferences, never invented message frontiers (1.580541ms)
+✔ native instance and aggregate Role lights use verified Host observations rather than enabled definitions or reused display names (0.642958ms)
+✔ read recovery coalesces visibility/focus hints and never refreshes hidden or disposed views (2.437416ms)
+✔ native model form groups AGY choices but writes exact published model/effort; remarks preserve the executable prompt (3.274917ms)
+✔ native sidebar uses kind refs and lossless section/order projections, retaining exact SDK revision (2.46425ms)
+✔ native custom-section sort and section order preserve their source semantics (0.394375ms)
+✔ only verified standalone instance peers map to DM Rooms; native file tabs retain SDK workspace identity (0.209041ms)
+✔ an accepted preference snapshot reconciles mute and display flags at one real revision (0.075125ms)
+✔ complete Web1.21.23 source and official workspace closure are immutable and use their original dependency lock (74.430166ms)
+ℹ tests 37
+ℹ suites 0
+ℹ pass 37
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 444.707167

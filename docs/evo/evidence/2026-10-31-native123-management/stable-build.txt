@@ -1,0 +1,272 @@
+
+> rah-os@0.0.0 prebuild:web:workbench
+> npm run check:repository-identity
+
+
+> rah-os@0.0.0 check:repository-identity
+> node scripts/repository-identity.mjs
+
+{"commandCwd":"/Users/sun/Code/repos/rah_os","gitTopLevel":"/Users/sun/Code/repos/rah_os","head":"aa562cad4c1dba199796e0e56d84143379a37628","packageName":"rah-os","repositoryDirectory":"/Users/sun/Code/repos/rah_os"}
+
+> rah-os@0.0.0 build:web:workbench
+> node scripts/build-product-web.mjs
+
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - import "./scripts/pwaManifestName" without a file extension (vite.config.ts:6:33). Add the file extension
+  - import "./scripts/webProxyTarget" without a file extension (vite.config.ts:7:39). Add the file extension
+  - import "./scripts/frontendReleaseIdentity" without a file extension (vite.config.ts:13:8). Add the file extension
+  - import "../src/buildIdentity" without a file extension (scripts/frontendReleaseIdentity.ts:10:46). Add the file extension
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+vite v8.3.4 building client environment for production...
+transforming...
+Found 2 warnings while optimizing generated CSS:
+
+Issue #1:
+[2m│   -webkit-text-fill-color: var(--foreground-disabled);[22m
+[2m│ }[22m
+[2m│[22m ::highlight(raft-comment) {
+[2m┆[22m             [33m[2m^--[22m 'highlight' is not recognized as a valid pseudo-element. Did you mean ':highlight' (pseudo-class) or is this a typo?[39m
+[2m┆[22m
+[2m│   background-color: light-dark([22m
+[2m│     var(--brand-400),[22m
+
+Issue #2:
+[2m│   text-decoration-thickness: 2px;[22m
+[2m│ }[22m
+[2m│[22m ::highlight(raft-comment-active) {
+[2m┆[22m             [33m[2m^--[22m 'highlight' is not recognized as a valid pseudo-element. Did you mean ':highlight' (pseudo-class) or is this a typo?[39m
+[2m┆[22m
+[2m│   background-color: var(--you);[22m
+[2m│   color: var(--sticker-ink);[22m
+
+✓ 6902 modules transformed.
+rendering chunks...
+computing gzip size...
+dist-workbench/index.html                                                2.18 kB │ gzip:   0.93 kB
+dist-workbench/assets/V8mDoQDjQSkFtoMM3T6r8E7mPb54C-s0-D0rl6rjA.woff2    6.71 kB
+dist-workbench/assets/i7dPIFZifjKcF5UAWdDRYE58RWq7-BNOj0Qhp.woff2        7.27 kB
+dist-workbench/assets/i7dMIFZifjKcF5UAWdDRaPpZUFqaHjyV-DWQgDHuA.woff2    7.33 kB
+dist-workbench/loom-push-sw.js                                           7.49 kB
+dist-workbench/assets/i7dMIFZifjKcF5UAWdDRaPpZUFuaHjyV-B2s3bDs2.woff2   15.80 kB
+dist-workbench/assets/i7dPIFZifjKcF5UAWdDRYE98RWq7-DTLbW2xa.woff2       15.83 kB
+dist-workbench/assets/i7dPIFZifjKcF5UAWdDRYEF8RQ-Rg4St2Dn.woff2         16.52 kB
+dist-workbench/assets/i7dMIFZifjKcF5UAWdDRaPpZUFWaHg-mWgeinG7.woff2     16.72 kB
+dist-workbench/assets/V8mDoQDjQSkFtoMM3T6r8E7mPb94C-s0-D9tNdqV9.woff2   18.94 kB
+dist-workbench/assets/V8mDoQDjQSkFtoMM3T6r8E7mPbF4Cw-BhU9QXUp.woff2     22.28 kB
+dist-workbench/assets/composerSuggestion.worker-C5SfRA0Q.js             42.48 kB
+dist-workbench/.vite/manifest.json                                      88.35 kB │ gzip:   9.48 kB
+dist-workbench/assets/app-entry-2M4mEElK.css                             0.72 kB │ gzip:   0.26 kB
+dist-workbench/assets/index-Dw30HREh.css                               533.16 kB │ gzip:  77.92 kB
+dist-workbench/assets/EmptyState-C4LumqiP.js                             0.03 kB │ gzip:   0.05 kB
+dist-workbench/assets/c-Cz4nF6n_.js                                      0.04 kB │ gzip:   0.06 kB
+dist-workbench/assets/cpp-DzjeI0uH.js                                    0.04 kB │ gzip:   0.06 kB
+dist-workbench/assets/css-DgaLhXQH.js                                    0.04 kB │ gzip:   0.06 kB
+dist-workbench/assets/jsx-C4yDKi0A.js                                    0.04 kB │ gzip:   0.06 kB
+dist-workbench/assets/lua-fPRBWD-V.js                                    0.04 kB │ gzip:   0.06 kB
+dist-workbench/assets/sql-CfM2IJm3.js                                    0.04 kB │ gzip:   0.06 kB
+dist-workbench/assets/tsx-CGosfAUg.js                                    0.04 kB │ gzip:   0.06 kB
+dist-workbench/assets/xml-DuKfbPI6.js                                    0.04 kB │ gzip:   0.06 kB
+dist-workbench/assets/html-BWDvXlHg.js                                   0.04 kB │ gzip:   0.06 kB
+dist-workbench/assets/java-_ATy9zCa.js                                   0.04 kB │ gzip:   0.06 kB
+dist-workbench/assets/json-C3WlssX3.js                                   0.04 kB │ gzip:   0.06 kB
+dist-workbench/assets/yaml-DDA_XMNu.js                                   0.04 kB │ gzip:   0.06 kB
+dist-workbench/assets/graphql-BHtseKAV.js                                0.04 kB │ gzip:   0.06 kB
+dist-workbench/assets/javascript-CpIGwZ_Y.js                             0.05 kB │ gzip:   0.07 kB
+dist-workbench/assets/typescript-Bb1J8qyy.js                             0.05 kB │ gzip:   0.07 kB
+dist-workbench/assets/bash-CVTB3cr6.js                                   0.05 kB │ gzip:   0.07 kB
+dist-workbench/assets/shellscript-CVTB3cr6.js                            0.05 kB │ gzip:   0.07 kB
+dist-workbench/assets/toastBridge-BGI2yoFI.js                            0.06 kB │ gzip:   0.07 kB
+dist-workbench/assets/array-BifhSqXX.js                                  0.10 kB │ gzip:   0.11 kB
+dist-workbench/assets/pie-WAS4IAKB-CUg41CQo.js                           0.10 kB │ gzip:   0.12 kB
+dist-workbench/assets/info-A6RAGUB7-B67RzFld.js                          0.10 kB │ gzip:   0.12 kB
+dist-workbench/assets/radar-RG4KPBEZ-2bmO6jrq.js                         0.10 kB │ gzip:   0.12 kB
+dist-workbench/assets/packet-AYTQ26CC-Yioo2AZ_.js                        0.11 kB │ gzip:   0.12 kB
+dist-workbench/assets/cynefin-OW5HDTMX-CwbWqXSj.js                       0.11 kB │ gzip:   0.12 kB
+dist-workbench/assets/treemap-WGGIJYW6-VZ9a_mWF.js                       0.11 kB │ gzip:   0.12 kB
+dist-workbench/assets/wardley-WFR3VGLG-DAtqmOc8.js                       0.11 kB │ gzip:   0.12 kB
+dist-workbench/assets/gitGraph-4MIJSDKK-j3Ka5lqx.js                      0.11 kB │ gzip:   0.12 kB
+dist-workbench/assets/railroad-74A4TZTK-BQBLcEEL.js                      0.11 kB │ gzip:   0.12 kB
+dist-workbench/assets/treeView-Q6P3EWNA-C-5HfCWb.js                      0.11 kB │ gzip:   0.12 kB
+dist-workbench/assets/channel-Cli_XHKc.js                                0.11 kB │ gzip:   0.12 kB
+dist-workbench/assets/railroad-peg-WCYAUIDC-CAnBYDUa.js                  0.11 kB │ gzip:   0.13 kB
+dist-workbench/assets/architecture-7GRP2DOG-CLwt8wpL.js                  0.11 kB │ gzip:   0.13 kB
+dist-workbench/assets/railroad-abnf-HS5TGJTU-TznE6dmt.js                 0.11 kB │ gzip:   0.13 kB
+dist-workbench/assets/railroad-ebnf-LZEXJU2U-BGDPdcTJ.js                 0.11 kB │ gzip:   0.13 kB
+dist-workbench/assets/eventmodeling-NTZA5JFV-Cl8-8QdX.js                 0.11 kB │ gzip:   0.13 kB
+dist-workbench/assets/init-C-OQMol4.js                                   0.14 kB │ gzip:   0.12 kB
+dist-workbench/assets/chunk-Y2CYZVJY-DsF7k-Jl.js                         0.15 kB │ gzip:   0.14 kB
+dist-workbench/assets/chunk-2Q5K7J3B-C1jixKkw.js                         0.19 kB │ gzip:   0.16 kB
+dist-workbench/assets/chunk-JWPE2WC7-DVXcaiue.js                         0.22 kB │ gzip:   0.17 kB
+dist-workbench/assets/chunk-XXDRQBXY-CvnjQB_y.js                         0.26 kB │ gzip:   0.22 kB
+dist-workbench/assets/copy-BLhLGRs5.js                                   0.27 kB │ gzip:   0.23 kB
+dist-workbench/assets/circle-user-round-DhZd8PeL.js                      0.31 kB │ gzip:   0.24 kB
+dist-workbench/assets/bell-D7dgEKMo.js                                   0.33 kB │ gzip:   0.26 kB
+dist-workbench/assets/chunk-5VM5RSS4-ZNzvKenW.js                         0.36 kB │ gzip:   0.27 kB
+dist-workbench/assets/flowDiagram-HODETNUW-ddz0Nv4X.js                   0.56 kB │ gzip:   0.31 kB
+dist-workbench/assets/chunk-POPQ4Y6H-CYzVuL2_.js                         0.57 kB │ gzip:   0.40 kB
+dist-workbench/assets/scrollable-DISIp31k.js                             0.59 kB │ gzip:   0.31 kB
+dist-workbench/assets/AvatarEditVeil-XAy5Rmjo.js                         0.60 kB │ gzip:   0.38 kB
+dist-workbench/assets/infoDiagram-27XIBGKW-CEsTUifF.js                   0.65 kB │ gzip:   0.41 kB
+dist-workbench/assets/rolldown-runtime-hePW80VL.js                       0.71 kB │ gzip:   0.42 kB
+dist-workbench/assets/classDiagram-ZZMXUADV-CwxtcaYs.js                  0.77 kB │ gzip:   0.45 kB
+dist-workbench/assets/classDiagram-v2-VYDZK3BY-CwxtcaYs.js               0.77 kB │ gzip:   0.45 kB
+dist-workbench/assets/stateDiagram-v2-MP3YSRHH-D8JQkQpo.js               0.78 kB │ gzip:   0.45 kB
+dist-workbench/assets/swimlanesDiagram-VR7AAH4N-xuc3Xszj.js              0.83 kB │ gzip:   0.48 kB
+dist-workbench/assets/relativeTime-BWJrd2jx.js                           0.85 kB │ gzip:   0.51 kB
+dist-workbench/assets/sizeCapture-INFHLROL-3uHXrFqA.js                   0.87 kB │ gzip:   0.51 kB
+dist-workbench/assets/codeBlockLanguages-C4olgTgx.js                     0.94 kB │ gzip:   0.49 kB
+dist-workbench/assets/line-CaHQba8N.js                                   0.94 kB │ gzip:   0.47 kB
+dist-workbench/assets/HtmlPreview-B5E2yFGM.js                            1.01 kB │ gzip:   0.55 kB
+dist-workbench/assets/DocumentPreview-CQlaGVE4.js                        1.13 kB │ gzip:   0.60 kB
+dist-workbench/assets/ordinal-BDEzSJ7C.js                                1.17 kB │ gzip:   0.56 kB
+dist-workbench/assets/chunk-GVQU2GXP-BZdFqmGi.js                         1.41 kB │ gzip:   0.79 kB
+dist-workbench/assets/railroadDiagram-O6MQD6OU-k9M-HIsP.js               1.65 kB │ gzip:   0.76 kB
+dist-workbench/assets/dockerfile-IyjqRm3v.js                             1.73 kB │ gzip:   0.59 kB
+dist-workbench/assets/abnfDiagram-VCTEODGH-DASiBtXY.js                   1.84 kB │ gzip:   0.89 kB
+dist-workbench/assets/useCurrentListPanel-BX4z11oR.js                    1.91 kB │ gzip:   1.05 kB
+dist-workbench/assets/chunk-P2QGCYS3-Cno91eCN.js                         1.94 kB │ gzip:   0.95 kB
+dist-workbench/assets/chunk-F27PBJKO-Bj1oedW_.js                         1.97 kB │ gzip:   0.88 kB
+dist-workbench/assets/pegDiagram-XKGWAZYB-B3ajQpk5.js                    2.01 kB │ gzip:   0.94 kB
+dist-workbench/assets/ebnfDiagram-PWID7BFC-CfwmUFJ9.js                   2.05 kB │ gzip:   0.88 kB
+dist-workbench/assets/dist-v5Q1xZ2K.js                                   2.17 kB │ gzip:   0.98 kB
+dist-workbench/assets/path-fybaL0A-.js                                   2.27 kB │ gzip:   0.98 kB
+dist-workbench/assets/conversation-icons-HaUm1Ea0.js                     2.40 kB │ gzip:   0.65 kB
+dist-workbench/assets/diff-woXpYk--.js                                   2.56 kB │ gzip:   0.68 kB
+dist-workbench/assets/json-B88Oqtu5.js                                   2.81 kB │ gzip:   0.76 kB
+dist-workbench/assets/MobileFormDialog-BprBsklm.js                       2.98 kB │ gzip:   1.62 kB
+dist-workbench/assets/jsonc-CYpm1nAK.js                                  3.10 kB │ gzip:   0.78 kB
+dist-workbench/assets/arc-Pry-7G1_.js                                    3.47 kB │ gzip:   1.46 kB
+dist-workbench/assets/SectionHeader-Cw8nS-dr.js                          3.67 kB │ gzip:   1.30 kB
+dist-workbench/assets/index-CfOM5U_1.js                                  3.69 kB │ gzip:   1.80 kB
+dist-workbench/assets/app-shell-D7pjsaYU.js                              3.72 kB │ gzip:   1.60 kB
+dist-workbench/assets/clock-D6giou9c.js                                  3.83 kB │ gzip:   1.24 kB
+dist-workbench/assets/diagram-Z3DM3KII-T4HHFEeX.js                       4.28 kB │ gzip:   1.84 kB
+dist-workbench/assets/defaultLocale-BFoDCU3G.js                          4.63 kB │ gzip:   2.12 kB
+dist-workbench/assets/list-row-Bxm7v_lz.js                               4.79 kB │ gzip:   1.49 kB
+dist-workbench/assets/xml-WY0zc4PG.js                                    5.38 kB │ gzip:   1.20 kB
+dist-workbench/assets/linear-pSVBlrdD.js                                 5.51 kB │ gzip:   2.25 kB
+dist-workbench/assets/OfficialSidebar139.generated-CHFPsBUA.js           5.66 kB │ gzip:   2.13 kB
+dist-workbench/assets/chunk-PWAF6VOD-DcFzoK8v.js                         5.83 kB │ gzip:   2.68 kB
+dist-workbench/assets/DraftNavigation-CtFxtY9d.js                        5.87 kB │ gzip:   2.12 kB
+dist-workbench/assets/diagram-UQ7AKVKN-BhdTLsCa.js                       6.07 kB │ gzip:   2.56 kB
+dist-workbench/assets/pieDiagram-E7YTZNPT-HZZ96bmD.js                    6.22 kB │ gzip:   2.59 kB
+dist-workbench/assets/Banner-vvNNToYZ.js                                 6.38 kB │ gzip:   2.30 kB
+dist-workbench/assets/clojure-DqKBuwfJ.js                                6.40 kB │ gzip:   1.41 kB
+dist-workbench/assets/OfficialListRows-4fhCXR_B.js                       7.39 kB │ gzip:   3.19 kB
+dist-workbench/assets/textarea-BviAKHu7.js                               7.57 kB │ gzip:   3.17 kB
+dist-workbench/assets/ImageLightbox-BYhgXOAG.js                          7.91 kB │ gzip:   2.95 kB
+dist-workbench/assets/diagram-S7CK7UJ4-B1SOAHAl.js                       8.12 kB │ gzip:   3.64 kB
+dist-workbench/assets/dart-CHZY9Xhz.js                                   8.60 kB │ gzip:   1.99 kB
+dist-workbench/assets/kotlin-DhhofPvG.js                                 8.77 kB │ gzip:   2.12 kB
+dist-workbench/assets/SavedPanel-IYrVjJdm.js                             8.86 kB │ gzip:   3.60 kB
+dist-workbench/assets/column-resize-BqqQsTKS.js                          9.24 kB │ gzip:   3.69 kB
+dist-workbench/assets/chunk-L3NEJ4N5-BoA67Lot.js                         9.68 kB │ gzip:   2.93 kB
+dist-workbench/assets/cynefinDiagram-5FMLGOSQ-DOxVet5R.js                9.94 kB │ gzip:   3.51 kB
+dist-workbench/assets/SidebarLayout-WvU8yxZ0.js                         10.04 kB │ gzip:   3.75 kB
+dist-workbench/assets/AttachmentCommentsPanel-BKKFYPPL.js               10.20 kB │ gzip:   3.90 kB
+dist-workbench/assets/yaml-DijMHRDA.js                                  10.49 kB │ gzip:   2.26 kB
+dist-workbench/assets/stateDiagram-D77RDMKH-5EdNgeD7.js                 10.64 kB │ gzip:   3.73 kB
+dist-workbench/assets/diagram-VSXAHHWV-DgrFZFgX.js                      10.65 kB │ gzip:   4.11 kB
+dist-workbench/assets/dagre-GXQ25YYZ-ixJFFF_k.js                        10.97 kB │ gzip:   4.14 kB
+dist-workbench/assets/github-light-EUqPIrTm.js                          11.18 kB │ gzip:   2.49 kB
+dist-workbench/assets/SurfaceListItem-D8Yh_6xO.js                       12.07 kB │ gzip:   3.90 kB
+dist-workbench/assets/github-dark-high-contrast-B_tTalzw.js             14.59 kB │ gzip:   3.07 kB
+dist-workbench/assets/rust-DpiIf5JO.js                                  15.16 kB │ gzip:   2.72 kB
+dist-workbench/assets/lua-DjuecEsk.js                                   15.53 kB │ gzip:   3.15 kB
+dist-workbench/assets/chunk-SVP7TREG-BYhEhJQF.js                        15.64 kB │ gzip:   4.35 kB
+dist-workbench/assets/diagram-VX7I27RA-jXu1kFKq.js                      15.75 kB │ gzip:   5.52 kB
+dist-workbench/assets/elixir-BHBpp1Ew.js                                16.26 kB │ gzip:   2.76 kB
+dist-workbench/assets/CreateRoleDialog-BZLghgvu.js                      16.27 kB │ gzip:   6.67 kB
+dist-workbench/assets/mermaid-parser.core-iYvB9V7h.js                   16.58 kB │ gzip:   3.93 kB
+dist-workbench/assets/channelStore-7xqJmJj8.js                          17.16 kB │ gzip:   5.24 kB
+dist-workbench/assets/ishikawaDiagram-5VMMS53U-CM6DiNC-.js              17.30 kB │ gzip:   6.53 kB
+dist-workbench/assets/graphql-f69H1Mm0.js                               18.00 kB │ gzip:   2.49 kB
+dist-workbench/assets/ChannelWorkspacePanel-C_A6eYDh.js                 18.16 kB │ gzip:   6.05 kB
+dist-workbench/assets/MemoryPage-vD14aWca.js                            19.34 kB │ gzip:   6.67 kB
+dist-workbench/assets/ComputersPage-BJpoHaWt.js                         19.92 kB │ gzip:   7.02 kB
+dist-workbench/assets/kanban-definition-UXKFOSKX-BCUR7Y33.js            20.26 kB │ gzip:   7.15 kB
+dist-workbench/assets/sankeyDiagram-P5KCCOFB-CWWH76P5.js                22.79 kB │ gzip:   8.25 kB
+dist-workbench/assets/journeyDiagram-3NMN7TZE-CSvmUkKn.js               23.15 kB │ gzip:   8.16 kB
+dist-workbench/assets/mindmap-definition-YA3MSWOX-Cg1fsm4T.js           23.44 kB │ gzip:   8.01 kB
+dist-workbench/assets/sql-CNu3Or2W.js                                   23.65 kB │ gzip:   7.51 kB
+dist-workbench/assets/graphlib-DS17s2tU.js                              23.90 kB │ gzip:   8.31 kB
+dist-workbench/assets/wardleyDiagram-VM6X3IG4-CAjh1BB3.js               25.20 kB │ gzip:   6.55 kB
+dist-workbench/assets/authStore-Br6vF-LS.js                             26.30 kB │ gzip:   8.36 kB
+dist-workbench/assets/rough.esm-Dy-Kn_BL.js                             27.10 kB │ gzip:   8.85 kB
+dist-workbench/assets/java-BtIQNnN0.js                                  27.20 kB │ gzip:   4.25 kB
+dist-workbench/assets/scala-BiFt_7mu.js                                 28.88 kB │ gzip:   3.93 kB
+dist-workbench/assets/gitGraphDiagram-WWUBYQGX-HYF_SvhY.js              29.00 kB │ gzip:   8.55 kB
+dist-workbench/assets/timeline-definition-24CTP7MA-CX4o4F4E.js          30.36 kB │ gzip:   9.97 kB
+dist-workbench/assets/erDiagram-RLTQ6QDP-Nd6dmkEt.js                    30.69 kB │ gzip:  10.57 kB
+dist-workbench/assets/chunk-75Z2AOVW-B_XtabL9.js                        30.75 kB │ gzip:   8.50 kB
+dist-workbench/assets/requirementDiagram-BXWQKSXE-BZ9tTx4H.js           31.00 kB │ gzip:   9.77 kB
+dist-workbench/assets/attachmentPreviewSurfaces-DJjlHW55.js             32.62 kB │ gzip:   9.99 kB
+dist-workbench/assets/quadrantDiagram-AXDQQJYC-B_J1X2oK.js              33.51 kB │ gzip:   9.74 kB
+dist-workbench/assets/chunk-OSK3NFVY-DANUhknh.js                        36.46 kB │ gzip:   7.95 kB
+dist-workbench/assets/dagre-D7JM2Yhv.js                                 36.84 kB │ gzip:  13.23 kB
+dist-workbench/assets/chunk-IMKFNOWR-9oZ-YGgZ.js                        37.64 kB │ gzip:  12.27 kB
+dist-workbench/assets/vennDiagram-4TSXK5OY-CRTiHCog.js                  41.15 kB │ gzip:  15.11 kB
+dist-workbench/assets/vendor-socketio-CwPEc2Qn.js                       41.18 kB │ gzip:  12.87 kB
+dist-workbench/assets/blockDiagram-I7D4REHJ-D6OoRxx1.js                 41.42 kB │ gzip:  13.35 kB
+dist-workbench/assets/shellscript-CqHdAlCp.js                           41.46 kB │ gzip:   6.07 kB
+dist-workbench/assets/haskell-D8IpX4py.js                               41.48 kB │ gzip:   6.41 kB
+dist-workbench/assets/toast-CvQElvc1.js                                 41.79 kB │ gzip:  13.83 kB
+dist-workbench/assets/perl-CF-HqRMk.js                                  43.14 kB │ gzip:   4.64 kB
+dist-workbench/assets/xychartDiagram-S5SC5T6Z-CGrIPFAS.js               44.14 kB │ gzip:  12.21 kB
+dist-workbench/assets/src-BPaH6LqJ.js                                   45.66 kB │ gzip:  16.00 kB
+dist-workbench/assets/go-rLFTqkRN.js                                    46.81 kB │ gzip:   5.14 kB
+dist-workbench/assets/chunk-TICWLB2K-BJ25kGgt.js                        48.78 kB │ gzip:  15.75 kB
+dist-workbench/assets/AgentPage-BWWXTK_V.js                             48.86 kB │ gzip:  16.20 kB
+dist-workbench/assets/chunk-GMAD6QVW-B_dREfRI.js                        51.20 kB │ gzip:  16.68 kB
+dist-workbench/assets/css-BGIxQoYs.js                                   53.35 kB │ gzip:  12.47 kB
+dist-workbench/assets/SectionEyebrow-bm3mItF0.js                        54.48 kB │ gzip:  17.64 kB
+dist-workbench/assets/ruby-2GzLUemz.js                                  54.76 kB │ gzip:   7.10 kB
+dist-workbench/assets/sortable.esm-C3ukZkc9.js                          56.36 kB │ gzip:  19.13 kB
+dist-workbench/assets/html-BMn1ogTm.js                                  57.24 kB │ gzip:  11.74 kB
+dist-workbench/assets/SettingsPage-DPUlR4ex.js                          57.55 kB │ gzip:  18.37 kB
+dist-workbench/assets/markdown-BYOwaDjH.js                              59.32 kB │ gzip:   5.66 kB
+dist-workbench/assets/chunk-SHT3W25Y-Dnx_r83w.js                        61.20 kB │ gzip:  19.82 kB
+dist-workbench/assets/c4Diagram-7LVT6UL2-CbnSTEHm.js                    64.74 kB │ gzip:  18.52 kB
+dist-workbench/assets/ganttDiagram-EL5Y4UJY-D_9Vif75.js                 69.35 kB │ gzip:  22.74 kB
+dist-workbench/assets/python-gzcpVVnB.js                                69.94 kB │ gzip:   9.09 kB
+dist-workbench/assets/TasksPage-ChD5X2Tu.js                             71.73 kB │ gzip:  22.82 kB
+dist-workbench/assets/c-SSSlmE39.js                                     72.10 kB │ gzip:  10.49 kB
+dist-workbench/assets/channel-members-BSvPM8wm.js                       73.61 kB │ gzip:  21.53 kB
+dist-workbench/assets/serverStore-DGvYz1xR.js                           77.21 kB │ gzip:  26.91 kB
+dist-workbench/assets/cose-bilkent-JH36ORCC-Mx7z22Mo.js                 81.22 kB │ gzip:  21.52 kB
+dist-workbench/assets/DiscoveryPage-DyalZfC6.js                         85.40 kB │ gzip:  26.88 kB
+dist-workbench/assets/swift-CyEgAFGc.js                                 87.22 kB │ gzip:  14.79 kB
+dist-workbench/assets/csharp-dmMxLVLW.js                                91.43 kB │ gzip:  10.79 kB
+dist-workbench/assets/mermaid.core-6wLfJs5E.js                          94.27 kB │ gzip:  32.52 kB
+dist-workbench/assets/Tooltip-DUv6vOPw.js                               97.02 kB │ gzip:  30.85 kB
+dist-workbench/assets/chunk-4HAMMTFA-DhqYrWi1.js                       104.85 kB │ gzip:  25.62 kB
+dist-workbench/assets/AgentActivityDot-DMzB6MUx.js                     110.16 kB │ gzip:  49.46 kB
+dist-workbench/assets/swimlanes-42K2YHIH-CSz0Kh8X.js                   111.06 kB │ gzip:  38.00 kB
+dist-workbench/assets/php-CUj1wjLQ.js                                  113.12 kB │ gzip:  28.84 kB
+dist-workbench/assets/sequenceDiagram-WJ2MYXX4-Bch9gUl9.js             115.74 kB │ gzip:  30.58 kB
+dist-workbench/assets/architectureDiagram-5GKGNRK7-Cz0Yaq_R.js         148.87 kB │ gzip:  41.10 kB
+dist-workbench/assets/shikiHighlighter-DewonjCJ.js                     149.99 kB │ gzip:  49.62 kB
+dist-workbench/assets/vendor-markdown-Bkod87Ne.js                      160.07 kB │ gzip:  48.27 kB
+dist-workbench/assets/javascript-BzbQS41l.js                           174.81 kB │ gzip:  16.62 kB
+dist-workbench/assets/tsx-BOvsFOI6.js                                  175.52 kB │ gzip:  16.61 kB
+dist-workbench/assets/jsx-D3KKoC5L.js                                  177.77 kB │ gzip:  16.70 kB
+dist-workbench/assets/typescript-j_1H8WHN.js                           181.06 kB │ gzip:  16.23 kB
+dist-workbench/assets/AppearanceRuntime-3LytniRQ.js                    217.42 kB │ gzip:  52.97 kB
+dist-workbench/assets/composerHost-BXpUtrhm.js                         231.27 kB │ gzip:  70.56 kB
+dist-workbench/assets/chunk-DU6HZSFF-JuPnwsJc.js                       237.73 kB │ gzip:  38.99 kB
+dist-workbench/assets/katex-DJhrJSbw.js                                258.59 kB │ gzip:  77.43 kB
+dist-workbench/assets/vendor-react-DBoKU7U9.js                         314.32 kB │ gzip:  99.82 kB
+dist-workbench/assets/CloseButton-C0qZZl0X.js                          328.09 kB │ gzip:  89.67 kB
+dist-workbench/assets/cytoscape.esm-CHBj4VkZ.js                        434.61 kB │ gzip: 137.74 kB
+dist-workbench/assets/src-DWukrdhb.js                                  522.09 kB │ gzip: 132.12 kB
+dist-workbench/assets/chunk-FOHPRMQF-DD4dKubD.js                       662.08 kB │ gzip: 143.15 kB
+dist-workbench/assets/ui-action-props-Cz8_YQiQ.js                      673.58 kB │ gzip: 186.26 kB
+dist-workbench/assets/app-entry-C-he5gTl.js                            748.70 kB │ gzip: 215.72 kB
+dist-workbench/assets/cpp-Cts1PyIS.js                                  796.95 kB │ gzip:  60.65 kB
+
+[plugin builtin:vite-reporter] 
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rolldownOptions.output.codeSplitting to improve chunking: https://rolldown.rs/reference/OutputOptions.codeSplitting
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 1.11s

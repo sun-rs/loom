@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {
   nativeSidebar,
   sidebarPatch,
+  conversationPreferences,
 } from "../../frontends/raft/adapter123/sidebar.ts";
 const prefs: any = {
   version: 7,
@@ -118,4 +119,15 @@ test("only verified standalone instance peers map to DM Rooms; native file tabs 
     () => nativeSidebar({ ...prefs, pinned: ["peer:unknown-principal"] }),
     /旧私信身份/,
   );
+});
+test("an accepted preference snapshot reconciles mute and display flags at one real revision", () => {
+  const [row] = conversationPreferences(
+    [{ id: "alpha", name: "keep", collapseLongMessages: false }],
+    { ...prefs, mutedActivity: ["room:alpha"], expandedLongMessages: [] },
+  );
+  assert.equal(row.name, "keep");
+  assert.equal(row.activityMuted, true);
+  assert.equal(row.collapseLongMessages, true);
+  assert.equal(row.prefsVersion, 7);
+  assert.equal(row.displayPrefsVersion, 7);
 });

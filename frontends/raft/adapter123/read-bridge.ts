@@ -174,6 +174,27 @@ export class NativeReadBridge {
       name: config.handle ?? config.displayName,
       displayName: config.displayName ?? config.handle,
       description: config.description ?? null,
+      loomRoleId:
+        c.roles.some((r: any) => r.roleId === id) ||
+        c.deletedRoles?.some((r: any) => r.roleId === id)
+          ? id
+          : undefined,
+      loomRoleRevisionId: [...c.roles, ...(c.deletedRoles ?? [])].find(
+        (r: any) => r.roleId === id,
+      )?.roleRevisionId,
+      loomEnabled: c.instances.some(
+        (i: any) =>
+          i.roleId === id &&
+          c.agents.some(
+            (a: any) =>
+              a.definition.agentId === i.agentId &&
+              a.definition.state === "enabled",
+          ),
+      ),
+      updatedAt:
+        [...c.roles, ...(c.deletedRoles ?? [])].find(
+          (r: any) => r.roleId === id,
+        )?.updatedAt ?? createdAt,
       avatarUrl: roleAvatarUrl(config.avatarKey ?? null),
       ...nativePresence(
         c.instances
@@ -264,6 +285,7 @@ export class NativeReadBridge {
       name: a.handle,
       model: binding?.modelId ?? "",
       ...nativePresence([a.definition.agentId], c.presence ?? []),
+      loomEnabled: a.definition.state === "enabled",
       avatarUrl: roleAvatarUrl(
         c.avatars[a.definition.participantId] ??
           a.currentRevision.avatarKey ??
@@ -277,15 +299,18 @@ export class NativeReadBridge {
         (r: any) => r.roleId === id,
       );
     if (role)
-      return this.agentDto(
-        id,
-        role.configuration,
-        role.createdAt,
-        c.roles.some((r: any) => r.roleId === id)
-          ? null
-          : (role.updatedAt ?? role.createdAt),
-        c,
-      );
+      return {
+        ...this.agentDto(
+          id,
+          role.configuration,
+          role.createdAt,
+          c.roles.some((r: any) => r.roleId === id)
+            ? null
+            : (role.updatedAt ?? role.createdAt),
+          c,
+        ),
+        loomPrompt: role.configuration.instructions ?? "",
+      };
     const a = c.agents.find((a: any) => a.definition.participantId === id);
     if (!a) throw Error("LOOM_AGENT_NOT_FOUND");
     const profile = await this.client.request("agent.get", {
@@ -301,7 +326,7 @@ export class NativeReadBridge {
       })
     ).rooms;
   }
-  channelDto(room: any) {
+  channelDto(room: any, preferences?: SidebarPreferences) {
     return {
       id: room.roomId,
       serverId: room.workspaceId,
@@ -312,10 +337,34 @@ export class NativeReadBridge {
       archivedAt: room.archivedAt ?? null,
       joined: true,
       channelRole: "admin",
+      channelCapabilities: {
+        editChannelMetadata: true,
+        archiveChannels: true,
+        deleteChannels: true,
+        addChannelMembers: true,
+        removeChannelMembers: true,
+        changeChannelVisibility: false,
+        federateChannels: false,
+        manageGuestAccess: false,
+      },
       guestVisible: false,
       guestJoinable: false,
       authorityRevision: room.updatedAt,
       systemKey: null,
+      ...(preferences
+        ? {
+            activityMuted: preferences.mutedActivity.includes(
+              "room:" + room.roomId,
+            ),
+            activityMuteSupported: room.kind === "channel" && !room.side,
+            muteFromSeq: null,
+            prefsVersion: preferences.version,
+            collapseLongMessages: !preferences.expandedLongMessages.includes(
+              "room:" + room.roomId,
+            ),
+            displayPrefsVersion: preferences.version,
+          }
+        : {}),
     };
   }
   channel(id: string) {
@@ -445,7 +494,8 @@ export class NativeReadBridge {
             ? standalone.has(r.roomId)
             : !standalone.has(r.roomId)),
       );
-      if (path === "/channels") return selected.map((r) => this.channelDto(r));
+      if (path === "/channels")
+        return selected.map((r) => this.channelDto(r, preferences));
       if (!selected.length) return [];
       const c = await this.catalog();
       return selected.map((room) => {
@@ -459,7 +509,7 @@ export class NativeReadBridge {
                 )
               : undefined;
         return {
-          ...this.channelDto(room),
+          ...this.channelDto(room, preferences),
           type: "dm",
           ...(a
             ? {

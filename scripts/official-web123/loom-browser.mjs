@@ -86,8 +86,10 @@ export async function verifyNativeLoom({
       await page.getByTestId("agent-change-avatar").waitFor();
       await page.screenshot({ path: out + "/role-" + width + ".png" });
       await page.getByRole("button", { name: "编辑描述", exact: true }).click();
-      const dialog = page.getByTestId("agent-profile-edit-dialog");
-      await dialog.locator("textarea").fill("FIXTURE remarks " + width);
+      const dialog = page.getByTestId("loom-role-editor");
+      await dialog
+        .getByLabel("描述", { exact: true })
+        .fill("FIXTURE remarks " + width);
       await dialog.getByRole("button", { name: "保存", exact: true }).click();
       await dialog.waitFor({ state: "hidden" });
       const changed = (

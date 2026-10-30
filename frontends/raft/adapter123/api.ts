@@ -4,6 +4,8 @@ import { HttpRahClient } from "@rah-os/client-sdk";
 import { pageFetch } from "../loom/page-fetch.ts";
 import { NativeReadBridge } from "./read-bridge.ts";
 import { useServerStore } from "../upstream/web-1.21.23/packages/web/src/store/serverStore";
+import { useChannelStore } from "../upstream/web-1.21.23/packages/web/src/store/channelStore";
+import { conversationPreferences } from "./sidebar.ts";
 export const client = new HttpRahClient({
   fetch: pageFetch,
   baseUrl: "",
@@ -44,6 +46,28 @@ const api = axios.create({
         method === "get"
           ? await bridge.read(config.url ?? "", config.params)
           : await commands.write(method, config.url ?? "", input);
+      if (
+        method !== "get" &&
+        data &&
+        typeof (data as any).prefsVersion === "number"
+      ) {
+        const version = (data as any).prefsVersion;
+        useServerStore.setState((state) => ({
+          sidebarOrder: {
+            ...state.sidebarOrder,
+            sectionsVersion: version,
+            pinnedVersion: version,
+          },
+        }));
+        const preferences = (data as any).loomPreferences;
+        if (preferences) {
+          useChannelStore.setState((state) => ({
+            channels: conversationPreferences(state.channels, preferences),
+            dmChannels: conversationPreferences(state.dmChannels, preferences),
+          }));
+          delete (data as any).loomPreferences;
+        }
+      }
     } catch (error: any) {
       // Native stores inspect Axios status for known refusals (not unknown writes).
       if (typeof error.status === "number")

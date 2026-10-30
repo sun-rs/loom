@@ -1,0 +1,74 @@
+✔ native channel edit/archive/delete preserve Room identity and historical visibility and use the Room causal owner (4.14925ms)
+✔ native notification/display preferences keep unrelated keys and reject stale observed versions (0.490166ms)
+✔ Role deletion only deletes configuration; instance deletion removes its actual membership (0.24475ms)
+✔ Role start/stop targets frozen instances' real Agent IDs; reset modes never discard workspaces (0.307291ms)
+✔ lifecycle cache refresh waits for the authoritative result and never synthesizes working/offline presence (0.113167ms)
+✖ a Role editor cannot overwrite a newer immutable revision (1.609917ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 5
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 246.205917
+
+✖ failing tests:
+
+test at scripts/official-web123/management.test.ts:216:1
+✖ a Role editor cannot overwrite a newer immutable revision (1.609917ms)
+  AssertionError [ERR_ASSERTION]: The validation function is expected to return "true". Received false
+  
+  Caught error:
+  
+  [
+    {
+      "expected": "object",
+      "code": "invalid_type",
+      "path": [
+        "modelIntent"
+      ],
+      "message": "Invalid input: expected object, received undefined"
+    },
+    {
+      "expected": "string",
+      "code": "invalid_type",
+      "path": [
+        "runtimeOfferId"
+      ],
+      "message": "Invalid input: expected string, received undefined"
+    }
+  ]
+      at async TestContext.<anonymous> (file:///Users/sun/Code/repos/rah_os/scripts/official-web123/management.test.ts:217:20)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: ZodError: [
+      {
+        "expected": "object",
+        "code": "invalid_type",
+        "path": [
+          "modelIntent"
+        ],
+        "message": "Invalid input: expected object, received undefined"
+      },
+      {
+        "expected": "string",
+        "code": "invalid_type",
+        "path": [
+          "runtimeOfferId"
+        ],
+        "message": "Invalid input: expected string, received undefined"
+      }
+    ]
+        at nativeRoleConfiguration (file:///Users/sun/Code/repos/rah_os/frontends/raft/adapter123/role-config.ts:112:34)
+        at NativeCommands.write (file:///Users/sun/Code/repos/rah_os/frontends/raft/adapter123/commands.ts:267:29)
+        at async waitForActual (node:assert:621:5)
+        at async strict.rejects (node:assert:744:25)
+        at async TestContext.<anonymous> (file:///Users/sun/Code/repos/rah_os/scripts/official-web123/management.test.ts:217:20)
+        at async Test.run (node:internal/test_runner/test:1208:7)
+        at async Test.processPendingSubtests (node:internal/test_runner/test:831:7),
+    operator: 'rejects',
+    diff: 'simple'
+  }

@@ -10,6 +10,7 @@ import { sdkRead } from "./pixel-fixture.mjs";
 import { FakeRahClient } from "@rah-os/client-sdk";
 import { RoomSession } from "@rah-os/client-core";
 import { interactionFixture, channels } from "./interaction-fixture.mjs";
+import { fixtureDirectories } from "./fixture-directories.mjs";
 test("pixel reference SDK fixtures obey real Room snapshot/timeline schemas, including canonical mention spans", () => {
   assert.doesNotThrow(() =>
     ClientRoomSyncResponseSchema.parse(sdkPopulated("/v3/client/rooms/sync")),
@@ -68,5 +69,28 @@ test("interaction SDK fixture enforces real sidebar schema, CAS and same-intent 
       ...request,
       patch: { unrecognized: true },
     }),
+  );
+});
+test("temporary Core cleanup keeps attached/user directories and only selects recorded platform homes", () => {
+  assert.deepEqual(
+    fixtureDirectories([
+      {
+        roomId: "room-a",
+        channelWorkspace: {
+          primaryDirectory: "/tmp/platform/room-a",
+          additionalDirectories: ["/Users/sun/Documents"],
+        },
+      },
+      {
+        roomId: "room-b",
+        channelWorkspace: { primaryDirectory: "/Users/sun/Documents" },
+      },
+      {
+        roomId: "relative",
+        channelWorkspace: { primaryDirectory: "relative" },
+      },
+      { roomId: "none" },
+    ]),
+    ["/tmp/platform/room-a"],
   );
 });

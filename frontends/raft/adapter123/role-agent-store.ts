@@ -1,4 +1,4 @@
-import { useAgentStore as native } from "../upstream/web-1.21.23/packages/web/src/store/agentStore.ts";
+import { useAgentStore as native } from "./runtime-agent-store.ts";
 import { bridge } from "./api.ts";
 import { createAgentFacet } from "./agent-facets.ts";
 export * from "../upstream/web-1.21.23/packages/web/src/store/agentStore.ts";
