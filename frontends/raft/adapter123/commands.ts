@@ -3,8 +3,11 @@ import { type RoomMutationSequenceSession } from "@rah-os/client-core";
 import {
   WriteIntentSlot,
   type IntentSpec,
+  type IntentOutcome,
 } from "@rah-os/client-core/write-intent";
-import { MessageSchema } from "@rah-os/protocol";
+import { RahClientError } from "@rah-os/client-sdk";
+import { nativeSidebar, sidebarPatch } from "./sidebar.ts";
+import { MessageSchema, type SidebarPreferences } from "@rah-os/protocol";
 import type { NativeReadBridge } from "./read-bridge.ts";
 import { nativeMessage } from "./message-projection.ts";
 import { nativeRoleConfiguration } from "./role-config.ts";
@@ -60,30 +63,67 @@ export class NativeCommands {
   private perform<Payload, Result>(
     spec: Omit<IntentSpec<Payload, Result>, "onSettled">,
   ): Promise<Result> {
+    return this.settle(spec.action, (onSettled) =>
+      this.writes.submit({ ...spec, onSettled }),
+    );
+  }
+  private settle<Result>(
+    action: string,
+    submit: (
+      onSettled: (outcome: IntentOutcome<Result>) => void,
+    ) => Promise<unknown>,
+  ): Promise<Result> {
     if (this.writes.state !== "idle" || this.projectionRetry)
       return Promise.reject(Error("仍在处理上一项操作，请先核实结果。"));
     return new Promise((resolve, reject) => {
-      void this.writes
-        .submit({
-          ...spec,
-          onSettled: (outcome) => {
-            if (outcome.kind === "ok") {
-              this.bridge.invalidate?.();
-              this.changed(spec.action);
-              resolve(outcome.result);
-            } else if (outcome.kind === "rejected") reject(outcome.error);
-            else if (outcome.kind === "busy")
-              reject(Error("仍在处理上一项操作"));
-          },
-        })
-        .catch(reject);
+      void submit((outcome) => {
+        if (outcome.kind === "ok") {
+          this.bridge.invalidate?.();
+          this.changed(action);
+          resolve(outcome.result);
+        } else if (outcome.kind === "rejected") reject(outcome.error);
+        else if (outcome.kind === "busy") reject(Error("仍在处理上一项操作"));
+      }).catch(reject);
     });
   }
   async write(method: string, path: string, input: any = {}) {
     if (this.writes.state !== "idle" || this.projectionRetry)
       throw Error("仍在处理上一项操作，请先核实结果。");
-    const { workspace, user } = await this.bridge.identity(),
+    const { workspace, user, server } = await this.bridge.identity(),
       client = this.bridge.client;
+    if (method === "patch" && path === `/servers/${server.id}/sidebar-order`) {
+      const { preferences } = await client.request("sidebar.get", {
+        workspaceId: workspace.workspaceId,
+      });
+      const expectedVersion = input.loomPrefsVersion ?? input.sectionsVersion;
+      if (
+        !Number.isInteger(expectedVersion) ||
+        expectedVersion !== preferences.version
+      )
+        throw new RahClientError(
+          "stale_sidebar",
+          "列表已更新，请重新读取后操作。",
+          409,
+        );
+      const peers = await this.bridge.sidebarPeers(preferences);
+      const patch = sidebarPatch(input, preferences, peers);
+      const result = await this.settle<{ preferences: SidebarPreferences }>(
+        "sidebar",
+        (onSettled) =>
+          this.writes.submitRevisioned({
+            action: "sidebar",
+            payload: {
+              workspaceId: workspace.workspaceId,
+              expectedVersion,
+              patch,
+            },
+            send: (payload, idempotencyKey) =>
+              client.request("sidebar.patch", { ...payload, idempotencyKey }),
+            onSettled,
+          }),
+      );
+      return nativeSidebar(result.preferences, peers);
+    }
     const viewport = path.match(/^\/channels\/([^/]+)\/read$/);
     if (method === "post" && viewport) {
       return client.request("activity.mark", {

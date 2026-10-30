@@ -6,6 +6,8 @@ import type { RahClient } from "@rah-os/client-sdk";
 import { projectRoleAvatars } from "../loom/role-avatar-projection.ts";
 import { nativeAvatarUrl as roleAvatarUrl } from "./avatars.ts";
 import { RoomSession } from "@rah-os/client-core";
+import { nativeSidebar } from "./sidebar.ts";
+import type { SidebarPreferences } from "@rah-os/protocol";
 /** Transport DTOs only. Kernel/SDK remain the owner; no native business API leaves the browser. */
 export class NativeReadBridge {
   readonly client: RahClient;
@@ -23,6 +25,23 @@ export class NativeReadBridge {
   private channels = new Map<string, { room: RoomSession }>();
   constructor(client: RahClient) {
     this.client = client;
+  }
+  async sidebarPeers(p: SidebarPreferences) {
+    const standalone = new Set(
+      p.dmOrder.filter((k) => k.startsWith("room:")).map((k) => k.slice(5)),
+    );
+    const peers = new Map<string, string>();
+    if (!standalone.size) return peers;
+    const [rooms, catalog] = await Promise.all([this.rooms(), this.catalog()]);
+    for (const room of rooms) {
+      if (room.kind !== "channel" || room.side || !standalone.has(room.roomId))
+        continue;
+      const members = catalog.instances.filter(
+        (i: any) => i.channelId === room.roomId,
+      );
+      if (members.length === 1) peers.set(members[0].instanceId, room.roomId);
+    }
+    return peers;
   }
   async identity() {
     return (this.bootstrap ??= Promise.all([
@@ -561,35 +580,7 @@ export class NativeReadBridge {
       const { preferences: p } = await this.client.request("sidebar.get", {
         workspaceId: workspace.workspaceId,
       });
-      const id = (key: string) => key.replace(/^(room|peer):/, "");
-      return {
-        channelOrder: p.channelOrder.map(id),
-        agentOrder: [],
-        dmOrder: p.dmOrder.map(id),
-        pinned: p.pinned.map((k) => ({ type: "channel", id: id(k) })),
-        hiddenDmIds: p.hiddenDms.map(id),
-        sectionOrder: p.sectionOrder.map((k) =>
-          k.startsWith("custom:") ? k.slice(7) : "system:" + k,
-        ),
-        customSections: p.customSections.map((s) => ({
-          id: s.id,
-          name: s.name,
-          emoji: s.emoji ?? null,
-          sortMode: "manual",
-        })),
-        sectionPlacements: p.customSections.flatMap((s) =>
-          s.items.map((k, position) => ({
-            kind: "channel",
-            id: id(k),
-            sectionId: s.id,
-            position,
-          })),
-        ),
-        channelSortMode: p.channelSortMode,
-        dmSortMode: p.dmSortMode,
-        pinnedSortMode: p.pinnedSortMode,
-        sectionsVersion: p.version,
-      };
+      return nativeSidebar(p, await this.sidebarPeers(p));
     }
     if (path === `/servers/${server.id}/settings`)
       return {

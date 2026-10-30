@@ -1,0 +1,154 @@
+{
+  "source": "db5e399",
+  "ui": "0.7.0",
+  "pixels": [
+    {
+      "name": "default",
+      "differingPixels": 0,
+      "totalPixels": 1440000,
+      "maxDelta": 0,
+      "ratio": 0
+    },
+    {
+      "name": "background-menu",
+      "differingPixels": 0,
+      "totalPixels": 1440000,
+      "maxDelta": 0,
+      "ratio": 0
+    },
+    {
+      "name": "channel-menu",
+      "differingPixels": 0,
+      "totalPixels": 1440000,
+      "maxDelta": 0,
+      "ratio": 0
+    },
+    {
+      "name": "pinned",
+      "differingPixels": 0,
+      "totalPixels": 1440000,
+      "maxDelta": 0,
+      "ratio": 0
+    },
+    {
+      "name": "group-menu",
+      "differingPixels": 0,
+      "totalPixels": 1440000,
+      "maxDelta": 0,
+      "ratio": 0
+    },
+    {
+      "name": "drag-pinned",
+      "differingPixels": 0,
+      "totalPixels": 1440000,
+      "maxDelta": 0,
+      "ratio": 0
+    },
+    {
+      "name": "drag-custom",
+      "differingPixels": 0,
+      "totalPixels": 1440000,
+      "maxDelta": 0,
+      "ratio": 0
+    },
+    {
+      "name": "persisted",
+      "differingPixels": 0,
+      "totalPixels": 1440000,
+      "maxDelta": 0,
+      "ratio": 0
+    },
+    {
+      "name": "move-submenu",
+      "differingPixels": 0,
+      "totalPixels": 1440000,
+      "maxDelta": 0,
+      "ratio": 0
+    },
+    {
+      "name": "create-section-form",
+      "differingPixels": 0,
+      "totalPixels": 1440000,
+      "maxDelta": 0,
+      "ratio": 0
+    },
+    {
+      "name": "renamed-section",
+      "differingPixels": 3600,
+      "totalPixels": 1440000,
+      "maxDelta": 235,
+      "ratio": 0.0025
+    },
+    {
+      "name": "delete-section-confirm",
+      "differingPixels": 3556,
+      "totalPixels": 1440000,
+      "maxDelta": 82,
+      "ratio": 0.0024694444444444442
+    },
+    {
+      "name": "manual-channel-order",
+      "differingPixels": 0,
+      "totalPixels": 1440000,
+      "maxDelta": 0,
+      "ratio": 0
+    },
+    {
+      "name": "resized-persisted",
+      "differingPixels": 0,
+      "totalPixels": 1440000,
+      "maxDelta": 0,
+      "ratio": 0
+    },
+    {
+      "name": "width-390",
+      "differingPixels": 0,
+      "totalPixels": 390000,
+      "maxDelta": 0,
+      "ratio": 0
+    },
+    {
+      "name": "width-767",
+      "differingPixels": 0,
+      "totalPixels": 767000,
+      "maxDelta": 0,
+      "ratio": 0
+    },
+    {
+      "name": "width-768",
+      "differingPixels": 0,
+      "totalPixels": 768000,
+      "maxDelta": 0,
+      "ratio": 0
+    },
+    {
+      "name": "width-1023",
+      "differingPixels": 0,
+      "totalPixels": 1023000,
+      "maxDelta": 0,
+      "ratio": 0
+    },
+    {
+      "name": "width-1024",
+      "differingPixels": 0,
+      "totalPixels": 1024000,
+      "maxDelta": 0,
+      "ratio": 0
+    },
+    {
+      "name": "width-1440",
+      "differingPixels": 0,
+      "totalPixels": 1440000,
+      "maxDelta": 0,
+      "ratio": 0
+    },
+    {
+      "name": "activity-default",
+      "differingPixels": 0,
+      "totalPixels": 1440000,
+      "maxDelta": 0,
+      "ratio": 0
+    }
+  ],
+  "reason": "Dropped system:joint navigation-order slot moved the new custom section; raw source unchanged."
+}

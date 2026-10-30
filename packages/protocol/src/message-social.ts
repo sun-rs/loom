@@ -122,6 +122,7 @@ const CustomSections = z
         name: z.string().trim().min(1).max(80),
         emoji: z.string().trim().min(1).max(64).nullable().optional(),
         items: Keys,
+        sortMode: SidebarSortModeSchema.optional(),
       })
       .strict(),
   )
@@ -133,6 +134,16 @@ const CustomSections = z
         sections.flatMap((s) => s.items).length,
     "duplicate section or placement",
   );
+// Layout identities only. Retaining the pinned official Web's `joint` slot
+// does not admit a joint Room kind, service, membership or creation operation.
+const SectionOrder = z
+  .array(
+    z
+      .string()
+      .regex(/^(pinned|channels|joint|dms|custom:[a-zA-Z0-9_-]{1,100})$/),
+  )
+  .max(54)
+  .refine((v) => new Set(v).size === v.length);
 const ChannelPanelTabOrder = z
   .array(z.enum(["chat", "tasks", "workspace"]))
   .max(3)
@@ -165,13 +176,7 @@ export const SidebarPreferencesSchema = z
     dmOrder: Keys,
     hiddenDms: Keys.default([]),
     customSections: CustomSections.default([]),
-    sectionOrder: z
-      .array(
-        z.string().regex(/^(pinned|channels|dms|custom:[a-zA-Z0-9_-]{1,100})$/),
-      )
-      .max(53)
-      .refine((v) => new Set(v).size === v.length)
-      .default([]),
+    sectionOrder: SectionOrder.default([]),
     // Raft channel settings are personal Human × Workspace preferences. Muting
     // suppresses ordinary Activity but never exact mentions.
     mutedActivity: Keys.default([]),
@@ -209,14 +214,7 @@ export const SidebarPatchRequestSchema = SidebarGetRequestSchema.extend({
       dmOrder: Keys,
       hiddenDms: Keys,
       customSections: CustomSections,
-      sectionOrder: z
-        .array(
-          z
-            .string()
-            .regex(/^(pinned|channels|dms|custom:[a-zA-Z0-9_-]{1,100})$/),
-        )
-        .max(53)
-        .refine((v) => new Set(v).size === v.length),
+      sectionOrder: SectionOrder,
       mutedActivity: Keys,
       mutedWorkspace: z.boolean(),
       notifyAllMessages: Keys,

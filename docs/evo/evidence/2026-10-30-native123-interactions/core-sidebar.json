@@ -1,0 +1,14 @@
+{
+  "temporaryCore": true,
+  "fakeRuntime": true,
+  "paidCalls": 0,
+  "nativePin": true,
+  "nativePointerMove": true,
+  "refreshPersistence": true,
+  "customSortPersistence": true,
+  "staleViewRefused": true,
+  "unknownHeldAndExplicitlyVerified": true,
+  "exactIntentReplay": true,
+  "writes": 5,
+  "errors": []
+}

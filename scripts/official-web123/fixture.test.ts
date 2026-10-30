@@ -9,6 +9,7 @@ import { sdkPopulated } from "./populated-fixture.mjs";
 import { sdkRead } from "./pixel-fixture.mjs";
 import { FakeRahClient } from "@rah-os/client-sdk";
 import { RoomSession } from "@rah-os/client-core";
+import { interactionFixture, channels } from "./interaction-fixture.mjs";
 test("pixel reference SDK fixtures obey real Room snapshot/timeline schemas, including canonical mention spans", () => {
   assert.doesNotThrow(() =>
     ClientRoomSyncResponseSchema.parse(sdkPopulated("/v3/client/rooms/sync")),
@@ -39,4 +40,33 @@ test("pixel sidebar fixture satisfies its entire SDK response and cold/warm Room
   await room.syncUntilCurrent();
   await room.syncUntilCurrent();
   assert.equal(room.state.cursor, 3);
+});
+test("interaction SDK fixture enforces real sidebar schema, CAS and same-intent replay", () => {
+  const f = interactionFixture("loom"),
+    request = {
+      workspaceId: "fixture-workspace",
+      expectedVersion: 0,
+      idempotencyKey: "fixture-pin",
+      patch: { pinned: ["room:" + channels[0].id] },
+    };
+  const first = f.handle("/v3/client/sidebar/patch", "POST", request);
+  assert.doesNotThrow(() => SidebarResponseSchema.parse(first.json));
+  assert.deepEqual(
+    f.handle("/v3/client/sidebar/patch", "POST", request),
+    first,
+  );
+  assert.equal(f.writes.length, 1);
+  assert.equal(
+    f.handle("/v3/client/sidebar/patch", "POST", {
+      ...request,
+      idempotencyKey: "stale",
+    }).status,
+    409,
+  );
+  assert.throws(() =>
+    f.handle("/v3/client/sidebar/patch", "POST", {
+      ...request,
+      patch: { unrecognized: true },
+    }),
+  );
 });

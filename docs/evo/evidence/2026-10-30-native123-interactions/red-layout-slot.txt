@@ -1,0 +1,41 @@
+✔ historical DM remains closable after its peer leaves memberships (137.298084ms)
+✔ sidebar order is private, version fenced, idempotent and ACL validated (43.408875ms)
+✖ custom sections and hidden conversations are private, persistent and target validated (41.996375ms)
+✔ panel tab order persists across reopen with sparse updates, replay and personal isolation (91.839375ms)
+✔ standalone chat placement accepts an authorized channel without changing its identity (41.786916ms)
+✔ workspace theme is personal, validated, version fenced and preserved by unrelated patches (40.994708ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 5
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 694.732209
+
+✖ failing tests:
+
+test at packages/kernel/test/human-sidebar.test.ts:185:1
+✖ custom sections and hidden conversations are private, persistent and target validated (41.996375ms)
+  ZodError: [
+    {
+      "origin": "string",
+      "code": "invalid_format",
+      "format": "regex",
+      "pattern": "/^(pinned|channels|dms|custom:[a-zA-Z0-9_-]{1,100})$/",
+      "path": [
+        "patch",
+        "sectionOrder",
+        2
+      ],
+      "message": "Invalid string: must match pattern /^(pinned|channels|dms|custom:[a-zA-Z0-9_-]{1,100})$/"
+    }
+  ]
+      at HumanSidebar.patch (file:///Users/sun/Code/repos/rah_os/packages/kernel/src/human-sidebar.ts:137:47)
+      at TestContext.<anonymous> (file:///Users/sun/Code/repos/rah_os/packages/kernel/test/human-sidebar.test.ts:220:35)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:831:18)
+      at Test.postRun (node:internal/test_runner/test:1330:19)
+      at Test.run (node:internal/test_runner/test:1258:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7)

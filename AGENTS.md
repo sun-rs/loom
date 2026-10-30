@@ -37,6 +37,17 @@ not silent pixel masks. Keep official source/hash checks separate from visual,
 behavioral and production acceptance. Never compare two copies of a locally
 rewritten component and call that official parity.
 
+Native chat sidebar edits use `adapter123/sidebar.ts` and the existing
+HumanSidebar preference owner: exact native `kind` refs, sparse writes, the
+displayed preference revision, and the shared frozen WriteIntentSlot. Never
+fresh-read and silently overwrite a stale view, guess a Role/legacy peer as a
+DM, or clear omitted preferences. Per-custom-section sort and the official
+`joint` layout-order slot are presentation compatibility only; they do not
+admit joint-channel business operations. Compare original menus, pointer DnD,
+keyboard dismissal/form commit and resized/reloaded widths with an independent
+native HTTP oracle; separately prove real SDK persistence and unknown-result
+verification. See `docs/evo/evidence/2026-10-30-native123-interactions/README.md`.
+
 Preserve the current production service and data until the whole-release adapter
 passes its vertical business and visual gates. Do not switch deployment merely
 because intake/build succeeds. Upgrade future versions as complete snapshots

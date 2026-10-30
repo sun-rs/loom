@@ -205,9 +205,15 @@ test("custom sections and hidden conversations are private, persistent and targe
       idempotencyKey: "section",
       patch: {
         hiddenDms: [key],
-        sectionOrder: ["custom:work", "dms", "pinned", "channels"],
+        sectionOrder: ["custom:work", "dms", "joint", "pinned", "channels"],
         customSections: [
-          { id: "work", name: "工作", emoji: "🚀", items: [key] },
+          {
+            id: "work",
+            name: "工作",
+            emoji: "🚀",
+            items: [key],
+            sortMode: "az" as const,
+          },
         ],
       },
     };

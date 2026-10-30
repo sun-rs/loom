@@ -1,0 +1,14 @@
+✔ historical DM remains closable after its peer leaves memberships (139.282584ms)
+✔ sidebar order is private, version fenced, idempotent and ACL validated (46.279708ms)
+✔ custom sections and hidden conversations are private, persistent and target validated (49.097ms)
+✔ panel tab order persists across reopen with sparse updates, replay and personal isolation (185.028375ms)
+✔ standalone chat placement accepts an authorized channel without changing its identity (44.419709ms)
+✔ workspace theme is personal, validated, version fenced and preserved by unrelated patches (45.11125ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 808.421958

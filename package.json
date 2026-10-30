@@ -63,7 +63,8 @@
     "test:official-web:channel": "node scripts/official-web/channel-browser.mjs",
     "build:official-web:native123": "node scripts/official-web123/build.mjs",
     "test:official-web:native123": "node --test scripts/official-web123/*.test.mjs scripts/official-web123/*.test.ts",
-    "test:official-web:native123:pixel": "node scripts/official-web123/pixel-compare.mjs"
+    "test:official-web:native123:pixel": "node scripts/official-web123/pixel-compare.mjs",
+    "test:official-web:native123:interactions": "node scripts/official-web123/interaction-compare.mjs"
   },
   "devDependencies": {
     "@types/node": "^24.3.0",
