@@ -9,7 +9,7 @@
 - `main` 是当前 Loom；`evo` 已晋升并移除；`chatbox` 独立承载 `rah/main` 导入，不参与 Loom 构建。见[分支记录](branch-promotion.zh-CN.md)。
 - 唯一产品前端为 `frontends/raft`。旧复刻 UI 和 `apps/console` 已退役，不恢复其路由、构建或测试入口。
 - 保留部署标签 `com.loom.evo`、数据目录 `~/.loom/evo`、日志目录及频道主目录 `~/.loom/channel-workspaces/`。这些名称不是旧分支残留任务，不能为整洁搬迁数据。
-- 正式服务已在`64b0990c`推送后备份并平滑重启，schema91；[部署收据](evidence/2026-10-30-ui-state-repair/deployment.json)确认账本／Role／实例／偏好保持，LAN/Tailnet原CA验证通过。[正式页面](evidence/2026-10-30-ui-state-repair/formal-page.json)在1440及390视口确认新buildId、Tasks冷加载仍有标题且Shell/Document未更换、chrome与frame一致；无配置写入和页面异常，验收后保护表仍保持。此前b31cd7eb等证据保留，实体PWA系统栏不作通过宣称。
+- 正式服务已在`007beae2`推送后备份并平滑重启，schema91；[部署收据](evidence/2026-10-30-pokemon-avatars/deployment.json)确认账本／Role／实例／偏好保持，LAN/Tailnet原CA验证通过。[正式页面](evidence/2026-10-30-pokemon-avatars/formal-page.json)在1440及390视口确认新buildId、539项部署素材hash、分批展示、形态搜索、原图512px与immutable缓存；无配置写入和页面异常，保护表保持。此前[64b0990c PWA/Tasks/草稿修复](evidence/2026-10-30-ui-state-repair/README.md)证据保留，实体PWA系统栏不作通过宣称。
 - HTTP 4176、LAN HTTPS 4178 与 Tailnet HTTPS 4178 在既有明确地址监听；同一 Core、原本地 CA、无配对、保留 Host/Origin 校验。本轮两个 HTTPS 首页经原 CA 校验，三个 HTTP 入口均200；页面/API/Service Worker及负向校验见此前[Tailnet入口证据](evidence/2026-10-28-tailnet-https/README.md)。远端实体手机与关闭页面后的推送未在本批重验；部署前仍须读取实际配置。
 
 ## 2. 当前状态

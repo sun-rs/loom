@@ -1,0 +1,78 @@
+{
+  "at": "2026-10-30T01:54:56.993Z",
+  "sourceRevision": "007beae2ce895a1ab6e34f14393e72628c413973",
+  "remoteMainBeforeRestart": "007beae2ce895a1ab6e34f14393e72628c413973",
+  "pushedBeforeServiceRestart": true,
+  "sourceWorktreeDirty": false,
+  "oldPid": 64872,
+  "newPid": 33145,
+  "backup": "/Users/sun/.loom/evo/backups/pre-pokemon-avatars-1793325277777",
+  "backupVerified": true,
+  "migrationPreflight": true,
+  "fromSchema": 91,
+  "toSchema": 91,
+  "protectedTables": {
+    "room_events": {
+      "count": 862,
+      "sha256": "9deb1a7d16a1d94aaa2d201ce108d2a146b8ac89127ebc547f463ecdf0f393ba"
+    },
+    "messages": {
+      "count": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "role_templates": {
+      "count": 56,
+      "sha256": "67d560a3e70faf99333fa5528846ad820960fe5ee7c16ef740e5d041aff92d6b"
+    },
+    "role_revisions": {
+      "count": 70,
+      "sha256": "a77a2791345bd842ce0c8fc521d353814aa7222c6d1c45d446ab5a4cbb653729"
+    },
+    "role_instances": {
+      "count": 1,
+      "sha256": "3855be788378256b72e65ad9b1d14de611cb89cf755a6320ddc7de8c91a59fb3"
+    },
+    "human_sidebar_preferences": {
+      "count": 1,
+      "sha256": "ded264b510608bcc4506f0b7d57323f510e63c1cd9e06b5b7d5f5630067ac6f7"
+    },
+    "human_saved_messages": {
+      "count": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "human_thread_follows": {
+      "count": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "human_activity_frontiers": {
+      "count": 1,
+      "sha256": "7e02ebdf4a46b3bc5a7ceb07fd63a678762edcf89d94f744bd7060ad03678598"
+    },
+    "human_activity_manual_unread": {
+      "count": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    }
+  },
+  "ledgerRoleInstancesPreferencesUnchanged": true,
+  "protectedNotificationMemoryFilesChecked": 3,
+  "newWebSnapshot": "/Users/sun/Code/repos/rah_os/.workbench-web/be57ded2816dab66a00b5e5efe2e40e9e912e58e7bb95f80225a507e8505149c",
+  "webBuildId": "55f2a9025d9242412ce274c46f0279cb1616bba89e9dc0fdc9ad0a000df9f9a7",
+  "indexSha256": "8961bfe4d9054667dcd96c95b279b3357ef25387a544943681b8cce5db3d8c9e",
+  "networkModeUnchanged": true,
+  "notificationTransportUnchanged": true,
+  "edges": [
+    {
+      "origin": "https://192.168.1.86:4178",
+      "status": 200,
+      "tlsVerifiedWithOriginalCA": true,
+      "webIndexMatches": true
+    },
+    {
+      "origin": "https://100.101.107.87:4178",
+      "status": 200,
+      "tlsVerifiedWithOriginalCA": true,
+      "webIndexMatches": true
+    }
+  ],
+  "scope": "Replace selectable/default Role avatar pool with 539 owner-supplied original PNGs; shared native frame and legacy read compatibility retained. No formal Role writes or provider generation; schema91, existing Role revisions, frozen instances, notification transport and network unchanged."
+}

@@ -42,5 +42,10 @@ SHA-256：`053e8d3ff952ae2086dd761baaebb2fac6df096341605675d43fa205cdf5084c`。5
 
 ## 部署
 
-产品提交推送后按既有服务维护合同执行备份、空闲检查、平滑重启和正式只读页面复核。
-具体产品revision、WebBuildId和保护表结果以部署收据为准；不对正式Role写入测试头像。
+产品提交`007beae2`已推送main，正式服务已备份、空闲检查及平滑重启。
+[部署收据](deployment.json)核实schema91与账本／Role／实例／偏好及通知／记忆文件保持，
+LAN/Tailnet HTTPS沿用原CA且首页一致。
+[正式页面](formal-page.json)在1440与390视口验证60→120项、四种代欧奇希斯、
+原图hash及一年immutable缓存；冻结部署目录539个文件hash均与素材清单相同。
+正式Role配置无写入，浏览器没有异常；[正式桌面截图](formal-1440.png)、
+[正式手机视口截图](formal-390.png)。

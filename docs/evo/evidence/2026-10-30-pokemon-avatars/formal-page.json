@@ -1,0 +1,36 @@
+{
+  "at": "2026-10-30T01:55:09.394Z",
+  "sourceRevision": "007beae2ce895a1ab6e34f14393e72628c413973",
+  "webBuildId": "55f2a9025d9242412ce274c46f0279cb1616bba89e9dc0fdc9ad0a000df9f9a7",
+  "browser": "Chromium",
+  "origin": "http://127.0.0.1:4176",
+  "productionProtectedTablesUnchanged": true,
+  "paidCalls": false,
+  "results": [
+    {
+      "width": 1440,
+      "initialMounted": 60,
+      "expandedMounted": 120,
+      "distinctDeoxysForms": 4,
+      "originalPngHashVerified": true,
+      "imageCache": "public, max-age=31536000, immutable",
+      "imageRequests": 124,
+      "existingConfigurationNotDirty": true,
+      "configurationMutations": [],
+      "errors": []
+    },
+    {
+      "width": 390,
+      "initialMounted": 60,
+      "expandedMounted": 120,
+      "distinctDeoxysForms": 4,
+      "originalPngHashVerified": true,
+      "imageCache": "public, max-age=31536000, immutable",
+      "imageRequests": 81,
+      "existingConfigurationNotDirty": true,
+      "configurationMutations": [],
+      "errors": []
+    }
+  ],
+  "all539DeployedAssetHashesMatchSource": true
+}
