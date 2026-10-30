@@ -50,3 +50,9 @@ LOOM_NATIVE_SIDEBAR_EMPTY=1 LOOM_RELEASE_EVIDENCE=/tmp/native-empty node scripts
 ```
 
 正式部署与只读验收以同目录收据为准；正式页面拖动仅执行Esc取消，禁止发送 sidebar.patch，保留真实偏好和频道数据。
+
+## 已推送与部署结果
+
+功能提交`736c8cf8`已推送`origin/main`，推送后重新构建、验证备份和初始化预演，并平滑重启原服务。`deployment.json`确认schema91、14个保护表及原网络／TLS／通知配置保持，原CA验证LAN及Tailnet入口成功。
+
+部署后`formal-after.json`实测提示文字、36px提示块及56px放置区；`formal-after.png`展示恢复后的空置顶和下方频道位置。`formal-drag.png`为正式页面真实鼠标拖出浮层，随后Esc取消；保护表散列保持、sidebar.patch发送数0、页面异常0。对照`formal-before.json`，正式旧实现没有提示且放置区仅16px。19项定向测试及三个浏览器流程均通过；没有写正式测试数据或调用付费模型。

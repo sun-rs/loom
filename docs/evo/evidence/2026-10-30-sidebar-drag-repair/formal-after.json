@@ -1,0 +1,16 @@
+{
+  "at": "2026-10-30T07:31:41.202Z",
+  "phase": "after",
+  "pinned": {
+    "text": "已置顶0将频道或私信拖到这里置顶",
+    "hasHint": true,
+    "hintHeight": 36,
+    "dropZoneHeight": 56,
+    "rows": 0
+  },
+  "cancelledDrag": true,
+  "protectedTablesUnchanged": true,
+  "sidebarWrites": 0,
+  "blockedReadOnlyGuard": ["/v3/client/rooms/acknowledge"],
+  "errors": []
+}
