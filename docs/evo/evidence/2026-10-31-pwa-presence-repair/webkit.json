@@ -1,0 +1,194 @@
+{
+  "temporaryCore": true,
+  "paidCalls": 0,
+  "coldChrome": [
+    {
+      "width": 390,
+      "heldAppModules": 42,
+      "parserPaintBeforeThemeScript": {
+        "capable": "yes",
+        "status": "black-translucent",
+        "color": "rgb(255, 212, 64)",
+        "appMounted": false
+      },
+      "beforeApp": {
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 390,
+          "height": 5,
+          "top": 0,
+          "right": 390,
+          "bottom": 5,
+          "left": 0
+        },
+        "color": "oklch(0.8829 0.1623 91.900002)",
+        "theme": "#FFD440",
+        "installed": "true",
+        "cssStandalone": false,
+        "appMounted": false
+      },
+      "edgePersistsAcrossRoutes": true,
+      "edgePersistsAfterRotation": true,
+      "errors": []
+    },
+    {
+      "width": 844,
+      "heldAppModules": 42,
+      "parserPaintBeforeThemeScript": {
+        "capable": "yes",
+        "status": "black-translucent",
+        "color": "rgb(255, 212, 64)",
+        "appMounted": false
+      },
+      "beforeApp": {
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 844,
+          "height": 5,
+          "top": 0,
+          "right": 844,
+          "bottom": 5,
+          "left": 0
+        },
+        "color": "oklch(0.8829 0.1623 91.900002)",
+        "theme": "#FFD440",
+        "installed": "true",
+        "cssStandalone": false,
+        "appMounted": false
+      },
+      "edgePersistsAcrossRoutes": true,
+      "edgePersistsAfterRotation": true,
+      "errors": []
+    },
+    {
+      "width": 1130,
+      "heldAppModules": 42,
+      "parserPaintBeforeThemeScript": {
+        "capable": "yes",
+        "status": "black-translucent",
+        "color": "rgb(255, 212, 64)",
+        "appMounted": false
+      },
+      "beforeApp": {
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 1130,
+          "height": 5,
+          "top": 0,
+          "right": 1130,
+          "bottom": 5,
+          "left": 0
+        },
+        "color": "oklch(0.8829 0.1623 91.900002)",
+        "theme": "#FFD440",
+        "installed": "true",
+        "cssStandalone": false,
+        "appMounted": false
+      },
+      "edgePersistsAcrossRoutes": true,
+      "edgePersistsAfterRotation": true,
+      "errors": []
+    }
+  ],
+  "presence": [
+    {
+      "width": 1440,
+      "roomWorkRemainsIdle": true,
+      "sharedHostColors": [
+        {
+          "activity": "online",
+          "body": "oklch(0.8272 0.1354 130.070007)",
+          "members": [
+            "oklch(0.8272 0.1354 130.070007)",
+            "oklch(0.8272 0.1354 130.070007)"
+          ]
+        },
+        {
+          "activity": "working",
+          "body": "oklch(0.8829 0.1623 91.900002)",
+          "members": [
+            "oklch(0.8829 0.1623 91.900002)",
+            "oklch(0.8272 0.1354 130.070007)"
+          ]
+        },
+        {
+          "activity": "thinking",
+          "body": "oklch(0.8829 0.1623 91.900002)",
+          "members": [
+            "oklch(0.8829 0.1623 91.900002)",
+            "oklch(0.8272 0.1354 130.070007)"
+          ]
+        },
+        {
+          "activity": "offline",
+          "body": "oklch(0.7892 0.0137 71.290001)",
+          "members": [
+            "oklch(0.7892 0.0137 71.290001)",
+            "oklch(0.8272 0.1354 130.070007)"
+          ]
+        },
+        {
+          "activity": "error",
+          "body": "oklch(0.7855 0.1227 50.110001)",
+          "members": [
+            "oklch(0.7855 0.1227 50.110001)",
+            "oklch(0.8272 0.1354 130.070007)"
+          ]
+        }
+      ],
+      "missingObservationHidesBodyBadge": true,
+      "errors": []
+    },
+    {
+      "width": 390,
+      "roomWorkRemainsIdle": true,
+      "sharedHostColors": [
+        {
+          "activity": "online",
+          "body": "oklch(0.8272 0.1354 130.070007)",
+          "members": [
+            "oklch(0.8272 0.1354 130.070007)",
+            "oklch(0.8272 0.1354 130.070007)"
+          ]
+        },
+        {
+          "activity": "working",
+          "body": "oklch(0.8829 0.1623 91.900002)",
+          "members": [
+            "oklch(0.8829 0.1623 91.900002)",
+            "oklch(0.8272 0.1354 130.070007)"
+          ]
+        },
+        {
+          "activity": "thinking",
+          "body": "oklch(0.8829 0.1623 91.900002)",
+          "members": [
+            "oklch(0.8829 0.1623 91.900002)",
+            "oklch(0.8272 0.1354 130.070007)"
+          ]
+        },
+        {
+          "activity": "offline",
+          "body": "oklch(0.7892 0.0137 71.290001)",
+          "members": [
+            "oklch(0.7892 0.0137 71.290001)",
+            "oklch(0.8272 0.1354 130.070007)"
+          ]
+        },
+        {
+          "activity": "error",
+          "body": "oklch(0.7855 0.1227 50.110001)",
+          "members": [
+            "oklch(0.7855 0.1227 50.110001)",
+            "oklch(0.8272 0.1354 130.070007)"
+          ]
+        }
+      ],
+      "missingObservationHidesBodyBadge": true,
+      "errors": []
+    }
+  ]
+}

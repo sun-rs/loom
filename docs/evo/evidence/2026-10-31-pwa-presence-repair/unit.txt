@@ -1,0 +1,39 @@
+✔ device mode does not overwrite canonical frame chrome with canvas color (0.783791ms)
+✔ PWA underlay and safe top use one frame with a matching zero-inset sampling reserve (0.168833ms)
+✔ message status is conversation-scoped, unknown until authoritative reads and never infers liveness (0.589042ms)
+✔ RolePresence.tsx suspends background polling, aborts stale reads and refreshes on return (30.69425ms)
+✔ InstancePresence.tsx suspends background polling, aborts stale reads and refreshes on return (5.506167ms)
+✔ browser chrome reuses official six-digit hex conversion, never a raw CSS token (0.748542ms)
+✔ a stable PWA top surface is outside changing page bodies and respects only the existing safe inset (0.220792ms)
+✔ global Tasks retain their page projection while inactive without retaining an interactive hidden page (0.419125ms)
+✔ all role member candidates carry their current Role revision avatar through native data slots (0.114208ms)
+✔ native chrome and avatar presentation regenerate from the locked release declarations (0.922833ms)
+✔ official default chrome values are opaque portable hex in both native modes (0.338417ms)
+✔ idle Channel work cannot paint an online Host grey; body and settings use the same stable-ID observation (0.646417ms)
+✔ iOS installed mode works when CSS standalone is false and keeps the same frame through orientation changes (0.695792ms)
+✔ the installed chrome edge exists in the parser shell before app chunks and is not recreated by React (1.070792ms)
+✔ iOS status metadata is parsed before a slow blocking theme script (0.106791ms)
+✔ missing Room work diagnostics cannot hide a known member's actual Host presence (0.062167ms)
+✔ product pins the single Raft design system (0.776625ms)
+✔ existing device mode survives removal of visual families (44.0245ms)
+✔ installed official resources match the reviewed immutable lock (4.978208ms)
+✔ first paint migrates mode without restoring a removed family (1.017583ms)
+✔ Loom and adopted pages resolve the same official component installation (2.362958ms)
+✔ local detail dismissals reuse official CloseButton including Side and loading/error branches (16.547791ms)
+✔ local official CloseButton calls carry an explicit semantic mobile target marker (112.330875ms)
+✔ header touch adaptation uses semantic controls rather than SVG/span nesting (0.129791ms)
+✔ adoption registry references existing source owners, bindings and checks (0.656834ms)
+✔ new local close affordances cannot silently bypass scenario owners (77.50575ms)
+✔ working UI joins observed definition IDs to instance principals; enabled membership alone is not work (1.228542ms)
+✔ all busy instances are retained, including several instances of the same Role (0.101458ms)
+✔ legacy catalog entries without a verified instance Channel never become inert working targets (0.052292ms)
+✔ theme option and preview retain recorded official bodies and one runtime (0.973625ms)
+✔ workspace theme uses canonical persisted preferences and official stylesheet, independently from device mode (0.19825ms)
+ℹ tests 31
+ℹ suites 0
+ℹ pass 31
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 403.274084

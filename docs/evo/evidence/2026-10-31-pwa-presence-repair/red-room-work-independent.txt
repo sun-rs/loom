@@ -1,0 +1,38 @@
+✔ idle Channel work cannot paint an online Host grey; body and settings use the same stable-ID observation (0.639375ms)
+✔ iOS installed mode works when CSS standalone is false and keeps the same frame through orientation changes (0.734791ms)
+✔ the installed chrome edge exists in the parser shell before app chunks and is not recreated by React (1.02575ms)
+✔ iOS status metadata is parsed before a slow blocking theme script (0.100917ms)
+✖ missing Room work diagnostics cannot hide a known member's actual Host presence (0.597375ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 4
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 119.884625
+
+✖ failing tests:
+
+test at scripts/official-web/pwa-presence-regression.test.ts:136:1
+✖ missing Room work diagnostics cannot hide a known member's actual Host presence (0.597375ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+
+  + 'unknown'
+  - 'online'
+
+      at TestContext.<anonymous> (file:///Users/sun/Code/repos/rah_os/scripts/official-web/pwa-presence-regression.test.ts:137:9)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:831:18)
+      at Test.postRun (node:internal/test_runner/test:1330:19)
+      at Test.run (node:internal/test_runner/test:1258:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'unknown',
+    expected: 'online',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

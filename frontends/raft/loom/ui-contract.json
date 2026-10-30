@@ -865,15 +865,16 @@
     {
       "id": "pwa-frame-chrome",
       "owner": "WorkspaceTheme frame token; native ThemeProvider mode classes; existing AppShell safe-area geometry",
-      "rule": "WorkspaceTheme alone writes theme-color. Follow the native mode class commit without a timer. Standalone underlay and existing top safe inset paint frame, not canvas; add no padding/overlay or alternate palette. Native OS status bar effects remain separately verified.",
+      "rule": "Parser-owned critical CSS, Apple metadata and one top-edge node precede app chunks and blocking theme bootstrap. WorkspaceTheme alone writes runtime theme-color; native ThemeProvider owns mode. Installed mode includes navigator.standalone and remains stable across rotation. Paint frame, retain the existing safe inset, keep page canvas and desktop geometry unchanged; native OS effects require physical verification.",
       "sources": [
         "frontends/raft/node_modules/raft-ui/dist/lib/theme/theme-provider.mjs",
         "frontends/raft/node_modules/raft-ui/dist/components/app-shell/app-shell.mjs"
       ],
-      "bindings": ["WorkspaceTheme.tsx", "mobile.css"],
+      "bindings": ["WorkspaceTheme.tsx", "mobile.css", "pwa-chrome.ts"],
       "evidence": [
         "scripts/official-web/chrome-draft-lifetime.test.mjs",
-        "scripts/official-web/ui-state-repair-browser.mjs"
+        "scripts/official-web/ui-state-repair-browser.mjs",
+        "scripts/official-web/pwa-presence-regression.test.ts"
       ]
     },
     {

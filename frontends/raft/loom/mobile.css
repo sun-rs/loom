@@ -2,38 +2,21 @@
  * Raft retains typography, colors, disclosure, focus and message measurement.
  * CSS reads the native textarea/draft; no second draft or keyboard state owner.
  */
-/* Installed PWA chrome uses the actual frame, including while bootstrapping or
- * loading a route. Paint the existing safe inset; do not add padding/overlays. */
-[data-testid="pwa-status-bar-surface"] {
-  display: none;
+/* The parser shell owns installed chrome before React starts (pwa-chrome.ts).
+ * Reserve only the same existing sampling inset, including iOS standalone
+ * documents whose CSS display-mode is temporarily false after rotation. */
+html[data-loom-installed="true"] [data-testid="loom-channel-app"],
+html[data-loom-installed="true"] [data-testid="loom-bootstrap-loading"] {
+  background-image: linear-gradient(var(--layer-frame), var(--layer-frame));
+  background-size: 100% max(5px, env(safe-area-inset-top, 0px));
+  background-position: top;
+  background-repeat: no-repeat;
 }
-@media (display-mode: standalone), (display-mode: fullscreen) {
-  html,
-  body {
-    background-color: var(--layer-frame);
-  }
-  /* A real, stable viewport edge paints the OS-safe top independently of the
-   * Search input/route's sticky layer. It occupies no document layout space. */
-  [data-testid="pwa-status-bar-surface"] {
-    display: block;
-    position: fixed;
-    inset: 0 0 auto;
-    height: max(5px, env(safe-area-inset-top, 0px));
-    background-color: var(--layer-frame);
-    pointer-events: none;
-    z-index: 100;
-  }
-  [data-testid="loom-channel-app"],
-  [data-testid="loom-bootstrap-loading"] {
-    background-image: linear-gradient(var(--layer-frame), var(--layer-frame));
-    background-size: 100% max(5px, env(safe-area-inset-top, 0px));
-    background-position: top;
-    background-repeat: no-repeat;
+@media (max-width: 767px), (pointer: coarse) {
+  html[data-loom-installed="true"] [data-testid="loom-channel-app"] {
+    padding-top: max(5px, env(safe-area-inset-top, 0px));
   }
 }
-/* WebKit samples 4px inside the viewport. When native safe-top is zero,
- * reserve that same tiny edge so the color surface cannot cover the search
- * input. Real nonzero safe areas and ordinary browser geometry stay native. */
 @media (display-mode: standalone) and (max-width: 767px),
   (display-mode: fullscreen) and (max-width: 767px),
   (display-mode: standalone) and (pointer: coarse),

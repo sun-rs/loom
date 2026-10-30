@@ -26,7 +26,7 @@ export async function verifyMessageStatus({
     try {
       const page = await ctx.newPage();
       page.setDefaultTimeout(10000);
-      let state = "working";
+      let state = "online";
       await page.route("**/v3/client/rooms/timeline", async (route) => {
         const response = await route.fetch(),
           data = await response.json();
@@ -37,19 +37,30 @@ export async function verifyMessageStatus({
       await page.route(
         "**/v3/client/rooms/agents/activity/list",
         async (route) => {
-          if (state === "unknown")
-            return route.fulfill({
-              status: 503,
-              body: "FIXTURE observation failure",
-            });
           const response = await route.fetch(),
             data = await response.json();
-          for (const a of data.agents)
-            if (a.participantId === instance.instanceId)
-              a.state = state === "left" ? "working" : state;
+          for (const a of data.agents) a.state = "online";
           await route.fulfill({ response, json: data });
         },
       );
+      await page.route("**/v3/client/agents/presence/list", async (route) => {
+        if (state === "unknown")
+          return route.fulfill({
+            status: 503,
+            body: "FIXTURE observation failure",
+          });
+        await route.fulfill({
+          json: {
+            observedAt: new Date().toISOString(),
+            agents: instances.map((i, n) => ({
+              agentId: i.agentId,
+              activity:
+                n === 0 ? (state === "left" ? "online" : state) : "online",
+              reason: "idle",
+            })),
+          },
+        });
+      });
       await page.route("**/v3/client/rooms/members/list", async (route) => {
         const response = await route.fetch(),
           data = await response.json();
@@ -61,7 +72,13 @@ export async function verifyMessageStatus({
       });
       await page.goto(`${origin}/?room=${room.roomId}`);
       const dot = page.getByTestId("message-instance-status").first();
-      for (const next of ["working", "idle", "waking", "error"]) {
+      for (const next of [
+        "online",
+        "working",
+        "thinking",
+        "error",
+        "offline",
+      ]) {
         state = next;
         await page.waitForFunction(
           (s) =>
@@ -83,7 +100,7 @@ export async function verifyMessageStatus({
         .getByText("已离开", { exact: true })
         .waitFor({ state: "hidden" });
       assert.equal(await dot.count(), 0);
-      state = "idle";
+      state = "online";
       await dot.waitFor();
       const body = page
         .locator("[data-message-font-size]")

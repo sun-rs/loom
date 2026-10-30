@@ -1,3 +1,4 @@
+import { verifyPwaPresence } from "./pwa-presence-browser.mjs";
 import { verifyNativeConversations } from "../official-web123/conversation-core-browser.mjs";
 import { verifyNativeChannelLifecycle } from "../official-web123/channel-core-browser.mjs";
 import { verifyNativeLoom } from "../official-web123/loom-browser.mjs";
@@ -424,6 +425,27 @@ try {
           workspace,
           head,
           role,
+        }),
+      ),
+    );
+  } else if (process.env.LOOM_BROWSER_SLICE === "pwa-presence") {
+    for (const instance of instances)
+      await client.request("agent.manage", {
+        action: "set_state",
+        agentId: instance.agentId,
+        state: "disabled",
+        basedOnRoomSeq: await head(workspace.controlRoomId),
+        idempotencyKey: "pwa-presence-disable-" + instance.instanceId,
+      });
+    console.log(
+      JSON.stringify(
+        await verifyPwaPresence({
+          browser,
+          origin,
+          client,
+          channels,
+          instances,
+          head,
         }),
       ),
     );

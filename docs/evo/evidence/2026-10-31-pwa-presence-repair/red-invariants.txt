@@ -1,0 +1,72 @@
+✖ idle Channel work cannot paint an online Host grey; body and settings use the same stable-ID observation (1.534875ms)
+✖ iOS installed mode works when CSS standalone is false and keeps the same frame through orientation changes (1.221792ms)
+✖ the installed chrome edge exists in the parser shell before app chunks and is not recreated by React (1.236417ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 0
+ℹ fail 3
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 123.786916
+
+✖ failing tests:
+
+test at scripts/official-web/pwa-presence-regression.test.ts:9:1
+✖ idle Channel work cannot paint an online Host grey; body and settings use the same stable-ID observation (1.534875ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+  'idle' !== 'online'
+
+      at TestContext.<anonymous> (file:///Users/sun/Code/repos/rah_os/scripts/official-web/pwa-presence-regression.test.ts:12:10)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at Test.start (node:internal/test_runner/test:1096:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:385:17) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'idle',
+    expected: 'online',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/official-web/pwa-presence-regression.test.ts:19:1
+✖ iOS installed mode works when CSS standalone is false and keeps the same frame through orientation changes (1.221792ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+
+  + undefined
+  - 'true'
+
+      at TestContext.<anonymous> (file:///Users/sun/Code/repos/rah_os/scripts/official-web/pwa-presence-regression.test.ts:28:9)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:831:18)
+      at Test.postRun (node:internal/test_runner/test:1330:19)
+      at Test.run (node:internal/test_runner/test:1258:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: 'true',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/official-web/pwa-presence-regression.test.ts:32:1
+✖ the installed chrome edge exists in the parser shell before app chunks and is not recreated by React (1.236417ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+  0 !== 1
+
+      at TestContext.<anonymous> (file:///Users/sun/Code/repos/rah_os/scripts/official-web/pwa-presence-regression.test.ts:35:9)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

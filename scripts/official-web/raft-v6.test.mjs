@@ -55,7 +55,9 @@ test("first paint migrates mode without restoring a removed family", async () =>
       meta = { content: "#FFD440" },
       root = {
         style: {},
-        removeAttribute: (name) => assert.equal(name, "data-theme"),
+        removeAttribute: (name) =>
+          assert.ok(["data-theme", "data-loom-installed"].includes(name)),
+        setAttribute: () => {},
         classList: {
           toggle: (name, on) => (on ? classes.add(name) : classes.delete(name)),
         },
@@ -65,7 +67,9 @@ test("first paint migrates mode without restoring a removed family", async () =>
       {
         document: { documentElement: root, querySelector: () => meta },
         localStorage: { getItem: () => null },
-        matchMedia: () => ({ matches: dark }),
+        matchMedia: (query) => ({
+          matches: query.includes("prefers-color-scheme") && dark,
+        }),
       },
     );
     assert.ok(classes.has(dark ? "dark" : "light"));

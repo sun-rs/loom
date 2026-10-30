@@ -5,6 +5,7 @@ import {
 import { useSidebarPreferences } from "./useSidebarPreferences";
 import {
   messageInstanceState,
+  messageInstancePresence,
   type MessageStatusFacts,
 } from "./message-status.ts";
 import {
@@ -31,6 +32,7 @@ const AppearanceRuntime = createContext<{
   expandedRooms?: readonly string[];
   models: Record<string, string>;
   presence: AgentPresence[];
+  catalog: readonly AgentCatalogEntry[];
   working: WorkingItem[];
   avatars: InstanceAvatarMap;
   refreshIdentity: () => void;
@@ -38,6 +40,7 @@ const AppearanceRuntime = createContext<{
 }>({
   models: {},
   presence: [],
+  catalog: [],
   working: [],
   avatars: {},
   refreshIdentity: () => {},
@@ -47,6 +50,16 @@ export const useLoomModelLabel = (id: string) =>
   useContext(AppearanceRuntime).models[id];
 export const useLoomMessageState = (roomId: string, id: string) =>
   messageInstanceState(useContext(AppearanceRuntime).facts, roomId, id);
+export function useLoomMessagePresence(roomId: string, id: string) {
+  const value = useContext(AppearanceRuntime);
+  return messageInstancePresence(
+    value.facts,
+    roomId,
+    id,
+    value.catalog,
+    value.presence,
+  );
+}
 export const useLoomCollapseLongMessages = (roomId: string) =>
   !useContext(AppearanceRuntime).expandedRooms?.includes(`room:${roomId}`);
 /** Read-only view data. No upstream server stores, inferred presence, or mutation path. */
@@ -176,23 +189,18 @@ export function AppearanceRuntimeProvider({
     if (!roomId) return;
     const read = async () => {
       try {
-        const [state, membership] = await Promise.all([
-          client.request(
-            "room.agent.activity.list",
-            { roomId },
-            { signal: controller.signal },
-          ),
-          client.request(
-            "room.member.list",
-            { roomId },
-            { signal: controller.signal },
-          ),
-        ]);
+        // Avatar liveness depends on current membership plus the shared Host
+        // observation. Room work being idle/unavailable is not offline.
+        const membership = await client.request(
+          "room.member.list",
+          { roomId },
+          { signal: controller.signal },
+        );
         if (controller.signal.aborted) return;
         setFacts({
           roomId,
           members: membership.memberships.map((m) => m.principalId),
-          activities: state.agents,
+          activities: [],
         });
       } catch {
         if (!controller.signal.aborted) {
@@ -217,6 +225,7 @@ export function AppearanceRuntimeProvider({
         refreshIdentity,
         expandedRooms: preferences?.expandedLongMessages,
         presence,
+        catalog,
         working,
         onOpen: (id) => {
           const agent = catalog.find((a) => a.definition.participantId === id);

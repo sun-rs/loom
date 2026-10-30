@@ -1,0 +1,31 @@
+✔ idle Channel work cannot paint an online Host grey; body and settings use the same stable-ID observation (0.709083ms)
+✔ iOS installed mode works when CSS standalone is false and keeps the same frame through orientation changes (0.731458ms)
+✔ the installed chrome edge exists in the parser shell before app chunks and is not recreated by React (1.276292ms)
+✖ iOS status metadata is parsed before a slow blocking theme script (4.119166ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 3
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 124.880291
+
+✖ failing tests:
+
+test at scripts/official-web/pwa-presence-regression.test.ts:124:1
+✖ iOS status metadata is parsed before a slow blocking theme script (4.119166ms)
+  AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:
+
+    assert.ok(out.indexOf('name="apple-mobile-web-app-capable"')<blocking)
+
+      at TestContext.<anonymous> (file:///Users/sun/Code/repos/rah_os/scripts/official-web/pwa-presence-regression.test.ts:128:9)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }

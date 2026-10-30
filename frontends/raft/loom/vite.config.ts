@@ -1,3 +1,4 @@
+import { pwaChromeHtml } from "./pwa-chrome.ts";
 import { adaptLayoutMedia } from "./adaptive-layout.ts";
 import { assertOfficialRuntimeBoundary } from "./runtime-boundary.ts";
 import { resolveOfficialApi } from "./api-resolution.ts";
@@ -48,7 +49,7 @@ export default defineConfig({
       transformIndexHtml: {
         order: "pre",
         handler: (html) =>
-          html.replace(
+          pwaChromeHtml(html).replace(
             "/src/main.tsx",
             "/@fs" + resolve(import.meta.dirname, "main.tsx"),
           ),

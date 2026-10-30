@@ -1109,7 +1109,6 @@ export default function ChannelApp() {
           client={client}
           workspaceId={directory?.workspace.workspaceId}
         />
-        <div aria-hidden="true" data-testid="pwa-status-bar-surface" />
         <LoomShellRoot
           destination={destination}
           inert={bootstrapping ? true : undefined}

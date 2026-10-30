@@ -1,5 +1,8 @@
 import { roleAvatarUrl } from "./profile-avatar.ts";
-import { useLoomMessageState, useLoomAvatarMap } from "./AppearanceRuntime.tsx";
+import {
+  useLoomMessagePresence,
+  useLoomAvatarMap,
+} from "./AppearanceRuntime.tsx";
 import { Status } from "raft-ui";
 export { boundMessageMentions } from "./member-roster.ts";
 import { projectMessageMentions } from "./member-roster.ts";
@@ -14,28 +17,24 @@ import Tooltip from "../packages/web/src/components/ui/Tooltip.tsx";
 export const MessageProfileMembers = createContext<readonly Principal[]>([]);
 export const MessageStatusRoom = createContext<string | undefined>(undefined);
 export function useMessageInstanceState(agentId: string) {
-  return useLoomMessageState(useContext(MessageStatusRoom) ?? "", agentId);
+  return useLoomMessagePresence(useContext(MessageStatusRoom) ?? "", agentId);
 }
 export function MessageInstanceStatusDot({ agentId }: { agentId: string }) {
   const state = useMessageInstanceState(agentId);
   if (state === "unknown" || state === "left") return null;
   const labels = {
-    working: "运行中",
-    waking: "排队或启动中",
-    idle: "空闲（无正在执行的工作）",
-    error: "执行错误",
+    working: "工作中",
+    thinking: "思考中",
+    online: "在线",
+    offline: "离线",
+    error: "异常",
   };
-  const tones = {
-    working: "bg-presence-online",
-    waking: "bg-presence-busy",
-    idle: "bg-presence-offline",
-    error: "bg-danger",
-  };
+  const presence = state === "working" || state === "thinking" ? "busy" : state;
   return (
     <Tooltip content={labels[state]}>
       <Status
         size="lg"
-        className={tones[state]}
+        presence={presence}
         aria-label={labels[state]}
         data-testid="message-instance-status"
         data-state={state}

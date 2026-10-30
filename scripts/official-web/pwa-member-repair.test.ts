@@ -16,8 +16,12 @@ test("browser chrome reuses official six-digit hex conversion, never a raw CSS t
   );
 });
 test("a stable PWA top surface is outside changing page bodies and respects only the existing safe inset", () => {
-  assert.match(read("ChannelApp.tsx"), /data-testid="pwa-status-bar-surface"/);
-  assert.match(read("mobile.css"), /pwa-status-bar-surface/);
+  assert.doesNotMatch(
+    read("ChannelApp.tsx"),
+    /data-testid="pwa-status-bar-surface"/,
+  );
+  assert.match(read("pwa-chrome.ts"), /data-testid="pwa-status-bar-surface"/);
+  assert.match(read("mobile.css"), /data-loom-installed/);
 });
 test("global Tasks retain their page projection while inactive without retaining an interactive hidden page", () => {
   assert.match(read("ChannelApp.tsx"), /tasksVisited/);
