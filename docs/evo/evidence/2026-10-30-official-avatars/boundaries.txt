@@ -1,0 +1,14 @@
+✔ an official avatar profile revision is atomic, stale-safe, and persistent (174.656375ms)
+✔ avatar profile input accepts official or authenticated upload keys (0.426708ms)
+✔ automatic Agent avatars are canonical, replay-stable and survive reopening (170.272416ms)
+✔ Raft seeded avatar recipe is stable, mirrored, and distinguishes legacy keys (1.563708ms)
+✔ Native avatar accepts only Loom's root-scoped uploaded image endpoint (0.649333ms)
+✔ shared content module bodies are reproducible import-only official bindings (20.300583ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 482.076166

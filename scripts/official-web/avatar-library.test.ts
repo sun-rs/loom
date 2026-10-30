@@ -13,7 +13,7 @@ import library, {
 const extra = JSON.parse(
   readFileSync("frontends/raft/loom/avatars/presets.json", "utf8"),
 );
-test("legacy grids stay immutable; random creation uses only the current supplied library", () => {
+test("legacy grids stay immutable; random creation uses only the current official library", () => {
   const native = JSON.parse(
     readFileSync(
       "frontends/raft/upstream/raft-web-source/packages/web/assets/avatars/pixelAvatars.json",

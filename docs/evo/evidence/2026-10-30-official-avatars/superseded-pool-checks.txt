@@ -1,0 +1,60 @@
+✖ automatic avatars choose unused official presets and stay Workspace scoped (1.611125ms)
+✔ Role creation chooses and persists an avatar once after idempotency replay; explicit avatars stay intact (133.129292ms)
+✔ Role remarks/prompt/avatar revisions preserve frozen instances and reach only new instances (70.254625ms)
+✔ blank Role prompt creates, revises and instantiates without manufacturing instructions (56.38175ms)
+✔ legacy grids stay immutable; random creation uses only the current supplied library (1.450417ms)
+✔ historical 32x32 identities remain renderable for stored Roles and frozen instances (5.589916ms)
+✔ new presets survive instance presentation and the existing profile authority contract (2.120083ms)
+✔ the official avatar data and identities are reproducible from the whole pinned Web release (1.350292ms)
+✔ the active picker uses native series order, native Chinese labels and all 72 original sprites (0.297333ms)
+✖ the selectable library fully replaces the former groups with all 539 supplied named PNGs (1.178958ms)
+✔ all original image bytes are shipped as separate same-origin content-addressed assets (99.391709ms)
+✔ every new identity survives profile authority validation and old stored keys stay readable (2.172375ms)
+ℹ tests 12
+ℹ suites 0
+ℹ pass 10
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1852.879666
+
+✖ failing tests:
+
+test at packages/kernel/test/agent-avatar-allocation.test.ts:6:1
+✖ automatic avatars choose unused official presets and stay Workspace scoped (1.611125ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+  'antenna' !== 'cat'
+
+      at TestContext.<anonymous> (file:///Users/sun/Code/repos/rah_os/packages/kernel/test/agent-avatar-allocation.test.ts:21:12)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at Test.start (node:internal/test_runner/test:1096:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:385:17) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'antenna',
+    expected: 'cat',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/official-web/pokemon-avatars.test.ts:21:1
+✖ the selectable library fully replaces the former groups with all 539 supplied named PNGs (1.178958ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+  72 !== 539
+
+      at TestContext.<anonymous> (file:///Users/sun/Code/repos/rah_os/scripts/official-web/pokemon-avatars.test.ts:23:10)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at Test.start (node:internal/test_runner/test:1096:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:385:17) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 72,
+    expected: 539,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

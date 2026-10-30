@@ -31,7 +31,7 @@
 
 - PWA后续修复：直接采用Web1.21.40已有的官方hex取色，补稳定安全区绘制；搜索网页标题此前已黄，系统状态栏另行验收。全局Tasks保留隐藏/inert投影，返回时重验而不重新清空正文，共享原生加载组件。频道添加角色补齐avatarUrl，头像网格/按钮接当前官方选段；基础包升0.52.2。91项定向检查、Chromium/WebKit与移动点击点通过，**鸿蒙/iOS实体PWA系统状态栏仍未确认**。[根因、版本差异与验证范围](evidence/2026-10-30-pwa-member-repair/README.md)。公开TSX仍为db5e399/1.21.23，不能宣称全站最新依赖化。
 
-- Owner提供的539张命名Pokémon PNG已完整替换可选头像库及新Role随机池；原图独立同源加载、每批展示60项、全库搜索。旧像素键和图形仅为既有Role／冻结实例／历史保留读取兼容，不改写现有修订。[素材、实现及验证](evidence/2026-10-30-pokemon-avatars/README.md)。
+- Owner随后要求头像库恢复完整官方版本：当前源码采用Web1.21.40的9组72款原始图案、配色、中文标题和顺序，选择器移除宝可梦搜索／分页，新Role从官方池随机并持久保存。539张PNG与旧32×32头像仅保留既有配置／冻结实例／历史读取，不批量改写修订。[切换与验证](evidence/2026-10-30-official-avatars/README.md)；此前[素材导入证据](evidence/2026-10-30-pokemon-avatars/README.md)保留。
 
 - 修复PWA顶部frame/canvas竞争及安全区底色、Tasks冷加载标题消失、Role保存后残留dirty三项缺陷。共享原生任务标题叶子，保留按需加载和拒绝保存的草稿保护；57项定向检查、Chromium/WebKit及桌面／手机运行时回环通过。非实体PWA系统栏验收。[复现、修复与边界](evidence/2026-10-30-ui-state-repair/README.md)。
 

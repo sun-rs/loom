@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { roleInstanceFixture } from "./role-instance-fixture.ts";
+import { OFFICIAL_AGENT_AVATAR_KEYS } from "@rah-os/protocol";
 test("Role creation chooses and persists an avatar once after idempotency replay; explicit avatars stay intact", () => {
   const f = roleInstanceFixture();
   try {
@@ -12,9 +13,11 @@ test("Role creation chooses and persists an avatar once after idempotency replay
       configuration: { ...configuration, displayName: "New role" },
     };
     const created = f.kernel.roles.create(f.actor, input);
-    assert.match(
-      created.role.configuration.avatarKey ?? "",
-      /^pixel:pokemon-[a-z0-9-]+$/,
+    assert.ok(
+      OFFICIAL_AGENT_AVATAR_KEYS.includes(
+        (created.role.configuration.avatarKey ?? "").replace(/^pixel:/, ""),
+      ),
+      "new Roles use the official library, never historical Pokémon or custom art",
     );
     assert.deepEqual(f.kernel.roles.create(f.actor, input).role, created.role);
     assert.equal(

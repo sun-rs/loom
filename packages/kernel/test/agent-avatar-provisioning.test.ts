@@ -10,7 +10,7 @@ import {
 } from "@rah-os/protocol";
 import { RoomKernel } from "../src/index.ts";
 
-test("automatic Agent avatars are unique, canonical, replay-stable and survive reopening", () => {
+test("automatic Agent avatars are canonical, replay-stable and survive reopening", () => {
   const directory = mkdtempSync(join(tmpdir(), "rah-avatar-provision-"));
   const options = {
     databasePath: join(directory, "room.db"),
@@ -106,7 +106,7 @@ test("automatic Agent avatars are unique, canonical, replay-stable and survive r
       .events.filter((event) => event.type === "agent.first_run_requested");
     assert.equal(firstRun.length, 0, "Role instances do not auto-greet");
     const firstKey = first.agent.currentRevision.avatarKey!;
-    assert.match(firstKey, /^pixel:pokemon-/);
+    assert.match(firstKey, /^pixel:[a-z]+$/);
     assert.ok(
       SELECTABLE_AGENT_AVATAR_KEYS.includes(firstKey.slice(6)),
       firstKey,
@@ -127,9 +127,13 @@ test("automatic Agent avatars are unique, canonical, replay-stable and survive r
       idempotencyKey: "create-kimi",
     });
     const secondKey = second.agent.currentRevision.avatarKey!;
-    assert.match(secondKey, /^pixel:pokemon-/);
+    assert.match(secondKey, /^pixel:[a-z]+$/);
     assert.ok(SELECTABLE_AGENT_AVATAR_KEYS.includes(secondKey.slice(6)));
-    assert.notDeepEqual(firstKey, secondKey);
+    // Native Raft samples with replacement; equal artwork never merges identities.
+    assert.notEqual(
+      first.agent.definition.agentId,
+      second.agent.definition.agentId,
+    );
     const manual = provisionRoleFixture(kernel, actor, {
       ...request,
       basedOnRoomSeq: second.event.roomSeq,

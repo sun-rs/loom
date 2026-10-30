@@ -9,17 +9,15 @@ import {
   WorkerSelfProfilePatchSchema,
 } from "@rah-os/protocol";
 import {
-  avatarGroups,
-  randomAvatarKey,
-} from "../../frontends/raft/loom/pixel-avatar-library.ts";
-import {
   libraryAvatarUrl,
   selectableAvatarKeys,
 } from "../../frontends/raft/loom/pixel-avatar-library.ts";
 import { SELECTABLE_AGENT_AVATAR_KEYS } from "@rah-os/protocol";
 
-test("the selectable library fully replaces the former groups with all 539 supplied named PNGs", () => {
-  const avatars = avatarGroups.flatMap((g) => g.avatars);
+test("all 539 supplied PNG identities remain readable but are no longer selectable", () => {
+  const avatars = JSON.parse(
+    readFileSync("frontends/raft/loom/avatars/pokemon.json", "utf8"),
+  ).avatars;
   assert.equal(avatars.length, 539);
   assert.equal(new Set(avatars.map((a) => a.id)).size, 539);
   assert.equal(avatars.find((a) => a.id === "pokemon-025")?.name, "皮卡丘");
@@ -29,14 +27,7 @@ test("the selectable library fully replaces the former groups with all 539 suppl
   );
   assert.ok(avatars.every((a) => a.id.startsWith("pokemon-")));
   assert.deepEqual(selectableAvatarKeys, SELECTABLE_AGENT_AVATAR_KEYS);
-  for (const sample of [0, 0.5, 0.99999]) {
-    const chosen = randomAvatarKey(undefined, () => sample);
-    assert.ok(avatars.some((a) => chosen === `pixel:${a.id}`));
-    assert.notEqual(
-      randomAvatarKey(chosen, () => sample),
-      chosen,
-    );
-  }
+  assert.ok(avatars.every((a) => !selectableAvatarKeys.includes(a.id)));
 });
 
 test("all original image bytes are shipped as separate same-origin content-addressed assets", () => {
@@ -76,8 +67,11 @@ test("all original image bytes are shipped as separate same-origin content-addre
   );
 });
 
-test("every new identity survives profile authority validation and old stored keys stay readable", () => {
-  for (const a of avatarGroups.flatMap((g) => g.avatars)) {
+test("every historical PNG identity survives profile authority validation and old stored keys stay readable", () => {
+  const avatars = JSON.parse(
+    readFileSync("frontends/raft/loom/avatars/pokemon.json", "utf8"),
+  ).avatars;
+  for (const a of avatars) {
     assert.equal(officialAgentAvatarKey("pixel:" + a.id), a.id);
     assert.equal(
       WorkerSelfProfilePatchSchema.safeParse({ avatarKey: a.id }).success,

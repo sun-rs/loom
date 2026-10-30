@@ -146,22 +146,46 @@ export async function verifyRoleIdentity({
       page.on("request", (r) => {
         if (r.url().includes("/avatars/pokemon/")) imageRequests.add(r.url());
       });
-      for (const [name, key] of [
-        ["皮卡丘", "pokemon-025"],
-        ["未知图腾-？", "pokemon-201-question"],
-        ["代欧奇希斯-防御形态", "pokemon-386-defense"],
-        ["小约克", "pokemon-506"],
-      ]) {
+      const firstKey =
+        created.configuration.avatarKey === "pixel:antenna"
+          ? "visor"
+          : "antenna";
+      for (const key of [firstKey, "owl", "rocket", "spider"]) {
         await profile
           .getByRole("button", { name: "更换头像", exact: true })
           .click();
         const picker = page.getByTestId("role-avatar-dialog");
         await picker.waitFor();
-        const choices = picker.locator('button[aria-label^="头像 "]');
+        const library = picker.getByTestId("role-avatar-library");
+        const choices = library.locator("button[aria-pressed]");
+        assert.equal(await choices.count(), 72);
+        assert.deepEqual(
+          await library
+            .locator("[data-avatar-series]")
+            .evaluateAll((es) =>
+              es.map((e) => e.getAttribute("data-avatar-series")),
+            ),
+          [
+            "bots",
+            "critters",
+            "space",
+            "desk",
+            "food",
+            "quest",
+            "weather",
+            "plants",
+            "spooky",
+          ],
+        );
         assert.equal(
-          await choices.count(),
-          60,
-          "opening the picker does not mount/download all 539 portraits",
+          await picker.getByRole("textbox").count(),
+          0,
+          "native catalog has no custom search",
+        );
+        assert.equal(
+          await picker.getByTestId("avatar-library-more").count(),
+          0,
+          "native catalog is not paginated",
         );
         const geometry = await choices.first().evaluate((el) => {
           const grid = el.parentElement,
@@ -177,48 +201,34 @@ export async function verifyRoleIdentity({
         assert.equal(geometry.width, 44);
         assert.equal(geometry.height, 44);
         assert.equal(geometry.columns, geometry.containerWidth >= 408 ? 8 : 4);
-        if (name === "皮卡丘") {
-          await picker.getByTestId("avatar-library-more").click();
-          assert.equal(await choices.count(), 120);
-          assert.ok(imageRequests.size < 539);
-        }
-        await picker.getByLabel("搜索头像", { exact: true }).fill(name);
-        const choice = picker.getByRole("button", {
-          name: `头像 ${name}`,
-          exact: true,
-        });
+        const choice = picker.getByRole("button", { name: key, exact: true });
+        await choice.scrollIntoViewIfNeeded();
         await choice.click();
         assert.equal(await choice.getAttribute("aria-pressed"), "true");
         assert.equal(
           await choice.locator("img[data-agent-pixel-avatar]").count(),
           1,
-          "one image per sprite, native rendering stays bounded",
         );
-        const img = choice.locator("img");
-        await img.waitFor();
-        await page.waitForFunction(
-          (src) =>
-            [...document.images].some(
-              (i) => i.src === src && i.complete && i.naturalWidth === 512,
-            ),
-          await img.getAttribute("src").then((s) => new URL(s, origin).href),
-        );
-        assert.match(await img.getAttribute("src"), /\/avatars\/pokemon\//);
-        if (name === "皮卡丘")
+        const src = await choice.locator("img").getAttribute("src");
+        assert.match(src, /^data:image\/svg\+xml/);
+        assert.match(decodeURIComponent(src), /viewBox="0 0 8 8"/);
+        if (key === firstKey)
           await page.screenshot({
-            path: `/tmp/loom-pokemon-avatar-${width}.png`,
+            path: `/tmp/loom-official-avatar-${width}.png`,
             animations: "disabled",
           });
         await picker.getByRole("button", { name: "保存", exact: true }).click();
         await picker.waitFor({ state: "hidden" });
         assert.equal((await current()).configuration.avatarKey, `pixel:${key}`);
       }
+      assert.equal(
+        imageRequests.size,
+        0,
+        "new official choices do not fetch historical PNGs",
+      );
       await page.reload();
       await profile.waitFor();
-      assert.equal(
-        (await current()).configuration.avatarKey,
-        "pixel:pokemon-506",
-      );
+      assert.equal((await current()).configuration.avatarKey, "pixel:spider");
       assert.equal(
         (await current()).configuration.instructions,
         "FIXTURE revised prompt",
@@ -235,8 +245,8 @@ export async function verifyRoleIdentity({
         oneRevision: true,
         grayPlaceholderNotStored: true,
         discardGuard: true,
-        pokemonSelectionAndDistinctForms: true,
-        incrementalImages: imageRequests.size < 539,
+        officialSeriesAndSprites: true,
+        noHistoricalImageRequests: imageRequests.size === 0,
         requestedImages: imageRequests.size,
         reload: true,
         nativeRuntimeColumn: true,

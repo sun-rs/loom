@@ -1,0 +1,20 @@
+✔ automatic avatars choose unused official presets and stay Workspace scoped (1.075583ms)
+✔ Role creation chooses and persists an avatar once after idempotency replay; explicit avatars stay intact (134.531709ms)
+✔ Role remarks/prompt/avatar revisions preserve frozen instances and reach only new instances (76.0405ms)
+✔ blank Role prompt creates, revises and instantiates without manufacturing instructions (63.773917ms)
+✔ legacy grids stay immutable; random creation uses only the current official library (1.410333ms)
+✔ historical 32x32 identities remain renderable for stored Roles and frozen instances (3.011833ms)
+✔ new presets survive instance presentation and the existing profile authority contract (2.016958ms)
+✔ the official avatar data and identities are reproducible from the whole pinned Web release (1.291541ms)
+✔ the active picker uses native series order, native Chinese labels and all 72 original sprites (1.112333ms)
+✔ all 539 supplied PNG identities remain readable but are no longer selectable (1.67225ms)
+✔ all original image bytes are shipped as separate same-origin content-addressed assets (22.36075ms)
+✔ every historical PNG identity survives profile authority validation and old stored keys stay readable (12.258167ms)
+ℹ tests 12
+ℹ suites 0
+ℹ pass 12
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1885.474041

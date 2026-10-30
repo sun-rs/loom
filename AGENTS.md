@@ -251,18 +251,18 @@ never installs them or configures their accounts.
   Role `instructions` may be empty; create/revise/instantiate and the editor must
   preserve an empty prompt without manufacturing instructions.
   New Role avatars are sampled once and stored after idempotency replay; never
-  randomize existing Roles on read/restart. Owner 2026-10-30 replaces the entire
-  selectable/random library with 539 supplied named Pokémon PNGs. Original bytes
-  live under `packages/web/public/avatars/pokemon`, with content-addressed URLs;
-  `loom/avatars/pokemon.json` is the lightweight runtime catalog and
-  `pokemon.provenance.json` records archive/entry hashes. Re-import only through
-  `scripts/official-web/import-pokemon-avatars.py`. Protocol's selectable keys
-  and frontend entries must agree. The picker searches all entries but mounts
-  batches of 60; images load on demand, never embedded into JS or fetched from a CDN.
-  Old 8x8/32x32 grids, palettes and accepted identities are read compatibility
-  for stored Roles/frozen instances/history only, not selectable presets. The
-  shared-content generator owns the PNG URL seam; native frames and original
-  SVG output stay unchanged. Never rewrite existing revisions for an art upgrade.
+  randomize existing Roles on read/restart. Owner 2026-10-30 replaces the
+  Pokémon selectable/random pool with the complete Web1.21.40 native catalog:
+  72 original 8x8 sprites in nine native series, exact palette/order/Chinese
+  labels. The two reserved originals remain excluded. Data is reproducibly read
+  from the whole pinned release by `scripts/official-web/generate-official-avatars.mjs`,
+  not hand-drawn or copied from an older catalog. `loom/avatars/official.json`
+  owns frontend art; generated Protocol keys own identity validation/allocation.
+  Existing 539 PNGs and older 32x32 artwork remain read compatibility for stored
+  Roles, frozen instances/history only; they are not selectable or randomized.
+  Never rewrite revisions to replace artwork. The picker uses native series,
+  tiles and 4/8-column rules without Pokémon search/pagination. This owner-requested
+  catalog switch does not certify the pending whole-Web business adapter.
   Runtime info uses the independently pinned official badge/card/mobile-sheet
   composition. Its status square reports Host CLI detection, not account health.
   Version/path/model count/probe time come from inventory; quota remains unknown

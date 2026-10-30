@@ -20,7 +20,7 @@ test("automatic avatars choose unused official presets and stay Workspace scoped
     );
     assert.equal(
       allocateAgentAvatarKey(db, "control", () => 0),
-      "cat",
+      "antenna",
     );
     assert.equal(
       allocateAgentAvatarKey(db, "other", () => 0),

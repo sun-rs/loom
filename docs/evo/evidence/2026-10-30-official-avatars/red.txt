@@ -1,0 +1,54 @@
+✖ Role creation chooses and persists an avatar once after idempotency replay; explicit avatars stay intact (122.185375ms)
+✔ Role remarks/prompt/avatar revisions preserve frozen instances and reach only new instances (61.596667ms)
+✔ blank Role prompt creates, revises and instantiates without manufacturing instructions (58.207667ms)
+node:internal/modules/esm/resolve:271
+    throw new ERR_MODULE_NOT_FOUND(
+          ^
+
+Error [ERR_MODULE_NOT_FOUND]: Cannot find module '/Users/sun/Code/repos/rah_os/scripts/official-web/generate-official-avatars.mjs' imported from /Users/sun/Code/repos/rah_os/scripts/official-web/official-avatar-library.test.mjs
+    at finalizeResolution (node:internal/modules/esm/resolve:271:11)
+    at moduleResolve (node:internal/modules/esm/resolve:861:10)
+    at defaultResolve (node:internal/modules/esm/resolve:988:11)
+    at #cachedDefaultResolve (node:internal/modules/esm/loader:697:20)
+    at #resolveAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:714:38)
+    at ModuleLoader.resolveSync (node:internal/modules/esm/loader:746:52)
+    at #resolve (node:internal/modules/esm/loader:679:17)
+    at ModuleLoader.getOrCreateModuleJob (node:internal/modules/esm/loader:599:35)
+    at ModuleJob.syncLink (node:internal/modules/esm/module_job:162:33)
+    at ModuleJob.link (node:internal/modules/esm/module_job:252:17) {
+  code: 'ERR_MODULE_NOT_FOUND',
+  url: 'file:///Users/sun/Code/repos/rah_os/scripts/official-web/generate-official-avatars.mjs'
+}
+
+Node.js v25.9.0
+✖ scripts/official-web/official-avatar-library.test.mjs (56.909709ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 2
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 560.210833
+
+✖ failing tests:
+
+test at packages/kernel/test/role-avatar-default.test.ts:5:1
+✖ Role creation chooses and persists an avatar once after idempotency replay; explicit avatars stay intact (122.185375ms)
+  AssertionError [ERR_ASSERTION]: new Roles use the official library, never historical Pokémon or custom art
+      at TestContext.<anonymous> (file:///Users/sun/Code/repos/rah_os/packages/kernel/test/role-avatar-default.test.ts:16:12)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at Test.start (node:internal/test_runner/test:1096:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:385:17) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at scripts/official-web/official-avatar-library.test.mjs:1:1
+✖ scripts/official-web/official-avatar-library.test.mjs (56.909709ms)
+  'test failed'
