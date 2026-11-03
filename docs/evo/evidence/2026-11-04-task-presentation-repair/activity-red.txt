@@ -1,0 +1,44 @@
+✖ activity keeps canonical task identity/status and parent identity rather than reparsing preview text (6.392542ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 221.826416
+
+✖ failing tests:
+
+test at scripts/official-web/task-message-presentation.test.ts:9:1
+✖ activity keeps canonical task identity/status and parent identity rather than reparsing preview text (6.392542ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+  + undefined
+  - {
+  -   collaboratorIds: [],
+  -   createdAt: '2026-11-04T00:00:00Z',
+  -   creatorId: 'h',
+  -   dependencyTaskIds: [],
+  -   reviewerIds: [],
+  -   roomId: 'room-a',
+  -   sourceMessageId: 'root',
+  -   state: 'submitted',
+  -   taskId: 'task-a',
+  -   taskNumber: 7,
+  -   threadId: 't',
+  -   title: 'Work',
+  -   updatedAt: '2026-11-04T00:00:00Z'
+  - }
+  
+      at TestContext.<anonymous> (file:///Users/sun/Code/repos/rah_os/scripts/official-web/task-message-presentation.test.ts:14:10)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: { taskId: 'task-a', roomId: 'room-a', creatorId: 'h', collaboratorIds: [], title: 'Work', dependencyTaskIds: [], sourceMessageId: 'root', state: 'submitted', taskNumber: 7, threadId: 't', createdAt: '2026-11-04T00:00:00Z', updatedAt: '2026-11-04T00:00:00Z', reviewerIds: [] },
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }

@@ -20,7 +20,25 @@ export function adaptTaskMessage(source: string) {
   let code = replace(
     source,
     "className }: MessageItemProps) {",
-    "className }: MessageItemProps) {\n  const loomTaskActions = useLoomTaskActions(message, !parentMessageId && !hideThreadActions);\n  linkedTask = linkedTask ?? loomTaskActions?.task;",
+    "className }: MessageItemProps) {\n  const loomTaskReferences = useLoomTaskReferences(message.channelId);\n  const loomTaskActions = useLoomTaskActions(message, !parentMessageId && !hideThreadActions);\n  linkedTask = linkedTask ?? loomTaskActions?.task;",
+  );
+  code = replace(
+    code,
+    "const channelTasks = useTaskStore((s) => s.tasks);",
+    "const nativeChannelTasks = useTaskStore((s) => s.tasks);\n  const channelTasks = readOnlyProjection ? loomTaskReferences?.tasks ?? [] : nativeChannelTasks;",
+  );
+  code = replace(
+    code,
+    "const serverTasks = useTaskStore((s) => s.serverTasks);",
+    "const nativeServerTasks = useTaskStore((s) => s.serverTasks);\n  const serverTasks = readOnlyProjection ? loomTaskReferences?.tasks ?? [] : nativeServerTasks;",
+  );
+  const nativeRef =
+    "onOpenTask={readOnlyProjection ? undefined : handleOpenTaskRef}";
+  if (code.split(nativeRef).length !== 3)
+    throw Error("Official task reference surfaces changed");
+  code = code.replaceAll(
+    nativeRef,
+    "onOpenTask={readOnlyProjection ? loomTaskReferences?.openNumber : handleOpenTaskRef}",
   );
   for (const [prop, handler] of [
     ["onContextMenu", "handleContextMenu"],
@@ -49,7 +67,7 @@ export function adaptTaskMessage(source: string) {
     "onClick={loomTaskActions ? () => loomTaskActions.open(linkedTask.id) : openLinkedTask}",
   );
   return (
-    'import { useLoomTaskActions, LoomTaskMenu } from "loom-channel-tasks";\n' +
+    'import { useLoomTaskActions, useLoomTaskReferences, LoomTaskMenu } from "loom-channel-tasks";\n' +
     code
   );
 }

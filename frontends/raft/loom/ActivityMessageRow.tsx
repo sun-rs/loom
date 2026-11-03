@@ -26,6 +26,9 @@ import {
   InboxItem,
   InboxItemTrigger as InboxItemOpen,
   InboxItemLeading,
+  IconTile,
+  ThreadIcon,
+  TaskStatusBadge,
   InboxItemContent,
   InboxItemHeading,
   InboxItemTitle,
@@ -37,13 +40,17 @@ import {
   SidebarItemCount,
   Button,
 } from "raft-ui";
+import { InboxItemLeadingBadge } from "raft-ui/wip";
 import {
   Check,
   BellOff,
   BellMinus,
   MessageSquareCheck,
   MessageSquareDot,
+  Hash,
 } from "lucide-react";
+import { taskWorkflowStatus } from "@rah-os/protocol";
+import { toRuiTaskStatus } from "../packages/web/src/components/task/taskStatusUi.ts";
 import { formatRelativeTime } from "../packages/web/src/utils/relativeTime.ts";
 import InlineMarkdownPreview from "../packages/web/src/components/markdown/InlineMarkdownPreview.tsx";
 import type { DiscoveryRow } from "./discovery-client.ts";
@@ -262,20 +269,34 @@ export default function ActivityMessageRow({
           </div>
         )}
         <InboxItemLeading>
-          <OfficialConversationAvatar
-            kind={
-              thread
-                ? "thread"
-                : row.activityKind === "direct"
-                  ? "dm"
-                  : "channel"
-            }
-            dmChannel={
-              row.activityKind === "direct" && row.senderType
-                ? { peerType: row.senderType === "agent" ? "agent" : "user" }
-                : null
-            }
-          />
+          {thread ? (
+            <>
+              <IconTile
+                data-testid="conversation-card-avatar"
+                data-kind="thread"
+              >
+                <ThreadIcon />
+              </IconTile>
+              <InboxItemLeadingBadge data-testid="conversation-card-channel-badge">
+                <Hash />
+              </InboxItemLeadingBadge>
+            </>
+          ) : (
+            <OfficialConversationAvatar
+              kind={
+                thread
+                  ? "thread"
+                  : row.activityKind === "direct"
+                    ? "dm"
+                    : "channel"
+              }
+              dmChannel={
+                row.activityKind === "direct" && row.senderType
+                  ? { peerType: row.senderType === "agent" ? "agent" : "user" }
+                  : null
+              }
+            />
+          )}
         </InboxItemLeading>
         <InboxItemContent data-testid="conversation-card-content">
           <InboxItemHeading>
@@ -285,6 +306,15 @@ export default function ActivityMessageRow({
             >
               {row.label}
             </InboxItemTitle>
+            {row.task && (
+              <TaskStatusBadge
+                size="sm"
+                status={toRuiTaskStatus(taskWorkflowStatus(row.task.state))}
+                data-testid="conversation-card-task-badge"
+              >
+                #{row.task.taskNumber}
+              </TaskStatusBadge>
+            )}
           </InboxItemHeading>
           <InboxItemBody id={bodyId} data-testid="conversation-card-body">
             {thread && (

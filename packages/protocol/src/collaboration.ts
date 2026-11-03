@@ -240,6 +240,23 @@ export const ThreadSchema = z
         participantIds: z.array(IdentifierSchema),
         unreadCount: z.number().int().nonnegative(),
         firstUnreadMessageId: IdentifierSchema.nullable(),
+        // Bounded presentation read, only when explicitly requested by thread.list.
+        previews: z
+          .array(
+            z
+              .object({
+                messageId: IdentifierSchema,
+                roomSeq: z.number().int().positive(),
+                actorId: IdentifierSchema,
+                senderKind: z.enum(["human", "agent"]),
+                senderName: z.string(),
+                preview: z.string().max(400),
+                createdAt: TimestampSchema,
+              })
+              .strict(),
+          )
+          .max(3)
+          .optional(),
       })
       .strict()
       .optional(),

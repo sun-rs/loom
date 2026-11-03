@@ -6,7 +6,7 @@ import LoomMessageCopyItems from "./MessageCopyItems";
 import OfficialMessageSelectText from "./OfficialMessageSelectText.generated.js";
 import {TextSelect} from "lucide-react";
 import {useLoomReactions} from "./MessageReactions";
-import {useLoomTaskActions,LoomTaskMenu} from "./ChannelTasks";
+import {useLoomTaskActions,useLoomTaskReferences,LoomTaskMenu} from "./ChannelTasks";
 
 import {useLoomModelLabel} from "./AppearanceRuntime";
 import {useLoomCollapseLongMessages} from "./AppearanceRuntime";
@@ -1200,6 +1200,7 @@ function taskAssigneeHandle(claimedByName: string) {
 const ignoreReadOnlyProjectionNavigation = () => undefined;
 
 const ConnectedMessageItem = memo(function ConnectedMessageItem({ message, mentionMap, channels, previewSenderAgent, previewSenderMember, channelParticipantAgentsById, channelParticipantMembersById, channelParticipantExternalsById, threadSummary, parentChannelId, parentMessageId, hideThreadActions, showThreadFollowAction, linkedTask, senderAvatarTestId, mentionComposerChannelId, reactionParentScopeKey, canReact = true, readOnlyProjection = false, readOnlySender, readOnlyReplyScope, onReadOnlyNavigateChannel, onBeforeOpenThread, onOpenThread, onOpenProfile, threadSearchHighlightQuery, threadSearchActive, groupState, followedBy, followsSystem, showDmReadStatus = false, className }: MessageItemProps) {
+  const loomTaskReferences = useLoomTaskReferences(message.channelId);
   const loomReactions = useLoomReactions(message);
   if (readOnlyProjection) canReact = !!loomReactions?.canReact;
   const loomTaskActions = useLoomTaskActions(message, !parentMessageId && !hideThreadActions);
@@ -2061,7 +2062,8 @@ const ConnectedMessageItem = memo(function ConnectedMessageItem({ message, menti
     viewerUserId,
   ]);
   const convertMessage = useTaskStore((s) => s.convertMessage);
-  const channelTasks = useTaskStore((s) => s.tasks);
+  const nativeChannelTasks = useTaskStore((s) => s.tasks);
+  const channelTasks = readOnlyProjection ? loomTaskReferences?.tasks ?? [] : nativeChannelTasks;
 
   // Parked with TaskChipList: grouping the channel's tasks by message id is
   // what feeds the list, and it comes back when the list does.
@@ -2076,7 +2078,8 @@ const ConnectedMessageItem = memo(function ConnectedMessageItem({ message, menti
   // this list has a host message by construction, but routing on the fact
   // rather than the assumption keeps the two paths honest.
 
-  const serverTasks = useTaskStore((s) => s.serverTasks);
+  const nativeServerTasks = useTaskStore((s) => s.serverTasks);
+  const serverTasks = readOnlyProjection ? loomTaskReferences?.tasks ?? [] : nativeServerTasks;
   const knownTaskNumbers = useMemo(() => {
     const nums = new Set<number>();
     for (const t of channelTasks) nums.add(t.taskNumber);
@@ -3178,7 +3181,7 @@ const ConnectedMessageItem = memo(function ConnectedMessageItem({ message, menti
                 onNavigateComputer={readOnlyProjection ? ignoreReadOnlyProjectionNavigation : handleNavigateComputer}
                 onOpenThread={readOnlyProjection ? undefined : handleOpenThreadRef}
                 resolvingThreadRefKey={resolvingThreadRefKey}
-                onOpenTask={readOnlyProjection ? undefined : handleOpenTaskRef}
+                onOpenTask={readOnlyProjection ? loomTaskReferences?.openNumber : handleOpenTaskRef}
                 onOpenMessage={readOnlyProjection ? undefined : handleOpenMessageRef}
                 onOpenPermalink={readOnlyProjection ? undefined : handleOpenPermalink}
                 serverSlug={serverSlug}
@@ -3225,7 +3228,7 @@ const ConnectedMessageItem = memo(function ConnectedMessageItem({ message, menti
                 onNavigateComputer={readOnlyProjection ? ignoreReadOnlyProjectionNavigation : handleNavigateComputer}
                 onOpenThread={readOnlyProjection ? undefined : handleOpenThreadRef}
                 resolvingThreadRefKey={resolvingThreadRefKey}
-                onOpenTask={readOnlyProjection ? undefined : handleOpenTaskRef}
+                onOpenTask={readOnlyProjection ? loomTaskReferences?.openNumber : handleOpenTaskRef}
                 onOpenMessage={readOnlyProjection ? undefined : handleOpenMessageRef}
                 onOpenPermalink={readOnlyProjection ? undefined : handleOpenPermalink}
                 serverSlug={serverSlug}

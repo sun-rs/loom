@@ -4,23 +4,34 @@ import {
   rolePresence,
   computerInstances,
 } from "../../frontends/raft/loom/role-presence.ts";
-test("role badge aggregates execution, not stored sessions or installed CLIs", () => {
+test("role badge aggregates actual Host connectivity across its stable agent IDs", () => {
   assert.equal(rolePresence(["a"], []), "unknown");
   assert.equal(
-    rolePresence(["a"], [{ participantId: "a", state: "idle" }]),
-    "idle",
+    rolePresence(["a"], [{ agentId: "a", activity: "online" }] as any),
+    "online",
   );
   assert.equal(
-    rolePresence(
-      ["a", "b"],
-      [
-        { participantId: "a", state: "idle" },
-        { participantId: "b", state: "working" },
-      ],
-    ),
-    "working",
+    rolePresence(["a", "b"], [
+      { agentId: "a", activity: "offline" },
+      { agentId: "b", activity: "working" },
+    ] as any),
+    "online",
   );
-  assert.equal(rolePresence([], []), "idle");
+  assert.equal(rolePresence([], []), "offline");
+  assert.equal(
+    rolePresence(["a"], [{ agentId: "a", activity: "offline" }] as any),
+    "offline",
+  );
+  assert.equal(
+    rolePresence(["a"], [
+      { agentId: "another-role", activity: "online" },
+    ] as any),
+    "unknown",
+  );
+  assert.equal(
+    rolePresence(["a"], [{ agentId: "a", activity: "thinking" }] as any),
+    "online",
+  );
 });
 test("computer instances are bound role instances, deduplicated across runtime offers", () => {
   assert.deepEqual(

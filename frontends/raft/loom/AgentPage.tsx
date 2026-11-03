@@ -25,7 +25,6 @@ import {
   LogIn,
   UserMinus,
 } from "lucide-react";
-import { useRolePresence } from "./RolePresence.tsx";
 import { rolePresence } from "./role-presence.ts";
 import { uiActionProps } from "./ui-action-props.ts";
 import { flushSync } from "react-dom";
@@ -203,7 +202,6 @@ export default function AgentPage({
   const roleName = (role: RoleTemplate) => role.configuration.displayName;
   const busy = state !== "idle" || refreshing;
   const instancePresences = useInstancePresence(client, controlRoomId, active);
-  const presence = useRolePresence(client, catalog?.instances ?? [], active);
   const entries: RoleEntry[] = [
     ...(catalog?.roles ?? []),
     ...(catalog?.deletedRoles ?? []),
@@ -218,8 +216,8 @@ export default function AgentPage({
     presence: rolePresence(
       (catalog?.instances ?? [])
         .filter((i) => i.roleId === role.roleId)
-        .map((i) => i.instanceId),
-      presence,
+        .map((i) => i.agentId),
+      instancePresences,
     ),
   }));
   // Deleting a Role never deletes its frozen instances. Keep a read-only group

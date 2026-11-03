@@ -217,6 +217,16 @@ not native OS validation. Message and member-avatar connectivity colors share
 the existing Host presence owner and stable definition/instance mapping; Room
 idle is work state, not proof of being offline. Missing observation stays
 unknown and current membership still gates the badge.
+Role sidebar connectivity aggregates its retained Instances' stable Agent IDs
+through that same Host presence projection, never Room idle or CLI detection.
+Online includes an available instance whose idle CLI process has been reclaimed;
+it does not certify a resident process. Idle reclamation retains the Instance and
+native session binding and never changes message recipients or enables a stopped
+instance. Task references in controlled messages use the current Room's task
+projection, not an unpopulated upstream store. Thread preview reads opt in for
+bounded displayed roots and latest-three excerpts, never full histories or read
+acknowledgements. Activity task badges use the canonical task payload and native
+components; preview text is not task identity or status.
 Global Tasks retain their bounded UI projection while
 hidden/inert, stop inactive reads, and revalidate on return without replacing
 same-query content with initial skeletons. Other workspace/filter results must

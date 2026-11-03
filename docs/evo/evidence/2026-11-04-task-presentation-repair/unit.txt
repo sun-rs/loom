@@ -1,0 +1,36 @@
+✔ opt-in thread preview returns latest three ordered bounded replies, without advancing read frontiers (154.84325ms)
+✔ thread preview scope is bounded and rejects duplicate roots (0.344625ms)
+✔ thread summaries use actual reply authors and independent Human read frontiers (152.134583ms)
+✔ official projection preserves message identity and separates same-role instances (0.682125ms)
+✔ channel read uses client-core bounded pages and rejects cross-channel projection (3.500333ms)
+✔ canonical attachments project stable IDs, names and sizes without placeholder text (0.682583ms)
+✔ mention projection preserves bound identity across rename and same-name recreation (0.093875ms)
+✔ historical unbound names never acquire a replacement principal (1.933708ms)
+✔ create shares the channel intent owner and replays the original task request (16.663584ms)
+✔ convert shares the channel intent owner and replays the original task request (0.285541ms)
+✔ private rooms cannot expose channel task writes (0.266625ms)
+✔ native task toggle is delivered to the override and reset only after success (0.568833ms)
+✔ native message menu enables only connected read-only actions, preserves native popup and touch handlers (1.678834ms)
+✔ message/input hosts are reproducible bindings over pinned originals, not Vite mutations (151.629917ms)
+✔ search, activity and task presentation are reproducible pinned-source modules (217.244625ms)
+✔ product bridges consume generated boundaries and the official disclosure control (0.277916ms)
+✔ search rows preserve Loom's stable keyboard rail identity (0.086917ms)
+✔ role badge aggregates actual Host connectivity across its stable agent IDs (0.622291ms)
+✔ computer instances are bound role instances, deduplicated across runtime offers (0.653375ms)
+✔ activity keeps canonical task identity/status and parent identity rather than reparsing preview text (4.050834ms)
+✔ controlled message supplies native task refs from its own Room projection (1.588ms)
+✔ channel and activity use native preview and task anatomy without guessing a task from text (0.12375ms)
+✔ controlled thread entry preserves all non-thread readonly guards and requires exact upstream boundaries (1.386583ms)
+✔ native readonly thread gains only a caller-owned footer slot (2.382208ms)
+✔ Loom composer preserves IME and Shift guards while applying Enter send to touch (0.380625ms)
+✔ controlled task thread uses the native parent slot without repeating its root message (1.083541ms)
+✔ controlled thread forwards native parent and reply profile actions to its host (44.236917ms)
+✔ thread host exposes native header actions without changing header geometry (1.09725ms)
+ℹ tests 28
+ℹ suites 0
+ℹ pass 28
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 625.48575

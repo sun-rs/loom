@@ -24,6 +24,23 @@ export const ChannelTasksContext = createContext<{
   open: (id: string) => void;
   thread: (id: string) => void;
 } | null>(null);
+const noTasks: Task[] = [];
+/** Same Room read projection for all message bodies, including thread replies. */
+export function useLoomTaskReferences(roomId: string) {
+  const actions = useContext(ChannelTasksContext);
+  const scoped = actions?.roomId === roomId ? actions : undefined;
+  return {
+    tasks: scoped?.tasks ?? noTasks,
+    openNumber: scoped
+      ? (number: number) => {
+          const task = scoped.tasks.find(
+            (t) => t.taskNumber === number && t.channelId === roomId,
+          );
+          if (task) scoped.open(task.id);
+        }
+      : undefined,
+  };
+}
 export function useLoomTaskActions(message: Message, topLevel = true) {
   const actions = useContext(ChannelTasksContext);
   if (

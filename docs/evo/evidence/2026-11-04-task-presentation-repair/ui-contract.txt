@@ -1,0 +1,20 @@
+
+> rah-os@0.0.0 test:official-web:ui-contract
+> node --test scripts/official-web/ui-contract.test.mjs scripts/official-web/ui-action-props.test.ts
+
+✔ scenario bindings use native parameters without a parallel geometry or component recipe (1.588042ms)
+✔ save and destructive actions opt into explicit native scenario bindings (0.762917ms)
+✔ all action bindings have upstream provenance and cannot be overridden locally (290.1075ms)
+✔ local detail dismissals reuse official CloseButton including Side and loading/error branches (18.999709ms)
+✔ local official CloseButton calls carry an explicit semantic mobile target marker (132.33725ms)
+✔ header touch adaptation uses semantic controls rather than SVG/span nesting (0.129ms)
+✔ adoption registry references existing source owners, bindings and checks (0.647791ms)
+✔ new local close affordances cannot silently bypass scenario owners (80.388791ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 8
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 475.64125

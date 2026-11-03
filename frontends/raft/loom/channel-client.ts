@@ -108,6 +108,19 @@ export class LoomChannelClient {
     return result;
   }
   private focusId?: string;
+  private async refreshThreads() {
+    const previewRootMessageIds = this.messages.state.items
+      .flatMap((item) =>
+        item.kind === "message" ? [item.message.messageId] : [],
+      )
+      .slice(-100);
+    this.threads = (
+      await this.client.request("thread.list", {
+        roomId: this.roomId,
+        previewRootMessageIds,
+      })
+    ).threads;
+  }
   refresh(focusId?: string) {
     return this.serial(async () => {
       await this.room.syncUntilCurrent({ maxPages: 10 });
@@ -120,9 +133,7 @@ export class LoomChannelClient {
           latestRoomSeq: this.room.state.latestRoomSeq,
         });
       this.focusId = focusId;
-      this.threads = (
-        await this.client.request("thread.list", { roomId: this.roomId })
-      ).threads;
+      await this.refreshThreads();
       const room = this.room.state.snapshot?.room;
       if (room?.kind === "direct") {
         // The sync snapshot owns history; room.list owns current private-box availability.
@@ -160,12 +171,14 @@ export class LoomChannelClient {
   newer() {
     return this.serial(async () => {
       await this.messages.syncUntilCurrent({ limit: 50, maxPages: 1 });
+      await this.refreshThreads();
       return this.view();
     });
   }
   older() {
     return this.serial(async () => {
       await this.messages.loadEarlier({ limit: 50 });
+      await this.refreshThreads();
       return this.view();
     });
   }

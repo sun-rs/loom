@@ -4,6 +4,7 @@ import type {
   Message,
   WorkspaceSearchRequest,
   HumanActivityRequest,
+  Task,
 } from "@rah-os/protocol";
 export type DiscoveryRow = {
   id: string;
@@ -22,6 +23,7 @@ export type DiscoveryRow = {
   archivedAt?: string;
   rootMessageId?: string;
   rootMessagePreview?: string;
+  task?: Task;
 };
 export async function searchPage(
   client: RahClient,
@@ -82,6 +84,8 @@ export async function activityPage(
       activityKind: item.kind,
       replyCount: item.replyCount,
       isFollowing: item.isFollowing,
+      rootMessageId: item.rootMessageId,
+      task: item.task,
     })),
   };
 }

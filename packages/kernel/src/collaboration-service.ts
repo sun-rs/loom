@@ -1,4 +1,7 @@
-import { threadViewerSummaries } from "./thread-viewer-summary.ts";
+import {
+  threadViewerSummaries,
+  threadReplyPreviews,
+} from "./thread-viewer-summary.ts";
 import { peerReplyReturn } from "./peer-reply-return.ts";
 import { latestBlockingReplyMessageSeq } from "./reply-message-freshness.ts";
 import { assertNoUnresolvedRuntimeCleanup } from "./runtime-process-cleanup.ts";
@@ -1422,9 +1425,19 @@ export class CollaborationService {
     };
   }
 
-  listThreads(actorId: string, roomId: string): Thread[] {
+  listThreads(
+    actorId: string,
+    roomId: string,
+    previewRootMessageIds?: readonly string[],
+  ): Thread[] {
     requireRoomMember(this.#database, roomId, actorId);
     const summaries = threadViewerSummaries(this.#database, roomId, actorId);
+    const previews = threadReplyPreviews(
+      this.#database,
+      roomId,
+      previewRootMessageIds ?? [],
+    );
+    const requested = new Set(previewRootMessageIds);
     return this.#database
       .prepare(
         "SELECT * FROM threads WHERE room_id = ? ORDER BY created_at, thread_id",
@@ -1434,10 +1447,15 @@ export class CollaborationService {
         const thread = threadProjectionFromRow(row);
         return {
           ...thread,
-          viewerSummary: summaries.get(thread.threadId) ?? {
-            participantIds: [],
-            unreadCount: 0,
-            firstUnreadMessageId: null,
+          viewerSummary: {
+            ...(summaries.get(thread.threadId) ?? {
+              participantIds: [],
+              unreadCount: 0,
+              firstUnreadMessageId: null,
+            }),
+            ...(requested.has(thread.rootMessageId)
+              ? { previews: previews.get(thread.threadId) ?? [] }
+              : {}),
           },
         };
       });

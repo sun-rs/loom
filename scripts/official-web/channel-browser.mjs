@@ -29,6 +29,7 @@ import { verifyRoleActivity } from "./role-activity-browser.mjs";
 import { verifyUpstream126 } from "./upstream-126-browser.mjs";
 import { verifySearchTransition } from "./search-transition-browser.mjs";
 import { verifyMessageStatus } from "./message-status-browser.mjs";
+import { verifyTaskPresentation } from "./task-presentation-browser.mjs";
 import { verifyPanelPolicy } from "./panel-policy-browser.mjs";
 import { verifyAgentProfile } from "./agent-profile-browser.mjs";
 import { verifyMessageMetrics } from "./message-metrics-browser.mjs";
@@ -781,6 +782,20 @@ try {
   } else if (process.env.LOOM_BROWSER_SLICE === "topbar") {
     console.log(
       JSON.stringify(await verifyTopbar({ browser, origin, channels })),
+    );
+  } else if (process.env.LOOM_BROWSER_SLICE === "task-presentation") {
+    console.log(
+      JSON.stringify(
+        await verifyTaskPresentation({
+          browser,
+          origin,
+          client,
+          workspace,
+          head,
+          instances,
+          role,
+        }),
+      ),
     );
   } else if (process.env.LOOM_BROWSER_SLICE === "message-status") {
     for (const instance of instances)

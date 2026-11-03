@@ -1,4 +1,5 @@
 import { useLoomDisplayMembers } from "./AppearanceRuntime.tsx";
+import { nativeThreadReplyScope } from "./thread-previews.ts";
 import { useComposerChannels } from "./ComposerDirectory.tsx";
 import { useIntentRoute, hasRouteBoundIntent } from "./useIntentRoute.ts";
 import { MessageProfileMembers, MessageStatusRoom } from "./MessageProfile.tsx";
@@ -61,6 +62,20 @@ export default function ChannelTimeline({
   const [, setParams] = useIntentRoute();
   const mentionMap = useMemo(() => projectMessageMentions(members), [members]);
   const roster = useMemo(() => projectMentionMembers(members), [members]);
+  const participantAgents = useMemo(
+    () => new Map(roster.agents.map((p) => [p.id, p as Agent])),
+    [roster],
+  );
+  const participantHumans = useMemo(
+    () =>
+      new Map(
+        roster.humans.map(({ id, ...p }) => [
+          id,
+          { ...p, userId: id } as ServerMember,
+        ]),
+      ),
+    [roster],
+  );
   const { options } = useTimeFormatter();
   const { formatMessage } = useIntl();
   const grouping = useStableMessageGrouping(
@@ -97,6 +112,12 @@ export default function ChannelTimeline({
         setParams(new URLSearchParams({ room: target.id }));
       }}
       readOnlyProjection
+      readOnlyReplyScope={nativeThreadReplyScope(
+        threads.find((t) => t.rootMessageId === message.id),
+        members,
+      )}
+      channelParticipantAgentsById={participantAgents}
+      channelParticipantMembersById={participantHumans}
       onOpenProfile={onOpenProfile}
       // Bounded identity-only previews; never publish these into official runtime stores.
       previewSenderAgent={

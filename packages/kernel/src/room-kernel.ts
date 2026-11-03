@@ -1622,11 +1622,15 @@ export class RoomKernel {
   }
   listThreads(
     actor: AuthenticatedActorContext,
-    input: { roomId: string },
+    input: {
+      roomId: string;
+      previewRootMessageIds?: readonly string[] | undefined;
+    },
   ): Thread[] {
     return this.#collaboration.listThreads(
       this.#requireAuthenticatedActor(actor),
       input.roomId,
+      input.previewRootMessageIds,
     );
   }
   listMessages(

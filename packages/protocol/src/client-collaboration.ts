@@ -677,7 +677,17 @@ export type ClientMessageMutationResponse = z.infer<
 >;
 
 export const ClientThreadsListRequestSchema = z
-  .object({ roomId: IdentifierSchema })
+  .object({
+    roomId: IdentifierSchema,
+    previewRootMessageIds: z
+      .array(IdentifierSchema)
+      .max(100)
+      .refine(
+        (ids) => new Set(ids).size === ids.length,
+        "duplicate preview roots",
+      )
+      .optional(),
+  })
   .strict();
 export type ClientThreadsListRequest = z.infer<
   typeof ClientThreadsListRequestSchema

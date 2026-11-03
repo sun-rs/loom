@@ -1,6 +1,6 @@
 # Loom 当前主线现状（原 evo）
 
-更新日期：2026-10-31。本页区分当前结论与历史试验，不改变目标合同或补判未通过的验收。文档整理基线为 `fe5d65fc`；当前部署及真实模型验收以下文和对应的 dated evidence 为准。
+更新日期：2026-11-04。本页区分当前结论与历史试验，不改变目标合同或补判未通过的验收。文档整理基线为 `fe5d65fc`；当前部署及真实模型验收以下文和对应的 dated evidence 为准。
 
 完整原文保留在[截至本日的状态快照](status-history-through-2026-10-27.zh-CN.md)。其中过时的 main 冻结、控制台在用、临时监听地址和早期“下一步”均不再作为当前指令；历史失败及限制仍可追溯。第一至六十五节另见[九月日志](log/status-history-2026-09.zh-CN.md)。
 
@@ -28,6 +28,8 @@
 - AGY→Codex→AGY 原 session 协作已在显式人工恢复后完成；AGY 使用 native-final，Codex 使用既有 `loom_reply(final=true)`。原中止保留，不能称无人救援或成本通过。[收尾证据](evidence/2026-10-27-agy-closeout/README.md)。
 
 ### 前端与通知
+
+- [任务／回复／Role角标接线](evidence/2026-11-04-task-presentation-repair/README.md)修复现役入口缺少的原生任务引用、最新三条回复卡片和动态任务徽标／消息列主图标；Kernel增加可选有界摘要只读投影，不ACK或回灌完整历史。Role列表复用Host presence聚合，任一实例在线显示绿，空闲不再误报离线；既有CLI空闲回收保留原session及消息收件规则。28项定向检查、8项UI规则、类型检查通过；无付费调用，最终构建及部署另记，不宣称完整候选迁移完成。
 
 - 现役入口的[PWA／头像状态修复](evidence/2026-10-31-pwa-presence-repair/README.md)把Apple声明和顶边取色提前到阻塞脚本／React启动前，补navigator.standalone及旋转保持；正文角标与成员设置共享Host在线状态，不再把Room idle涂成离线灰。31项定向检查、类型／构建、Chromium／WebKit冷启动及状态对照、最终消息门禁和正式页面检查通过。未改字体／移动密度／官方版本；实体iOS／鸿蒙系统状态栏仍须真机复看，桌面模拟不能补判通过。
 

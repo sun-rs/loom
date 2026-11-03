@@ -1,14 +1,20 @@
-import type { RoomAgentActivity } from "@rah-os/protocol";
+import type { AgentPresence } from "@rah-os/protocol";
 export function rolePresence(
   ids: readonly string[],
-  activities: readonly Pick<RoomAgentActivity, "participantId" | "state">[],
+  activities: readonly Pick<AgentPresence, "agentId" | "activity">[],
 ) {
   const states = ids.map(
-    (id) => activities.find((a) => a.participantId === id)?.state,
+    (id) => activities.find((a) => a.agentId === id)?.activity,
   );
-  for (const state of ["working", "error", "waking"] as const)
-    if (states.includes(state)) return state;
-  return states.some((state) => !state) ? "unknown" : "idle";
+  if (
+    states.some(
+      (state) =>
+        state === "online" || state === "working" || state === "thinking",
+    )
+  )
+    return "online";
+  if (states.includes("error")) return "error";
+  return states.some((state) => !state) ? "unknown" : "offline";
 }
 export function computerInstances<
   T extends { instanceId: string; agentId: string; roleId: string },
