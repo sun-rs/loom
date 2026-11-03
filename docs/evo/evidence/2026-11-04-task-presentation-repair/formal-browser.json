@@ -1,0 +1,136 @@
+{
+  "at": "2026-11-03T16:38:25.572Z",
+  "sourceRevision": "d0886849051b41355bafe6f910c35308c9c58b87",
+  "webBuildId": "ad36665aac7a06c530aedcb61cf1b105240c07d9aae16108c3dcd2001e8fd5a9",
+  "scope": "Read-only acceptance of actual deployed channel, Activity and Role pages. No fixture data, provider calls or content/configuration writes; canonical read receipts allowed. Original CA checked separately. Not whole-site/physical-device parity.",
+  "results": [
+    {
+      "engine": "firefox",
+      "width": 1440,
+      "height": 1000,
+      "httpsOrigin": "https://100.101.107.87:4178",
+      "pages": [
+        {
+          "view": "channels",
+          "loaded": true,
+          "horizontalOverflow": false,
+          "taskRefs": 1,
+          "replyPreviews": 1,
+          "activityTaskBadges": 0,
+          "roleStates": []
+        },
+        {
+          "view": "activity",
+          "loaded": true,
+          "horizontalOverflow": false,
+          "taskRefs": 0,
+          "replyPreviews": 0,
+          "activityTaskBadges": 1,
+          "roleStates": []
+        },
+        {
+          "view": "agents",
+          "loaded": true,
+          "horizontalOverflow": false,
+          "taskRefs": 0,
+          "replyPreviews": 0,
+          "activityTaskBadges": 0,
+          "roleStates": [
+            {
+              "state": "offline",
+              "color": "oklch(0.7892 0.0137 71.29)"
+            },
+            {
+              "state": "offline",
+              "color": "oklch(0.7892 0.0137 71.29)"
+            },
+            {
+              "state": "online",
+              "color": "oklch(0.8272 0.1354 130.07)"
+            },
+            {
+              "state": "online",
+              "color": "oklch(0.8272 0.1354 130.07)"
+            },
+            {
+              "state": "offline",
+              "color": "oklch(0.7892 0.0137 71.29)"
+            },
+            {
+              "state": "online",
+              "color": "oklch(0.8272 0.1354 130.07)"
+            }
+          ]
+        }
+      ],
+      "pageErrors": [],
+      "failedApi": [],
+      "blockedMutations": [],
+      "allowedCanonicalReadReceipts": 1
+    },
+    {
+      "engine": "firefox",
+      "width": 390,
+      "height": 844,
+      "httpsOrigin": "https://100.101.107.87:4178",
+      "pages": [
+        {
+          "view": "channels",
+          "loaded": true,
+          "horizontalOverflow": false,
+          "taskRefs": 1,
+          "replyPreviews": 1,
+          "activityTaskBadges": 0,
+          "roleStates": []
+        },
+        {
+          "view": "activity",
+          "loaded": true,
+          "horizontalOverflow": false,
+          "taskRefs": 0,
+          "replyPreviews": 0,
+          "activityTaskBadges": 1,
+          "roleStates": []
+        },
+        {
+          "view": "agents",
+          "loaded": true,
+          "horizontalOverflow": false,
+          "taskRefs": 0,
+          "replyPreviews": 0,
+          "activityTaskBadges": 0,
+          "roleStates": [
+            {
+              "state": "offline",
+              "color": "oklch(0.7892 0.0137 71.29)"
+            },
+            {
+              "state": "offline",
+              "color": "oklch(0.7892 0.0137 71.29)"
+            },
+            {
+              "state": "online",
+              "color": "oklch(0.8272 0.1354 130.07)"
+            },
+            {
+              "state": "online",
+              "color": "oklch(0.8272 0.1354 130.07)"
+            },
+            {
+              "state": "offline",
+              "color": "oklch(0.7892 0.0137 71.29)"
+            },
+            {
+              "state": "online",
+              "color": "oklch(0.8272 0.1354 130.07)"
+            }
+          ]
+        }
+      ],
+      "pageErrors": [],
+      "failedApi": [],
+      "blockedMutations": [],
+      "allowedCanonicalReadReceipts": 1
+    }
+  ]
+}

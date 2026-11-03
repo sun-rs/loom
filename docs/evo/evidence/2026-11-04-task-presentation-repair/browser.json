@@ -1,0 +1,34 @@
+{
+  "results": [
+    {
+      "width": 1440,
+      "taskReference": true,
+      "latestThreeReplyPreview": true,
+      "previewOpensThread": true,
+      "activityTaskOpensBoundConversation": true,
+      "activityTaskStatus": true,
+      "nativeLeadingAndCorner": true,
+      "taskColor": "oklch(0.9492 0.0176 296.63)",
+      "activityColor": "oklch(0.9492 0.0176 296.63)",
+      "roleOnlineColor": "oklch(0.8272 0.1354 130.07)",
+      "roleOfflineColor": "oklch(0.7892 0.0137 71.29)",
+      "pageErrors": []
+    },
+    {
+      "width": 390,
+      "taskReference": true,
+      "latestThreeReplyPreview": true,
+      "previewOpensThread": true,
+      "activityTaskOpensBoundConversation": true,
+      "activityTaskStatus": true,
+      "nativeLeadingAndCorner": true,
+      "taskColor": "oklch(0.9492 0.0176 296.63)",
+      "activityColor": "oklch(0.9492 0.0176 296.63)",
+      "roleOnlineColor": "oklch(0.8272 0.1354 130.07)",
+      "roleOfflineColor": "oklch(0.7892 0.0137 71.29)",
+      "pageErrors": []
+    }
+  ],
+  "paidCalls": 0,
+  "scope": "Canonical task/thread Core data; only Role Host connectivity observations are stubbed for colour transitions."
+}

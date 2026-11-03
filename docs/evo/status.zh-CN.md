@@ -9,7 +9,7 @@
 - `main` 是当前 Loom；`evo` 已晋升并移除；`chatbox` 独立承载 `rah/main` 导入，不参与 Loom 构建。见[分支记录](branch-promotion.zh-CN.md)。
 - 唯一产品前端为 `frontends/raft`。旧复刻 UI 和 `apps/console` 已退役，不恢复其路由、构建或测试入口。
 - 保留部署标签 `com.loom.evo`、数据目录 `~/.loom/evo`、日志目录及频道主目录 `~/.loom/channel-workspaces/`。这些名称不是旧分支残留任务，不能为整洁搬迁数据。
-- 正式服务已从推送后的main `d1bc067f`重建现役产品入口并备份／平滑重启，schema91；[PWA／头像状态修复与部署](evidence/2026-10-31-pwa-presence-repair/README.md)确认14个保护表及通知／记忆文件保持，五个网络入口构建匹配、原CA校验通过。桌面／手机／触控横屏共18个真实页面状态通过，原移动优化及原创业务入口保留；**adapter123完整候选尚未上线**。前次[部署与来源核查](evidence/2026-10-31-deployment-source-audit/README.md)、[头像修复](evidence/2026-10-30-avatar-consistency/README.md)和[工作动态／计算机概览](evidence/2026-10-30-working-surfaces140/README.md)仍可追溯。
+- 正式服务已从推送后的main `d0886849`重建现役产品入口并备份／平滑重启，schema91；[任务／回复／Role角标修复与部署](evidence/2026-11-04-task-presentation-repair/README.md)确认14个保护表及通知／记忆文件保持，五个网络入口构建匹配、原CA校验通过。Firefox桌面／手机的频道、动态与Role共6页真实复查通过，原移动优化及原创业务入口保留；**adapter123完整候选尚未上线**。此前[PWA／头像状态修复](evidence/2026-10-31-pwa-presence-repair/README.md)、[部署与来源核查](evidence/2026-10-31-deployment-source-audit/README.md)、[头像修复](evidence/2026-10-30-avatar-consistency/README.md)和[工作动态／计算机概览](evidence/2026-10-30-working-surfaces140/README.md)仍可追溯。
 - HTTP 4176、LAN HTTPS 4178 与 Tailnet HTTPS 4178 在既有明确地址监听；同一 Core、原本地 CA、无配对、保留 Host/Origin 校验。本轮两个 HTTPS 首页经原 CA 校验，三个 HTTP 入口均200；页面/API/Service Worker及负向校验见此前[Tailnet入口证据](evidence/2026-10-28-tailnet-https/README.md)。远端实体手机与关闭页面后的推送未在本批重验；部署前仍须读取实际配置。
 
 ## 2. 当前状态
@@ -29,7 +29,7 @@
 
 ### 前端与通知
 
-- [任务／回复／Role角标接线](evidence/2026-11-04-task-presentation-repair/README.md)修复现役入口缺少的原生任务引用、最新三条回复卡片和动态任务徽标／消息列主图标；Kernel增加可选有界摘要只读投影，不ACK或回灌完整历史。Role列表复用Host presence聚合，任一实例在线显示绿，空闲不再误报离线；既有CLI空闲回收保留原session及消息收件规则。28项定向检查、8项UI规则、类型检查通过；无付费调用，最终构建及部署另记，不宣称完整候选迁移完成。
+- [任务／回复／Role角标接线](evidence/2026-11-04-task-presentation-repair/README.md)修复现役入口缺少的原生任务引用、最新三条回复卡片和动态任务徽标／消息列主图标；Kernel增加可选有界摘要只读投影，不ACK或回灌完整历史。Role列表复用Host presence聚合，任一实例在线显示绿，空闲不再误报离线；既有CLI空闲回收保留原session及消息收件规则。28项定向检查、8项UI规则、类型／产品构建及两尺寸隔离浏览器通过；正式服务已部署并完成6页只读复查，无付费调用，不宣称完整候选迁移完成。
 
 - 现役入口的[PWA／头像状态修复](evidence/2026-10-31-pwa-presence-repair/README.md)把Apple声明和顶边取色提前到阻塞脚本／React启动前，补navigator.standalone及旋转保持；正文角标与成员设置共享Host在线状态，不再把Room idle涂成离线灰。31项定向检查、类型／构建、Chromium／WebKit冷启动及状态对照、最终消息门禁和正式页面检查通过。未改字体／移动密度／官方版本；实体iOS／鸿蒙系统状态栏仍须真机复看，桌面模拟不能补判通过。
 

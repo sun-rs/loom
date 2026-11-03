@@ -1,0 +1,118 @@
+{
+  "at": "2026-11-03T16:36:42.635Z",
+  "sourceRevision": "d0886849051b41355bafe6f910c35308c9c58b87",
+  "pushedBeforeRestart": true,
+  "oldPid": 16284,
+  "newPid": 11296,
+  "backup": "/Users/sun/.loom/evo/backups/pre-task-presentation-repair-2026-11-03T16-36-29.873Z",
+  "backupVerified": true,
+  "migrationPreflight": true,
+  "fromSchema": 91,
+  "toSchema": 91,
+  "protectedTables": {
+    "room_events": {
+      "count": 951,
+      "sha256": "056ac99f26b321cda67738322cbda0ba9c1742312c407cacb00c35c66615a53b"
+    },
+    "messages": {
+      "count": 11,
+      "sha256": "b1f42cd3271c903d4a532baf963b8b4a58f79e96c1398e19e4115bf5b82036c7"
+    },
+    "role_templates": {
+      "count": 56,
+      "sha256": "ad16740583f71e0583c984fb0de2b9087f758b379f5cde34c6bf537df5dc88d0"
+    },
+    "role_revisions": {
+      "count": 76,
+      "sha256": "69c207f01812e890cc310fe7e905bf091dafba96fc8a55155b8220b1d6f0a5e7"
+    },
+    "role_instances": {
+      "count": 3,
+      "sha256": "5909a7569724053097ce0ed7dd1618da7a8c1f452b8b8efc0b12adb4b1afd4d1"
+    },
+    "human_sidebar_preferences": {
+      "count": 1,
+      "sha256": "e818e7e62cb18fb1738d48db6ea93bf6ca243ca09a1e264e943ff16f24df27f5"
+    },
+    "human_saved_messages": {
+      "count": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "human_thread_follows": {
+      "count": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "human_activity_frontiers": {
+      "count": 3,
+      "sha256": "a4cfd3806b55ce8e261b9ca464bce146ad467127ac6f96ad6669559f46685efa"
+    },
+    "human_activity_manual_unread": {
+      "count": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "agent_definitions": {
+      "count": 86,
+      "sha256": "097b1db3383d38c37f3f18ced6020b439a7393fb67367faee0507a3883d483a1"
+    },
+    "agent_definition_revisions": {
+      "count": 104,
+      "sha256": "01b94b3a9a932059a5efe1ae6f66d15d68e14353aa86f9990bee3eb30b723822"
+    },
+    "profile_image_objects": {
+      "count": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "profile_image_upload_intents": {
+      "count": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    }
+  },
+  "ledgerRolesInstancesPreferencesUnchanged": true,
+  "protectedNotificationMemoryFilesChecked": 3,
+  "newWebSnapshot": "/Users/sun/Code/repos/rah_os/.workbench-web/130259411c09c8988eda4bec0c96e500c424eb49f991430a2c8377b8e893bc17",
+  "webBuildId": "ad36665aac7a06c530aedcb61cf1b105240c07d9aae16108c3dcd2001e8fd5a9",
+  "buildIdentity": {
+    "schemaVersion": 1,
+    "kind": "development",
+    "version": "0.0.0-dev+d088684",
+    "commit": "d0886849051b41355bafe6f910c35308c9c58b87",
+    "shortCommit": "d088684",
+    "builtAt": "2026-11-03T16:35:33.655Z",
+    "buildId": "8498aba22af9b189"
+  },
+  "networkModeUnchanged": true,
+  "edges": [
+    {
+      "origin": "http://127.0.0.1:4176",
+      "status": 200,
+      "indexMatchesTarget": true,
+      "tlsVerifiedWithOriginalCA": false
+    },
+    {
+      "origin": "http://192.168.1.86:4176",
+      "status": 200,
+      "indexMatchesTarget": true,
+      "tlsVerifiedWithOriginalCA": false
+    },
+    {
+      "origin": "http://100.101.107.87:4176",
+      "status": 200,
+      "indexMatchesTarget": true,
+      "tlsVerifiedWithOriginalCA": false
+    },
+    {
+      "origin": "https://192.168.1.86:4178",
+      "status": 200,
+      "indexMatchesTarget": true,
+      "tlsVerifiedWithOriginalCA": true
+    },
+    {
+      "origin": "https://100.101.107.87:4178",
+      "status": 200,
+      "indexMatchesTarget": true,
+      "tlsVerifiedWithOriginalCA": true
+    }
+  ],
+  "candidate123Deployed": false,
+  "scope": "Canonical task references, bounded reply previews, Activity task composition and aggregated Role Host connectivity repair. Existing idle-reclamation and mobile policies retained; Web1.21.23 candidate remains isolated. No production test objects or paid calls."
+}
