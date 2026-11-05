@@ -1,0 +1,230 @@
+{
+  "schemaVersion": 1,
+  "kind": "loom-herdr-runtime-research-plan",
+  "designDate": "2026-11-05",
+  "status": "designed-only",
+  "productBaselineCommit": "a147a7cf09964debd56805fbe7ff659fd9b47d4d",
+  "observedAt": "2026-11-05T05:42:31.611762+00:00",
+  "excludedClis": ["claude", "claude-code"],
+  "allowedClis": ["codex", "opencode", "pi"],
+  "paidExecutionEnabled": false,
+  "providerCallsPerformedThisBatch": 0,
+  "actualProviderCatalogVerified": false,
+  "actualCodexToolHostVerifiedThisBatch": false,
+  "herdrApiCompatibilityVerifiedThisBatch": false,
+  "currentConversationIsNotAnExperimentTarget": true,
+  "arms": [
+    {
+      "id": "A",
+      "carrier": "existing-loom",
+      "cliMode": "existing-structured-native",
+      "changes": "none"
+    },
+    {
+      "id": "B",
+      "carrier": "isolated-herdr-tui",
+      "cliMode": "same-as-A",
+      "changes": "generic transport relay only, counted as candidate code and processes"
+    },
+    {
+      "id": "C",
+      "carrier": "same-herdr-as-B",
+      "cliMode": "native-interactive",
+      "changes": "pinned reused transcript and terminal bridge + Loom execution binding"
+    }
+  ],
+  "candidateCorePolicy": "herdr-core is not mixed into this batch; assess as a separate later candidate.",
+  "sources": [
+    {
+      "name": "roamgate",
+      "revision": "29885e06a33695f666be3e2fcfd92760c8e0448b",
+      "license": "MIT"
+    },
+    {
+      "name": "sheprd",
+      "revision": "d8db7e83e67bbb832e90a444c5a8a2922eee7aa5",
+      "license": "Apache-2.0"
+    },
+    {
+      "name": "herdr-tui-reference",
+      "revision": "ee5bfb5041bb3e4a49d591c72308aae3c81ecdde",
+      "note": "Reference checkout; not yet matched to installed 0.9.1"
+    },
+    {
+      "name": "herdr-core-reference",
+      "revision": "ec8adcdf0da38e539e8702f7c37801647da035f3",
+      "note": "Separate preview implementation, not execution target"
+    },
+    {
+      "name": "alma-installed-reference",
+      "version": "0.4.403",
+      "mainBundleSha256": "17c5b089bb769a6787fa6ae71617a6a1ae6f5009ae6d344fc90a612883c45134"
+    }
+  ],
+  "executables": [
+    {
+      "name": "codex",
+      "versionOutput": "0.166.0",
+      "entryPath": "/opt/homebrew/bin/codex",
+      "resolvedEntryPath": "/opt/homebrew/Caskroom/codex/0.166.0/bin/codex",
+      "entrySha256": "39acf979729dd290f9a24ee38b2914e036c91b65952872e28ae2a6b88a7db7c1",
+      "coverage": "Entry file only; native helpers and loaded modules require execution-stage inventory. Not a tool-host or model-catalog preflight."
+    },
+    {
+      "name": "opencode",
+      "versionOutput": "1.19.5",
+      "entryPath": "/opt/homebrew/bin/opencode",
+      "resolvedEntryPath": "/opt/homebrew/lib/node_modules/opencode-ai/bin/opencode.exe",
+      "entrySha256": "feaafead8cd563af0c2dcb386b0757e4355e327ebb6bd1aaad5440fe2f83596c",
+      "coverage": "Entry file only; native helpers and loaded modules require execution-stage inventory. Not a tool-host or model-catalog preflight."
+    },
+    {
+      "name": "pi",
+      "versionOutput": "1.5.0",
+      "entryPath": "/opt/homebrew/bin/pi",
+      "resolvedEntryPath": "/opt/homebrew/lib/node_modules/@earendil-works/pi-coding-agent/dist/bundle/cli.js",
+      "entrySha256": "e79626f2dd6f94aa45d30f3fa63cd84319a6eefcd150b353cfaf274366926774",
+      "coverage": "Entry file only; native helpers and loaded modules require execution-stage inventory. Not a tool-host or model-catalog preflight."
+    },
+    {
+      "name": "herdr",
+      "versionOutput": "0.9.1",
+      "entryPath": "/opt/homebrew/bin/herdr",
+      "resolvedEntryPath": "/opt/homebrew/Cellar/herdr/0.9.1/bin/herdr",
+      "entrySha256": "09145802bc2cdd6612b3447b2ca42a2967c3d00563fbf084889d1916441bc334",
+      "coverage": "Entry file only; native helpers and loaded modules require execution-stage inventory. Not a tool-host or model-catalog preflight."
+    }
+  ],
+  "isolation": {
+    "state": "mkdtemp only",
+    "herdr": "new explicit named session/socket with scratch configuration",
+    "core": "independent temporary state and host identity",
+    "networkForFreeNativeProbes": "localhost model only",
+    "productionMutationsAllowed": false,
+    "globalCliConfigWritesAllowed": false,
+    "automaticUpdatesAllowed": false,
+    "thirdPartyAssistantAndAutoTitleCallsAllowed": false,
+    "claudeDescendantsAllowed": false
+  },
+  "freeStage": {
+    "status": "not-run",
+    "firstCli": "codex",
+    "fallbackIfPreparationBlocked": "pi",
+    "nativeHostGate": "scripts/cli-efficiency/codex-tool-preflight.mjs",
+    "scenarioIds": [
+      {
+        "id": "S01",
+        "name": "input-final-correlation"
+      },
+      {
+        "id": "S02",
+        "name": "parallel-channel-isolation"
+      },
+      {
+        "id": "S03",
+        "name": "unknown-send-and-duplicate-wake"
+      },
+      {
+        "id": "S04",
+        "name": "blocked-error-interrupt"
+      },
+      {
+        "id": "S05",
+        "name": "background-descendant-lifecycle"
+      },
+      {
+        "id": "S06",
+        "name": "observer-detach-resize"
+      },
+      {
+        "id": "S07",
+        "name": "human-takeover-and-queued-delivery"
+      },
+      {
+        "id": "S08",
+        "name": "cli-host-carrier-restart"
+      },
+      {
+        "id": "S09",
+        "name": "idle-reclamation-and-resume"
+      },
+      {
+        "id": "S10",
+        "name": "bounded-transcripts-and-binding-change"
+      }
+    ],
+    "fixedScheduleSeeds": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+    "engineeringTimeboxHours": 4,
+    "fakeRuntimeSuccessIsNativeCliSuccess": false,
+    "eachCandidateStopsOnFirstInvariantFailure": true,
+    "criticalInvariantFailureBlocksProduction": true,
+    "resourceInstanceCounts": [0, 1, 10],
+    "resourceRepeats": 5
+  },
+  "paidStage": {
+    "status": "not-started",
+    "requires": "free correctness, net reuse benefit, exact catalogs, metering closure and a separately bounded run batch",
+    "models": [
+      {
+        "cli": "codex",
+        "model": "gpt-6-luna",
+        "effort": "low"
+      },
+      {
+        "cli": "opencode",
+        "model": "deepseek/deepseek-flash",
+        "effort": "low"
+      },
+      {
+        "cli": "pi",
+        "model": "magpie/kimi-code-cn/k3.1-pro",
+        "effort": "low"
+      }
+    ],
+    "arms": ["N-native-cli", "A-existing-loom", "selected-candidate"],
+    "blocksPerCli": 6,
+    "humanTurnsPerBlockArm": 6,
+    "taskKinds": [
+      "cross-module-regression-fix",
+      "design-build-review-with-new-constraint"
+    ],
+    "snapshotsPerTaskKind": 3,
+    "reviewerUsesSameCliModel": true,
+    "mainSessionsPerCli": 18,
+    "reviewerSessionsPerCli": 9,
+    "totalSessionsPerCli": 27,
+    "humanInputsPerCli": 108,
+    "allPeerAndDescendantExecutionsCounted": true,
+    "balancedArmOrders": [
+      ["N", "A", "C"],
+      ["N", "C", "A"],
+      ["A", "N", "C"],
+      ["A", "C", "N"],
+      ["C", "N", "A"],
+      ["C", "A", "N"]
+    ],
+    "nativeMemory": "official automatic memory disabled across every arm and descendants",
+    "sameNativeSessionWithinTask": true,
+    "countFailedAndUnknownUsage": true,
+    "silentReplacementRunsAllowed": false,
+    "singleNativeSampleAsDenominatorAllowed": false,
+    "qualityOracle": "hidden deterministic acceptance and explicit severe-issue review, not model grading",
+    "ratioScope": "per CLI and model; same-quality completed evidence only"
+  },
+  "decisions": [
+    "adopt-process-carrier",
+    "terminal-observation-only",
+    "retain-current-runtime"
+  ],
+  "remainingBeforeAnyExperiment": [
+    "match installed Herdr protocol and source",
+    "implement isolated candidate adapter(s)",
+    "create immutable tasks and scenario truth fixtures",
+    "confirm free probe tool receipts and exact runtime behavior"
+  ],
+  "completedThisBatch": [
+    "read-only source/evidence review",
+    "CLI version observations without model calls",
+    "written study plan and machine-readable matrix"
+  ]
+}

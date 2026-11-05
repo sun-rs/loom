@@ -1,0 +1,15 @@
+{
+  "kind": "design-static-preflight",
+  "checkedAt": "2026-11-05T05:43:32.044Z",
+  "checks": [
+    "Claude excluded including descendants",
+    "all proposed models present in existing approval table",
+    "session and Human-input counts consistent",
+    "six arm orders counterbalanced",
+    "ten unique deterministic scenarios and seeds",
+    "paid execution disabled",
+    "production and global settings mutations excluded"
+  ],
+  "passed": true,
+  "scope": "Static plan validation only. No Herdr control, real-provider catalog/tool-host test, candidate adapter execution or model request."
+}
