@@ -32,7 +32,7 @@
 - [任务验收离线汇总](evo/task-outcome-report.zh-CN.md)：交付、人工介入、交接证据及失败用量；目前支持两种已归档格式。
 - [运行记录离线诊断](evo/runtime-diagnostics.zh-CN.md)：同次压缩观测、原生重试信号与缺失数据；不自动干预运行时。
 - [文章与 Cindy 的研究及候选顺序](evo/article-cindy-adoption-review.zh-CN.md)：研究建议，不代表已实现或已测得收益。
-- [Herdr 托管运行时实验方案](design/herdr-runtime-evaluation.zh-CN.md)：区分进程托管、交互式 CLI 与观察界面，先免费验证；当前实验排除 Claude Code。
+- [Herdr 托管运行时实验](design/herdr-runtime-evaluation.zh-CN.md)：免费 Pi 路径及观察投影通过，原始接管不能暂停自动输入，候选停止；保留现有运行时，排除 Claude Code。[执行证据](evo/evidence/2026-11-05-herdr-runtime-study/README.md)。
 
 ## 历史与追溯
 

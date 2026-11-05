@@ -1,0 +1,34 @@
+{
+  "herdr": {
+    "version": "0.9.1",
+    "tag": "v0.9.1",
+    "tagObject": "8544776216a8d28088db59a5344ea21ee2d05d2b",
+    "commit": "065ef9d6a531c49fb8bee7e818ef837065b21ee9",
+    "scope": "Version-matched release source; not a reproducible binary build claim"
+  },
+  "executables": [
+    {
+      "path": "/opt/homebrew/Cellar/herdr/0.9.1/bin/herdr",
+      "sha256": "09145802bc2cdd6612b3447b2ca42a2967c3d00563fbf084889d1916441bc334",
+      "version": "herdr 0.9.1"
+    },
+    {
+      "path": "/opt/homebrew/lib/node_modules/@earendil-works/pi-coding-agent/dist/bundle/cli.js",
+      "sha256": "e79626f2dd6f94aa45d30f3fa63cd84319a6eefcd150b353cfaf274366926774",
+      "version": "1.5.0"
+    }
+  ],
+  "piIntegration": {
+    "file": "herdr-agent-state.ts",
+    "sha256": "2c5272d732b475bbf91a027203b1f98d25fe43d2c1402530a442b288aeaca1e4"
+  },
+  "roamgate": {
+    "commit": "29885e06a33695f666be3e2fcfd92760c8e0448b",
+    "license": "MIT",
+    "dirty": false,
+    "execution": "Unchanged projectAgentTrajectory, pi branch only; native 2-turn and 13-turn transcripts",
+    "productionDependencyAdded": false
+  },
+  "claudeExecuted": false,
+  "herdrCoreExecuted": false
+}

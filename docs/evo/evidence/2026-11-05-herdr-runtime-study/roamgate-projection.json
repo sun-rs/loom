@@ -1,0 +1,1076 @@
+{
+  "sourceRevision": "29885e06a33695f666be3e2fcfd92760c8e0448b",
+  "license": "MIT",
+  "sourceUnmodified": true,
+  "agent": "pi",
+  "nativeSessionId": "01a1aa8a-3bb3-7508-aa66-55058d1b3c95",
+  "userCount": 13,
+  "finalCount": 13,
+  "projection": {
+    "schema_version": "ATIF-v1.7",
+    "session_id": "01a1aa8a-3bb3-7508-aa66-55058d1b3c95",
+    "trajectory_id": "01a1aa8a-3bb3-7508-aa66-55058d1b3c95",
+    "agent": {
+      "name": "pi",
+      "version": "unknown",
+      "model_name": "fixture"
+    },
+    "steps": [
+      {
+        "timestamp": "2026-11-05T07:09:11.628Z",
+        "source": "user",
+        "message": "Read probe.txt using the read tool, then finish.",
+        "extra": {
+          "record_type": "message"
+        },
+        "step_id": 1
+      },
+      {
+        "timestamp": "2026-11-05T07:09:11.659Z",
+        "source": "agent",
+        "message": "Tool call: read",
+        "tool_calls": [
+          {
+            "tool_call_id": "read-5",
+            "function_name": "read",
+            "arguments": {
+              "path": "probe.txt"
+            }
+          }
+        ],
+        "metrics": {
+          "prompt_tokens": 100,
+          "completion_tokens": 20,
+          "cached_tokens": 0,
+          "extra": {
+            "reasoning_output_tokens": 0,
+            "total_tokens": 120
+          }
+        },
+        "extra": {
+          "record_type": "message",
+          "provider": "fixture",
+          "model": "fixture",
+          "stop_reason": "toolUse"
+        },
+        "step_id": 2
+      },
+      {
+        "timestamp": "2026-11-05T07:09:11.662Z",
+        "source": "system",
+        "message": "0ce6c9a7-b8ae-43fe-b1b4-bf0aef78b342",
+        "observation": {
+          "results": [
+            {
+              "source_call_id": "read-5",
+              "content": "0ce6c9a7-b8ae-43fe-b1b4-bf0aef78b342",
+              "extra": {
+                "tool_name": "read"
+              }
+            }
+          ]
+        },
+        "extra": {
+          "record_type": "message"
+        },
+        "step_id": 3
+      },
+      {
+        "timestamp": "2026-11-05T07:09:11.666Z",
+        "source": "agent",
+        "message": "Fixture task completed.",
+        "metrics": {
+          "prompt_tokens": 100,
+          "completion_tokens": 20,
+          "cached_tokens": 0,
+          "extra": {
+            "reasoning_output_tokens": 0,
+            "total_tokens": 120
+          }
+        },
+        "extra": {
+          "record_type": "message",
+          "provider": "fixture",
+          "model": "fixture",
+          "stop_reason": "stop"
+        },
+        "step_id": 4
+      },
+      {
+        "timestamp": "2026-11-05T07:09:12.099Z",
+        "source": "user",
+        "message": "SLOW: Read probe.txt using the read tool, then finish.",
+        "extra": {
+          "record_type": "message"
+        },
+        "step_id": 5
+      },
+      {
+        "timestamp": "2026-11-05T07:09:12.101Z",
+        "source": "agent",
+        "message": "Tool call: read",
+        "tool_calls": [
+          {
+            "tool_call_id": "read-7",
+            "function_name": "read",
+            "arguments": {
+              "path": "probe.txt"
+            }
+          }
+        ],
+        "metrics": {
+          "prompt_tokens": 100,
+          "completion_tokens": 20,
+          "cached_tokens": 0,
+          "extra": {
+            "reasoning_output_tokens": 0,
+            "total_tokens": 120
+          }
+        },
+        "extra": {
+          "record_type": "message",
+          "provider": "fixture",
+          "model": "fixture",
+          "stop_reason": "toolUse"
+        },
+        "step_id": 6
+      },
+      {
+        "timestamp": "2026-11-05T07:09:12.102Z",
+        "source": "system",
+        "message": "0ce6c9a7-b8ae-43fe-b1b4-bf0aef78b342",
+        "observation": {
+          "results": [
+            {
+              "source_call_id": "read-7",
+              "content": "0ce6c9a7-b8ae-43fe-b1b4-bf0aef78b342",
+              "extra": {
+                "tool_name": "read"
+              }
+            }
+          ]
+        },
+        "extra": {
+          "record_type": "message"
+        },
+        "step_id": 7
+      },
+      {
+        "timestamp": "2026-11-05T07:09:12.506Z",
+        "source": "agent",
+        "message": "Fixture task completed.",
+        "metrics": {
+          "prompt_tokens": 100,
+          "completion_tokens": 20,
+          "cached_tokens": 0,
+          "extra": {
+            "reasoning_output_tokens": 0,
+            "total_tokens": 120
+          }
+        },
+        "extra": {
+          "record_type": "message",
+          "provider": "fixture",
+          "model": "fixture",
+          "stop_reason": "stop"
+        },
+        "step_id": 8
+      },
+      {
+        "timestamp": "2026-11-05T07:09:13.217Z",
+        "source": "user",
+        "message": "Read probe.txt using the read tool, then finish.",
+        "extra": {
+          "record_type": "message"
+        },
+        "step_id": 9
+      },
+      {
+        "timestamp": "2026-11-05T07:09:13.220Z",
+        "source": "agent",
+        "message": "Tool call: read",
+        "tool_calls": [
+          {
+            "tool_call_id": "read-9",
+            "function_name": "read",
+            "arguments": {
+              "path": "probe.txt"
+            }
+          }
+        ],
+        "metrics": {
+          "prompt_tokens": 100,
+          "completion_tokens": 20,
+          "cached_tokens": 0,
+          "extra": {
+            "reasoning_output_tokens": 0,
+            "total_tokens": 120
+          }
+        },
+        "extra": {
+          "record_type": "message",
+          "provider": "fixture",
+          "model": "fixture",
+          "stop_reason": "toolUse"
+        },
+        "step_id": 10
+      },
+      {
+        "timestamp": "2026-11-05T07:09:13.221Z",
+        "source": "system",
+        "message": "0ce6c9a7-b8ae-43fe-b1b4-bf0aef78b342",
+        "observation": {
+          "results": [
+            {
+              "source_call_id": "read-9",
+              "content": "0ce6c9a7-b8ae-43fe-b1b4-bf0aef78b342",
+              "extra": {
+                "tool_name": "read"
+              }
+            }
+          ]
+        },
+        "extra": {
+          "record_type": "message"
+        },
+        "step_id": 11
+      },
+      {
+        "timestamp": "2026-11-05T07:09:13.223Z",
+        "source": "agent",
+        "message": "Fixture task completed.",
+        "metrics": {
+          "prompt_tokens": 100,
+          "completion_tokens": 20,
+          "cached_tokens": 0,
+          "extra": {
+            "reasoning_output_tokens": 0,
+            "total_tokens": 120
+          }
+        },
+        "extra": {
+          "record_type": "message",
+          "provider": "fixture",
+          "model": "fixture",
+          "stop_reason": "stop"
+        },
+        "step_id": 12
+      },
+      {
+        "timestamp": "2026-11-05T07:09:13.828Z",
+        "source": "user",
+        "message": "SLOW: Read probe.txt using the read tool, then finish.",
+        "extra": {
+          "record_type": "message"
+        },
+        "step_id": 13
+      },
+      {
+        "timestamp": "2026-11-05T07:09:13.830Z",
+        "source": "agent",
+        "message": "Tool call: read",
+        "tool_calls": [
+          {
+            "tool_call_id": "read-11",
+            "function_name": "read",
+            "arguments": {
+              "path": "probe.txt"
+            }
+          }
+        ],
+        "metrics": {
+          "prompt_tokens": 100,
+          "completion_tokens": 20,
+          "cached_tokens": 0,
+          "extra": {
+            "reasoning_output_tokens": 0,
+            "total_tokens": 120
+          }
+        },
+        "extra": {
+          "record_type": "message",
+          "provider": "fixture",
+          "model": "fixture",
+          "stop_reason": "toolUse"
+        },
+        "step_id": 14
+      },
+      {
+        "timestamp": "2026-11-05T07:09:13.831Z",
+        "source": "system",
+        "message": "0ce6c9a7-b8ae-43fe-b1b4-bf0aef78b342",
+        "observation": {
+          "results": [
+            {
+              "source_call_id": "read-11",
+              "content": "0ce6c9a7-b8ae-43fe-b1b4-bf0aef78b342",
+              "extra": {
+                "tool_name": "read"
+              }
+            }
+          ]
+        },
+        "extra": {
+          "record_type": "message"
+        },
+        "step_id": 15
+      },
+      {
+        "timestamp": "2026-11-05T07:09:14.233Z",
+        "source": "agent",
+        "message": "Fixture task completed.",
+        "metrics": {
+          "prompt_tokens": 100,
+          "completion_tokens": 20,
+          "cached_tokens": 0,
+          "extra": {
+            "reasoning_output_tokens": 0,
+            "total_tokens": 120
+          }
+        },
+        "extra": {
+          "record_type": "message",
+          "provider": "fixture",
+          "model": "fixture",
+          "stop_reason": "stop"
+        },
+        "step_id": 16
+      },
+      {
+        "timestamp": "2026-11-05T07:09:14.944Z",
+        "source": "user",
+        "message": "Read probe.txt using the read tool, then finish.",
+        "extra": {
+          "record_type": "message"
+        },
+        "step_id": 17
+      },
+      {
+        "timestamp": "2026-11-05T07:09:14.947Z",
+        "source": "agent",
+        "message": "Tool call: read",
+        "tool_calls": [
+          {
+            "tool_call_id": "read-13",
+            "function_name": "read",
+            "arguments": {
+              "path": "probe.txt"
+            }
+          }
+        ],
+        "metrics": {
+          "prompt_tokens": 100,
+          "completion_tokens": 20,
+          "cached_tokens": 0,
+          "extra": {
+            "reasoning_output_tokens": 0,
+            "total_tokens": 120
+          }
+        },
+        "extra": {
+          "record_type": "message",
+          "provider": "fixture",
+          "model": "fixture",
+          "stop_reason": "toolUse"
+        },
+        "step_id": 18
+      },
+      {
+        "timestamp": "2026-11-05T07:09:14.948Z",
+        "source": "system",
+        "message": "0ce6c9a7-b8ae-43fe-b1b4-bf0aef78b342",
+        "observation": {
+          "results": [
+            {
+              "source_call_id": "read-13",
+              "content": "0ce6c9a7-b8ae-43fe-b1b4-bf0aef78b342",
+              "extra": {
+                "tool_name": "read"
+              }
+            }
+          ]
+        },
+        "extra": {
+          "record_type": "message"
+        },
+        "step_id": 19
+      },
+      {
+        "timestamp": "2026-11-05T07:09:14.950Z",
+        "source": "agent",
+        "message": "Fixture task completed.",
+        "metrics": {
+          "prompt_tokens": 100,
+          "completion_tokens": 20,
+          "cached_tokens": 0,
+          "extra": {
+            "reasoning_output_tokens": 0,
+            "total_tokens": 120
+          }
+        },
+        "extra": {
+          "record_type": "message",
+          "provider": "fixture",
+          "model": "fixture",
+          "stop_reason": "stop"
+        },
+        "step_id": 20
+      },
+      {
+        "timestamp": "2026-11-05T07:09:15.556Z",
+        "source": "user",
+        "message": "SLOW: Read probe.txt using the read tool, then finish.",
+        "extra": {
+          "record_type": "message"
+        },
+        "step_id": 21
+      },
+      {
+        "timestamp": "2026-11-05T07:09:15.558Z",
+        "source": "agent",
+        "message": "Tool call: read",
+        "tool_calls": [
+          {
+            "tool_call_id": "read-15",
+            "function_name": "read",
+            "arguments": {
+              "path": "probe.txt"
+            }
+          }
+        ],
+        "metrics": {
+          "prompt_tokens": 100,
+          "completion_tokens": 20,
+          "cached_tokens": 0,
+          "extra": {
+            "reasoning_output_tokens": 0,
+            "total_tokens": 120
+          }
+        },
+        "extra": {
+          "record_type": "message",
+          "provider": "fixture",
+          "model": "fixture",
+          "stop_reason": "toolUse"
+        },
+        "step_id": 22
+      },
+      {
+        "timestamp": "2026-11-05T07:09:15.559Z",
+        "source": "system",
+        "message": "0ce6c9a7-b8ae-43fe-b1b4-bf0aef78b342",
+        "observation": {
+          "results": [
+            {
+              "source_call_id": "read-15",
+              "content": "0ce6c9a7-b8ae-43fe-b1b4-bf0aef78b342",
+              "extra": {
+                "tool_name": "read"
+              }
+            }
+          ]
+        },
+        "extra": {
+          "record_type": "message"
+        },
+        "step_id": 23
+      },
+      {
+        "timestamp": "2026-11-05T07:09:15.961Z",
+        "source": "agent",
+        "message": "Fixture task completed.",
+        "metrics": {
+          "prompt_tokens": 100,
+          "completion_tokens": 20,
+          "cached_tokens": 0,
+          "extra": {
+            "reasoning_output_tokens": 0,
+            "total_tokens": 120
+          }
+        },
+        "extra": {
+          "record_type": "message",
+          "provider": "fixture",
+          "model": "fixture",
+          "stop_reason": "stop"
+        },
+        "step_id": 24
+      },
+      {
+        "timestamp": "2026-11-05T07:09:16.670Z",
+        "source": "user",
+        "message": "Read probe.txt using the read tool, then finish.",
+        "extra": {
+          "record_type": "message"
+        },
+        "step_id": 25
+      },
+      {
+        "timestamp": "2026-11-05T07:09:16.672Z",
+        "source": "agent",
+        "message": "Tool call: read",
+        "tool_calls": [
+          {
+            "tool_call_id": "read-17",
+            "function_name": "read",
+            "arguments": {
+              "path": "probe.txt"
+            }
+          }
+        ],
+        "metrics": {
+          "prompt_tokens": 100,
+          "completion_tokens": 20,
+          "cached_tokens": 0,
+          "extra": {
+            "reasoning_output_tokens": 0,
+            "total_tokens": 120
+          }
+        },
+        "extra": {
+          "record_type": "message",
+          "provider": "fixture",
+          "model": "fixture",
+          "stop_reason": "toolUse"
+        },
+        "step_id": 26
+      },
+      {
+        "timestamp": "2026-11-05T07:09:16.673Z",
+        "source": "system",
+        "message": "0ce6c9a7-b8ae-43fe-b1b4-bf0aef78b342",
+        "observation": {
+          "results": [
+            {
+              "source_call_id": "read-17",
+              "content": "0ce6c9a7-b8ae-43fe-b1b4-bf0aef78b342",
+              "extra": {
+                "tool_name": "read"
+              }
+            }
+          ]
+        },
+        "extra": {
+          "record_type": "message"
+        },
+        "step_id": 27
+      },
+      {
+        "timestamp": "2026-11-05T07:09:16.674Z",
+        "source": "agent",
+        "message": "Fixture task completed.",
+        "metrics": {
+          "prompt_tokens": 100,
+          "completion_tokens": 20,
+          "cached_tokens": 0,
+          "extra": {
+            "reasoning_output_tokens": 0,
+            "total_tokens": 120
+          }
+        },
+        "extra": {
+          "record_type": "message",
+          "provider": "fixture",
+          "model": "fixture",
+          "stop_reason": "stop"
+        },
+        "step_id": 28
+      },
+      {
+        "timestamp": "2026-11-05T07:09:17.180Z",
+        "source": "user",
+        "message": "SLOW: Read probe.txt using the read tool, then finish.",
+        "extra": {
+          "record_type": "message"
+        },
+        "step_id": 29
+      },
+      {
+        "timestamp": "2026-11-05T07:09:17.182Z",
+        "source": "agent",
+        "message": "Tool call: read",
+        "tool_calls": [
+          {
+            "tool_call_id": "read-19",
+            "function_name": "read",
+            "arguments": {
+              "path": "probe.txt"
+            }
+          }
+        ],
+        "metrics": {
+          "prompt_tokens": 100,
+          "completion_tokens": 20,
+          "cached_tokens": 0,
+          "extra": {
+            "reasoning_output_tokens": 0,
+            "total_tokens": 120
+          }
+        },
+        "extra": {
+          "record_type": "message",
+          "provider": "fixture",
+          "model": "fixture",
+          "stop_reason": "toolUse"
+        },
+        "step_id": 30
+      },
+      {
+        "timestamp": "2026-11-05T07:09:17.183Z",
+        "source": "system",
+        "message": "0ce6c9a7-b8ae-43fe-b1b4-bf0aef78b342",
+        "observation": {
+          "results": [
+            {
+              "source_call_id": "read-19",
+              "content": "0ce6c9a7-b8ae-43fe-b1b4-bf0aef78b342",
+              "extra": {
+                "tool_name": "read"
+              }
+            }
+          ]
+        },
+        "extra": {
+          "record_type": "message"
+        },
+        "step_id": 31
+      },
+      {
+        "timestamp": "2026-11-05T07:09:17.584Z",
+        "source": "agent",
+        "message": "Fixture task completed.",
+        "metrics": {
+          "prompt_tokens": 100,
+          "completion_tokens": 20,
+          "cached_tokens": 0,
+          "extra": {
+            "reasoning_output_tokens": 0,
+            "total_tokens": 120
+          }
+        },
+        "extra": {
+          "record_type": "message",
+          "provider": "fixture",
+          "model": "fixture",
+          "stop_reason": "stop"
+        },
+        "step_id": 32
+      },
+      {
+        "timestamp": "2026-11-05T07:09:18.295Z",
+        "source": "user",
+        "message": "Read probe.txt using the read tool, then finish.",
+        "extra": {
+          "record_type": "message"
+        },
+        "step_id": 33
+      },
+      {
+        "timestamp": "2026-11-05T07:09:18.297Z",
+        "source": "agent",
+        "message": "Tool call: read",
+        "tool_calls": [
+          {
+            "tool_call_id": "read-21",
+            "function_name": "read",
+            "arguments": {
+              "path": "probe.txt"
+            }
+          }
+        ],
+        "metrics": {
+          "prompt_tokens": 100,
+          "completion_tokens": 20,
+          "cached_tokens": 0,
+          "extra": {
+            "reasoning_output_tokens": 0,
+            "total_tokens": 120
+          }
+        },
+        "extra": {
+          "record_type": "message",
+          "provider": "fixture",
+          "model": "fixture",
+          "stop_reason": "toolUse"
+        },
+        "step_id": 34
+      },
+      {
+        "timestamp": "2026-11-05T07:09:18.297Z",
+        "source": "system",
+        "message": "0ce6c9a7-b8ae-43fe-b1b4-bf0aef78b342",
+        "observation": {
+          "results": [
+            {
+              "source_call_id": "read-21",
+              "content": "0ce6c9a7-b8ae-43fe-b1b4-bf0aef78b342",
+              "extra": {
+                "tool_name": "read"
+              }
+            }
+          ]
+        },
+        "extra": {
+          "record_type": "message"
+        },
+        "step_id": 35
+      },
+      {
+        "timestamp": "2026-11-05T07:09:18.299Z",
+        "source": "agent",
+        "message": "Fixture task completed.",
+        "metrics": {
+          "prompt_tokens": 100,
+          "completion_tokens": 20,
+          "cached_tokens": 0,
+          "extra": {
+            "reasoning_output_tokens": 0,
+            "total_tokens": 120
+          }
+        },
+        "extra": {
+          "record_type": "message",
+          "provider": "fixture",
+          "model": "fixture",
+          "stop_reason": "stop"
+        },
+        "step_id": 36
+      },
+      {
+        "timestamp": "2026-11-05T07:09:18.804Z",
+        "source": "user",
+        "message": "SLOW: Read probe.txt using the read tool, then finish.",
+        "extra": {
+          "record_type": "message"
+        },
+        "step_id": 37
+      },
+      {
+        "timestamp": "2026-11-05T07:09:18.805Z",
+        "source": "agent",
+        "message": "Tool call: read",
+        "tool_calls": [
+          {
+            "tool_call_id": "read-23",
+            "function_name": "read",
+            "arguments": {
+              "path": "probe.txt"
+            }
+          }
+        ],
+        "metrics": {
+          "prompt_tokens": 100,
+          "completion_tokens": 20,
+          "cached_tokens": 0,
+          "extra": {
+            "reasoning_output_tokens": 0,
+            "total_tokens": 120
+          }
+        },
+        "extra": {
+          "record_type": "message",
+          "provider": "fixture",
+          "model": "fixture",
+          "stop_reason": "toolUse"
+        },
+        "step_id": 38
+      },
+      {
+        "timestamp": "2026-11-05T07:09:18.806Z",
+        "source": "system",
+        "message": "0ce6c9a7-b8ae-43fe-b1b4-bf0aef78b342",
+        "observation": {
+          "results": [
+            {
+              "source_call_id": "read-23",
+              "content": "0ce6c9a7-b8ae-43fe-b1b4-bf0aef78b342",
+              "extra": {
+                "tool_name": "read"
+              }
+            }
+          ]
+        },
+        "extra": {
+          "record_type": "message"
+        },
+        "step_id": 39
+      },
+      {
+        "timestamp": "2026-11-05T07:09:19.207Z",
+        "source": "agent",
+        "message": "Fixture task completed.",
+        "metrics": {
+          "prompt_tokens": 100,
+          "completion_tokens": 20,
+          "cached_tokens": 0,
+          "extra": {
+            "reasoning_output_tokens": 0,
+            "total_tokens": 120
+          }
+        },
+        "extra": {
+          "record_type": "message",
+          "provider": "fixture",
+          "model": "fixture",
+          "stop_reason": "stop"
+        },
+        "step_id": 40
+      },
+      {
+        "timestamp": "2026-11-05T07:09:19.919Z",
+        "source": "user",
+        "message": "Read probe.txt using the read tool, then finish.",
+        "extra": {
+          "record_type": "message"
+        },
+        "step_id": 41
+      },
+      {
+        "timestamp": "2026-11-05T07:09:19.921Z",
+        "source": "agent",
+        "message": "Tool call: read",
+        "tool_calls": [
+          {
+            "tool_call_id": "read-25",
+            "function_name": "read",
+            "arguments": {
+              "path": "probe.txt"
+            }
+          }
+        ],
+        "metrics": {
+          "prompt_tokens": 100,
+          "completion_tokens": 20,
+          "cached_tokens": 0,
+          "extra": {
+            "reasoning_output_tokens": 0,
+            "total_tokens": 120
+          }
+        },
+        "extra": {
+          "record_type": "message",
+          "provider": "fixture",
+          "model": "fixture",
+          "stop_reason": "toolUse"
+        },
+        "step_id": 42
+      },
+      {
+        "timestamp": "2026-11-05T07:09:19.921Z",
+        "source": "system",
+        "message": "0ce6c9a7-b8ae-43fe-b1b4-bf0aef78b342",
+        "observation": {
+          "results": [
+            {
+              "source_call_id": "read-25",
+              "content": "0ce6c9a7-b8ae-43fe-b1b4-bf0aef78b342",
+              "extra": {
+                "tool_name": "read"
+              }
+            }
+          ]
+        },
+        "extra": {
+          "record_type": "message"
+        },
+        "step_id": 43
+      },
+      {
+        "timestamp": "2026-11-05T07:09:19.923Z",
+        "source": "agent",
+        "message": "Fixture task completed.",
+        "metrics": {
+          "prompt_tokens": 100,
+          "completion_tokens": 20,
+          "cached_tokens": 0,
+          "extra": {
+            "reasoning_output_tokens": 0,
+            "total_tokens": 120
+          }
+        },
+        "extra": {
+          "record_type": "message",
+          "provider": "fixture",
+          "model": "fixture",
+          "stop_reason": "stop"
+        },
+        "step_id": 44
+      },
+      {
+        "timestamp": "2026-11-05T07:09:20.530Z",
+        "source": "user",
+        "message": "SLOW: Read probe.txt using the read tool, then finish.",
+        "extra": {
+          "record_type": "message"
+        },
+        "step_id": 45
+      },
+      {
+        "timestamp": "2026-11-05T07:09:20.534Z",
+        "source": "agent",
+        "message": "Tool call: read",
+        "tool_calls": [
+          {
+            "tool_call_id": "read-27",
+            "function_name": "read",
+            "arguments": {
+              "path": "probe.txt"
+            }
+          }
+        ],
+        "metrics": {
+          "prompt_tokens": 100,
+          "completion_tokens": 20,
+          "cached_tokens": 0,
+          "extra": {
+            "reasoning_output_tokens": 0,
+            "total_tokens": 120
+          }
+        },
+        "extra": {
+          "record_type": "message",
+          "provider": "fixture",
+          "model": "fixture",
+          "stop_reason": "toolUse"
+        },
+        "step_id": 46
+      },
+      {
+        "timestamp": "2026-11-05T07:09:20.535Z",
+        "source": "system",
+        "message": "0ce6c9a7-b8ae-43fe-b1b4-bf0aef78b342",
+        "observation": {
+          "results": [
+            {
+              "source_call_id": "read-27",
+              "content": "0ce6c9a7-b8ae-43fe-b1b4-bf0aef78b342",
+              "extra": {
+                "tool_name": "read"
+              }
+            }
+          ]
+        },
+        "extra": {
+          "record_type": "message"
+        },
+        "step_id": 47
+      },
+      {
+        "timestamp": "2026-11-05T07:09:20.937Z",
+        "source": "agent",
+        "message": "Fixture task completed.",
+        "metrics": {
+          "prompt_tokens": 100,
+          "completion_tokens": 20,
+          "cached_tokens": 0,
+          "extra": {
+            "reasoning_output_tokens": 0,
+            "total_tokens": 120
+          }
+        },
+        "extra": {
+          "record_type": "message",
+          "provider": "fixture",
+          "model": "fixture",
+          "stop_reason": "stop"
+        },
+        "step_id": 48
+      },
+      {
+        "timestamp": "2026-11-05T07:09:21.868Z",
+        "source": "user",
+        "message": "Read probe.txt using the read tool, then finish.",
+        "extra": {
+          "record_type": "message"
+        },
+        "step_id": 49
+      },
+      {
+        "timestamp": "2026-11-05T07:09:21.871Z",
+        "source": "agent",
+        "message": "Tool call: read",
+        "tool_calls": [
+          {
+            "tool_call_id": "read-29",
+            "function_name": "read",
+            "arguments": {
+              "path": "probe.txt"
+            }
+          }
+        ],
+        "metrics": {
+          "prompt_tokens": 100,
+          "completion_tokens": 20,
+          "cached_tokens": 0,
+          "extra": {
+            "reasoning_output_tokens": 0,
+            "total_tokens": 120
+          }
+        },
+        "extra": {
+          "record_type": "message",
+          "provider": "fixture",
+          "model": "fixture",
+          "stop_reason": "toolUse"
+        },
+        "step_id": 50
+      },
+      {
+        "timestamp": "2026-11-05T07:09:21.871Z",
+        "source": "system",
+        "message": "0ce6c9a7-b8ae-43fe-b1b4-bf0aef78b342",
+        "observation": {
+          "results": [
+            {
+              "source_call_id": "read-29",
+              "content": "0ce6c9a7-b8ae-43fe-b1b4-bf0aef78b342",
+              "extra": {
+                "tool_name": "read"
+              }
+            }
+          ]
+        },
+        "extra": {
+          "record_type": "message"
+        },
+        "step_id": 51
+      },
+      {
+        "timestamp": "2026-11-05T07:09:21.873Z",
+        "source": "agent",
+        "message": "Fixture task completed.",
+        "metrics": {
+          "prompt_tokens": 100,
+          "completion_tokens": 20,
+          "cached_tokens": 0,
+          "extra": {
+            "reasoning_output_tokens": 0,
+            "total_tokens": 120
+          }
+        },
+        "extra": {
+          "record_type": "message",
+          "provider": "fixture",
+          "model": "fixture",
+          "stop_reason": "stop"
+        },
+        "step_id": 52
+      }
+    ],
+    "final_metrics": {
+      "total_prompt_tokens": 2600,
+      "total_completion_tokens": 520,
+      "total_cached_tokens": 0,
+      "total_steps": 52,
+      "extra": {
+        "reasoning_output_tokens": 0,
+        "total_tokens": 3120
+      }
+    },
+    "extra": {
+      "source_path": "/tmp/lh-7vNri0/c.jsonl",
+      "source_records": 56,
+      "projection": "roamgate-lightweight"
+    }
+  }
+}

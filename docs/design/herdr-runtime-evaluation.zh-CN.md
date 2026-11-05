@@ -1,6 +1,6 @@
 # Herdr 托管 Loom 运行时的实验方案
 
-日期：2026-11-05。状态：实验设计与静态预检完成，尚未运行候选适配器或付费模型。全批排除 Claude Code，包括通过其他 CLI 启动的子进程。配置见[固定实验清单](../evo/evidence/2026-11-05-herdr-runtime-study/plan.json)。
+日期：2026-11-05。状态：已执行免费筛选，原生 Pi 的结构化承载、观察与聊天投影通过；接管时自动输入未被原始 Herdr 阻止，候选在首次关键失败处停止。保留现有 Loom 运行时，不进入付费阶段。详见[执行结果和范围](../evo/evidence/2026-11-05-herdr-runtime-study/README.md)。下文是预先固定的完整方案，不代表所有阶段均已执行。全批排除 Claude Code，包括通过其他 CLI 启动的子进程。配置见[固定实验清单](../evo/evidence/2026-11-05-herdr-runtime-study/plan.json)。
 
 ## 要作出的决定
 

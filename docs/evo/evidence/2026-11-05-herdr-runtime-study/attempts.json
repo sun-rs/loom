@@ -1,0 +1,232 @@
+[
+  {
+    "attempt": 1,
+    "root": "/tmp/lh-98ShnE",
+    "status": "harness-setup-failed-before-server-or-model",
+    "error": "Missing config/herdr directory when writing config.toml",
+    "requests": 0,
+    "actualFileReadReceipts": 0
+  },
+  {
+    "attempt": 2,
+    "root": "/tmp/lh-6UCwPd",
+    "startedAt": "2026-11-05T07:05:50.602Z",
+    "finishedAt": "2026-11-05T07:05:51.193Z",
+    "status": "stopped-at-first-failure",
+    "error": "SyntaxError: Unexpected token 's', \"status: ru\"... is not valid JSON",
+    "checks": [],
+    "requests": 0,
+    "actualFileReadReceipts": 0,
+    "cleanup": {
+      "socketRemoved": true,
+      "serverExit": {
+        "code": 0,
+        "signal": null
+      }
+    },
+    "serverStatus": null,
+    "classification": "harness setup: status server returns text, not JSON; no native CLI launched"
+  },
+  {
+    "attempt": 3,
+    "root": "/tmp/lh-VTHBBb",
+    "startedAt": "2026-11-05T07:06:00.685Z",
+    "finishedAt": "2026-11-05T07:06:31.164Z",
+    "status": "stopped-at-first-failure",
+    "error": "Error: Command failed: /opt/homebrew/bin/pi --offline --no-context-files --no-extensions --no-skills --no-prompt-templates --no-mcp --no-themes --provider fixture --model fixture --thinking off --tools read --print --mode json --session /tmp/lh-VTHBBb/a.jsonl Read probe.txt using the read tool, then finish.\n",
+    "checks": [
+      {
+        "id": "isolated-server-ready",
+        "pid": 56692,
+        "socket": "/tmp/lh-VTHBBb/config/herdr/sessions/probe/herdr.sock"
+      }
+    ],
+    "requests": 0,
+    "actualFileReadReceipts": 0,
+    "cleanup": {
+      "socketRemoved": true,
+      "serverExit": {
+        "code": 0,
+        "signal": null
+      }
+    },
+    "serverStatus": "status: running\nversion: 0.9.1\nendpoint_compatible: yes\nprivate_protocol: 22\nprivate_protocol_compatible: yes\nsocket: /tmp/lh-VTHBBb/config/herdr/sessions/probe/herdr.sock",
+    "classification": "harness setup: Pi stdin pipe was not ended; no fixture request/session created; timeout and stop preserved"
+  },
+  {
+    "attempt": 4,
+    "root": "/tmp/lh-FsLZiS",
+    "startedAt": "2026-11-05T07:07:00.249Z",
+    "finishedAt": "2026-11-05T07:07:05.817Z",
+    "status": "smoke-passed-not-production-accepted",
+    "error": null,
+    "checks": [
+      {
+        "id": "isolated-server-ready",
+        "pid": 59612,
+        "socket": "/tmp/lh-FsLZiS/config/herdr/sessions/probe/herdr.sock"
+      },
+      {
+        "id": "A0-native-structured-tool-final",
+        "ms": 267,
+        "requests": 2
+      },
+      {
+        "id": "B0-same-stdio-tool-final",
+        "ms": 307,
+        "requests": 2,
+        "scope": "stdout file relay only; not a production RuntimeAdapter"
+      },
+      {
+        "id": "C-native-interactive-tool-final",
+        "requests": 2
+      },
+      {
+        "id": "C-observe-repeated-read-zero-generation",
+        "reads": 10,
+        "extraRequests": 0
+      },
+      {
+        "id": "C-second-turn-exact-native-final",
+        "requests": 2,
+        "waitError": null
+      }
+    ],
+    "requests": 8,
+    "actualFileReadReceipts": 4,
+    "cleanup": {
+      "socketRemoved": true,
+      "serverExit": {
+        "code": 0,
+        "signal": null
+      }
+    },
+    "serverStatus": "status: running\nversion: 0.9.1\nendpoint_compatible: yes\nprivate_protocol: 22\nprivate_protocol_compatible: yes\nsocket: /tmp/lh-FsLZiS/config/herdr/sessions/probe/herdr.sock"
+  },
+  {
+    "attempt": 5,
+    "root": "/tmp/lh-7vNri0",
+    "startedAt": "2026-11-05T07:09:07.313Z",
+    "finishedAt": "2026-11-05T07:09:23.184Z",
+    "status": "stopped-at-first-failure",
+    "error": "AssertionError [ERR_ASSERTION]: Herdr terminal ownership did not pause the independent automation API\n\n2 !== 0\n",
+    "checks": [
+      {
+        "id": "isolated-server-ready",
+        "pid": 65931,
+        "socket": "/tmp/lh-7vNri0/config/herdr/sessions/probe/herdr.sock"
+      },
+      {
+        "id": "A0-native-structured-tool-final",
+        "ms": 260,
+        "requests": 2
+      },
+      {
+        "id": "B0-same-stdio-tool-final",
+        "ms": 308,
+        "requests": 2,
+        "scope": "stdout file relay only; not a production RuntimeAdapter"
+      },
+      {
+        "id": "C-native-interactive-tool-final",
+        "requests": 2
+      },
+      {
+        "id": "C-observe-repeated-read-zero-generation",
+        "reads": 10,
+        "extraRequests": 0
+      },
+      {
+        "id": "C-second-turn-exact-native-final",
+        "requests": 2,
+        "waitError": null
+      },
+      {
+        "id": "C-fixed-seed-observe-and-turn",
+        "seed": 0,
+        "extraObservationRequests": 0,
+        "turnRequests": 2,
+        "nativeSessionId": "01a1aa8a-3bb3-7508-aa66-55058d1b3c95"
+      },
+      {
+        "id": "C-fixed-seed-observe-and-turn",
+        "seed": 1,
+        "extraObservationRequests": 0,
+        "turnRequests": 2,
+        "nativeSessionId": "01a1aa8a-3bb3-7508-aa66-55058d1b3c95"
+      },
+      {
+        "id": "C-fixed-seed-observe-and-turn",
+        "seed": 2,
+        "extraObservationRequests": 0,
+        "turnRequests": 2,
+        "nativeSessionId": "01a1aa8a-3bb3-7508-aa66-55058d1b3c95"
+      },
+      {
+        "id": "C-fixed-seed-observe-and-turn",
+        "seed": 3,
+        "extraObservationRequests": 0,
+        "turnRequests": 2,
+        "nativeSessionId": "01a1aa8a-3bb3-7508-aa66-55058d1b3c95"
+      },
+      {
+        "id": "C-fixed-seed-observe-and-turn",
+        "seed": 4,
+        "extraObservationRequests": 0,
+        "turnRequests": 2,
+        "nativeSessionId": "01a1aa8a-3bb3-7508-aa66-55058d1b3c95"
+      },
+      {
+        "id": "C-fixed-seed-observe-and-turn",
+        "seed": 5,
+        "extraObservationRequests": 0,
+        "turnRequests": 2,
+        "nativeSessionId": "01a1aa8a-3bb3-7508-aa66-55058d1b3c95"
+      },
+      {
+        "id": "C-fixed-seed-observe-and-turn",
+        "seed": 6,
+        "extraObservationRequests": 0,
+        "turnRequests": 2,
+        "nativeSessionId": "01a1aa8a-3bb3-7508-aa66-55058d1b3c95"
+      },
+      {
+        "id": "C-fixed-seed-observe-and-turn",
+        "seed": 7,
+        "extraObservationRequests": 0,
+        "turnRequests": 2,
+        "nativeSessionId": "01a1aa8a-3bb3-7508-aa66-55058d1b3c95"
+      },
+      {
+        "id": "C-fixed-seed-observe-and-turn",
+        "seed": 8,
+        "extraObservationRequests": 0,
+        "turnRequests": 2,
+        "nativeSessionId": "01a1aa8a-3bb3-7508-aa66-55058d1b3c95"
+      },
+      {
+        "id": "C-fixed-seed-observe-and-turn",
+        "seed": 9,
+        "extraObservationRequests": 0,
+        "turnRequests": 2,
+        "nativeSessionId": "01a1aa8a-3bb3-7508-aa66-55058d1b3c95"
+      },
+      {
+        "id": "C-takeover-automation-boundary",
+        "secondControllerRejected": true,
+        "automaticError": null,
+        "automaticRequestsWhileControlled": 2
+      }
+    ],
+    "requests": 30,
+    "actualFileReadReceipts": 15,
+    "cleanup": {
+      "socketRemoved": true,
+      "serverExit": {
+        "code": 0,
+        "signal": null
+      }
+    },
+    "serverStatus": "status: running\nversion: 0.9.1\nendpoint_compatible: yes\nprivate_protocol: 22\nprivate_protocol_compatible: yes\nsocket: /tmp/lh-7vNri0/config/herdr/sessions/probe/herdr.sock"
+  }
+]

@@ -1,0 +1,1652 @@
+[
+  {
+    "attempt": 4,
+    "request": 1,
+    "at": 1793862420790,
+    "endpoint": "http://127.0.0.1:53714/v1/chat/completions",
+    "model": "fixture",
+    "stream": true,
+    "bodySha256CanonicalPython": "f70ff2fffd33c06417c1c26a125af1747dc1d191717f043b392bc5c139f80ba6",
+    "lastUser": {
+      "role": "user",
+      "content": [
+        {
+          "type": "text",
+          "text": "Read probe.txt using the read tool, then finish."
+        }
+      ]
+    },
+    "messageRoles": ["system", "user"],
+    "nativeToolReceiptIds": []
+  },
+  {
+    "attempt": 4,
+    "request": 2,
+    "at": 1793862420802,
+    "endpoint": "http://127.0.0.1:53714/v1/chat/completions",
+    "model": "fixture",
+    "stream": true,
+    "bodySha256CanonicalPython": "5fb432a2193d251fe2a72819702768a437e645f62eb1b6c0c8070c5c86a3feb3",
+    "lastUser": {
+      "role": "user",
+      "content": [
+        {
+          "type": "text",
+          "text": "Read probe.txt using the read tool, then finish."
+        }
+      ]
+    },
+    "messageRoles": ["system", "user", "assistant", "tool"],
+    "nativeToolReceiptIds": ["read-1"]
+  },
+  {
+    "attempt": 4,
+    "request": 3,
+    "at": 1793862421059,
+    "endpoint": "http://127.0.0.1:53714/v1/chat/completions",
+    "model": "fixture",
+    "stream": true,
+    "bodySha256CanonicalPython": "be6bd10dc3acdea7f4e70cb7e520398cfbf3b517d870703b510099b89bfc6b2b",
+    "lastUser": {
+      "role": "user",
+      "content": [
+        {
+          "type": "text",
+          "text": "Read probe.txt using the read tool, then finish."
+        }
+      ]
+    },
+    "messageRoles": ["system", "user"],
+    "nativeToolReceiptIds": []
+  },
+  {
+    "attempt": 4,
+    "request": 4,
+    "at": 1793862421071,
+    "endpoint": "http://127.0.0.1:53714/v1/chat/completions",
+    "model": "fixture",
+    "stream": true,
+    "bodySha256CanonicalPython": "a05085eb136c8a4d4e4185f2d8cad3e67f9e60acebf57baf44e85bd26740b0ab",
+    "lastUser": {
+      "role": "user",
+      "content": [
+        {
+          "type": "text",
+          "text": "Read probe.txt using the read tool, then finish."
+        }
+      ]
+    },
+    "messageRoles": ["system", "user", "assistant", "tool"],
+    "nativeToolReceiptIds": ["read-3"]
+  },
+  {
+    "attempt": 4,
+    "request": 5,
+    "at": 1793862424570,
+    "endpoint": "http://127.0.0.1:53714/v1/chat/completions",
+    "model": "fixture",
+    "stream": true,
+    "bodySha256CanonicalPython": "d09d45046e2fe457c39fe968c19f05dae7055d2906995b0a64b76cba5001f8ce",
+    "lastUser": {
+      "role": "user",
+      "content": [
+        {
+          "type": "text",
+          "text": "Read probe.txt using the read tool, then finish."
+        }
+      ]
+    },
+    "messageRoles": ["system", "user"],
+    "nativeToolReceiptIds": []
+  },
+  {
+    "attempt": 4,
+    "request": 6,
+    "at": 1793862424592,
+    "endpoint": "http://127.0.0.1:53714/v1/chat/completions",
+    "model": "fixture",
+    "stream": true,
+    "bodySha256CanonicalPython": "8e55b6d83039fd211aa502d3314772b02aeb46ed5d7f6702916395b9944fa398",
+    "lastUser": {
+      "role": "user",
+      "content": [
+        {
+          "type": "text",
+          "text": "Read probe.txt using the read tool, then finish."
+        }
+      ]
+    },
+    "messageRoles": ["system", "user", "assistant", "tool"],
+    "nativeToolReceiptIds": ["read-5"]
+  },
+  {
+    "attempt": 4,
+    "request": 7,
+    "at": 1793862425036,
+    "endpoint": "http://127.0.0.1:53714/v1/chat/completions",
+    "model": "fixture",
+    "stream": true,
+    "bodySha256CanonicalPython": "ecb727b7af9275b0159eaeec4b96daec6ec293d6ebefe8781de1caf3e558b695",
+    "lastUser": {
+      "role": "user",
+      "content": [
+        {
+          "type": "text",
+          "text": "SLOW: Read probe.txt using the read tool, then finish."
+        }
+      ]
+    },
+    "messageRoles": [
+      "system",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user"
+    ],
+    "nativeToolReceiptIds": ["read-5"]
+  },
+  {
+    "attempt": 4,
+    "request": 8,
+    "at": 1793862425040,
+    "endpoint": "http://127.0.0.1:53714/v1/chat/completions",
+    "model": "fixture",
+    "stream": true,
+    "bodySha256CanonicalPython": "1d81f5c87940111eeecd811d464a7348060ca6c67f198aad3d8b124dfcf0163b",
+    "lastUser": {
+      "role": "user",
+      "content": [
+        {
+          "type": "text",
+          "text": "SLOW: Read probe.txt using the read tool, then finish."
+        }
+      ]
+    },
+    "messageRoles": [
+      "system",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool"
+    ],
+    "nativeToolReceiptIds": ["read-5", "read-7"]
+  },
+  {
+    "attempt": 5,
+    "request": 1,
+    "at": 1793862547855,
+    "endpoint": "http://127.0.0.1:54784/v1/chat/completions",
+    "model": "fixture",
+    "stream": true,
+    "bodySha256CanonicalPython": "d8c8963713ac2d3c6a48291a94dc981882117e8db4a1dc1ea9634673d211723b",
+    "lastUser": {
+      "role": "user",
+      "content": [
+        {
+          "type": "text",
+          "text": "Read probe.txt using the read tool, then finish."
+        }
+      ]
+    },
+    "messageRoles": ["system", "user"],
+    "nativeToolReceiptIds": []
+  },
+  {
+    "attempt": 5,
+    "request": 2,
+    "at": 1793862547867,
+    "endpoint": "http://127.0.0.1:54784/v1/chat/completions",
+    "model": "fixture",
+    "stream": true,
+    "bodySha256CanonicalPython": "4ea3e0a5f99d3fd989309b7fb3716eaa163a199cbbbaf5681405bf95db38c7d6",
+    "lastUser": {
+      "role": "user",
+      "content": [
+        {
+          "type": "text",
+          "text": "Read probe.txt using the read tool, then finish."
+        }
+      ]
+    },
+    "messageRoles": ["system", "user", "assistant", "tool"],
+    "nativeToolReceiptIds": ["read-1"]
+  },
+  {
+    "attempt": 5,
+    "request": 3,
+    "at": 1793862548137,
+    "endpoint": "http://127.0.0.1:54784/v1/chat/completions",
+    "model": "fixture",
+    "stream": true,
+    "bodySha256CanonicalPython": "699b1cc672d2af76d736275656cbefa87dfcce6b5e365bcfe22d15a15ccdcfcf",
+    "lastUser": {
+      "role": "user",
+      "content": [
+        {
+          "type": "text",
+          "text": "Read probe.txt using the read tool, then finish."
+        }
+      ]
+    },
+    "messageRoles": ["system", "user"],
+    "nativeToolReceiptIds": []
+  },
+  {
+    "attempt": 5,
+    "request": 4,
+    "at": 1793862548150,
+    "endpoint": "http://127.0.0.1:54784/v1/chat/completions",
+    "model": "fixture",
+    "stream": true,
+    "bodySha256CanonicalPython": "ba26a4678c329c590c54343b05d00807d240b3260f2f6e9139d78f5f57d59650",
+    "lastUser": {
+      "role": "user",
+      "content": [
+        {
+          "type": "text",
+          "text": "Read probe.txt using the read tool, then finish."
+        }
+      ]
+    },
+    "messageRoles": ["system", "user", "assistant", "tool"],
+    "nativeToolReceiptIds": ["read-3"]
+  },
+  {
+    "attempt": 5,
+    "request": 5,
+    "at": 1793862551652,
+    "endpoint": "http://127.0.0.1:54784/v1/chat/completions",
+    "model": "fixture",
+    "stream": true,
+    "bodySha256CanonicalPython": "b6c52939cb0467526c8d01c9031f4f941f6253966b3503e03e5f0843b2791769",
+    "lastUser": {
+      "role": "user",
+      "content": [
+        {
+          "type": "text",
+          "text": "Read probe.txt using the read tool, then finish."
+        }
+      ]
+    },
+    "messageRoles": ["system", "user"],
+    "nativeToolReceiptIds": []
+  },
+  {
+    "attempt": 5,
+    "request": 6,
+    "at": 1793862551665,
+    "endpoint": "http://127.0.0.1:54784/v1/chat/completions",
+    "model": "fixture",
+    "stream": true,
+    "bodySha256CanonicalPython": "2ddc342960c7ff2a606df39dbc495082887309e1d3511c27dd2fec3780a0378d",
+    "lastUser": {
+      "role": "user",
+      "content": [
+        {
+          "type": "text",
+          "text": "Read probe.txt using the read tool, then finish."
+        }
+      ]
+    },
+    "messageRoles": ["system", "user", "assistant", "tool"],
+    "nativeToolReceiptIds": ["read-5"]
+  },
+  {
+    "attempt": 5,
+    "request": 7,
+    "at": 1793862552101,
+    "endpoint": "http://127.0.0.1:54784/v1/chat/completions",
+    "model": "fixture",
+    "stream": true,
+    "bodySha256CanonicalPython": "f9901a706f9b2ce02158696132d8aca8bce5983d757eab614cc3023b9027e380",
+    "lastUser": {
+      "role": "user",
+      "content": [
+        {
+          "type": "text",
+          "text": "SLOW: Read probe.txt using the read tool, then finish."
+        }
+      ]
+    },
+    "messageRoles": [
+      "system",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user"
+    ],
+    "nativeToolReceiptIds": ["read-5"]
+  },
+  {
+    "attempt": 5,
+    "request": 8,
+    "at": 1793862552104,
+    "endpoint": "http://127.0.0.1:54784/v1/chat/completions",
+    "model": "fixture",
+    "stream": true,
+    "bodySha256CanonicalPython": "6098a97b339f72b5b9aec2e7199ca3bcdc7fa12c8d204787c5d7a122b6142cd9",
+    "lastUser": {
+      "role": "user",
+      "content": [
+        {
+          "type": "text",
+          "text": "SLOW: Read probe.txt using the read tool, then finish."
+        }
+      ]
+    },
+    "messageRoles": [
+      "system",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool"
+    ],
+    "nativeToolReceiptIds": ["read-5", "read-7"]
+  },
+  {
+    "attempt": 5,
+    "request": 9,
+    "at": 1793862553218,
+    "endpoint": "http://127.0.0.1:54784/v1/chat/completions",
+    "model": "fixture",
+    "stream": true,
+    "bodySha256CanonicalPython": "36b1b2d9d2dbdffa7ff99b66a56143a4331c6cbded8cdad8f45ff027815ddebd",
+    "lastUser": {
+      "role": "user",
+      "content": [
+        {
+          "type": "text",
+          "text": "Read probe.txt using the read tool, then finish."
+        }
+      ]
+    },
+    "messageRoles": [
+      "system",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user"
+    ],
+    "nativeToolReceiptIds": ["read-5", "read-7"]
+  },
+  {
+    "attempt": 5,
+    "request": 10,
+    "at": 1793862553222,
+    "endpoint": "http://127.0.0.1:54784/v1/chat/completions",
+    "model": "fixture",
+    "stream": true,
+    "bodySha256CanonicalPython": "7e69a01d34571e69fc0bda486cf5cef9d8d2c0dd32a257a628066bf07ea4f2c2",
+    "lastUser": {
+      "role": "user",
+      "content": [
+        {
+          "type": "text",
+          "text": "Read probe.txt using the read tool, then finish."
+        }
+      ]
+    },
+    "messageRoles": [
+      "system",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool"
+    ],
+    "nativeToolReceiptIds": ["read-5", "read-7", "read-9"]
+  },
+  {
+    "attempt": 5,
+    "request": 11,
+    "at": 1793862553829,
+    "endpoint": "http://127.0.0.1:54784/v1/chat/completions",
+    "model": "fixture",
+    "stream": true,
+    "bodySha256CanonicalPython": "266b858160c3b75441deaee244273a1320f830b25562c8d807fbdfdf52f5bb64",
+    "lastUser": {
+      "role": "user",
+      "content": [
+        {
+          "type": "text",
+          "text": "SLOW: Read probe.txt using the read tool, then finish."
+        }
+      ]
+    },
+    "messageRoles": [
+      "system",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user"
+    ],
+    "nativeToolReceiptIds": ["read-5", "read-7", "read-9"]
+  },
+  {
+    "attempt": 5,
+    "request": 12,
+    "at": 1793862553832,
+    "endpoint": "http://127.0.0.1:54784/v1/chat/completions",
+    "model": "fixture",
+    "stream": true,
+    "bodySha256CanonicalPython": "2717e160854982e36f7f51569cbb01ae31620075fddb5aa3bcf4c2d640639d68",
+    "lastUser": {
+      "role": "user",
+      "content": [
+        {
+          "type": "text",
+          "text": "SLOW: Read probe.txt using the read tool, then finish."
+        }
+      ]
+    },
+    "messageRoles": [
+      "system",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool"
+    ],
+    "nativeToolReceiptIds": ["read-5", "read-7", "read-9", "read-11"]
+  },
+  {
+    "attempt": 5,
+    "request": 13,
+    "at": 1793862554946,
+    "endpoint": "http://127.0.0.1:54784/v1/chat/completions",
+    "model": "fixture",
+    "stream": true,
+    "bodySha256CanonicalPython": "6cee5532d708e9cfdebf6040f83e0a6971685667c36d2b84e667d53bad3f70ee",
+    "lastUser": {
+      "role": "user",
+      "content": [
+        {
+          "type": "text",
+          "text": "Read probe.txt using the read tool, then finish."
+        }
+      ]
+    },
+    "messageRoles": [
+      "system",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user"
+    ],
+    "nativeToolReceiptIds": ["read-5", "read-7", "read-9", "read-11"]
+  },
+  {
+    "attempt": 5,
+    "request": 14,
+    "at": 1793862554949,
+    "endpoint": "http://127.0.0.1:54784/v1/chat/completions",
+    "model": "fixture",
+    "stream": true,
+    "bodySha256CanonicalPython": "8f439abb5aa9570f01328b308751f228177c54b6e59695a97b28243cd31ecafc",
+    "lastUser": {
+      "role": "user",
+      "content": [
+        {
+          "type": "text",
+          "text": "Read probe.txt using the read tool, then finish."
+        }
+      ]
+    },
+    "messageRoles": [
+      "system",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool"
+    ],
+    "nativeToolReceiptIds": ["read-5", "read-7", "read-9", "read-11", "read-13"]
+  },
+  {
+    "attempt": 5,
+    "request": 15,
+    "at": 1793862555557,
+    "endpoint": "http://127.0.0.1:54784/v1/chat/completions",
+    "model": "fixture",
+    "stream": true,
+    "bodySha256CanonicalPython": "58e88c0de0ae2604ee868b39aad2cfe2da86c7d633acd4990a3a52afe7fedafa",
+    "lastUser": {
+      "role": "user",
+      "content": [
+        {
+          "type": "text",
+          "text": "SLOW: Read probe.txt using the read tool, then finish."
+        }
+      ]
+    },
+    "messageRoles": [
+      "system",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user"
+    ],
+    "nativeToolReceiptIds": ["read-5", "read-7", "read-9", "read-11", "read-13"]
+  },
+  {
+    "attempt": 5,
+    "request": 16,
+    "at": 1793862555560,
+    "endpoint": "http://127.0.0.1:54784/v1/chat/completions",
+    "model": "fixture",
+    "stream": true,
+    "bodySha256CanonicalPython": "a46c3455f58ab5c7d0e028b1e82d4fc0d2390ed04551027b1356df6284284acc",
+    "lastUser": {
+      "role": "user",
+      "content": [
+        {
+          "type": "text",
+          "text": "SLOW: Read probe.txt using the read tool, then finish."
+        }
+      ]
+    },
+    "messageRoles": [
+      "system",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool"
+    ],
+    "nativeToolReceiptIds": [
+      "read-5",
+      "read-7",
+      "read-9",
+      "read-11",
+      "read-13",
+      "read-15"
+    ]
+  },
+  {
+    "attempt": 5,
+    "request": 17,
+    "at": 1793862556671,
+    "endpoint": "http://127.0.0.1:54784/v1/chat/completions",
+    "model": "fixture",
+    "stream": true,
+    "bodySha256CanonicalPython": "405429758c366ce1b75352c2b8a6ed35e8c504b918f6863358c89a8ed20dfc8f",
+    "lastUser": {
+      "role": "user",
+      "content": [
+        {
+          "type": "text",
+          "text": "Read probe.txt using the read tool, then finish."
+        }
+      ]
+    },
+    "messageRoles": [
+      "system",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user"
+    ],
+    "nativeToolReceiptIds": [
+      "read-5",
+      "read-7",
+      "read-9",
+      "read-11",
+      "read-13",
+      "read-15"
+    ]
+  },
+  {
+    "attempt": 5,
+    "request": 18,
+    "at": 1793862556674,
+    "endpoint": "http://127.0.0.1:54784/v1/chat/completions",
+    "model": "fixture",
+    "stream": true,
+    "bodySha256CanonicalPython": "9d2337278ee3ea3e53b364dbd708c4ff8040800d37dd4deb2fdf56b96c66ff32",
+    "lastUser": {
+      "role": "user",
+      "content": [
+        {
+          "type": "text",
+          "text": "Read probe.txt using the read tool, then finish."
+        }
+      ]
+    },
+    "messageRoles": [
+      "system",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool"
+    ],
+    "nativeToolReceiptIds": [
+      "read-5",
+      "read-7",
+      "read-9",
+      "read-11",
+      "read-13",
+      "read-15",
+      "read-17"
+    ]
+  },
+  {
+    "attempt": 5,
+    "request": 19,
+    "at": 1793862557182,
+    "endpoint": "http://127.0.0.1:54784/v1/chat/completions",
+    "model": "fixture",
+    "stream": true,
+    "bodySha256CanonicalPython": "aee8e39f1f2dd830da24cb0ff4ee06762752844070010c58f49bef84d3948074",
+    "lastUser": {
+      "role": "user",
+      "content": [
+        {
+          "type": "text",
+          "text": "SLOW: Read probe.txt using the read tool, then finish."
+        }
+      ]
+    },
+    "messageRoles": [
+      "system",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user"
+    ],
+    "nativeToolReceiptIds": [
+      "read-5",
+      "read-7",
+      "read-9",
+      "read-11",
+      "read-13",
+      "read-15",
+      "read-17"
+    ]
+  },
+  {
+    "attempt": 5,
+    "request": 20,
+    "at": 1793862557184,
+    "endpoint": "http://127.0.0.1:54784/v1/chat/completions",
+    "model": "fixture",
+    "stream": true,
+    "bodySha256CanonicalPython": "23f37b3e6f91f3bb9b7c18010d4cfe7be8b5d4798a053dbd8d6a130314c1297b",
+    "lastUser": {
+      "role": "user",
+      "content": [
+        {
+          "type": "text",
+          "text": "SLOW: Read probe.txt using the read tool, then finish."
+        }
+      ]
+    },
+    "messageRoles": [
+      "system",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool"
+    ],
+    "nativeToolReceiptIds": [
+      "read-5",
+      "read-7",
+      "read-9",
+      "read-11",
+      "read-13",
+      "read-15",
+      "read-17",
+      "read-19"
+    ]
+  },
+  {
+    "attempt": 5,
+    "request": 21,
+    "at": 1793862558296,
+    "endpoint": "http://127.0.0.1:54784/v1/chat/completions",
+    "model": "fixture",
+    "stream": true,
+    "bodySha256CanonicalPython": "58236d44616cf900420836c6e209555e4eba4a4c1501aa934b92f24b3716722e",
+    "lastUser": {
+      "role": "user",
+      "content": [
+        {
+          "type": "text",
+          "text": "Read probe.txt using the read tool, then finish."
+        }
+      ]
+    },
+    "messageRoles": [
+      "system",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user"
+    ],
+    "nativeToolReceiptIds": [
+      "read-5",
+      "read-7",
+      "read-9",
+      "read-11",
+      "read-13",
+      "read-15",
+      "read-17",
+      "read-19"
+    ]
+  },
+  {
+    "attempt": 5,
+    "request": 22,
+    "at": 1793862558299,
+    "endpoint": "http://127.0.0.1:54784/v1/chat/completions",
+    "model": "fixture",
+    "stream": true,
+    "bodySha256CanonicalPython": "d392ca288ba9ca179e55e5e38a4afd3a4056720ad89890144232e9c389843590",
+    "lastUser": {
+      "role": "user",
+      "content": [
+        {
+          "type": "text",
+          "text": "Read probe.txt using the read tool, then finish."
+        }
+      ]
+    },
+    "messageRoles": [
+      "system",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool"
+    ],
+    "nativeToolReceiptIds": [
+      "read-5",
+      "read-7",
+      "read-9",
+      "read-11",
+      "read-13",
+      "read-15",
+      "read-17",
+      "read-19",
+      "read-21"
+    ]
+  },
+  {
+    "attempt": 5,
+    "request": 23,
+    "at": 1793862558805,
+    "endpoint": "http://127.0.0.1:54784/v1/chat/completions",
+    "model": "fixture",
+    "stream": true,
+    "bodySha256CanonicalPython": "c12cc079996f394b56738f4d655c8c0c3ec52f7be6df2ea3698f83634bc09bd8",
+    "lastUser": {
+      "role": "user",
+      "content": [
+        {
+          "type": "text",
+          "text": "SLOW: Read probe.txt using the read tool, then finish."
+        }
+      ]
+    },
+    "messageRoles": [
+      "system",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user"
+    ],
+    "nativeToolReceiptIds": [
+      "read-5",
+      "read-7",
+      "read-9",
+      "read-11",
+      "read-13",
+      "read-15",
+      "read-17",
+      "read-19",
+      "read-21"
+    ]
+  },
+  {
+    "attempt": 5,
+    "request": 24,
+    "at": 1793862558807,
+    "endpoint": "http://127.0.0.1:54784/v1/chat/completions",
+    "model": "fixture",
+    "stream": true,
+    "bodySha256CanonicalPython": "c13d3f9b8d3ddc74f3f812f9c8fde88191d45c2197a4162076d803a5234f4f6f",
+    "lastUser": {
+      "role": "user",
+      "content": [
+        {
+          "type": "text",
+          "text": "SLOW: Read probe.txt using the read tool, then finish."
+        }
+      ]
+    },
+    "messageRoles": [
+      "system",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool"
+    ],
+    "nativeToolReceiptIds": [
+      "read-5",
+      "read-7",
+      "read-9",
+      "read-11",
+      "read-13",
+      "read-15",
+      "read-17",
+      "read-19",
+      "read-21",
+      "read-23"
+    ]
+  },
+  {
+    "attempt": 5,
+    "request": 25,
+    "at": 1793862559920,
+    "endpoint": "http://127.0.0.1:54784/v1/chat/completions",
+    "model": "fixture",
+    "stream": true,
+    "bodySha256CanonicalPython": "a126598cf1bb80df22be87c07627d7704eff044939d0246652f2b6b1f0a2bc13",
+    "lastUser": {
+      "role": "user",
+      "content": [
+        {
+          "type": "text",
+          "text": "Read probe.txt using the read tool, then finish."
+        }
+      ]
+    },
+    "messageRoles": [
+      "system",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user"
+    ],
+    "nativeToolReceiptIds": [
+      "read-5",
+      "read-7",
+      "read-9",
+      "read-11",
+      "read-13",
+      "read-15",
+      "read-17",
+      "read-19",
+      "read-21",
+      "read-23"
+    ]
+  },
+  {
+    "attempt": 5,
+    "request": 26,
+    "at": 1793862559922,
+    "endpoint": "http://127.0.0.1:54784/v1/chat/completions",
+    "model": "fixture",
+    "stream": true,
+    "bodySha256CanonicalPython": "17b542e1f37f6999efc72df46a54f8326f9da96c3413d0f484f1750395a4a022",
+    "lastUser": {
+      "role": "user",
+      "content": [
+        {
+          "type": "text",
+          "text": "Read probe.txt using the read tool, then finish."
+        }
+      ]
+    },
+    "messageRoles": [
+      "system",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool"
+    ],
+    "nativeToolReceiptIds": [
+      "read-5",
+      "read-7",
+      "read-9",
+      "read-11",
+      "read-13",
+      "read-15",
+      "read-17",
+      "read-19",
+      "read-21",
+      "read-23",
+      "read-25"
+    ]
+  },
+  {
+    "attempt": 5,
+    "request": 27,
+    "at": 1793862560532,
+    "endpoint": "http://127.0.0.1:54784/v1/chat/completions",
+    "model": "fixture",
+    "stream": true,
+    "bodySha256CanonicalPython": "8bef05a41be0ff314c4b0c5059ea33bfd049e297ee5e9e1068b2fe2a30ef3426",
+    "lastUser": {
+      "role": "user",
+      "content": [
+        {
+          "type": "text",
+          "text": "SLOW: Read probe.txt using the read tool, then finish."
+        }
+      ]
+    },
+    "messageRoles": [
+      "system",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user"
+    ],
+    "nativeToolReceiptIds": [
+      "read-5",
+      "read-7",
+      "read-9",
+      "read-11",
+      "read-13",
+      "read-15",
+      "read-17",
+      "read-19",
+      "read-21",
+      "read-23",
+      "read-25"
+    ]
+  },
+  {
+    "attempt": 5,
+    "request": 28,
+    "at": 1793862560536,
+    "endpoint": "http://127.0.0.1:54784/v1/chat/completions",
+    "model": "fixture",
+    "stream": true,
+    "bodySha256CanonicalPython": "45c92b72c6ceb8b44f8b34d248f5fda5a2b1441ab7766d6995ac2ba5f449d164",
+    "lastUser": {
+      "role": "user",
+      "content": [
+        {
+          "type": "text",
+          "text": "SLOW: Read probe.txt using the read tool, then finish."
+        }
+      ]
+    },
+    "messageRoles": [
+      "system",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool"
+    ],
+    "nativeToolReceiptIds": [
+      "read-5",
+      "read-7",
+      "read-9",
+      "read-11",
+      "read-13",
+      "read-15",
+      "read-17",
+      "read-19",
+      "read-21",
+      "read-23",
+      "read-25",
+      "read-27"
+    ]
+  },
+  {
+    "attempt": 5,
+    "request": 29,
+    "at": 1793862561870,
+    "endpoint": "http://127.0.0.1:54784/v1/chat/completions",
+    "model": "fixture",
+    "stream": true,
+    "bodySha256CanonicalPython": "a4e5c31f60f0f83d0ff9aef6d64b8278bd1a652dc1af09052b50bb0190b5a5c5",
+    "lastUser": {
+      "role": "user",
+      "content": [
+        {
+          "type": "text",
+          "text": "Read probe.txt using the read tool, then finish."
+        }
+      ]
+    },
+    "messageRoles": [
+      "system",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user"
+    ],
+    "nativeToolReceiptIds": [
+      "read-5",
+      "read-7",
+      "read-9",
+      "read-11",
+      "read-13",
+      "read-15",
+      "read-17",
+      "read-19",
+      "read-21",
+      "read-23",
+      "read-25",
+      "read-27"
+    ]
+  },
+  {
+    "attempt": 5,
+    "request": 30,
+    "at": 1793862561873,
+    "endpoint": "http://127.0.0.1:54784/v1/chat/completions",
+    "model": "fixture",
+    "stream": true,
+    "bodySha256CanonicalPython": "480b485650e5a1faa0434bf29e28287be12076c2b97fe32e771fa9b1879bb01c",
+    "lastUser": {
+      "role": "user",
+      "content": [
+        {
+          "type": "text",
+          "text": "Read probe.txt using the read tool, then finish."
+        }
+      ]
+    },
+    "messageRoles": [
+      "system",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool",
+      "assistant",
+      "user",
+      "assistant",
+      "tool"
+    ],
+    "nativeToolReceiptIds": [
+      "read-5",
+      "read-7",
+      "read-9",
+      "read-11",
+      "read-13",
+      "read-15",
+      "read-17",
+      "read-19",
+      "read-21",
+      "read-23",
+      "read-25",
+      "read-27",
+      "read-29"
+    ]
+  }
+]

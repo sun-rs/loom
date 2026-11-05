@@ -1,0 +1,29 @@
+{
+  "boundary": "native Herdr terminal controller vs independent agent.prompt automation API",
+  "controlConflict": {
+    "exit": {
+      "code": 0,
+      "signal": null
+    },
+    "stderr": "",
+    "output": "{\"reason\":\"terminal attach failed: terminal term_65f822bf66e832 already has an attached client; retry with --takeover\",\"type\":\"terminal.closed\"}\n"
+  },
+  "result": {
+    "secondControllerRejected": true,
+    "automaticError": null,
+    "automaticRequestsWhileControlled": 2
+  },
+  "automaticPromptResponse": {
+    "args": [
+      "agent",
+      "prompt",
+      "study-pi",
+      "Read probe.txt using the read tool, then finish."
+    ],
+    "ms": 307,
+    "stdout": "{\"id\":\"cli:agent:prompt\",\"result\":{\"agent\":{\"agent\":\"pi\",\"agent_session\":{\"agent\":\"pi\",\"kind\":\"path\",\"source\":\"herdr:pi\",\"value\":\"/tmp/lh-7vNri0/c.jsonl\"},\"agent_status\":\"done\",\"cwd\":\"/private/tmp/lh-7vNri0/work-c\",\"focused\":false,\"foreground_cwd\":\"/private/tmp/lh-7vNri0/work-c\",\"interactive_ready\":true,\"name\":\"study-pi\",\"pane_id\":\"w2:p1\",\"revision\":1,\"screen_detection_skipped\":true,\"state_change_seq\":25,\"tab_id\":\"w2:t1\",\"terminal_id\":\"term_65f822bf66e832\",\"terminal_title\":\"π - work-c\",\"terminal_title_stripped\":\"π - work-c\",\"workspace_id\":\"w2\"},\"type\":\"agent_prompted\"}}\n",
+    "stderr": "",
+    "code": 0
+  },
+  "meaning": "Raw Herdr carrier does not implement Loom Human takeover / automatic delivery fencing; not a defect claim against Herdr API contract."
+}

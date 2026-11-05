@@ -1,0 +1,31 @@
+{
+  "checkedAt": "2026-11-05T07:17:20.388728+00:00",
+  "focusedTests": {
+    "command": "node --test scripts/herdr-runtime-study/fixture.test.mjs scripts/herdr-runtime-study/evidence.test.mjs",
+    "passed": 5,
+    "failed": 0
+  },
+  "syntaxCheckPassed": true,
+  "gitDiffCheckPassed": true,
+  "productionFilesChanged": false,
+  "nativeExperiments": {
+    "smoke": "passed; 8 localhost requests",
+    "extended": "stopped on takeover boundary; 30 localhost requests",
+    "codexPreflight": "failed; 2 localhost requests"
+  },
+  "fullSuiteRun": false,
+  "fullSuiteReason": "Isolated research scripts and evidence only; no production behavior change",
+  "harnessHashesAtHandoff": {
+    "scripts/herdr-runtime-study/fixture.mjs": "65066859922bf63bea7c5b51f9121e75950075a1e4e6e417a7d5e995d2083902",
+    "scripts/herdr-runtime-study/project-pi.ts": "4fd3f3d91c6a3307e86454c4bff92367506670bc5bcf2dfb401dda4f7a4f5e13",
+    "scripts/herdr-runtime-study/fixture.test.mjs": "63a049854938318c9763d5dda2dfe4b359bc1c24107f9d032c4a302a402d0c78",
+    "scripts/herdr-runtime-study/free-probe.mjs": "9be2aabb1fff2b9693776a95389d88be665d263a99143bd71c0786a56a3b633f",
+    "scripts/herdr-runtime-study/evidence.test.mjs": "c8247ebb55dbd6f15f1b39dd0b7842730c374e7d408d013da0967933dae52ce7"
+  },
+  "harnessNote": "Hashes are for formatted handoff source, not a claim that every earlier setup attempt used this corrected source. Failed attempts remain recorded.",
+  "sourceIntegrationMatch": {
+    "herdrTag": "v0.9.1",
+    "nativePiIntegrationSha256": "2c5272d732b475bbf91a027203b1f98d25fe43d2c1402530a442b288aeaca1e4",
+    "installedScratchMatchesTagSource": true
+  }
+}

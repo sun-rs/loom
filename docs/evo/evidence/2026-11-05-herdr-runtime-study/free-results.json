@@ -1,0 +1,56 @@
+{
+  "schemaVersion": 1,
+  "status": "research-stopped-at-first-takeover-invariant-failure",
+  "decision": "retain-current-runtime; observation code reusable, no production adoption",
+  "paidCalls": 0,
+  "remoteProviderCalls": 0,
+  "localhostNativeCliFixtureRequests": 40,
+  "codex": {
+    "preflightPassed": false,
+    "requests": 2,
+    "error": "code-mode host negotiation timed out; native turn failed",
+    "substitutionOrBypass": false
+  },
+  "pi": {
+    "version": "1.5.0",
+    "nativeFixtureRequests": 38,
+    "actualFileReadReceipts": 19,
+    "smokePassed": true,
+    "fixedScheduleSeedsCompleted": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+    "fixedSeedTurnRequests": [2, 2, 2, 2, 2, 2, 2, 2, 2, 2],
+    "observerConnections": 10,
+    "observationExtraRequests": 0,
+    "sameNativeSessionAcrossExtendedInteractiveInputs": true,
+    "extendedInteractiveInputCount": 13,
+    "lastInputWasIntentionalNegativeTakeoverTest": true,
+    "roamgateProjectionUserCount": 13,
+    "roamgateProjectionFinalCount": 13
+  },
+  "coverage": {
+    "A": "A0 native structured CLI smoke only; no Loom Core/Activation/Worker commit",
+    "B": "B0 unchanged Pi print-JSON output via shell/file relay; not a RuntimeAdapter implementation or full duplex transport",
+    "C": "Real Pi native TUI, real read tool, transcript projection, read-only terminal streams and control/automation negative test; no product integration"
+  },
+  "firstCriticalFailure": {
+    "secondControllerRejected": true,
+    "automaticError": null,
+    "automaticRequestsWhileControlled": 2
+  },
+  "notRun": [
+    "all ten scenarios x ten seeds x all arms",
+    "temporary Core Room delivery and idempotency integration",
+    "parallel Channel isolation",
+    "lost-send response / duplicate wake",
+    "approval / error / interrupt correctness",
+    "background descendant quiescence",
+    "CLI / Host / Herdr restart recovery",
+    "idle eviction / pin / resume",
+    "long/partial/replaced transcript bounded ingestion",
+    "resource repeat matrix",
+    "paid model quality or token comparison"
+  ],
+  "preparationMistakesRetained": 3,
+  "fixtureTokenNumbersAreSynthetic": true,
+  "tokenRatioClaimAllowed": false,
+  "productionTouched": false
+}

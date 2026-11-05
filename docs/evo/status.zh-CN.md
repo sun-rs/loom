@@ -1,6 +1,6 @@
 # Loom 当前主线现状（原 evo）
 
-更新日期：2026-11-04。本页区分当前结论与历史试验，不改变目标合同或补判未通过的验收。文档整理基线为 `fe5d65fc`；当前部署及真实模型验收以下文和对应的 dated evidence 为准。
+更新日期：2026-11-05。本页区分当前结论与历史试验，不改变目标合同或补判未通过的验收。文档整理基线为 `fe5d65fc`；当前部署及真实模型验收以下文和对应的 dated evidence 为准。
 
 完整原文保留在[截至本日的状态快照](status-history-through-2026-10-27.zh-CN.md)。其中过时的 main 冻结、控制台在用、临时监听地址和早期“下一步”均不再作为当前指令；历史失败及限制仍可追溯。第一至六十五节另见[九月日志](log/status-history-2026-09.zh-CN.md)。
 
@@ -15,6 +15,8 @@
 ## 2. 当前状态
 
 ### 后端与运行时
+
+Owner 请求的 [Herdr 运行时免费研究](evidence/2026-11-05-herdr-runtime-study/README.md)完成筛选：真实 Pi CLI 的基础承载、同 session 观察和原始 Roamgate 投影可行；Herdr 终端接管不能暂停独立自动输入，候选按首次关键失败停止。Codex 工具宿主免费预检失败并保留；无 Claude、付费调用或正式服务改动。本批不构成完整 RuntimeAdapter／Core 验收，保留现有运行时，不推动底层替换。
 
 本地单 Human 后端 MVP 已冻结；维护现有 Room-first、独立实例执行 lane、连续原生 session、权限、幂等和因果围栏。冻结证据见[2026-10-14记录](evidence/2026-10-14-backend-freeze/summary.json)。冻结不等于所有 CLI、真实模型、故障时序和效率门禁全部通过。
 
