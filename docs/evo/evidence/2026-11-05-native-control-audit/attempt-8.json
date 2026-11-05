@@ -1,0 +1,233 @@
+{
+  "root": "/tmp/lh-rpc-kimi-KN5ADa",
+  "kind": "native-kimi-persistent-acp-probe",
+  "paidCalls": 0,
+  "checks": [
+    {
+      "id": "initialize-create-session",
+      "sessionId": "session_d0aad5b6-3a85-4594-a859-99d4239b9a6e",
+      "capabilities": {
+        "loadSession": true,
+        "promptCapabilities": {
+          "image": true,
+          "audio": false,
+          "embeddedContext": true
+        },
+        "sessionCapabilities": {
+          "list": {},
+          "resume": {},
+          "close": {},
+          "delete": {},
+          "fork": {},
+          "additionalDirectories": {}
+        },
+        "mcpCapabilities": {
+          "http": true,
+          "sse": true
+        },
+        "auth": {
+          "logout": {}
+        }
+      }
+    },
+    {
+      "id": "continuous-native-turn",
+      "turn": 1,
+      "sessionId": "session_d0aad5b6-3a85-4594-a859-99d4239b9a6e",
+      "pid": 7967
+    },
+    {
+      "id": "continuous-native-turn",
+      "turn": 2,
+      "sessionId": "session_d0aad5b6-3a85-4594-a859-99d4239b9a6e",
+      "pid": 7967
+    },
+    {
+      "id": "model-and-effort-change-in-same-session",
+      "sessionId": "session_d0aad5b6-3a85-4594-a859-99d4239b9a6e",
+      "model": "fixture-alt",
+      "effort": "high"
+    },
+    {
+      "id": "native-cancel",
+      "stopReason": "cancelled"
+    },
+    {
+      "id": "next-turn-after-cancel"
+    },
+    {
+      "id": "unknown-model-rejected"
+    },
+    {
+      "id": "process-restart-resumes-exact-session",
+      "sessionId": "session_d0aad5b6-3a85-4594-a859-99d4239b9a6e"
+    }
+  ],
+  "startedAt": "2026-11-05T11:59:36.125Z",
+  "initialize": {
+    "protocolVersion": 1,
+    "agentCapabilities": {
+      "loadSession": true,
+      "promptCapabilities": {
+        "image": true,
+        "audio": false,
+        "embeddedContext": true
+      },
+      "sessionCapabilities": {
+        "list": {},
+        "resume": {},
+        "close": {},
+        "delete": {},
+        "fork": {},
+        "additionalDirectories": {}
+      },
+      "mcpCapabilities": {
+        "http": true,
+        "sse": true
+      },
+      "auth": {
+        "logout": {}
+      }
+    },
+    "authMethods": [
+      {
+        "id": "login",
+        "type": "terminal",
+        "name": "Login with Kimi account",
+        "description": "Open the device-code login flow in a terminal.",
+        "args": ["--login"],
+        "env": {
+          "KIMI_CODE_HOME": "/tmp/lh-rpc-kimi-KN5ADa/kimi"
+        },
+        "_meta": {
+          "terminal-auth": {
+            "type": "terminal",
+            "label": "Login with Kimi account",
+            "command": "/opt/homebrew/bin/kimi",
+            "args": ["login"],
+            "env": {
+              "KIMI_CODE_HOME": "/tmp/lh-rpc-kimi-KN5ADa/kimi"
+            }
+          }
+        }
+      }
+    ],
+    "agentInfo": {
+      "name": "Kimi Code CLI",
+      "version": "2.4.0"
+    }
+  },
+  "nativeSessionId": "session_d0aad5b6-3a85-4594-a859-99d4239b9a6e",
+  "pid": 7967,
+  "session": {
+    "sessionId": "session_d0aad5b6-3a85-4594-a859-99d4239b9a6e",
+    "configOptions": [
+      {
+        "type": "select",
+        "id": "model",
+        "name": "Model",
+        "category": "model",
+        "currentValue": "fixture",
+        "options": [
+          {
+            "value": "fixture",
+            "name": "fixture"
+          },
+          {
+            "value": "fixture-alt",
+            "name": "fixture-alt"
+          }
+        ]
+      },
+      {
+        "type": "select",
+        "id": "thinking",
+        "name": "Thinking",
+        "category": "thought_level",
+        "currentValue": "low",
+        "options": [
+          {
+            "value": "off",
+            "name": "Thinking Off"
+          },
+          {
+            "value": "low",
+            "name": "Thinking Low"
+          },
+          {
+            "value": "high",
+            "name": "Thinking High"
+          }
+        ]
+      },
+      {
+        "type": "select",
+        "id": "mode",
+        "name": "Mode",
+        "category": "mode",
+        "currentValue": "default",
+        "options": [
+          {
+            "value": "default",
+            "name": "Default",
+            "description": "Manual approvals; tools execute normally."
+          },
+          {
+            "value": "plan",
+            "name": "Plan",
+            "description": "Read-only planning; no tool execution."
+          },
+          {
+            "value": "auto",
+            "name": "Auto",
+            "description": "Auto-approve safe operations."
+          },
+          {
+            "value": "yolo",
+            "name": "YOLO",
+            "description": "Auto-approve everything."
+          }
+        ]
+      }
+    ],
+    "modes": {
+      "currentModeId": "default",
+      "availableModes": [
+        {
+          "id": "default",
+          "name": "Default",
+          "description": "Manual approvals; tools execute normally."
+        },
+        {
+          "id": "plan",
+          "name": "Plan",
+          "description": "Read-only planning; no tool execution."
+        },
+        {
+          "id": "auto",
+          "name": "Auto",
+          "description": "Auto-approve safe operations."
+        },
+        {
+          "id": "yolo",
+          "name": "YOLO",
+          "description": "Auto-approve everything."
+        }
+      ]
+    }
+  },
+  "status": "passed-native-probe-not-product-integration",
+  "exits": [
+    {
+      "code": 0,
+      "signal": null
+    },
+    {
+      "code": 0,
+      "signal": null
+    }
+  ],
+  "requests": 12,
+  "fileReadReceipts": 6,
+  "finishedAt": "2026-11-05T12:00:04.634Z"
+}

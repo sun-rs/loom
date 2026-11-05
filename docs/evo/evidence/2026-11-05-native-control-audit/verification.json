@@ -1,0 +1,29 @@
+{
+  "checkedAt": "2026-11-05T12:06:59.949501+00:00",
+  "focusedTests": {
+    "command": "node --test scripts/runtime-interface-audit/*.test.mjs scripts/herdr-runtime-study/fixture.test.mjs scripts/herdr-runtime-study/evidence.test.mjs",
+    "passed": 11,
+    "failed": 0
+  },
+  "syntaxChecksPassed": [
+    "pi-rpc.mjs",
+    "kimi-acp.mjs",
+    "agy-acp.mjs"
+  ],
+  "diffCheckPassed": true,
+  "productionFilesChanged": false,
+  "globalConfigurationChanged": false,
+  "nativeAccountCredentialsCopied": false,
+  "paidCalls": 0,
+  "currentResearchScriptHashes": {
+    "scripts/runtime-interface-audit/stdio.test.mjs": "e96ff1a4fbbd4a4b866e89cb40115bc111f718c0973bd0aa7093f92b22252a43",
+    "scripts/runtime-interface-audit/stdio.mjs": "5a9226f2af5ff88d6692d8f7ca17d8e8c46734a2c295843a51f195dab5738ec5",
+    "scripts/runtime-interface-audit/agy-acp.mjs": "0b9b09d5dd1914c18857fbe05a9013e490f8023a701d40ef0b38ae99f42db0cf",
+    "scripts/runtime-interface-audit/kimi-acp.mjs": "3566c7fa6d16c9d2ef8a4892c42f68f78640b9832ce76cf614acffccba967a76",
+    "scripts/runtime-interface-audit/pi-rpc.mjs": "a33ba178c6dcd633baeb95da07395026a2dcf0a99abd8e8bb34495d363de5ae1",
+    "scripts/runtime-interface-audit/evidence.test.mjs": "2580ea8ecdd579f93a4d55bcbd1444e9193107c98a6aec2d99c5e10ec27384a1",
+    "scripts/herdr-runtime-study/fixture.mjs": "59390ebdef2841ff58298a8c69a8b5ade2cbb6a3fd1e8fc4d576c9d41b631980",
+    "scripts/herdr-runtime-study/fixture.test.mjs": "ca4f0feb04e96c0286dca1a973d307c8cf745fa88ca36d64f67231963460304f"
+  },
+  "note": "Hashes describe formatted handoff code, not the earlier failed setup variants; every failed native attempt remains in the ledger."
+}

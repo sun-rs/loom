@@ -1,0 +1,80 @@
+{
+  "root": "/tmp/lh-rpc-pi-4HKMko",
+  "kind": "native-pi-rpc-control-probe",
+  "paidCalls": 0,
+  "checks": [
+    {
+      "id": "state-and-model-discovery",
+      "sessionId": "01a1ab8e-e074-703b-9b81-82655ea78fb3",
+      "models": ["fixture", "fixture-alt"]
+    },
+    {
+      "id": "continuous-native-turn",
+      "turn": 1,
+      "sessionId": "01a1ab8e-e074-703b-9b81-82655ea78fb3",
+      "pid": 91673
+    },
+    {
+      "id": "continuous-native-turn",
+      "turn": 2,
+      "sessionId": "01a1ab8e-e074-703b-9b81-82655ea78fb3",
+      "pid": 91673
+    },
+    {
+      "id": "model-change-without-process-or-session-replacement",
+      "model": "fixture-alt",
+      "controlRequests": 0
+    },
+    {
+      "id": "native-abort-settled",
+      "stopReason": "aborted"
+    },
+    {
+      "id": "next-turn-after-abort"
+    },
+    {
+      "id": "unknown-model-rejected-without-fallback"
+    }
+  ],
+  "startedAt": "2026-11-05T11:53:49.765Z",
+  "args": [
+    "--mode",
+    "rpc",
+    "--offline",
+    "--no-context-files",
+    "--no-extensions",
+    "--no-skills",
+    "--no-prompt-templates",
+    "--no-mcp",
+    "--no-themes",
+    "--provider",
+    "fixture",
+    "--model",
+    "fixture",
+    "--thinking",
+    "off",
+    "--tools",
+    "read",
+    "--session",
+    "/tmp/lh-rpc-pi-4HKMko/session.jsonl"
+  ],
+  "nativeSessionId": "01a1ab8e-e074-703b-9b81-82655ea78fb3",
+  "pid": 91673,
+  "status": "failed",
+  "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n+ actual - expected\n\n+ 'fixture'\n- 'fixture-alt'\n          ^\n",
+  "stack": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n+ actual - expected\n\n+ 'fixture'\n- 'fixture-alt'\n          ^\n\n    at file:///Users/sun/Code/repos/rah_os/scripts/runtime-interface-audit/pi-rpc.mjs:72:10\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)",
+  "exits": [
+    {
+      "code": 0,
+      "signal": null
+    },
+    {
+      "code": 0,
+      "signal": null
+    }
+  ],
+  "requests": 10,
+  "fileReadReceipts": 5,
+  "nativeHeader": "{\"type\":\"session\",\"version\":3,\"id\":\"01a1ab8e-e074-703b-9b81-82655ea78fb3\",\"timestamp\":\"2026-11-05T11:53:49.941Z\",\"cwd\":\"/private/tmp/lh-rpc-pi-4HKMko/work\"}",
+  "finishedAt": "2026-11-05T11:53:50.241Z"
+}

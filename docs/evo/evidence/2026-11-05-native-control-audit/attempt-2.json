@@ -1,0 +1,82 @@
+{
+  "root": "/tmp/lh-rpc-pi-03SsQK",
+  "kind": "native-pi-rpc-control-probe",
+  "paidCalls": 0,
+  "checks": [
+    {
+      "id": "state-and-model-discovery",
+      "sessionId": "01a1ab8f-46ab-73b8-997d-356468ad400c",
+      "models": ["fixture", "fixture-alt"]
+    },
+    {
+      "id": "continuous-native-turn",
+      "turn": 1,
+      "sessionId": "01a1ab8f-46ab-73b8-997d-356468ad400c",
+      "pid": 92796
+    },
+    {
+      "id": "continuous-native-turn",
+      "turn": 2,
+      "sessionId": "01a1ab8f-46ab-73b8-997d-356468ad400c",
+      "pid": 92796
+    },
+    {
+      "id": "model-change-without-process-or-session-replacement",
+      "model": "fixture-alt",
+      "controlRequests": 0
+    },
+    {
+      "id": "native-abort-settled",
+      "stopReason": "aborted"
+    },
+    {
+      "id": "next-turn-after-abort"
+    },
+    {
+      "id": "unknown-model-rejected-without-fallback"
+    },
+    {
+      "id": "process-restart-resumes-exact-session",
+      "sessionId": "01a1ab8f-46ab-73b8-997d-356468ad400c"
+    }
+  ],
+  "startedAt": "2026-11-05T11:54:15.931Z",
+  "args": [
+    "--mode",
+    "rpc",
+    "--offline",
+    "--no-context-files",
+    "--no-extensions",
+    "--no-skills",
+    "--no-prompt-templates",
+    "--no-mcp",
+    "--no-themes",
+    "--provider",
+    "fixture",
+    "--model",
+    "fixture",
+    "--thinking",
+    "off",
+    "--tools",
+    "read",
+    "--session",
+    "/tmp/lh-rpc-pi-03SsQK/session.jsonl"
+  ],
+  "nativeSessionId": "01a1ab8f-46ab-73b8-997d-356468ad400c",
+  "pid": 92796,
+  "status": "passed-native-probe-not-product-integration",
+  "exits": [
+    {
+      "code": 0,
+      "signal": null
+    },
+    {
+      "code": 0,
+      "signal": null
+    }
+  ],
+  "requests": 12,
+  "fileReadReceipts": 6,
+  "nativeHeader": "{\"type\":\"session\",\"version\":3,\"id\":\"01a1ab8f-46ab-73b8-997d-356468ad400c\",\"timestamp\":\"2026-11-05T11:54:16.108Z\",\"cwd\":\"/private/tmp/lh-rpc-pi-03SsQK/work\"}",
+  "finishedAt": "2026-11-05T11:54:16.444Z"
+}

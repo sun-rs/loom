@@ -1,0 +1,177 @@
+{
+  "root": "/tmp/lh-rpc-agy-yp385y",
+  "kind": "native-agy-acp-metadata-only",
+  "args": [
+    "acp",
+    "--stdio",
+    "--disable-telemetry",
+    "--include-default-customizations=false",
+    "--app-data-dir",
+    "loom-runtime-audit-agy",
+    "--gemini-dir",
+    ".gemini",
+    "--cloud_code_endpoint",
+    "http://127.0.0.1:52981",
+    "--log-file",
+    "/tmp/lh-rpc-agy-yp385y/agy.log"
+  ],
+  "paidCalls": 0,
+  "modelPromptsSent": 0,
+  "startedAt": "2026-11-05T11:57:58.068Z",
+  "initialize": {
+    "protocolVersion": 1,
+    "agentCapabilities": {
+      "loadSession": true,
+      "load_session": true,
+      "promptCapabilities": {
+        "image": true,
+        "audio": false,
+        "embeddedContext": true
+      },
+      "sessionCapabilities": {
+        "resume": {},
+        "close": {},
+        "load": {},
+        "list": {},
+        "additionalDirectories": {}
+      },
+      "session_capabilities": {
+        "resume": {},
+        "close": {},
+        "load": {},
+        "list": {},
+        "additionalDirectories": {}
+      },
+      "auth": {
+        "logout": {}
+      },
+      "_meta": {
+        "antigravity": {
+          "tier": true,
+          "systemPrompt": {
+            "append": true
+          }
+        }
+      }
+    },
+    "agentInfo": {
+      "name": "Antigravity ACP Server",
+      "version": "1.5.0"
+    },
+    "authMethods": [
+      {
+        "id": "oauth-personal",
+        "name": "Log in with Google",
+        "description": "Log in with your Google account"
+      },
+      {
+        "id": "oauth-business",
+        "name": "Log in with Gemini Enterprise",
+        "description": "Log in with your Gemini Enterprise account"
+      },
+      {
+        "id": "gemini-api-key",
+        "name": "Gemini API key",
+        "description": "Use an API key with Gemini Developer API"
+      },
+      {
+        "id": "agent-platform",
+        "name": "Gemini Enterprise Agent Platform",
+        "description": "Use Gemini Enterprise Agent Platform (formerly Vertex AI) with Application Default Credentials"
+      }
+    ]
+  },
+  "newSession": {
+    "jsonrpc": "2.0",
+    "error": {
+      "code": -32000,
+      "message": "Authentication required"
+    },
+    "id": 2
+  },
+  "status": "protocol-ready-session-create-error",
+  "exit": {
+    "code": 0,
+    "signal": null
+  },
+  "frames": [
+    {
+      "jsonrpc": "2.0",
+      "result": {
+        "protocolVersion": 1,
+        "agentCapabilities": {
+          "loadSession": true,
+          "load_session": true,
+          "promptCapabilities": {
+            "image": true,
+            "audio": false,
+            "embeddedContext": true
+          },
+          "sessionCapabilities": {
+            "resume": {},
+            "close": {},
+            "load": {},
+            "list": {},
+            "additionalDirectories": {}
+          },
+          "session_capabilities": {
+            "resume": {},
+            "close": {},
+            "load": {},
+            "list": {},
+            "additionalDirectories": {}
+          },
+          "auth": {
+            "logout": {}
+          },
+          "_meta": {
+            "antigravity": {
+              "tier": true,
+              "systemPrompt": {
+                "append": true
+              }
+            }
+          }
+        },
+        "agentInfo": {
+          "name": "Antigravity ACP Server",
+          "version": "1.5.0"
+        },
+        "authMethods": [
+          {
+            "id": "oauth-personal",
+            "name": "Log in with Google",
+            "description": "Log in with your Google account"
+          },
+          {
+            "id": "oauth-business",
+            "name": "Log in with Gemini Enterprise",
+            "description": "Log in with your Gemini Enterprise account"
+          },
+          {
+            "id": "gemini-api-key",
+            "name": "Gemini API key",
+            "description": "Use an API key with Gemini Developer API"
+          },
+          {
+            "id": "agent-platform",
+            "name": "Gemini Enterprise Agent Platform",
+            "description": "Use Gemini Enterprise Agent Platform (formerly Vertex AI) with Application Default Credentials"
+          }
+        ]
+      },
+      "id": 1
+    },
+    {
+      "jsonrpc": "2.0",
+      "error": {
+        "code": -32000,
+        "message": "Authentication required"
+      },
+      "id": 2
+    }
+  ],
+  "stderr": "",
+  "traffic": [],
+  "finishedAt": "2026-11-05T11:57:58.192Z"
+}

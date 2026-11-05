@@ -33,6 +33,7 @@
 - [运行记录离线诊断](evo/runtime-diagnostics.zh-CN.md)：同次压缩观测、原生重试信号与缺失数据；不自动干预运行时。
 - [文章与 Cindy 的研究及候选顺序](evo/article-cindy-adoption-review.zh-CN.md)：研究建议，不代表已实现或已测得收益。
 - [Herdr 托管运行时实验](design/herdr-runtime-evaluation.zh-CN.md)：免费 Pi 路径及观察投影通过，原始接管不能暂停自动输入，候选停止；保留现有运行时，排除 Claude Code。[执行证据](evo/evidence/2026-11-05-herdr-runtime-study/README.md)。
+- [六家CLI持续机器接口审查](evo/evidence/2026-11-05-native-control-audit/README.md)：Pi RPC／持续Kimi ACP原生免费探针通过，Agy1.5.0新增ACP握手成功；产品驱动尚未切换，不宣称缓存或成本改善。
 
 ## 历史与追溯
 

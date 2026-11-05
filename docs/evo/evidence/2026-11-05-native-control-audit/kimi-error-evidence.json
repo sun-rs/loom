@@ -1,0 +1,48 @@
+[
+  {
+    "type": "llm.request",
+    "agentId": "main",
+    "kind": "loop",
+    "provider": "openai",
+    "model": "fixture",
+    "modelAlias": "fixture",
+    "thinkingEffort": "off",
+    "toolSelect": false,
+    "systemPromptHash": "913d14fd85ac2fbd4018453d134bfd90b61dbb45e37d1881de9521a4f43cb654",
+    "toolsHash": "c7f354986e1a01e2153e2b3f96e49b53b4e401ef07328141cc71812bba7c8131",
+    "messageCount": 3,
+    "turnStep": "0.1",
+    "time": 1793879786123
+  },
+  {
+    "type": "turn.step.interrupted",
+    "agentId": "main",
+    "turnId": 0,
+    "step": 1,
+    "reason": "error",
+    "message": "[provider.api_error] Model 'fixture' reasons by default but declares no off effort, so thinking cannot be turned off. Declare offEffort (for example 'none') for this model in the model catalog configuration.",
+    "time": 1793879786127
+  },
+  {
+    "type": "turn.ended",
+    "agentId": "main",
+    "turnId": 0,
+    "reason": "failed",
+    "error": {
+      "code": "provider.api_error",
+      "message": "Model 'fixture' reasons by default but declares no off effort, so thinking cannot be turned off. Declare offEffort (for example 'none') for this model in the model catalog configuration.",
+      "name": "ChatProviderError",
+      "retryable": false
+    },
+    "durationMs": 14,
+    "time": 1793879786127
+  },
+  {
+    "type": "prompt.completed",
+    "agentId": "main",
+    "promptId": "msg_01M6NS2GKWSZ57C2V160E407WG",
+    "finishedAt": "2026-11-05T11:56:26.128Z",
+    "reason": "failed",
+    "time": 1793879786128
+  }
+]

@@ -1,0 +1,14 @@
+{
+  "checkedAt": "2026-11-05T12:04:11.392703+00:00",
+  "matchesByRoot": {
+    "/tmp/lh-rpc-pi-4HKMko": [],
+    "/tmp/lh-rpc-pi-03SsQK": [],
+    "/tmp/lh-rpc-kimi-yscfT8": [],
+    "/tmp/lh-rpc-agy-32K5L9": [],
+    "/tmp/lh-rpc-kimi-bzsmUL": [],
+    "/tmp/lh-rpc-agy-yp385y": [],
+    "/tmp/lh-rpc-kimi-t45Qbf": [],
+    "/tmp/lh-rpc-kimi-KN5ADa": []
+  },
+  "scope": "No command line matches for owned study roots; explicit native exit evidence is in attempts. Not a universal descendant-quiescence certificate."
+}

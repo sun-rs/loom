@@ -60,7 +60,33 @@ test("localhost fixture requires an actual tool receipt, streams one final, refu
     assert.equal(text, "Fixture task completed.");
     assert.equal(fixture.receipts.length, 1);
     assert.equal((await fetch(fixture.origin + "/wrong")).status, 404);
+    assert.equal(fixture.traffic.at(-1).url, "/wrong");
     assert.equal(fixture.paidCalls, 0);
+  } finally {
+    await fixture.close();
+  }
+});
+
+test("fixture can verify an explicit model switch without silently rewriting it", async () => {
+  const fixture = await createFixture({
+    models: ["fixture", "fixture-alt"],
+    readTool: { name: "Read", arguments: { path: "probe.txt" } },
+  });
+  try {
+    const response = await fetch(fixture.origin + "/v1/chat/completions", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        model: "fixture-alt",
+        messages: [{ role: "user", content: "Read the file" }],
+        stream: true,
+      }),
+    });
+    assert.equal(response.status, 200);
+    const stream = await response.text();
+    assert.match(stream, /"model":"fixture-alt"/);
+    assert.match(stream, /"name":"Read"/);
+    assert.equal(fixture.requests[0].body.model, "fixture-alt");
   } finally {
     await fixture.close();
   }

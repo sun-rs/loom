@@ -18,6 +18,8 @@
 
 Owner 请求的 [Herdr 运行时免费研究](evidence/2026-11-05-herdr-runtime-study/README.md)完成筛选：真实 Pi CLI 的基础承载、同 session 观察和原始 Roamgate 投影可行；Herdr 终端接管不能暂停独立自动输入，候选按首次关键失败停止。Codex 工具宿主免费预检失败并保留；无 Claude、付费调用或正式服务改动。本批不构成完整 RuntimeAdapter／Core 验收，保留现有运行时，不推动底层替换。
 
+后继[持续机器接口审查](evidence/2026-11-05-native-control-audit/README.md)验证Pi1.5.0 RPC及Kimi2.4.0同进程多轮、改模型、取消后继续与精确会话恢复，均为localhost假模型；Agy1.5.0新增ACP握手成功，隔离认证后的执行未测，1.5.1另有相关兼容修复。建议按Pi→Kimi→Agy候选推进；当前仍是研究结果，正式print／ACP每轮启动路径未变，无Claude执行或付费调用，不据此声称缓存改善。
+
 本地单 Human 后端 MVP 已冻结；维护现有 Room-first、独立实例执行 lane、连续原生 session、权限、幂等和因果围栏。冻结证据见[2026-10-14记录](evidence/2026-10-14-backend-freeze/summary.json)。冻结不等于所有 CLI、真实模型、故障时序和效率门禁全部通过。
 
 - Owner2026-10-30的[头像接线](evidence/2026-10-30-sidebar-avatar-closeout/README.md)完成未占用随机分配、手选重复、上传／保存及历史图片保留。该批静态侧栏报告漏验空置顶和实际拖动，不能证明完整侧栏对齐；已在[后续修复](evidence/2026-10-30-sidebar-drag-repair/README.md)明确纠正，改用完整锁定发布中的原生拖动声明／算法和真实鼠标验收。整版Web业务迁移仍不能据此宣称完成。

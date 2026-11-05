@@ -1,0 +1,67 @@
+{
+  "checkedAt": "2026-11-05T12:04:11.351625+00:00",
+  "executables": [
+    {
+      "name": "codex",
+      "path": "/opt/homebrew/Caskroom/codex/0.166.0/bin/codex",
+      "sha256": "39acf979729dd290f9a24ee38b2914e036c91b65952872e28ae2a6b88a7db7c1",
+      "version": "codex-cli 0.166.0"
+    },
+    {
+      "name": "opencode",
+      "path": "/opt/homebrew/lib/node_modules/opencode-ai/bin/opencode.exe",
+      "sha256": "feaafead8cd563af0c2dcb386b0757e4355e327ebb6bd1aaad5440fe2f83596c",
+      "version": "1.19.5"
+    },
+    {
+      "name": "pi",
+      "path": "/opt/homebrew/lib/node_modules/@earendil-works/pi-coding-agent/dist/bundle/cli.js",
+      "sha256": "e79626f2dd6f94aa45d30f3fa63cd84319a6eefcd150b353cfaf274366926774",
+      "version": "1.5.0"
+    },
+    {
+      "name": "kimi",
+      "path": "/opt/homebrew/lib/node_modules/@moonshot-ai/kimi-code/dist/main.mjs",
+      "sha256": "c42ac981607ae36ffc96110db6a901529c9e1a0c22fae58aaf3ee45912f7be33",
+      "version": "2.4.0"
+    },
+    {
+      "name": "agy",
+      "path": "/Users/sun/.local/bin/agy",
+      "sha256": "e61679b8ba54abae9a56534208e21f65e1dede6e4eb0144dbd64535f42d07724",
+      "version": "1.5.0"
+    }
+  ],
+  "claude": {
+    "executed": false,
+    "evidence": "Existing Loom launch defaults plus official streaming documentation; no native trial in this batch"
+  },
+  "kimiReleaseSource": {
+    "tag": "@moonshot-ai/kimi-code@2.4.0",
+    "commit": "f26e4d91ef8d5d233f6c20b42a150f96924d4f5e",
+    "path": "/tmp/loom-kimi-code-rpc-20261105",
+    "license": "MIT"
+  },
+  "docs": [
+    {
+      "url": "https://github.com/earendil-works/pi/blob/main/packages/coding-agent/docs/rpc.md",
+      "installedReference": "Pi1.5.0 docs/rpc.md and rpc-commands.md"
+    },
+    {
+      "url": "https://antigravity.google/docs/cli/acp/"
+    },
+    {
+      "url": "https://antigravity.google/docs/cli/headless/"
+    },
+    {
+      "url": "https://github.com/google-antigravity/antigravity-cli/blob/main/CHANGELOG.md",
+      "note": "1.5.1 notes inspected; not installed or executed"
+    },
+    {
+      "url": "https://learn.chatgpt.com/docs/app-server"
+    },
+    {
+      "url": "https://code.claude.com/docs/en/agent-sdk/streaming-vs-single-mode"
+    }
+  ]
+}

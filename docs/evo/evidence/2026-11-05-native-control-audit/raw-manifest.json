@@ -1,0 +1,927 @@
+[
+  {
+    "path": "/tmp/lh-rpc-pi-4HKMko/fixture.json",
+    "bytes": 54687,
+    "sha256": "a21498458c5c7bbcc2c2bf0f91aec2bd9971f26b13bb49541a9c830be9a5bbcd"
+  },
+  {
+    "path": "/tmp/lh-rpc-pi-4HKMko/session.jsonl",
+    "bytes": 11760,
+    "sha256": "82a24eea9334a768ceff5e6bf54cf3c52e0603db73202c565af73042b8c74b7b"
+  },
+  {
+    "path": "/tmp/lh-rpc-pi-4HKMko/result.json",
+    "bytes": 2312,
+    "sha256": "914d6bc85e12d1ba982ad5bc3a312cd406093866060e2101979ef393126c1d5d"
+  },
+  {
+    "path": "/tmp/lh-rpc-pi-4HKMko/frames-0.json",
+    "bytes": 136837,
+    "sha256": "9957e2802e4c67a4a27ad675fefea159861e473eeb351329ab2b4b83fe1c9b97"
+  },
+  {
+    "path": "/tmp/lh-rpc-pi-4HKMko/frames-1.json",
+    "bytes": 949,
+    "sha256": "c1126622f22995a245a7d4cd2e53258948eb826b82bbd240068e3c5af48dfa58"
+  },
+  {
+    "path": "/tmp/lh-rpc-pi-4HKMko/stderr-1",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "/tmp/lh-rpc-pi-4HKMko/stderr-0",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "/tmp/lh-rpc-pi-4HKMko/pi/models.json",
+    "bytes": 431,
+    "sha256": "e066c8993c919d091580844c75349e0d3cd24bdd7954d06b264bd002eb192f18"
+  },
+  {
+    "path": "/tmp/lh-rpc-pi-4HKMko/pi/settings.json",
+    "bytes": 93,
+    "sha256": "690045d0c00e51e61ffe8aa2ff0d539ca8040c8683993155176fb192aad8af76"
+  },
+  {
+    "path": "/tmp/lh-rpc-pi-4HKMko/pi/models-store.json",
+    "bytes": 2,
+    "sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
+  },
+  {
+    "path": "/tmp/lh-rpc-pi-4HKMko/pi/auth.json",
+    "bytes": 2,
+    "sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
+  },
+  {
+    "path": "/tmp/lh-rpc-pi-4HKMko/work/probe.txt",
+    "bytes": 36,
+    "sha256": "9e6d9c8ccf885930b0822706738a6312f56696fd7eb1eb5c7d8216675940a251"
+  },
+  {
+    "path": "/tmp/lh-rpc-pi-03SsQK/fixture.json",
+    "bytes": 70561,
+    "sha256": "eaf2ca1944587837cefd2b77ca24628eb9031c75651e0ec2d9eb95cee76d037a"
+  },
+  {
+    "path": "/tmp/lh-rpc-pi-03SsQK/session.jsonl",
+    "bytes": 13488,
+    "sha256": "99f80e07fe432c47e6a9048876dbe39582ccbc4ee4e41e65d3519deb69ce0dd5"
+  },
+  {
+    "path": "/tmp/lh-rpc-pi-03SsQK/result.json",
+    "bytes": 1992,
+    "sha256": "1ecb56cb9fbec696facab451c881eccaf8b5f509c4d765a23f977e7f17565d56"
+  },
+  {
+    "path": "/tmp/lh-rpc-pi-03SsQK/frames-0.json",
+    "bytes": 136837,
+    "sha256": "6115b1dad6a968a7615798381cd24a0662f5ab04aea1ef8db3f6b8415d82e9e9"
+  },
+  {
+    "path": "/tmp/lh-rpc-pi-03SsQK/frames-1.json",
+    "bytes": 33532,
+    "sha256": "fd86d3c6e2ac52295b16de681596f52d16c634180927fac8a17176dc316d1442"
+  },
+  {
+    "path": "/tmp/lh-rpc-pi-03SsQK/stderr-1",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "/tmp/lh-rpc-pi-03SsQK/stderr-0",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "/tmp/lh-rpc-pi-03SsQK/pi/models.json",
+    "bytes": 431,
+    "sha256": "cd5b788f5370a94734251acba4a55b551a3cd5b2ef6f7b61a60431d49829bccc"
+  },
+  {
+    "path": "/tmp/lh-rpc-pi-03SsQK/pi/settings.json",
+    "bytes": 93,
+    "sha256": "690045d0c00e51e61ffe8aa2ff0d539ca8040c8683993155176fb192aad8af76"
+  },
+  {
+    "path": "/tmp/lh-rpc-pi-03SsQK/pi/models-store.json",
+    "bytes": 2,
+    "sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
+  },
+  {
+    "path": "/tmp/lh-rpc-pi-03SsQK/pi/auth.json",
+    "bytes": 2,
+    "sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
+  },
+  {
+    "path": "/tmp/lh-rpc-pi-03SsQK/work/probe.txt",
+    "bytes": 36,
+    "sha256": "21bcd6e74e1a849a71266265c05f4688ba5281e27158882cbe12937842ec6a5b"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-yscfT8/fixture.json",
+    "bytes": 54,
+    "sha256": "d141c79e927728a4f8a737d58d1f38b06e479f3cb5b49fca23bfd62b59d91411"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-yscfT8/result.json",
+    "bytes": 5204,
+    "sha256": "983d741e113a6984624f98a086e2936adcbd57bdc7d91c351b4c2ab5b019d26a"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-yscfT8/frames-0.json",
+    "bytes": 6820,
+    "sha256": "a1d372b241e9a584ee72b8dc61e137d247ebea2523a4b46fa017c089004944cc"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-yscfT8/stderr-0",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-yscfT8/work/probe.txt",
+    "bytes": 36,
+    "sha256": "9cc820da95a68e9f7d57f2f17a56f596f3b4dc0ac9f164b8e96ae87161b77c73"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-yscfT8/kimi/workspaces.json",
+    "bytes": 216,
+    "sha256": "fb040087aa29fbc8c6a911760fc271afdd705bd81e273585ef64568fc83dc8c8"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-yscfT8/kimi/session_index.jsonl",
+    "bytes": 221,
+    "sha256": "c9020022c5dc1be3803fe588e2a5134d822638e7c84345717074a8c141ab6bea"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-yscfT8/kimi/config.toml",
+    "bytes": 665,
+    "sha256": "a78f036a4f5a716caf750c0f65a453605b8015df50061a44a3720433f3e62a23"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-yscfT8/kimi/logs/kimi-code.log",
+    "bytes": 124,
+    "sha256": "67d28a5c0cbd69a3af760f6d11ed0a7af8ba7d7d6d9723ac5c9ec8c32f8cf2f9"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-yscfT8/kimi/sessions/.index-dirty/session_6c7f759f-787a-428b-8fde-b61afc66218c.1793879786140",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-yscfT8/kimi/sessions/.index-dirty/session_6c7f759f-787a-428b-8fde-b61afc66218c.1793879786107",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-yscfT8/kimi/sessions/.index-dirty/session_6c7f759f-787a-428b-8fde-b61afc66218c.1793879786082",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-yscfT8/kimi/sessions/.index-dirty/session_6c7f759f-787a-428b-8fde-b61afc66218c.1793879786047",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-yscfT8/kimi/sessions/wd_work_6c410d658d4e/session_6c7f759f-787a-428b-8fde-b61afc66218c/state.json",
+    "bytes": 526,
+    "sha256": "ab521c027f55d0d3f8e44dee44f8fdb7b9a3d5e680dff37acae86cd0764a74b3"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-yscfT8/kimi/sessions/wd_work_6c410d658d4e/session_6c7f759f-787a-428b-8fde-b61afc66218c/notify/state.json",
+    "bytes": 17,
+    "sha256": "5acf3ff77b4420677b5923071f303facaba7a9273a346284a667a275df325146"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-yscfT8/kimi/sessions/wd_work_6c410d658d4e/session_6c7f759f-787a-428b-8fde-b61afc66218c/logs/kimi-code.log",
+    "bytes": 525,
+    "sha256": "299080ec44b579b841dc6db55a8fe42588ccf0c8f89c049a486e08fb6a0aef48"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-yscfT8/kimi/sessions/wd_work_6c410d658d4e/session_6c7f759f-787a-428b-8fde-b61afc66218c/agents/main/wire.jsonl",
+    "bytes": 88255,
+    "sha256": "bfded9162ca29b986dfd531835851b071b17dac109602be2bb16fe1727a45b7e"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-yscfT8/kimi/cache/query-store/cluster.meta.json",
+    "bytes": 134,
+    "sha256": "6efad62d14f42b17aa2f585a9d257d2099ce398c4d4e3a3c717dbd5c1112ab7b"
+  },
+  {
+    "path": "/tmp/lh-rpc-agy-32K5L9/result.json",
+    "bytes": 4618,
+    "sha256": "1399a1efe138a23b5328f4f1911a6e7880926081b794a981246cc9db1961d153"
+  },
+  {
+    "path": "/tmp/lh-rpc-agy-32K5L9/agy.log",
+    "bytes": 3710,
+    "sha256": "6a900d6e832b2f966b699788f7ef4b5004c7dddd58ebab3c752911401daf0b7e"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-bzsmUL/fixture.json",
+    "bytes": 1040076,
+    "sha256": "e4a1fa56be0ef4e0ea6d63b4b655d8222a5548e3eefbcccbc8d4264525663649"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-bzsmUL/result.json",
+    "bytes": 5967,
+    "sha256": "29f2015af40b31b0e700ee906fe7cc09bf68ffb9473f1411be8602d386c25a54"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-bzsmUL/frames-0.json",
+    "bytes": 27861,
+    "sha256": "2bbfd7e8979a79b8ae11520dbae5245c08b88e1b4a0bc7ef6a6a03ed41af9744"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-bzsmUL/frames-1.json",
+    "bytes": 6113,
+    "sha256": "1986e4bed80ece2aa69d714cd23a528ed3413ae7b8b8a1d7fe810accab133413"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-bzsmUL/stderr-1",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-bzsmUL/stderr-0",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-bzsmUL/work/probe.txt",
+    "bytes": 36,
+    "sha256": "8f67d6ccd7fd2a45953f0357e30214ee99f72b008c2bfedf3a788c5109842a36"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-bzsmUL/kimi/workspaces.json",
+    "bytes": 216,
+    "sha256": "1b88e6941de1faa0c0e557ca36be308954ab64d063d2882a11bc8a973a60fbb4"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-bzsmUL/kimi/session_index.jsonl",
+    "bytes": 221,
+    "sha256": "3cefc35cd8132946a6855e24f1fa907812fab889cbbb6dae2defbf75b3e25926"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-bzsmUL/kimi/config.toml",
+    "bytes": 664,
+    "sha256": "656c780535124ebe7ade1a49f340bb7e24c78d9d4a6dd5d4cc203c999232c349"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-bzsmUL/kimi/logs/kimi-code.log",
+    "bytes": 248,
+    "sha256": "a29a720705e3e6657b2e77e227cebd4d2e27655cc5f2806c565aae9d826e0c6c"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-bzsmUL/kimi/sessions/.index-cache/scan.json",
+    "bytes": 518,
+    "sha256": "c9c5784c1564c8b4c8849e4b2b3f175f107dd805bd47d53965df278588e222f4"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-bzsmUL/kimi/sessions/.index-dirty/session_4c2438cf-ac14-4128-a89d-b1978b4988f7.1793879859581",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-bzsmUL/kimi/sessions/.index-dirty/session_4c2438cf-ac14-4128-a89d-b1978b4988f7.1793879859519",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-bzsmUL/kimi/sessions/.index-dirty/session_4c2438cf-ac14-4128-a89d-b1978b4988f7.1793879859634",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-bzsmUL/kimi/sessions/.index-dirty/session_4c2438cf-ac14-4128-a89d-b1978b4988f7.1793879859391",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-bzsmUL/kimi/sessions/.index-dirty/session_4c2438cf-ac14-4128-a89d-b1978b4988f7.1793879859593",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-bzsmUL/kimi/sessions/.index-dirty/session_4c2438cf-ac14-4128-a89d-b1978b4988f7.1793879859513",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-bzsmUL/kimi/sessions/.index-dirty/session_4c2438cf-ac14-4128-a89d-b1978b4988f7.1793879859549",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-bzsmUL/kimi/sessions/.index-dirty/session_4c2438cf-ac14-4128-a89d-b1978b4988f7.1793879864805",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-bzsmUL/kimi/sessions/.index-dirty/session_4c2438cf-ac14-4128-a89d-b1978b4988f7.1793879859638",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-bzsmUL/kimi/sessions/.index-dirty/session_4c2438cf-ac14-4128-a89d-b1978b4988f7.1793879859665",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-bzsmUL/kimi/sessions/.index-dirty/session_4c2438cf-ac14-4128-a89d-b1978b4988f7.1793879859622",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-bzsmUL/kimi/sessions/.index-dirty/session_4c2438cf-ac14-4128-a89d-b1978b4988f7.1793879859419",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-bzsmUL/kimi/sessions/.index-dirty/session_4c2438cf-ac14-4128-a89d-b1978b4988f7.1793879859648",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-bzsmUL/kimi/sessions/.index-dirty/session_4c2438cf-ac14-4128-a89d-b1978b4988f7.1793879859563",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-bzsmUL/kimi/sessions/.index-dirty/session_4c2438cf-ac14-4128-a89d-b1978b4988f7.1793879859537",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-bzsmUL/kimi/sessions/.index-dirty/session_4c2438cf-ac14-4128-a89d-b1978b4988f7.1793879859598",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-bzsmUL/kimi/sessions/.index-dirty/session_4c2438cf-ac14-4128-a89d-b1978b4988f7.1793879859360",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-bzsmUL/kimi/sessions/wd_work_d868c8448c42/session_4c2438cf-ac14-4128-a89d-b1978b4988f7/state.json",
+    "bytes": 529,
+    "sha256": "d5ea841ec27195d6c27d805d5ce336fa0f2e7bc1fc25464d421d6a846b0097c5"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-bzsmUL/kimi/sessions/wd_work_d868c8448c42/session_4c2438cf-ac14-4128-a89d-b1978b4988f7/notify/state.json",
+    "bytes": 17,
+    "sha256": "5acf3ff77b4420677b5923071f303facaba7a9273a346284a667a275df325146"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-bzsmUL/kimi/sessions/wd_work_d868c8448c42/session_4c2438cf-ac14-4128-a89d-b1978b4988f7/logs/kimi-code.log",
+    "bytes": 2830,
+    "sha256": "f6f5e44146aad7ba6aca9b82de4416a9922cd4c256b38ed1cc7416a4ea52e489"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-bzsmUL/kimi/sessions/wd_work_d868c8448c42/session_4c2438cf-ac14-4128-a89d-b1978b4988f7/agents/main/wire.jsonl",
+    "bytes": 118467,
+    "sha256": "1adf862b84adfbb3360c2b9ec3bcbbaba2fdf222678ecd1e8fea9ac748f33130"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-bzsmUL/kimi/cache/query-store/cluster.meta.json",
+    "bytes": 134,
+    "sha256": "9cc0a5c8fd9a15e79b27117292848bebb2fe9e2cc1804e166286160e55cf3e8b"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-bzsmUL/kimi/cache/query-store/shard-00/db.lock",
+    "bytes": 83,
+    "sha256": "b694f93ef92dcac4ecdbfc0e7de4974d8e7886dc3b59acfa77dbea5ba662e3fe"
+  },
+  {
+    "path": "/tmp/lh-rpc-agy-yp385y/result.json",
+    "bytes": 4407,
+    "sha256": "83d0f1bfd0eee808a79074badbd2e713833ab94adc92e2be5bcabc84ac3b93f3"
+  },
+  {
+    "path": "/tmp/lh-rpc-agy-yp385y/agy.log",
+    "bytes": 10443,
+    "sha256": "e4236b0c2e26408c8921ad383af3c8be945e5fefbae6e80ad0c79d9c8e74c0d5"
+  },
+  {
+    "path": "/tmp/lh-rpc-agy-yp385y/home/.gemini/config/mcp_config.json",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "/tmp/lh-rpc-agy-yp385y/home/.gemini/config/.migrated",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "/tmp/lh-rpc-agy-yp385y/home/.gemini/loom-runtime-audit-agy/conversation_summaries.db",
+    "bytes": 4096,
+    "sha256": "da63a52bdf62b3fc863995d79f497584be3ba97c1de4c55d1d301afbafab6cfc"
+  },
+  {
+    "path": "/tmp/lh-rpc-agy-yp385y/home/.gemini/loom-runtime-audit-agy/jetski_state.pbtxt",
+    "bytes": 503,
+    "sha256": "91c29db3d9acbab6c9ddbfae1574f3590d08baac6f6e296d4f7b43effb6039af"
+  },
+  {
+    "path": "/tmp/lh-rpc-agy-yp385y/home/.gemini/loom-runtime-audit-agy/installation_id",
+    "bytes": 36,
+    "sha256": "cf2d90304b328ed93d7f2e7241513033ec5e53746516613c04ac96e3c8aaaf3d"
+  },
+  {
+    "path": "/tmp/lh-rpc-agy-yp385y/home/.gemini/loom-runtime-audit-agy/conversation_summaries.db-shm",
+    "bytes": 32768,
+    "sha256": "d6e5d5f66bb18853c261b93828b4d580b10c1e77645344e655b6bd912fbbb3c3"
+  },
+  {
+    "path": "/tmp/lh-rpc-agy-yp385y/home/.gemini/loom-runtime-audit-agy/conversation_summaries.db-wal",
+    "bytes": 20632,
+    "sha256": "76588f45993ffcfda7c4ec68bac8fec61667948ff027094f091ec76480ae4a5c"
+  },
+  {
+    "path": "/tmp/lh-rpc-agy-yp385y/home/.gemini/loom-runtime-audit-agy/implicit/9eaca097-e7ed-481c-afd8-54ccbb5a7ac6.pb",
+    "bytes": 256,
+    "sha256": "d0a6a81b0085232fa8c39010807ea7c6d552290d35e87b2e78a9924642a3ac39"
+  },
+  {
+    "path": "/tmp/lh-rpc-agy-yp385y/home/.gemini/loom-runtime-audit-agy/builtin/.checksum",
+    "bytes": 72,
+    "sha256": "c37afbbef5ad3a4fb7642fe3d9fd5ee00ec62f4bf7a6e8d0a04c81358098be44"
+  },
+  {
+    "path": "/tmp/lh-rpc-agy-yp385y/home/.gemini/loom-runtime-audit-agy/builtin/keep.txt",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "/tmp/lh-rpc-agy-yp385y/home/.gemini/loom-runtime-audit-agy/builtin/.manifest",
+    "bytes": 722,
+    "sha256": "9015e9ab80fc0573c09948ce4816fe3112a7f6a67bc9c976d04f068b4b1d1ec2"
+  },
+  {
+    "path": "/tmp/lh-rpc-agy-yp385y/home/.gemini/loom-runtime-audit-agy/builtin/skills/generative_ui/SKILL.md",
+    "bytes": 5824,
+    "sha256": "ce3390af7b2db6d46bb8bfe7a9af3afced9fa26700fb8b7945d3a9ab66fd4830"
+  },
+  {
+    "path": "/tmp/lh-rpc-agy-yp385y/home/.gemini/loom-runtime-audit-agy/builtin/skills/plugin/SKILL.md",
+    "bytes": 17208,
+    "sha256": "61d4b73a11a2c14a88d909454f8fa435b6606b875d28b270b9267f7923866dfe"
+  },
+  {
+    "path": "/tmp/lh-rpc-agy-yp385y/home/.gemini/loom-runtime-audit-agy/builtin/skills/agy-customizations/SKILL.md",
+    "bytes": 5465,
+    "sha256": "79c8885e76ce449e82016b37b53dfcc3ff5afefd90a23ea83b24148f41f33fa1"
+  },
+  {
+    "path": "/tmp/lh-rpc-agy-yp385y/home/.gemini/loom-runtime-audit-agy/builtin/skills/automation/SKILL.md",
+    "bytes": 12572,
+    "sha256": "43f296abc2f206dc625669d38035be3b61a46cad1596b27dbf1134d30cf8d36b"
+  },
+  {
+    "path": "/tmp/lh-rpc-agy-yp385y/home/.gemini/loom-runtime-audit-agy/builtin/skills/permissioned-github/SKILL.md",
+    "bytes": 8293,
+    "sha256": "5779716732c7a75681aa980c76355ae8b675f881e742b74f93e4be14b4abfc9d"
+  },
+  {
+    "path": "/tmp/lh-rpc-agy-yp385y/home/.gemini/loom-runtime-audit-agy/builtin/skills/ui-plugin-navigation/SKILL.md",
+    "bytes": 3811,
+    "sha256": "79ec8489d201382989061aab44dfd42ad5f586d88621b867bdca90284bd62af5"
+  },
+  {
+    "path": "/tmp/lh-rpc-agy-yp385y/home/.gemini/loom-runtime-audit-agy/builtin/skills/migrate-workflows/SKILL.md",
+    "bytes": 6039,
+    "sha256": "ee8b18d875bba52c024c609f8cbdaf5bbf60396e0f826944c38ce191590cb787"
+  },
+  {
+    "path": "/tmp/lh-rpc-agy-yp385y/home/.gemini/loom-runtime-audit-agy/builtin/skills/run-workflow/SKILL.md",
+    "bytes": 10315,
+    "sha256": "4a524107cb6173d75a54c2a7de3addeb413d7bdb868c8279682ded74672beb1e"
+  },
+  {
+    "path": "/tmp/lh-rpc-agy-yp385y/home/.gemini/loom-runtime-audit-agy/builtin/skills/antigravity_guide/SKILL.md",
+    "bytes": 3023,
+    "sha256": "9fc5f6570e91dd792dab582d4e1cc7e7bd25b303c1583c6f118a07ec6bb3dd1d"
+  },
+  {
+    "path": "/tmp/lh-rpc-agy-yp385y/home/.gemini/loom-runtime-audit-agy/builtin/skills/antigravity_guide/references/app.md",
+    "bytes": 3852,
+    "sha256": "5adba0e3ca6dbf08d7ad1c2b136f88c067e175b454f0179fc7aa3c4783d9f5ab"
+  },
+  {
+    "path": "/tmp/lh-rpc-agy-yp385y/home/.gemini/loom-runtime-audit-agy/builtin/skills/antigravity_guide/references/cli.md",
+    "bytes": 1686,
+    "sha256": "1499e0ac083227b88e74373d46672afccd1ffe31d0a5136bcc352fe72c582d2a"
+  },
+  {
+    "path": "/tmp/lh-rpc-agy-yp385y/home/.gemini/loom-runtime-audit-agy/builtin/skills/antigravity_guide/references/ide.md",
+    "bytes": 3399,
+    "sha256": "e3da87b168f25f229a14a4547d7833e8e49191f1a85346f463c01f886a64693d"
+  },
+  {
+    "path": "/tmp/lh-rpc-agy-yp385y/home/.gemini/loom-runtime-audit-agy/builtin/skills/antigravity_guide/references/sdk.md",
+    "bytes": 3130,
+    "sha256": "a20587f3cedf7b8c6f7501f71fc7985d76c64007f7581690f68c0ffdc4357560"
+  },
+  {
+    "path": "/tmp/lh-rpc-agy-yp385y/home/.gemini/loom-runtime-audit-agy/builtin/skills/agy-customizations/docs/json_configs.md",
+    "bytes": 4904,
+    "sha256": "c15221be619c411058179fb1da85195894e33502dd074eba64e6a609572488b6"
+  },
+  {
+    "path": "/tmp/lh-rpc-agy-yp385y/home/.gemini/loom-runtime-audit-agy/builtin/skills/agy-customizations/docs/skills.md",
+    "bytes": 2650,
+    "sha256": "c4eba3bc9a8775928704d1b7feede20871b25f8d427c6cd6757b7edd54b3ae60"
+  },
+  {
+    "path": "/tmp/lh-rpc-agy-yp385y/home/.gemini/loom-runtime-audit-agy/builtin/skills/agy-customizations/docs/plugins.md",
+    "bytes": 4714,
+    "sha256": "6dc3064ac51957d0c3ade9aa9fb62f546f0ae64334a7653fab993598b69903a4"
+  },
+  {
+    "path": "/tmp/lh-rpc-agy-yp385y/home/.gemini/loom-runtime-audit-agy/builtin/skills/agy-customizations/docs/hooks.md",
+    "bytes": 14291,
+    "sha256": "31749bcc58053efc852a20110e0a90716d235796a03262ae507a1b5f09177898"
+  },
+  {
+    "path": "/tmp/lh-rpc-agy-yp385y/home/.gemini/loom-runtime-audit-agy/builtin/skills/agy-customizations/docs/rules.md",
+    "bytes": 1757,
+    "sha256": "063ab1c908fae4798d9a1f5981ed57b7570a860ceb0e5850816aefddf72b8b54"
+  },
+  {
+    "path": "/tmp/lh-rpc-agy-yp385y/home/.gemini/loom-runtime-audit-agy/builtin/skills/agy-customizations/docs/mcp_servers.md",
+    "bytes": 3378,
+    "sha256": "7e34d5924e3574a60b75e8972d121de6923a3e7b9248c3c95434f26823fe18cf"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-t45Qbf/fixture.json",
+    "bytes": 1040076,
+    "sha256": "22b466f0a788ebff033fc6ac16a24f115a157b7b365e78a2dc98a7227d51b321"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-t45Qbf/result.json",
+    "bytes": 5772,
+    "sha256": "042378e65a7d3ef00e74de78a969e663a31fec4439e7457d435a125824ec985a"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-t45Qbf/frames-0.json",
+    "bytes": 27861,
+    "sha256": "67436a56d0a6c04380fe0ca8360d6474ef2ad25bb110b09513719d11cb7f3758"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-t45Qbf/stderr-0",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-t45Qbf/work/probe.txt",
+    "bytes": 36,
+    "sha256": "e19a95e7fd8dc994bebf4a91f2eeb2551e8920e0ad52f2eefffcf9ea957943df"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-t45Qbf/kimi/workspaces.json",
+    "bytes": 216,
+    "sha256": "dcd47e643adb2bfd963672fbe1bb5f6fe80c04f34023d6d4ccd8b253b6580aad"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-t45Qbf/kimi/session_index.jsonl",
+    "bytes": 221,
+    "sha256": "b2f24349b16df7a11abe3b3f6feb5638863f0ede22435280f64cf8bdbb9ee2f1"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-t45Qbf/kimi/config.toml",
+    "bytes": 664,
+    "sha256": "49777114e973c9c9e54b6ff208dc28fa80329ee03689dd855a7f84595290e45e"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-t45Qbf/kimi/logs/kimi-code.log",
+    "bytes": 124,
+    "sha256": "b85272592a8fcaa0247cbc129659a84c156f947317c65d4367f7f3605bac0ab4"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-t45Qbf/kimi/sessions/.index-dirty/session_8a8541b3-bd87-42e4-9e27-336fa48de4a1.1793879908636",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-t45Qbf/kimi/sessions/.index-dirty/session_8a8541b3-bd87-42e4-9e27-336fa48de4a1.1793879908696",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-t45Qbf/kimi/sessions/.index-dirty/session_8a8541b3-bd87-42e4-9e27-336fa48de4a1.1793879908458",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-t45Qbf/kimi/sessions/.index-dirty/session_8a8541b3-bd87-42e4-9e27-336fa48de4a1.1793879908583",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-t45Qbf/kimi/sessions/.index-dirty/session_8a8541b3-bd87-42e4-9e27-336fa48de4a1.1793879908565",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-t45Qbf/kimi/sessions/.index-dirty/session_8a8541b3-bd87-42e4-9e27-336fa48de4a1.1793879908599",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-t45Qbf/kimi/sessions/.index-dirty/session_8a8541b3-bd87-42e4-9e27-336fa48de4a1.1793879908677",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-t45Qbf/kimi/sessions/.index-dirty/session_8a8541b3-bd87-42e4-9e27-336fa48de4a1.1793879908420",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-t45Qbf/kimi/sessions/.index-dirty/session_8a8541b3-bd87-42e4-9e27-336fa48de4a1.1793879908640",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-t45Qbf/kimi/sessions/.index-dirty/session_8a8541b3-bd87-42e4-9e27-336fa48de4a1.1793879908625",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-t45Qbf/kimi/sessions/.index-dirty/session_8a8541b3-bd87-42e4-9e27-336fa48de4a1.1793879908657",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-t45Qbf/kimi/sessions/.index-dirty/session_8a8541b3-bd87-42e4-9e27-336fa48de4a1.1793879908603",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-t45Qbf/kimi/sessions/.index-dirty/session_8a8541b3-bd87-42e4-9e27-336fa48de4a1.1793879908669",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-t45Qbf/kimi/sessions/.index-dirty/session_8a8541b3-bd87-42e4-9e27-336fa48de4a1.1793879908557",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-t45Qbf/kimi/sessions/.index-dirty/session_8a8541b3-bd87-42e4-9e27-336fa48de4a1.1793879908479",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-t45Qbf/kimi/sessions/wd_work_36313042662e/session_8a8541b3-bd87-42e4-9e27-336fa48de4a1/state.json",
+    "bytes": 529,
+    "sha256": "03076c16cec941433efab11c75432da0f0e4e0eccb540689830c89aaf91cb375"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-t45Qbf/kimi/sessions/wd_work_36313042662e/session_8a8541b3-bd87-42e4-9e27-336fa48de4a1/notify/state.json",
+    "bytes": 17,
+    "sha256": "5acf3ff77b4420677b5923071f303facaba7a9273a346284a667a275df325146"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-t45Qbf/kimi/sessions/wd_work_36313042662e/session_8a8541b3-bd87-42e4-9e27-336fa48de4a1/logs/kimi-code.log",
+    "bytes": 2830,
+    "sha256": "d5cdd2d37a6d76743179591e67cfaee272ee783e31aa2d516cb8c9a4e6d9e717"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-t45Qbf/kimi/sessions/wd_work_36313042662e/session_8a8541b3-bd87-42e4-9e27-336fa48de4a1/agents/main/wire.jsonl",
+    "bytes": 118467,
+    "sha256": "52d06c262e96edc277b280cb164678e1f957cc64a1faffa57ae04d87b8200c1b"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-t45Qbf/kimi/cache/query-store/cluster.meta.json",
+    "bytes": 134,
+    "sha256": "bcc5033fa8597dca32f6900d11dfa0762095693523c6ddca97763fc75707e663"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-KN5ADa/fixture.json",
+    "bytes": 1255246,
+    "sha256": "fe740bac7a5b00104281a988c7040c4b0d579d06ff1825abc3071a796da44257"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-KN5ADa/result.json",
+    "bytes": 5605,
+    "sha256": "ef49dd691a7d196db47531bce950c93d4b2ef48705f699f328a550ba6d5b0f9d"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-KN5ADa/frames-0.json",
+    "bytes": 27861,
+    "sha256": "3788f852abe0b6dd60a66bbbe3b7485f745f8ee15306c7ff237bf9ce1f8c4961"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-KN5ADa/frames-1.json",
+    "bytes": 9555,
+    "sha256": "a52bc6866e0dde27f92b4369badb0dc1e3ef6bc86acfe6b8fab9533415cfd7ee"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-KN5ADa/stderr-1",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-KN5ADa/stderr-0",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-KN5ADa/work/probe.txt",
+    "bytes": 36,
+    "sha256": "12577d7831757767c7f5487b64826199f61365223c7c41517a9ee4656e833232"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-KN5ADa/kimi/workspaces.json",
+    "bytes": 216,
+    "sha256": "5cfe50d09adf3171c9cdb606114fa669992d07824b5abcd507b57fd74de66c36"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-KN5ADa/kimi/session_index.jsonl",
+    "bytes": 221,
+    "sha256": "9b0a716dcd96079ac24d2a90c06f5db1ca5390673e3310da7eacfb4ddda8dcad"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-KN5ADa/kimi/config.toml",
+    "bytes": 664,
+    "sha256": "5945a0ef5f7659d3f12f2d189726bf521f43d5b2aa85fa5806e2ff206c4bb35a"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-KN5ADa/kimi/logs/kimi-code.log",
+    "bytes": 358,
+    "sha256": "67493030cd48287e928f9cf3e4f5c2614b30c0382be2d18c2af7e48c2b64af6b"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-KN5ADa/kimi/sessions/.index-cache/scan.json",
+    "bytes": 518,
+    "sha256": "acd01f3de4cab949ff800cce22ece2cffcb08cf0f88e33087ea40795d126d8d4"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-KN5ADa/kimi/sessions/.index-dirty/session_d0aad5b6-3a85-4594-a859-99d4239b9a6e.1793879987599",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-KN5ADa/kimi/sessions/.index-dirty/session_d0aad5b6-3a85-4594-a859-99d4239b9a6e.1793879976978",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-KN5ADa/kimi/sessions/.index-dirty/session_d0aad5b6-3a85-4594-a859-99d4239b9a6e.1793879976949",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-KN5ADa/kimi/sessions/.index-dirty/session_d0aad5b6-3a85-4594-a859-99d4239b9a6e.1793879976941",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-KN5ADa/kimi/sessions/.index-dirty/session_d0aad5b6-3a85-4594-a859-99d4239b9a6e.1793879976999",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-KN5ADa/kimi/sessions/.index-dirty/session_d0aad5b6-3a85-4594-a859-99d4239b9a6e.1793879987578",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-KN5ADa/kimi/sessions/.index-dirty/session_d0aad5b6-3a85-4594-a859-99d4239b9a6e.1793879976889",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-KN5ADa/kimi/sessions/.index-dirty/session_d0aad5b6-3a85-4594-a859-99d4239b9a6e.1793879976863",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-KN5ADa/kimi/sessions/.index-dirty/session_d0aad5b6-3a85-4594-a859-99d4239b9a6e.1793879976910",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-KN5ADa/kimi/sessions/.index-dirty/session_d0aad5b6-3a85-4594-a859-99d4239b9a6e.1793879987644",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-KN5ADa/kimi/sessions/.index-dirty/session_d0aad5b6-3a85-4594-a859-99d4239b9a6e.1793879976716",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-KN5ADa/kimi/sessions/.index-dirty/session_d0aad5b6-3a85-4594-a859-99d4239b9a6e.1793879976986",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-KN5ADa/kimi/sessions/.index-dirty/session_d0aad5b6-3a85-4594-a859-99d4239b9a6e.1793879976775",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-KN5ADa/kimi/sessions/.index-dirty/session_d0aad5b6-3a85-4594-a859-99d4239b9a6e.1793879976905",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-KN5ADa/kimi/sessions/.index-dirty/session_d0aad5b6-3a85-4594-a859-99d4239b9a6e.1793879976750",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-KN5ADa/kimi/sessions/.index-dirty/session_d0aad5b6-3a85-4594-a859-99d4239b9a6e.1793879976933",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-KN5ADa/kimi/sessions/.index-dirty/session_d0aad5b6-3a85-4594-a859-99d4239b9a6e.1793879977011",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-KN5ADa/kimi/sessions/.index-dirty/session_d0aad5b6-3a85-4594-a859-99d4239b9a6e.1793879976961",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-KN5ADa/kimi/sessions/.index-dirty/session_d0aad5b6-3a85-4594-a859-99d4239b9a6e.1793879976871",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-KN5ADa/kimi/sessions/wd_work_b9df2520a918/session_d0aad5b6-3a85-4594-a859-99d4239b9a6e/state.json",
+    "bytes": 529,
+    "sha256": "6d9984c32313f8ca63154c89b43143bb45f3e66ba4b14607dfb061faecfb3162"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-KN5ADa/kimi/sessions/wd_work_b9df2520a918/session_d0aad5b6-3a85-4594-a859-99d4239b9a6e/notify/state.json",
+    "bytes": 17,
+    "sha256": "5acf3ff77b4420677b5923071f303facaba7a9273a346284a667a275df325146"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-KN5ADa/kimi/sessions/wd_work_b9df2520a918/session_d0aad5b6-3a85-4594-a859-99d4239b9a6e/logs/kimi-code.log",
+    "bytes": 3501,
+    "sha256": "a86d84ca0dbedf41c1c6f6009ca9e971903c17c12874c0d2483e150204b51cb0"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-KN5ADa/kimi/sessions/wd_work_b9df2520a918/session_d0aad5b6-3a85-4594-a859-99d4239b9a6e/agents/main/wire.jsonl",
+    "bytes": 125697,
+    "sha256": "79b6d8983a3bbb4f9447fe6cb03fa1b229cd2050889affb2e18ffc3d84a1eab3"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-KN5ADa/kimi/cache/query-store/cluster.meta.json",
+    "bytes": 134,
+    "sha256": "478ecefce285b532b87fbafe50761b9e3098d8b88e1b1ca24069f5ff8e46a472"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-KN5ADa/kimi/cache/query-store/shard-00/db.indexes.json",
+    "bytes": 114,
+    "sha256": "3b82e963f9e39205a1dbbcb6492edfe3375d2fc86d9011cd1638122af23ae6b7"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-KN5ADa/kimi/cache/query-store/shard-00/db.lock",
+    "bytes": 83,
+    "sha256": "6bf4a63f6f9890041cffb42a38e6403e3ebecca4ab9b5c356fb8b4523c9c26c7"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-KN5ADa/kimi/cache/query-store/shard-00/db.wal",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-KN5ADa/kimi/cache/query-store/shard-01/db.indexes.json",
+    "bytes": 114,
+    "sha256": "3b82e963f9e39205a1dbbcb6492edfe3375d2fc86d9011cd1638122af23ae6b7"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-KN5ADa/kimi/cache/query-store/shard-01/db.lock",
+    "bytes": 83,
+    "sha256": "d3607c2380e6054d511038d8f1603653c05c28482f80028c66a5be774b7ff2ab"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-KN5ADa/kimi/cache/query-store/shard-01/db.wal",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-KN5ADa/kimi/cache/query-store/shard-02/db.indexes.json.tmp-8409-3",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-KN5ADa/kimi/cache/query-store/shard-02/db.lock",
+    "bytes": 83,
+    "sha256": "f882d033b4020afeeeb39f5086ec79a95f83eaf705e0f8e5cf1baa7f779ac618"
+  },
+  {
+    "path": "/tmp/lh-rpc-kimi-KN5ADa/kimi/cache/query-store/shard-02/db.wal",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+]

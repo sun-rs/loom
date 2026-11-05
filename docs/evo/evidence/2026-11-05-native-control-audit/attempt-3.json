@@ -1,0 +1,199 @@
+{
+  "root": "/tmp/lh-rpc-kimi-yscfT8",
+  "kind": "native-kimi-persistent-acp-probe",
+  "paidCalls": 0,
+  "checks": [
+    {
+      "id": "initialize-create-session",
+      "sessionId": "session_6c7f759f-787a-428b-8fde-b61afc66218c",
+      "capabilities": {
+        "loadSession": true,
+        "promptCapabilities": {
+          "image": true,
+          "audio": false,
+          "embeddedContext": true
+        },
+        "sessionCapabilities": {
+          "list": {},
+          "resume": {},
+          "close": {},
+          "delete": {},
+          "fork": {},
+          "additionalDirectories": {}
+        },
+        "mcpCapabilities": {
+          "http": true,
+          "sse": true
+        },
+        "auth": {
+          "logout": {}
+        }
+      }
+    }
+  ],
+  "startedAt": "2026-11-05T11:56:25.444Z",
+  "initialize": {
+    "protocolVersion": 1,
+    "agentCapabilities": {
+      "loadSession": true,
+      "promptCapabilities": {
+        "image": true,
+        "audio": false,
+        "embeddedContext": true
+      },
+      "sessionCapabilities": {
+        "list": {},
+        "resume": {},
+        "close": {},
+        "delete": {},
+        "fork": {},
+        "additionalDirectories": {}
+      },
+      "mcpCapabilities": {
+        "http": true,
+        "sse": true
+      },
+      "auth": {
+        "logout": {}
+      }
+    },
+    "authMethods": [
+      {
+        "id": "login",
+        "type": "terminal",
+        "name": "Login with Kimi account",
+        "description": "Open the device-code login flow in a terminal.",
+        "args": ["--login"],
+        "env": {
+          "KIMI_CODE_HOME": "/tmp/lh-rpc-kimi-yscfT8/kimi"
+        },
+        "_meta": {
+          "terminal-auth": {
+            "type": "terminal",
+            "label": "Login with Kimi account",
+            "command": "/opt/homebrew/bin/kimi",
+            "args": ["login"],
+            "env": {
+              "KIMI_CODE_HOME": "/tmp/lh-rpc-kimi-yscfT8/kimi"
+            }
+          }
+        }
+      }
+    ],
+    "agentInfo": {
+      "name": "Kimi Code CLI",
+      "version": "2.4.0"
+    }
+  },
+  "nativeSessionId": "session_6c7f759f-787a-428b-8fde-b61afc66218c",
+  "pid": 99243,
+  "session": {
+    "sessionId": "session_6c7f759f-787a-428b-8fde-b61afc66218c",
+    "configOptions": [
+      {
+        "type": "select",
+        "id": "model",
+        "name": "Model",
+        "category": "model",
+        "currentValue": "fixture",
+        "options": [
+          {
+            "value": "fixture",
+            "name": "fixture"
+          },
+          {
+            "value": "fixture-alt",
+            "name": "fixture-alt"
+          }
+        ]
+      },
+      {
+        "type": "select",
+        "id": "thinking",
+        "name": "Thinking",
+        "category": "thought_level",
+        "currentValue": "off",
+        "options": [
+          {
+            "value": "off",
+            "name": "Thinking Off"
+          },
+          {
+            "value": "low",
+            "name": "Thinking Low"
+          },
+          {
+            "value": "high",
+            "name": "Thinking High"
+          }
+        ]
+      },
+      {
+        "type": "select",
+        "id": "mode",
+        "name": "Mode",
+        "category": "mode",
+        "currentValue": "default",
+        "options": [
+          {
+            "value": "default",
+            "name": "Default",
+            "description": "Manual approvals; tools execute normally."
+          },
+          {
+            "value": "plan",
+            "name": "Plan",
+            "description": "Read-only planning; no tool execution."
+          },
+          {
+            "value": "auto",
+            "name": "Auto",
+            "description": "Auto-approve safe operations."
+          },
+          {
+            "value": "yolo",
+            "name": "YOLO",
+            "description": "Auto-approve everything."
+          }
+        ]
+      }
+    ],
+    "modes": {
+      "currentModeId": "default",
+      "availableModes": [
+        {
+          "id": "default",
+          "name": "Default",
+          "description": "Manual approvals; tools execute normally."
+        },
+        {
+          "id": "plan",
+          "name": "Plan",
+          "description": "Read-only planning; no tool execution."
+        },
+        {
+          "id": "auto",
+          "name": "Auto",
+          "description": "Auto-approve safe operations."
+        },
+        {
+          "id": "yolo",
+          "name": "YOLO",
+          "description": "Auto-approve everything."
+        }
+      ]
+    }
+  },
+  "status": "failed",
+  "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\n0 !== 2\n",
+  "stack": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\n0 !== 2\n\n    at ask (file:///Users/sun/Code/repos/rah_os/scripts/runtime-interface-audit/kimi-acp.mjs:29:10)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async file:///Users/sun/Code/repos/rah_os/scripts/runtime-interface-audit/kimi-acp.mjs:40:5",
+  "exits": [
+    {
+      "code": null,
+      "signal": "SIGKILL"
+    }
+  ],
+  "requests": 0,
+  "fileReadReceipts": 0,
+  "finishedAt": "2026-11-05T11:56:31.146Z"
+}

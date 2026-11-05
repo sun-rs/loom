@@ -1,0 +1,142 @@
+[
+  {
+    "attempt": 1,
+    "root": "/tmp/lh-rpc-pi-4HKMko",
+    "cli": "pi",
+    "status": "failed",
+    "requests": 10,
+    "fileReadReceipts": 5,
+    "classification": "Pi restart retained explicit --model fixture, which intentionally overrides the model changed through RPC. Failed expectation retained; native override must be reconciled with Loom launch state.",
+    "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n+ actual - expected\n\n+ 'fixture'\n- 'fixture-alt'\n          ^\n",
+    "exits": [
+      {
+        "code": 0,
+        "signal": null
+      },
+      {
+        "code": 0,
+        "signal": null
+      }
+    ]
+  },
+  {
+    "attempt": 2,
+    "root": "/tmp/lh-rpc-pi-03SsQK",
+    "cli": "pi",
+    "status": "passed-native-probe-not-product-integration",
+    "requests": 12,
+    "fileReadReceipts": 6,
+    "classification": "Pi native capability probe passed; restart relies on the saved session rather than overriding its model with initial argv.",
+    "error": null,
+    "exits": [
+      {
+        "code": 0,
+        "signal": null
+      },
+      {
+        "code": 0,
+        "signal": null
+      }
+    ]
+  },
+  {
+    "attempt": 3,
+    "root": "/tmp/lh-rpc-kimi-yscfT8",
+    "cli": "kimi",
+    "status": "failed",
+    "requests": 0,
+    "fileReadReceipts": 0,
+    "classification": "Kimi fixture declared a thinking model without off_effort but requested off. Native engine failed before HTTP; ACP returned end_turn, so the tool-receipt assertion correctly refused success. Short research cleanup escalated to KILL.",
+    "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\n0 !== 2\n",
+    "exits": [
+      {
+        "code": null,
+        "signal": "SIGKILL"
+      }
+    ]
+  },
+  {
+    "attempt": 4,
+    "root": "/tmp/lh-rpc-agy-32K5L9",
+    "cli": "agy",
+    "status": "protocol-ready-session-authentication-required",
+    "requests": 0,
+    "fileReadReceipts": 0,
+    "classification": "AGY initialize passed, but absolute app-data-dir is rejected by its language server. Original raw label incorrectly said authentication-required; this normalized record corrects it to launch-argument setup failure.",
+    "error": null,
+    "exits": {
+      "code": 0,
+      "signal": null
+    }
+  },
+  {
+    "attempt": 5,
+    "root": "/tmp/lh-rpc-kimi-bzsmUL",
+    "cli": "kimi",
+    "status": "failed",
+    "requests": 10,
+    "fileReadReceipts": 5,
+    "classification": "Kimi ACP resume returns configOptions/modes, not a new sessionId. Probe incorrectly required an id in that response. Failure preserved; one cleanup also exceeded the initial short timeout.",
+    "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n+ actual - expected\n\n+ undefined\n- 'session_4c2438cf-ac14-4128-a89d-b1978b4988f7'\n",
+    "exits": [
+      {
+        "code": 0,
+        "signal": null
+      },
+      {
+        "code": null,
+        "signal": "SIGKILL"
+      }
+    ]
+  },
+  {
+    "attempt": 6,
+    "root": "/tmp/lh-rpc-agy-yp385y",
+    "cli": "agy",
+    "status": "protocol-ready-session-create-error",
+    "requests": 0,
+    "fileReadReceipts": 0,
+    "classification": "AGY initialize passed. Isolated session creation explicitly returned Authentication required. No production credentials copied, no session/prompt sent; not evidence that the user account is logged out.",
+    "error": null,
+    "exits": {
+      "code": 0,
+      "signal": null
+    }
+  },
+  {
+    "attempt": 7,
+    "root": "/tmp/lh-rpc-kimi-t45Qbf",
+    "cli": "kimi",
+    "status": "failed",
+    "requests": 10,
+    "fileReadReceipts": 5,
+    "classification": "Kimi research helper allowed only 2.5 seconds for EOF cleanup, below the already-documented native cleanup allowance. Forced termination is not clean exit. Failure preserved.",
+    "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\nnull !== 0\n",
+    "exits": [
+      {
+        "code": null,
+        "signal": "SIGKILL"
+      }
+    ]
+  },
+  {
+    "attempt": 8,
+    "root": "/tmp/lh-rpc-kimi-KN5ADa",
+    "cli": "kimi",
+    "status": "passed-native-probe-not-product-integration",
+    "requests": 12,
+    "fileReadReceipts": 6,
+    "classification": "Kimi native capability probe passed, including two exit-0 cleanups with a 35-second allowance and exact session resume.",
+    "error": null,
+    "exits": [
+      {
+        "code": 0,
+        "signal": null
+      },
+      {
+        "code": 0,
+        "signal": null
+      }
+    ]
+  }
+]

@@ -1,0 +1,56 @@
+{
+  "kind": "native-control-interface-audit",
+  "date": "2026-11-05",
+  "productBaseline": "287c9661c2b8747d7b60f8d98e0235f849311dd5",
+  "productionChanged": false,
+  "paidCalls": 0,
+  "remoteModelCalls": 0,
+  "localhostNativeModelRequests": 54,
+  "actualFileReadReceipts": 27,
+  "fixtureTokensAreSynthetic": true,
+  "efficiencyOrCacheImprovementClaim": false,
+  "nativePassed": {
+    "pi": {
+      "version": "1.5.0",
+      "checks": 8,
+      "requests": 12,
+      "sessionId": "01a1ab8f-46ab-73b8-997d-356468ad400c"
+    },
+    "kimi": {
+      "version": "2.4.0",
+      "checks": 8,
+      "requests": 12,
+      "sessionId": "session_d0aad5b6-3a85-4594-a859-99d4239b9a6e"
+    }
+  },
+  "agy": {
+    "version": "1.5.0",
+    "initializePassed": true,
+    "sessionCreation": "isolated-auth-required",
+    "generationTested": false,
+    "modelControlTested": false,
+    "candidateMinimumRecommendedVersion": "1.5.1",
+    "candidateUpgradePerformed": false
+  },
+  "existingContinuousInterfaces": [
+    "codex app-server",
+    "claude stream-json stdin/stdout",
+    "opencode serve HTTP/events"
+  ],
+  "existingInterfacesFreshGenerationTested": false,
+  "claudeExcluded": true,
+  "nextOrder": [
+    "Pi: integrate native RPC in the existing RuntimeAdapter/pool and WorkerFinalOutput boundary",
+    "Kimi: keep ACP process across Activations without weakening turn completion, cleanup or usage proof",
+    "Agy: validate >=1.5.1 ACP model catalog and lifecycle before adopting"
+  ],
+  "notValidated": [
+    "product Channel/Inbox/Activation/Worker integration",
+    "real provider generation quality",
+    "token/cache/latency benefit",
+    "permission and Human steering integration",
+    "descendant quiescence under all native modes",
+    "fork/side compatibility of new drivers",
+    "Agy authenticated generation, model/effort change, cancel or resume"
+  ]
+}

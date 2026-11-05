@@ -1,0 +1,231 @@
+{
+  "root": "/tmp/lh-rpc-kimi-bzsmUL",
+  "kind": "native-kimi-persistent-acp-probe",
+  "paidCalls": 0,
+  "checks": [
+    {
+      "id": "initialize-create-session",
+      "sessionId": "session_4c2438cf-ac14-4128-a89d-b1978b4988f7",
+      "capabilities": {
+        "loadSession": true,
+        "promptCapabilities": {
+          "image": true,
+          "audio": false,
+          "embeddedContext": true
+        },
+        "sessionCapabilities": {
+          "list": {},
+          "resume": {},
+          "close": {},
+          "delete": {},
+          "fork": {},
+          "additionalDirectories": {}
+        },
+        "mcpCapabilities": {
+          "http": true,
+          "sse": true
+        },
+        "auth": {
+          "logout": {}
+        }
+      }
+    },
+    {
+      "id": "continuous-native-turn",
+      "turn": 1,
+      "sessionId": "session_4c2438cf-ac14-4128-a89d-b1978b4988f7",
+      "pid": 2955
+    },
+    {
+      "id": "continuous-native-turn",
+      "turn": 2,
+      "sessionId": "session_4c2438cf-ac14-4128-a89d-b1978b4988f7",
+      "pid": 2955
+    },
+    {
+      "id": "model-and-effort-change-in-same-session",
+      "sessionId": "session_4c2438cf-ac14-4128-a89d-b1978b4988f7",
+      "model": "fixture-alt",
+      "effort": "high"
+    },
+    {
+      "id": "native-cancel",
+      "stopReason": "cancelled"
+    },
+    {
+      "id": "next-turn-after-cancel"
+    },
+    {
+      "id": "unknown-model-rejected"
+    }
+  ],
+  "startedAt": "2026-11-05T11:57:38.764Z",
+  "initialize": {
+    "protocolVersion": 1,
+    "agentCapabilities": {
+      "loadSession": true,
+      "promptCapabilities": {
+        "image": true,
+        "audio": false,
+        "embeddedContext": true
+      },
+      "sessionCapabilities": {
+        "list": {},
+        "resume": {},
+        "close": {},
+        "delete": {},
+        "fork": {},
+        "additionalDirectories": {}
+      },
+      "mcpCapabilities": {
+        "http": true,
+        "sse": true
+      },
+      "auth": {
+        "logout": {}
+      }
+    },
+    "authMethods": [
+      {
+        "id": "login",
+        "type": "terminal",
+        "name": "Login with Kimi account",
+        "description": "Open the device-code login flow in a terminal.",
+        "args": ["--login"],
+        "env": {
+          "KIMI_CODE_HOME": "/tmp/lh-rpc-kimi-bzsmUL/kimi"
+        },
+        "_meta": {
+          "terminal-auth": {
+            "type": "terminal",
+            "label": "Login with Kimi account",
+            "command": "/opt/homebrew/bin/kimi",
+            "args": ["login"],
+            "env": {
+              "KIMI_CODE_HOME": "/tmp/lh-rpc-kimi-bzsmUL/kimi"
+            }
+          }
+        }
+      }
+    ],
+    "agentInfo": {
+      "name": "Kimi Code CLI",
+      "version": "2.4.0"
+    }
+  },
+  "nativeSessionId": "session_4c2438cf-ac14-4128-a89d-b1978b4988f7",
+  "pid": 2955,
+  "session": {
+    "sessionId": "session_4c2438cf-ac14-4128-a89d-b1978b4988f7",
+    "configOptions": [
+      {
+        "type": "select",
+        "id": "model",
+        "name": "Model",
+        "category": "model",
+        "currentValue": "fixture",
+        "options": [
+          {
+            "value": "fixture",
+            "name": "fixture"
+          },
+          {
+            "value": "fixture-alt",
+            "name": "fixture-alt"
+          }
+        ]
+      },
+      {
+        "type": "select",
+        "id": "thinking",
+        "name": "Thinking",
+        "category": "thought_level",
+        "currentValue": "low",
+        "options": [
+          {
+            "value": "off",
+            "name": "Thinking Off"
+          },
+          {
+            "value": "low",
+            "name": "Thinking Low"
+          },
+          {
+            "value": "high",
+            "name": "Thinking High"
+          }
+        ]
+      },
+      {
+        "type": "select",
+        "id": "mode",
+        "name": "Mode",
+        "category": "mode",
+        "currentValue": "default",
+        "options": [
+          {
+            "value": "default",
+            "name": "Default",
+            "description": "Manual approvals; tools execute normally."
+          },
+          {
+            "value": "plan",
+            "name": "Plan",
+            "description": "Read-only planning; no tool execution."
+          },
+          {
+            "value": "auto",
+            "name": "Auto",
+            "description": "Auto-approve safe operations."
+          },
+          {
+            "value": "yolo",
+            "name": "YOLO",
+            "description": "Auto-approve everything."
+          }
+        ]
+      }
+    ],
+    "modes": {
+      "currentModeId": "default",
+      "availableModes": [
+        {
+          "id": "default",
+          "name": "Default",
+          "description": "Manual approvals; tools execute normally."
+        },
+        {
+          "id": "plan",
+          "name": "Plan",
+          "description": "Read-only planning; no tool execution."
+        },
+        {
+          "id": "auto",
+          "name": "Auto",
+          "description": "Auto-approve safe operations."
+        },
+        {
+          "id": "yolo",
+          "name": "YOLO",
+          "description": "Auto-approve everything."
+        }
+      ]
+    }
+  },
+  "status": "failed",
+  "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n+ actual - expected\n\n+ undefined\n- 'session_4c2438cf-ac14-4128-a89d-b1978b4988f7'\n",
+  "stack": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n+ actual - expected\n\n+ undefined\n- 'session_4c2438cf-ac14-4128-a89d-b1978b4988f7'\n\n    at file:///Users/sun/Code/repos/rah_os/scripts/runtime-interface-audit/kimi-acp.mjs:62:10\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)",
+  "exits": [
+    {
+      "code": 0,
+      "signal": null
+    },
+    {
+      "code": null,
+      "signal": "SIGKILL"
+    }
+  ],
+  "requests": 10,
+  "fileReadReceipts": 5,
+  "finishedAt": "2026-11-05T11:57:49.826Z"
+}

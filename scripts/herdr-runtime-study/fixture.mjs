@@ -37,12 +37,17 @@ export function assertStudySocket(root, socket) {
     "Refusing a socket outside this study",
   );
 }
-export async function createFixture() {
+export async function createFixture({
+  models = ["fixture"],
+  readTool = { name: "read", arguments: { path: "probe.txt" } },
+} = {}) {
   const marker = randomUUID(),
     requests = [],
     receipts = [],
-    errors = [];
+    errors = [],
+    traffic = [];
   const server = createServer(async (req, res) => {
+    traffic.push({ method: req.method, url: req.url, at: Date.now() });
     if (req.method !== "POST" || req.url !== "/v1/chat/completions") {
       res.writeHead(404).end();
       return;
@@ -54,7 +59,7 @@ export async function createFixture() {
         assert(bytes.length < 2 * 1024 * 1024);
       }
       const body = JSON.parse(bytes);
-      assert.equal(body.model, "fixture");
+      assert(models.includes(body.model), "Unexpected fixture model");
       requests.push({ at: Date.now(), body });
       const userIndex = body.messages.findLastIndex((x) => x.role === "user");
       const tail = body.messages.slice(userIndex + 1);
@@ -83,7 +88,7 @@ export async function createFixture() {
               id,
               object: "chat.completion.chunk",
               created: 1,
-              model: "fixture",
+              model: body.model,
               choices: [{ index: 0, delta, finish_reason }],
             }) +
             "\n\n",
@@ -102,8 +107,8 @@ export async function createFixture() {
               id: "read-" + requests.length,
               type: "function",
               function: {
-                name: "read",
-                arguments: JSON.stringify({ path: "probe.txt" }),
+                name: readTool.name,
+                arguments: JSON.stringify(readTool.arguments),
               },
             },
           ],
@@ -116,7 +121,7 @@ export async function createFixture() {
             id,
             object: "chat.completion.chunk",
             created: 1,
-            model: "fixture",
+            model: body.model,
             choices: [],
             usage: {
               prompt_tokens: 100,
@@ -139,6 +144,7 @@ export async function createFixture() {
     requests,
     receipts,
     errors,
+    traffic,
     paidCalls: 0,
     close: async () => {
       server.closeAllConnections();

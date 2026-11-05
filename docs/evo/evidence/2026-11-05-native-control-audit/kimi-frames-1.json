@@ -1,0 +1,357 @@
+[
+  {
+    "jsonrpc": "2.0",
+    "id": 1,
+    "result": {
+      "protocolVersion": 1,
+      "agentCapabilities": {
+        "loadSession": true,
+        "promptCapabilities": {
+          "image": true,
+          "audio": false,
+          "embeddedContext": true
+        },
+        "sessionCapabilities": {
+          "list": {},
+          "resume": {},
+          "close": {},
+          "delete": {},
+          "fork": {},
+          "additionalDirectories": {}
+        },
+        "mcpCapabilities": {
+          "http": true,
+          "sse": true
+        },
+        "auth": {
+          "logout": {}
+        }
+      },
+      "authMethods": [
+        {
+          "id": "login",
+          "type": "terminal",
+          "name": "Login with Kimi account",
+          "description": "Open the device-code login flow in a terminal.",
+          "args": ["--login"],
+          "env": {
+            "KIMI_CODE_HOME": "/tmp/lh-rpc-kimi-KN5ADa/kimi"
+          },
+          "_meta": {
+            "terminal-auth": {
+              "type": "terminal",
+              "label": "Login with Kimi account",
+              "command": "/opt/homebrew/bin/kimi",
+              "args": ["login"],
+              "env": {
+                "KIMI_CODE_HOME": "/tmp/lh-rpc-kimi-KN5ADa/kimi"
+              }
+            }
+          }
+        }
+      ],
+      "agentInfo": {
+        "name": "Kimi Code CLI",
+        "version": "2.4.0"
+      }
+    }
+  },
+  {
+    "jsonrpc": "2.0",
+    "id": 2,
+    "result": {
+      "configOptions": [
+        {
+          "type": "select",
+          "id": "model",
+          "name": "Model",
+          "category": "model",
+          "currentValue": "fixture-alt",
+          "options": [
+            {
+              "value": "fixture",
+              "name": "fixture"
+            },
+            {
+              "value": "fixture-alt",
+              "name": "fixture-alt"
+            }
+          ]
+        },
+        {
+          "type": "select",
+          "id": "thinking",
+          "name": "Thinking",
+          "category": "thought_level",
+          "currentValue": "high",
+          "options": [
+            {
+              "value": "off",
+              "name": "Thinking Off"
+            },
+            {
+              "value": "low",
+              "name": "Thinking Low"
+            },
+            {
+              "value": "high",
+              "name": "Thinking High"
+            }
+          ]
+        },
+        {
+          "type": "select",
+          "id": "mode",
+          "name": "Mode",
+          "category": "mode",
+          "currentValue": "default",
+          "options": [
+            {
+              "value": "default",
+              "name": "Default",
+              "description": "Manual approvals; tools execute normally."
+            },
+            {
+              "value": "plan",
+              "name": "Plan",
+              "description": "Read-only planning; no tool execution."
+            },
+            {
+              "value": "auto",
+              "name": "Auto",
+              "description": "Auto-approve safe operations."
+            },
+            {
+              "value": "yolo",
+              "name": "YOLO",
+              "description": "Auto-approve everything."
+            }
+          ]
+        }
+      ],
+      "modes": {
+        "currentModeId": "default",
+        "availableModes": [
+          {
+            "id": "default",
+            "name": "Default",
+            "description": "Manual approvals; tools execute normally."
+          },
+          {
+            "id": "plan",
+            "name": "Plan",
+            "description": "Read-only planning; no tool execution."
+          },
+          {
+            "id": "auto",
+            "name": "Auto",
+            "description": "Auto-approve safe operations."
+          },
+          {
+            "id": "yolo",
+            "name": "YOLO",
+            "description": "Auto-approve everything."
+          }
+        ]
+      }
+    }
+  },
+  {
+    "jsonrpc": "2.0",
+    "method": "session/update",
+    "params": {
+      "sessionId": "session_d0aad5b6-3a85-4594-a859-99d4239b9a6e",
+      "update": {
+        "sessionUpdate": "available_commands_update",
+        "availableCommands": [
+          {
+            "name": "compact",
+            "description": "Compact the conversation context",
+            "input": {
+              "hint": "<optional custom summarization instructions>"
+            }
+          },
+          {
+            "name": "status",
+            "description": "Show current session status"
+          },
+          {
+            "name": "usage",
+            "description": "Show session token usage"
+          },
+          {
+            "name": "mcp",
+            "description": "Show MCP server status"
+          },
+          {
+            "name": "tasks",
+            "description": "List background tasks"
+          },
+          {
+            "name": "help",
+            "description": "Show available ACP commands"
+          },
+          {
+            "name": "sub-skill",
+            "description": "Discover and reorganize the skill inventory into hierarchical sub-skill bundles. Use when the user asks to review, group, or consolidate skills into a parent bundle."
+          },
+          {
+            "name": "sub-skill.consolidate",
+            "description": "Apply an approved sub-skill grouping by moving user-specified skills into a parent bundle, with timestamped backups of every modified directory."
+          },
+          {
+            "name": "sub-skill.review",
+            "description": "Analyze the available skill set and recommend candidate groups that could be consolidated into sub-skill bundles. Read-only — proposes a plan, does not move files."
+          },
+          {
+            "name": "write-goal",
+            "description": "Help the user craft a well-specified `/goal` objective for goal mode — turn a rough intention into a completion contract with a clear finish line, proof, boundaries, and stop rule. Use when the user asks for help writing, refining, or improving a goal."
+          }
+        ]
+      }
+    }
+  },
+  {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+      "sessions": [
+        {
+          "sessionId": "session_d0aad5b6-3a85-4594-a859-99d4239b9a6e",
+          "cwd": "/tmp/lh-rpc-kimi-KN5ADa/work",
+          "title": "Use Read to read probe.txt, then finish.",
+          "updatedAt": "2026-11-05T11:59:36.999Z"
+        }
+      ],
+      "nextCursor": null
+    }
+  },
+  {
+    "jsonrpc": "2.0",
+    "method": "session/update",
+    "params": {
+      "sessionId": "session_d0aad5b6-3a85-4594-a859-99d4239b9a6e",
+      "update": {
+        "sessionUpdate": "tool_call",
+        "toolCallId": "5:read-11",
+        "title": "Read",
+        "kind": "read",
+        "status": "pending",
+        "content": [
+          {
+            "type": "content",
+            "content": {
+              "type": "text",
+              "text": "{\"path\":\"/tmp/lh-rpc-kimi-KN5ADa/work/probe.txt\"}"
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "jsonrpc": "2.0",
+    "method": "session/update",
+    "params": {
+      "sessionId": "session_d0aad5b6-3a85-4594-a859-99d4239b9a6e",
+      "update": {
+        "sessionUpdate": "tool_call_update",
+        "toolCallId": "5:read-11",
+        "title": "Reading /tmp/lh-rpc-kimi-KN5ADa/work/probe.txt",
+        "kind": "read",
+        "status": "in_progress",
+        "rawInput": {
+          "path": "/tmp/lh-rpc-kimi-KN5ADa/work/probe.txt"
+        },
+        "locations": [
+          {
+            "path": "/tmp/lh-rpc-kimi-KN5ADa/work/probe.txt"
+          }
+        ],
+        "content": [
+          {
+            "type": "content",
+            "content": {
+              "type": "text",
+              "text": "{\"path\":\"/tmp/lh-rpc-kimi-KN5ADa/work/probe.txt\"}"
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "jsonrpc": "2.0",
+    "method": "session/update",
+    "params": {
+      "sessionId": "session_d0aad5b6-3a85-4594-a859-99d4239b9a6e",
+      "update": {
+        "sessionUpdate": "tool_call_update",
+        "toolCallId": "5:read-11",
+        "status": "completed",
+        "content": [
+          {
+            "type": "content",
+            "content": {
+              "type": "text",
+              "text": "1\t1086d519-3288-4062-88ae-0a3e2267c69b"
+            }
+          }
+        ],
+        "rawOutput": "1\t1086d519-3288-4062-88ae-0a3e2267c69b",
+        "locations": [
+          {
+            "path": "/tmp/lh-rpc-kimi-KN5ADa/work/probe.txt"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "jsonrpc": "2.0",
+    "method": "session/update",
+    "params": {
+      "sessionId": "session_d0aad5b6-3a85-4594-a859-99d4239b9a6e",
+      "update": {
+        "sessionUpdate": "agent_message_chunk",
+        "content": {
+          "type": "text",
+          "text": "Fixture task "
+        }
+      }
+    }
+  },
+  {
+    "jsonrpc": "2.0",
+    "method": "session/update",
+    "params": {
+      "sessionId": "session_d0aad5b6-3a85-4594-a859-99d4239b9a6e",
+      "update": {
+        "sessionUpdate": "agent_message_chunk",
+        "content": {
+          "type": "text",
+          "text": "completed."
+        }
+      }
+    }
+  },
+  {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "result": {
+      "stopReason": "end_turn"
+    }
+  },
+  {
+    "jsonrpc": "2.0",
+    "method": "session/update",
+    "params": {
+      "sessionId": "session_d0aad5b6-3a85-4594-a859-99d4239b9a6e",
+      "update": {
+        "sessionUpdate": "usage_update",
+        "used": 120,
+        "size": 32000
+      }
+    }
+  }
+]

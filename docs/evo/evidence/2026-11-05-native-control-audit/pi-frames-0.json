@@ -1,0 +1,5149 @@
+[
+  {
+    "id": 1,
+    "type": "response",
+    "command": "get_state",
+    "success": true,
+    "data": {
+      "model": {
+        "id": "fixture",
+        "name": "fixture",
+        "api": "openai-completions",
+        "provider": "fixture",
+        "baseUrl": "http://127.0.0.1:51120/v1",
+        "reasoning": false,
+        "input": ["text"],
+        "cost": {
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheWrite": 0
+        },
+        "contextWindow": 32000,
+        "maxTokens": 2048
+      },
+      "thinkingLevel": "off",
+      "isStreaming": false,
+      "isCompacting": false,
+      "steeringMode": "one-at-a-time",
+      "followUpMode": "one-at-a-time",
+      "sessionFile": "/tmp/lh-rpc-pi-03SsQK/session.jsonl",
+      "sessionId": "01a1ab8f-46ab-73b8-997d-356468ad400c",
+      "autoCompactionEnabled": false,
+      "messageCount": 0,
+      "pendingMessageCount": 0
+    }
+  },
+  {
+    "id": 2,
+    "type": "response",
+    "command": "get_available_models",
+    "success": true,
+    "data": {
+      "models": [
+        {
+          "id": "fixture",
+          "name": "fixture",
+          "api": "openai-completions",
+          "provider": "fixture",
+          "baseUrl": "http://127.0.0.1:51120/v1",
+          "reasoning": false,
+          "input": ["text"],
+          "cost": {
+            "input": 0,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0
+          },
+          "contextWindow": 32000,
+          "maxTokens": 2048
+        },
+        {
+          "id": "fixture-alt",
+          "name": "fixture-alt",
+          "api": "openai-completions",
+          "provider": "fixture",
+          "baseUrl": "http://127.0.0.1:51120/v1",
+          "reasoning": false,
+          "input": ["text"],
+          "cost": {
+            "input": 0,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0
+          },
+          "contextWindow": 32000,
+          "maxTokens": 2048
+        }
+      ]
+    }
+  },
+  {
+    "id": 3,
+    "type": "response",
+    "command": "prompt",
+    "success": true,
+    "data": {
+      "disposition": "started"
+    }
+  },
+  {
+    "type": "agent_start"
+  },
+  {
+    "type": "turn_start"
+  },
+  {
+    "type": "message_start",
+    "message": {
+      "role": "system",
+      "content": "",
+      "sections": {
+        "preamble": "You are a coding assistant running inside pi, a coding agent harness. Help users inspect files, run commands, and modify code.",
+        "tools": "<tools>\n- read: Read file contents\n\nAdditional tools may be available.\n</tools>",
+        "rules": "<rules>\n- Use read to examine files instead of cat or sed.\n- Be concise in your responses\n- Show file paths clearly when working with files\n</rules>",
+        "docs": "<docs>\nPi documentation (read only when the user asks about the harness itself, its SDK, extensions, themes, skills, or TUI):\n- Main documentation: /opt/homebrew/lib/node_modules/@earendil-works/pi-coding-agent/README.md\n- Additional docs: /opt/homebrew/lib/node_modules/@earendil-works/pi-coding-agent/docs\n- Examples: /opt/homebrew/lib/node_modules/@earendil-works/pi-coding-agent/examples (extensions, custom tools, SDK)\n- When reading pi docs or examples, resolve docs/... under Additional docs and examples/... under Examples, not the current working directory\n- When asked about: extensions (docs/extensions.md, examples/extensions/), themes (docs/themes.md), skills (docs/skills.md), prompt templates (docs/prompt-templates.md), TUI components (docs/tui.md), keybindings (docs/keybindings.md), SDK integrations (docs/sdk.md), custom providers (docs/custom-provider.md), adding models (docs/models.md), packages (docs/packages.md), environment variables (docs/environment-variables.md), MCP servers (docs/mcp.md), codemode scripts and non-LLM models such as classifiers and image models (docs/codemode.md)\n- Before implementing harness changes, read the relevant docs and examples in full, following related cross-references.\n</docs>",
+        "cwd": "<cwd>\n/private/tmp/lh-rpc-pi-03SsQK/work\n</cwd>"
+      },
+      "timestamp": 1793879656129,
+      "toolsAdded": [
+        {
+          "name": "read",
+          "description": "Read the contents of a file. Supports text files and images (jpg, png, gif, webp, bmp). Images are sent as attachments. For text files, output is truncated to 2000 lines or 50KB (whichever is hit first). Use offset/limit for large files. When you need the full file, continue with offset until complete.",
+          "parameters": {
+            "type": "object",
+            "required": ["path"],
+            "properties": {
+              "path": {
+                "type": "string",
+                "description": "Path to the file to read (relative or absolute)"
+              },
+              "offset": {
+                "type": "number",
+                "description": "Line number to start reading from (1-indexed)"
+              },
+              "limit": {
+                "type": "number",
+                "description": "Maximum number of lines to read"
+              }
+            }
+          },
+          "constrainedSampling": {
+            "type": "json_schema",
+            "strict": "prefer"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "type": "message_end",
+    "message": {
+      "role": "system",
+      "content": "",
+      "sections": {
+        "preamble": "You are a coding assistant running inside pi, a coding agent harness. Help users inspect files, run commands, and modify code.",
+        "tools": "<tools>\n- read: Read file contents\n\nAdditional tools may be available.\n</tools>",
+        "rules": "<rules>\n- Use read to examine files instead of cat or sed.\n- Be concise in your responses\n- Show file paths clearly when working with files\n</rules>",
+        "docs": "<docs>\nPi documentation (read only when the user asks about the harness itself, its SDK, extensions, themes, skills, or TUI):\n- Main documentation: /opt/homebrew/lib/node_modules/@earendil-works/pi-coding-agent/README.md\n- Additional docs: /opt/homebrew/lib/node_modules/@earendil-works/pi-coding-agent/docs\n- Examples: /opt/homebrew/lib/node_modules/@earendil-works/pi-coding-agent/examples (extensions, custom tools, SDK)\n- When reading pi docs or examples, resolve docs/... under Additional docs and examples/... under Examples, not the current working directory\n- When asked about: extensions (docs/extensions.md, examples/extensions/), themes (docs/themes.md), skills (docs/skills.md), prompt templates (docs/prompt-templates.md), TUI components (docs/tui.md), keybindings (docs/keybindings.md), SDK integrations (docs/sdk.md), custom providers (docs/custom-provider.md), adding models (docs/models.md), packages (docs/packages.md), environment variables (docs/environment-variables.md), MCP servers (docs/mcp.md), codemode scripts and non-LLM models such as classifiers and image models (docs/codemode.md)\n- Before implementing harness changes, read the relevant docs and examples in full, following related cross-references.\n</docs>",
+        "cwd": "<cwd>\n/private/tmp/lh-rpc-pi-03SsQK/work\n</cwd>"
+      },
+      "timestamp": 1793879656129,
+      "toolsAdded": [
+        {
+          "name": "read",
+          "description": "Read the contents of a file. Supports text files and images (jpg, png, gif, webp, bmp). Images are sent as attachments. For text files, output is truncated to 2000 lines or 50KB (whichever is hit first). Use offset/limit for large files. When you need the full file, continue with offset until complete.",
+          "parameters": {
+            "type": "object",
+            "required": ["path"],
+            "properties": {
+              "path": {
+                "type": "string",
+                "description": "Path to the file to read (relative or absolute)"
+              },
+              "offset": {
+                "type": "number",
+                "description": "Line number to start reading from (1-indexed)"
+              },
+              "limit": {
+                "type": "number",
+                "description": "Maximum number of lines to read"
+              }
+            }
+          },
+          "constrainedSampling": {
+            "type": "json_schema",
+            "strict": "prefer"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "type": "message_start",
+    "message": {
+      "role": "user",
+      "content": [
+        {
+          "type": "text",
+          "text": "Read probe.txt using read, then finish."
+        }
+      ],
+      "timestamp": 1793879656129
+    }
+  },
+  {
+    "type": "message_end",
+    "message": {
+      "role": "user",
+      "content": [
+        {
+          "type": "text",
+          "text": "Read probe.txt using read, then finish."
+        }
+      ],
+      "timestamp": 1793879656129
+    }
+  },
+  {
+    "type": "message_start",
+    "message": {
+      "role": "assistant",
+      "content": [],
+      "api": "openai-completions",
+      "provider": "fixture",
+      "model": "fixture",
+      "usage": {
+        "input": 0,
+        "output": 0,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "totalTokens": 0,
+        "cost": {
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "total": 0
+        }
+      },
+      "stopReason": "pending",
+      "timestamp": 1793879656135
+    }
+  },
+  {
+    "type": "message_update",
+    "usage": {
+      "input": 100,
+      "output": 20,
+      "cacheRead": 0,
+      "cacheWrite": 0,
+      "reasoning": 0,
+      "totalTokens": 120,
+      "cost": {
+        "input": 0,
+        "output": 0,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "total": 0,
+        "totalFromProvider": false
+      }
+    },
+    "assistantMessageEvent": {
+      "type": "toolcall_start",
+      "contentIndex": 0,
+      "id": "read-1",
+      "toolName": "read"
+    }
+  },
+  {
+    "type": "message_update",
+    "usage": {
+      "input": 100,
+      "output": 20,
+      "cacheRead": 0,
+      "cacheWrite": 0,
+      "reasoning": 0,
+      "totalTokens": 120,
+      "cost": {
+        "input": 0,
+        "output": 0,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "total": 0,
+        "totalFromProvider": false
+      }
+    },
+    "assistantMessageEvent": {
+      "type": "toolcall_delta",
+      "contentIndex": 0,
+      "delta": "{\"path\":\"probe.txt\"}"
+    }
+  },
+  {
+    "type": "message_update",
+    "usage": {
+      "input": 100,
+      "output": 20,
+      "cacheRead": 0,
+      "cacheWrite": 0,
+      "reasoning": 0,
+      "totalTokens": 120,
+      "cost": {
+        "input": 0,
+        "output": 0,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "total": 0,
+        "totalFromProvider": false
+      }
+    },
+    "assistantMessageEvent": {
+      "type": "toolcall_end",
+      "contentIndex": 0,
+      "toolCall": {
+        "type": "toolCall",
+        "id": "read-1",
+        "name": "read",
+        "arguments": {
+          "path": "probe.txt"
+        }
+      }
+    }
+  },
+  {
+    "type": "message_end",
+    "message": {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "toolCall",
+          "id": "read-1",
+          "name": "read",
+          "arguments": {
+            "path": "probe.txt"
+          }
+        }
+      ],
+      "api": "openai-completions",
+      "provider": "fixture",
+      "model": "fixture",
+      "usage": {
+        "input": 100,
+        "output": 20,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "reasoning": 0,
+        "totalTokens": 120,
+        "cost": {
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "total": 0,
+          "totalFromProvider": false
+        }
+      },
+      "stopReason": "toolUse",
+      "timestamp": 1793879656135,
+      "responseId": "fixture-1",
+      "rawStopReason": "tool_calls",
+      "durationMs": 18,
+      "thinkingLevel": "off"
+    }
+  },
+  {
+    "type": "tool_execution_start",
+    "toolCallId": "read-1",
+    "toolName": "read",
+    "args": {
+      "path": "probe.txt"
+    }
+  },
+  {
+    "type": "tool_execution_end",
+    "toolCallId": "read-1",
+    "toolName": "read",
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "6487742f-5f68-4e5e-9612-f4fe0f894c15"
+        }
+      ],
+      "structuredContent": "6487742f-5f68-4e5e-9612-f4fe0f894c15"
+    },
+    "isError": false,
+    "durationMs": 1
+  },
+  {
+    "type": "message_start",
+    "message": {
+      "role": "toolResult",
+      "toolCallId": "read-1",
+      "toolName": "read",
+      "content": [
+        {
+          "type": "text",
+          "text": "6487742f-5f68-4e5e-9612-f4fe0f894c15"
+        }
+      ],
+      "isError": false,
+      "durationMs": 1,
+      "timestamp": 1793879656156
+    }
+  },
+  {
+    "type": "message_end",
+    "message": {
+      "role": "toolResult",
+      "toolCallId": "read-1",
+      "toolName": "read",
+      "content": [
+        {
+          "type": "text",
+          "text": "6487742f-5f68-4e5e-9612-f4fe0f894c15"
+        }
+      ],
+      "isError": false,
+      "durationMs": 1,
+      "timestamp": 1793879656156
+    }
+  },
+  {
+    "type": "turn_end",
+    "message": {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "toolCall",
+          "id": "read-1",
+          "name": "read",
+          "arguments": {
+            "path": "probe.txt"
+          }
+        }
+      ],
+      "api": "openai-completions",
+      "provider": "fixture",
+      "model": "fixture",
+      "usage": {
+        "input": 100,
+        "output": 20,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "reasoning": 0,
+        "totalTokens": 120,
+        "cost": {
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "total": 0,
+          "totalFromProvider": false
+        }
+      },
+      "stopReason": "toolUse",
+      "timestamp": 1793879656135,
+      "responseId": "fixture-1",
+      "rawStopReason": "tool_calls",
+      "durationMs": 18,
+      "thinkingLevel": "off"
+    },
+    "toolResults": [
+      {
+        "role": "toolResult",
+        "toolCallId": "read-1",
+        "toolName": "read",
+        "content": [
+          {
+            "type": "text",
+            "text": "6487742f-5f68-4e5e-9612-f4fe0f894c15"
+          }
+        ],
+        "isError": false,
+        "durationMs": 1,
+        "timestamp": 1793879656156
+      }
+    ]
+  },
+  {
+    "type": "turn_start"
+  },
+  {
+    "type": "message_start",
+    "message": {
+      "role": "assistant",
+      "content": [],
+      "api": "openai-completions",
+      "provider": "fixture",
+      "model": "fixture",
+      "usage": {
+        "input": 0,
+        "output": 0,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "totalTokens": 0,
+        "cost": {
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "total": 0
+        }
+      },
+      "stopReason": "pending",
+      "timestamp": 1793879656156
+    }
+  },
+  {
+    "type": "message_update",
+    "usage": {
+      "input": 100,
+      "output": 20,
+      "cacheRead": 0,
+      "cacheWrite": 0,
+      "reasoning": 0,
+      "totalTokens": 120,
+      "cost": {
+        "input": 0,
+        "output": 0,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "total": 0,
+        "totalFromProvider": false
+      }
+    },
+    "assistantMessageEvent": {
+      "type": "text_start",
+      "contentIndex": 0
+    }
+  },
+  {
+    "type": "message_update",
+    "usage": {
+      "input": 100,
+      "output": 20,
+      "cacheRead": 0,
+      "cacheWrite": 0,
+      "reasoning": 0,
+      "totalTokens": 120,
+      "cost": {
+        "input": 0,
+        "output": 0,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "total": 0,
+        "totalFromProvider": false
+      }
+    },
+    "assistantMessageEvent": {
+      "type": "text_delta",
+      "contentIndex": 0,
+      "delta": "Fixture task "
+    }
+  },
+  {
+    "type": "message_update",
+    "usage": {
+      "input": 100,
+      "output": 20,
+      "cacheRead": 0,
+      "cacheWrite": 0,
+      "reasoning": 0,
+      "totalTokens": 120,
+      "cost": {
+        "input": 0,
+        "output": 0,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "total": 0,
+        "totalFromProvider": false
+      }
+    },
+    "assistantMessageEvent": {
+      "type": "text_delta",
+      "contentIndex": 0,
+      "delta": "completed."
+    }
+  },
+  {
+    "type": "message_update",
+    "usage": {
+      "input": 100,
+      "output": 20,
+      "cacheRead": 0,
+      "cacheWrite": 0,
+      "reasoning": 0,
+      "totalTokens": 120,
+      "cost": {
+        "input": 0,
+        "output": 0,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "total": 0,
+        "totalFromProvider": false
+      }
+    },
+    "assistantMessageEvent": {
+      "type": "text_end",
+      "contentIndex": 0,
+      "content": "Fixture task completed."
+    }
+  },
+  {
+    "type": "message_end",
+    "message": {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "text",
+          "text": "Fixture task completed."
+        }
+      ],
+      "api": "openai-completions",
+      "provider": "fixture",
+      "model": "fixture",
+      "usage": {
+        "input": 100,
+        "output": 20,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "reasoning": 0,
+        "totalTokens": 120,
+        "cost": {
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "total": 0,
+          "totalFromProvider": false
+        }
+      },
+      "stopReason": "stop",
+      "timestamp": 1793879656156,
+      "responseId": "fixture-2",
+      "rawStopReason": "stop",
+      "durationMs": 2,
+      "thinkingLevel": "off"
+    }
+  },
+  {
+    "type": "turn_end",
+    "message": {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "text",
+          "text": "Fixture task completed."
+        }
+      ],
+      "api": "openai-completions",
+      "provider": "fixture",
+      "model": "fixture",
+      "usage": {
+        "input": 100,
+        "output": 20,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "reasoning": 0,
+        "totalTokens": 120,
+        "cost": {
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "total": 0,
+          "totalFromProvider": false
+        }
+      },
+      "stopReason": "stop",
+      "timestamp": 1793879656156,
+      "responseId": "fixture-2",
+      "rawStopReason": "stop",
+      "durationMs": 2,
+      "thinkingLevel": "off"
+    },
+    "toolResults": []
+  },
+  {
+    "type": "agent_end",
+    "messages": [
+      {
+        "role": "system",
+        "content": "",
+        "sections": {
+          "preamble": "You are a coding assistant running inside pi, a coding agent harness. Help users inspect files, run commands, and modify code.",
+          "tools": "<tools>\n- read: Read file contents\n\nAdditional tools may be available.\n</tools>",
+          "rules": "<rules>\n- Use read to examine files instead of cat or sed.\n- Be concise in your responses\n- Show file paths clearly when working with files\n</rules>",
+          "docs": "<docs>\nPi documentation (read only when the user asks about the harness itself, its SDK, extensions, themes, skills, or TUI):\n- Main documentation: /opt/homebrew/lib/node_modules/@earendil-works/pi-coding-agent/README.md\n- Additional docs: /opt/homebrew/lib/node_modules/@earendil-works/pi-coding-agent/docs\n- Examples: /opt/homebrew/lib/node_modules/@earendil-works/pi-coding-agent/examples (extensions, custom tools, SDK)\n- When reading pi docs or examples, resolve docs/... under Additional docs and examples/... under Examples, not the current working directory\n- When asked about: extensions (docs/extensions.md, examples/extensions/), themes (docs/themes.md), skills (docs/skills.md), prompt templates (docs/prompt-templates.md), TUI components (docs/tui.md), keybindings (docs/keybindings.md), SDK integrations (docs/sdk.md), custom providers (docs/custom-provider.md), adding models (docs/models.md), packages (docs/packages.md), environment variables (docs/environment-variables.md), MCP servers (docs/mcp.md), codemode scripts and non-LLM models such as classifiers and image models (docs/codemode.md)\n- Before implementing harness changes, read the relevant docs and examples in full, following related cross-references.\n</docs>",
+          "cwd": "<cwd>\n/private/tmp/lh-rpc-pi-03SsQK/work\n</cwd>"
+        },
+        "timestamp": 1793879656129,
+        "toolsAdded": [
+          {
+            "name": "read",
+            "description": "Read the contents of a file. Supports text files and images (jpg, png, gif, webp, bmp). Images are sent as attachments. For text files, output is truncated to 2000 lines or 50KB (whichever is hit first). Use offset/limit for large files. When you need the full file, continue with offset until complete.",
+            "parameters": {
+              "type": "object",
+              "required": ["path"],
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "description": "Path to the file to read (relative or absolute)"
+                },
+                "offset": {
+                  "type": "number",
+                  "description": "Line number to start reading from (1-indexed)"
+                },
+                "limit": {
+                  "type": "number",
+                  "description": "Maximum number of lines to read"
+                }
+              }
+            },
+            "constrainedSampling": {
+              "type": "json_schema",
+              "strict": "prefer"
+            }
+          }
+        ]
+      },
+      {
+        "role": "user",
+        "content": [
+          {
+            "type": "text",
+            "text": "Read probe.txt using read, then finish."
+          }
+        ],
+        "timestamp": 1793879656129
+      },
+      {
+        "role": "assistant",
+        "content": [
+          {
+            "type": "toolCall",
+            "id": "read-1",
+            "name": "read",
+            "arguments": {
+              "path": "probe.txt"
+            }
+          }
+        ],
+        "api": "openai-completions",
+        "provider": "fixture",
+        "model": "fixture",
+        "usage": {
+          "input": 100,
+          "output": 20,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "reasoning": 0,
+          "totalTokens": 120,
+          "cost": {
+            "input": 0,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "total": 0,
+            "totalFromProvider": false
+          }
+        },
+        "stopReason": "toolUse",
+        "timestamp": 1793879656135,
+        "responseId": "fixture-1",
+        "rawStopReason": "tool_calls",
+        "durationMs": 18,
+        "thinkingLevel": "off"
+      },
+      {
+        "role": "toolResult",
+        "toolCallId": "read-1",
+        "toolName": "read",
+        "content": [
+          {
+            "type": "text",
+            "text": "6487742f-5f68-4e5e-9612-f4fe0f894c15"
+          }
+        ],
+        "isError": false,
+        "durationMs": 1,
+        "timestamp": 1793879656156
+      },
+      {
+        "role": "assistant",
+        "content": [
+          {
+            "type": "text",
+            "text": "Fixture task completed."
+          }
+        ],
+        "api": "openai-completions",
+        "provider": "fixture",
+        "model": "fixture",
+        "usage": {
+          "input": 100,
+          "output": 20,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "reasoning": 0,
+          "totalTokens": 120,
+          "cost": {
+            "input": 0,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "total": 0,
+            "totalFromProvider": false
+          }
+        },
+        "stopReason": "stop",
+        "timestamp": 1793879656156,
+        "responseId": "fixture-2",
+        "rawStopReason": "stop",
+        "durationMs": 2,
+        "thinkingLevel": "off"
+      }
+    ],
+    "willRetry": false
+  },
+  {
+    "type": "agent_settled",
+    "aborted": false
+  },
+  {
+    "id": 4,
+    "type": "response",
+    "command": "get_state",
+    "success": true,
+    "data": {
+      "model": {
+        "id": "fixture",
+        "name": "fixture",
+        "api": "openai-completions",
+        "provider": "fixture",
+        "baseUrl": "http://127.0.0.1:51120/v1",
+        "reasoning": false,
+        "input": ["text"],
+        "cost": {
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheWrite": 0
+        },
+        "contextWindow": 32000,
+        "maxTokens": 2048
+      },
+      "thinkingLevel": "off",
+      "isStreaming": false,
+      "isCompacting": false,
+      "steeringMode": "one-at-a-time",
+      "followUpMode": "one-at-a-time",
+      "sessionFile": "/tmp/lh-rpc-pi-03SsQK/session.jsonl",
+      "sessionId": "01a1ab8f-46ab-73b8-997d-356468ad400c",
+      "autoCompactionEnabled": false,
+      "messageCount": 5,
+      "pendingMessageCount": 0
+    }
+  },
+  {
+    "id": 5,
+    "type": "response",
+    "command": "get_messages",
+    "success": true,
+    "data": {
+      "messages": [
+        {
+          "role": "system",
+          "content": "",
+          "sections": {
+            "preamble": "You are a coding assistant running inside pi, a coding agent harness. Help users inspect files, run commands, and modify code.",
+            "tools": "<tools>\n- read: Read file contents\n\nAdditional tools may be available.\n</tools>",
+            "rules": "<rules>\n- Use read to examine files instead of cat or sed.\n- Be concise in your responses\n- Show file paths clearly when working with files\n</rules>",
+            "docs": "<docs>\nPi documentation (read only when the user asks about the harness itself, its SDK, extensions, themes, skills, or TUI):\n- Main documentation: /opt/homebrew/lib/node_modules/@earendil-works/pi-coding-agent/README.md\n- Additional docs: /opt/homebrew/lib/node_modules/@earendil-works/pi-coding-agent/docs\n- Examples: /opt/homebrew/lib/node_modules/@earendil-works/pi-coding-agent/examples (extensions, custom tools, SDK)\n- When reading pi docs or examples, resolve docs/... under Additional docs and examples/... under Examples, not the current working directory\n- When asked about: extensions (docs/extensions.md, examples/extensions/), themes (docs/themes.md), skills (docs/skills.md), prompt templates (docs/prompt-templates.md), TUI components (docs/tui.md), keybindings (docs/keybindings.md), SDK integrations (docs/sdk.md), custom providers (docs/custom-provider.md), adding models (docs/models.md), packages (docs/packages.md), environment variables (docs/environment-variables.md), MCP servers (docs/mcp.md), codemode scripts and non-LLM models such as classifiers and image models (docs/codemode.md)\n- Before implementing harness changes, read the relevant docs and examples in full, following related cross-references.\n</docs>",
+            "cwd": "<cwd>\n/private/tmp/lh-rpc-pi-03SsQK/work\n</cwd>"
+          },
+          "timestamp": 1793879656129,
+          "toolsAdded": [
+            {
+              "name": "read",
+              "description": "Read the contents of a file. Supports text files and images (jpg, png, gif, webp, bmp). Images are sent as attachments. For text files, output is truncated to 2000 lines or 50KB (whichever is hit first). Use offset/limit for large files. When you need the full file, continue with offset until complete.",
+              "parameters": {
+                "type": "object",
+                "required": ["path"],
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "description": "Path to the file to read (relative or absolute)"
+                  },
+                  "offset": {
+                    "type": "number",
+                    "description": "Line number to start reading from (1-indexed)"
+                  },
+                  "limit": {
+                    "type": "number",
+                    "description": "Maximum number of lines to read"
+                  }
+                }
+              },
+              "constrainedSampling": {
+                "type": "json_schema",
+                "strict": "prefer"
+              }
+            }
+          ]
+        },
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": "Read probe.txt using read, then finish."
+            }
+          ],
+          "timestamp": 1793879656129
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "toolCall",
+              "id": "read-1",
+              "name": "read",
+              "arguments": {
+                "path": "probe.txt"
+              }
+            }
+          ],
+          "api": "openai-completions",
+          "provider": "fixture",
+          "model": "fixture",
+          "usage": {
+            "input": 100,
+            "output": 20,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "reasoning": 0,
+            "totalTokens": 120,
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 0,
+              "totalFromProvider": false
+            }
+          },
+          "stopReason": "toolUse",
+          "timestamp": 1793879656135,
+          "responseId": "fixture-1",
+          "rawStopReason": "tool_calls",
+          "durationMs": 18,
+          "thinkingLevel": "off"
+        },
+        {
+          "role": "toolResult",
+          "toolCallId": "read-1",
+          "toolName": "read",
+          "content": [
+            {
+              "type": "text",
+              "text": "6487742f-5f68-4e5e-9612-f4fe0f894c15"
+            }
+          ],
+          "isError": false,
+          "durationMs": 1,
+          "timestamp": 1793879656156
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "text",
+              "text": "Fixture task completed."
+            }
+          ],
+          "api": "openai-completions",
+          "provider": "fixture",
+          "model": "fixture",
+          "usage": {
+            "input": 100,
+            "output": 20,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "reasoning": 0,
+            "totalTokens": 120,
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 0,
+              "totalFromProvider": false
+            }
+          },
+          "stopReason": "stop",
+          "timestamp": 1793879656156,
+          "responseId": "fixture-2",
+          "rawStopReason": "stop",
+          "durationMs": 2,
+          "thinkingLevel": "off"
+        }
+      ]
+    }
+  },
+  {
+    "id": 6,
+    "type": "response",
+    "command": "prompt",
+    "success": true,
+    "data": {
+      "disposition": "started"
+    }
+  },
+  {
+    "type": "agent_start"
+  },
+  {
+    "type": "turn_start"
+  },
+  {
+    "type": "message_start",
+    "message": {
+      "role": "user",
+      "content": [
+        {
+          "type": "text",
+          "text": "Read probe.txt using read, then finish."
+        }
+      ],
+      "timestamp": 1793879656161
+    }
+  },
+  {
+    "type": "message_end",
+    "message": {
+      "role": "user",
+      "content": [
+        {
+          "type": "text",
+          "text": "Read probe.txt using read, then finish."
+        }
+      ],
+      "timestamp": 1793879656161
+    }
+  },
+  {
+    "type": "message_start",
+    "message": {
+      "role": "assistant",
+      "content": [],
+      "api": "openai-completions",
+      "provider": "fixture",
+      "model": "fixture",
+      "usage": {
+        "input": 0,
+        "output": 0,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "totalTokens": 0,
+        "cost": {
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "total": 0
+        }
+      },
+      "stopReason": "pending",
+      "timestamp": 1793879656161
+    }
+  },
+  {
+    "type": "message_update",
+    "usage": {
+      "input": 100,
+      "output": 20,
+      "cacheRead": 0,
+      "cacheWrite": 0,
+      "reasoning": 0,
+      "totalTokens": 120,
+      "cost": {
+        "input": 0,
+        "output": 0,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "total": 0,
+        "totalFromProvider": false
+      }
+    },
+    "assistantMessageEvent": {
+      "type": "toolcall_start",
+      "contentIndex": 0,
+      "id": "read-3",
+      "toolName": "read"
+    }
+  },
+  {
+    "type": "message_update",
+    "usage": {
+      "input": 100,
+      "output": 20,
+      "cacheRead": 0,
+      "cacheWrite": 0,
+      "reasoning": 0,
+      "totalTokens": 120,
+      "cost": {
+        "input": 0,
+        "output": 0,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "total": 0,
+        "totalFromProvider": false
+      }
+    },
+    "assistantMessageEvent": {
+      "type": "toolcall_delta",
+      "contentIndex": 0,
+      "delta": "{\"path\":\"probe.txt\"}"
+    }
+  },
+  {
+    "type": "message_update",
+    "usage": {
+      "input": 100,
+      "output": 20,
+      "cacheRead": 0,
+      "cacheWrite": 0,
+      "reasoning": 0,
+      "totalTokens": 120,
+      "cost": {
+        "input": 0,
+        "output": 0,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "total": 0,
+        "totalFromProvider": false
+      }
+    },
+    "assistantMessageEvent": {
+      "type": "toolcall_end",
+      "contentIndex": 0,
+      "toolCall": {
+        "type": "toolCall",
+        "id": "read-3",
+        "name": "read",
+        "arguments": {
+          "path": "probe.txt"
+        }
+      }
+    }
+  },
+  {
+    "type": "message_end",
+    "message": {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "toolCall",
+          "id": "read-3",
+          "name": "read",
+          "arguments": {
+            "path": "probe.txt"
+          }
+        }
+      ],
+      "api": "openai-completions",
+      "provider": "fixture",
+      "model": "fixture",
+      "usage": {
+        "input": 100,
+        "output": 20,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "reasoning": 0,
+        "totalTokens": 120,
+        "cost": {
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "total": 0,
+          "totalFromProvider": false
+        }
+      },
+      "stopReason": "toolUse",
+      "timestamp": 1793879656161,
+      "responseId": "fixture-3",
+      "rawStopReason": "tool_calls",
+      "durationMs": 1,
+      "thinkingLevel": "off"
+    }
+  },
+  {
+    "type": "tool_execution_start",
+    "toolCallId": "read-3",
+    "toolName": "read",
+    "args": {
+      "path": "probe.txt"
+    }
+  },
+  {
+    "type": "tool_execution_end",
+    "toolCallId": "read-3",
+    "toolName": "read",
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "6487742f-5f68-4e5e-9612-f4fe0f894c15"
+        }
+      ],
+      "structuredContent": "6487742f-5f68-4e5e-9612-f4fe0f894c15"
+    },
+    "isError": false,
+    "durationMs": 0
+  },
+  {
+    "type": "message_start",
+    "message": {
+      "role": "toolResult",
+      "toolCallId": "read-3",
+      "toolName": "read",
+      "content": [
+        {
+          "type": "text",
+          "text": "6487742f-5f68-4e5e-9612-f4fe0f894c15"
+        }
+      ],
+      "isError": false,
+      "durationMs": 0,
+      "timestamp": 1793879656163
+    }
+  },
+  {
+    "type": "message_end",
+    "message": {
+      "role": "toolResult",
+      "toolCallId": "read-3",
+      "toolName": "read",
+      "content": [
+        {
+          "type": "text",
+          "text": "6487742f-5f68-4e5e-9612-f4fe0f894c15"
+        }
+      ],
+      "isError": false,
+      "durationMs": 0,
+      "timestamp": 1793879656163
+    }
+  },
+  {
+    "type": "turn_end",
+    "message": {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "toolCall",
+          "id": "read-3",
+          "name": "read",
+          "arguments": {
+            "path": "probe.txt"
+          }
+        }
+      ],
+      "api": "openai-completions",
+      "provider": "fixture",
+      "model": "fixture",
+      "usage": {
+        "input": 100,
+        "output": 20,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "reasoning": 0,
+        "totalTokens": 120,
+        "cost": {
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "total": 0,
+          "totalFromProvider": false
+        }
+      },
+      "stopReason": "toolUse",
+      "timestamp": 1793879656161,
+      "responseId": "fixture-3",
+      "rawStopReason": "tool_calls",
+      "durationMs": 1,
+      "thinkingLevel": "off"
+    },
+    "toolResults": [
+      {
+        "role": "toolResult",
+        "toolCallId": "read-3",
+        "toolName": "read",
+        "content": [
+          {
+            "type": "text",
+            "text": "6487742f-5f68-4e5e-9612-f4fe0f894c15"
+          }
+        ],
+        "isError": false,
+        "durationMs": 0,
+        "timestamp": 1793879656163
+      }
+    ]
+  },
+  {
+    "type": "turn_start"
+  },
+  {
+    "type": "message_start",
+    "message": {
+      "role": "assistant",
+      "content": [],
+      "api": "openai-completions",
+      "provider": "fixture",
+      "model": "fixture",
+      "usage": {
+        "input": 0,
+        "output": 0,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "totalTokens": 0,
+        "cost": {
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "total": 0
+        }
+      },
+      "stopReason": "pending",
+      "timestamp": 1793879656164
+    }
+  },
+  {
+    "type": "message_update",
+    "usage": {
+      "input": 100,
+      "output": 20,
+      "cacheRead": 0,
+      "cacheWrite": 0,
+      "reasoning": 0,
+      "totalTokens": 120,
+      "cost": {
+        "input": 0,
+        "output": 0,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "total": 0,
+        "totalFromProvider": false
+      }
+    },
+    "assistantMessageEvent": {
+      "type": "text_start",
+      "contentIndex": 0
+    }
+  },
+  {
+    "type": "message_update",
+    "usage": {
+      "input": 100,
+      "output": 20,
+      "cacheRead": 0,
+      "cacheWrite": 0,
+      "reasoning": 0,
+      "totalTokens": 120,
+      "cost": {
+        "input": 0,
+        "output": 0,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "total": 0,
+        "totalFromProvider": false
+      }
+    },
+    "assistantMessageEvent": {
+      "type": "text_delta",
+      "contentIndex": 0,
+      "delta": "Fixture task "
+    }
+  },
+  {
+    "type": "message_update",
+    "usage": {
+      "input": 100,
+      "output": 20,
+      "cacheRead": 0,
+      "cacheWrite": 0,
+      "reasoning": 0,
+      "totalTokens": 120,
+      "cost": {
+        "input": 0,
+        "output": 0,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "total": 0,
+        "totalFromProvider": false
+      }
+    },
+    "assistantMessageEvent": {
+      "type": "text_delta",
+      "contentIndex": 0,
+      "delta": "completed."
+    }
+  },
+  {
+    "type": "message_update",
+    "usage": {
+      "input": 100,
+      "output": 20,
+      "cacheRead": 0,
+      "cacheWrite": 0,
+      "reasoning": 0,
+      "totalTokens": 120,
+      "cost": {
+        "input": 0,
+        "output": 0,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "total": 0,
+        "totalFromProvider": false
+      }
+    },
+    "assistantMessageEvent": {
+      "type": "text_end",
+      "contentIndex": 0,
+      "content": "Fixture task completed."
+    }
+  },
+  {
+    "type": "message_end",
+    "message": {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "text",
+          "text": "Fixture task completed."
+        }
+      ],
+      "api": "openai-completions",
+      "provider": "fixture",
+      "model": "fixture",
+      "usage": {
+        "input": 100,
+        "output": 20,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "reasoning": 0,
+        "totalTokens": 120,
+        "cost": {
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "total": 0,
+          "totalFromProvider": false
+        }
+      },
+      "stopReason": "stop",
+      "timestamp": 1793879656164,
+      "responseId": "fixture-4",
+      "rawStopReason": "stop",
+      "durationMs": 1,
+      "thinkingLevel": "off"
+    }
+  },
+  {
+    "type": "turn_end",
+    "message": {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "text",
+          "text": "Fixture task completed."
+        }
+      ],
+      "api": "openai-completions",
+      "provider": "fixture",
+      "model": "fixture",
+      "usage": {
+        "input": 100,
+        "output": 20,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "reasoning": 0,
+        "totalTokens": 120,
+        "cost": {
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "total": 0,
+          "totalFromProvider": false
+        }
+      },
+      "stopReason": "stop",
+      "timestamp": 1793879656164,
+      "responseId": "fixture-4",
+      "rawStopReason": "stop",
+      "durationMs": 1,
+      "thinkingLevel": "off"
+    },
+    "toolResults": []
+  },
+  {
+    "type": "agent_end",
+    "messages": [
+      {
+        "role": "user",
+        "content": [
+          {
+            "type": "text",
+            "text": "Read probe.txt using read, then finish."
+          }
+        ],
+        "timestamp": 1793879656161
+      },
+      {
+        "role": "assistant",
+        "content": [
+          {
+            "type": "toolCall",
+            "id": "read-3",
+            "name": "read",
+            "arguments": {
+              "path": "probe.txt"
+            }
+          }
+        ],
+        "api": "openai-completions",
+        "provider": "fixture",
+        "model": "fixture",
+        "usage": {
+          "input": 100,
+          "output": 20,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "reasoning": 0,
+          "totalTokens": 120,
+          "cost": {
+            "input": 0,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "total": 0,
+            "totalFromProvider": false
+          }
+        },
+        "stopReason": "toolUse",
+        "timestamp": 1793879656161,
+        "responseId": "fixture-3",
+        "rawStopReason": "tool_calls",
+        "durationMs": 1,
+        "thinkingLevel": "off"
+      },
+      {
+        "role": "toolResult",
+        "toolCallId": "read-3",
+        "toolName": "read",
+        "content": [
+          {
+            "type": "text",
+            "text": "6487742f-5f68-4e5e-9612-f4fe0f894c15"
+          }
+        ],
+        "isError": false,
+        "durationMs": 0,
+        "timestamp": 1793879656163
+      },
+      {
+        "role": "assistant",
+        "content": [
+          {
+            "type": "text",
+            "text": "Fixture task completed."
+          }
+        ],
+        "api": "openai-completions",
+        "provider": "fixture",
+        "model": "fixture",
+        "usage": {
+          "input": 100,
+          "output": 20,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "reasoning": 0,
+          "totalTokens": 120,
+          "cost": {
+            "input": 0,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "total": 0,
+            "totalFromProvider": false
+          }
+        },
+        "stopReason": "stop",
+        "timestamp": 1793879656164,
+        "responseId": "fixture-4",
+        "rawStopReason": "stop",
+        "durationMs": 1,
+        "thinkingLevel": "off"
+      }
+    ],
+    "willRetry": false
+  },
+  {
+    "type": "agent_settled",
+    "aborted": false
+  },
+  {
+    "id": 7,
+    "type": "response",
+    "command": "get_state",
+    "success": true,
+    "data": {
+      "model": {
+        "id": "fixture",
+        "name": "fixture",
+        "api": "openai-completions",
+        "provider": "fixture",
+        "baseUrl": "http://127.0.0.1:51120/v1",
+        "reasoning": false,
+        "input": ["text"],
+        "cost": {
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheWrite": 0
+        },
+        "contextWindow": 32000,
+        "maxTokens": 2048
+      },
+      "thinkingLevel": "off",
+      "isStreaming": false,
+      "isCompacting": false,
+      "steeringMode": "one-at-a-time",
+      "followUpMode": "one-at-a-time",
+      "sessionFile": "/tmp/lh-rpc-pi-03SsQK/session.jsonl",
+      "sessionId": "01a1ab8f-46ab-73b8-997d-356468ad400c",
+      "autoCompactionEnabled": false,
+      "messageCount": 9,
+      "pendingMessageCount": 0
+    }
+  },
+  {
+    "id": 8,
+    "type": "response",
+    "command": "get_messages",
+    "success": true,
+    "data": {
+      "messages": [
+        {
+          "role": "system",
+          "content": "",
+          "sections": {
+            "preamble": "You are a coding assistant running inside pi, a coding agent harness. Help users inspect files, run commands, and modify code.",
+            "tools": "<tools>\n- read: Read file contents\n\nAdditional tools may be available.\n</tools>",
+            "rules": "<rules>\n- Use read to examine files instead of cat or sed.\n- Be concise in your responses\n- Show file paths clearly when working with files\n</rules>",
+            "docs": "<docs>\nPi documentation (read only when the user asks about the harness itself, its SDK, extensions, themes, skills, or TUI):\n- Main documentation: /opt/homebrew/lib/node_modules/@earendil-works/pi-coding-agent/README.md\n- Additional docs: /opt/homebrew/lib/node_modules/@earendil-works/pi-coding-agent/docs\n- Examples: /opt/homebrew/lib/node_modules/@earendil-works/pi-coding-agent/examples (extensions, custom tools, SDK)\n- When reading pi docs or examples, resolve docs/... under Additional docs and examples/... under Examples, not the current working directory\n- When asked about: extensions (docs/extensions.md, examples/extensions/), themes (docs/themes.md), skills (docs/skills.md), prompt templates (docs/prompt-templates.md), TUI components (docs/tui.md), keybindings (docs/keybindings.md), SDK integrations (docs/sdk.md), custom providers (docs/custom-provider.md), adding models (docs/models.md), packages (docs/packages.md), environment variables (docs/environment-variables.md), MCP servers (docs/mcp.md), codemode scripts and non-LLM models such as classifiers and image models (docs/codemode.md)\n- Before implementing harness changes, read the relevant docs and examples in full, following related cross-references.\n</docs>",
+            "cwd": "<cwd>\n/private/tmp/lh-rpc-pi-03SsQK/work\n</cwd>"
+          },
+          "timestamp": 1793879656129,
+          "toolsAdded": [
+            {
+              "name": "read",
+              "description": "Read the contents of a file. Supports text files and images (jpg, png, gif, webp, bmp). Images are sent as attachments. For text files, output is truncated to 2000 lines or 50KB (whichever is hit first). Use offset/limit for large files. When you need the full file, continue with offset until complete.",
+              "parameters": {
+                "type": "object",
+                "required": ["path"],
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "description": "Path to the file to read (relative or absolute)"
+                  },
+                  "offset": {
+                    "type": "number",
+                    "description": "Line number to start reading from (1-indexed)"
+                  },
+                  "limit": {
+                    "type": "number",
+                    "description": "Maximum number of lines to read"
+                  }
+                }
+              },
+              "constrainedSampling": {
+                "type": "json_schema",
+                "strict": "prefer"
+              }
+            }
+          ]
+        },
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": "Read probe.txt using read, then finish."
+            }
+          ],
+          "timestamp": 1793879656129
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "toolCall",
+              "id": "read-1",
+              "name": "read",
+              "arguments": {
+                "path": "probe.txt"
+              }
+            }
+          ],
+          "api": "openai-completions",
+          "provider": "fixture",
+          "model": "fixture",
+          "usage": {
+            "input": 100,
+            "output": 20,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "reasoning": 0,
+            "totalTokens": 120,
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 0,
+              "totalFromProvider": false
+            }
+          },
+          "stopReason": "toolUse",
+          "timestamp": 1793879656135,
+          "responseId": "fixture-1",
+          "rawStopReason": "tool_calls",
+          "durationMs": 18,
+          "thinkingLevel": "off"
+        },
+        {
+          "role": "toolResult",
+          "toolCallId": "read-1",
+          "toolName": "read",
+          "content": [
+            {
+              "type": "text",
+              "text": "6487742f-5f68-4e5e-9612-f4fe0f894c15"
+            }
+          ],
+          "isError": false,
+          "durationMs": 1,
+          "timestamp": 1793879656156
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "text",
+              "text": "Fixture task completed."
+            }
+          ],
+          "api": "openai-completions",
+          "provider": "fixture",
+          "model": "fixture",
+          "usage": {
+            "input": 100,
+            "output": 20,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "reasoning": 0,
+            "totalTokens": 120,
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 0,
+              "totalFromProvider": false
+            }
+          },
+          "stopReason": "stop",
+          "timestamp": 1793879656156,
+          "responseId": "fixture-2",
+          "rawStopReason": "stop",
+          "durationMs": 2,
+          "thinkingLevel": "off"
+        },
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": "Read probe.txt using read, then finish."
+            }
+          ],
+          "timestamp": 1793879656161
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "toolCall",
+              "id": "read-3",
+              "name": "read",
+              "arguments": {
+                "path": "probe.txt"
+              }
+            }
+          ],
+          "api": "openai-completions",
+          "provider": "fixture",
+          "model": "fixture",
+          "usage": {
+            "input": 100,
+            "output": 20,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "reasoning": 0,
+            "totalTokens": 120,
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 0,
+              "totalFromProvider": false
+            }
+          },
+          "stopReason": "toolUse",
+          "timestamp": 1793879656161,
+          "responseId": "fixture-3",
+          "rawStopReason": "tool_calls",
+          "durationMs": 1,
+          "thinkingLevel": "off"
+        },
+        {
+          "role": "toolResult",
+          "toolCallId": "read-3",
+          "toolName": "read",
+          "content": [
+            {
+              "type": "text",
+              "text": "6487742f-5f68-4e5e-9612-f4fe0f894c15"
+            }
+          ],
+          "isError": false,
+          "durationMs": 0,
+          "timestamp": 1793879656163
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "text",
+              "text": "Fixture task completed."
+            }
+          ],
+          "api": "openai-completions",
+          "provider": "fixture",
+          "model": "fixture",
+          "usage": {
+            "input": 100,
+            "output": 20,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "reasoning": 0,
+            "totalTokens": 120,
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 0,
+              "totalFromProvider": false
+            }
+          },
+          "stopReason": "stop",
+          "timestamp": 1793879656164,
+          "responseId": "fixture-4",
+          "rawStopReason": "stop",
+          "durationMs": 1,
+          "thinkingLevel": "off"
+        }
+      ]
+    }
+  },
+  {
+    "id": 9,
+    "type": "response",
+    "command": "set_model",
+    "success": true,
+    "data": {
+      "id": "fixture-alt",
+      "name": "fixture-alt",
+      "api": "openai-completions",
+      "provider": "fixture",
+      "baseUrl": "http://127.0.0.1:51120/v1",
+      "reasoning": false,
+      "input": ["text"],
+      "cost": {
+        "input": 0,
+        "output": 0,
+        "cacheRead": 0,
+        "cacheWrite": 0
+      },
+      "contextWindow": 32000,
+      "maxTokens": 2048
+    }
+  },
+  {
+    "id": 10,
+    "type": "response",
+    "command": "set_thinking_level",
+    "success": true
+  },
+  {
+    "id": 11,
+    "type": "response",
+    "command": "prompt",
+    "success": true,
+    "data": {
+      "disposition": "started"
+    }
+  },
+  {
+    "type": "agent_start"
+  },
+  {
+    "type": "turn_start"
+  },
+  {
+    "type": "message_start",
+    "message": {
+      "role": "user",
+      "content": [
+        {
+          "type": "text",
+          "text": "Read probe.txt using read, then finish."
+        }
+      ],
+      "timestamp": 1793879656173
+    }
+  },
+  {
+    "type": "message_end",
+    "message": {
+      "role": "user",
+      "content": [
+        {
+          "type": "text",
+          "text": "Read probe.txt using read, then finish."
+        }
+      ],
+      "timestamp": 1793879656173
+    }
+  },
+  {
+    "type": "message_start",
+    "message": {
+      "role": "assistant",
+      "content": [],
+      "api": "openai-completions",
+      "provider": "fixture",
+      "model": "fixture-alt",
+      "usage": {
+        "input": 0,
+        "output": 0,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "totalTokens": 0,
+        "cost": {
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "total": 0
+        }
+      },
+      "stopReason": "pending",
+      "timestamp": 1793879656174
+    }
+  },
+  {
+    "type": "message_update",
+    "usage": {
+      "input": 100,
+      "output": 20,
+      "cacheRead": 0,
+      "cacheWrite": 0,
+      "reasoning": 0,
+      "totalTokens": 120,
+      "cost": {
+        "input": 0,
+        "output": 0,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "total": 0,
+        "totalFromProvider": false
+      }
+    },
+    "assistantMessageEvent": {
+      "type": "toolcall_start",
+      "contentIndex": 0,
+      "id": "read-5",
+      "toolName": "read"
+    }
+  },
+  {
+    "type": "message_update",
+    "usage": {
+      "input": 100,
+      "output": 20,
+      "cacheRead": 0,
+      "cacheWrite": 0,
+      "reasoning": 0,
+      "totalTokens": 120,
+      "cost": {
+        "input": 0,
+        "output": 0,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "total": 0,
+        "totalFromProvider": false
+      }
+    },
+    "assistantMessageEvent": {
+      "type": "toolcall_delta",
+      "contentIndex": 0,
+      "delta": "{\"path\":\"probe.txt\"}"
+    }
+  },
+  {
+    "type": "message_update",
+    "usage": {
+      "input": 100,
+      "output": 20,
+      "cacheRead": 0,
+      "cacheWrite": 0,
+      "reasoning": 0,
+      "totalTokens": 120,
+      "cost": {
+        "input": 0,
+        "output": 0,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "total": 0,
+        "totalFromProvider": false
+      }
+    },
+    "assistantMessageEvent": {
+      "type": "toolcall_end",
+      "contentIndex": 0,
+      "toolCall": {
+        "type": "toolCall",
+        "id": "read-5",
+        "name": "read",
+        "arguments": {
+          "path": "probe.txt"
+        }
+      }
+    }
+  },
+  {
+    "type": "message_end",
+    "message": {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "toolCall",
+          "id": "read-5",
+          "name": "read",
+          "arguments": {
+            "path": "probe.txt"
+          }
+        }
+      ],
+      "api": "openai-completions",
+      "provider": "fixture",
+      "model": "fixture-alt",
+      "usage": {
+        "input": 100,
+        "output": 20,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "reasoning": 0,
+        "totalTokens": 120,
+        "cost": {
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "total": 0,
+          "totalFromProvider": false
+        }
+      },
+      "stopReason": "toolUse",
+      "timestamp": 1793879656174,
+      "responseId": "fixture-5",
+      "rawStopReason": "tool_calls",
+      "durationMs": 1,
+      "thinkingLevel": "off"
+    }
+  },
+  {
+    "type": "tool_execution_start",
+    "toolCallId": "read-5",
+    "toolName": "read",
+    "args": {
+      "path": "probe.txt"
+    }
+  },
+  {
+    "type": "tool_execution_end",
+    "toolCallId": "read-5",
+    "toolName": "read",
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "6487742f-5f68-4e5e-9612-f4fe0f894c15"
+        }
+      ],
+      "structuredContent": "6487742f-5f68-4e5e-9612-f4fe0f894c15"
+    },
+    "isError": false,
+    "durationMs": 0
+  },
+  {
+    "type": "message_start",
+    "message": {
+      "role": "toolResult",
+      "toolCallId": "read-5",
+      "toolName": "read",
+      "content": [
+        {
+          "type": "text",
+          "text": "6487742f-5f68-4e5e-9612-f4fe0f894c15"
+        }
+      ],
+      "isError": false,
+      "durationMs": 0,
+      "timestamp": 1793879656176
+    }
+  },
+  {
+    "type": "message_end",
+    "message": {
+      "role": "toolResult",
+      "toolCallId": "read-5",
+      "toolName": "read",
+      "content": [
+        {
+          "type": "text",
+          "text": "6487742f-5f68-4e5e-9612-f4fe0f894c15"
+        }
+      ],
+      "isError": false,
+      "durationMs": 0,
+      "timestamp": 1793879656176
+    }
+  },
+  {
+    "type": "turn_end",
+    "message": {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "toolCall",
+          "id": "read-5",
+          "name": "read",
+          "arguments": {
+            "path": "probe.txt"
+          }
+        }
+      ],
+      "api": "openai-completions",
+      "provider": "fixture",
+      "model": "fixture-alt",
+      "usage": {
+        "input": 100,
+        "output": 20,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "reasoning": 0,
+        "totalTokens": 120,
+        "cost": {
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "total": 0,
+          "totalFromProvider": false
+        }
+      },
+      "stopReason": "toolUse",
+      "timestamp": 1793879656174,
+      "responseId": "fixture-5",
+      "rawStopReason": "tool_calls",
+      "durationMs": 1,
+      "thinkingLevel": "off"
+    },
+    "toolResults": [
+      {
+        "role": "toolResult",
+        "toolCallId": "read-5",
+        "toolName": "read",
+        "content": [
+          {
+            "type": "text",
+            "text": "6487742f-5f68-4e5e-9612-f4fe0f894c15"
+          }
+        ],
+        "isError": false,
+        "durationMs": 0,
+        "timestamp": 1793879656176
+      }
+    ]
+  },
+  {
+    "type": "turn_start"
+  },
+  {
+    "type": "message_start",
+    "message": {
+      "role": "assistant",
+      "content": [],
+      "api": "openai-completions",
+      "provider": "fixture",
+      "model": "fixture-alt",
+      "usage": {
+        "input": 0,
+        "output": 0,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "totalTokens": 0,
+        "cost": {
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "total": 0
+        }
+      },
+      "stopReason": "pending",
+      "timestamp": 1793879656176
+    }
+  },
+  {
+    "type": "message_update",
+    "usage": {
+      "input": 100,
+      "output": 20,
+      "cacheRead": 0,
+      "cacheWrite": 0,
+      "reasoning": 0,
+      "totalTokens": 120,
+      "cost": {
+        "input": 0,
+        "output": 0,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "total": 0,
+        "totalFromProvider": false
+      }
+    },
+    "assistantMessageEvent": {
+      "type": "text_start",
+      "contentIndex": 0
+    }
+  },
+  {
+    "type": "message_update",
+    "usage": {
+      "input": 100,
+      "output": 20,
+      "cacheRead": 0,
+      "cacheWrite": 0,
+      "reasoning": 0,
+      "totalTokens": 120,
+      "cost": {
+        "input": 0,
+        "output": 0,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "total": 0,
+        "totalFromProvider": false
+      }
+    },
+    "assistantMessageEvent": {
+      "type": "text_delta",
+      "contentIndex": 0,
+      "delta": "Fixture task "
+    }
+  },
+  {
+    "type": "message_update",
+    "usage": {
+      "input": 100,
+      "output": 20,
+      "cacheRead": 0,
+      "cacheWrite": 0,
+      "reasoning": 0,
+      "totalTokens": 120,
+      "cost": {
+        "input": 0,
+        "output": 0,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "total": 0,
+        "totalFromProvider": false
+      }
+    },
+    "assistantMessageEvent": {
+      "type": "text_delta",
+      "contentIndex": 0,
+      "delta": "completed."
+    }
+  },
+  {
+    "type": "message_update",
+    "usage": {
+      "input": 100,
+      "output": 20,
+      "cacheRead": 0,
+      "cacheWrite": 0,
+      "reasoning": 0,
+      "totalTokens": 120,
+      "cost": {
+        "input": 0,
+        "output": 0,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "total": 0,
+        "totalFromProvider": false
+      }
+    },
+    "assistantMessageEvent": {
+      "type": "text_end",
+      "contentIndex": 0,
+      "content": "Fixture task completed."
+    }
+  },
+  {
+    "type": "message_end",
+    "message": {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "text",
+          "text": "Fixture task completed."
+        }
+      ],
+      "api": "openai-completions",
+      "provider": "fixture",
+      "model": "fixture-alt",
+      "usage": {
+        "input": 100,
+        "output": 20,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "reasoning": 0,
+        "totalTokens": 120,
+        "cost": {
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "total": 0,
+          "totalFromProvider": false
+        }
+      },
+      "stopReason": "stop",
+      "timestamp": 1793879656176,
+      "responseId": "fixture-6",
+      "rawStopReason": "stop",
+      "durationMs": 1,
+      "thinkingLevel": "off"
+    }
+  },
+  {
+    "type": "turn_end",
+    "message": {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "text",
+          "text": "Fixture task completed."
+        }
+      ],
+      "api": "openai-completions",
+      "provider": "fixture",
+      "model": "fixture-alt",
+      "usage": {
+        "input": 100,
+        "output": 20,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "reasoning": 0,
+        "totalTokens": 120,
+        "cost": {
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "total": 0,
+          "totalFromProvider": false
+        }
+      },
+      "stopReason": "stop",
+      "timestamp": 1793879656176,
+      "responseId": "fixture-6",
+      "rawStopReason": "stop",
+      "durationMs": 1,
+      "thinkingLevel": "off"
+    },
+    "toolResults": []
+  },
+  {
+    "type": "agent_end",
+    "messages": [
+      {
+        "role": "user",
+        "content": [
+          {
+            "type": "text",
+            "text": "Read probe.txt using read, then finish."
+          }
+        ],
+        "timestamp": 1793879656173
+      },
+      {
+        "role": "assistant",
+        "content": [
+          {
+            "type": "toolCall",
+            "id": "read-5",
+            "name": "read",
+            "arguments": {
+              "path": "probe.txt"
+            }
+          }
+        ],
+        "api": "openai-completions",
+        "provider": "fixture",
+        "model": "fixture-alt",
+        "usage": {
+          "input": 100,
+          "output": 20,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "reasoning": 0,
+          "totalTokens": 120,
+          "cost": {
+            "input": 0,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "total": 0,
+            "totalFromProvider": false
+          }
+        },
+        "stopReason": "toolUse",
+        "timestamp": 1793879656174,
+        "responseId": "fixture-5",
+        "rawStopReason": "tool_calls",
+        "durationMs": 1,
+        "thinkingLevel": "off"
+      },
+      {
+        "role": "toolResult",
+        "toolCallId": "read-5",
+        "toolName": "read",
+        "content": [
+          {
+            "type": "text",
+            "text": "6487742f-5f68-4e5e-9612-f4fe0f894c15"
+          }
+        ],
+        "isError": false,
+        "durationMs": 0,
+        "timestamp": 1793879656176
+      },
+      {
+        "role": "assistant",
+        "content": [
+          {
+            "type": "text",
+            "text": "Fixture task completed."
+          }
+        ],
+        "api": "openai-completions",
+        "provider": "fixture",
+        "model": "fixture-alt",
+        "usage": {
+          "input": 100,
+          "output": 20,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "reasoning": 0,
+          "totalTokens": 120,
+          "cost": {
+            "input": 0,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "total": 0,
+            "totalFromProvider": false
+          }
+        },
+        "stopReason": "stop",
+        "timestamp": 1793879656176,
+        "responseId": "fixture-6",
+        "rawStopReason": "stop",
+        "durationMs": 1,
+        "thinkingLevel": "off"
+      }
+    ],
+    "willRetry": false
+  },
+  {
+    "type": "agent_settled",
+    "aborted": false
+  },
+  {
+    "id": 12,
+    "type": "response",
+    "command": "get_state",
+    "success": true,
+    "data": {
+      "model": {
+        "id": "fixture-alt",
+        "name": "fixture-alt",
+        "api": "openai-completions",
+        "provider": "fixture",
+        "baseUrl": "http://127.0.0.1:51120/v1",
+        "reasoning": false,
+        "input": ["text"],
+        "cost": {
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheWrite": 0
+        },
+        "contextWindow": 32000,
+        "maxTokens": 2048
+      },
+      "thinkingLevel": "off",
+      "isStreaming": false,
+      "isCompacting": false,
+      "steeringMode": "one-at-a-time",
+      "followUpMode": "one-at-a-time",
+      "sessionFile": "/tmp/lh-rpc-pi-03SsQK/session.jsonl",
+      "sessionId": "01a1ab8f-46ab-73b8-997d-356468ad400c",
+      "autoCompactionEnabled": false,
+      "messageCount": 13,
+      "pendingMessageCount": 0
+    }
+  },
+  {
+    "id": 13,
+    "type": "response",
+    "command": "get_messages",
+    "success": true,
+    "data": {
+      "messages": [
+        {
+          "role": "system",
+          "content": "",
+          "sections": {
+            "preamble": "You are a coding assistant running inside pi, a coding agent harness. Help users inspect files, run commands, and modify code.",
+            "tools": "<tools>\n- read: Read file contents\n\nAdditional tools may be available.\n</tools>",
+            "rules": "<rules>\n- Use read to examine files instead of cat or sed.\n- Be concise in your responses\n- Show file paths clearly when working with files\n</rules>",
+            "docs": "<docs>\nPi documentation (read only when the user asks about the harness itself, its SDK, extensions, themes, skills, or TUI):\n- Main documentation: /opt/homebrew/lib/node_modules/@earendil-works/pi-coding-agent/README.md\n- Additional docs: /opt/homebrew/lib/node_modules/@earendil-works/pi-coding-agent/docs\n- Examples: /opt/homebrew/lib/node_modules/@earendil-works/pi-coding-agent/examples (extensions, custom tools, SDK)\n- When reading pi docs or examples, resolve docs/... under Additional docs and examples/... under Examples, not the current working directory\n- When asked about: extensions (docs/extensions.md, examples/extensions/), themes (docs/themes.md), skills (docs/skills.md), prompt templates (docs/prompt-templates.md), TUI components (docs/tui.md), keybindings (docs/keybindings.md), SDK integrations (docs/sdk.md), custom providers (docs/custom-provider.md), adding models (docs/models.md), packages (docs/packages.md), environment variables (docs/environment-variables.md), MCP servers (docs/mcp.md), codemode scripts and non-LLM models such as classifiers and image models (docs/codemode.md)\n- Before implementing harness changes, read the relevant docs and examples in full, following related cross-references.\n</docs>",
+            "cwd": "<cwd>\n/private/tmp/lh-rpc-pi-03SsQK/work\n</cwd>"
+          },
+          "timestamp": 1793879656129,
+          "toolsAdded": [
+            {
+              "name": "read",
+              "description": "Read the contents of a file. Supports text files and images (jpg, png, gif, webp, bmp). Images are sent as attachments. For text files, output is truncated to 2000 lines or 50KB (whichever is hit first). Use offset/limit for large files. When you need the full file, continue with offset until complete.",
+              "parameters": {
+                "type": "object",
+                "required": ["path"],
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "description": "Path to the file to read (relative or absolute)"
+                  },
+                  "offset": {
+                    "type": "number",
+                    "description": "Line number to start reading from (1-indexed)"
+                  },
+                  "limit": {
+                    "type": "number",
+                    "description": "Maximum number of lines to read"
+                  }
+                }
+              },
+              "constrainedSampling": {
+                "type": "json_schema",
+                "strict": "prefer"
+              }
+            }
+          ]
+        },
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": "Read probe.txt using read, then finish."
+            }
+          ],
+          "timestamp": 1793879656129
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "toolCall",
+              "id": "read-1",
+              "name": "read",
+              "arguments": {
+                "path": "probe.txt"
+              }
+            }
+          ],
+          "api": "openai-completions",
+          "provider": "fixture",
+          "model": "fixture",
+          "usage": {
+            "input": 100,
+            "output": 20,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "reasoning": 0,
+            "totalTokens": 120,
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 0,
+              "totalFromProvider": false
+            }
+          },
+          "stopReason": "toolUse",
+          "timestamp": 1793879656135,
+          "responseId": "fixture-1",
+          "rawStopReason": "tool_calls",
+          "durationMs": 18,
+          "thinkingLevel": "off"
+        },
+        {
+          "role": "toolResult",
+          "toolCallId": "read-1",
+          "toolName": "read",
+          "content": [
+            {
+              "type": "text",
+              "text": "6487742f-5f68-4e5e-9612-f4fe0f894c15"
+            }
+          ],
+          "isError": false,
+          "durationMs": 1,
+          "timestamp": 1793879656156
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "text",
+              "text": "Fixture task completed."
+            }
+          ],
+          "api": "openai-completions",
+          "provider": "fixture",
+          "model": "fixture",
+          "usage": {
+            "input": 100,
+            "output": 20,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "reasoning": 0,
+            "totalTokens": 120,
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 0,
+              "totalFromProvider": false
+            }
+          },
+          "stopReason": "stop",
+          "timestamp": 1793879656156,
+          "responseId": "fixture-2",
+          "rawStopReason": "stop",
+          "durationMs": 2,
+          "thinkingLevel": "off"
+        },
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": "Read probe.txt using read, then finish."
+            }
+          ],
+          "timestamp": 1793879656161
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "toolCall",
+              "id": "read-3",
+              "name": "read",
+              "arguments": {
+                "path": "probe.txt"
+              }
+            }
+          ],
+          "api": "openai-completions",
+          "provider": "fixture",
+          "model": "fixture",
+          "usage": {
+            "input": 100,
+            "output": 20,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "reasoning": 0,
+            "totalTokens": 120,
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 0,
+              "totalFromProvider": false
+            }
+          },
+          "stopReason": "toolUse",
+          "timestamp": 1793879656161,
+          "responseId": "fixture-3",
+          "rawStopReason": "tool_calls",
+          "durationMs": 1,
+          "thinkingLevel": "off"
+        },
+        {
+          "role": "toolResult",
+          "toolCallId": "read-3",
+          "toolName": "read",
+          "content": [
+            {
+              "type": "text",
+              "text": "6487742f-5f68-4e5e-9612-f4fe0f894c15"
+            }
+          ],
+          "isError": false,
+          "durationMs": 0,
+          "timestamp": 1793879656163
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "text",
+              "text": "Fixture task completed."
+            }
+          ],
+          "api": "openai-completions",
+          "provider": "fixture",
+          "model": "fixture",
+          "usage": {
+            "input": 100,
+            "output": 20,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "reasoning": 0,
+            "totalTokens": 120,
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 0,
+              "totalFromProvider": false
+            }
+          },
+          "stopReason": "stop",
+          "timestamp": 1793879656164,
+          "responseId": "fixture-4",
+          "rawStopReason": "stop",
+          "durationMs": 1,
+          "thinkingLevel": "off"
+        },
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": "Read probe.txt using read, then finish."
+            }
+          ],
+          "timestamp": 1793879656173
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "toolCall",
+              "id": "read-5",
+              "name": "read",
+              "arguments": {
+                "path": "probe.txt"
+              }
+            }
+          ],
+          "api": "openai-completions",
+          "provider": "fixture",
+          "model": "fixture-alt",
+          "usage": {
+            "input": 100,
+            "output": 20,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "reasoning": 0,
+            "totalTokens": 120,
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 0,
+              "totalFromProvider": false
+            }
+          },
+          "stopReason": "toolUse",
+          "timestamp": 1793879656174,
+          "responseId": "fixture-5",
+          "rawStopReason": "tool_calls",
+          "durationMs": 1,
+          "thinkingLevel": "off"
+        },
+        {
+          "role": "toolResult",
+          "toolCallId": "read-5",
+          "toolName": "read",
+          "content": [
+            {
+              "type": "text",
+              "text": "6487742f-5f68-4e5e-9612-f4fe0f894c15"
+            }
+          ],
+          "isError": false,
+          "durationMs": 0,
+          "timestamp": 1793879656176
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "text",
+              "text": "Fixture task completed."
+            }
+          ],
+          "api": "openai-completions",
+          "provider": "fixture",
+          "model": "fixture-alt",
+          "usage": {
+            "input": 100,
+            "output": 20,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "reasoning": 0,
+            "totalTokens": 120,
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 0,
+              "totalFromProvider": false
+            }
+          },
+          "stopReason": "stop",
+          "timestamp": 1793879656176,
+          "responseId": "fixture-6",
+          "rawStopReason": "stop",
+          "durationMs": 1,
+          "thinkingLevel": "off"
+        }
+      ]
+    }
+  },
+  {
+    "id": 14,
+    "type": "response",
+    "command": "prompt",
+    "success": true,
+    "data": {
+      "disposition": "started"
+    }
+  },
+  {
+    "type": "agent_start"
+  },
+  {
+    "type": "turn_start"
+  },
+  {
+    "type": "message_start",
+    "message": {
+      "role": "user",
+      "content": [
+        {
+          "type": "text",
+          "text": "SLOW: Read probe.txt using read, then finish."
+        }
+      ],
+      "timestamp": 1793879656186
+    }
+  },
+  {
+    "type": "message_end",
+    "message": {
+      "role": "user",
+      "content": [
+        {
+          "type": "text",
+          "text": "SLOW: Read probe.txt using read, then finish."
+        }
+      ],
+      "timestamp": 1793879656186
+    }
+  },
+  {
+    "type": "message_start",
+    "message": {
+      "role": "assistant",
+      "content": [],
+      "api": "openai-completions",
+      "provider": "fixture",
+      "model": "fixture-alt",
+      "usage": {
+        "input": 0,
+        "output": 0,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "totalTokens": 0,
+        "cost": {
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "total": 0
+        }
+      },
+      "stopReason": "pending",
+      "timestamp": 1793879656186
+    }
+  },
+  {
+    "type": "message_update",
+    "usage": {
+      "input": 100,
+      "output": 20,
+      "cacheRead": 0,
+      "cacheWrite": 0,
+      "reasoning": 0,
+      "totalTokens": 120,
+      "cost": {
+        "input": 0,
+        "output": 0,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "total": 0,
+        "totalFromProvider": false
+      }
+    },
+    "assistantMessageEvent": {
+      "type": "toolcall_start",
+      "contentIndex": 0,
+      "id": "read-7",
+      "toolName": "read"
+    }
+  },
+  {
+    "type": "message_update",
+    "usage": {
+      "input": 100,
+      "output": 20,
+      "cacheRead": 0,
+      "cacheWrite": 0,
+      "reasoning": 0,
+      "totalTokens": 120,
+      "cost": {
+        "input": 0,
+        "output": 0,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "total": 0,
+        "totalFromProvider": false
+      }
+    },
+    "assistantMessageEvent": {
+      "type": "toolcall_delta",
+      "contentIndex": 0,
+      "delta": "{\"path\":\"probe.txt\"}"
+    }
+  },
+  {
+    "type": "message_update",
+    "usage": {
+      "input": 100,
+      "output": 20,
+      "cacheRead": 0,
+      "cacheWrite": 0,
+      "reasoning": 0,
+      "totalTokens": 120,
+      "cost": {
+        "input": 0,
+        "output": 0,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "total": 0,
+        "totalFromProvider": false
+      }
+    },
+    "assistantMessageEvent": {
+      "type": "toolcall_end",
+      "contentIndex": 0,
+      "toolCall": {
+        "type": "toolCall",
+        "id": "read-7",
+        "name": "read",
+        "arguments": {
+          "path": "probe.txt"
+        }
+      }
+    }
+  },
+  {
+    "type": "message_end",
+    "message": {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "toolCall",
+          "id": "read-7",
+          "name": "read",
+          "arguments": {
+            "path": "probe.txt"
+          }
+        }
+      ],
+      "api": "openai-completions",
+      "provider": "fixture",
+      "model": "fixture-alt",
+      "usage": {
+        "input": 100,
+        "output": 20,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "reasoning": 0,
+        "totalTokens": 120,
+        "cost": {
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "total": 0,
+          "totalFromProvider": false
+        }
+      },
+      "stopReason": "toolUse",
+      "timestamp": 1793879656186,
+      "responseId": "fixture-7",
+      "rawStopReason": "tool_calls",
+      "durationMs": 1,
+      "thinkingLevel": "off"
+    }
+  },
+  {
+    "type": "tool_execution_start",
+    "toolCallId": "read-7",
+    "toolName": "read",
+    "args": {
+      "path": "probe.txt"
+    }
+  },
+  {
+    "type": "tool_execution_end",
+    "toolCallId": "read-7",
+    "toolName": "read",
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "6487742f-5f68-4e5e-9612-f4fe0f894c15"
+        }
+      ],
+      "structuredContent": "6487742f-5f68-4e5e-9612-f4fe0f894c15"
+    },
+    "isError": false,
+    "durationMs": 0
+  },
+  {
+    "type": "message_start",
+    "message": {
+      "role": "toolResult",
+      "toolCallId": "read-7",
+      "toolName": "read",
+      "content": [
+        {
+          "type": "text",
+          "text": "6487742f-5f68-4e5e-9612-f4fe0f894c15"
+        }
+      ],
+      "isError": false,
+      "durationMs": 0,
+      "timestamp": 1793879656188
+    }
+  },
+  {
+    "type": "message_end",
+    "message": {
+      "role": "toolResult",
+      "toolCallId": "read-7",
+      "toolName": "read",
+      "content": [
+        {
+          "type": "text",
+          "text": "6487742f-5f68-4e5e-9612-f4fe0f894c15"
+        }
+      ],
+      "isError": false,
+      "durationMs": 0,
+      "timestamp": 1793879656188
+    }
+  },
+  {
+    "type": "turn_end",
+    "message": {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "toolCall",
+          "id": "read-7",
+          "name": "read",
+          "arguments": {
+            "path": "probe.txt"
+          }
+        }
+      ],
+      "api": "openai-completions",
+      "provider": "fixture",
+      "model": "fixture-alt",
+      "usage": {
+        "input": 100,
+        "output": 20,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "reasoning": 0,
+        "totalTokens": 120,
+        "cost": {
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "total": 0,
+          "totalFromProvider": false
+        }
+      },
+      "stopReason": "toolUse",
+      "timestamp": 1793879656186,
+      "responseId": "fixture-7",
+      "rawStopReason": "tool_calls",
+      "durationMs": 1,
+      "thinkingLevel": "off"
+    },
+    "toolResults": [
+      {
+        "role": "toolResult",
+        "toolCallId": "read-7",
+        "toolName": "read",
+        "content": [
+          {
+            "type": "text",
+            "text": "6487742f-5f68-4e5e-9612-f4fe0f894c15"
+          }
+        ],
+        "isError": false,
+        "durationMs": 0,
+        "timestamp": 1793879656188
+      }
+    ]
+  },
+  {
+    "type": "turn_start"
+  },
+  {
+    "type": "message_start",
+    "message": {
+      "role": "assistant",
+      "content": [],
+      "api": "openai-completions",
+      "provider": "fixture",
+      "model": "fixture-alt",
+      "usage": {
+        "input": 0,
+        "output": 0,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "totalTokens": 0,
+        "cost": {
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "total": 0
+        }
+      },
+      "stopReason": "pending",
+      "timestamp": 1793879656188
+    }
+  },
+  {
+    "type": "message_update",
+    "usage": {
+      "input": 0,
+      "output": 0,
+      "cacheRead": 0,
+      "cacheWrite": 0,
+      "totalTokens": 0,
+      "cost": {
+        "input": 0,
+        "output": 0,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "total": 0
+      }
+    },
+    "assistantMessageEvent": {
+      "type": "text_start",
+      "contentIndex": 0
+    }
+  },
+  {
+    "type": "message_update",
+    "usage": {
+      "input": 0,
+      "output": 0,
+      "cacheRead": 0,
+      "cacheWrite": 0,
+      "totalTokens": 0,
+      "cost": {
+        "input": 0,
+        "output": 0,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "total": 0
+      }
+    },
+    "assistantMessageEvent": {
+      "type": "text_delta",
+      "contentIndex": 0,
+      "delta": "Fixture task "
+    }
+  },
+  {
+    "type": "message_update",
+    "usage": {
+      "input": 0,
+      "output": 0,
+      "cacheRead": 0,
+      "cacheWrite": 0,
+      "totalTokens": 0,
+      "cost": {
+        "input": 0,
+        "output": 0,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "total": 0
+      }
+    },
+    "assistantMessageEvent": {
+      "type": "text_end",
+      "contentIndex": 0,
+      "content": "Fixture task "
+    }
+  },
+  {
+    "type": "message_end",
+    "message": {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "text",
+          "text": "Fixture task "
+        }
+      ],
+      "api": "openai-completions",
+      "provider": "fixture",
+      "model": "fixture-alt",
+      "usage": {
+        "input": 0,
+        "output": 0,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "totalTokens": 0,
+        "cost": {
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "total": 0
+        }
+      },
+      "stopReason": "aborted",
+      "timestamp": 1793879656188,
+      "responseId": "fixture-8",
+      "errorMessage": "Request was aborted",
+      "durationMs": 6,
+      "thinkingLevel": "off"
+    }
+  },
+  {
+    "type": "turn_end",
+    "message": {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "text",
+          "text": "Fixture task "
+        }
+      ],
+      "api": "openai-completions",
+      "provider": "fixture",
+      "model": "fixture-alt",
+      "usage": {
+        "input": 0,
+        "output": 0,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "totalTokens": 0,
+        "cost": {
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "total": 0
+        }
+      },
+      "stopReason": "aborted",
+      "timestamp": 1793879656188,
+      "responseId": "fixture-8",
+      "errorMessage": "Request was aborted",
+      "durationMs": 6,
+      "thinkingLevel": "off"
+    },
+    "toolResults": []
+  },
+  {
+    "type": "agent_end",
+    "messages": [
+      {
+        "role": "user",
+        "content": [
+          {
+            "type": "text",
+            "text": "SLOW: Read probe.txt using read, then finish."
+          }
+        ],
+        "timestamp": 1793879656186
+      },
+      {
+        "role": "assistant",
+        "content": [
+          {
+            "type": "toolCall",
+            "id": "read-7",
+            "name": "read",
+            "arguments": {
+              "path": "probe.txt"
+            }
+          }
+        ],
+        "api": "openai-completions",
+        "provider": "fixture",
+        "model": "fixture-alt",
+        "usage": {
+          "input": 100,
+          "output": 20,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "reasoning": 0,
+          "totalTokens": 120,
+          "cost": {
+            "input": 0,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "total": 0,
+            "totalFromProvider": false
+          }
+        },
+        "stopReason": "toolUse",
+        "timestamp": 1793879656186,
+        "responseId": "fixture-7",
+        "rawStopReason": "tool_calls",
+        "durationMs": 1,
+        "thinkingLevel": "off"
+      },
+      {
+        "role": "toolResult",
+        "toolCallId": "read-7",
+        "toolName": "read",
+        "content": [
+          {
+            "type": "text",
+            "text": "6487742f-5f68-4e5e-9612-f4fe0f894c15"
+          }
+        ],
+        "isError": false,
+        "durationMs": 0,
+        "timestamp": 1793879656188
+      },
+      {
+        "role": "assistant",
+        "content": [
+          {
+            "type": "text",
+            "text": "Fixture task "
+          }
+        ],
+        "api": "openai-completions",
+        "provider": "fixture",
+        "model": "fixture-alt",
+        "usage": {
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "totalTokens": 0,
+          "cost": {
+            "input": 0,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "total": 0
+          }
+        },
+        "stopReason": "aborted",
+        "timestamp": 1793879656188,
+        "responseId": "fixture-8",
+        "errorMessage": "Request was aborted",
+        "durationMs": 6,
+        "thinkingLevel": "off"
+      }
+    ],
+    "willRetry": false
+  },
+  {
+    "type": "agent_settled",
+    "aborted": true
+  },
+  {
+    "id": 15,
+    "type": "response",
+    "command": "abort",
+    "success": true
+  },
+  {
+    "id": 16,
+    "type": "response",
+    "command": "get_messages",
+    "success": true,
+    "data": {
+      "messages": [
+        {
+          "role": "system",
+          "content": "",
+          "sections": {
+            "preamble": "You are a coding assistant running inside pi, a coding agent harness. Help users inspect files, run commands, and modify code.",
+            "tools": "<tools>\n- read: Read file contents\n\nAdditional tools may be available.\n</tools>",
+            "rules": "<rules>\n- Use read to examine files instead of cat or sed.\n- Be concise in your responses\n- Show file paths clearly when working with files\n</rules>",
+            "docs": "<docs>\nPi documentation (read only when the user asks about the harness itself, its SDK, extensions, themes, skills, or TUI):\n- Main documentation: /opt/homebrew/lib/node_modules/@earendil-works/pi-coding-agent/README.md\n- Additional docs: /opt/homebrew/lib/node_modules/@earendil-works/pi-coding-agent/docs\n- Examples: /opt/homebrew/lib/node_modules/@earendil-works/pi-coding-agent/examples (extensions, custom tools, SDK)\n- When reading pi docs or examples, resolve docs/... under Additional docs and examples/... under Examples, not the current working directory\n- When asked about: extensions (docs/extensions.md, examples/extensions/), themes (docs/themes.md), skills (docs/skills.md), prompt templates (docs/prompt-templates.md), TUI components (docs/tui.md), keybindings (docs/keybindings.md), SDK integrations (docs/sdk.md), custom providers (docs/custom-provider.md), adding models (docs/models.md), packages (docs/packages.md), environment variables (docs/environment-variables.md), MCP servers (docs/mcp.md), codemode scripts and non-LLM models such as classifiers and image models (docs/codemode.md)\n- Before implementing harness changes, read the relevant docs and examples in full, following related cross-references.\n</docs>",
+            "cwd": "<cwd>\n/private/tmp/lh-rpc-pi-03SsQK/work\n</cwd>"
+          },
+          "timestamp": 1793879656129,
+          "toolsAdded": [
+            {
+              "name": "read",
+              "description": "Read the contents of a file. Supports text files and images (jpg, png, gif, webp, bmp). Images are sent as attachments. For text files, output is truncated to 2000 lines or 50KB (whichever is hit first). Use offset/limit for large files. When you need the full file, continue with offset until complete.",
+              "parameters": {
+                "type": "object",
+                "required": ["path"],
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "description": "Path to the file to read (relative or absolute)"
+                  },
+                  "offset": {
+                    "type": "number",
+                    "description": "Line number to start reading from (1-indexed)"
+                  },
+                  "limit": {
+                    "type": "number",
+                    "description": "Maximum number of lines to read"
+                  }
+                }
+              },
+              "constrainedSampling": {
+                "type": "json_schema",
+                "strict": "prefer"
+              }
+            }
+          ]
+        },
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": "Read probe.txt using read, then finish."
+            }
+          ],
+          "timestamp": 1793879656129
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "toolCall",
+              "id": "read-1",
+              "name": "read",
+              "arguments": {
+                "path": "probe.txt"
+              }
+            }
+          ],
+          "api": "openai-completions",
+          "provider": "fixture",
+          "model": "fixture",
+          "usage": {
+            "input": 100,
+            "output": 20,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "reasoning": 0,
+            "totalTokens": 120,
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 0,
+              "totalFromProvider": false
+            }
+          },
+          "stopReason": "toolUse",
+          "timestamp": 1793879656135,
+          "responseId": "fixture-1",
+          "rawStopReason": "tool_calls",
+          "durationMs": 18,
+          "thinkingLevel": "off"
+        },
+        {
+          "role": "toolResult",
+          "toolCallId": "read-1",
+          "toolName": "read",
+          "content": [
+            {
+              "type": "text",
+              "text": "6487742f-5f68-4e5e-9612-f4fe0f894c15"
+            }
+          ],
+          "isError": false,
+          "durationMs": 1,
+          "timestamp": 1793879656156
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "text",
+              "text": "Fixture task completed."
+            }
+          ],
+          "api": "openai-completions",
+          "provider": "fixture",
+          "model": "fixture",
+          "usage": {
+            "input": 100,
+            "output": 20,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "reasoning": 0,
+            "totalTokens": 120,
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 0,
+              "totalFromProvider": false
+            }
+          },
+          "stopReason": "stop",
+          "timestamp": 1793879656156,
+          "responseId": "fixture-2",
+          "rawStopReason": "stop",
+          "durationMs": 2,
+          "thinkingLevel": "off"
+        },
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": "Read probe.txt using read, then finish."
+            }
+          ],
+          "timestamp": 1793879656161
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "toolCall",
+              "id": "read-3",
+              "name": "read",
+              "arguments": {
+                "path": "probe.txt"
+              }
+            }
+          ],
+          "api": "openai-completions",
+          "provider": "fixture",
+          "model": "fixture",
+          "usage": {
+            "input": 100,
+            "output": 20,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "reasoning": 0,
+            "totalTokens": 120,
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 0,
+              "totalFromProvider": false
+            }
+          },
+          "stopReason": "toolUse",
+          "timestamp": 1793879656161,
+          "responseId": "fixture-3",
+          "rawStopReason": "tool_calls",
+          "durationMs": 1,
+          "thinkingLevel": "off"
+        },
+        {
+          "role": "toolResult",
+          "toolCallId": "read-3",
+          "toolName": "read",
+          "content": [
+            {
+              "type": "text",
+              "text": "6487742f-5f68-4e5e-9612-f4fe0f894c15"
+            }
+          ],
+          "isError": false,
+          "durationMs": 0,
+          "timestamp": 1793879656163
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "text",
+              "text": "Fixture task completed."
+            }
+          ],
+          "api": "openai-completions",
+          "provider": "fixture",
+          "model": "fixture",
+          "usage": {
+            "input": 100,
+            "output": 20,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "reasoning": 0,
+            "totalTokens": 120,
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 0,
+              "totalFromProvider": false
+            }
+          },
+          "stopReason": "stop",
+          "timestamp": 1793879656164,
+          "responseId": "fixture-4",
+          "rawStopReason": "stop",
+          "durationMs": 1,
+          "thinkingLevel": "off"
+        },
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": "Read probe.txt using read, then finish."
+            }
+          ],
+          "timestamp": 1793879656173
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "toolCall",
+              "id": "read-5",
+              "name": "read",
+              "arguments": {
+                "path": "probe.txt"
+              }
+            }
+          ],
+          "api": "openai-completions",
+          "provider": "fixture",
+          "model": "fixture-alt",
+          "usage": {
+            "input": 100,
+            "output": 20,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "reasoning": 0,
+            "totalTokens": 120,
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 0,
+              "totalFromProvider": false
+            }
+          },
+          "stopReason": "toolUse",
+          "timestamp": 1793879656174,
+          "responseId": "fixture-5",
+          "rawStopReason": "tool_calls",
+          "durationMs": 1,
+          "thinkingLevel": "off"
+        },
+        {
+          "role": "toolResult",
+          "toolCallId": "read-5",
+          "toolName": "read",
+          "content": [
+            {
+              "type": "text",
+              "text": "6487742f-5f68-4e5e-9612-f4fe0f894c15"
+            }
+          ],
+          "isError": false,
+          "durationMs": 0,
+          "timestamp": 1793879656176
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "text",
+              "text": "Fixture task completed."
+            }
+          ],
+          "api": "openai-completions",
+          "provider": "fixture",
+          "model": "fixture-alt",
+          "usage": {
+            "input": 100,
+            "output": 20,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "reasoning": 0,
+            "totalTokens": 120,
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 0,
+              "totalFromProvider": false
+            }
+          },
+          "stopReason": "stop",
+          "timestamp": 1793879656176,
+          "responseId": "fixture-6",
+          "rawStopReason": "stop",
+          "durationMs": 1,
+          "thinkingLevel": "off"
+        },
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": "SLOW: Read probe.txt using read, then finish."
+            }
+          ],
+          "timestamp": 1793879656186
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "toolCall",
+              "id": "read-7",
+              "name": "read",
+              "arguments": {
+                "path": "probe.txt"
+              }
+            }
+          ],
+          "api": "openai-completions",
+          "provider": "fixture",
+          "model": "fixture-alt",
+          "usage": {
+            "input": 100,
+            "output": 20,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "reasoning": 0,
+            "totalTokens": 120,
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 0,
+              "totalFromProvider": false
+            }
+          },
+          "stopReason": "toolUse",
+          "timestamp": 1793879656186,
+          "responseId": "fixture-7",
+          "rawStopReason": "tool_calls",
+          "durationMs": 1,
+          "thinkingLevel": "off"
+        },
+        {
+          "role": "toolResult",
+          "toolCallId": "read-7",
+          "toolName": "read",
+          "content": [
+            {
+              "type": "text",
+              "text": "6487742f-5f68-4e5e-9612-f4fe0f894c15"
+            }
+          ],
+          "isError": false,
+          "durationMs": 0,
+          "timestamp": 1793879656188
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "text",
+              "text": "Fixture task "
+            }
+          ],
+          "api": "openai-completions",
+          "provider": "fixture",
+          "model": "fixture-alt",
+          "usage": {
+            "input": 0,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "totalTokens": 0,
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 0
+            }
+          },
+          "stopReason": "aborted",
+          "timestamp": 1793879656188,
+          "responseId": "fixture-8",
+          "errorMessage": "Request was aborted",
+          "durationMs": 6,
+          "thinkingLevel": "off"
+        }
+      ]
+    }
+  },
+  {
+    "id": 17,
+    "type": "response",
+    "command": "get_state",
+    "success": true,
+    "data": {
+      "model": {
+        "id": "fixture-alt",
+        "name": "fixture-alt",
+        "api": "openai-completions",
+        "provider": "fixture",
+        "baseUrl": "http://127.0.0.1:51120/v1",
+        "reasoning": false,
+        "input": ["text"],
+        "cost": {
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheWrite": 0
+        },
+        "contextWindow": 32000,
+        "maxTokens": 2048
+      },
+      "thinkingLevel": "off",
+      "isStreaming": false,
+      "isCompacting": false,
+      "steeringMode": "one-at-a-time",
+      "followUpMode": "one-at-a-time",
+      "sessionFile": "/tmp/lh-rpc-pi-03SsQK/session.jsonl",
+      "sessionId": "01a1ab8f-46ab-73b8-997d-356468ad400c",
+      "autoCompactionEnabled": false,
+      "messageCount": 17,
+      "pendingMessageCount": 0
+    }
+  },
+  {
+    "id": 18,
+    "type": "response",
+    "command": "prompt",
+    "success": true,
+    "data": {
+      "disposition": "started"
+    }
+  },
+  {
+    "type": "agent_start"
+  },
+  {
+    "type": "turn_start"
+  },
+  {
+    "type": "message_start",
+    "message": {
+      "role": "user",
+      "content": [
+        {
+          "type": "text",
+          "text": "Read probe.txt using read, then finish."
+        }
+      ],
+      "timestamp": 1793879656195
+    }
+  },
+  {
+    "type": "message_end",
+    "message": {
+      "role": "user",
+      "content": [
+        {
+          "type": "text",
+          "text": "Read probe.txt using read, then finish."
+        }
+      ],
+      "timestamp": 1793879656195
+    }
+  },
+  {
+    "type": "message_start",
+    "message": {
+      "role": "assistant",
+      "content": [],
+      "api": "openai-completions",
+      "provider": "fixture",
+      "model": "fixture-alt",
+      "usage": {
+        "input": 0,
+        "output": 0,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "totalTokens": 0,
+        "cost": {
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "total": 0
+        }
+      },
+      "stopReason": "pending",
+      "timestamp": 1793879656196
+    }
+  },
+  {
+    "type": "message_update",
+    "usage": {
+      "input": 100,
+      "output": 20,
+      "cacheRead": 0,
+      "cacheWrite": 0,
+      "reasoning": 0,
+      "totalTokens": 120,
+      "cost": {
+        "input": 0,
+        "output": 0,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "total": 0,
+        "totalFromProvider": false
+      }
+    },
+    "assistantMessageEvent": {
+      "type": "toolcall_start",
+      "contentIndex": 0,
+      "id": "read-9",
+      "toolName": "read"
+    }
+  },
+  {
+    "type": "message_update",
+    "usage": {
+      "input": 100,
+      "output": 20,
+      "cacheRead": 0,
+      "cacheWrite": 0,
+      "reasoning": 0,
+      "totalTokens": 120,
+      "cost": {
+        "input": 0,
+        "output": 0,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "total": 0,
+        "totalFromProvider": false
+      }
+    },
+    "assistantMessageEvent": {
+      "type": "toolcall_delta",
+      "contentIndex": 0,
+      "delta": "{\"path\":\"probe.txt\"}"
+    }
+  },
+  {
+    "type": "message_update",
+    "usage": {
+      "input": 100,
+      "output": 20,
+      "cacheRead": 0,
+      "cacheWrite": 0,
+      "reasoning": 0,
+      "totalTokens": 120,
+      "cost": {
+        "input": 0,
+        "output": 0,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "total": 0,
+        "totalFromProvider": false
+      }
+    },
+    "assistantMessageEvent": {
+      "type": "toolcall_end",
+      "contentIndex": 0,
+      "toolCall": {
+        "type": "toolCall",
+        "id": "read-9",
+        "name": "read",
+        "arguments": {
+          "path": "probe.txt"
+        }
+      }
+    }
+  },
+  {
+    "type": "message_end",
+    "message": {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "toolCall",
+          "id": "read-9",
+          "name": "read",
+          "arguments": {
+            "path": "probe.txt"
+          }
+        }
+      ],
+      "api": "openai-completions",
+      "provider": "fixture",
+      "model": "fixture-alt",
+      "usage": {
+        "input": 100,
+        "output": 20,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "reasoning": 0,
+        "totalTokens": 120,
+        "cost": {
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "total": 0,
+          "totalFromProvider": false
+        }
+      },
+      "stopReason": "toolUse",
+      "timestamp": 1793879656196,
+      "responseId": "fixture-9",
+      "rawStopReason": "tool_calls",
+      "durationMs": 1,
+      "thinkingLevel": "off"
+    }
+  },
+  {
+    "type": "tool_execution_start",
+    "toolCallId": "read-9",
+    "toolName": "read",
+    "args": {
+      "path": "probe.txt"
+    }
+  },
+  {
+    "type": "tool_execution_end",
+    "toolCallId": "read-9",
+    "toolName": "read",
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "6487742f-5f68-4e5e-9612-f4fe0f894c15"
+        }
+      ],
+      "structuredContent": "6487742f-5f68-4e5e-9612-f4fe0f894c15"
+    },
+    "isError": false,
+    "durationMs": 0
+  },
+  {
+    "type": "message_start",
+    "message": {
+      "role": "toolResult",
+      "toolCallId": "read-9",
+      "toolName": "read",
+      "content": [
+        {
+          "type": "text",
+          "text": "6487742f-5f68-4e5e-9612-f4fe0f894c15"
+        }
+      ],
+      "isError": false,
+      "durationMs": 0,
+      "timestamp": 1793879656198
+    }
+  },
+  {
+    "type": "message_end",
+    "message": {
+      "role": "toolResult",
+      "toolCallId": "read-9",
+      "toolName": "read",
+      "content": [
+        {
+          "type": "text",
+          "text": "6487742f-5f68-4e5e-9612-f4fe0f894c15"
+        }
+      ],
+      "isError": false,
+      "durationMs": 0,
+      "timestamp": 1793879656198
+    }
+  },
+  {
+    "type": "turn_end",
+    "message": {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "toolCall",
+          "id": "read-9",
+          "name": "read",
+          "arguments": {
+            "path": "probe.txt"
+          }
+        }
+      ],
+      "api": "openai-completions",
+      "provider": "fixture",
+      "model": "fixture-alt",
+      "usage": {
+        "input": 100,
+        "output": 20,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "reasoning": 0,
+        "totalTokens": 120,
+        "cost": {
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "total": 0,
+          "totalFromProvider": false
+        }
+      },
+      "stopReason": "toolUse",
+      "timestamp": 1793879656196,
+      "responseId": "fixture-9",
+      "rawStopReason": "tool_calls",
+      "durationMs": 1,
+      "thinkingLevel": "off"
+    },
+    "toolResults": [
+      {
+        "role": "toolResult",
+        "toolCallId": "read-9",
+        "toolName": "read",
+        "content": [
+          {
+            "type": "text",
+            "text": "6487742f-5f68-4e5e-9612-f4fe0f894c15"
+          }
+        ],
+        "isError": false,
+        "durationMs": 0,
+        "timestamp": 1793879656198
+      }
+    ]
+  },
+  {
+    "type": "turn_start"
+  },
+  {
+    "type": "message_start",
+    "message": {
+      "role": "assistant",
+      "content": [],
+      "api": "openai-completions",
+      "provider": "fixture",
+      "model": "fixture-alt",
+      "usage": {
+        "input": 0,
+        "output": 0,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "totalTokens": 0,
+        "cost": {
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "total": 0
+        }
+      },
+      "stopReason": "pending",
+      "timestamp": 1793879656198
+    }
+  },
+  {
+    "type": "message_update",
+    "usage": {
+      "input": 100,
+      "output": 20,
+      "cacheRead": 0,
+      "cacheWrite": 0,
+      "reasoning": 0,
+      "totalTokens": 120,
+      "cost": {
+        "input": 0,
+        "output": 0,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "total": 0,
+        "totalFromProvider": false
+      }
+    },
+    "assistantMessageEvent": {
+      "type": "text_start",
+      "contentIndex": 0
+    }
+  },
+  {
+    "type": "message_update",
+    "usage": {
+      "input": 100,
+      "output": 20,
+      "cacheRead": 0,
+      "cacheWrite": 0,
+      "reasoning": 0,
+      "totalTokens": 120,
+      "cost": {
+        "input": 0,
+        "output": 0,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "total": 0,
+        "totalFromProvider": false
+      }
+    },
+    "assistantMessageEvent": {
+      "type": "text_delta",
+      "contentIndex": 0,
+      "delta": "Fixture task "
+    }
+  },
+  {
+    "type": "message_update",
+    "usage": {
+      "input": 100,
+      "output": 20,
+      "cacheRead": 0,
+      "cacheWrite": 0,
+      "reasoning": 0,
+      "totalTokens": 120,
+      "cost": {
+        "input": 0,
+        "output": 0,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "total": 0,
+        "totalFromProvider": false
+      }
+    },
+    "assistantMessageEvent": {
+      "type": "text_delta",
+      "contentIndex": 0,
+      "delta": "completed."
+    }
+  },
+  {
+    "type": "message_update",
+    "usage": {
+      "input": 100,
+      "output": 20,
+      "cacheRead": 0,
+      "cacheWrite": 0,
+      "reasoning": 0,
+      "totalTokens": 120,
+      "cost": {
+        "input": 0,
+        "output": 0,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "total": 0,
+        "totalFromProvider": false
+      }
+    },
+    "assistantMessageEvent": {
+      "type": "text_end",
+      "contentIndex": 0,
+      "content": "Fixture task completed."
+    }
+  },
+  {
+    "type": "message_end",
+    "message": {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "text",
+          "text": "Fixture task completed."
+        }
+      ],
+      "api": "openai-completions",
+      "provider": "fixture",
+      "model": "fixture-alt",
+      "usage": {
+        "input": 100,
+        "output": 20,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "reasoning": 0,
+        "totalTokens": 120,
+        "cost": {
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "total": 0,
+          "totalFromProvider": false
+        }
+      },
+      "stopReason": "stop",
+      "timestamp": 1793879656198,
+      "responseId": "fixture-10",
+      "rawStopReason": "stop",
+      "durationMs": 1,
+      "thinkingLevel": "off"
+    }
+  },
+  {
+    "type": "turn_end",
+    "message": {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "text",
+          "text": "Fixture task completed."
+        }
+      ],
+      "api": "openai-completions",
+      "provider": "fixture",
+      "model": "fixture-alt",
+      "usage": {
+        "input": 100,
+        "output": 20,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "reasoning": 0,
+        "totalTokens": 120,
+        "cost": {
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "total": 0,
+          "totalFromProvider": false
+        }
+      },
+      "stopReason": "stop",
+      "timestamp": 1793879656198,
+      "responseId": "fixture-10",
+      "rawStopReason": "stop",
+      "durationMs": 1,
+      "thinkingLevel": "off"
+    },
+    "toolResults": []
+  },
+  {
+    "type": "agent_end",
+    "messages": [
+      {
+        "role": "user",
+        "content": [
+          {
+            "type": "text",
+            "text": "Read probe.txt using read, then finish."
+          }
+        ],
+        "timestamp": 1793879656195
+      },
+      {
+        "role": "assistant",
+        "content": [
+          {
+            "type": "toolCall",
+            "id": "read-9",
+            "name": "read",
+            "arguments": {
+              "path": "probe.txt"
+            }
+          }
+        ],
+        "api": "openai-completions",
+        "provider": "fixture",
+        "model": "fixture-alt",
+        "usage": {
+          "input": 100,
+          "output": 20,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "reasoning": 0,
+          "totalTokens": 120,
+          "cost": {
+            "input": 0,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "total": 0,
+            "totalFromProvider": false
+          }
+        },
+        "stopReason": "toolUse",
+        "timestamp": 1793879656196,
+        "responseId": "fixture-9",
+        "rawStopReason": "tool_calls",
+        "durationMs": 1,
+        "thinkingLevel": "off"
+      },
+      {
+        "role": "toolResult",
+        "toolCallId": "read-9",
+        "toolName": "read",
+        "content": [
+          {
+            "type": "text",
+            "text": "6487742f-5f68-4e5e-9612-f4fe0f894c15"
+          }
+        ],
+        "isError": false,
+        "durationMs": 0,
+        "timestamp": 1793879656198
+      },
+      {
+        "role": "assistant",
+        "content": [
+          {
+            "type": "text",
+            "text": "Fixture task completed."
+          }
+        ],
+        "api": "openai-completions",
+        "provider": "fixture",
+        "model": "fixture-alt",
+        "usage": {
+          "input": 100,
+          "output": 20,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "reasoning": 0,
+          "totalTokens": 120,
+          "cost": {
+            "input": 0,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "total": 0,
+            "totalFromProvider": false
+          }
+        },
+        "stopReason": "stop",
+        "timestamp": 1793879656198,
+        "responseId": "fixture-10",
+        "rawStopReason": "stop",
+        "durationMs": 1,
+        "thinkingLevel": "off"
+      }
+    ],
+    "willRetry": false
+  },
+  {
+    "type": "agent_settled",
+    "aborted": false
+  },
+  {
+    "id": 19,
+    "type": "response",
+    "command": "get_state",
+    "success": true,
+    "data": {
+      "model": {
+        "id": "fixture-alt",
+        "name": "fixture-alt",
+        "api": "openai-completions",
+        "provider": "fixture",
+        "baseUrl": "http://127.0.0.1:51120/v1",
+        "reasoning": false,
+        "input": ["text"],
+        "cost": {
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheWrite": 0
+        },
+        "contextWindow": 32000,
+        "maxTokens": 2048
+      },
+      "thinkingLevel": "off",
+      "isStreaming": false,
+      "isCompacting": false,
+      "steeringMode": "one-at-a-time",
+      "followUpMode": "one-at-a-time",
+      "sessionFile": "/tmp/lh-rpc-pi-03SsQK/session.jsonl",
+      "sessionId": "01a1ab8f-46ab-73b8-997d-356468ad400c",
+      "autoCompactionEnabled": false,
+      "messageCount": 21,
+      "pendingMessageCount": 0
+    }
+  },
+  {
+    "id": 20,
+    "type": "response",
+    "command": "get_messages",
+    "success": true,
+    "data": {
+      "messages": [
+        {
+          "role": "system",
+          "content": "",
+          "sections": {
+            "preamble": "You are a coding assistant running inside pi, a coding agent harness. Help users inspect files, run commands, and modify code.",
+            "tools": "<tools>\n- read: Read file contents\n\nAdditional tools may be available.\n</tools>",
+            "rules": "<rules>\n- Use read to examine files instead of cat or sed.\n- Be concise in your responses\n- Show file paths clearly when working with files\n</rules>",
+            "docs": "<docs>\nPi documentation (read only when the user asks about the harness itself, its SDK, extensions, themes, skills, or TUI):\n- Main documentation: /opt/homebrew/lib/node_modules/@earendil-works/pi-coding-agent/README.md\n- Additional docs: /opt/homebrew/lib/node_modules/@earendil-works/pi-coding-agent/docs\n- Examples: /opt/homebrew/lib/node_modules/@earendil-works/pi-coding-agent/examples (extensions, custom tools, SDK)\n- When reading pi docs or examples, resolve docs/... under Additional docs and examples/... under Examples, not the current working directory\n- When asked about: extensions (docs/extensions.md, examples/extensions/), themes (docs/themes.md), skills (docs/skills.md), prompt templates (docs/prompt-templates.md), TUI components (docs/tui.md), keybindings (docs/keybindings.md), SDK integrations (docs/sdk.md), custom providers (docs/custom-provider.md), adding models (docs/models.md), packages (docs/packages.md), environment variables (docs/environment-variables.md), MCP servers (docs/mcp.md), codemode scripts and non-LLM models such as classifiers and image models (docs/codemode.md)\n- Before implementing harness changes, read the relevant docs and examples in full, following related cross-references.\n</docs>",
+            "cwd": "<cwd>\n/private/tmp/lh-rpc-pi-03SsQK/work\n</cwd>"
+          },
+          "timestamp": 1793879656129,
+          "toolsAdded": [
+            {
+              "name": "read",
+              "description": "Read the contents of a file. Supports text files and images (jpg, png, gif, webp, bmp). Images are sent as attachments. For text files, output is truncated to 2000 lines or 50KB (whichever is hit first). Use offset/limit for large files. When you need the full file, continue with offset until complete.",
+              "parameters": {
+                "type": "object",
+                "required": ["path"],
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "description": "Path to the file to read (relative or absolute)"
+                  },
+                  "offset": {
+                    "type": "number",
+                    "description": "Line number to start reading from (1-indexed)"
+                  },
+                  "limit": {
+                    "type": "number",
+                    "description": "Maximum number of lines to read"
+                  }
+                }
+              },
+              "constrainedSampling": {
+                "type": "json_schema",
+                "strict": "prefer"
+              }
+            }
+          ]
+        },
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": "Read probe.txt using read, then finish."
+            }
+          ],
+          "timestamp": 1793879656129
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "toolCall",
+              "id": "read-1",
+              "name": "read",
+              "arguments": {
+                "path": "probe.txt"
+              }
+            }
+          ],
+          "api": "openai-completions",
+          "provider": "fixture",
+          "model": "fixture",
+          "usage": {
+            "input": 100,
+            "output": 20,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "reasoning": 0,
+            "totalTokens": 120,
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 0,
+              "totalFromProvider": false
+            }
+          },
+          "stopReason": "toolUse",
+          "timestamp": 1793879656135,
+          "responseId": "fixture-1",
+          "rawStopReason": "tool_calls",
+          "durationMs": 18,
+          "thinkingLevel": "off"
+        },
+        {
+          "role": "toolResult",
+          "toolCallId": "read-1",
+          "toolName": "read",
+          "content": [
+            {
+              "type": "text",
+              "text": "6487742f-5f68-4e5e-9612-f4fe0f894c15"
+            }
+          ],
+          "isError": false,
+          "durationMs": 1,
+          "timestamp": 1793879656156
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "text",
+              "text": "Fixture task completed."
+            }
+          ],
+          "api": "openai-completions",
+          "provider": "fixture",
+          "model": "fixture",
+          "usage": {
+            "input": 100,
+            "output": 20,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "reasoning": 0,
+            "totalTokens": 120,
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 0,
+              "totalFromProvider": false
+            }
+          },
+          "stopReason": "stop",
+          "timestamp": 1793879656156,
+          "responseId": "fixture-2",
+          "rawStopReason": "stop",
+          "durationMs": 2,
+          "thinkingLevel": "off"
+        },
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": "Read probe.txt using read, then finish."
+            }
+          ],
+          "timestamp": 1793879656161
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "toolCall",
+              "id": "read-3",
+              "name": "read",
+              "arguments": {
+                "path": "probe.txt"
+              }
+            }
+          ],
+          "api": "openai-completions",
+          "provider": "fixture",
+          "model": "fixture",
+          "usage": {
+            "input": 100,
+            "output": 20,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "reasoning": 0,
+            "totalTokens": 120,
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 0,
+              "totalFromProvider": false
+            }
+          },
+          "stopReason": "toolUse",
+          "timestamp": 1793879656161,
+          "responseId": "fixture-3",
+          "rawStopReason": "tool_calls",
+          "durationMs": 1,
+          "thinkingLevel": "off"
+        },
+        {
+          "role": "toolResult",
+          "toolCallId": "read-3",
+          "toolName": "read",
+          "content": [
+            {
+              "type": "text",
+              "text": "6487742f-5f68-4e5e-9612-f4fe0f894c15"
+            }
+          ],
+          "isError": false,
+          "durationMs": 0,
+          "timestamp": 1793879656163
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "text",
+              "text": "Fixture task completed."
+            }
+          ],
+          "api": "openai-completions",
+          "provider": "fixture",
+          "model": "fixture",
+          "usage": {
+            "input": 100,
+            "output": 20,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "reasoning": 0,
+            "totalTokens": 120,
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 0,
+              "totalFromProvider": false
+            }
+          },
+          "stopReason": "stop",
+          "timestamp": 1793879656164,
+          "responseId": "fixture-4",
+          "rawStopReason": "stop",
+          "durationMs": 1,
+          "thinkingLevel": "off"
+        },
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": "Read probe.txt using read, then finish."
+            }
+          ],
+          "timestamp": 1793879656173
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "toolCall",
+              "id": "read-5",
+              "name": "read",
+              "arguments": {
+                "path": "probe.txt"
+              }
+            }
+          ],
+          "api": "openai-completions",
+          "provider": "fixture",
+          "model": "fixture-alt",
+          "usage": {
+            "input": 100,
+            "output": 20,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "reasoning": 0,
+            "totalTokens": 120,
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 0,
+              "totalFromProvider": false
+            }
+          },
+          "stopReason": "toolUse",
+          "timestamp": 1793879656174,
+          "responseId": "fixture-5",
+          "rawStopReason": "tool_calls",
+          "durationMs": 1,
+          "thinkingLevel": "off"
+        },
+        {
+          "role": "toolResult",
+          "toolCallId": "read-5",
+          "toolName": "read",
+          "content": [
+            {
+              "type": "text",
+              "text": "6487742f-5f68-4e5e-9612-f4fe0f894c15"
+            }
+          ],
+          "isError": false,
+          "durationMs": 0,
+          "timestamp": 1793879656176
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "text",
+              "text": "Fixture task completed."
+            }
+          ],
+          "api": "openai-completions",
+          "provider": "fixture",
+          "model": "fixture-alt",
+          "usage": {
+            "input": 100,
+            "output": 20,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "reasoning": 0,
+            "totalTokens": 120,
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 0,
+              "totalFromProvider": false
+            }
+          },
+          "stopReason": "stop",
+          "timestamp": 1793879656176,
+          "responseId": "fixture-6",
+          "rawStopReason": "stop",
+          "durationMs": 1,
+          "thinkingLevel": "off"
+        },
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": "SLOW: Read probe.txt using read, then finish."
+            }
+          ],
+          "timestamp": 1793879656186
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "toolCall",
+              "id": "read-7",
+              "name": "read",
+              "arguments": {
+                "path": "probe.txt"
+              }
+            }
+          ],
+          "api": "openai-completions",
+          "provider": "fixture",
+          "model": "fixture-alt",
+          "usage": {
+            "input": 100,
+            "output": 20,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "reasoning": 0,
+            "totalTokens": 120,
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 0,
+              "totalFromProvider": false
+            }
+          },
+          "stopReason": "toolUse",
+          "timestamp": 1793879656186,
+          "responseId": "fixture-7",
+          "rawStopReason": "tool_calls",
+          "durationMs": 1,
+          "thinkingLevel": "off"
+        },
+        {
+          "role": "toolResult",
+          "toolCallId": "read-7",
+          "toolName": "read",
+          "content": [
+            {
+              "type": "text",
+              "text": "6487742f-5f68-4e5e-9612-f4fe0f894c15"
+            }
+          ],
+          "isError": false,
+          "durationMs": 0,
+          "timestamp": 1793879656188
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "text",
+              "text": "Fixture task "
+            }
+          ],
+          "api": "openai-completions",
+          "provider": "fixture",
+          "model": "fixture-alt",
+          "usage": {
+            "input": 0,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "totalTokens": 0,
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 0
+            }
+          },
+          "stopReason": "aborted",
+          "timestamp": 1793879656188,
+          "responseId": "fixture-8",
+          "errorMessage": "Request was aborted",
+          "durationMs": 6,
+          "thinkingLevel": "off"
+        },
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": "Read probe.txt using read, then finish."
+            }
+          ],
+          "timestamp": 1793879656195
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "toolCall",
+              "id": "read-9",
+              "name": "read",
+              "arguments": {
+                "path": "probe.txt"
+              }
+            }
+          ],
+          "api": "openai-completions",
+          "provider": "fixture",
+          "model": "fixture-alt",
+          "usage": {
+            "input": 100,
+            "output": 20,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "reasoning": 0,
+            "totalTokens": 120,
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 0,
+              "totalFromProvider": false
+            }
+          },
+          "stopReason": "toolUse",
+          "timestamp": 1793879656196,
+          "responseId": "fixture-9",
+          "rawStopReason": "tool_calls",
+          "durationMs": 1,
+          "thinkingLevel": "off"
+        },
+        {
+          "role": "toolResult",
+          "toolCallId": "read-9",
+          "toolName": "read",
+          "content": [
+            {
+              "type": "text",
+              "text": "6487742f-5f68-4e5e-9612-f4fe0f894c15"
+            }
+          ],
+          "isError": false,
+          "durationMs": 0,
+          "timestamp": 1793879656198
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "text",
+              "text": "Fixture task completed."
+            }
+          ],
+          "api": "openai-completions",
+          "provider": "fixture",
+          "model": "fixture-alt",
+          "usage": {
+            "input": 100,
+            "output": 20,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "reasoning": 0,
+            "totalTokens": 120,
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 0,
+              "totalFromProvider": false
+            }
+          },
+          "stopReason": "stop",
+          "timestamp": 1793879656198,
+          "responseId": "fixture-10",
+          "rawStopReason": "stop",
+          "durationMs": 1,
+          "thinkingLevel": "off"
+        }
+      ]
+    }
+  },
+  {
+    "id": 21,
+    "type": "response",
+    "command": "set_model",
+    "success": false,
+    "error": "Model not found: fixture/not-published"
+  },
+  {
+    "id": 22,
+    "type": "response",
+    "command": "get_state",
+    "success": true,
+    "data": {
+      "model": {
+        "id": "fixture-alt",
+        "name": "fixture-alt",
+        "api": "openai-completions",
+        "provider": "fixture",
+        "baseUrl": "http://127.0.0.1:51120/v1",
+        "reasoning": false,
+        "input": ["text"],
+        "cost": {
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheWrite": 0
+        },
+        "contextWindow": 32000,
+        "maxTokens": 2048
+      },
+      "thinkingLevel": "off",
+      "isStreaming": false,
+      "isCompacting": false,
+      "steeringMode": "one-at-a-time",
+      "followUpMode": "one-at-a-time",
+      "sessionFile": "/tmp/lh-rpc-pi-03SsQK/session.jsonl",
+      "sessionId": "01a1ab8f-46ab-73b8-997d-356468ad400c",
+      "autoCompactionEnabled": false,
+      "messageCount": 21,
+      "pendingMessageCount": 0
+    }
+  }
+]
