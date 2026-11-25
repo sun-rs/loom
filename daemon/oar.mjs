@@ -1,4 +1,4 @@
-import { appendFileSync, constants, lstatSync, realpathSync } from 'node:fs';
+import { appendFileSync, constants, lstatSync, realpathSync, statSync } from 'node:fs';
 import { randomUUID } from 'node:crypto';
 import { join } from 'node:path';
 import { antigravityRuntime, claudeRuntime, codexRuntime, createRuntimeRegistry, opencodeRuntime } from '@botiverse/oar';
@@ -11,7 +11,8 @@ import { codexFastArgs, nativeClaude } from './executables.mjs';
 import { finishHead, headAt } from './turn-heads.mjs';
 import { codexEnvironmentArgs } from '../cli/project.mjs';
 import { managedEnvironment } from './release.mjs';
-import { workerCodexArgs, workerEnvironment, workerProviderEnvironment } from './worker-environment.mjs';
+import { sandboxNativeWorker, workerCodexArgs, workerEnvironment, workerNativeLogin,
+  workerProviderEnvironment } from './worker-environment.mjs';
 
 const registry = createRuntimeRegistry([codexRuntime, antigravityRuntime, opencodeRuntime, claudeRuntime]);
 const adapters = { codex, agy, claude };
@@ -38,7 +39,8 @@ export async function openOar(row, project, resume) {
   const runtime = registry.require(row.runtimeId);
   const managed = managedEnvironment(project, row.addr);
   const isolated = workerEnvironment(row);
-  const env = { HC_TERMINAL_ID: null, ...managed, ...isolated, ...workerProviderEnvironment(row) };
+  const login = workerNativeLogin(row);
+  const env = { HC_TERMINAL_ID: null, ...managed, ...isolated, ...workerProviderEnvironment(row), ...login };
   let launchArgs;
   if (row.cli === 'codex') {
     const toolsEnv = row.role === 'worker' ? { ...isolated, CODEX_HOME: join(isolated.HOME, '.codex') } : {};
@@ -50,15 +52,25 @@ export async function openOar(row, project, resume) {
       throw new Error('Unsupported CODEX_HOME for loom');
     }
   } else if (row.cli === 'agy') {
-    Object.assign(env, { AGY_CLI_DISABLE_AUTO_UPDATE: 'true', GEMINI_HOME: null });
-    launchArgs = ['--sandbox', '--log-file', eventPath(project, row.addr).replace(/\.jsonl$/, '.agy.log')];
+    Object.assign(env, { AGY_CLI_DISABLE_AUTO_UPDATE: 'true', GEMINI_HOME: login?.GEMINI_HOME ?? null });
+    // The macOS worker already inherits Seatbelt. agy's inner sandbox tries
+    // to generate profiles in the real login home before running a command.
+    launchArgs = [login ? '--sandbox=false' : '--sandbox', '--log-file', login ? join(isolated.TMPDIR, 'agy.log') :
+      eventPath(project, row.addr).replace(/\.jsonl$/, '.agy.log')];
   } else if (row.cli === 'claude') {
     Object.assign(env, { OAR_CLAUDE_BIN: nativeClaude(), CLAUDE_CODE_ENTRYPOINT: 'loom', DISABLE_AUTOUPDATER: '1' });
+    if (login) env.CLAUDE_CODE_TMPDIR = isolated.TMPDIR;
     launchArgs = ['--setting-sources', '', '--strict-mcp-config'];
     if (row.fast !== undefined) launchArgs.push('--settings', JSON.stringify({ fastMode: row.fast }));
   }
-  const installation = await runtime.installation({ env });
+  const probe = login ? { ...env, ...isolated, CLAUDE_CONFIG_DIR: null, GEMINI_HOME: null, ANTIGRAVITY_APP_DATA_DIR: null } : env;
+  if (login && row.cli === 'agy' && !process.env.OAR_ANTIGRAVITY_BIN) {
+    const installed = join(login.HOME, '.local', 'bin', 'agy');
+    if (statSync(installed, { throwIfNoEntry: false })?.isFile()) probe.OAR_ANTIGRAVITY_BIN = installed;
+  }
+  let installation = await runtime.installation({ env: probe });
   if (installation.kind !== 'available') throw new Error(`${row.cli} unavailable: ${installation.reason ?? installation.kind}`);
+  if (login) installation = { ...installation, command: sandboxNativeWorker(project, row, login, isolated, installation.command) };
   const { cwd, model, effort } = row;
   return runtime.session(installation, { cwd, model, effort, env, launchArgs, ...(resume ? { resume } : {}) });
 }

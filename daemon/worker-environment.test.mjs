@@ -1,11 +1,11 @@
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
-import { lstatSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
+import { lstatSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { test } from 'node:test';
-import { workerCodexArgs, workerEnvironment, workerGitWritePaths } from './worker-environment.mjs';
+import { sandboxNativeWorker, workerCodexArgs, workerEnvironment, workerGitWritePaths } from './worker-environment.mjs';
 
 test('worker launch grants only its worktree Git metadata and private HOME, XDG and socket paths', t => {
   const project = mkdtempSync(join(realpathSync(tmpdir()), 'loom-worker-'));
@@ -53,3 +53,27 @@ test('worker launch grants only its worktree Git metadata and private HOME, XDG 
   git('-C', cwd, 'switch', '--detach', '-q');
   assert.deepEqual(workerGitWritePaths(project, cwd), gitWrites.slice(0, 2));
 });
+
+test('macOS native workers can write their worktree and state without making the login home writable',
+  { skip: process.platform !== 'darwin' }, t => {
+    const project = mkdtempSync(join(realpathSync(tmpdir()), 'loom-native-worker-'));
+    t.after(() => rmSync(project, { recursive: true, force: true }));
+    const cwd = join(project, 'work');
+    const login = { HOME: join(project, 'login') };
+    const data = join(login.HOME, '.gemini', 'antigravity-cli');
+    for (const path of [cwd, join(data, 'brain'), join(data, 'bin')]) mkdirSync(path, { recursive: true });
+    const row = { role: 'worker', cli: 'agy', addr: `oar-${randomUUID()}`, cwd };
+    const env = workerEnvironment(row);
+    t.after(() => rmSync(dirname(env.HOME), { recursive: true, force: true }));
+    const launch = sandboxNativeWorker(project, row, login, env, '/bin/sh');
+    execFileSync(launch, ['-c', [
+      'test "$HOME" = "$1" && : > "$2/work" && : > "$3/log" && : > "$4/brain/session" && : > "$4/bin/agentapi" &&',
+      '! ( : > "$1/outside" ) 2>/dev/null && ! ( : > "$4/settings" ) 2>/dev/null && ! ( : > "$4/bin/other" ) 2>/dev/null',
+    ].join(' '), 'loom-fixture', login.HOME, cwd, env.HOME, data], {
+      cwd, env: { ...process.env, ...env, ...login }, stdio: 'pipe',
+    });
+    const pty = execFileSync(launch, ['-c', '/usr/bin/script -q "$1/pty" /bin/echo loom-pty-fixture',
+      'loom-fixture', env.TMPDIR], { cwd, env: { ...process.env, ...env, ...login },
+      encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], timeout: 5000 });
+    assert.match(pty, /loom-pty-fixture/);
+  });

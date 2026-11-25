@@ -1,9 +1,9 @@
 import { execFileSync } from 'node:child_process';
-import { lstatSync, mkdirSync, realpathSync, writeFileSync } from 'node:fs';
+import { chmodSync, lstatSync, mkdirSync, realpathSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
-import { dirname, join, relative, sep } from 'node:path';
+import { dirname, isAbsolute, join, relative, sep } from 'node:path';
 import { inDirectory } from '../cli/project.mjs';
-import { readText } from './io.mjs';
+import { readText, writeState } from './io.mjs';
 
 const workerAddress = /^(?:oar|loom)-([0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12})$/;
 const gitOverrides = ['GIT_DIR', 'GIT_COMMON_DIR', 'GIT_WORK_TREE', 'GIT_INDEX_FILE', 'GIT_OBJECT_DIRECTORY',
@@ -54,6 +54,62 @@ export function workerProviderEnvironment(row) {
     agy: ['ANTIGRAVITY_APP_DATA_DIR', '.gemini/antigravity-cli'],
   }[row.cli];
   return nativeHome ? { [nativeHome[0]]: process.env[nativeHome[0]] || join(homedir(), nativeHome[1]) } : {};
+}
+
+export function workerNativeLogin(row) {
+  if (row.role !== 'worker' || process.platform !== 'darwin') return;
+  // The macOS native login can depend on the original HOME and on whether a
+  // config override was present. The actual session runs under Seatbelt.
+  if (row.cli === 'claude') return {
+    HOME: homedir(), CLAUDE_CONFIG_DIR: process.env.CLAUDE_CONFIG_DIR || null,
+  };
+  if (row.cli === 'agy') return {
+    HOME: homedir(), GEMINI_HOME: process.env.GEMINI_HOME || null,
+    ANTIGRAVITY_APP_DATA_DIR: process.env.ANTIGRAVITY_APP_DATA_DIR || null,
+  };
+}
+
+const shellWord = value => "'" + value.replaceAll("'", "'\\''") + "'";
+
+export function sandboxNativeWorker(project, row, login, isolated, command) {
+  const agy = row.cli === 'agy';
+  const configured = agy
+    ? login.ANTIGRAVITY_APP_DATA_DIR ?? join(login.GEMINI_HOME ?? join(login.HOME, '.gemini'), 'antigravity-cli')
+    : login.CLAUDE_CONFIG_DIR ?? join(login.HOME, '.claude');
+  if (![command, login.HOME, configured].every(isAbsolute)) throw new Error('Worker login paths must be absolute');
+  let data = configured;
+  try { data = realpathSync(configured); }
+  catch (error) { if (error.code !== 'ENOENT') throw error; }
+  if (inDirectory(row.cwd, realpathSync(login.HOME)) || inDirectory(row.cwd, data) || inDirectory(data, row.cwd)) {
+    throw new Error('Worker launch requires an absolute native executable and a worktree separate from login state');
+  }
+  const state = (agy ? ['brain', 'conversations', 'log'] : ['projects', 'sessions']).flatMap(name => {
+    // Grant only native-generated state directories, without following aliases
+    // into the login store or granting write access to its top level.
+    const path = join(data, name);
+    try { return realpathSync(path) === path && lstatSync(path).isDirectory() ? [path] : []; }
+    catch (error) { if (error.code !== 'ENOENT') throw error; return []; }
+  });
+  const writes = [row.cwd, isolated.HOME, isolated.TMPDIR, ...workerGitWritePaths(project, row.cwd), ...state];
+  const agentapi = join(data, 'bin', 'agentapi');
+  // agy rewrites this generated shell shim when it initializes its command tool.
+  let helper;
+  if (agy) {
+    try {
+      if (realpathSync(dirname(agentapi)) === dirname(agentapi)) {
+        const file = lstatSync(agentapi, { throwIfNoEntry: false });
+        if (!file || file.isFile()) helper = agentapi;
+      }
+    } catch (error) { if (error.code !== 'ENOENT') throw error; }
+  }
+  const policy = ['(version 1)', '(allow default)', '(deny file-write*)', '(allow file-write* (literal "/dev/null"))',
+    ...(agy ? ['(allow file-write-data (literal "/dev/ptmx") (regex #"^/dev/ttys[0-9]+$"))'] : []),
+    ...(helper ? [`(allow file-write* (literal ${quote(helper)}))`] : []),
+    ...writes.map(path => `(allow file-write* (subpath ${quote(path)}))`)].join('\n');
+  const launch = join(dirname(isolated.HOME), 'native');
+  writeState(launch, `#!/bin/sh\nexec /usr/bin/sandbox-exec -p ${shellWord(policy)} ${shellWord(command)} "$@"\n`);
+  chmodSync(launch, 0o700);
+  return launch;
 }
 
 function git(cwd, ...args) {

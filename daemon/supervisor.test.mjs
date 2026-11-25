@@ -844,7 +844,8 @@ test('sends one Auditor wake for card drift and includes worker fact misses in i
   writeFileSync(join(f.project, 'extra.txt'), 'one\ntwo\nthree\nfour\n');
   f.sessions.get(worker).check('npm test', 100, 1);
   f.sessions.get(worker).check('npm test', 500, 1);
-  f.sessions.get(worker).finish('DONE DRIFT\nSee `unreal.mjs`.');
+  const missing = ['unreal.mjs', ...Array.from({ length: 5 }, (_, i) => `unreal-${i}.mjs`)];
+  f.sessions.get(worker).finish('DONE DRIFT\nSee ' + missing.map(path => '`' + path + '`').join(', '));
   await d.tick();
   await d.tick();
   const notices = f.read('inbox/state.json').messages.filter(message => message.orgEvents);
@@ -853,11 +854,16 @@ test('sends one Auditor wake for card drift and includes worker fact misses in i
   for (const type of ['budget-raised', 'line-budget', 'plan-growth', 'slow-command', 'repeated-failure', 'fact-miss']) {
     assert.match(notices[0].text, new RegExp(type));
   }
-  const evidence = Object.keys(f.read('loomd/org.json').notices).length;
-  assert.equal(evidence, 6);
+  const evidence = Object.values(f.read('loomd/org.json').notices);
+  assert.equal(evidence.length, 6);
+  const drift = evidence.filter(item => item.type === 'fact-miss');
+  assert.equal(drift.length, 1);
+  assert.equal(drift[0].count, 6);
+  assert.deepEqual(drift[0].misses.map(item => item.value), missing.slice(0, 5));
+  assert.doesNotMatch(notices[0].text, /unreal-4\.mjs/);
   f.sessions.get(leader).finish('dispatch ended');
   await d.tick();
-  assert.match(f.read('inbox/state.json').messages.find(message => message.waveBatch).text, /fact-miss 1 · unreal\.mjs/);
+  assert.match(f.read('inbox/state.json').messages.find(message => message.waveBatch).text, /fact-miss 6 · unreal\.mjs/);
 });
 
 test('worker switch affects only new spawns and a quota failure keeps the selected CLI', async t => {

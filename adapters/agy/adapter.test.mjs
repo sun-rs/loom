@@ -11,7 +11,7 @@ const fixture = name => readFileSync(join(dir, 'fixtures', name), 'utf8');
 const jsonl = rows => rows.map(row => JSON.stringify(row)).join('\n');
 
 function scratch(t) {
-  const path = realpathSync(mkdtempSync(join(dir, 'test-')));
+  const path = realpathSync(mkdtempSync(join(dir, '.test-')));
   t.after(() => rmSync(path, { recursive: true, force: true }));
   return path;
 }
