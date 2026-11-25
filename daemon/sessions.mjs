@@ -19,6 +19,7 @@ import { headAt, linkTuiInputHead, observeTuiHeads, saveTuiInputHead } from './t
 import { controlTui, wrapperFailedStart } from '../runtimes/tui/transport.mjs';
 import { controlHello, requestControl } from '../tui/pty-control.mjs';
 import { attachHost } from './host-client.mjs';
+import { attachCodexHolder, pipeTransport, useCodexHolder } from './codex-holder.mjs';
 import { releaseId } from './release.mjs';
 import { projectMemoryPrompt } from '../memory/project.mjs';
 
@@ -396,12 +397,15 @@ export function ownedSessions(project, index, report, {
     if (job?.fast !== undefined) effective.fast = null;
     const unverified = Object.keys(selected).filter(key => effective[key] == null);
     const differences = Object.keys(selected).filter(key => effective[key] != null && effective[key] !== selected[key]);
-    const tui = jobs.get(row.addr)?.tui;
+    const transport = job?.tui ?? job?.host;
     return { selected, effective, differences, unverified,
       ...(job?.fastRequested !== undefined && { fastRequested: job.fastRequested }),
       ...(job?.warnings?.length && { warnings: job.warnings }),
-      ...(tui && { transport: tui.transport, ...(tui.reason && { transportReason: tui.reason }) }) };
+      ...(transport?.transport && { transport: transport.transport, ...(transport.reason && { transportReason: transport.reason }) }) };
   }
+
+  const attachHeadless = (row, job, options) => (useCodexHolder(row, job) ? attachCodexHolder : attachHost)(
+    project, row, job, save, controller, options);
 
   async function openFixture(row, job) {
     const session = await open(job.fast === undefined ? row : { ...row, fast: job.fast }, project, row.sessionId);
@@ -428,7 +432,7 @@ export function ownedSessions(project, index, report, {
       if (!running.has(row.addr)) {
         const last = events(row.addr).findLast(event => ['stream-opened', 'exited', 'released'].includes(event.type));
         if (!job.host && ['exited', 'released'].includes(last?.type) && !last.suspending) return finish(job, row, last.at);
-        const runtime = open ? await openFixture(row, job) : await attachHost(project, row, job, save, controller);
+        const runtime = open ? await openFixture(row, job) : await attachHeadless(row, job);
         if (runtime.endedAt != null) {
           if (runtime.sessionId && row.sessionId !== runtime.sessionId) row = index.update(row.addr, { sessionId: runtime.sessionId });
           const transcriptPath = checkedTranscript(runtime.transcriptPath, row);
@@ -595,7 +599,7 @@ export function ownedSessions(project, index, report, {
     let runtime = running.get(row.addr);
     let endedAt;
     if (row.backend === 'headless') {
-      if (!runtime && job.host) runtime = await attachHost(project, row, job, save, controller, { stop: true });
+      if (!runtime && job.host) runtime = await attachHeadless(row, job, { stop: true });
       if (runtime?.hosted) endedAt = (await runtime.close()).endedAt;
       else if (runtime?.session) await runtime.session.dispose();
       else endedAt = runtime?.endedAt;
@@ -635,6 +639,12 @@ export function ownedSessions(project, index, report, {
           if (!host?.hosted) throw new Error('Session has no attached detached host');
           await host.pull();
           if (host.error()) throw new Error(host.error());
+          if (host.transport === pipeTransport) {
+            const snapshot = await host.snapshot();
+            if (snapshot.ended || sessionId !== host.session.id || host.endedAt != null) throw new Error('Codex pipe session changed');
+            return { ...base, status: 'attached', transport: host.transport, incarnation: host.incarnation, streamId: host.streamId,
+              pid: host.pid, childPid: snapshot.childPid, holderGeneration: String(snapshot.generation), protocol: 3, release: host.build() };
+          }
           return { ...base, status: 'attached', incarnation: host.incarnation, streamId: host.streamId,
             pid: host.pid, protocol: host.protocol, release: host.release, oar: host.oar };
         }
@@ -671,14 +681,22 @@ export function ownedSessions(project, index, report, {
   async function upgradeHolder({ target, rollback, check, addr }) {
     const row = rowFor(addr);
     const job = row && jobs.get(row.addr);
-    if (!job || row.endedAt !== null || job.tui?.transport !== 'holder-v3') {
+    if (!job || row.endedAt !== null || job.tui?.transport !== 'holder-v3' && job.host?.transport !== pipeTransport) {
       throw new ErrorCode('not-ready', 'Choose a live holder v3 session address');
     }
     if (!rollback && !isAbsolute(target ?? '')) throw new ErrorCode('invalid-arguments', 'Holder release path must be absolute');
+    target = rollback ? undefined : realpathSync(target);
+    if (job.host?.transport === pipeTransport) {
+      const runtime = running.get(row.addr);
+      if (runtime?.transport !== pipeTransport || runtime.endedAt != null || runtime.error()) {
+        throw new ErrorCode('not-ready', 'Owned Codex pipe holder is unavailable');
+      }
+      return runtime.handoff({ target, rollback, check });
+    }
     const status = () => getPane(job, row);
     const pane = await status();
     if (!pane || completedPane(pane)) throw new ErrorCode('not-ready', 'Owned holder pane is unavailable');
-    return holders.handoff(job, row, pane, status, rollback ? undefined : realpathSync(target), rollback, check);
+    return holders.handoff(job, row, pane, status, target, rollback, check);
   }
 
   async function sealed(addr, gate) {

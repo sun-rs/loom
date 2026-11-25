@@ -39,6 +39,8 @@
 #define QUEUE_SIZE (4 * CHUNK_LIMIT)
 #define MANIFEST_HEAD "LOOM-HOLDER 3 1\n"
 #define BOOT_MAGIC UINT64_C(0x4c4f4f4d00000301)
+#define PIPE_MAGIC UINT64_C(0x4c4f4f4d00000311)
+#define PIPE_MANIFEST "LOOM-HOLDER PIPES 1\n"
 #define JOURNAL_LIMIT (UINT64_C(256) * 1024 * 1024)
 
 typedef unsigned char Byte;
@@ -76,9 +78,16 @@ struct client {
 };
 
 static struct state s;
+// Keep the original TUI state layout. Only pipe images use this extension.
+static struct {
+  uint64_t stderr_offset;
+  int stdout_fd, stderr_fd;
+} pipes;
 static struct record ring[RING_EVENTS];
 static struct client clients[CLIENTS];
 static volatile sig_atomic_t winch, termination;
+
+static bool pipe_mode(void) { return s.magic == PIPE_MAGIC; }
 
 static uint64_t now(void) {
   struct timespec t;
@@ -201,7 +210,7 @@ static void append(enum event type, const void *payload, uint32_t length) {
   set32(r->bytes, r->size - 4);
   r->bytes[4] = type;
   set64(r->bytes + 5, seq);
-  set64(r->bytes + 13, s.cursor.output);
+  set64(r->bytes + 13, type == ERROR_OUTPUT ? pipes.stderr_offset : s.cursor.output);
   if (length) memcpy(r->bytes + RECORD_HEAD, payload, length);
   if (s.cursor.gap || s.journal_bytes + r->size > JOURNAL_LIMIT) { s.cursor.gap = 1; return; }
   int flags = O_WRONLY | O_APPEND;
@@ -281,16 +290,11 @@ static void note_size(uint32_t cols, uint32_t rows) {
   append(SIZE, geometry, sizeof(geometry));
 }
 
-static void collect(void) {
+static void collect_tty(void) {
   if (winch) {
     winch = 0;
     struct winsize w;
     if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &w) == 0) note_size(w.ws_col, w.ws_row);
-  }
-  if (termination) {
-    int sig = termination;
-    termination = 0;
-    deliver_signal(sig);
   }
   ssize_t n = drain_queue(STDOUT_FILENO, &s.output);
   if (n > 0) s.mirror += (uint64_t)n;
@@ -321,6 +325,38 @@ static void collect(void) {
     s.cursor.output += (uint64_t)n;
     s.output.size += (size_t)n;
   }
+  s.cursor.human_pending = s.input.size > 0;
+}
+
+static void collect_pipe(int *fd, enum event stream, uint64_t *offset) {
+  if (*fd < 0) return;
+  // Limit a pass so a noisy stream can't starve the other one or control RPC.
+  for (int i = 0; i < 16; ++i) {
+    Byte bytes[CHUNK_LIMIT];
+    ssize_t n = read(*fd, bytes, sizeof(bytes));
+    if (n < 0 && (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR)) return;
+    if (n <= 0) {
+      if (n < 0) s.cursor.gap = 1;
+      close(*fd);
+      *fd = -1;
+      return;
+    }
+    append(stream, bytes, (uint32_t)n);
+    *offset += (uint64_t)n;
+  }
+}
+
+static void collect(void) {
+  if (termination) {
+    int sig = termination;
+    termination = 0;
+    deliver_signal(sig);
+  }
+  if (pipe_mode()) {
+    collect_pipe(&pipes.stdout_fd, OUTPUT, &s.cursor.output);
+    collect_pipe(&pipes.stderr_fd, ERROR_OUTPUT, &pipes.stderr_offset);
+    s.eof = pipes.stdout_fd < 0 && pipes.stderr_fd < 0;
+  } else collect_tty();
 
   if (!s.reaped) {
     pid_t got = waitpid(s.child, &s.wait_status, WNOHANG);
@@ -334,7 +370,6 @@ static void collect(void) {
     set32(status + 4, WIFSIGNALED(s.wait_status) ? 128 + WTERMSIG(s.wait_status) : WEXITSTATUS(s.wait_status));
     append(END, status, sizeof(status));
   }
-  s.cursor.human_pending = s.input.size > 0;
 }
 
 static bool registered(uint64_t epoch, const Byte *id) {
@@ -358,10 +393,14 @@ static uint32_t snapshot(Byte *out) {
   out[96] = s.cursor.ended;
   out[97] = s.cursor.gap;
   out[98] = s.cursor.human_pending;
-  out[99] = 0;
+  out[99] = pipe_mode();
   set32(out + 100, s.cursor.ended ? (uint32_t)s.wait_status : 0);
   memcpy(out + 104, s.transaction, ID_SIZE);
   memcpy(out + 120, s.build, sizeof(s.build));
+  if (pipe_mode()) {
+    set64(out + 152, pipes.stderr_offset);
+    return 160;
+  }
   return 152;
 }
 
@@ -397,7 +436,7 @@ static enum status write_request(const Byte *body, size_t length, Byte *reply, u
   // readable fds here, after the last blocking filesystem operation.
   collect();
   struct pollfd human = {STDIN_FILENO, POLLIN, 0};
-  if (poll(&human, 1, 0) > 0 && (human.revents & POLLIN)) collect();
+  if (!pipe_mode() && poll(&human, 1, 0) > 0 && (human.revents & POLLIN)) collect();
   uint32_t written = 0;
   enum status result = guarded_write(s.master, &s.cursor, &condition, now(),
     body + header, length - header, write, &written);
@@ -436,19 +475,19 @@ static bool digest_file(int source, int target, Byte digest[32]) {
   return true;
 }
 
-static bool manifest_matches(const char *path, const Byte *digest) {
+static bool manifest_matches(const char *path, const Byte *digest, const char *file, const char *header) {
   size_t n = strlen(path);
   if (n <= sizeof(ASSET) || path[n - sizeof(ASSET)] != '/' || strcmp(path + n - sizeof(ASSET) + 1, ASSET)) return false;
   char name[PATH_MAX], text[1024], wanted[128], hash[65];
   memcpy(name, path, n - sizeof(ASSET) + 1);
-  strcpy(name + n - sizeof(ASSET) + 1, "manifest");
+  strcpy(name + n - sizeof(ASSET) + 1, file);
   int fd = open(name, O_RDONLY | O_CLOEXEC | O_NOFOLLOW);
   if (fd < 0) return false;
   ssize_t size = read(fd, text, sizeof(text) - 1);
   close(fd);
-  if (size < (ssize_t)strlen(MANIFEST_HEAD)) return false;
+  if (size < (ssize_t)strlen(header)) return false;
   text[size] = 0;
-  if (strncmp(text, MANIFEST_HEAD, strlen(MANIFEST_HEAD))) return false;
+  if (strncmp(text, header, strlen(header))) return false;
   hex(digest, 32, hash);
   snprintf(wanted, sizeof(wanted), "\n%s %s\n", ASSET, hash);
   return strstr(text, wanted) != NULL;
@@ -462,7 +501,9 @@ static enum status replace_image(const Byte *body, size_t length) {
   memcpy(candidate, body + header, length - header);
   candidate[length - header] = 0;
   int n = snprintf(staged, sizeof(staged), "%s/.image-XXXXXX", s.dir);
-  if (candidate[0] != '/' || n <= 0 || n >= (int)sizeof(staged) || !manifest_matches(candidate, body + 24)) return INVALID;
+  if (candidate[0] != '/' || n <= 0 || n >= (int)sizeof(staged) ||
+      !manifest_matches(candidate, body + 24, "manifest", MANIFEST_HEAD) ||
+      (pipe_mode() && !manifest_matches(candidate, body + 24, "pipes", PIPE_MANIFEST))) return INVALID;
   int input = open(candidate, O_RDONLY | O_CLOEXEC | O_NOFOLLOW | O_NONBLOCK);
   if (input < 0) return FAILED;
   struct stat st;
@@ -484,16 +525,21 @@ static enum status replace_image(const Byte *body, size_t length) {
   next.generation++;
   memcpy(next.transaction, body + 8, ID_SIZE);
   memcpy(next.build, actual, 32);
-  const int inherit[] = {s.master, s.listener, s.journal, s.keeper};
-  if (pwrite(s.keeper, &next, sizeof(next), 0) != sizeof(next)) { unlink(staged); return FAILED; }
+  const int inherit[] = {s.master, s.listener, s.journal, s.keeper,
+    pipe_mode() ? pipes.stdout_fd : -1, pipe_mode() ? pipes.stderr_fd : -1};
+  if (pwrite(s.keeper, &next, sizeof(next), 0) != sizeof(next) ||
+      (pipe_mode() && pwrite(s.keeper, &pipes, sizeof(pipes), sizeof(next)) != sizeof(pipes))) {
+    unlink(staged); return FAILED;
+  }
   bool prepared = true;
   for (size_t i = 0; i < sizeof(inherit) / sizeof(inherit[0]); ++i)
-    if (descriptor_flags(inherit[i], false) < 0) prepared = false;
+    if (inherit[i] >= 0 && descriptor_flags(inherit[i], false) < 0) prepared = false;
   char state_fd[32];
   snprintf(state_fd, sizeof(state_fd), "%d", s.keeper);
   char *const argv[] = {staged, "--reattach", state_fd, NULL};
   if (prepared) execve(staged, argv, environ);
-  for (size_t i = 0; i < sizeof(inherit) / sizeof(inherit[0]); ++i) descriptor_flags(inherit[i], true);
+  for (size_t i = 0; i < sizeof(inherit) / sizeof(inherit[0]); ++i)
+    if (inherit[i] >= 0) descriptor_flags(inherit[i], true);
   unlink(staged);
   return FAILED;
 }
@@ -541,7 +587,7 @@ static void dispatch(struct client *c) {
     uint32_t size = 0;
     enum status status = write_request(body, length, out, &size);
     respond(c, status, size);
-  } else if (method == RESIZE && length == 8) {
+  } else if (method == RESIZE && length == 8 && !pipe_mode()) {
     uint32_t cols = get32(body), rows = get32(body + 4);
     if (!cols || !rows || cols > UINT16_MAX || rows > UINT16_MAX) respond(c, INVALID, 0);
     else { note_size(cols, rows); respond(c, s.eof ? EXITED : OK, snapshot(out)); }
@@ -584,10 +630,11 @@ static void run(void) {
     }
     bool read_master = !s.eof && s.output.size <= QUEUE_SIZE - CHUNK_LIMIT;
     bool write_master = !s.eof && s.input.size > 0;
+    bool pty = !pipe_mode();
     struct pollfd p[4 + CLIENTS] = {
-      {s.eof || s.input.size == QUEUE_SIZE ? -1 : STDIN_FILENO, POLLIN, 0},
-      {s.output.size ? STDOUT_FILENO : -1, POLLOUT, 0},
-      {read_master || write_master ? s.master : -1, (read_master ? POLLIN : 0) | (write_master ? POLLOUT : 0), 0},
+      {pty ? (s.eof || s.input.size == QUEUE_SIZE ? -1 : STDIN_FILENO) : pipes.stdout_fd, POLLIN, 0},
+      {pty ? (s.output.size ? STDOUT_FILENO : -1) : pipes.stderr_fd, pty ? POLLOUT : POLLIN, 0},
+      {pty && (read_master || write_master) ? s.master : -1, (read_master ? POLLIN : 0) | (write_master ? POLLOUT : 0), 0},
       {s.listener, POLLIN, 0},
     };
     for (size_t i = 0; i < CLIENTS; ++i)
@@ -620,8 +667,27 @@ static void restore_tty(void) {
   fcntl(STDOUT_FILENO, F_SETFL, s.out_flags);
 }
 
+static void start_pipes(char **argv) {
+  int input[2], output[2], error[2];
+  if (pipe(input) < 0 || pipe(output) < 0 || pipe(error) < 0) fatal("pipes");
+  if ((s.child = fork()) < 0) fatal("fork");
+  if (!s.child) {
+    if (setpgid(0, 0) < 0 || dup2(input[0], STDIN_FILENO) < 0 || dup2(output[1], STDOUT_FILENO) < 0 ||
+        dup2(error[1], STDERR_FILENO) < 0) _exit(126);
+    close(input[0]); close(input[1]); close(output[0]); close(output[1]); close(error[0]); close(error[1]);
+    signal(SIGPIPE, SIG_DFL);
+    execve(argv[0], argv, environ);
+    _exit(127);
+  }
+  close(input[0]); close(output[1]); close(error[1]);
+  s.master = input[1]; pipes.stdout_fd = output[0]; pipes.stderr_fd = error[0];
+  const int fds[] = {s.master, pipes.stdout_fd, pipes.stderr_fd};
+  for (size_t i = 0; i < sizeof(fds) / sizeof(fds[0]); ++i)
+    if (descriptor_flags(fds[i], true) < 0 || nonblock(fds[i]) < 0) fatal("nonblocking pipe");
+}
+
 static void start(char **argv) {
-  s.magic = BOOT_MAGIC;
+  s.magic = !strcmp(argv[1], "--pipes") ? PIPE_MAGIC : BOOT_MAGIC;
   s.generation = 1;
   if (!path_copy(s.socket_path, sizeof(s.socket_path), argv[2]) || !path_copy(s.dir, sizeof(s.dir), argv[3]) ||
       !path_copy(s.controller_path, sizeof(s.controller_path), argv[4]) || !unhex(argv[5], s.incarnation, ID_SIZE) ||
@@ -640,6 +706,7 @@ static void start(char **argv) {
   if (s.keeper < 0 || unlink(keep) < 0 || descriptor_flags(s.keeper, true) < 0) fatal("state descriptor");
   s.listener = open_listener();
   if (s.listener < 0) fatal("holder socket");
+  if (pipe_mode()) { start_pipes(argv + 7); return; }
 
   struct winsize size = {24, 80, 0, 0};
   if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &size) < 0 || !size.ws_row || !size.ws_col) size = (struct winsize){24, 80, 0, 0};
@@ -670,21 +737,28 @@ int main(int argc, char **argv) {
     puts(MANIFEST_HEAD ASSET);
     return 0;
   }
+  if (argc == 2 && !strcmp(argv[1], "--self-check-pipes")) {
+    puts(PIPE_MANIFEST ASSET);
+    return 0;
+  }
   umask(077);
   if (atexit(restore_tty)) return 125;
   install_signals();
   if (argc == 3 && !strcmp(argv[1], "--reattach")) {
     int fd = atoi(argv[2]);
-    if (fd <= STDERR_FILENO || pread(fd, &s, sizeof(s), 0) != sizeof(s) || s.magic != BOOT_MAGIC || s.keeper != fd) {
+    if (fd <= STDERR_FILENO || pread(fd, &s, sizeof(s), 0) != sizeof(s) ||
+        (s.magic != BOOT_MAGIC && !pipe_mode()) || s.keeper != fd ||
+        (pipe_mode() && pread(fd, &pipes, sizeof(pipes), sizeof(s)) != sizeof(pipes))) {
       s.term_changed = 0;
       errno = EINVAL; fatal("incompatible holder state");
     }
-    const int inherited[] = {s.master, s.listener, s.journal, s.keeper};
+    const int inherited[] = {s.master, s.listener, s.journal, s.keeper,
+      pipe_mode() ? pipes.stdout_fd : -1, pipe_mode() ? pipes.stderr_fd : -1};
     for (size_t i = 0; i < sizeof(inherited) / sizeof(inherited[0]); ++i)
-      if (descriptor_flags(inherited[i], true) < 0) fatal("restore descriptor");
+      if (inherited[i] >= 0 && descriptor_flags(inherited[i], true) < 0) fatal("restore descriptor");
     unlink(argv[0]);
     winch = 1;
-  } else if (argc >= 8 && !strcmp(argv[1], "--launch")) {
+  } else if (argc >= 8 && (!strcmp(argv[1], "--launch") || !strcmp(argv[1], "--pipes"))) {
     // hc only owns stdio at this boundary. Drop accidental inherited fds
     // before allocating the explicitly managed descriptors.
     int limit = getdtablesize();

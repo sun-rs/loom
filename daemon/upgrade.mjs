@@ -32,10 +32,10 @@ export async function selfCheck() {
   await import('node-pty');
   await import('@xterm/headless');
   const { controlProtocol } = await import('../tui/pty-control.mjs');
-  const holder = await checkHolder(releaseRoot);
+  const holder = await checkHolder(releaseRoot, { pipes: true });
   return { root: releaseRoot, digest: releaseDigest(releaseRoot, { legacy: true }), releaseDigest: releaseDigest(releaseRoot),
-    daemonProtocol, hostProtocol, hostProtocols, ptyProtocol: controlProtocol, ptyProtocols: [0, 1, 2, 3],
-    defaultTuiProtocol: 3, holderDigest: holder.digest, storageVersions, packages,
+    daemonProtocol, hostProtocol, hostProtocols: [...hostProtocols, 3], ptyProtocol: controlProtocol, ptyProtocols: [0, 1, 2, 3],
+    defaultTuiProtocol: 3, defaultCodexHostProtocol: 3, holderDigest: holder.digest, storageVersions, packages,
     platform: process.platform, arch: process.arch, node: process.versions.node };
 }
 
@@ -177,7 +177,7 @@ export function validateReattachment(plan, result) {
     const before = plan.sessions.find(session => session.addr === live.addr);
     if (live.status !== 'attached' || before && (live.pid !== before.pid ||
         live.incarnation !== before.incarnation || before.sessionId && live.sessionId !== before.sessionId ||
-        live.streamId !== before.streamId || before.protocol === 3 && (live.pane !== before.pane ||
+        live.streamId !== before.streamId || before.protocol === 3 && (live.protocol !== 3 || live.pane !== before.pane ||
           live.paneCreatedAt !== before.paneCreatedAt || live.childPid !== before.childPid))) {
       throw new Error(`Session ${live.addr} could not reattach: ${live.reason ?? 'identity changed'}`);
     }

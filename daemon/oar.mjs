@@ -7,11 +7,11 @@ import claude from '../adapters/claude/index.mjs';
 import codex from '../adapters/codex/index.mjs';
 import { deliveryId, wireText } from '../inbox/message.mjs';
 import { eventPath, jsonRows, prepareJournal } from './io.mjs';
-import { codexFastArgs, nativeClaude } from './executables.mjs';
+import { nativeClaude } from './executables.mjs';
 import { finishHead, headAt } from './turn-heads.mjs';
-import { codexEnvironmentArgs } from '../cli/project.mjs';
+import { codexConfiguration } from './codex-launch.mjs';
 import { managedEnvironment } from './release.mjs';
-import { sandboxNativeWorker, workerCodexArgs, workerEnvironment, workerNativeLogin,
+import { sandboxNativeWorker, workerEnvironment, workerNativeLogin,
   workerProviderEnvironment } from './worker-environment.mjs';
 
 const registry = createRuntimeRegistry([codexRuntime, antigravityRuntime, opencodeRuntime, claudeRuntime]);
@@ -43,14 +43,7 @@ export async function openOar(row, project, resume) {
   const env = { HC_TERMINAL_ID: null, ...managed, ...isolated, ...workerProviderEnvironment(row), ...login };
   let launchArgs;
   if (row.cli === 'codex') {
-    const toolsEnv = row.role === 'worker' ? { ...isolated, CODEX_HOME: join(isolated.HOME, '.codex') } : {};
-    launchArgs = ['-c', 'features.memories=false', ...codexFastArgs(row.fast),
-      ...(row.role === 'worker' ? workerCodexArgs(project, row, isolated) : ['-c', 'sandbox_mode="workspace-write"']),
-      '-c', 'check_for_update_on_startup=false', ...codexEnvironmentArgs({ ...managed, ...toolsEnv }),
-      '-c', `projects.${JSON.stringify(row.cwd)}.trust_level="trusted"`];
-    if (process.env.CODEX_HOME && /(?:provider-homes|(?:^|\/)memories|(?:^|\/)\.env)/.test(process.env.CODEX_HOME)) {
-      throw new Error('Unsupported CODEX_HOME for loom');
-    }
+    launchArgs = codexConfiguration(project, row, managed, isolated);
   } else if (row.cli === 'agy') {
     Object.assign(env, { AGY_CLI_DISABLE_AUTO_UPDATE: 'true', GEMINI_HOME: login?.GEMINI_HOME ?? null });
     // The macOS worker already inherits Seatbelt. agy's inner sandbox tries
@@ -237,7 +230,7 @@ export function oarDelivery(message, observation) {
   const { at, sessionId, turnId, streamId } = start ?? end;
   return { at, sessionId, turnId, streamId, ...(end && { completion: {
     at: end.at, sessionId, turnId, nativeTurnId: end.nativeTurnId, nativeTurnIndex: end.turn,
-    source: 'OAR turn-end', outcome: end.outcome,
+    source: end.source ?? 'OAR turn-end', outcome: end.outcome,
     ...(end.unconfirmed || message.target?.provider && acpProviders.has(message.target.provider) && end.outcome.kind === 'completed' ?
       { noReply: true, unconfirmed: true, unconfirmedBody: end.unconfirmedBody ?? end.finalReply } :
       end.finalReply ? { body: end.finalReply } : { noReply: true }),

@@ -4,7 +4,7 @@ export const protocol = 3;
 export const frameLimit = 65536;
 export const methods = Object.freeze({ hello: 1, claim: 2, snapshot: 3, read: 4, write: 5, resize: 6, signal: 7, handoff: 8 });
 export const statuses = Object.freeze(['applied', 'invalid', 'stale', 'busy-human', 'would-block', 'partial', 'exited', 'gap', 'unknown', 'failed']);
-export const events = Object.freeze({ output: 1, resize: 2, human: 3, write: 4, exit: 5 });
+export const events = Object.freeze({ output: 1, resize: 2, human: 3, write: 4, exit: 5, stderr: 6 });
 export const idBytes = id => {
   if (!/^[a-f\d]{8}(?:-[a-f\d]{4}){3}-[a-f\d]{12}$/.test(id ?? '')) throw new TypeError('Invalid holder UUID');
   return Buffer.from(id.replaceAll('-', ''), 'hex');
@@ -54,13 +54,15 @@ export function holderError(code, message = `Holder v3: ${code}`) {
 }
 
 export function decodeSnapshot(p) {
-  if (p.length !== 152 || p[99] !== 0) throw holderError('HOLDER_FRAME');
+  const pipes = p[99] === 1;
+  if (pipes ? p.length !== 160 : p.length !== 152 || p[99] !== 0) throw holderError('HOLDER_FRAME');
   const get = i => p.readBigUInt64BE(i);
   const geometry = i => ({ cols: p.readUInt32BE(i), rows: p.readUInt32BE(i + 4) });
   return { generation: get(0), epoch: get(8), eventSeq: get(16), outputOffset: get(24), humanInputOffset: get(32),
     lastHumanNs: get(40), nowNs: get(48), mirroredOffset: get(56), pid: Number(get(64)), childPid: Number(get(72)),
     initial: geometry(80), size: geometry(88), ended: Boolean(p[96]), gap: Boolean(p[97]), humanPending: Boolean(p[98]),
-    waitStatus: p.readUInt32BE(100), transaction: p.toString('hex', 104, 120), build: p.toString('hex', 120, 152) };
+    waitStatus: p.readUInt32BE(100), transaction: p.toString('hex', 104, 120), build: p.toString('hex', 120, 152),
+    ...(pipes && { pipes, stderrOffset: get(152) }) };
 }
 
 export function decodeEvents(bytes) {
@@ -72,7 +74,7 @@ export function decodeEvents(bytes) {
     if (n < 21 || n > 8213 || i + n > bytes.length ||
         type === events.resize && n !== 29 || type === events.human && n !== 37 ||
         type === events.write && n !== 41 || type === events.exit && n !== 29 ||
-        type === events.output && n === 21 || !Object.values(events).includes(type)) throw holderError('HOLDER_FRAME');
+        (type === events.output || type === events.stderr) && n === 21 || !Object.values(events).includes(type)) throw holderError('HOLDER_FRAME');
     result.push({ type, seq: bytes.readBigUInt64BE(i + 5), offset: bytes.readBigUInt64BE(i + 13),
       data: bytes.subarray(i + 21, i + n) });
     i += n;

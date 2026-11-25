@@ -9,7 +9,7 @@
 
 enum method { HELLO = 1, CLAIM, SNAPSHOT, READ, WRITE, RESIZE, SIGNAL, HANDOFF };
 enum status { OK, INVALID, STALE, HUMAN, WOULD_BLOCK, PARTIAL, EXITED, GAP, UNKNOWN, FAILED };
-enum event { OUTPUT = 1, SIZE, INPUT, WRITTEN, END };
+enum event { OUTPUT = 1, SIZE, INPUT, WRITTEN, END, ERROR_OUTPUT };
 
 static inline uint32_t get32(const unsigned char *p) {
   return (uint32_t)p[0] << 24 | (uint32_t)p[1] << 16 | (uint32_t)p[2] << 8 | p[3];

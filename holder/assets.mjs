@@ -6,6 +6,7 @@ import { promisify } from 'node:util';
 
 const exec = promisify(execFile);
 export const manifestHeader = 'LOOM-HOLDER 3 1';
+export const pipeManifestHeader = 'LOOM-HOLDER PIPES 1';
 export const platforms = ['darwin-arm64', 'linux-arm64', 'linux-x64'];
 export const sha256 = bytes => createHash('sha256').update(bytes).digest('hex');
 export const holderName = platform => `loom-holder-${platform}`;
@@ -36,9 +37,18 @@ export function holderAsset(root) {
   return asset;
 }
 
-export async function checkHolder(root) {
+export async function checkHolder(root, { pipes = false } = {}) {
   const asset = holderAsset(root);
-  const { stdout } = await exec(asset.path, ['--self-check'], { timeout: 5000, maxBuffer: 256 });
-  if (stdout !== `${manifestHeader}\n${asset.name}\n`) throw new Error('Holder self-check mismatch');
+  const header = pipes ? pipeManifestHeader : manifestHeader;
+  if (pipes) {
+    const stamp = join(root, 'holder', 'bin', 'pipes');
+    const base = readFileSync(join(root, 'holder', 'bin', 'manifest'), 'utf8');
+    if (!lstatSync(stamp, { throwIfNoEntry: false })?.isFile() ||
+        readFileSync(stamp, 'utf8') !== base.replace(manifestHeader, header)) {
+      throw new Error('Release does not advertise this pipe holder');
+    }
+  }
+  const { stdout } = await exec(asset.path, [pipes ? '--self-check-pipes' : '--self-check'], { timeout: 5000, maxBuffer: 256 });
+  if (stdout !== `${header}\n${asset.name}\n`) throw new Error('Holder self-check mismatch');
   return asset;
 }
