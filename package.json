@@ -1,0 +1,21 @@
+{
+  "name": "loom",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24.2"
+  },
+  "bin": {
+    "loom": "bin/loom",
+    "loomd": "bin/loomd"
+  },
+  "scripts": {
+    "test": "node --test",
+    "postinstall": "node tui/install-pty.mjs"
+  },
+  "dependencies": {
+    "@botiverse/oar": "0.130.1",
+    "@xterm/headless": "5.5.0",
+    "node-pty": "1.1.0"
+  }
+}

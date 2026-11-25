@@ -1,0 +1,5 @@
+node_modules/
+# raw per-request telemetry (session ids, local paths); keep scripts + aggregates only
+tasks/COST-REQ-0/requests.csv
+tasks/COST-REQ-0/sessions.csv
+tasks/CACHE-TTL-0/replay.csv
