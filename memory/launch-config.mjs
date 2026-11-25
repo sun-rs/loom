@@ -39,7 +39,10 @@ async function buildLaunch(mode, options, { readFile, readDir } = {}) {
     }
     coverage = 'covered';
   }
-  if (provider === 'opencode') env.OPENCODE_DISABLE_CLAUDE_CODE_SKILLS = '1';
+  if (provider === 'opencode') {
+    env.OPENCODE_DISABLE_CLAUDE_CODE_SKILLS = '1';
+    coverage = 'not needed';
+  }
   if (provider === 'agy' && home) {
     const path = join(home, '.gemini', 'antigravity-cli', 'knowledge');
     if ((await readIfPresent(readDir, path))?.length) warnings.push({ path, recipient: 'super' });

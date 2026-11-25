@@ -6,6 +6,7 @@ const day = 86_400_000;
 const decisions = new Map([
   ['promote', 'promoted'], ['merge', 'merged'], ['return', 'returned'], ['reject', 'rejected'],
 ]);
+const bodyWrites = new Set(['put', 'propose', 'promote', 'merge', 'import_rulings']);
 const invalid = error => ({ ok: false, code: 'invalid', error });
 const forbidden = () => ({ ok: false, code: 'forbidden', error: 'Memory write is forbidden' });
 const conflict = currentRevision => ({ ok: false, code: 'conflict', error: 'Memory revision changed', currentRevision });
@@ -73,6 +74,11 @@ function purge(state, entry) {
   }
   state.changes = state.changes.filter(change => change.id !== entry.id);
   for (const { response } of state.receipts) {
+    if (response.candidate?.status === 'merged' && replacements.has(response.candidate.id)
+      && !replacements.has(response.item.id)) {
+      const { body, ...item } = response.item;
+      response.item = item;
+    }
     for (const field of ['item', 'candidate']) {
       const marker = replacements.get(response[field]?.id);
       if (marker) response[field] = marker;
@@ -161,7 +167,7 @@ export function createMemoryStore({ now = Date.now, readState, commitState, evid
   }
 
   async function put(state, binding, request, current, success) {
-    const { id, entry, expectedRevision, op } = request;
+    const { id, entry, expectedRevision, op, supersedeExpectedRevisions } = request;
     if (id != null && !current) return forbidden();
     if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return invalid('Invalid memory entry');
     const candidate = op === 'propose';
@@ -171,8 +177,6 @@ export function createMemoryStore({ now = Date.now, readState, commitState, evid
       || current.project !== scope.project || current.layer !== scope.layer || current.kind !== scope.kind))) return forbidden();
     if (current && (candidate ? !['pending', 'returned'].includes(current.status)
       : !['active', 'stale'].includes(current.status))) return invalid('Memory entry cannot be revised');
-    const mismatch = expected(expectedRevision, current);
-    if (mismatch) return mismatch;
     const requested = entry.supersedes;
     if (requested !== undefined && (candidate || !Array.isArray(requested) || !Array.from(requested).every(nonempty))) {
       return invalid('Invalid memory replacement');
@@ -182,10 +186,19 @@ export function createMemoryStore({ now = Date.now, readState, commitState, evid
     const targets = [];
     for (const targetId of added) {
       const target = state.entries.find(row => row.id === targetId);
-      if (!target || target.id === id) return invalid('Invalid memory replacement target');
       if (!access.canWrite(binding, target)) return forbidden();
-      if (!['active', 'stale'].includes(target.status)) return invalid('Invalid memory replacement target');
+      if (target.id === id || target.layer !== scope.layer || !['active', 'stale'].includes(target.status)) {
+        return invalid('Invalid memory replacement target');
+      }
       targets.push(target);
+    }
+    const mismatch = expected(expectedRevision, current);
+    if (mismatch) return mismatch;
+    for (const target of targets) {
+      const revision = supersedeExpectedRevisions != null && Object.hasOwn(supersedeExpectedRevisions, target.id)
+        ? supersedeExpectedRevisions[target.id] : undefined;
+      const targetMismatch = expected(revision, target);
+      if (targetMismatch) return targetMismatch;
     }
     const supersedes = [...existing, ...added];
     const extra = current ? select(current, ['original', 'proposer', 'reviewer']) : {};
@@ -216,7 +229,7 @@ export function createMemoryStore({ now = Date.now, readState, commitState, evid
     const { cardId, expectedRevision, op } = request;
     if (!access.canReview(binding, current) || !cardId || cardId !== current.cardId) return forbidden();
     const status = decisions.get(op);
-    if (current.status === status) {
+    if (op !== 'merge' && current.status === status) {
       const prior = state.receipts.find(({ response }) => response.candidate?.id === current.id
         && response.candidate.status === status && response.candidate.revision === current.revision);
       if (prior && (expectedRevision === current.revision - 1 || expectedRevision === current.revision)) {
@@ -264,6 +277,27 @@ export function createMemoryStore({ now = Date.now, readState, commitState, evid
     }
     updateEntry(state, candidate);
     return success({ item, candidate });
+  }
+
+  function replayMerge(state, binding, request, current, prior, success) {
+    if (!access.canReview(binding, current) || !request.cardId || request.cardId !== current.cardId) return forbidden();
+    if (prior && (prior.candidate?.id !== current.id || prior.candidate.status !== 'merged')) {
+      return conflict(current.revision);
+    }
+    // The original receipt keeps the redacted merge result even when the target is revised.
+    const merged = prior ?? state.receipts.find(({ response }) => response.candidate?.id === current.id
+      && response.candidate.status === 'merged' && response.candidate.revision === current.revision)?.response;
+    if (!merged || merged.item.id !== request.targetId || typeof request.body !== 'string') {
+      return conflict(current.revision);
+    }
+    const safe = sanitizeEntry({ body: request.body }, redaction);
+    if (!safe.ok) return safe;
+    if (safe.entry.body !== merged.item.body) return conflict(current.revision);
+    if (prior) return prior;
+    if (request.expectedRevision !== current.revision - 1 && request.expectedRevision !== current.revision) {
+      return conflict(current.revision);
+    }
+    return success(select(merged, ['item', 'candidate']));
   }
 
   async function importRulings(state, binding, request, success) {
@@ -321,13 +355,17 @@ export function createMemoryStore({ now = Date.now, readState, commitState, evid
   async function write(binding, request) {
     if (!nonempty(binding?.sessionId) || !nonempty(binding.principal)) return forbidden();
     if (!nonempty(request?.requestId)) return invalid('Expected a memory request ID');
-    const state = await snapshot();
     const { op, id, expectedRevision, requestId } = request;
+    if (bodyWrites.has(op) && typeof classifySensitive !== 'function') return forbidden();
+    const state = await snapshot();
     const scope = JSON.stringify([binding.sessionId, binding.principal, binding.role, binding.project, binding.cardId]);
     const prior = state.receipts.find(row => row.scope === scope && row.requestId === requestId);
-    if (prior) return prior.response;
     const success = (fields, status = 'accepted') => ({ ok: true, ...fields, receipt: { requestId, status } });
     const current = state.entries.find(entry => entry.id === id);
+    if (op === 'merge' && current?.status === 'merged') {
+      return replayMerge(state, binding, request, current, prior?.response, success);
+    }
+    if (prior) return prior.response;
     const before = state.seq;
     let result;
     if (op === 'put' || op === 'propose') result = await put(state, binding, request, current, success);

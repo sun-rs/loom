@@ -2,6 +2,10 @@ const kindRank = { ruling: 0, preference: 1, lesson: 2 };
 const indexSurfaces = new Set(['index', 'search', 'attachments', 'delta']);
 const deltaLimit = 30;
 
+function isUserGuidance(row) {
+  return row.project === null && row.layer === 'user' && ['ruling', 'preference'].includes(row.kind);
+}
+
 function isCrossProject(binding, row) {
   return row.project != null && row.project !== binding.project;
 }
@@ -76,7 +80,7 @@ function canWrite(binding, entry) {
   const { role, project, principal } = binding;
   const { layer, kind } = entry;
   if (role === 'super' && entry.project === null) {
-    return (layer === 'user' && kind === 'preference')
+    return isUserGuidance(entry)
       || (layer === 'cross_project' && ['ruling', 'lesson'].includes(kind));
   }
   if (project == null || entry.project !== project) return false;
@@ -141,7 +145,9 @@ export function createAccess({ readState, entries = [], changes = [], history, n
       if (surface === 'withdraw' && candidate) return false;
       if (surface === 'attachments' && row.layer !== 'shared') return false;
     }
-    if (binding.role !== 'super' && row.project == null && binding.role !== 'reviewer') return false;
+    if (binding.role !== 'super' && row.project == null && binding.role !== 'reviewer') {
+      return surface !== 'history' && isUserGuidance(row) && ['auditor', 'leader'].includes(binding.role);
+    }
     if (binding.role !== 'super' && isCrossProject(binding, row)) {
       if (row.layer !== 'shared' || time >= grantExpiry(binding, row)) return false;
     }
