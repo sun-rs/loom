@@ -69,8 +69,12 @@ export function readGrid(terminal, provider, extractDraft) {
     const boundary = !lines[index + 1]?.isWrapped || provider === 'opencode' && index === last;
     const line = undimmedText(lines[index], terminal.cols, cell, boundary,
       provider === 'claude' && index === cursor.y ? cursor.x : undefined);
-    // OpenCode paints actual spaces to fill each logical composer row.
-    return provider === 'opencode' && boundary ? line.trimEnd() : line;
+    // OpenCode paints row fills. Claude can repaint the beginning of a
+    // composer row while leaving actual spaces from the previous paint.
+    // Strip that padding at hard line boundaries, keeping soft wraps intact.
+    if (!boundary) return line;
+    if (provider === 'claude') return line.replace(/ +$/, '');
+    return provider === 'opencode' ? line.trimEnd() : line;
   };
   let draft = rowText(first).trimStart().slice(prompt.length).replace(/^[ \u00a0]/, '');
   for (let index = first + 1; index <= last; index++) {
