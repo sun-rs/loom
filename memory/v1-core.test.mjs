@@ -206,6 +206,43 @@ test('U03 enforces the role and scope matrix using session identity', async t =>
   }
 });
 
+test('U03 forbids a Leader from forgetting a ruling', async () => {
+  const { store, commits, readState } = await fixture();
+  const { auditor, leader } = bindings;
+  const ruling = saved(await store.write(auditor, put('create-ruling', { ...fact, kind: 'ruling' })));
+  const before = readState();
+  const commitCount = commits.length;
+
+  const denied = await store.write(leader, {
+    op: 'forget', requestId: 'forget-ruling', id: ruling.id, expectedRevision: ruling.revision,
+  });
+  assert.deepEqual([denied.ok, denied.code], [false, 'forbidden']);
+  assert.equal(commits.length, commitCount);
+  assert.deepEqual(readState(), before);
+});
+
+test('U03 rejects another project’s Leader editing or forgetting a local entry by ID', async () => {
+  const { store, commits, readState } = await fixture();
+  const { leader } = bindings;
+  const foreign = { ...leader, sessionId: 'foreign-leader', principal: 'actor-foreign-leader', project: 'project-b' };
+  const item = saved(await store.write(leader, put('create-local-lesson')));
+  const target = { id: item.id, expectedRevision: item.revision };
+  const before = readState();
+  const commitCount = commits.length;
+
+  const update = put('foreign-update', { ...fact, body: correctedBody, source: correctedSource }, target);
+  for (const request of [
+    update,
+    put('foreign-scope-update', { ...update.entry, project: foreign.project }, target),
+    { op: 'forget', requestId: 'foreign-forget', ...target },
+  ]) {
+    const denied = await store.write(foreign, request);
+    assert.equal(denied.ok, false, `${request.requestId}: ${JSON.stringify(denied)}`);
+    assert.equal(commits.length, commitCount);
+    assert.deepEqual(readState(), before);
+  }
+});
+
 test('U04 reviews candidates at card close and imports legacy rulings', async () => {
   const { store, commits, readState } = await fixture();
   const { worker, leader, auditor } = bindings;
@@ -241,7 +278,12 @@ test('U04 reviews candidates at card close and imports legacy rulings', async ()
   }
   assert.equal(commits.length, before);
 
-  const existing = saved(await store.write(leader, put('merge-target')));
+  const originalTarget = saved(await store.write(leader, put('merge-target')));
+  const existing = saved(await store.write(leader, put('revise-merge-target', {
+    ...fact, body: correctedBody, source: correctedSource,
+  }, { id: originalTarget.id, expectedRevision: originalTarget.revision })));
+  assert.equal(existing.id, originalTarget.id);
+  assert.equal(existing.revision, originalTarget.revision + 1);
   const review = async event => {
     const result = await store.write(leader, event);
     assert.equal(result.ok, true, JSON.stringify(result));
@@ -258,6 +300,12 @@ test('U04 reviews candidates at card close and imports legacy rulings', async ()
       event.targetId = existing.id;
       event.targetExpectedRevision = existing.revision;
       event.body = `${existing.body} ${candidate.body}`;
+      const before = commits.length;
+      const conflict = await store.write(leader, {
+        ...event, requestId: 'stale-merge-target', targetExpectedRevision: originalTarget.revision,
+      });
+      assert.deepEqual([conflict.ok, conflict.code, conflict.currentRevision], [false, 'conflict', existing.revision]);
+      assert.equal(commits.length, before);
     }
     if (action === 'promote' || action === 'merge') {
       const before = commits.length;
