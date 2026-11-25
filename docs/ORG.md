@@ -25,3 +25,16 @@
 - **worker 一律由 OAR 管理。** 特殊形态的 worker，比如 Claude TUI worker，也要按 OAR 的 runtime 规范来写，不另开一条只属于 loom 的通路。
 - **原生 subagent 只用于只读调研。** 高级角色可以用 CLI 自带的 subagent（agy subagent、Claude Task、Codex sub-agent）做回合内的只读调研。凡是改代码、跑测试、长时间运行、需要证据或审查的工作，一律派 loom worker。原因：原生 subagent 的消耗算在父角色身上，loom 也看不到、审不了它做了什么。
 - **按门禁边界给 Auditor 换班。** 每完成一道门禁就换一次，避免单个长会话占满成本；Auditor 不与 Leader 同时换班。
+
+## 消耗金字塔（2026-11-25，用户裁决）
+目标结构：**worker 消耗最多，Leader 次之，Auditor 最少**。按 token 和调用次数衡量，不按价格。
+- **Auditor 只看证据，不重新做一遍工作。**
+  - 门禁复核时，只读证据卡、diff 统计和 reviewer 的结论，不通读代码，也不自己跑探针。需要深入核查时，派一个短期 reviewer，这部分消耗记在 reviewer 名下。
+  - 只在三种情况下被唤醒：用户消息、门禁裁决（每道门禁一次，材料由 Leader 整理好）、升级事项。
+- **Leader 只协调，不施工。**
+  - 不自己跑全量测试，也不自己复现问题，这些交给 worker 或 reviewer。
+  - 只读三行回执和证据卡。
+- **worker 承担实际工作。**
+  - 卡片做大一些，自带验收；
+  - 测试由 worker 在自己的沙箱里跑完，并附上证据。
+- **loomd 每轮统计各角色的调用次数和 token。** 一旦出现倒金字塔（Auditor 高于 Leader，或 Leader 高于 worker 合计），就向 Super 发出偏离提醒。
