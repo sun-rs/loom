@@ -37,6 +37,8 @@
     "auditor": {
       "trustWorkspace": true,
       "rotateAt": "gate",
+      "maxWakesPerGate": 3,
+      "maxContextTokens": 150000,
       "guidance": { "modelTier": "strong", "vendorFamily": "different-from-workers", "preferLongPromptCacheTtl": true },
       "preferred": [
         { "cli": "agy", "model": "gemini-4-neon", "effort": "high", "mode": "tui" },

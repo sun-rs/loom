@@ -62,7 +62,7 @@ export async function projectStatus(project) {
     }));
   const merges = [...new Map([...history, ...verified].filter(merge => merge.sha).map(merge => [merge.sha, merge])).values()]
     .sort((a, b) => b.at - a.at).slice(0, 5);
-  const { byRole, rawTokens, missing } = projectCost(project, rows, { includeAcceptance: false });
+  const { byRole, rawTokens, missing, pyramid } = projectCost(project, rows, { includeAcceptance: false });
   const rotations = projectIndex(project).rotations();
   const rotating = new Set(rotations.filter(item => item.boundAt != null && item.verifiedAt == null && item.failedAt == null)
     .map(item => item.successor));
@@ -76,7 +76,7 @@ export async function projectStatus(project) {
     waves, pendingContinuations, cards: cards.filter(card => card.active || card.state === 'blocked'),
     blocked, notices, merges, rotations,
     cost: { rawTokens, byRole: Object.fromEntries(Object.entries(byRole).map(([role, value]) => [role, value.rawTokens])),
-      missingSessions: missing.length },
+      usageByRole: byRole, pyramid, missingSessions: missing.length },
   };
 }
 
@@ -98,8 +98,12 @@ export function printStatus(result) {
     [row.type, row.task ?? row.addr, row.misses?.map(miss => miss.value).join(', ') ??
       row.command ?? row.file ?? row.failureClass].join(' '), 3);
   section('Last merges', result.merges, row => [row.sha.slice(0, 12), row.subject].join(' '), 3);
-  const shares = Object.entries(result.cost.byRole).map(([role, count]) =>
-    role + ' ' + (result.cost.rawTokens ? (100 * count / result.cost.rawTokens).toFixed(1) + '%' : '—'));
-  console.log('Cost · ' + result.cost.rawTokens.toLocaleString() + ' recorded tokens · ' + shares.join(' · ') +
+  console.log('Cost · ' + result.cost.rawTokens.toLocaleString() + ' recorded tokens' +
     (result.cost.missingSessions ? ' · ' + result.cost.missingSessions + ' sessions with transcript gaps' : ''));
+  for (const [role, usage] of Object.entries(result.cost.usageByRole)) {
+    const share = result.cost.rawTokens ? (100 * usage.rawTokens / result.cost.rawTokens).toFixed(1) + '%' : '—';
+    console.log(`  ${role} · ${usage.modelCalls} calls · ${usage.rawTokens} raw (${share}) · ${usage.freshInputTokens} fresh input · ${usage.outputTokens} output`);
+  }
+  const { state, inversions } = result.cost.pyramid;
+  console.log('Pyramid (1h) · ' + state + inversions.map(item => ` · ${item.higher} > ${item.lower} (${item.metric})`).join(''));
 }

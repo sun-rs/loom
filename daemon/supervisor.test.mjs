@@ -46,7 +46,8 @@ function fixture(t, options) {
         emit('turn_started', { requestId, input });
         if (row.cli === 'agy') emit('tool_call_started', { callId: 'fixture-call' });
         else emit('turn_active', { inputId });
-        const prompt = input.split('\n').slice(1).join('\n').split('\n\n## Loom task conventions', 1)[0];
+        const prompt = input.split('\n').slice(1).join('\n').split('\n\n## Loom task conventions', 1)[0]
+          .split('\n\n## Startup request\n').at(-1);
         const body = row.role === 'reviewer' ? prompt.split('\n\n').at(-1) : prompt;
         if (!body.startsWith('HOLD') &&
             (row.role !== 'leader' || body.includes('波次') || body.includes('续作批次') || body.endsWith('replacement')) &&
@@ -88,7 +89,8 @@ function fixture(t, options) {
       emit('tool_call_started', { callId, toolName: 'exec_command', input: { cmd: command } }, end - duration);
       emit('tool_call_ended', { callId, toolName: 'exec_command', exitCode }, end);
     }
-    sessions.set(row.addr, { finish, check, session, loseEnd: () => { active = undefined; } });
+    const context = tokens => emit('usage', { usage: { context: { tokens, contextWindow: 300_000 } } });
+    sessions.set(row.addr, { finish, check, context, session, loseEnd: () => { active = undefined; } });
     return session;
   }
 
@@ -118,15 +120,149 @@ test('only Leader and Auditor get a bounded project memory block on spawn', asyn
   const { session: auditor } = await f.spawn(daemon, 'auditor', 'A');
   const { session: worker } = await f.spawn(daemon, 'worker', 'W', leader.addr);
   await daemon.tick();
-  for (const { addr } of [leader, auditor]) {
+  const guidance = [/Coordinate work.*Workers reproduce issues and run full test suites in their own sandboxes/,
+    /read only the gate packet and reviewer conclusions.*one ephemeral read-only reviewer/];
+  for (const [{ addr }, rule] of [[leader, guidance[0]], [auditor, guidance[1]]]) {
     const prompt = f.prompts.find(item => item.addr === addr).input;
-    assert.ok(prompt.endsWith('\n\nstart'));
-    const memory = prompt.slice(0, -'start'.length);
+    assert.ok(prompt.endsWith('\n\n## Startup request\nstart'));
+    assert.match(prompt, rule);
+    const memory = prompt.slice(0, prompt.indexOf('## Loom role guidance'));
     assert.ok(estimateTokens(memory) <= 400);
     assert.match(memory, /charter\.md.*Require approval.*rulings\.md.*items\/fact-0\.md/s);
     assert.doesNotMatch(memory, /fact-5\.md/);
   }
   assert.doesNotMatch(f.prompts.find(item => item.addr === worker.addr).input, /项目记忆|memory\/items/);
+});
+
+async function nativeCost(f, row, at, inputTokens, contextTokens = inputTokens) {
+  const id = randomUUID();
+  const records = [
+    { type: 'event_msg', payload: { type: 'task_started', turn_id: id } },
+    { type: 'token_usage_record', payload: { response_id: id, usage: { input_tokens: inputTokens, output_tokens: 10 } } },
+    { type: 'event_msg', payload: { type: 'token_count',
+      info: { model_context_window: 300_000, last_token_usage: { total_tokens: contextTokens } } } },
+    { type: 'event_msg', payload: { type: 'task_complete', turn_id: id, last_agent_message: 'done' } },
+  ];
+  const path = await f.sessions.get(row.addr).session.nativeSessionFile();
+  appendFileSync(path, records.map(record => JSON.stringify({ ...record, timestamp: new Date(at).toISOString() }) + '\n').join(''));
+}
+
+test('consumption drift reaches only Super and a restart preserves the one-hour throttle', async t => {
+  let advance = 0;
+  const f = fixture(t, { now: () => Date.now() + advance });
+  let d = f.daemon();
+  t.after(() => d.shutdown());
+  const { session: superSession } = await f.spawn(d, 'super', 'S');
+  const { session: auditor } = await f.spawn(d, 'auditor', 'A');
+  await d.tick();
+  advance = 31_000;
+  await nativeCost(f, auditor, Date.now(), 80);
+  await d.tick();
+  const ledger = () => f.read('loomd/notifications.json').filter(event => event.type === 'consumption-pyramid');
+  const delivery = event => f.read('inbox/state.json').messages.filter(message => message.projectEvents?.includes(event.id));
+  assert.equal(ledger().length, 1);
+  assert.deepEqual(delivery(ledger()[0]).map(item => item.target.addr), [superSession.addr]);
+  await d.shutdown();
+  d = f.daemon();
+  advance += 59 * 60_000;
+  await d.tick();
+  assert.equal(ledger().length, 1);
+  advance += 120_000;
+  await nativeCost(f, auditor, Date.now() + advance - 1_000, 100);
+  await d.tick();
+  assert.equal(ledger().length, 2);
+  assert.ok(ledger()[1].at - ledger()[0].at >= 3_600_000);
+  assert.deepEqual(delivery(ledger()[1]).map(item => item.target.addr), [superSession.addr]);
+});
+
+test('Auditor wakes and context have independent budgets and rotation waits for a completed gate', async t => {
+  let advance = 0;
+  const f = fixture(t, { now: () => Date.now() + advance });
+  const d = f.daemon();
+  t.after(d.shutdown);
+  const { session: leader } = await f.spawn(d, 'leader', 'L');
+  const { session: auditor } = await f.spawn(d, 'auditor', 'A');
+  await d.tick();
+  const events = async () => (await d.handle('notifications', { history: true })).notifications;
+  const budgets = async () => (await events()).filter(event => event.type === 'auditor-budget-exceeded');
+  const proposals = async () => (await events()).filter(event => event.type === 'auditor-rotation-proposed');
+  advance = 31_000;
+  for (let i = 3; i > 1; i--) await nativeCost(f, auditor, Date.now() + advance - i, 10);
+  await d.tick();
+  assert.equal((await budgets()).length, 0);
+  await nativeCost(f, auditor, Date.now() + advance - 1, 10);
+  assert.equal((await proposals()).length, 0);
+  await d.handle('notifications', { gateComplete: 'G1' }, leader.addr);
+  assert.deepEqual((await budgets())[0].usage,
+    { wakes: 4, contextTokens: 10, maxWakesPerGate: 3, maxContextTokens: 150_000 });
+  assert.deepEqual((await proposals()).map(event => event.gate), ['G1']);
+  const notes = () => f.read('inbox/state.json').messages.filter(message => message.text.includes('请把常规材料合并'));
+  assert.deepEqual(notes().map(message => message.target.addr), [leader.addr]);
+  await d.handle('notifications', { gateComplete: 'G1' }, leader.addr);
+  f.policy({ roles: { auditor: { maxWakesPerGate: 10, maxContextTokens: 100 } } });
+  advance += 31_000;
+  await nativeCost(f, auditor, Date.now() + advance - 1, 20);
+  await d.handle('send', { target: auditor.addr, mode: 'queue', text: 'HOLD context probe' });
+  await d.tick();
+  f.sessions.get(auditor.addr).context(101);
+  advance += 31_000;
+  await d.tick();
+  assert.deepEqual((await budgets())[1].usage,
+    { wakes: 1, contextTokens: 101, maxWakesPerGate: 10, maxContextTokens: 100 });
+  assert.equal((await proposals()).length, 1);
+  await d.handle('notifications', { gateComplete: 'G2' }, leader.addr);
+  assert.deepEqual((await proposals()).map(event => event.gate), ['G1', 'G2']);
+  assert.deepEqual(notes().map(message => message.target.addr), [leader.addr, leader.addr]);
+  assert.notEqual((await d.handle('state', { target: auditor.addr })).state, 'exited');
+});
+
+test('gate pack snapshots scoped evidence into one compact file and enqueues one pointer across restart', async t => {
+  const f = fixture(t);
+  const commit = name => f.git('-c', 'user.name=Loom', '-c', 'user.email=loom@example.invalid', 'commit', '-qm', name);
+  f.git('init', '-q');
+  writeFileSync(join(f.project, 'fixture.mjs'), 'old\n');
+  f.git('add', 'fixture.mjs');
+  commit('base');
+  const base = f.git('rev-parse', 'HEAD');
+  writeFileSync(join(f.project, 'fixture.mjs'), 'new\n');
+  f.git('add', 'fixture.mjs');
+  commit('candidate');
+  const candidate = f.git('rev-parse', 'HEAD');
+  let d = f.daemon();
+  t.after(() => d.shutdown());
+  const { session: leader } = await f.spawn(d, 'leader', 'L');
+  const { session: auditor } = await f.spawn(d, 'auditor', 'A');
+  await d.tick();
+  const { session: worker } = await f.spawn(d, 'worker', 'W', leader.addr, { wave: 'GATE', prompt: 'HOLD work' });
+  await f.spawn(d, 'reviewer', 'R', leader.addr, { wave: 'GATE', prompt: 'RETURN PASS fixed candidate' });
+  await f.spawn(d, 'reviewer', 'OUTSIDE', leader.addr, { wave: 'OTHER', prompt: 'RETURN unrelated verdict' });
+  await d.tick();
+  f.sessions.get(worker.addr).check('npm test', 5, 0);
+  f.sessions.get(worker.addr).finish('DONE W');
+  for (let i = 0; i < 3; i++) await d.tick();
+  await assert.rejects(d.handle('gate-pack', { gate: '../elsewhere' }, leader.addr), { code: 'invalid-arguments' });
+  await assert.rejects(d.handle('gate-pack', { gate: 'GATE' }, worker.addr), { code: 'invalid-arguments' });
+  const packet = await d.handle('gate-pack', { gate: 'GATE', base, candidate, question: '答'.repeat(1900) }, leader.addr);
+  assert.equal(packet.path, join(f.project, '.project', 'gates', `GATE.${packet.deliveryId}.md`));
+  const contents = readFileSync(packet.path, 'utf8');
+  assert.ok(Buffer.byteLength(contents) <= 2048);
+  assert.match(contents, /Evidence cards.*\.project\/evidence\/.*Diff --stat.*fixture\.mjs.*Test summary.*1 passed.*Reviewer verdicts.*PASS fixed candidate.*Open questions.*答.*Pointers/s);
+  assert.doesNotMatch(contents, /unrelated verdict/);
+  await d.shutdown();
+  d = f.daemon();
+  const retry = await d.handle('gate-pack', { gate: 'GATE', question: 'replacement' }, leader.addr);
+  assert.equal(retry.deliveryId, packet.deliveryId);
+  assert.equal(readFileSync(packet.path, 'utf8'), contents);
+  for (let i = 0; i < 3; i++) await d.tick();
+  const { session: deep } = await f.spawn(d, 'reviewer', 'DEEP', auditor.addr,
+    { wave: 'GATE', prompt: 'RETURN PASS investigated edge' });
+  for (let i = 0; i < 3; i++) await d.tick();
+  const reviews = f.read('loomd/notifications.json').filter(event => event.type === 'reviewer-result' && event.addr === deep.addr);
+  assert.equal(reviews.length, 1);
+  assert.match(reviews[0].text, /PASS investigated edge/);
+  const auditMessages = f.read('inbox/state.json').messages.filter(message => message.target.addr === auditor.addr && !message.startup);
+  assert.deepEqual(auditMessages.map(message => message.text), [`Read gate packet ${packet.path}`]);
+  assert.equal(f.prompts.filter(message => message.addr === auditor.addr && message.input.includes(packet.path)).length, 1);
 });
 
 test('large OpenCode exports recover the consecutive-failure stuck state', async t => {

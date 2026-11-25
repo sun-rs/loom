@@ -30,7 +30,8 @@ const help = {
   state: ['loom state <target> [--project DIR]'],
   memory: ['loom memory search <query> [--project DIR] [--json]'],
   status: ['loom status --project DIR [--json]'],
-  cost: ['loom cost [--project DIR]', 'Reports raw tokens, estimated USD costs by role and per-turn acceptance timing.'],
+  cost: ['loom cost [--project DIR]', 'Reports role usage, the rolling consumption pyramid, estimated USD costs and per-turn acceptance timing.'],
+  gate: ['loom gate pack <gate-id> [--project DIR] [--base REF] [--candidate REF] [--question TEXT]'],
   stop: ['loom stop <target> [--project DIR]'],
   send: [sendUsage, sendHelp],
   handover: ['loom handover <leader|auditor|super> --project DIR [--to ADDR]'],
@@ -52,6 +53,7 @@ const commands = {
     ...flags('json', 'diff', 'evidence', 'only-failed', 'with-calls') },
   state: projectArgs, stop: projectArgs, ls: projectArgs, cost: projectArgs,
   status: { ...projectArgs, ...flags('json') },
+  gate: { ...projectArgs, ...strings('base', 'candidate', 'question') },
   memory: { ...projectArgs, ...flags('json') },
   switch: { ...projectArgs, ...strings('to') },
   doctor: { ...projectArgs, ...flags('fix') },
@@ -233,6 +235,15 @@ export async function main(args) {
       if (values.json) emit(matches);
       else if (matches.length) console.log(matches.map(indexLine).join('\n'));
       return 0;
+    } else if (command === 'gate') {
+      const [action, gate] = positionals;
+      if (positionals.length !== 2 || action !== 'pack') invalid(help.gate[0]);
+      try { result = await request(directory, 'gate-pack', { gate, base: values.base, candidate: values.candidate,
+        question: values.question }); }
+      catch (error) {
+        if (!daemonAbsent(error)) throw error;
+        throw new CommandError('not-ready', 'loomd is not running for this project');
+      }
     } else if (command === 'switch') {
       const [role] = positionals;
       if (positionals.length !== 1 || !['leader', 'auditor', 'worker'].includes(role) || !values.to?.trim()) invalid(help.switch[0]);

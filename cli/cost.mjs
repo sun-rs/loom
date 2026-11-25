@@ -12,12 +12,51 @@ const referencePrices = {
   claude: { freshInput: 3, cacheWrite: 3.75, cacheRead: 0.3, output: 15 },
   opencode: { freshInput: 0.3, cacheWrite: 0.3, cacheRead: 0.006, output: 1.2 },
 };
-const emptyRole = () => ({
-  sessions: 0, turns: 0, turnsWithUsage: 0, modelCalls: 0,
+const emptyUsage = () => ({
+  modelCalls: 0,
   rawTokens: 0, inputTokens: 0, freshInputTokens: 0, cachedInputTokens: 0, cacheWriteInputTokens: 0,
-  outputTokens: 0, reasoningOutputTokens: 0, estimatedCostUsd: 0,
+  outputTokens: 0, reasoningOutputTokens: 0,
 });
+const emptyRole = () => ({ sessions: 0, turns: 0, turnsWithUsage: 0, ...emptyUsage(), estimatedCostUsd: 0 });
+export const pyramidWindowMs = 60 * 60_000;
 const eventTime = row => timestamp(row.timestamp ?? row.created_at ?? row.receivedAt ?? row.at);
+
+function addUsage(totals, usage, cli, price) {
+  totals.modelCalls += usage.calls;
+  for (const field of usageFields) totals[field] += usage[field] ?? 0;
+  const write = usage.cacheWriteInputTokens ?? 0;
+  const fresh = Math.max(0, (usage.inputTokens ?? 0) - (usage.cachedInputTokens ?? 0) - write);
+  totals.freshInputTokens += fresh + (cli === 'claude' ? write : 0);
+  totals.rawTokens = totals.inputTokens + totals.outputTokens;
+  if (price) totals.estimatedCostUsd += (fresh * price.freshInput + write * price.cacheWrite +
+    (usage.cachedInputTokens ?? 0) * price.cacheRead + (usage.outputTokens ?? 0) * price.output) / 1_000_000;
+}
+
+function inWindow(turn, since, until) {
+  const turnTime = timestamp(turn.endedAt ?? turn.startedAt);
+  const within = at => at >= since && at <= until;
+  if (turn.calls?.length === turn.usage.calls) {
+    return turn.calls.filter(call => {
+      const at = timestamp(call.timestamp);
+      return within(Number.isFinite(at) ? at : turnTime);
+    }).map(call => ({ ...call, calls: 1 }));
+  }
+  return within(turnTime) ? [turn.usage] : [];
+}
+
+function pyramid(byRole, since, until) {
+  const inversions = [];
+  for (const metric of ['modelCalls', 'rawTokens']) {
+    for (const [higher, lower] of [['auditor', 'leader'], ['leader', 'worker']]) {
+      if (byRole[higher][metric] > byRole[lower][metric]) {
+        inversions.push({ metric, higher, lower, actual: byRole[higher][metric], comparedTo: byRole[lower][metric] });
+      }
+    }
+  }
+  const observed = ['auditor', 'leader', 'worker'].some(role => byRole[role].modelCalls > 0);
+  return { since, until, windowMs: until - since, byRole, inversions,
+    state: inversions.length ? 'inverted' : observed ? 'balanced' : 'unobserved' };
+}
 
 function passingChecks(cli, turn, rows) {
   const tools = cli === 'codex' ? codexCommands(rows.map(({ row }) => row), turn).filter(tool =>
@@ -52,19 +91,22 @@ function afterAcceptance({ session, turn, rows, journalOnly }) {
   };
 }
 
-export function projectCost(directory, sessions, { includeAcceptance = true } = {}) {
-  const reader = historyReader(directory);
-  const overrides = readPolicy(directory, { optional: true }).cost?.prices ?? {};
+export function projectCost(directory, sessions, { includeAcceptance = true, now = Date.now(),
+  reader = historyReader(directory), policy = readPolicy(directory, { optional: true }) } = {}) {
+  const overrides = policy.cost?.prices ?? {};
   const prices = Object.fromEntries(Object.entries(referencePrices)
     .map(([cli, defaults]) => [cli, { ...defaults, ...overrides[cli] }]));
   const byRole = Object.fromEntries([...roles, 'unassigned'].map(role => [role, emptyRole()]));
+  const rolling = Object.fromEntries(Object.keys(byRole).map(role => [role, emptyUsage()]));
+  const since = now - pyramidWindowMs;
   const workerTurns = [];
   const missing = [];
   const seen = new Set();
   let leaderWakes = 0;
 
   for (const session of sessions) {
-    const role = byRole[session.role ?? 'unassigned'];
+    const name = session.role ?? 'unassigned';
+    const role = byRole[name];
     role.sessions++;
     let history;
     try { history = reader.sessionHistory(session); }
@@ -87,13 +129,8 @@ export function projectCost(directory, sessions, { includeAcceptance = true } = 
       const usage = item.turn.usage;
       if (usage?.calls > 0) {
         role.turnsWithUsage++;
-        role.modelCalls += usage.calls;
-        for (const field of usageFields) role[field] += usage[field] ?? 0;
-        const fresh = Math.max(0, (usage.inputTokens ?? 0) - (usage.cachedInputTokens ?? 0) - (usage.cacheWriteInputTokens ?? 0));
-        role.freshInputTokens += fresh;
-        const price = prices[session.cli];
-        if (price) role.estimatedCostUsd += (fresh * price.freshInput + (usage.cacheWriteInputTokens ?? 0) * price.cacheWrite
-          + (usage.cachedInputTokens ?? 0) * price.cacheRead + (usage.outputTokens ?? 0) * price.output) / 1_000_000;
+        addUsage(role, usage, session.cli, prices[session.cli]);
+        for (const call of inWindow(item.turn, since, now)) addUsage(rolling[name], call, session.cli);
       }
       if (includeAcceptance && session.role === 'worker') {
         workerTurns.push({ addr: session.addr, task: session.task, turn: item.index,
@@ -102,9 +139,6 @@ export function projectCost(directory, sessions, { includeAcceptance = true } = 
     }
   }
 
-  for (const totals of Object.values(byRole)) {
-    totals.rawTokens = totals.inputTokens + totals.outputTokens;
-  }
   const rawTokens = Object.values(byRole).reduce((sum, totals) => sum + totals.rawTokens, 0);
   const estimatedCostUsd = Object.values(byRole).reduce((sum, totals) => sum + totals.estimatedCostUsd, 0);
   for (const totals of Object.values(byRole)) {
@@ -113,5 +147,5 @@ export function projectCost(directory, sessions, { includeAcceptance = true } = 
   return { byRole, rawTokens, workerShare: rawTokens ? byRole.worker.rawTokens / rawTokens : null,
     estimatedCostUsd, estimatedWorkerShare: byRole.worker.estimatedCostShare,
     pricing: { estimate: true, unit: 'USD per million tokens', prices },
-    leaderWakes, workerTurns, missing };
+    leaderWakes, workerTurns, missing, pyramid: pyramid(rolling, since, now) };
 }

@@ -4,6 +4,21 @@ import { transcriptRows } from './turns.mjs';
 
 const numeric = (...values) => values.find(Number.isFinite) ?? null;
 
+export function reportedContext(result, root, raw) {
+  const journal = root.findLast(row => row.contextUsage || row.context || row.usage?.context);
+  const reported = result.signals?.context ?? result.contextUsage ?? result.runtimeStatus?.contextUsage ??
+    journal?.contextUsage ?? journal?.context ?? journal?.usage?.context;
+  const context = reported?.value ?? reported;
+  const codex = raw.findLast(row => row.payload?.type === 'token_count' &&
+    Number.isFinite(row.payload.info?.model_context_window))?.payload.info;
+  const tokens = reported != null ? numeric(context?.tokens, context?.contextTokens) :
+    numeric(codex?.last_token_usage?.total_tokens);
+  const contextWindow = reported != null ? numeric(context?.contextWindow, context?.window) :
+    numeric(codex?.model_context_window);
+  const percent = numeric(context?.percent, tokens !== null && contextWindow > 0 ? 100 * tokens / contextWindow : null);
+  return { tokens, contextWindow, percent };
+}
+
 export function presentState(result, session, directory) {
   const project = sessionProject(directory, session);
   const artifacts = project && readArtifacts(project);
@@ -20,23 +35,12 @@ export function presentState(result, session, directory) {
   } catch { /* The daemon can still report current signals without a bound transcript. */ }
 
   const signal = result.signals ?? {};
-  const journalContext = root.findLast(row => row.contextUsage || row.context)?.contextUsage ??
-    root.findLast(row => row.context)?.context;
-  const codexContext = raw.findLast(row => row.payload?.type === 'token_count' &&
-    Number.isFinite(row.payload.info?.model_context_window))?.payload.info;
-  const reported = signal.context ?? result.contextUsage ?? result.runtimeStatus?.contextUsage ?? journalContext;
-  const context = reported?.value ?? reported;
-  const tokens = reported !== undefined && reported !== null ? numeric(context?.tokens, context?.contextTokens) :
-    numeric(codexContext?.last_token_usage?.total_tokens);
-  const contextWindow = reported !== undefined && reported !== null ? numeric(context?.contextWindow, context?.window) :
-    numeric(codexContext?.model_context_window);
-  const percent = numeric(context?.percent, tokens !== null && contextWindow > 0 ? 100 * tokens / contextWindow : null);
   const compactEvents = root.filter(row => row.type === 'compaction_ended' || row.hook_event_name === 'PostCompact');
   const compactRows = raw.filter(row => !row.isSidechain && row.parent_tool_use_id == null && row.parentToolUseId == null &&
     (row.type === 'compacted' || row.type === 'compact_boundary' || row.type === 'system' && row.subtype === 'compact_boundary'));
   const journalTurns = root.filter(row => row.type === 'turn-start' || row.hook_event_name === 'UserPromptSubmit' ||
     row.hook_event_name === 'PreInvocation' && Number(row.invocationNum ?? 0) === 0);
-  return { ...result, signals: { ...signal, context: { tokens, contextWindow, percent },
+  return { ...result, signals: { ...signal, context: reportedContext(result, root, raw),
     compactions: numeric(signal.compactions, result.compactions, raw.length || root.length ?
       Math.max(compactEvents.length, compactRows.length) : null),
     turns: numeric(signal.turns, result.turns, journalTurns.length || null, transcript?.turns.length),

@@ -378,9 +378,45 @@ test('cost splits Claude and agy cache usage and pairs their passing results', t
 
   const report = f.run(0, 'cost', '--project', f.cwd);
   const { rawTokens, freshInputTokens, cachedInputTokens, cacheWriteInputTokens } = report.byRole.worker;
-  assert.deepEqual([rawTokens, freshInputTokens, cachedInputTokens, cacheWriteInputTokens], [80, 40, 20, 12]);
+  assert.deepEqual([rawTokens, freshInputTokens, cachedInputTokens, cacheWriteInputTokens], [80, 46, 20, 12]);
   assert.equal(report.byRole.worker.estimatedCostUsd,
     (20 * 4 + 6 * 5 + 10 * 0.4 + 4 * 20 + 20 * 3 + 6 * 3.75 + 10 * 0.3 + 4 * 15) / 1_000_000);
   assert.deepEqual(report.workerTurns.map(turn => [turn.addr, turn.lastPassingAcceptanceAt, turn.callsAfterAcceptance]),
     [['agy', time(3), 1], ['claude', time(3), 1]]);
+});
+
+test('cost and status check the pyramid using calls inside the rolling window', t => {
+  const f = fixture(t);
+  const now = Date.now();
+  const add = (role, calls) => {
+    const transcriptPath = join(f.cwd, `${role}.jsonl`);
+    const rows = calls.map(([age, input], index) => ({
+      type: 'token_usage_record', timestamp: new Date(now - age).toISOString(),
+      payload: { response_id: role + index, usage: { input_tokens: input, output_tokens: 5 } },
+    }));
+    rows.unshift({ type: 'event_msg', timestamp: new Date(now - 75 * 60_000).toISOString(),
+      payload: { type: 'task_started', turn_id: role } });
+    rows.push({ type: 'event_msg', timestamp: new Date(now - 500).toISOString(),
+      payload: { type: 'task_complete', turn_id: role, last_agent_message: 'done' } });
+    writeFileSync(transcriptPath, rows.map(row => JSON.stringify(row)).join('\n') + '\n');
+    f.register(role, { role, transcriptPath });
+  };
+  add('worker', [[70 * 60_000, 1000], [2000, 20]]);
+  add('leader', [[2000, 40]]);
+  add('auditor', [[3000, 5], [2000, 5]]);
+  const args = ['--project', f.cwd];
+  const cost = f.run(0, 'cost', ...args);
+  const status = f.run(0, 'status', ...args, '--json').cost;
+  assert.deepEqual(status.usageByRole, cost.byRole);
+  assert.equal(status.byRole.worker, 1030);
+  const { byRole, inversions, windowMs, state } = cost.pyramid;
+  assert.equal(windowMs, 3_600_000);
+  assert.equal(state, 'inverted');
+  assert.deepEqual(inversions.map(({ higher, lower, metric }) => [higher, lower, metric]),
+    [['auditor', 'leader', 'modelCalls'], ['leader', 'worker', 'rawTokens']]);
+  assert.deepEqual(status.pyramid.inversions, inversions);
+  assert.deepEqual([byRole.worker.modelCalls, byRole.worker.rawTokens, byRole.worker.freshInputTokens, byRole.worker.outputTokens],
+    [1, 25, 20, 5]);
+  assert.equal(f.run(2, 'gate', 'pack', ...args).error.code, 'invalid-arguments');
+  assert.equal(f.run(1, 'gate', 'pack', 'G1', ...args).error.code, 'not-ready');
 });

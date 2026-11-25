@@ -102,6 +102,11 @@ export function readPolicy(project, { optional = false } = {}) {
         if (entry.rotateAt !== undefined && (role !== 'auditor' || entry.rotateAt !== 'gate')) {
           throw new Error('Expected roles.auditor.rotateAt to be gate');
         }
+        for (const [key, min] of [['maxWakesPerGate', 0], ['maxContextTokens', 1]]) {
+          if (Object.hasOwn(entry, key) && (role !== 'auditor' || !Number.isSafeInteger(entry[key]) || entry[key] < min)) {
+            throw new Error(`Expected roles.auditor.${key} to be an integer >= ${min}`);
+          }
+        }
         if (entry.trustWorkspace !== undefined && typeof entry.trustWorkspace !== 'boolean') {
           throw new Error(`Expected roles.${role}.trustWorkspace to be a boolean`);
         }
@@ -213,3 +218,8 @@ export function spawnProfile(project, input, owner, occupies) {
 }
 
 export const workerLimit = policy => policy.roles?.leader?.maxActiveWorkers ?? defaultMaxActiveWorkers;
+
+export const auditorLimits = policy => ({
+  maxWakesPerGate: policy.roles?.auditor?.maxWakesPerGate ?? 3,
+  maxContextTokens: policy.roles?.auditor?.maxContextTokens ?? 150_000,
+});
