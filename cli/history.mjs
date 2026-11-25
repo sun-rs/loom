@@ -1,4 +1,6 @@
 import { compareClaims } from '../evidence/claims.mjs';
+import { deliveryId } from '../inbox/message.mjs';
+import { agyTurnPrompt } from '../adapters/agy/lib/parse-agy.mjs';
 import { readArtifacts, sessionProject } from './artifacts.mjs';
 import { changeReader } from './changes.mjs';
 import { activitySummary, adapterFor, CommandError, parentOrder, readTranscript, transcriptFor, turnActivityFacts } from './sessions.mjs';
@@ -49,8 +51,10 @@ function matchingCards(session, turns, artifacts) {
   const interrupts = messages.filter(message => message.requestedMode === 'interrupt' && message.stoppedAt != null);
   const used = new Set();
   const entries = turns.map(turn => {
+    const markers = new Set((turn.prompts ?? [agyTurnPrompt.get(turn)]).map(deliveryId).filter(Boolean));
     const observation = observations.find(item => !used.has(item) &&
       (sameId(item.end?.nativeTurnId ?? item.start.turnId, turn.id) ||
+        item.end?.inputIds?.some(id => markers.has(id)) ||
         at(turn.startedAt) === item.start.at || at(turn.endedAt) === item.end?.at && item.end != null));
     if (observation) used.add(observation);
     const completion = completions.find(done => sameId(done.nativeTurnId ?? done.turnId, turn.id) ||
@@ -103,11 +107,13 @@ function matchingCards(session, turns, artifacts) {
 function enrich(entry) {
   const { session, turn, rows, observation, completion, cards, heads } = entry;
   const nativeTools = turnTools(session.cli, turn, rows);
-  const tools = nativeTools.length || !observation ? nativeTools : turnTools(session.cli, turn, observation.rows);
+  const journalTools = observation && turnTools(session.cli, turn, observation.rows);
+  const tools = session.cli === 'agy' && journalTools?.length ? journalTools : nativeTools.length ? nativeTools : journalTools ?? [];
   const git = heads.end?.git ?? cards.find(card => card.data.git?.source === 'git-worktree')?.data.git;
   const activity = turnActivityFacts({ ...entry, tools, git, cwd: session.cwd });
   const claims = compareClaims(turn.reply ?? observation?.end?.finalReply, git ?? {}, {
-    status: rows.length ? 'ok' : 'missing-transcript', turnStatus: activity.lifecycle, commands: activity.tests,
+    status: rows.length || journalTools?.length ? 'ok' : 'missing-transcript', turnStatus: activity.lifecycle,
+    commands: activity.tests, expectRed: cards.some(card => card.data.verification?.expectRed === true),
   }, activity.lifecycle === 'failed' || activity.lifecycle === 'quota');
   const { tags } = activity;
   if (!tags.includes('unverified') && (claims.some(claim => claim.status === 'UNVERIFIED') ||

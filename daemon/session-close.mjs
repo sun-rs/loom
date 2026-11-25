@@ -19,8 +19,8 @@ export function disposeSession(session, timeoutMs = 8_000) {
   return withDeadline(Promise.resolve().then(() => session.dispose()), timeoutMs, 'OAR session disposal timed out', 'close-timeout');
 }
 
-export function ownedHostChildren(owner, previous = new Map()) {
-  const table = processTable();
+export async function ownedHostChildren(owner, previous = new Map()) {
+  const table = await processTable();
   if (owner.pid <= 1 || owner.pgid !== owner.pid || !sameProcess(owner, table.get(owner.pid))) {
     throw new Error('OAR host process group identity changed');
   }
@@ -49,9 +49,9 @@ export async function closeHostChildren(owner, previous) {
       catch (error) { if (error.code !== 'ESRCH') throw error; }
     }
   };
-  const children = ownedHostChildren(owner, previous);
+  const children = await ownedHostChildren(owner, previous);
   if (!children.size) return;
   signal(children, 'SIGTERM');
   await delay(800);
-  signal(ownedHostChildren(owner, children), 'SIGKILL');
+  signal(await ownedHostChildren(owner, children), 'SIGKILL');
 }

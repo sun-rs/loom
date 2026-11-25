@@ -17,6 +17,7 @@ try {
       (payload.session_id === sessionId || payload.hook_event_name === 'SessionStart') &&
       (['SessionStart', 'SessionEnd', 'PreCompact', 'PostCompact'].includes(payload.hook_event_name) || claude.hooks.normalize(payload))) {
     const row = { receivedAt: Date.now(), deliveryId: deliveryId(payload.prompt) };
+    if (payload.tool_name === 'Bash' && payload.tool_input?.run_in_background === true) row.backgroundBash = true;
     for (const field of fields) {
       const value = payload[field];
       if (typeof value === 'string' || typeof value === 'boolean') row[field] = value;

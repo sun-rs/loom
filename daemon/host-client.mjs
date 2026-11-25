@@ -39,7 +39,7 @@ export async function attachHost(project, row, job, save, controller, { stop = f
       if (owner.addr !== addr || owner.project !== project || owner.incarnation !== job.host.incarnation) {
         throw new Error('Session host binding changed');
       }
-      start = !sameProcess(owner.identity, processTable().get(owner.identity.pid));
+      start = !sameProcess(owner.identity, (await processTable([owner.identity.pid])).get(owner.identity.pid));
       if (start) {
         const event = lastExit(journal);
         if (event && ['exited', 'released'].includes(event.type) && event.incarnation === owner.incarnation) {
@@ -103,7 +103,7 @@ export async function attachHost(project, row, job, save, controller, { stop = f
     if (ended) return { endedAt: ended.at, sessionId: ended.sessionId, transcriptPath: ended.transcriptPath };
     if (failure) throw new Error(failure.message);
     const owner = readJSON(join(dir, 'owner.json'));
-    if (owner && !sameProcess(owner.identity, processTable().get(owner.identity.pid))) {
+    if (owner && !sameProcess(owner.identity, (await processTable([owner.identity.pid])).get(owner.identity.pid))) {
       throw new Error(readJSON(join(dir, 'failed.json'))?.message ?? 'Session host exited during startup');
     }
     if (Date.now() >= deadline) throw new Error('Session host did not become ready');

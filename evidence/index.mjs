@@ -59,10 +59,10 @@ function cardFor({ claims, git, verification, facts }) {
   const staticCounts = (git.tests ?? []).reduce((sum, test) => {
     for (const key of Object.keys(sum)) sum[key] += test.changes?.[key] ?? 0;
     return sum;
-  }, { removedAssertions: 0, addedSkip: 0, addedOnly: 0 });
+  }, { removedAssertions: 0, rewrittenAssertions: 0, addedSkip: 0, addedOnly: 0 });
   const removed = git.tests?.filter(test => test.status === 'D').length;
   const changes = git.status === 'ok'
-    ? `改动 ${git.files.length} · 保护 ${git.protectedHits.length} · 测试 ${git.tests.length}（删 ${removed}） · 断言 -${staticCounts.removedAssertions} · skip +${staticCounts.addedSkip} / only +${staticCounts.addedOnly}`
+    ? `改动 ${git.files.length} · 保护 ${git.protectedHits.length} · 测试 ${git.tests.length}（删 ${removed}） · 断言删 ${staticCounts.removedAssertions} 改 ${staticCounts.rewrittenAssertions} · skip +${staticCounts.addedSkip} / only +${staticCounts.addedOnly}`
     : `Git ${git.status}`;
   const { commands } = verification;
   const passed = commands.filter(check => check.result === 'passed').length;
@@ -107,7 +107,8 @@ export async function forTurn(options) {
   const textPath = join(directory, `${task}-${turn}.txt`);
   const previous = await localText(path);
   if (previous === undefined) {
-    const settings = await config(project);
+    const shared = await config(project);
+    const settings = { ...shared, ...shared.tasks?.[task] };
     const capturedAt = Date.now();
     const git = options.gitObservation ?? (cwd ? await collectGit(cwd, {
       baseCommit: options.baseCommit ?? settings.baseCommit,
@@ -128,6 +129,7 @@ export async function forTurn(options) {
       }) });
     }
     const reply = finalReply === undefined ? nativeReply : finalReply;
+    verification.expectRed = (options.expectRed ?? settings.expectRed) === true;
     const claims = compareClaims(reply, git, verification, failed);
     const facts = options.facts ?? (cwd && reply ? checkFacts(reply, cwd, project, git) : { checked: 0, misses: [] });
     const data = { version: 1, task, turn, addr, provider: provider ?? null, endedAt, capturedAt, git, verification, claims, facts };

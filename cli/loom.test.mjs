@@ -119,6 +119,70 @@ test('status JSON shows the auth mode from Claude launch evidence even offline',
   assert.deepEqual(result.sessions.map(row => row.authMode).sort(), ['api-key', 'subscription']);
 });
 
+test('T6 history groups interleaved test results with their own exits and closes nested exec output', t => {
+  const f = fixture(t);
+  const path = join(f.cwd, 't6.jsonl');
+  const stamp = n => new Date(n * 1000).toISOString();
+  const event = (type, payload) => ({ type, payload });
+  const commands = ['node --test new.test.mjs', 'node --test baseline.test.mjs'];
+  const checks = Array.from({ length: 4 }, (_, i) => {
+    const base = i % 2 === 1;
+    const id = `test-${i}`;
+    return [
+      event('response_item', { type: 'function_call', call_id: id, name: 'exec_command',
+        arguments: JSON.stringify({ cmd: commands[Number(base)] }) }),
+      event('response_item', { type: 'function_call_output', call_id: id, output: {
+        exit_code: base ? 0 : 1, output: base ? '# tests 4\n# pass 4\n# fail 0' : '# tests 29\n# pass 0\n# fail 29',
+      } }),
+    ];
+  }).flat();
+  const rows = [event('event_msg', { type: 'task_started', turn_id: 't6' }),
+    event('response_item', { type: 'function_call', name: 'exec_command', call_id: 'nested',
+      arguments: '{"cmd":"git status"}' }),
+    event('response_item', { type: 'function_call_output', call_id: 'nested', output: 'Script completed without a captured exit code' }),
+    ...checks, event('event_msg', { type: 'task_complete', turn_id: 't6', last_agent_message: 'DONE\n原测试 4/4 全绿' }),
+  ];
+  writeFileSync(path, rows.map((row, i) => JSON.stringify({ ...row, timestamp: stamp(i + 1) })).join('\n') + '\n');
+  f.register('t6', { role: 'worker', task: 'T6', transcriptPath: path });
+  const [turn] = f.run(0, 'hist', 't6', '--json').turns;
+  assert.match(turn.summary, /测试 node --test new\.test\.mjs ×2 0\/29 → 0\/29 · exit 1/);
+  assert.match(turn.summary, /测试 node --test baseline\.test\.mjs ×2 4\/4 → 4\/4 · exit 0/);
+  assert.doesNotMatch(turn.summary, /未结束工具/);
+  assert.doesNotMatch(turn.summary, /MISMATCH/);
+});
+
+test('8f1d01d6 binds agy journal ends and Git evidence even when native turn IDs and times differ', t => {
+  const f = fixture(t);
+  const addr = 'oar-8f1d01d6', path = join(f.cwd, 'review.jsonl');
+  const events = join(f.cwd, '.project/relay/events');
+  const id = 'feb9db2b-177b-485d-ac4b-b244695d17b0';
+  const sha = 'a'.repeat(40);
+  mkdirSync(events, { recursive: true });
+  const journal = [
+    { type: 'turn-start', at: 3000, head: sha, observedAt: 3000 },
+    { type: 'tool_call_started', at: 4000, callId: 'call-1', tool: 'read_file', input: { path: 'src.mjs' } },
+    { type: 'tool_call_ended', at: 5000, callId: 'call-1', result: 'ok' },
+    { type: 'turn-end', at: 8000, head: sha, observedAt: 8000,
+      outcome: { kind: 'completed' }, inputIds: [id], unconfirmed: true, unconfirmedBody: 'PASS',
+      git: { status: 'ok', source: 'git-worktree', baseCommit: sha, head: sha, files: [], numstat: { net: 0 } } },
+  ];
+  const native = [
+    { source: 'USER_EXPLICIT', type: 'USER_INPUT', content: `[loom:${id}]\nReview` },
+    { source: 'MODEL', type: 'PLANNER_RESPONSE', tool_calls: [{ name: 'read_file', args: { Path: 'src.mjs' } }] },
+    { source: 'MODEL', type: 'PLANNER_RESPONSE', status: 'DONE', content: 'PASS' },
+  ];
+  writeFileSync(join(events, addr + '.jsonl'), journal.map(row =>
+    JSON.stringify({ streamId: 'old-stream', turnId: 'runtime-span', turn: 1, ...row })).join('\n') + '\n');
+  writeFileSync(path, native.map((row, step_index) =>
+    JSON.stringify({ ...row, step_index, created_at: new Date(1000 + step_index * 200).toISOString() })).join('\n') + '\n');
+  f.register(addr, { cli: 'agy', backend: 'headless', role: 'reviewer', transcriptPath: path });
+  const result = f.run(0, 'hist', addr, '--level', 'L2', '--diff', '--json');
+  assert.equal(result.turns.length, 1);
+  assert.equal(result.turns[0].tools.length, 1);
+  assert.equal(result.turns[0].tools[0].status, 'completed');
+  assert.equal(result.turns[0].diff.turn.status, 'ok');
+});
+
 test('queries parent chains and role timelines by time and turn across sessions', t => {
   const f = fixture(t);
   function transcript(name, time) {

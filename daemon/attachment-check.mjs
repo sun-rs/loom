@@ -12,7 +12,6 @@ import { processTable, sameProcess } from './processes.mjs';
 import { ownedPane } from './tui.mjs';
 
 export async function probeAttachments(project, sessions) {
-  const processes = processTable();
   return Promise.all(sessions.map(async expected => {
     const { addr, backend, sessionId, pane } = expected;
     try {
@@ -34,6 +33,7 @@ export async function probeAttachments(project, sessions) {
           const client = holderClient({ socket, incarnation });
           const state = readJSON(join(dir, 'rpc.json'));
           const snapshot = await client.snapshot();
+          const processes = await processTable([snapshot.pid, snapshot.childPid]);
           const holder = processes.get(snapshot.pid), child = processes.get(snapshot.childPid);
           if (!snapshot.pipes || snapshot.pid !== binding.identity?.pid || !holder ||
               holder.started !== binding.identity.started || holder.uid !== process.getuid() ||
@@ -56,6 +56,7 @@ export async function probeAttachments(project, sessions) {
           }
           const { protocol } = await hostHello(socket, incarnation);
           const host = await hostRequest(socket, incarnation, 'state', undefined, protocol);
+          const processes = await processTable([host.identity?.pid]);
           if (host.project !== project || host.addr !== addr || host.incarnation !== incarnation ||
               host.root !== binding.root || host.release !== binding.release ||
               !sameProcess(host.identity, processes.get(host.identity?.pid))) throw new Error('Session host identity changed');
@@ -86,7 +87,8 @@ export async function probeAttachments(project, sessions) {
       }
       return { ...expected, ...observed, status: 'attached' };
     } catch (error) {
-      return { ...expected, status: 'unavailable', reason: error.message };
+      return { ...expected, status: 'unavailable', reason: error.message,
+        ...(error.code === 'process-enumeration-retry' && { retryable: true }) };
     }
   }));
 }

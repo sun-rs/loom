@@ -6,6 +6,7 @@ import { CommandError } from '../cli/sessions.mjs';
 import { clip } from '../evidence/checks.mjs';
 import { readText, writeState } from './io.mjs';
 import { workerRedFacts } from './routing.mjs';
+import { conclusoryReply } from '../inbox/message.mjs';
 
 export const gateId = /^[A-Za-z0-9][A-Za-z0-9_.-]{0,127}$/;
 const oneLine = text => String(text ?? '').replace(/\s+/g, ' ').replace(/[\x00-\x1f\x7f-\x9f]/g, '').trim();
@@ -60,8 +61,9 @@ export function saveGatePacket(project, { id, gate, base: baseRef, candidate: ca
   const reviews = members.filter(row => row.role === 'reviewer').map(row => {
     const returned = messages.find(message => message.reviewerResult === row.addr)?.text;
     const first = messages.find(message => message.id === jobs.get(row.addr)?.firstId);
-    const detail = returned?.split('\n\n', 2)[1] ?? first?.completion?.body ??
-      (first?.completion?.unconfirmedBody && 'UNCONFIRMED ' + first.completion.unconfirmedBody);
+    const verdict = first?.completion?.body ?? first?.completion?.unconfirmedBody;
+    const detail = returned?.split('\n\n', 2)[1] ?? (verdict && conclusoryReply(verdict) ?
+      first.completion.body ?? 'UNCONFIRMED ' + verdict : undefined);
     return `- ${row.addr} · ${clip(oneLine(detail?.split('\n', 1)[0] || 'verdict unavailable'), 140)}`;
   });
   const questions = [question, ...decisions.map(event => event.text)]

@@ -70,9 +70,9 @@ const handoffOwner = (project, id) => {
   return join(runtimeDirectory(project), `upgrade-${id}.owner.json`);
 };
 
-export function liveHandoff(project, id) {
+export async function liveHandoff(project, id) {
   const owner = readJSON(handoffOwner(project, id));
-  return Boolean(owner && sameProcess(owner, processTable().get(owner.pid)));
+  return Boolean(owner && sameProcess(owner, (await processTable([owner.pid])).get(owner.pid)));
 }
 
 async function projectStatus(project) {
@@ -138,6 +138,10 @@ export async function checkUpgradeAttachments(project, plan) {
     const blockers = attachmentFailures(plan.sessions, JSON.parse(stdout));
     return { ...plan, attachmentCheck: 'checked', blockers };
   } catch (error) {
+    if (/spawnSync ps ETIMEDOUT/.test(error.stderr ?? error.message)) {
+      return { ...plan, attachmentCheck: 'failed', blockers: [{ status: 'unavailable', retryable: true,
+        reason: 'Candidate process enumeration timed out. Retry the upgrade check.' }] };
+    }
     return { ...plan, attachmentCheck: 'failed', blockers: [{ status: 'unavailable',
       reason: error.killed ? 'Candidate attachment check timed out' : `Candidate attachment check failed: ${error.stderr?.trim() || error.message}` }] };
   }
@@ -145,12 +149,17 @@ export async function checkUpgradeAttachments(project, plan) {
 
 export async function beginUpgrade(project, plan) {
   plan = await checkUpgradeAttachments(project, { ...plan, blockers: blockersFor(plan.sessions, plan.target) });
-  if (plan.blockers.length) throw new CommandError('not-ready', 'Some sessions could not be verified. Run loom upgrade --check for details.');
+  if (plan.blockers.length) {
+    if (plan.blockers.every(blocker => blocker.retryable)) {
+      throw new CommandError('process-enumeration-retry', 'Process enumeration temporarily unavailable. Retry loom upgrade.');
+    }
+    throw new CommandError('not-ready', 'Some sessions could not be verified. Run loom upgrade --check for details.');
+  }
   const prior = upgradeState(project);
-  if (prior?.phase === 'switching' || prior?.recoveryPending && liveHandoff(project, prior.id)) {
+  if (prior?.phase === 'switching' || prior?.recoveryPending && await liveHandoff(project, prior.id)) {
     throw new CommandError('not-ready', 'An upgrade is already switching');
   }
-  const predecessor = processTable().get(process.pid);
+  const predecessor = (await processTable([process.pid])).get(process.pid);
   if (!predecessor) throw new Error('Previous loomd identity unavailable');
   const state = { id: randomUUID(), phase: 'switching', startedAt: Date.now(), predecessorPid: process.pid, predecessor, ...plan };
   const path = upgradeFile(project);
@@ -158,7 +167,7 @@ export async function beginUpgrade(project, plan) {
   try {
     const helper = await launch(project, fileURLToPath(import.meta.url), [project, state.id]);
     const deadline = Date.now() + 5000;
-    while (!liveHandoff(project, state.id)) {
+    while (!await liveHandoff(project, state.id)) {
       if (helper.exitCode !== null || helper.signalCode || Date.now() >= deadline) {
         throw new Error('Upgrade launcher did not claim its handoff');
       }
@@ -171,13 +180,13 @@ export async function beginUpgrade(project, plan) {
   return { upgradeId: state.id, phase: state.phase, sessions: plan.sessions };
 }
 
-export function validateHandoff(project, id, recovery) {
+export async function validateHandoff(project, id, recovery) {
   const state = upgradeState(project);
   if (!id) {
     const active = activeRelease(project);
     if (active && active.current.root !== releaseRoot) throw new Error('Start loomd from the active project release');
     if (state?.phase === 'switching') {
-      if (liveHandoff(project, state.id)) throw new Error('An upgrade is switching the project release');
+      if (await liveHandoff(project, state.id)) throw new Error('An upgrade is switching the project release');
       const installed = active?.upgradeId === state.id && active.current.root === state.target.root;
       writeState(upgradeFile(project), JSON.stringify({ ...state, phase: installed ? 'committed' : 'failed',
         finishedAt: Date.now(), error: installed ? undefined : 'Interrupted upgrade launcher. Resumed the active release.' }));
@@ -185,7 +194,7 @@ export function validateHandoff(project, id, recovery) {
     return;
   }
   if (state?.id !== id || state.phase !== 'switching' || (recovery ? state.current : state.target).root !== releaseRoot ||
-      !liveHandoff(project, id)) {
+      !await liveHandoff(project, id)) {
     throw new Error('Invalid loomd handoff identity');
   }
   if (!recovery && releaseDigest(releaseRoot) !== (state.target.releaseDigest ?? state.target.digest)) {
@@ -220,7 +229,7 @@ export function validateReattachment(plan, result) {
 async function handoff(project, id) {
   const state = upgradeState(project);
   if (state?.id !== id || state.phase !== 'switching') throw new Error('Upgrade record changed');
-  const identity = processTable().get(process.pid);
+  const identity = (await processTable([process.pid])).get(process.pid);
   if (!identity) throw new Error('Upgrade launcher identity unavailable');
   writeState(handoffOwner(project, id), JSON.stringify(identity));
   const path = upgradeFile(project);
@@ -266,7 +275,10 @@ async function handoff(project, id) {
   try {
     await waitFor(async () => {
       if (upgradeState(project)?.phase !== 'switching') throw new Error('Upgrade launcher no longer owns the handoff');
-      if (state.predecessor) return !sameProcess(state.predecessor, processTable().get(state.predecessorPid));
+      if (state.predecessor) {
+        try { return !sameProcess(state.predecessor, (await processTable([state.predecessorPid])).get(state.predecessorPid)); }
+        catch (error) { if (error.code === 'process-enumeration-retry') return false; throw error; }
+      }
       try { process.kill(state.predecessorPid, 0); }
       catch (error) { if (error.code === 'ESRCH') return true; throw error; }
     }, 'Previous loomd did not release the project');

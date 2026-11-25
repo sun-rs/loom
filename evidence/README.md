@@ -36,4 +36,6 @@ const { path, textPath, card, data } = await evidence.forTurn({
 
 `verification.commands` 记录可从当前轮归属的验证命令和原生退出码。`sandboxed` 为 `true`、`false` 或 `null`，取原生结果、工具参数或明确的启动参数。每条命令的 `tailSha256` 对统一换行后的最后五行计算，`tail` 保留限长摘录。复合命令保存外层退出码。测试总数或通过数取自识别到的摘要，无法归属通过数时显示 `count unrecognised`。
 
-`claims` 保存简单规则提取的声称、`MATCH`、`MISMATCH` 或 `UNVERIFIED`，以及原因。全绿比较同轮每条命令的最后一次执行并检查跳测信号。通过数用单次可识别的测试摘要核对。合入检查配置的本地 `mergeRef` 是否含工作提交，以及工作树是否仍有待合入改动。
+`claims` 保存规则提取的声称、`MATCH`、`MISMATCH` 或 `UNVERIFIED`，以及原因。全绿比较该声称指向的命令的最后一次执行，并检查跳测信号。`loom hist` 按命令分别显示测试计数和退出码。测试先行卡可用 `.project/evidence.json` 中的 `tasks.<card-id>.expectRed`（布尔值），或在 `forTurn` 传入 `expectRed: true`。此时有明确基线范围的声称可使用通过的基线记录核验，显式指定的红测仍保留失败原件。通过数用单次可识别的测试摘要核对。合入检查配置的本地 `mergeRef` 是否含工作提交，以及工作树是否仍有待合入改动。
+
+断言删除和改写分别记为 `removedAssertions` 和 `rewrittenAssertions`。门禁的机械删除提示使用 `kind: deleted` 或按新规则计算的删除数。

@@ -9,7 +9,8 @@ import { checkEvidence } from './checks.mjs';
 import { compareClaims } from './claims.mjs';
 import { diffFiles, testChanges } from './git.mjs';
 import { evidence } from './index.mjs';
-import { collectVerification } from './transcript.mjs';
+import { agyCommands, collectVerification } from './transcript.mjs';
+import { workerRedFacts } from '../daemon/routing.mjs';
 
 const jsonl = rows => rows.map(row => JSON.stringify(row)).join('\n') + '\n';
 const failedOutput = '# tests 3\n# pass 1\n# fail 2\n# skipped 0\n';
@@ -56,8 +57,65 @@ test('counts deleted assertion lines and new skip/only lines in test patches', (
     'diff --git a/tests/test_old.py b/tests/test_old.py', '--- a/tests/test_old.py', '+++ /dev/null',
     '@@ -1,2 +0,0 @@', '-    self.assertEqual(a, b)', '-    assert enabled',
   ].join('\n');
-  assert.deepEqual(testChanges(patch), { removedAssertions: 4, addedSkip: 2, addedOnly: 1 });
-  assert.deepEqual(testChanges('test.only("fixture", () => {});\n', true), { removedAssertions: 0, addedSkip: 0, addedOnly: 1 });
+  assert.deepEqual(testChanges(patch), { removedAssertions: 4, rewrittenAssertions: 0, addedSkip: 2, addedOnly: 1 });
+  assert.deepEqual(testChanges('test.only("fixture", () => {});\n', true),
+    { removedAssertions: 0, rewrittenAssertions: 0, addedSkip: 0, addedOnly: 1 });
+});
+
+test('T6 assertion rewrites do not enter a gate as deletions', () => {
+  const patch = ['@@ -1,78 +1,77 @@', ...Array.from({ length: 78 }, (_, i) => `-assert.equal(value${i}, oldValue);`),
+    ...Array.from({ length: 77 }, (_, i) => `+assert.equal(value${i}, newValue);`)].join('\n');
+  const changes = testChanges(patch);
+  assert.equal(changes.removedAssertions, 1);
+  assert.equal(changes.rewrittenAssertions, 77);
+  const rewritten = testChanges('@@ -1 +1 @@\n-assert(a);\n+assert(b);');
+  assert.deepEqual(workerRedFacts({ tests: [{ path: 'T6.test.mjs', changes: rewritten },
+    { path: 'legacy.test.mjs', changes: { removedAssertions: 78 } }] }), []);
+  assert.deepEqual(workerRedFacts({ tests: [{ path: 'T6.test.mjs', changes }] }),
+    [{ reason: 'assertion', file: 'T6.test.mjs' }]);
+});
+
+test('T6 and T13 baseline claims use the referenced command on expectRed cards', async t => {
+  const project = directory(t);
+  mkdirSync(join(project, '.project'));
+  writeFileSync(join(project, '.project/evidence.json'), JSON.stringify({ tasks: { T13: { expectRed: true } } }));
+  const base = 'node --test memory/memory.test.mjs';
+  const added = 'node --test memory/v1-core.test.mjs';
+  const tools = [
+    { tool: 'shell', command: added, exitCode: 1, output: '# tests 29\n# pass 0\n# fail 29\n' },
+    { tool: 'shell', command: base, exitCode: 0, output: '# tests 4\n# pass 4\n# fail 0\n' },
+  ];
+  const { data } = await evidence.forTurn({ project, cwd: null, provider: 'codex', task: 'T13', turn: 3,
+    finalReply: 'DONE T13\n基线套件全绿', projected: { tools, turnStatus: 'completed' } });
+  assert.equal(data.verification.expectRed, true);
+  assert.equal(data.claims.find(claim => claim.kind === 'all-green').status, 'MATCH');
+  assert.equal(compareClaims('原测试 4/4 全绿', {}, data.verification)[0].status, 'MATCH');
+  assert.equal(compareClaims('新测试见红，`memory.test.mjs` 4/4 全绿', {}, data.verification)[0].status, 'MATCH');
+  assert.equal(compareClaims('新测试见红，`memory.test.mjs` 4/4 全绿',
+    {}, { ...data.verification, commands: [data.verification.commands[0]] })[0].status, 'UNVERIFIED');
+  const mixed = checkEvidence({ command: 'node --test mixed.test.mjs', exitCode: 1,
+    output: '# tests 103\n# pass 80\n# fail 23' });
+  assert.equal(compareClaims('新增 23 个用例全部见红，既有 80 项测试全部通过',
+    {}, { ...data.verification, commands: [mixed] }).find(claim => claim.kind === 'all-green').status, 'MATCH');
+  assert.equal(compareClaims(`\`${added}\` 全绿`, {}, data.verification)[0].status, 'MISMATCH');
+  assert.equal(compareClaims('全绿', {}, data.verification)[0].status, 'MISMATCH');
+});
+
+test('L3 attributes the completed agy background test to its original command', () => {
+  const task = 'conversation/task-83';
+  const rows = [
+    { source: 'MODEL', type: 'PLANNER_RESPONSE', tool_calls: [{ name: 'run_command',
+      args: { CommandLine: 'git worktree add /fixture && npm test' } }] },
+    { source: 'MODEL', type: 'GENERIC', status: 'RUNNING', content: `Created At: native\nTool is running as a background task with task id: ${task}` },
+    { source: 'MODEL', type: 'PLANNER_RESPONSE', tool_calls: [{ name: 'manage_task', args: { TaskId: task } }] },
+    { source: 'SYSTEM', type: 'SYSTEM_MESSAGE', content: `<SYSTEM_MESSAGE>\n[Message] timestamp=t sender=${task} priority=HIGH content=Task id "${task}" finished with result:\nCommand exited with code 0.\n\nCommand output:\n# tests 350\n# pass 350\n# fail 0\n</SYSTEM_MESSAGE>` },
+  ];
+  const commands = agyCommands(rows, null, true);
+  assert.equal(commands.length, 1);
+  assert.equal(commands[0].source, 'agy.background-completion');
+  const check = checkEvidence(commands[0]);
+  assert.equal(check.result, 'passed');
+  assert.equal(check.counts.passed, 350);
 });
 
 test('compares DONE, all-green, pass count, and merge claims using only the bound turn', () => {

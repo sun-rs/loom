@@ -43,6 +43,6 @@
 
 ## 消息路由（R20，2026-11-25）
 
-- Worker 的首轮和批量续作结果发给 Leader。普通角色收件人仅在发送者使用 `loom send --expect-reply` 或请求门禁裁决时回送一次；自动回送从此结束。Auditor 发出的请求如需查询正文，可查看目标会话的 `loom state` 或历史。
+- Worker 的首轮和批量续作结果发给 Leader。普通角色收件人在发送者使用 `loom send --expect-reply` 且回复首行带结论标签（例如 `DONE`、`PASS` 或 `REJECT`）时回送一次。门禁请求回送结论轮，确认、等待状态及 `NOREPLY` 留在历史；自动回送从此结束。Auditor 可从目标会话的 `loom state` 或历史查阅正文。
 - Leader 核实红色事项后可运行 `loom escalate <gate-id> --reason REASON --evidence TEXT`。原因限 `protected-file`（保护或越界文件）、`assertion`（删除或削弱断言）、`skip-only`、`confirmed-fact-miss`、`sandbox-escape`。升级附证据，和门禁包共用每门禁一次的投递额度。额度已用时，结论记入通知账本，供查询。
 - Worker 的卡死、事实核验和其他常规信号随 Leader 的实际消息送达。`loom status --json` 可查看完整信号及被白名单过滤的投递。旧项目中的 `drift.deferAuditorNotices` 字段可继续读取，路由由本规则统一执行。

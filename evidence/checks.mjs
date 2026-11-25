@@ -67,7 +67,7 @@ export function shellBody(command) {
 }
 
 function inspectCommand(command, classify = runner) {
-  const tokens = shellBody(command).match(shellWords) ?? [];
+  const tokens = shellBody(command).replace(/\\\r?\n/g, '').match(shellWords) ?? [];
   const groups = [[]];
   const separators = [];
   for (const word of tokens) {
@@ -134,6 +134,8 @@ export function checkEvidence({ command, cwd, exitCode, output, sandboxed, sourc
   const tail = normalized?.split('\n').slice(-5).join('\n') ?? null;
   const cleanOutput = clean(normalized ?? '').replace(/ \| (?=ℹ\s+)/g, '\n');
   const counts = summary(cleanOutput);
+  if (!check.direct && !check.checksAfterCd && counts.passed === null && counts.failed === null &&
+      !/^\s*(?:node\s+--test|npm\s+test|pytest|cargo\s+test|go\s+test|bun\s+test)\b/.test(shellBody(command))) return null;
   const reportedTotal = [...cleanOutput.matchAll(/^(?:#|ℹ)\s*tests\s+(\d+)\s*$/gm)].at(-1)?.[1];
   const total = reportedTotal == null ? (counts.passed !== null && counts.failed !== null ?
     counts.passed + counts.failed + (counts.skipped ?? 0) : null) : Number(reportedTotal);

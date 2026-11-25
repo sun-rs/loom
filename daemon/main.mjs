@@ -66,7 +66,7 @@ export async function main(args, { pollInterval = 350, ...options } = {}) {
   mkdirSync(join(metadata, 'relay', 'events'), { recursive: true, mode: 0o700 });
   syncDirectory(metadata);
   syncDirectory(join(metadata, 'relay'));
-  const handoff = validateHandoff(project, values.handoff, values['handoff-recovery']);
+  const handoff = await validateHandoff(project, values.handoff, values['handoff-recovery']);
   const controller = nextController(project);
 
   const path = socketPath(project);
@@ -203,7 +203,9 @@ export async function main(args, { pollInterval = 350, ...options } = {}) {
     if (!canDispatch()) {
       if (handoff && !switching && Date.now() >= handoffCheckAt) {
         handoffCheckAt = Date.now() + 1000;
-        if (!liveHandoff(project, handoff.id)) void stop();
+        polling = true;
+        void liveHandoff(project, handoff.id).then(live => { if (!live) void stop(); },
+          error => console.error(error.message)).finally(() => { polling = false; });
       }
       return;
     }

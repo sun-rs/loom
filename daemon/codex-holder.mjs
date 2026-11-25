@@ -80,10 +80,11 @@ export async function attachCodexHolder(project, row, job, saveJob, controller, 
     }
     verifyHolderBuild(binding, value, save);
   }
-  const gone = () => !binding.identity || !sameBirth(binding.identity, processTable().get(binding.identity.pid));
+  const gone = async () => !binding.identity ||
+    !sameBirth(binding.identity, (await processTable([binding.identity.pid])).get(binding.identity.pid));
   if (snapshot) {
     verify(snapshot);
-    const processes = processTable();
+    const processes = await processTable([snapshot.pid, snapshot.childPid]);
     const pid = processes.get(snapshot.pid);
     const child = processes.get(snapshot.childPid);
     if (pid?.uid !== process.getuid() || binding.identity && !sameBirth(binding.identity, pid) ||
@@ -96,7 +97,7 @@ export async function attachCodexHolder(project, row, job, saveJob, controller, 
     const claimed = await client.claim();
     verify(claimed);
     if (claimed.epoch !== BigInt(controller.generation)) throw holderError('HOLDER_STALE');
-  } else if (!gone()) throw holderError('HOLDER_NOT_READY');
+  } else if (!await gone()) throw holderError('HOLDER_NOT_READY');
 
   const runtime = codexPipeSession(project, row, dir, incarnation, client, value => {
     verify(value);

@@ -175,7 +175,8 @@ export function hookObservation(provider, row, expectedPayload) {
   const interrupted = row.is_interrupt === true;
   const inputId = start ? row.deliveryId ?? deliveryId(row.prompt) : undefined;
   return {
-    phase: start || type === 'tool' ? 'busy' : type === 'turn-end' ? 'idle' : type === 'stop-failure' ? 'error' : undefined,
+    phase: start || type === 'tool' || type === 'turn-paused' ? 'busy' :
+      type === 'turn-end' ? 'idle' : type === 'stop-failure' ? 'error' : undefined,
     ...detail,
     interrupted: detail?.interrupted ?? interrupted,
     inputId,

@@ -280,6 +280,21 @@ test('native background task rows hold busy beyond the idle and busy timers', as
   }
 });
 
+test('an agy non-idle Stop prevents idle-without-stop while native background work is recorded', async t => {
+  const rule = '─'.repeat(24);
+  const f = setup(t, { cli: 'agy', text: [rule, '>', rule, '? for shortcuts'].join('\n') });
+  f.hooks.push({ receivedAt: f.at, hook_event_name: 'PreInvocation', conversationId: 's1', invocationNum: 0 });
+  const watcher = f.create();
+  await watcher.poll();
+  f.advance(100);
+  f.hooks.push({ receivedAt: f.at, hook_event_name: 'Stop', conversationId: 's1', executionNum: 0, fullyIdle: false });
+  f.advance(60_000);
+  assert.equal((await watcher.poll())[0].state, 'busy');
+  assert.deepEqual(f.events(), []);
+  f.hooks.push({ receivedAt: f.at, hook_event_name: 'Stop', conversationId: 's1', executionNum: 0, fullyIdle: true });
+  assert.equal((await watcher.poll())[0].state, 'idle');
+});
+
 test('rate limit pins retry time and enqueues once across restarts', async t => {
   const f = setup(t, { text: `${rate}Retry-After: 60\n` });
   let watcher = f.create();

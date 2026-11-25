@@ -260,13 +260,13 @@ test('SIGKILL around delivery, registry, relay and history durability boundaries
       await f.waitMail(sender.deliveryId);
       const options = { id, from: sender.session.addr, expectReply: true };
       f.arm(stage, moment);
-      await f.send(target, 'FAULT REQUEST', options).catch(() => {});
+      await f.send(target, 'RETURN DONE FAULT REQUEST', options).catch(() => {});
       await f.killed(proc, stage, moment);
       await f.start();
-      const retry = await f.send(target, 'FAULT REQUEST', options);
+      const retry = await f.send(target, 'RETURN DONE FAULT REQUEST', options);
       assert.equal(retry.id, id);
       const result = await f.waitMail(id);
-      assert.equal(result.completion.body, 'OK FAULT REQUEST');
+      assert.equal(result.completion.body, 'DONE FAULT REQUEST');
       const routed = await until(() => f.mail().find(message => message.replyTo === id && message.completion?.body), 'routed reply');
       assert.equal(f.deliveries(id).length, 1);
       assert.equal(f.deliveries(routed.id).length, 1);

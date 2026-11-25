@@ -30,10 +30,10 @@ export function normalizeHook(payload) {
 
   const transcriptPath = typeof payload.transcript_path === 'string' && payload.transcript_path.trim()
     ? payload.transcript_path : null;
-  const event = { type, sessionId, transcriptPath };
+  const event = { type: type === 'turn-end' && payload.paused ? 'turn-paused' : type, sessionId, transcriptPath };
   // Orca b7fd7caa3: src/shared/agent-hook-listener/providers/claude/claude-tool-fields.ts (native Stop text first).
   const reply = payload.last_assistant_message;
-  if (type === 'turn-end' && payload.is_interrupt !== true && typeof reply === 'string' && reply.trim()) {
+  if (event.type === 'turn-end' && payload.is_interrupt !== true && typeof reply === 'string' && reply.trim()) {
     event.finalReply = reply;
   }
   return event;

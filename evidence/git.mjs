@@ -63,13 +63,14 @@ function codeLine(line) {
 }
 
 export function testChanges(lines, untracked = false) {
-  const counts = { removedAssertions: 0, addedSkip: 0, addedOnly: 0 };
+  const edits = untracked ? [] : assertionEdits(lines);
+  const counts = { removedAssertions: edits.filter(edit => edit.kind === 'deleted').length,
+    rewrittenAssertions: edits.filter(edit => edit.kind === 'modified').length, addedSkip: 0, addedOnly: 0 };
   let hunk = untracked;
   for (const line of lines.split('\n')) {
     if (!untracked && line.startsWith('diff --git ')) hunk = false;
     if (!untracked && line.startsWith('@@ ')) hunk = true;
     if (!hunk) continue;
-    if (!untracked && line.startsWith('-')) counts.removedAssertions += Number(assertion.test(codeLine(line.slice(1))));
     if (untracked || line.startsWith('+')) {
       const code = codeLine(untracked ? line : line.slice(1));
       counts.addedSkip += Number(skip.test(code));
@@ -104,6 +105,18 @@ export function assertionEdits(patch) {
   }
   finish();
   return edits;
+}
+
+export function assertionCounts(test) {
+  if (Array.isArray(test.assertions)) return {
+    removedAssertions: test.assertions.filter(edit => edit.kind === 'deleted').length,
+    rewrittenAssertions: test.assertions.filter(edit => edit.kind === 'modified').length,
+  };
+  if (Object.hasOwn(test.changes ?? {}, 'rewrittenAssertions')) return {
+    removedAssertions: test.changes.removedAssertions ?? 0,
+    rewrittenAssertions: test.changes.rewrittenAssertions ?? 0,
+  };
+  return { removedAssertions: 0, rewrittenAssertions: 0 };
 }
 
 export function inspectFiles(files, { protectedPaths = [], testPaths: extra = [], allowedPaths = [] }, patchFor) {

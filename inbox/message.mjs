@@ -15,6 +15,13 @@ export function wireText(id, message) {
   return `[loom:${id}]\n${message}`;
 }
 export const payloadDigest = text => createHash('sha256').update(text).digest('hex');
+export function conclusoryReply(text, gate = false) {
+  const first = text.trimStart().split(/\r?\n/, 1)[0].replace(/^[#*\s-]+/, '');
+  if (/^NOREPLY(?=$|[\s*:：.])/i.test(first)) return false;
+  if (/^(?:DONE|BLOCKED|FAILED|PASS(?:ED)?|FAIL|REJECT(?:ED)?|APPROVE(?:D)?|VERIFIED|LGTM|VERDICT|结论|裁决)(?=$|[\s*:：.!])/i.test(first)) return true;
+  if (!gate || /^(?:收到|已收到|在等|ack(?:nowledged)?\b|noted\b|waiting\b|no reply\b)|(?:尚无结论|复核进行中|继续等待|无需回复|不必回复|不(?:再|另)(?:回复|发消息))/i.test(first)) return false;
+  return /批准|退回|拒绝|复核通过|审核通过|可合入|暂缓合入|禁止合入|阻断|^(?:accepted|changes requested|looks good|no blockers)\b/i.test(first);
+}
 export const checksDeliveryIntegrity = target => ['claude', 'agy'].includes(target.provider) && target.tui?.transport === 'holder-v3';
 
 export function combinedDeliveryText(message, waves, separator = message.waveSeparator ?? '\n\n') {

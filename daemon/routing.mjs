@@ -1,3 +1,5 @@
+import { assertionCounts } from '../evidence/git.mjs';
+
 export const redReasons = new Set(['protected-file', 'assertion', 'skip-only', 'confirmed-fact-miss', 'sandbox-escape']);
 export const auditorWakeFiltered = 'auditor-wake-filtered';
 
@@ -17,7 +19,8 @@ export function workerRedFacts(git) {
     ...(git?.protectedHits ?? []).map(hit => ({ reason: 'protected-file', file: hit.path })),
     ...(git?.scopeHits ?? []).map(file => ({ reason: 'protected-file', file })),
     ...(git?.tests ?? []).flatMap(test => [
-      (test.status === 'D' || test.changes?.removedAssertions > 0) && { reason: 'assertion', file: test.path },
+      assertionCounts(test).removedAssertions > 0 &&
+        { reason: 'assertion', file: test.path },
       (test.changes?.addedSkip > 0 || test.changes?.addedOnly > 0) && { reason: 'skip-only', file: test.path },
     ].filter(Boolean)),
   ];

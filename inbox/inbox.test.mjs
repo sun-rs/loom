@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
 import { relay as waveRelay } from '../relay/project.mjs';
 import { inbox, receipt } from './engine.mjs';
-import { deliveryId, payloadDigest, wireText } from './message.mjs';
+import { conclusoryReply, deliveryId, payloadDigest, wireText } from './message.mjs';
 import { lookup, publish } from './store.mjs';
 import { inputPlan, nativeDelivery, tui } from './tui.mjs';
 
@@ -94,6 +94,57 @@ test('a native submission still reconciles when the wrapper withheld Enter', () 
       prompt: wireText(id, 'manually submitted draft') }],
   };
   assert.equal(nativeDelivery({ id, attemptAt: 1000 }, observation).sessionId, sessionId);
+});
+
+test('a Claude background Stop leaves the delivery open until the original task notification concludes', async t => {
+  const f = fixture(t);
+  const target = f.terminal('t1', 'claude', 'idle');
+  const from = f.terminal('t2', 'codex', 'idle');
+  const at = Date.now() - 10_000;
+  const id = await f.submit(target, 'queue', from, { phase: 'sending', attemptAt: at, expectReply: true });
+  const path = join(target.cwd, 't1.jsonl');
+  const append = (offset, type, fields) => appendFileSync(path, JSON.stringify({
+    sessionId: 't1', cwd: target.cwd, timestamp: new Date(at + offset).toISOString(), type, ...fields,
+  }) + '\n');
+  const hook = (offset, name, turn, fields = {}) => f.event(target, name, turn,
+    { ...fields, receivedAt: at + offset, transcript_path: path });
+  const prompt = wireText(id, 'Run the checks');
+  append(10, 'user', { uuid: 'original', message: { content: prompt } });
+  append(20, 'assistant', { uuid: 'launch', message: { content: [
+    { type: 'tool_use', id: 'tool-use-1', name: 'Bash', input: { run_in_background: true } },
+  ] } });
+  append(25, 'user', { toolUseResult: { backgroundTaskId: 'task-1' },
+    message: { content: [{ type: 'tool_result', tool_use_id: 'tool-use-1', content: 'Background task' }] } });
+  append(30, 'assistant', { uuid: 'waiting', message: { content: '收到，继续等待', stop_reason: 'end_turn' } });
+  append(40, 'system', { subtype: 'turn_duration' });
+  hook(11, 'UserPromptSubmit', 'first-hook', { prompt });
+  hook(39, 'Stop', 'first-hook', { last_assistant_message: '收到，继续等待' });
+  await f.reopen().step();
+  assert.equal(f.lookup(id).phase, 'received');
+  assert.equal(f.lookup(id).completion, undefined);
+  const notification = '<task-notification><task-id>task-1</task-id><tool-use-id>tool-use-1</tool-use-id><status>completed</status></task-notification>';
+  append(100, 'user', { uuid: 'notification', message: { content: notification } });
+  append(110, 'assistant', { uuid: 'conclusion', message: { content: 'PASS checks complete', stop_reason: 'end_turn' } });
+  append(120, 'system', { subtype: 'turn_duration' });
+  hook(101, 'UserPromptSubmit', 'task-hook', { prompt: notification });
+  hook(119, 'Stop', 'task-hook', { last_assistant_message: 'PASS checks complete' });
+  await f.reopen().step();
+  await f.reopen().step();
+  assert.equal(f.lookup(id).received.turnId, 'first-hook');
+  assert.equal(f.lookup(id).completion.nativeTurnId, 'notification');
+  assert.deepEqual(f.reopen().messages.filter(message => message.replyTo === id)
+    .map(message => message.text.split('\n').at(-1)), ['PASS checks complete']);
+});
+
+test('automatic replies require a conclusion and honour an explicit NOREPLY', () => {
+  for (const text of ['收到，继续等待', '核对一致，无需回复本条', '报到内容一致，我不另发消息', 'NOREPLY\nPASS']) {
+    assert.equal(conclusoryReply(text), false);
+    assert.equal(conclusoryReply(text, true), false);
+  }
+  for (const tag of ['DONE', 'BLOCKED', 'FAILED', 'PASS', 'REJECT', 'APPROVE']) assert.equal(conclusoryReply(`**${tag}**`), true);
+  assert.equal(conclusoryReply('合入批准，SHA 已核对'), false);
+  assert.equal(conclusoryReply('合入批准，SHA 已核对', true), true);
+  assert.equal(conclusoryReply('I am still gathering evidence.', true), false);
 });
 
 test('a native Claude v3 marker with incomplete user text corrects a prior delivered receipt', async t => {
@@ -414,7 +465,7 @@ test('queues TUI steering and routes only the final from the new prompt turn', a
   assert.equal(receipt(f.lookup(id)).status, 'delivered');
   assert.equal(receipt(f.lookup(id)).downgraded, true);
   assert.equal(f.sends.length, 1);
-  f.event(target, 'Stop', 'new', { last_assistant_message: 'right reply' });
+  f.event(target, 'Stop', 'new', { last_assistant_message: 'DONE right reply' });
   const relay = f.reopen();
   await relay.step();
   assert.deepEqual(relay.routesForTurn('t1', f.lookup(id).completion), ['t2']);
@@ -507,7 +558,7 @@ test('reconciles a previous Claude TUI steer only in the transcript turn contain
     row('user', -5, 'original prompt', 'p0'),
     row('assistant', 3, 'original reply', 'a0'),
     row('user', 12, wireText(id, 'identical input'), 'p1'),
-    row('assistant', 15, 'associated reply', 'a1'),
+    row('assistant', 15, 'DONE associated reply', 'a1'),
   ].join('\n') + '\n');
   f.event(target, 'UserPromptSubmit', undefined, { deliveryId: id, receivedAt: when + 1 });
   f.event(target, 'Stop', undefined, { transcript_path: file, receivedAt: when + 5 });
@@ -548,7 +599,7 @@ test('keeps a queued worker in its wave and avoids a duplicate copy to from', as
   f.event(target, 'Stop', 'original');
   await mail.step();
   f.event(target, 'UserPromptSubmit', 'new', { deliveryId: id });
-  f.event(target, 'Stop', 'new', { last_assistant_message: 'directed body' });
+  f.event(target, 'Stop', 'new', { last_assistant_message: 'DONE directed body' });
   f.event(other, 'Stop', 'other', { last_assistant_message: 'other result' });
   const registry = join(f.root, '.project/workers.md');
   writeFileSync(registry, 'A | t1 | codex | dispatched | | wave=W1\nB | t3 | codex | dispatched | | wave=W1\n');

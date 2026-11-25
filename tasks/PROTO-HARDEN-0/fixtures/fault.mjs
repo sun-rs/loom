@@ -46,7 +46,7 @@ function selected(path, temporary) {
     const { messages } = JSON.parse(fs.readFileSync(temporary, 'utf8'));
     const wave = messages.find(message => message.waveBatch);
     if (wave) return 'wave-inbox';
-    const message = messages.find(value => value.text === 'FAULT REQUEST');
+    const message = messages.find(value => /^(?:RETURN DONE )?FAULT REQUEST$/.test(value.text ?? ''));
     if (message?.completion) return 'completion';
     if (message?.received) return 'receipt';
     if (message?.typedAt) return 'native-ack';

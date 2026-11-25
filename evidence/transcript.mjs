@@ -140,7 +140,7 @@ export function codexCommands(rows, turn, defaultSandbox, includePending = false
       output: native?.output ?? result?.output, chunk: native?.chunk ?? result?.chunk, position, resultPosition, timestamp,
       sandboxed: native?.sandboxed ?? result?.sandboxed ?? callSandbox ?? turnSandbox,
       durationMs: result?.durationMs ?? native?.durationMs ?? (result && elapsed(time(timestamp), resultAt)),
-      started, status: native?.status, ...(includePending && { nativeStatus: native?.status, ended: Boolean(native || result) }),
+      started, status: native?.status, ...(includePending && { nativeStatus: native?.status, ended: Boolean(native || result || resultPosition != null) }),
       source: `codex.${source ?? (result ? 'call_output' : started ? 'exec_command_begin' : 'call')}` }];
   });
   // Code-mode exec returns the same command result as its native child event.
@@ -200,6 +200,7 @@ const agyHeader = /^(?:(?:Created|Completed) At: [^\r\n]+\r?\n)*/;
 export function agyCommands(rows, defaultSandbox, includePending = false) {
   const commands = [];
   const ids = new Map();
+  const tasks = new Map();
   let batch = [];
   let edit;
   function resolve(call, row, position, generic) {
@@ -242,8 +243,30 @@ export function agyCommands(rows, defaultSandbox, includePending = false) {
       const call = row.toolCall ?? row.tool_call ?? row;
       const name = call.name ?? call.tool_name;
       if (row.type === 'RUN_COMMAND' || name == null || agyShell.test(name)) resolve(call, row, position);
+    } else if (row.type === 'SYSTEM_MESSAGE' && row.source === 'SYSTEM' && typeof row.content === 'string') {
+      const finished = /^\[Message\][^\r\n]* content=Task id "([^"]+)" finished with result:/m.exec(row.content);
+      const match = finished && /^Command exited with code (-?\d+)\.(?:\s*Command output:\s*([\s\S]*))?/m.exec(
+        row.content.slice(finished.index + finished[0].length).split(/\r?\n<\/SYSTEM_MESSAGE>/, 1)[0]);
+      const entry = finished && tasks.get(finished[1]);
+      if (entry && match) {
+        entry.exitCode = Number(match[1]);
+        entry.output = match[2] ?? null;
+        entry.durationMs = elapsed(time(entry.timestamp), time(row.created_at));
+        entry.source = 'agy.background-completion';
+        tasks.delete(finished[1]);
+      }
     } else if (row.source === 'MODEL' && row.type === 'GENERIC' && typeof row.content === 'string') {
       const content = row.content.replace(agyHeader, '').trimStart();
+      const background = /^Tool is running as a background task with task id: (\S+)(?:\s+Task Description: ([^\r\n]+))?/.exec(content);
+      if (background) {
+        const pending = batch.filter(item => item.exitCode === null && ![...tasks.values()].includes(item));
+        const entry = pending.find(item => background[2]?.trim() === item.command.split(/\r?\n/, 1)[0].trim()) ??
+          (pending.length === 1 ? pending[0] : undefined);
+        if (entry) {
+          tasks.set(background[1], entry);
+          batch = batch.filter(item => item !== entry);
+        }
+      }
       const match = /^Command exited with code (-?\d+)\.(?:\s*Command output:\s*([\s\S]*))?/.exec(content);
       if (match) resolve(row, row, position, { exitCode: Number(match[1]), output: match[2] });
       const verify = edit && /^Verify \[(PASS|FAIL \(exit (-?\d+)\)) in (\d+)ms\] `([^`\n]+)`:\r?\n([\s\S]*)/m.exec(content);

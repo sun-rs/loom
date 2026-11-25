@@ -74,9 +74,9 @@ export function normalize(payload) {
     if (invocation != null && invocation !== 0 && invocation !== '0') return null;
   }
   if (eventName === 'Stop') {
-    if (isAntigravityStopStillBusy(payload)) return null;
+    if (isAntigravityStopStillBusy(payload)) type = 'turn-paused';
     const reason = payload.terminationReason ?? payload.termination_reason ?? '';
-    if (payload.error || reasonFailed.test(reason)) type = 'stop-failure';
+    if (type !== 'turn-paused' && (payload.error || reasonFailed.test(reason))) type = 'stop-failure';
   }
   const event = {
     type,

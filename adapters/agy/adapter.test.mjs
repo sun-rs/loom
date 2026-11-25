@@ -105,7 +105,9 @@ test('normalizes the actual 1.5.16 hook and OSC samples', () => {
   assert.deepEqual(agy.hooks.normalize({ ...hooks[1], finalReply: firstDone }), {
     type: 'turn-end', sessionId: 'live-fixture-001', transcriptPath: hooks[1].transcriptPath, finalReply: 'AGY-ADAPTER-OK',
   });
-  assert.equal(agy.hooks.normalize({ ...hooks[1], fullyIdle: false }), null);
+  assert.deepEqual(agy.hooks.normalize({ ...hooks[1], fullyIdle: false }), {
+    type: 'turn-paused', sessionId: 'live-fixture-001', transcriptPath: hooks[1].transcriptPath,
+  });
   assert.equal(agy.hooks.normalize({ ...hooks[0], invocationNum: 1 }), null);
   assert.deepEqual(agy.hooks.normalize({ ...hooks[1], terminationReason: 'USER_CANCELED', finalReply: firstDone }), {
     type: 'stop-failure', sessionId: 'live-fixture-001', transcriptPath: hooks[1].transcriptPath,
@@ -148,7 +150,9 @@ test('capture uses the scoped transcript and the exact current turn, with POSIX 
   assert.equal(run('PreToolUse', { toolCall: { name: 'read_file', args: { Path: 'omitted' } } }), '');
   assert.equal(run('Stop', { executionNum: 0, fullyIdle: false }), '{"decision":""}');
   assert.equal(run('Stop', { executionNum: 0, fullyIdle: true }), '{"decision":""}');
-  assert.equal(read().length, 3);
+  assert.equal(read().length, 4);
+  assert.equal(read()[2].fullyIdle, false);
+  assert.equal(agy.hooks.normalize(read()[2]).type, 'turn-paused');
   assert.equal(read()[1].toolName, 'read_file');
   assert.ok(!('toolCall' in read()[1]));
   assert.equal(agy.hooks.normalize(read().at(-1)).finalReply, 'first answer');

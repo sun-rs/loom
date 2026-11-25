@@ -97,7 +97,7 @@ child.stdout.on('data', bytes => { output += bytes.toString(); });
 const exited = once(child, 'exit');
 try {
   await once(child.stdout, 'data');
-  await closeHostChildren(processTable().get(process.pid));
+  await closeHostChildren((await processTable([process.pid])).get(process.pid));
   assert.deepEqual(await exited, [null, 'SIGKILL']);
   assert.match(output, /TERM/);
 } finally { child.kill('SIGKILL'); }`;

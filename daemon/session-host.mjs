@@ -20,7 +20,8 @@ async function main(project, addr, incarnation, release) {
   const { row } = readJSON(join(dir, 'launch.json'));
   if (row.addr !== addr || row.backend !== 'headless') throw new Error('Invalid host launch intent');
   const path = hostSocket(project, addr, incarnation);
-  const identity = processTable().get(process.pid);
+  const identity = (await processTable([process.pid])).get(process.pid);
+  if (!identity) throw new Error('Session host identity unavailable');
   const binding = { incarnation, identity, project, addr, release, root: releaseRoot, oar: oarVersion() };
   const owner = join(dir, 'owner.json');
   const staging = join(dir, randomUUID() + '.owner');
@@ -88,7 +89,7 @@ async function main(project, addr, incarnation, release) {
   }
 
   async function releaseSession() {
-    const children = ownedHostChildren(identity);
+    const children = await ownedHostChildren(identity);
     if (session) {
       locateTranscript();
       try { await disposeSession(session, 4_000); }

@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { openStore } from './store.mjs';
 import { refusals } from './tui.mjs';
-import { checksDeliveryIntegrity, combinedDeliveryText, payloadDigest } from './message.mjs';
+import { checksDeliveryIntegrity, combinedDeliveryText, conclusoryReply, payloadDigest } from './message.mjs';
 import { replyForDelivery } from './reply-file.mjs';
 
 const isDone = message => message.phase === 'received';
@@ -91,6 +91,7 @@ export function inbox(project, transport, report = console.error, { replyLimit, 
     const { from, target } = message;
     if (!message.expectReply || !from || !completion.body || message.replyKey || message.replyTo ||
         message.batchId || message.implicitBatch || canRelayReply && !canRelayReply(from.addr)) return;
+    if (!conclusoryReply(completion.body, Boolean(message.gatePacket))) return;
     if (messages.some(item => item.waveParent === from.addr && item.target.addr === target.addr &&
         item.completion?.sessionId === completion.sessionId && item.completion?.turnId === completion.turnId)) return;
     const key = JSON.stringify([target.addr, target.createdAt, completion.sessionId,
@@ -268,7 +269,7 @@ export function inbox(project, transport, report = console.error, { replyLimit, 
       '\n--- Loom result ---\n' : message.waveSeparator;
     const decorated = { ...message, ...extras, waveSeparator };
     const combined = combinedDeliveryText(decorated, waves);
-    const automatic = message.replyKey || message.waveBatch || message.continuationBatch || message.reviewerResult;
+    const automatic = message.replyKey || message.waveBatch || message.continuationBatch || message.reviewerResult || message.projectEvents;
     let text = combined;
     if (automatic) text = replyForDelivery(project, combined, replyLimit?.());
     else if (waves.length && message.wireBody === undefined) {
@@ -276,6 +277,7 @@ export function inbox(project, transport, report = console.error, { replyLimit, 
       const brief = replyForDelivery(project, batch, replyLimit?.());
       if (brief !== batch) text = combinedDeliveryText(decorated, [{ text: brief }]);
     }
+    if (!message.payloadFrozen) text = replyForDelivery(project, text, 16_000);
     Object.assign(message, extras);
     if (waveSeparator) message.waveSeparator = waveSeparator;
     if (text !== combined) message.wireBody = text;
@@ -591,7 +593,8 @@ export function inbox(project, transport, report = console.error, { replyLimit, 
       completion && completion.sessionId === reply.sessionId &&
       (completion.at === reply.at || (reply.turnId && completion.turnId === reply.turnId)));
     if (related.length) return [...new Set(related.flatMap(message =>
-      message.expectReply && message.from && !message.replyKey && !message.replyTo && message.completion.body ?
+      message.expectReply && message.from && !message.replyKey && !message.replyTo && message.completion.body &&
+        conclusoryReply(message.completion.body, Boolean(message.gatePacket)) ?
         [message.from.addr] : []))];
   }
 

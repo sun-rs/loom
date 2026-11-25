@@ -73,9 +73,8 @@ function completedClaudeTurns(path, id, cwd) {
   if (cached?.revision === revision && cached.cwd === cwd) return cached.turns;
   const rows = jsonl(path).filter(row => row.sessionId === id && (!row.cwd || row.cwd === cwd) && !row.agent_id);
   const boundaries = new Set(rows.filter(isClaudeTranscriptEnd).map(row => row.timestamp));
-  const turns = boundaries.size ? parseClaude(rows.map(row => JSON.stringify(row)).join('\n'))
-    .turns.filter(turn => turn.status === 'completed' && boundaries.has(turn.endedAt))
-    .map(({ endedAt, prompts, reply }) => ({ endedAt, prompts, reply })) : [];
+  const turns = parseClaude(rows.map(row => JSON.stringify(row)).join('\n')).turns
+    .map(turn => ({ ...turn, boundary: boundaries.has(turn.endedAt) }));
   claudeTurnCache.delete(path);
   if (claudeTurnCache.size >= 16) claudeTurnCache.delete(claudeTurnCache.keys().next().value);
   claudeTurnCache.set(path, { revision, cwd, turns });
@@ -100,30 +99,55 @@ export function withClaudeTranscriptStops(terminal, events, sessionId) {
       if (entry) entry.ended = true;
     }
   }
-  if (starts.every(entry => entry.ended)) return events;
   const binding = session.findLast(row => row.transcript_path ?? row.transcriptPath);
   const path = binding?.transcript_path ?? binding?.transcriptPath ?? terminal.transcriptPath;
   if (typeof path !== 'string' || basename(path) !== `${id}.jsonl` || existingPath(path) !== path ||
       transcriptPath('claude', realpathSync(terminal.cwd), terminal, { transcript_path: path }) !== path) return events;
   const turns = completedClaudeTurns(path, id, terminal.cwd);
   if (!turns.length) return events;
+  function decorate(stop, turn) {
+    if (turn.status === 'paused') return { ...stop, paused: true };
+    if (!turn.backgroundPrompts || turn.status !== 'completed') return stop;
+    const ids = turn.backgroundPrompts.map(deliveryId).filter(Boolean);
+    const original = starts.find(({ row }) => ids.includes(row.deliveryId ?? deliveryId(row.prompt)));
+    return { ...stop, backgroundDeliveryIds: ids, backgroundPromptId: original?.key,
+      backgroundReply: turn.reply, nativeTurnId: turn.id };
+  }
+  const decorated = events.map(row => {
+    if (row.session_id !== id || row.hook_event_name !== 'Stop') return row;
+    const anchor = byPrompt.get(row.prompt_id ?? row.turn_id)?.row;
+    const turn = turns.findLast(turn => Date.parse(turn.startedAt) <= row.receivedAt &&
+      (!anchor?.prompt || turn.prompts.some(prompt => prompt === anchor.prompt.trim() ||
+        deliveryId(prompt) && deliveryId(prompt) === deliveryId(anchor.prompt))));
+    const pendingHook = session.some(event => event.backgroundBash && event.receivedAt <= row.receivedAt &&
+      (anchor ? event.receivedAt >= anchor.receivedAt : row.prompt_id && event.prompt_id === row.prompt_id));
+    if (pendingHook && !turn) return { ...row, paused: true };
+    return turn ? decorate(row, turn) : row;
+  });
   const stops = starts.flatMap(({ row, key, ended }, index) => {
     if (ended) return [];
     const next = starts[index + 1]?.row.receivedAt ?? Infinity;
     const marker = row.deliveryId ?? deliveryId(row.prompt);
-    const turn = turns.find(({ endedAt, prompts }) =>
+    const turn = turns.find(({ endedAt, prompts, status, boundary }) =>
+      (status === 'paused' || status === 'completed' && boundary) &&
       Date.parse(endedAt) >= row.receivedAt && Date.parse(endedAt) < next && prompts.some(prompt =>
         marker ? deliveryId(prompt) === marker : prompt === row.prompt?.trim()));
     if (!turn) return [];
-    return [{ cwd: terminal.cwd, session_id: id, prompt_id: key, receivedAt: Date.parse(turn.endedAt),
-      hook_event_name: 'Stop', deliveryId: marker, last_assistant_message: turn.reply, source: 'claude transcript turn_duration' }];
+    return [decorate({ cwd: terminal.cwd, session_id: id, prompt_id: key, receivedAt: Date.parse(turn.endedAt),
+      hook_event_name: 'Stop', deliveryId: marker, last_assistant_message: turn.reply, source: 'claude transcript turn_duration' }, turn)];
   });
-  return stops.length ? [...events, ...stops].sort((a, b) => a.receivedAt - b.receivedAt) : events;
+  for (const turn of turns) {
+    if (turn.status !== 'completed' || !turn.boundary || !turn.backgroundPrompts ||
+        [...decorated, ...stops].some(stop => stop.nativeTurnId === turn.id && stop.backgroundDeliveryIds)) continue;
+    stops.push(decorate({ cwd: terminal.cwd, session_id: id, receivedAt: Date.parse(turn.endedAt), hook_event_name: 'Stop' }, turn));
+  }
+  return stops.length ? [...decorated, ...stops].sort((a, b) => a.receivedAt - b.receivedAt) : decorated;
 }
 
 export function finalFromStop(provider, stop, rows) {
+  if (stop.paused || stop.fullyIdle === false) return;
   const direct = provider === 'codex' && nonempty(stop.last_assistant_message) ||
-    provider === 'agy' && nonempty(stop.finalReply);
+    provider === 'agy' && nonempty(stop.finalReply) || provider === 'claude' && nonempty(stop.backgroundReply);
   if (direct) return { body: direct, source: `${provider} Stop` };
   const text = transcriptReply(provider, rows, stop);
   if (text) return { ...text, source: `${provider} Stop + transcript` };
@@ -193,9 +217,11 @@ export async function observe(project, worker, progress, hc, now = Date.now(), w
   const terminal = await hc('get', addr);
   const cwd = existingPath(terminal.cwd);
   if (!within(project, cwd)) return [];
-  const events = terminalEvents(project, addr, terminal).filter(row =>
+  const hooks = terminalEvents(project, addr, terminal);
+  const activity = provider === 'claude' ? withClaudeTranscriptStops(terminal, hooks) : hooks;
+  const events = activity.filter(row =>
     provider === 'agy' ? row.fullyIdle === true && row.conversationId && row.executionNum != null :
-      ['Stop', 'StopFailure'].includes(row.hook_event_name) && !row.agent_id);
+      ['Stop', 'StopFailure'].includes(row.hook_event_name) && !row.agent_id && !row.paused);
   const observed = progress.events ??= {};
   const frame = `${terminal.created_ms}:${terminal.turn}`;
   if (!progress.frame && status !== 'dispatched') {
@@ -232,6 +258,8 @@ export async function observe(project, worker, progress, hc, now = Date.now(), w
   }
   const statusWord = terminal.status?.state;
   const exit = terminal.state === 'finished';
+  const latestStop = activity.findLast(row => row.hook_event_name === 'Stop' || row.fullyIdle !== undefined);
+  if (!exit && (latestStop?.paused || latestStop?.fullyIdle === false)) return replies;
   const stopped = exit || ['blocked', 'error', 'done'].includes(statusWord) || statusWord === 'idle' && terminal.turn > 0;
   if (replies.length || !stopped || progress.frame === frame || now - (terminal.finished_ms ?? terminal.status_ms) < grace) return replies;
   const wait = await hc('wait', addr, '--timeout', '1');

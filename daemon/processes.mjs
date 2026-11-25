@@ -1,14 +1,37 @@
-import { execFileSync } from 'node:child_process';
+import { execFile } from 'node:child_process';
 import { join } from 'node:path';
+import { promisify } from 'node:util';
+import { setTimeout as delay } from 'node:timers/promises';
 import { runtimeDirectory } from '../cli/project.mjs';
 import { readText, writeState } from './io.mjs';
 
 export const oarProcessPath = project => join(runtimeDirectory(project), 'oar-processes.json');
 
-export function processTable() {
-  const text = execFileSync('ps', ['-axo', 'pid=,ppid=,pgid=,uid=,lstart=,comm='], {
-    encoding: 'utf8', timeout: 3000, maxBuffer: 4 * 1024 * 1024, env: { ...process.env, LC_ALL: 'C' },
-  });
+const exec = promisify(execFile);
+const fields = 'pid=,ppid=,pgid=,uid=,lstart=,comm=';
+
+export async function processTable(pids, run = exec) {
+  const selected = pids && [...new Set(pids.filter(pid => Number.isSafeInteger(pid) && pid > 0))];
+  if (selected?.length === 0) return new Map();
+  let text;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      ({ stdout: text } = await run('/bin/ps', selected ? ['-p', selected.join(','), '-o', fields] : ['-axo', fields], {
+        encoding: 'utf8', timeout: 2000, killSignal: 'SIGKILL',
+        maxBuffer: 4 * 1024 * 1024, env: { ...process.env, LC_ALL: 'C' },
+      }));
+      break;
+    } catch (error) {
+      if (selected && error.code === 1 && !error.stdout?.trim() && !error.stderr?.trim()) return new Map();
+      const transient = error.killed || ['ETIMEDOUT', 'EAGAIN', 'EINTR', 'ENOMEM'].includes(error.code);
+      if (!transient || attempt === 2) {
+        throw Object.assign(new Error(`Process enumeration ${transient ? 'temporarily unavailable; retry the operation' :
+          'failed'} (${error.code ?? error.signal ?? 'ps'})`, { cause: error }),
+        { code: transient ? 'process-enumeration-retry' : 'process-enumeration-failed' });
+      }
+      await delay(50 * (attempt + 1));
+    }
+  }
   const rows = new Map();
   for (const line of text.split('\n')) {
     const match = /^\s*(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\w{3}\s+\w{3}\s+\d+\s+[\d:]+\s+\d{4})\s+(.+)$/.exec(line);
@@ -24,10 +47,10 @@ export function sameProcess(record, live) {
     record.started === live.started && record.executable === live.executable);
 }
 
-export function rememberOarProcesses(project, before) {
+export async function rememberOarProcesses(project, before) {
   const path = oarProcessPath(project);
   const previous = readText(path, '[]');
-  const live = processTable();
+  const live = await processTable();
   const retained = JSON.parse(previous).filter(row => sameProcess(row, live.get(row.pid)));
   const candidates = new Map(retained.map(row => [row.pid, row]));
   if (before) {

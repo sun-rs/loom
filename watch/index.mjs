@@ -275,15 +275,15 @@ export function createWatcher({
     if (!isVisibleFrame(terminal, frame)) return snapshot(entry, 'unknown');
     const adapter = adapters.get(session.cli).screen;
     const screen = adapter.classify(frame.text);
-    if (screen === 'unknown') return snapshot(entry, screen);
     let hooks;
     try {
       const rows = await readHooks(session);
       hooks = hookTiming(session, rows, now());
     } catch { /* Timing evidence is unavailable. */ }
+    if (screen === 'unknown' && !hooks?.background) return snapshot(entry, screen);
     const at = now();
     const reason = reasons.get(screen);
-    const background = screen === 'busy' && adapter.hasRunningBackgroundTask?.(frame.text);
+    const background = hooks?.background || screen === 'busy' && adapter.hasRunningBackgroundTask?.(frame.text);
     if (!reason && !hooks && !background) return snapshot(entry, 'unknown');
     const condition = reason ? { reason, since: at } : background ? null : timedCondition(entry, screen, frame.text, hooks, at);
     if (reason || background) entry.timer = null;
@@ -309,7 +309,7 @@ export function createWatcher({
     if (opened !== incident && opened?.reason === 'rate-limit' && hooks && opened.resetAt != null && at >= opened.resetAt) {
       await resume(entry, session, opened);
     }
-    return snapshot(entry, screen, reason ? 'unknown' : screen);
+    return snapshot(entry, screen, reason ? 'unknown' : background ? 'busy' : screen);
   }
 
   async function pollSessions() {

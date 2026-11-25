@@ -27,6 +27,7 @@ description: 在 Loom 中启动、指挥、复核或接手由 Super、Auditor、
 - 常驻并独立于 Leader。用户问进度或取舍时，自己读历史、证据卡和原件，简明交代结论、阻塞和待裁决事项。禁止要求 Leader 汇报或复述。Auditor 裁决范围、预算和方法，监督 Leader 换班。产品代码和派工由执行侧负责。
 - 每道门禁仅看一份门禁包及 Reviewer 结论，根据固定候选 SHA、diff 统计、证据卡与验收摘要给出裁决。仅由用户或 Super 消息、每门禁一次的 Leader 门禁包或红色升级、以及换班监督唤醒。消耗倒金字塔由 loomd 提醒 Super。
 - 需要核查 diff、原始日志或数据时，只派一名临时 Reviewer。证据出现 `FAILED`、`MISMATCH`、越界、删断言或跳测时，由 Reviewer 复核原件。
+- 把耗时工作交给 Worker 或 Reviewer，禁止用后台 Bash 等结果。结论首行用 `PASS`、`APPROVE`、`REJECT` 或 `BLOCKED`。确认收到时用 `NOREPLY`。
 - Reviewer 是一次性的独立只读审查，在新会话中进行。Auditor 用 `loom spawn reviewer --project "$PROJECT" --cwd "$REVIEW_TREE" --wave "$GATE" "$QUESTION"` 启动，提供固定候选和必要证据，只问一个可证伪的问题，限时 15–30 分钟。Reviewer 禁跑大测试，给出结论和证据后即回收。用 `loom notifications --history` 查询追加审查结论。项目只设既定常驻角色。
 - 每次介入给 Leader 一条可执行的结论。常规结论排队投递，只有可复现的阻断缺陷可用 `interrupt` 否决。每轮自查验收要求是否超出目标或证据所需。每项交付最多审两轮，仍阻塞时向 Super 升级改设计，用 `--audit-escalation blocking-disagreement` 附证据和影响。
 
@@ -37,6 +38,7 @@ description: 在 Loom 中启动、指挥、复核或接手由 Super、Auditor、
 3. 波次结算、阻塞或失败、审查结论、Super 裁决、超时或 STUCK 时处理一次决定，然后结束本轮。Worker 阻塞或被退回时用 `loom send` 在原会话续作。需显式续作批次时查 `loom send --help-advanced`。
 4. 由 Worker 在自己的隔离沙箱中对固定候选 SHA 复现问题、跑全量测试和记录验收证据。Leader 汇总回执和证据，使用 `"$LOOM_BIN" gate pack "$GATE" --project "$PROJECT" --base "$BASE" --candidate "$CANDIDATE"` 生成门禁包并投递一条指针。确认审核结论与授权后合入，再用 `loom notifications --gate-complete "$GATE"` 登记安全边界。收到 Auditor 超预算通知时，把材料合并到下一份门禁包。
 5. 在真实派工或汇报中处理 loomd 附上的信号。核实保护或越界文件、删除或削弱断言、skip/only、事实错误或沙箱逃逸尝试后，可用 `loom escalate "$GATE" --reason REASON --evidence TEXT` 升级；与门禁包共用一次唤醒。需要其他角色回送最终答复时用 `loom send --expect-reply`。Worker 波次按批次回 Leader。
+6. 把耗时验收交给 Worker 或 Reviewer，禁止用后台 Bash 等结果。结论首行用 `DONE`、`BLOCKED`、`FAILED` 等标签，确认收到时用 `NOREPLY`。
 
 ## Worker · 按卡施工
 

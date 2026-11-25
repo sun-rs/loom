@@ -52,7 +52,8 @@ function fixture(t, options) {
         if (!/^(?:Loom Super message\n\n)?HOLD/.test(body) &&
             (row.role !== 'leader' || body.includes('波次') || body.includes('续作批次') || body.endsWith('replacement')) &&
             (row.task != null || body.startsWith('RETURN '))) {
-          finish(body.startsWith('RETURN ') ? body.slice(7) : row.task);
+          finish(body.startsWith('RETURN ') ? body.slice(7) :
+            row.role === 'auditor' && /^(?:Read gate packet|Loom red escalation)/.test(body) ? '合入批准，候选已核对。' : row.task);
         }
         return { kind: 'accepted', requestId, seq: seq - 1 };
       },
@@ -250,7 +251,7 @@ test('gate pack snapshots scoped evidence into one compact file and enqueues one
   for (let i = 0; i < 3; i++) await d.tick();
   writeFileSync(join(f.project, '.project', 'evidence', 'red-fixture.json'), JSON.stringify({
     addr: worker.addr, card: 'Planned safeguards', git: { protectedHits: [{ path: 'fence.md' }],
-      tests: [{ path: 'case.test.mjs', changes: { removedAssertions: 1, addedSkip: 1 } }] },
+      tests: [{ path: 'case.test.mjs', changes: { removedAssertions: 1, rewrittenAssertions: 0, addedSkip: 1 } }] },
   }));
   await assert.rejects(d.handle('gate-pack', { gate: '../elsewhere' }, leader.addr), { code: 'invalid-arguments' });
   await assert.rejects(d.handle('gate-pack', { gate: 'GATE' }, worker.addr), { code: 'invalid-arguments' });
@@ -1025,7 +1026,7 @@ test('reviewers occupy no worker seat, relay one result, and stop at the deadlin
   await d.tick();
   for (const task of ['A', 'B', 'C']) await f.spawn(d, 'worker', task, leader, { prompt: 'HOLD worker' });
   await assert.rejects(f.spawn(d, 'worker', 'D', leader), { code: 'worker-capacity' });
-  const review = (await f.spawn(d, 'reviewer', 'REVIEW', leader, { prompt: 'RETURN review conclusion' })).session;
+  const review = (await f.spawn(d, 'reviewer', 'REVIEW', leader, { prompt: 'RETURN PASS review conclusion' })).session;
   const job = f.read('loomd/sessions/' + review.addr + '.json');
   assert.equal(job.reviewDeadline - review.startedAt, 1_800_000);
   await d.tick();
@@ -1045,6 +1046,32 @@ test('reviewers occupy no worker seat, relay one result, and stop at the deadlin
   assert.match(results[0].text, /review conclusion/);
   assert.match(results[1].text, /TIMED OUT/);
   assert.equal((await d.handle('state', { target: late.addr })).state, 'exited');
+});
+
+test('8f1d01d6 oversized reviewer output is preserved through the digest pointer', async t => {
+  const f = fixture(t);
+  const d = f.daemon();
+  t.after(d.shutdown);
+  const { session: leader } = await f.spawn(d, 'leader', 'L');
+  await d.tick();
+  f.sessions.get(leader.addr).finish('Dispatch complete');
+  const heading = '### 结论\n';
+  const body = heading + '核'.repeat(25_702 - heading.length - 1) + '终';
+  assert.equal(body.length, 25_702);
+  const { session: reviewer } = await f.spawn(d, 'reviewer', 'HIST-LONG', leader.addr, { cli: 'agy', prompt: 'HOLD reviewer' });
+  await d.tick();
+  const runtime = f.sessions.get(reviewer.addr);
+  runtime.finish(body);
+  writeFileSync(await runtime.session.nativeSessionFile(), '');
+  for (let i = 0; i < 4; i++) await d.tick();
+  const input = f.read('inbox/state.json').messages.find(message => message.reviewerResult === reviewer.addr);
+  const wire = f.prompts.find(message => deliveryId(message.input) === input.id).input;
+  const [, file, digest] = /Read (\.project\/replies\/([a-f0-9]{64})\.txt) \(SHA-256\)/.exec(wire);
+  const stored = readFileSync(join(f.project, file), 'utf8');
+  assert.ok(stored.includes('\nUNCONFIRMED\n'));
+  assert.ok(stored.endsWith(body));
+  assert.equal(payloadDigest(stored), digest);
+  assert.equal(payloadDigest(wire.split('\n').slice(1).join('\n')), input.payloadDigest ?? payloadDigest(input.wireBody));
 });
 
 test('switches Claude Leader to agy and agy Auditor to Codex under one durable succession guard', async t => {
@@ -1174,7 +1201,7 @@ test('delivers a short digest pointer for a large automatic reply across restart
   const sender = (await f.spawn(d, 'super', 'S')).session.addr;
   const target = (await f.spawn(d, 'auditor', 'A')).session.addr;
   await d.tick();
-  const body = '完整结果🐙'.repeat(30);
+  const body = 'DONE\n' + '完整结果🐙'.repeat(30);
   const send = await d.handle('send', { target, mode: 'queue', text: 'HOLD report', expectReply: true }, sender);
   await d.tick();
   f.sessions.get(target).finish(body);

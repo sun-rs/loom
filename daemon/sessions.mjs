@@ -24,6 +24,7 @@ import { releaseId } from './release.mjs';
 import { projectMemoryPrompt } from '../memory/project.mjs';
 import { disposeSession } from './session-close.mjs';
 import { workerEnvironment } from './worker-environment.mjs';
+import { withClaudeTranscriptStops } from '../relay/sources.mjs';
 
 const runtimeIds = { codex: 'codex', agy: 'antigravity', claude: 'claude', opencode: 'opencode' };
 const modes = new Set(['tui', 'headless']);
@@ -404,13 +405,13 @@ export function ownedSessions(project, index, report, {
       const guidance = row.role === 'leader' ?
         'Coordinate work. Workers reproduce issues and run full test suites in their own sandboxes. Review their receipts and signals. Use loom gate pack for the Auditor, or loom escalate for confirmed red facts, sharing one wake per gate.' :
         'For gate review, read only the gate packet and reviewer conclusions. Delegate deep checks to one ephemeral read-only reviewer. Wake sources are user or Super messages, a gate packet or red escalation from Leader, and succession supervision.';
-      prompt = `## Loom role guidance\n${guidance}\n\n## Startup request\n${prompt}`;
+      prompt = `## Loom role guidance\n${guidance} Assign long-running work to a Worker or Reviewer. Do not wait on background Bash. Begin conclusions with DONE, BLOCKED, FAILED, PASS, REJECT or APPROVE. Use NOREPLY for acknowledgements.\n\n## Startup request\n${prompt}`;
       try { prompt = await projectMemoryPrompt(project) + prompt; }
       catch (error) { report(`Project memory unavailable: ${error.message}`); }
     }
     if (row.role === 'worker') prompt += `\n\n${cardConventions(row)}`;
     if (row.role === 'reviewer') prompt = [
-      'You are a one-turn Loom reviewer. Inspect read-only and answer the one question below. Do not edit files, change repository state, run broad test suites or delegate. Give a concise conclusion and cite any evidence you use.',
+      'You are a one-turn Loom reviewer. Inspect read-only and answer the one question below. Do not edit files, change repository state, run broad test suites or delegate. Start your conclusion with PASS, REJECT or BLOCKED and cite the evidence.',
       prompt,
     ].join('\n\n');
     const job = { row, firstId: randomUUID(), prompt, gate, requested, deny, release: releaseId(),
@@ -601,8 +602,10 @@ export function ownedSessions(project, index, report, {
       }
     }
     if (row.sessionId) {
-      try { observeTuiHeads(project, row, hooks.filter(event => !event.agent_id &&
-        (event.session_id ?? event.conversationId) === row.sessionId)); }
+      try {
+        const bound = hooks.filter(event => !event.agent_id && (event.session_id ?? event.conversationId) === row.sessionId);
+        observeTuiHeads(project, row, row.cli === 'claude' ? withClaudeTranscriptStops(row, bound, row.sessionId) : bound);
+      }
       catch (error) { report(error.message); }
     }
     if (!terminal || completedPane(terminal)) row = await finish(job, row, terminal?.finished_ms);

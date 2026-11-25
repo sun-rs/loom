@@ -10,7 +10,7 @@ import opencode from '../adapters/opencode/index.mjs';
 
 export const adapters = new Map([agy, claude, codex, opencode].map(adapter => [adapter.id, adapter]));
 
-const hookTypes = new Set(['turn-start', 'turn-end', 'tool', 'stop-failure']);
+const hookTypes = new Set(['turn-start', 'turn-end', 'turn-paused', 'tool', 'stop-failure']);
 
 export function hookTiming(session, rows, now) {
   const events = [];
@@ -31,21 +31,27 @@ export function hookTiming(session, rows, now) {
   const closed = [];
   let startedAt = -Infinity;
   let activityAt = -Infinity;
+  let background = false;
   for (const event of events.sort((a, b) => a.at - b.at)) {
     if (event.type === 'turn-start') {
       startedAt = event.at;
       activityAt = event.at;
+      background = false;
       if (event.turn == null || event.turn !== open?.turn || event.sessionId !== open?.sessionId) open = event;
     } else if ((!open?.sessionId || !event.sessionId || event.sessionId === open.sessionId) &&
         (open?.turn == null || event.turn == null || event.turn === open.turn)) {
       activityAt = event.at;
-      if (event.type !== 'tool') {
+      if (event.type === 'turn-paused') {
+        background = true;
+        open ??= event;
+      } else if (event.type !== 'tool') {
         open = null;
+        background = false;
         closed.push(event);
       }
     }
   }
-  return { open, closed, startedAt, activityAt };
+  return { open, closed, startedAt, activityAt, background };
 }
 
 export function hasClosingHook(evidence, hooks) {

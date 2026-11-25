@@ -39,6 +39,7 @@ const start = (provider, row) => provider === 'agy' ?
   row.hook_event_name === 'UserPromptSubmit';
 
 function end(provider, row) {
+  if (row.paused || row.fullyIdle === false) return false;
   return provider === 'agy' ?
     row.fullyIdle === true && row.executionNum != null :
     ['Stop', 'StopFailure', 'Interrupt'].includes(row.hook_event_name);
@@ -100,6 +101,7 @@ export function turnEnd(frame, observation) {
   const stop = observation.events.findLast(row => end(observation.provider, row) && row.receivedAt >= frame.since &&
     (!frame.sessionId || session(row) === frame.sessionId) && (!frame.turnId ||
       String(row.turn_id ?? row.prompt_id ?? row.executionNum ?? '') === frame.turnId ||
+      row.backgroundPromptId === frame.turnId ||
       frame.pty && observation.provider === 'claude' && !row.turn_id && !row.prompt_id));
   if (stop) return { at: stop.receivedAt, canceled: canceled(stop) };
 }
@@ -110,34 +112,42 @@ function nativeInputState(provider, events) {
   let compacting = false;
   let state = 'unknown';
   let proof;
+  let background = false;
   for (const event of events) {
     if (session(event) !== currentSession) continue;
     const kind = event.hook_event_name;
     if (kind === 'SessionStart' && event.source === 'compact') continue;
     if (kind === 'SessionStart' || kind === 'SessionEnd') {
       opened = undefined;
+      background = false;
       compacting = false;
       state = kind === 'SessionStart' ? 'idle' : 'unknown';
     } else if (kind === 'PreCompact' || kind === 'PostCompact') {
       compacting = kind === 'PreCompact';
     } else if (start(provider, event)) {
       opened = event;
+      background = false;
       state = 'busy';
     } else if (kind === 'PreToolUse' || kind === 'PostToolUse') {
       opened ??= event;
+      state = 'busy';
+    } else if (event.paused || kind === 'Stop' && event.fullyIdle === false) {
+      opened ??= event;
+      background = true;
       state = 'busy';
     } else if (end(provider, event)) {
       const expected = opened?.turn_id ?? opened?.prompt_id ?? opened?.executionNum;
       const actual = event.turn_id ?? event.prompt_id ?? event.executionNum;
       if (expected !== undefined && actual !== undefined && String(expected) !== String(actual)) continue;
       opened = undefined;
+      background = false;
       state = 'idle';
     } else {
       continue;
     }
     proof = { event: kind, at: event.receivedAt, turnId: event.turn_id ?? event.prompt_id };
   }
-  return { state: compacting ? 'busy' : state, proof, opened };
+  return { state: compacting ? 'busy' : state, proof, opened, background };
 }
 
 function transcriptContains(provider, rows, stop, id) {
@@ -219,6 +229,9 @@ export function nativeDelivery(message, observation) {
     return claudeTurns.get(stop);
   }
   const stop = stops.find(row => {
+    if (provider === 'claude' && row.backgroundDeliveryIds?.includes(message.id)) {
+      return session(row) === (anchor ? session(anchor) : message.received?.sessionId ?? confirmed?.sessionId);
+    }
     if (provider === 'agy' && agyReceipt?.sessionId &&
         (session(row) !== agyReceipt.sessionId || row.receivedAt < agyReceipt.at ||
           anchor && events.indexOf(row) <= events.indexOf(anchor))) return false;
@@ -239,8 +252,9 @@ export function nativeDelivery(message, observation) {
     }
     return transcriptContains(provider, rows(row), row, message.id);
   });
-  const receipt = anchor ?? stop;
-  const result = receipt ? receiptFor(receipt) : confirmed ?? agyReceipt;
+  const resumed = stop?.backgroundDeliveryIds?.includes(message.id);
+  const receipt = anchor ?? (resumed ? undefined : stop);
+  const result = receipt ? receiptFor(receipt) : confirmed ?? (resumed ? message.received : agyReceipt);
   if (!result) return;
   if (integrity) {
     const expected = message.payloadDigest ?? entry?.digest ?? payloadDigest(message.text);
@@ -269,6 +283,10 @@ export function nativeDelivery(message, observation) {
     return { ...result, completion: { ...completion, noReply: true, source: `${provider} native ${stop.hook_event_name}` } };
   }
   let reply;
+  if (provider === 'claude' && stop.backgroundDeliveryIds?.includes(message.id)) {
+    return { ...result, completion: { ...completion, nativeTurnId: stop.nativeTurnId, source: 'claude task-notification',
+      ...(stop.backgroundReply ? { body: stop.backgroundReply } : { noReply: true }) } };
+  }
   if (provider === 'claude' && stop.source === 'claude transcript turn_duration') {
     return { ...result, completion: { ...completion, source: stop.source,
       ...(stop.last_assistant_message ? { body: stop.last_assistant_message } : { noReply: true }) } };
@@ -306,6 +324,7 @@ export function tui(project, call = hc, fixtureSend, control = controlTui) {
     if (provider === 'claude') events = withClaudeTranscriptStops(terminal, events, sessionId);
     const snapshot = { terminal, events, provider, tui: binding, strictEnd: true };
     if (terminal.state === 'finished') return { ...snapshot, state: 'finished' };
+    const native = nativeInputState(provider, events);
     if (['loom-pty', 'holder-v3'].includes(binding?.transport)) {
       const status = terminal.status?.state;
       let frame;
@@ -315,16 +334,16 @@ export function tui(project, call = hc, fixtureSend, control = controlTui) {
           transport: binding.transport, screen: 'unavailable', hc: status ?? null, reason: error.code ?? 'control-unavailable',
         } };
       }
-      const { screen, host, native } = frame;
-      const active = frame.phase === 'busy' && native.activeSince !== undefined && {
-        pty: true, hcTurn: terminal.turn, since: native.activeSince, sessionId: native.sessionId, turnId: native.activeTurn,
+      const { screen, host, native: holderNative } = frame;
+      const active = frame.phase === 'busy' && holderNative.activeSince !== undefined && {
+        pty: true, hcTurn: terminal.turn, since: holderNative.activeSince, sessionId: holderNative.sessionId, turnId: holderNative.activeTurn,
       };
       const veto = ['working', 'blocked', 'error'].includes(status);
-      const state = frame.exit ? 'finished' : frame.blocker ?? (frame.ready && !veto ? 'idle' :
+      const state = frame.exit ? 'finished' : frame.blocker ?? (native.background ? 'busy' : frame.ready && !veto ? 'idle' :
         ['blocked', 'error'].includes(status) ? 'blocked' : screen.kind === 'busy' && active ? 'busy' :
           ['idle', 'busy'].includes(screen.kind) ? 'unknown' : screen.kind);
       return { ...snapshot, state, active, generation: host.generation, urgentReady: frame.urgentReady && !veto, writeEvidence: {
-        transport: binding.transport, screen: screen.kind, native: native.phase ?? 'unknown', hc: status ?? null,
+        transport: binding.transport, screen: screen.kind, native: native.background ? 'background-in-progress' : holderNative.phase ?? 'unknown', hc: status ?? null,
         complete: screen.text !== undefined, humanActive: host.humanActive, composerEmpty: screen.empty,
         ...(frame.heldDraftProof && { heldDraftProof: frame.heldDraftProof, heldDeliveryId: frame.pending,
           heldDraftBytes: frame.heldDraftBytes }),
@@ -338,12 +357,12 @@ export function tui(project, call = hc, fixtureSend, control = controlTui) {
     const visible = terminal.screen !== 'inexact' && frame?.complete === true &&
       frame.how === 'screen' && typeof frame.text === 'string';
     const screen = visible ? adapters.get(provider).screen.classify(frame.text) : 'unknown';
-    const native = nativeInputState(provider, events);
     const status = terminal.status?.state;
     let state = screen;
     if (status === 'blocked' || status === 'error') state = 'blocked';
     else if (['idle', 'busy', 'unknown'].includes(screen)) {
-      if (screen === 'idle' && native.state === 'idle' && status !== 'working') state = 'idle';
+      if (native.background) state = 'busy';
+      else if (screen === 'idle' && native.state === 'idle' && status !== 'working') state = 'idle';
       else if (screen === 'busy' && native.state === 'busy' && !['idle', 'done'].includes(status)) state = 'busy';
       else state = 'unknown';
     }

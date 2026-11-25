@@ -43,8 +43,8 @@ export function oarTurnEndHead(project, row, start, end) {
 export const turnHeadsPath = (project, addr) => join(runtimeDirectory(project), 'sessions', `${addr}.turn-heads.json`);
 const isStart = event => event.hook_event_name === 'UserPromptSubmit' ||
   event.hook_event_name === 'PreInvocation' && Number(event.invocationNum ?? 0) === 0;
-const isEnd = event => event.fullyIdle === true && event.executionNum != null ||
-  ['Stop', 'StopFailure', 'Interrupt'].includes(event.hook_event_name) && event.fullyIdle !== false;
+const isEnd = event => !event.paused && (event.fullyIdle === true && event.executionNum != null ||
+  ['Stop', 'StopFailure', 'Interrupt'].includes(event.hook_event_name) && event.fullyIdle !== false);
 const idOf = event => event.turn_id ?? event.turnId ?? event.turnStep;
 const sameId = (a, b) => a != null && b != null && String(a) === String(b);
 const compatible = (a, b) => a == null || b == null || sameId(a, b);

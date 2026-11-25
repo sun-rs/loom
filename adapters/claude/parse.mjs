@@ -90,6 +90,14 @@ function readUserText(blocks) {
     .filter((text) => text && !localCommandTag.test(text)).join('\n');
 }
 
+export function taskNotification(text) {
+  if (!text.trimStart().startsWith('<task-notification>')) return;
+  const data = /^\s*<task-notification>([\s\S]*?)<\/task-notification>\s*$/.exec(text)?.[1];
+  if (!data || !/<status>(?:completed|failed|stopped|killed|cancelled|canceled)<\/status>/i.test(data)) return;
+  return { tool: /<tool-use-id>([^<]+)<\/tool-use-id>/.exec(data)?.[1],
+    task: /<task-id>([^<]+)<\/task-id>/.exec(data)?.[1] };
+}
+
 // Orca b7fd7caa3: src/main/native-chat/transcript-decoding/transcript-line-decoders-claude.ts
 // claudeQueuedPromptAsUserRecord: a human prompt attached mid-turn belongs to the active turn.
 function readQueuedPrompt(record) {
@@ -160,11 +168,14 @@ export function parseClaude(text) {
   const session = { provider: 'claude', turns: [], lastReply: null, usage: emptyUsage() };
   const seenCallIds = new Set();
   let activeTurn = null;
+  const backgrounds = new Map();
 
   function finishTurn(status, timestamp) {
     if (!activeTurn) return;
 
     const groups = [...activeTurn.groups.values()];
+    const owner = activeTurn.origin ?? activeTurn;
+    const pending = [...backgrounds.values()].some(task => task.owner === owner);
     const reply = status === 'interrupted' ? null : finalReply(groups.at(-1));
     const usage = emptyUsage();
     const calls = [];
@@ -179,14 +190,15 @@ export function parseClaude(text) {
       id: activeTurn.id,
       startedAt: activeTurn.startedAt,
       endedAt: timestamp ?? reply?.timestamp ?? null,
-      status: status ?? (reply ? 'completed' : 'incomplete'),
+      status: pending && status !== 'interrupted' ? 'paused' : status ?? (reply ? 'completed' : 'incomplete'),
       reply: reply?.text ?? null,
       usage,
       calls,
       prompts: activeTurn.prompts,
+      ...(activeTurn.origin && { backgroundPrompts: owner.prompts }),
       tools: collectTools(groups, activeTurn.toolResults),
     });
-    if (reply) session.lastReply = reply.text;
+    if (reply && !pending) session.lastReply = reply.text;
     addUsage(session.usage, usage, usage.calls);
     activeTurn = null;
   }
@@ -216,6 +228,9 @@ export function parseClaude(text) {
       for (const result of results) {
         const code = toolExitCode(result, metadata);
         if (result.tool_use_id && code !== null) activeTurn.toolResults.set(result.tool_use_id, code);
+        const task = backgrounds.get(result.tool_use_id);
+        if (task && typeof metadata?.backgroundTaskId === 'string') task.id = metadata.backgroundTaskId;
+        else if (task && (result.is_error || code !== null)) backgrounds.delete(result.tool_use_id);
       }
     }
     const interrupted = record.interruptedMessageId != null || type === 'turn_aborted'
@@ -230,8 +245,14 @@ export function parseClaude(text) {
       finishTurn('completed', timestamp);
     } else if (prompt) {
       finishTurn();
+      const notification = taskNotification(prompt);
+      const tool = notification?.tool ?? (notification?.task &&
+        [...backgrounds].find(([, entry]) => entry.id === notification.task)?.[0]);
+      const task = tool ? backgrounds.get(tool) : undefined;
+      const origin = task && (!task.id || !notification.task || task.id === notification.task) ? task.owner : undefined;
+      if (origin) backgrounds.delete(tool);
       activeTurn = { id: stringOrNull(record.uuid), startedAt: timestamp, groups: new Map(),
-        prompts: [prompt], toolResults: new Map() };
+        prompts: [prompt], toolResults: new Map(), origin };
     } else if (activeTurn && type === 'attachment') {
       const queued = readQueuedPrompt(record);
       if (queued) activeTurn.prompts.push(queued);
@@ -253,6 +274,12 @@ export function parseClaude(text) {
       }
 
       appendBlocks(group, blocks, record.apiBlockIndex, timestamp, lineNumber);
+      for (const block of blocks) {
+        if (block?.type === 'tool_use' && block.name === 'Bash' && block.input?.run_in_background === true &&
+            typeof block.id === 'string' && !backgrounds.has(block.id)) {
+          backgrounds.set(block.id, { owner: activeTurn.origin ?? activeTurn });
+        }
+      }
       const stopReason = message.stop_reason;
       if (stopReason != null) group.stopReason = stopReason;
       group.stoppedForTool ||= stopReason === 'tool_use' || stopReason === 'pause_turn';

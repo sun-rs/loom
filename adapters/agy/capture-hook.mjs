@@ -24,7 +24,7 @@ function captureReply(event, payload) {
     for (let index = rows.length - 1; index >= 0; index -= 1) {
       const start = JSON.parse(rows[index]);
       if (start.conversationId !== event.sessionId) continue;
-      if (start.hookEventName === 'Stop') return;
+      if (start.hookEventName === 'Stop' && start.fullyIdle !== false) return;
       if (start.hookEventName !== 'PreInvocation') continue;
       // The first invocation counts the user step in initialNumSteps. Match that step so
       // a Stop that beats the transcript flush cannot publish a previous turn's reply.

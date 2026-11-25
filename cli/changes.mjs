@@ -1,7 +1,7 @@
 import { execFile } from 'node:child_process';
 import { join, matchesGlob } from 'node:path';
 import { promisify } from 'node:util';
-import { diffFiles, isCredentialPath, testChanges } from '../evidence/git.mjs';
+import { assertionEdits, diffFiles, isCredentialPath } from '../evidence/git.mjs';
 import { readText } from '../daemon/io.mjs';
 
 const exec = promisify(execFile);
@@ -51,17 +51,7 @@ export function changeReader(project) {
         if (category !== 'test' || !file.deleted) continue;
         const paths = [file.previousPath, file.path].filter(Boolean).map(path => `:(literal)${path}`);
         const patch = await run(['--unified=0'], paths);
-        let oldLine = null;
-        for (const line of patch.split('\n')) {
-          const hunk = /^@@ -(\d+)(?:,\d+)? \+\d+(?:,\d+)? @@/.exec(line);
-          if (line.startsWith('diff --git ')) oldLine = null;
-          if (hunk) oldLine = Number(hunk[1]);
-          if (oldLine === null || !line.startsWith('-')) continue;
-          if (testChanges(`@@ -1 +1 @@\n${line}`).removedAssertions) {
-            result.testAssertions.push({ path: file.previousPath ?? file.path, line: oldLine, text: line.slice(1) });
-          }
-          oldLine++;
-        }
+        result.testAssertions.push(...assertionEdits(patch).map(edit => ({ path: file.previousPath ?? file.path, ...edit })));
       }
       return result;
     } catch (error) {

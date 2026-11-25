@@ -187,11 +187,14 @@ function parseJsonlRecords(text) {
   return records;
 }
 
+export const agyTurnPrompt = new WeakMap();
+
 function createTurnState(record) {
   return {
     id: normalizeStepId(record.step_index),
     startedAt: normalizeTimestamp(record.created_at),
     lastActivityAt: normalizeTimestamp(record.created_at),
+    prompt: typeof record.content === 'string' ? record.content : null,
     hasModelStep: false,
     explicitInterrupted: false,
     interruptedAt: null,
@@ -232,7 +235,7 @@ function settleTurn(turnState, index, reason) {
     reply = null;
   }
 
-  return {
+  const turn = {
     index,
     id: turnState.id,
     startedAt: turnState.startedAt,
@@ -242,6 +245,8 @@ function settleTurn(turnState, index, reason) {
     usage: turnState.usage,
     calls: turnState.calls,
   };
+  if (turnState.prompt) agyTurnPrompt.set(turn, turnState.prompt);
+  return turn;
 }
 
 /**

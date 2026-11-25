@@ -120,7 +120,7 @@ async function inspect(project) {
   }
 
   const ledger = JSON.parse(projectText(project, 'loomd', 'oar-processes.json') ?? '[]');
-  const processes = ledger.length ? processTable() : new Map();
+  const processes = await processTable(ledger.map(row => row.pid));
   const oarChildren = ledger.filter(row => sameProcess(row, processes.get(row.pid))).map(row =>
     ({ ...row, residual: !status.running || status.pid !== row.daemonPid }));
   const temporary = knownDirs.flatMap(parts => {
@@ -230,13 +230,13 @@ export async function doctor(project, fix) {
       });
     }
     for (const row of [...report.oarChildren].reverse()) {
-      await clean('oar-child-sigterm', row.pid, () => {
-        if (sameProcess(row, processTable().get(row.pid))) process.kill(row.pid, 'SIGTERM');
+      await clean('oar-child-sigterm', row.pid, async () => {
+        if (sameProcess(row, (await processTable([row.pid])).get(row.pid))) process.kill(row.pid, 'SIGTERM');
       });
     }
     if (report.oarChildren.length) {
       for (let attempt = 0; attempt < 5; attempt++) {
-        const processes = processTable();
+        const processes = await processTable(report.oarChildren.map(row => row.pid));
         if (!report.oarChildren.some(row => sameProcess(row, processes.get(row.pid)))) break;
         await delay(100);
       }

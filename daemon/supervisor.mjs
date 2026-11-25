@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import { CommandError } from '../cli/sessions.mjs';
 import { projectIndex } from '../cli/project.mjs';
 import { inbox, pendingWork, receipt } from '../inbox/engine.mjs';
-import { isBlockedReply, messageIdPattern } from '../inbox/message.mjs';
+import { conclusoryReply, isBlockedReply, messageIdPattern } from '../inbox/message.mjs';
 import { relay } from '../relay/project.mjs';
 import { withClaudeTranscriptStops } from '../relay/sources.mjs';
 import { createWatcher } from '../watch/index.mjs';
@@ -82,10 +82,10 @@ export function createSupervisor(project, {
       const superSession = rows.findLast(row => row.role === 'super' &&
         row.project === name && row.endedAt === null && sessions.jobs.has(row.addr));
       if (superSession && !batch[0].externalOnly) {
-        const details = [...new Set(batch.map(event => terminalText(event.text ??
-          `${event.type} ${event.addr ?? ''} ${event.reason ?? ''}`.trim()).slice(0, 4000)))];
+        const details = [...new Set(batch.map(event => event.text ??
+          `${event.type} ${event.addr ?? ''} ${event.reason ?? ''}`.trim()))];
         const heading = `Loom 项目通知：${[...new Set(batch.map(event => event.type))].join(', ')}`;
-        saved(sessions.targetBinding(superSession), [heading, ...details].join('\n\n').slice(0, 16_000),
+        saved(sessions.targetBinding(superSession), [heading, ...details].join('\n\n'),
           { id, projectEvents: batch.map(event => event.id),
             ...(batch.some(event => event.type === 'needs-decision') && { superPriority: true }) });
         return superSession.addr;
@@ -438,25 +438,26 @@ export function createSupervisor(project, {
       const gate = audit && row.wave && mail.messages.some(message =>
         message.id === packetDeliveryId(row.project, row.wave) && message.gatePacket) ? row.wave : undefined;
       if (mail.messages.some(message => message.id === id) ||
-          audit && notifications.list(row.project, false, true).some(event => event.id === id)) continue;
+          notifications.list(row.project, false, true).some(event => event.id === id)) continue;
       if (row.endedAt == null) {
         try { await sessions.stop(row); }
         catch (error) { report(`${row.addr} reviewer stop: ${error.message}`); continue; }
       }
       const onTime = result && result.at <= job.reviewDeadline;
+      const body = onTime && (result.body ?? result.unconfirmedBody);
       const detail = onTime && result.body ? result.body : onTime && result.unconfirmedBody ?
         `UNCONFIRMED\n${result.unconfirmedBody}` :
         expired && (!onTime || row.endedAt >= job.reviewDeadline) ? 'TIMED OUT' :
           `FAILED ${result?.outcome?.failure ?? first?.issue ?? 'no native reply'}`;
-      const text = `Loom reviewer ${row.addr}${row.task ? ' · ' + row.task : ''}\n\n${terminalText(detail)}`;
-      if (audit) {
+      const text = `Loom reviewer ${row.addr}${row.task ? ' · ' + row.task : ''}\n\n${detail}`;
+      if (audit || body && !conclusoryReply(body)) {
         notifications.add({ id, gate, type: 'reviewer-result', project: row.project, addr: row.addr,
-          at: result?.at ?? row.endedAt ?? job.reviewDeadline, text: text.slice(0, 16_000), logOnly: true });
+          at: result?.at ?? row.endedAt ?? job.reviewDeadline, text, logOnly: true });
       } else if (row.parent) {
         if (owner?.endedAt === null) saved(sessions.targetBinding(owner), text, { id, reviewerResult: row.addr });
       } else {
         notifications.add({ id, type: 'reviewer-result', project: row.project, addr: row.addr,
-          batch: id, at: result?.at ?? row.endedAt ?? job.reviewDeadline, text: text.slice(0, 16_000), externalOnly: true });
+          batch: id, at: result?.at ?? row.endedAt ?? job.reviewDeadline, text, externalOnly: true });
       }
     }
   }
