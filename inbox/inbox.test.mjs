@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
 import { relay as waveRelay } from '../relay/project.mjs';
 import { inbox, receipt } from './engine.mjs';
-import { deliveryId, wireText } from './message.mjs';
+import { deliveryId, payloadDigest, wireText } from './message.mjs';
 import { lookup, publish } from './store.mjs';
 import { inputPlan, nativeDelivery, tui } from './tui.mjs';
 
@@ -94,6 +94,55 @@ test('a native submission still reconciles when the wrapper withheld Enter', () 
       prompt: wireText(id, 'manually submitted draft') }],
   };
   assert.equal(nativeDelivery({ id, attemptAt: 1000 }, observation).sessionId, sessionId);
+});
+
+test('a native Claude v3 marker with incomplete user text corrects a prior delivered receipt', async t => {
+  const f = fixture(t);
+  const id = randomUUID();
+  const target = { addr: 't9', backend: 'tui', provider: 'claude', tui: { transport: 'holder-v3' } };
+  const transport = { nativeDelivery, inspect: async () => ({ state: 'idle', provider: 'claude', tui: target.tui,
+    terminal: { address: target.addr }, events: [{ hook_event_name: 'UserPromptSubmit', session_id: 'native',
+      receivedAt: 2000, prompt: wireText(id, 'first half\ufffd') }] }), send: () => assert.fail('Corrupted inputs are not resent') };
+  const store = inbox(f.root, transport);
+  const old = { id, target, text: 'first half and the complete suffix', createdAt: 900, attemptAt: 1000, phase: 'received',
+    received: { at: 2000 }, completion: { body: 'stale response' }, mode: 'queue', requestedMode: 'queue' };
+  store.enqueue(old);
+  await store.step();
+  let changed = f.lookup(id);
+  assert.equal(changed.phase, 'corrupted');
+  assert.equal(changed.received, undefined);
+  assert.equal(changed.completion, undefined);
+  assert.equal(receipt(changed).deliveryStatus, 'corrupted');
+  assert.notEqual(changed.corruption.expected, changed.corruption.observed);
+  await inbox(f.root, transport).step();
+  assert.deepEqual(f.lookup(id), changed);
+});
+
+test('one agy step can corrupt its first delivery and confirm its complete, independently reserved suffix', async t => {
+  const f = fixture(t);
+  const { parked } = JSON.parse(readFileSync(new URL('../tasks/PILOT2-FIX-2/agy-receipts.json', import.meta.url)));
+  const first = parked.deliveryId;
+  const second = parked.urgentId;
+  const original = 'Complete first message with the missing suffix';
+  const urgent = 'Complete urgent message with trailing whitespace \n';
+  const book = new Map([[first, { digest: payloadDigest(original) }], [second, { digest: payloadDigest(urgent) }]]);
+  const transcript = join(f.root, 'transcript_full.jsonl');
+  writeFileSync(transcript, JSON.stringify({ source: 'USER_EXPLICIT', type: 'USER_INPUT', created_at: new Date(2000).toISOString(),
+    step_index: parked.nativeStep, content: `<USER_REQUEST>\n${wireText(first, 'Complete first�')}${wireText(second, urgent)}\n</USER_REQUEST>\n` }) + '\n');
+  const target = { addr: 't9', backend: 'tui', provider: 'agy', tui: { transport: 'holder-v3' } };
+  const native = { provider: 'agy', tui: target.tui, book, terminal: { cwd: f.root }, state: 'idle',
+    events: [{ hook_event_name: 'PreInvocation', invocationNum: 0, conversationId: 'native', receivedAt: 2300,
+      deliveryId: first, transcriptPath: transcript }] };
+  const store = inbox(f.root, { nativeDelivery, inspect: async () => native, send: () => assert.fail('No re-submission') });
+  for (const [id, text] of [[first, original], [second, urgent]]) store.enqueue({ id, target, text, phase: id === first ? 'received' : 'sending',
+    createdAt: 1000, attemptAt: 2100, mode: 'queue', requestedMode: 'queue',
+    ...(id === first && { received: { at: 2300 }, completion: { body: 'stale reply' } }) });
+  await store.step();
+  assert.equal(f.lookup(first).phase, 'corrupted');
+  assert.equal(f.lookup(first).received, undefined);
+  assert.equal(f.lookup(second).phase, 'received');
+  assert.equal(f.lookup(second).received.sessionId, 'native');
+  assert.equal(f.lookup(second).payloadVerified, true);
 });
 
 test('Claude root transcript completion of a human-submitted delivery releases its FIFO queue', async t => {

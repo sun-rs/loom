@@ -9,7 +9,7 @@ import { hasHeldComposer } from '../adapters/agy/screen.mjs';
 import opencode from '../adapters/opencode/index.mjs';
 import { parseAgyTranscriptLine } from '../adapters/agy/transcript.mjs';
 import { screenEvidence, stopFailure } from '../runtimes/tui/failure.mjs';
-import { deliveryId } from '../inbox/message.mjs';
+import { claudeNativeDigest, deliveryId } from '../inbox/message.mjs';
 import { addCodexStartHook } from '../runtimes/tui/codex-start.mjs';
 import { agentResumeArgs } from './resume.mjs';
 
@@ -70,7 +70,8 @@ export const providers = {
       if (row.type === 'user' && !row.isMeta && !row.isCompactSummary && !row.isVisibleInTranscriptOnly) {
         const message = content(row.message?.content);
         if (row.interruptedMessageId || /^\[Request interrupted by user/.test(message ?? '')) return activity('idle', { interrupted: true });
-        if (deliveryId(message)) return { ...input(message, row.uuid), phase: 'busy' };
+        const id = deliveryId(message);
+        if (id) return { ...input(message, row.uuid), payloadDigest: claudeNativeDigest(message, id), phase: 'busy' };
       }
       if (row.type === 'assistant' && row.isApiErrorMessage) {
         const { failure } = stopFailure({ error: row.apiError ?? row.error, error_details: content(row.message?.content) });
@@ -151,8 +152,8 @@ export const providers = {
       if (row.hook_event_name === 'Stop' && row.fullyIdle !== true) return activity('busy');
     },
     transcriptRow(row) {
-      const user = parseAgyTranscriptLine(row).find(event => event.kind === 'user');
-      if (user) return { ...input(user.text, row.step_index), phase: 'busy' };
+      const user = parseAgyTranscriptLine(row, { preserveUserWhitespace: true }).find(event => event.kind === 'user');
+      if (user) return { ...input(user.text, row.step_index), userText: user.text, phase: 'busy' };
     },
   },
   opencode: {
@@ -172,11 +173,13 @@ export function hookObservation(provider, row) {
   const { type } = native ?? {};
   const start = type === 'turn-start';
   const interrupted = row.is_interrupt === true;
+  const inputId = start ? row.deliveryId ?? deliveryId(row.prompt) : undefined;
   return {
     phase: start || type === 'tool' ? 'busy' : type === 'turn-end' ? 'idle' : type === 'stop-failure' ? 'error' : undefined,
     ...detail,
     interrupted: detail?.interrupted ?? interrupted,
-    inputId: start ? row.deliveryId ?? deliveryId(row.prompt) : undefined,
+    inputId,
+    ...(inputId && provider.id === 'claude' && { payloadDigest: claudeNativeDigest(row.prompt, inputId) }),
     key: row.turn_id ?? row.prompt_id ?? row.initialNumSteps,
     turnId: row.turn_id ?? row.prompt_id ?? (row.executionNum == null ? undefined : String(row.executionNum)),
     sessionId: native?.sessionId ?? row.session_id ?? row.conversationId,

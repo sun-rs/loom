@@ -50,7 +50,7 @@ function extractAntigravityUserRequest(content) {
 }
 
 // Conversation rows as decoded by the former drivers/tui-hooks/agy/src/index.ts.
-export function parseAgyTranscriptLine(row) {
+export function parseAgyTranscriptLine(row, { preserveUserWhitespace = false } = {}) {
   if (!row || typeof row.content !== 'string') return [];
   const source = String(row.source ?? '');
   const type = String(row.type ?? '');
@@ -61,8 +61,12 @@ export function parseAgyTranscriptLine(row) {
     const opening = '<USER_REQUEST>';
     const start = row.content.indexOf(opening);
     const body = start < 0 ? row.content : row.content.slice(start + opening.length);
-    const end = body.indexOf('</USER_REQUEST>');
-    const text = (end < 0 ? body : body.slice(0, end)).trim();
+    const closing = '</USER_REQUEST>';
+    const end = preserveUserWhitespace ? body.lastIndexOf(closing) : body.indexOf(closing);
+    const request = end < 0 ? body : body.slice(0, end);
+    let text = request;
+    if (!preserveUserWhitespace) text = request.trim();
+    else if (start >= 0 && end >= 0) text = request.replace(/^\r?\n|\r?\n$/g, '');
     if (text) return [{ kind: 'user', text, raw: row }];
   }
   return [];

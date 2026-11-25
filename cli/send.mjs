@@ -19,12 +19,13 @@ async function waitForReply(project, response) {
   let current;
   do {
     current = lookup(project, response.id);
-    if (current?.completion?.body || current?.completion?.noReply || current?.phase === 'refused') break;
+    if (current?.completion?.body || current?.completion?.noReply || ['refused', 'corrupted'].includes(current?.phase)) break;
     await sleep(250);
   } while (Date.now() < deadline);
   const result = { ...response, ...(current && { ...receipt(current), phase: current.phase }) };
   if (current?.completion?.body) return { ...result, reply: current.completion.body };
-  const code = current?.phase === 'refused' ? 'not-ready' : current?.completion ? 'unavailable' : 'uncertain';
+  const code = current?.phase === 'corrupted' ? 'corrupted' :
+    current?.phase === 'refused' ? 'not-ready' : current?.completion ? 'unavailable' : 'uncertain';
   return { ...result, ok: false, error: { code, message: current?.issue ??
     (current?.completion?.unconfirmed ? 'Native final reply is unconfirmed' :
       current?.completion ? 'No native final reply' : 'Still waiting for a reply') } };

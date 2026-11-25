@@ -1,7 +1,7 @@
 import { execFileSync } from 'node:child_process';
 import { mkdtempSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import { isAbsolute, join } from 'node:path';
-import { holderName, manifestHeader, platforms, sha256 } from './assets.mjs';
+import { holderName, manifestHeader, pipeManifestHeader, platforms, sha256 } from './assets.mjs';
 
 const root = import.meta.dirname;
 const [archive, officialDigest] = process.argv.slice(2);
@@ -34,6 +34,8 @@ try {
   for (const platform of platforms) renameSync(join(stage, holderName(platform)), join(out, holderName(platform)));
   writeFileSync(join(stage, 'manifest'), [manifestHeader, ...entries, ''].join('\n'));
   renameSync(join(stage, 'manifest'), join(out, 'manifest'));
+  writeFileSync(join(stage, 'pipes'), [pipeManifestHeader, ...entries, ''].join('\n'));
+  renameSync(join(stage, 'pipes'), join(out, 'pipes'));
 } finally {
   rmSync(stage, { recursive: true, force: true });
 }

@@ -1,14 +1,16 @@
 import { randomUUID } from 'node:crypto';
+import { dirname } from 'node:path';
 import { performance } from 'node:perf_hooks';
+import { setTimeout as delay } from 'node:timers/promises';
 import xterm from '@xterm/headless';
 import { events, holderClient, holderError } from '../holder/protocol.mjs';
 import { submitComposer } from './agent-input.mjs';
 import { titlePhase } from './agent-status.mjs';
 import { readGrid } from './pty-grid.mjs';
 import { providers } from './providers.mjs';
+import { utf8PasteChunk, provePaste, readPasteReceipt } from './holder-paste.mjs';
 
 const humanPause = 800_000_000n;
-const writeChunk = 4096;
 const keys = { enter: '\r', esc: '\x1b', up: '\x1b[A', down: '\x1b[B', 'ctrl+c': '\x03', '0': '0' };
 const stale = () => holderError('STALE_FRAME', 'PTY changed after guarded read');
 const gap = () => holderError('HOLDER_GAP', 'Holder journal has a gap');
@@ -35,8 +37,11 @@ export async function holderTerminal(binding, controller, provider, expectedPid,
   let lastChange = -Infinity;
   let queue = Promise.resolve();
   let size = { cols, rows };
+  let human = 0n;
+  let pasteBoundary = 0;
+  const recentWrites = [];
   grid.onTitleChange(value => { title = { phase: titlePhase(provider, value), observedAt: Date.now() }; });
-  grid.buffer.onBufferChange(() => { bufferSequence++; });
+  grid.buffer.onBufferChange(() => { bufferSequence++; pasteBoundary++; });
 
   async function apply(upTo) {
     while (eventSeq < upTo.eventSeq) {
@@ -57,15 +62,23 @@ export async function holderTerminal(binding, controller, provider, expectedPid,
           }
           await parse(event.data);
         } else if (event.type === events.resize) {
+          pasteBoundary++;
           resizeSequence++;
           size = { cols: event.data.readUInt32BE(), rows: event.data.readUInt32BE(4) };
           grid.resize(size.cols, size.rows);
           lastChange = performance.now();
+        } else if (event.type === events.human) {
+          human = event.data.readBigUInt64BE();
+          pasteBoundary++;
+        } else if (event.type === events.write) {
+          recentWrites.push({ id: event.data.toString('hex', 0, 16), count: event.data.readUInt32BE(16), human,
+            seq: event.seq, output: event.offset, boundary: pasteBoundary });
+          if (recentWrites.length > 128) recentWrites.shift();
         }
         eventSeq = event.seq;
       }
     }
-    if (offset !== upTo.outputOffset || size.cols !== upTo.size.cols || size.rows !== upTo.size.rows) throw gap();
+    if (offset !== upTo.outputOffset || human !== upTo.humanInputOffset || size.cols !== upTo.size.cols || size.rows !== upTo.size.rows) throw gap();
   }
 
   async function catchUp() {
@@ -95,29 +108,39 @@ export async function holderTerminal(binding, controller, provider, expectedPid,
   }
 
   const writable = view => !view?.exited && view?.writable && !view.humanActive;
-  async function writeOnce(bytes, view) {
-    if (!writable(view)) return false;
+  async function writeOnce(bytes, view, id) {
+    if (!writable(view)) return 0;
     // Connection loss after the first byte is inherently ambiguous.
-    const response = await client.write({ ...view.cursorToken, minHumanQuietNs: humanPause }, bytes, randomUUID());
-    if (response.status === 'applied') return true;
-    if (writeFailure.has(response.status)) return false;
+    const response = await client.write({ ...view.cursorToken, minHumanQuietNs: humanPause }, bytes, id);
+    if (response.status === 'applied' && response.written === bytes.length ||
+        response.status === 'partial' && response.written > 0 && response.written < bytes.length) return response.written;
+    if (writeFailure.has(response.status)) return 0;
     if (response.status === 'invalid') throw holderError('INPUT_SIZE', 'Holder refused the input frame');
     if (response.status === 'gap') throw gap();
     throw holderError('HOLDER_UNCERTAIN', `Holder write ${response.status}`);
   }
 
-  async function write(bytes, view) {
+  async function write(bytes, view, { id, verify } = {}) {
     const data = Buffer.from(bytes);
-    for (let offset = 0; offset < data.length; offset += writeChunk) {
-      const part = data.subarray(offset, offset + writeChunk);
-      const current = offset ? await read() : view;
+    let accepted = 0;
+    let current = view;
+    let writeId = id ?? randomUUID();
+    const deadline = performance.now() + 2200;
+    do {
       if (current.humanSequence !== view.humanSequence || current.resizeSequence !== view.resizeSequence ||
-          current.bufferSequence !== view.bufferSequence || current.buffer !== view.buffer || !await writeOnce(part, current)) {
-        if (!offset) return false;
-        throw holderError('HOLDER_UNCERTAIN', 'Holder stopped a partially written input');
-      }
-    }
-    return true;
+          current.bufferSequence !== view.bufferSequence || current.buffer !== view.buffer || !writable(current) ||
+          accepted && verify && !await verify(current)) break;
+      const part = utf8PasteChunk(data, accepted);
+      const n = await writeOnce(part, current, writeId);
+      if (!n && !accepted) return false;
+      accepted += n;
+      if (accepted === data.length) return true;
+      if (!n) await delay(15);
+      else writeId = randomUUID();
+      current = await read();
+    } while (performance.now() < deadline);
+    if (accepted) throw holderError('HOLDER_UNCERTAIN', 'Holder stopped a partially written input');
+    return false;
   }
 
   try { await read(); }
@@ -132,7 +155,7 @@ export async function holderTerminal(binding, controller, provider, expectedPid,
         return await submitComposer(text, {
           before, provider, read, verify, valid: writable, pastePlaceholder: providers[provider]?.screen.pastePlaceholder,
           async write(bytes, view) {
-            const accepted = await write(bytes, view);
+            const accepted = await write(bytes, view, { verify });
             if (!accepted && !wrote) throw stale();
             wrote ||= accepted;
             return accepted;
@@ -146,9 +169,24 @@ export async function holderTerminal(binding, controller, provider, expectedPid,
         echo = undefined;
       }
     },
-    async key(key, expectedGeneration) {
+    async key(key, expectedGeneration, id) {
       if (!Object.hasOwn(keys, key) || frame?.generation !== expectedGeneration ||
-          !await write(keys[key], frame)) throw stale();
+          !await write(keys[key], frame, { id })) throw stale();
+    },
+    provePaste(input, expected, overlayDismissal) {
+      if (frame !== expected || !binding.bookPath) return { status: 'unproven', written: null };
+      return provePaste(recentWrites, input, { ...frame.cursorToken, boundary: pasteBoundary },
+        id => readPasteReceipt(dirname(binding.bookPath), id),
+        { provider, rows: frame.size.rows, overlayDismissal: overlayDismissal?.replaceAll('-', '') });
+    },
+    async resumePaste(input, expected, resume, verify, enterId) {
+      if (provider !== 'agy' || frame !== expected || !writable(frame) || !await verify(frame)) throw stale();
+      return submitComposer(input, { before: expected, provider, read, valid: writable, resume, verify,
+        async write(bytes, view) {
+          if (!await verify(view)) return false;
+          return write(bytes, view, { id: bytes === '\r' ? enterId : undefined, verify });
+        },
+      });
     },
     async close() {
       try { await client.signal('SIGTERM'); }

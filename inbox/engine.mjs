@@ -1,17 +1,19 @@
 import { randomUUID } from 'node:crypto';
 import { openStore } from './store.mjs';
 import { refusals } from './tui.mjs';
+import { checksDeliveryIntegrity, combinedDeliveryText, payloadDigest } from './message.mjs';
 
 const terminalText = text => text.replace(/[\x00-\x08\x0b-\x1f\x7f-\x9f]/g, '');
 const isDone = message => message.phase === 'received';
 const isUrgent = message => message.superPriority || message.mode === 'interrupt';
 const awaiting = message => ['sending', 'stopping'].includes(message.phase);
+const rejected = message => ['refused', 'corrupted'].includes(message.phase);
 
 export function receipt(message) {
   const { id, mode, requestedMode, createdAt, received, phase } = message;
   const issue = message.issue ?? (phase === 'sending' ? 'awaiting-native-confirmation' : undefined);
-  const status = received ? { queue: 'delivered', steer: 'steered', interrupt: 'interrupted' }[mode] : 'queued';
-  const deliveryStatus = message.completion?.body ? 'answered' : received ? 'delivered' :
+  const status = phase === 'corrupted' ? 'corrupted' : received ? { queue: 'delivered', steer: 'steered', interrupt: 'interrupted' }[mode] : 'queued';
+  const deliveryStatus = phase === 'corrupted' ? 'corrupted' : message.completion?.body ? 'answered' : received ? 'delivered' :
     phase === 'refused' ? 'refused' : message.issue?.startsWith('uncertain') ? 'uncertain' : 'accepted';
   return {
     id, status, deliveryStatus, at: received?.at ?? createdAt, requestedMode, mode,
@@ -25,7 +27,7 @@ export function receipt(message) {
 }
 
 export function pendingWork(messages, addr, parentFor = value => value) {
-  const pending = messages.filter(message => message.phase !== 'refused' &&
+  const pending = messages.filter(message => !rejected(message) &&
     !message.completion?.body && !message.completion?.noReply);
   const relevant = message => !addr || parentFor(message.target.addr) === addr || parentFor(message.from?.addr) === addr;
   const groups = Map.groupBy(messages.filter(message => message.batchId || message.implicitBatch),
@@ -57,6 +59,9 @@ export function pendingWork(messages, addr, parentFor = value => value) {
 export function inbox(project, transport, report = console.error) {
   const store = openStore(project);
   const { messages, save } = store;
+  const integrityScanned = new Set();
+  const needsIntegrity = message => checksDeliveryIntegrity(message.target) && isDone(message) && !message.payloadVerified &&
+    !integrityScanned.has(message.id);
   const recovering = messages.filter(message =>
     (message.phase === 'sending' && !message.typedAt || message.phase === 'stopping' && !message.stopKeySent) && !message.issue);
   for (const message of recovering) message.issue = message.phase === 'sending' ? 'uncertain' : 'uncertain-stop';
@@ -78,9 +83,25 @@ export function inbox(project, transport, report = console.error) {
   }
 
   function reconcile(message, observation) {
-    if (!message.attemptAt || message.completion?.body || message.completion?.noReply) return;
+    const complete = Boolean(message.completion?.body || message.completion?.noReply);
+    if (!message.attemptAt || message.phase === 'corrupted' || complete && !needsIntegrity(message)) return;
     const native = transport.nativeDelivery(message, observation);
+    if (complete) integrityScanned.add(message.id);
     if (!native) return;
+    if (native.corrupted) {
+      message.corruption = { ...native.corrupted, at: native.at, sessionId: native.sessionId, turnId: native.turnId };
+      message.phase = 'corrupted';
+      message.issue = 'payload-mismatch';
+      delete message.received;
+      delete message.completion;
+      save();
+      return;
+    }
+    if (native.payloadVerified && !message.payloadVerified) {
+      message.payloadVerified = true;
+      save();
+    }
+    if (complete) return;
     if (native.dropped) {
       if (isDone(message)) return;
       message.issue = 'input-dropped';
@@ -203,14 +224,11 @@ export function inbox(project, transport, report = console.error) {
     message.attemptAt = Date.now();
     message.writeTurn = observation.terminal.turn;
     if (observation.hostIncarnation) message.hostAttempt = observation.hostIncarnation;
+    const input = { ...message, urgent, text: combinedDeliveryText(message, waves) };
+    if (checksDeliveryIntegrity(message.target)) message.payloadDigest = payloadDigest(input.text);
     delete message.waitingForWritable;
     save();
     try {
-      const input = waves.length ? { ...message, urgent, text: [
-        ...(message.superPriority ? ['Loom Super message', message.text, '--- Loom wave results ---'] :
-          ['Loom worker results', message.text]),
-        ...waves.map(wave => wave.text),
-      ].join('\n\n') } : { ...message, urgent };
       const attempt = await transport.send(input, observation);
       if (attempt?.requestId) message.nativeAttempt = attempt;
     } catch (error) {
@@ -259,7 +277,7 @@ export function inbox(project, transport, report = console.error) {
         changed = true;
         continue;
       }
-      for (const field of ['phase', 'received', 'completion', 'issue', 'refusedAt']) {
+      for (const field of ['phase', 'received', 'completion', 'issue', 'refusedAt', 'corruption']) {
         if (wave[field] === primary[field]) continue;
         if (wave[field] != null && JSON.stringify(wave[field]) === JSON.stringify(primary[field])) continue;
         if (primary[field] === undefined) delete wave[field];
@@ -441,8 +459,8 @@ export function inbox(project, transport, report = console.error) {
     if (changed) save();
     const groups = () => Map.groupBy(messages, ({ target }) => JSON.stringify([target.addr, target.createdAt, target.pid]));
     const active = [...groups()].filter(([, group]) =>
-      group.some(message => message.phase !== 'refused' &&
-        (!isDone(message) || !(message.completion?.body || message.completion?.noReply))));
+      group.some(message => !rejected(message) && (needsIntegrity(message) ||
+        !isDone(message) || !(message.completion?.body || message.completion?.noReply))));
     if (beforeDispatch) {
       const known = new Set(messages.map(message => message.id));
       const observed = new Map(await Promise.all(active.map(async ([key, group]) => [key, await observeTarget(group)])));

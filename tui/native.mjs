@@ -1,6 +1,7 @@
 import { realpath } from 'node:fs/promises';
 import { basename, dirname, extname, isAbsolute, join, relative, sep } from 'node:path';
 import { jsonlTail } from '../runtimes/tui/read-jsonl.mjs';
+import { agyDeliveryParts } from '../inbox/message.mjs';
 import { hookObservation } from './providers.mjs';
 
 function inside(root, path) {
@@ -8,7 +9,7 @@ function inside(root, path) {
   return child !== '' && child !== '..' && !child.startsWith(`..${sep}`) && !isAbsolute(child);
 }
 
-export function nativeState(provider, { hookSink, evidenceRoot, cwd, sessionId, boundTranscript = false, resumedAt }) {
+export function nativeState(provider, { hookSink, evidenceRoot, cwd, sessionId, boundTranscript = false, resumedAt, expectedPayload }) {
   const readHook = jsonlTail();
   const readTranscript = jsonlTail();
   const receipts = new Map();
@@ -55,7 +56,7 @@ export function nativeState(provider, { hookSink, evidenceRoot, cwd, sessionId, 
       receipts.set(event.inputId, sources);
       changedInputs.add(event.inputId);
     }
-    if (!event.phase || state && (event.observedAt < state.observedAt || event.startup && state.phase === 'busy')) return;
+    if (event.receiptOnly || !event.phase || state && (event.observedAt < state.observedAt || event.startup && state.phase === 'busy')) return;
     if (event.phase === 'busy') {
       if (state?.phase !== 'busy' || event.turnId && activeTurn && event.turnId !== activeTurn ||
           event.inputId && activeInputId && event.inputId !== activeInputId ||
@@ -109,7 +110,17 @@ export function nativeState(provider, { hookSink, evidenceRoot, cwd, sessionId, 
             row.sessionId && row.sessionId !== sessionId ||
             resumedAt !== undefined && !(Date.parse(row.timestamp ?? row.created_at) >= resumedAt)) continue;
         const event = provider.transcriptRow(row);
-        if (event) observations.push({ ...event, sessionId, observedAt: at(row), order: transcriptOrder++, source: 'transcript' });
+        if (!event) continue;
+        const { userText, ...fields } = event;
+        const observedAt = at(row);
+        const parts = userText && expectedPayload ? agyDeliveryParts(userText, expectedPayload) : [];
+        const anchor = parts.length && observations.find(candidate => candidate.source === 'hook' &&
+          candidate.inputId === parts[0].id && Math.abs(candidate.observedAt - observedAt) <= 5000);
+        const native = { ...fields, sessionId, observedAt: Math.max(observedAt, anchor?.observedAt ?? 0),
+          order: transcriptOrder++, source: 'transcript' };
+        if (parts.length) for (const part of parts) observations.push({ ...native, inputId: part.id, payloadDigest: part.digest,
+          receiptOnly: part.id !== parts[0].id });
+        else observations.push(native);
       }
       observations.push(...await hooks());
       observations.sort((a, b) => a.observedAt - b.observedAt || (a.source === b.source ? a.order - b.order : a.source === 'hook' ? 1 : -1));
@@ -126,8 +137,10 @@ export function nativeState(provider, { hookSink, evidenceRoot, cwd, sessionId, 
       const transcript = [...(sources?.get('transcript')?.values() ?? [])];
       const count = Math.max(hook.length, transcript.length);
       const anchor = hook[0] ?? transcript[0];
+      const digests = [...new Set([...hook, ...transcript].map(event => event.payloadDigest).filter(Boolean))];
       return {
         count, hook: hook.length, transcript: transcript.length,
+        ...(digests.length && { digests }),
         ...(anchor && { source: anchor.source, at: anchor.observedAt, sessionId: anchor.sessionId, turnId: anchor.turnId }),
       };
     },

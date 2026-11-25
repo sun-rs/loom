@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { execFileSync } from 'node:child_process';
+import { execFileSync, spawn } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
 import { copyFileSync, chmodSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
@@ -7,7 +7,7 @@ import { setTimeout as delay } from 'node:timers/promises';
 import { test } from 'node:test';
 import pty from 'node-pty';
 import { releaseDigest } from '../daemon/release.mjs';
-import { checkHolder, holderAsset, holderName, holderAssets, manifestHeader, platforms, sha256 } from './assets.mjs';
+import { checkHolder, holderAsset, holderName, holderAssets, manifestHeader, pipeManifestHeader, platforms, sha256 } from './assets.mjs';
 import { decodeEvents, frame, frameDecoder, u32, holderClient, events } from './protocol.mjs';
 
 const root = resolve(import.meta.dirname, '..');
@@ -180,4 +180,37 @@ test('exec failure preserves the old holder, a missing journal is explicit, and 
   const crash = candidate(t, Buffer.from('#!/bin/sh\nexit 99\n'));
   await assert.rejects(f.peer.handoff(second.generation, randomUUID(), crash), { code: 'HOLDER_EOF' });
   assert.equal((await f.gone).exitCode, 99);
+});
+
+test('pipe holder isolates stderr and inherits both output fds and stdin across same-PID exec', { skip: !supported }, async t => {
+  const dir = fixture(t);
+  const binding = { socket: join(dir, 's'), incarnation: randomUUID() };
+  const controller = { generation: 1, id: randomUUID() };
+  const path = join(dir, 'controller');
+  writeFileSync(path, JSON.stringify(controller));
+  const asset = await checkHolder(root, { pipes: true });
+  const peer = holderClient(binding, controller);
+  const child = spawn(asset.path, ['--pipes', binding.socket, dir, path, binding.incarnation.replaceAll('-', ''), asset.digest,
+    '/bin/sh', '-c', 'printf out; printf err >&2; read -r line; printf "%s" "$line"; printf done >&2; exit 42'],
+  { cwd: dir, stdio: 'ignore' });
+  const gone = new Promise(resolve => child.once('exit', resolve));
+  t.after(async () => { if (child.exitCode === null) child.kill(); await gone; });
+  await until(() => peer.hello(), x => x?.outputOffset === 3n && x.stderrOffset === 3n);
+  const start = await peer.claim();
+  assert.equal(start.pipes, true);
+  const target = candidate(t, readFileSync(asset.path));
+  await assert.rejects(peer.handoff(start.generation, randomUUID(), target), { code: 'HOLDER_INVALID' });
+  writeFileSync(join(resolve(target.path, '..'), 'pipes'), `${pipeManifestHeader}\n${holderName(host)} ${target.digest}\n`);
+  await assert.rejects(peer.handoff(start.generation, randomUUID(), target), { code: 'HOLDER_EOF' });
+  const after = await until(() => peer.hello(), x => x?.generation === 2n);
+  assert.deepEqual([after.pid, after.childPid, after.outputOffset, after.stderrOffset],
+    [child.pid, start.childPid, 3n, 3n]);
+  const receipt = await peer.write(guard(after, 0n), 'after\n', randomUUID());
+  assert.equal(receipt.status, 'applied');
+  assert.equal(await gone, 42);
+  const records = decodeEvents(readFileSync(join(dir, 'events-0000000000000000')));
+  const readStream = type => records.filter(e => e.type === type).map(e => [e.offset, e.data.toString()]);
+  assert.deepEqual(readStream(events.output), [[0n, 'out'], [3n, 'after']]);
+  assert.deepEqual(readStream(events.stderr), [[0n, 'err'], [3n, 'done']]);
+  assert.equal(records.at(-1).data.readUInt32BE(4), 42);
 });
