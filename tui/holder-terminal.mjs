@@ -19,11 +19,11 @@ const writeFailure = new Set(['stale', 'busy-human', 'would-block', 'exited']);
 
 export async function holderTerminal(binding, controller, provider, expectedPid, expectedChild) {
   const client = holderClient(binding, controller);
-  const initial = await client.claim();
+  const initial = controller ? await client.claim() : await client.snapshot();
   function verifyIdentity(value) {
-    if (value.pid !== initial.pid || value.childPid !== initial.childPid ||
+    if (value.pipes || value.pid !== initial.pid || value.childPid !== initial.childPid ||
         expectedPid != null && value.pid !== expectedPid || expectedChild != null && value.childPid !== expectedChild ||
-        value.epoch !== BigInt(controller.generation)) throw holderError('HOLDER_IDENTITY');
+        controller && value.epoch !== BigInt(controller.generation)) throw holderError('HOLDER_IDENTITY');
     if (value.gap) throw gap();
   }
   verifyIdentity(initial);
@@ -47,20 +47,29 @@ export async function holderTerminal(binding, controller, provider, expectedPid,
     while (eventSeq < upTo.eventSeq) {
       const batch = await client.read(eventSeq);
       if (!batch.length || batch[0].seq > upTo.eventSeq) throw gap();
+      let output = [];
+      async function flushOutput() {
+        if (!output.length) return;
+        await parse(output.length === 1 ? output[0] : Buffer.concat(output));
+        output = [];
+        lastOutputAt = Date.now();
+        lastChange = performance.now();
+      }
       for (const event of batch) {
         if (event.seq > upTo.eventSeq) break;
         if (event.seq !== eventSeq + 1n || event.offset !== offset) throw gap();
+        // Preserve the grid at input and geometry boundaries. Group adjacent
+        // output so replay does not incur xterm's timer for each journal event.
+        if (event.type !== events.output) await flushOutput();
         if (event.type === events.output) {
           outputSequence++;
           offset += BigInt(event.data.length);
-          lastOutputAt = Date.now();
-          lastChange = performance.now();
           if (echo && !echo.found) {
             const scan = echo.tail + event.data.toString();
             echo.found = scan.includes(echo.marker);
             echo.tail = scan.slice(1 - echo.marker.length);
           }
-          await parse(event.data);
+          output.push(event.data);
         } else if (event.type === events.resize) {
           pasteBoundary++;
           resizeSequence++;
@@ -77,6 +86,7 @@ export async function holderTerminal(binding, controller, provider, expectedPid,
         }
         eventSeq = event.seq;
       }
+      await flushOutput();
     }
     if (offset !== upTo.outputOffset || human !== upTo.humanInputOffset || size.cols !== upTo.size.cols || size.rows !== upTo.size.rows) throw gap();
   }
@@ -145,6 +155,7 @@ export async function holderTerminal(binding, controller, provider, expectedPid,
 
   try { await read(); }
   catch (error) { grid.dispose(); throw error; }
+  if (!controller) return { initial, read, dispose: () => grid.dispose() };
   return {
     id: binding.incarnation, client, initial, read,
     async writeIf(text, { host: expected }, verify) {

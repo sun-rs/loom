@@ -23,9 +23,12 @@ export function combinedDeliveryText(message, waves) {
     ['Loom worker results', message.text]), ...waves.map(wave => wave.text)].join('\n\n');
 }
 
-export function claudeNativeDigest(prompt, id) {
+export const claudeDigestVersion = 2;
+
+export function claudeNativeDigest(prompt, id, expected) {
   if (typeof prompt !== 'string' || deliveryId(prompt) !== id) return;
   let input = prompt.trimStart();
+  let terminalNewline;
   const pasted = /^<pasted_content(?: id="([a-zA-Z0-9_-]+)")?>\r?\n/.exec(input);
   if (pasted) {
     const closing = `</pasted_content${pasted[1] ? ` id="${pasted[1]}"` : ''}>`;
@@ -33,11 +36,20 @@ export function claudeNativeDigest(prompt, id) {
     const end = input.lastIndexOf(`\n${closing}`);
     // Keep stray bytes after the close tag, including a replacement
     // character produced by a short write. They are part of the input.
-    if (end >= 0) input = input.slice(0, end) + input.slice(end + 1 + closing.length).replace(/^\r?\n/, '');
+    if (end >= 0) {
+      const after = input.slice(end + 1 + closing.length).replace(/^\r?\n/, '');
+      const start = input[end - 1] === '\r' ? end - 1 : end;
+      if (!after) terminalNewline = input.slice(start, end + 1);
+      input = input.slice(0, start) + after;
+    }
   }
   const prefix = `[loom:${id}]`;
   if (!input.startsWith(prefix)) return;
-  return payloadDigest(input.slice(prefix.length).replace(/^\r?\n/, ''));
+  const body = input.slice(prefix.length).replace(/^\r?\n/, '');
+  // Claude can reuse the payload's own newline as the wrapper separator.
+  // Accept it only if that exact variant matches the reserved body.
+  if (terminalNewline && expected && payloadDigest(body + terminalNewline) === expected) return expected;
+  return payloadDigest(body);
 }
 
 export function agyDeliveryParts(text, expected) {

@@ -9,7 +9,7 @@ import { createSupervisor } from './supervisor.mjs';
 import { maxLine } from './rpc.mjs';
 import { readText, syncDirectory } from './io.mjs';
 import { activeRelease, nextController, releaseDigest, releaseId, releaseRoot, upgradeState } from './release.mjs';
-import { beginUpgrade, daemonProtocol, liveHandoff, planUpgrade, selfCheck, validateHandoff, validateReattachment } from './upgrade.mjs';
+import { beginUpgrade, checkUpgradeAttachments, daemonProtocol, liveHandoff, planUpgrade, selfCheck, validateHandoff, validateReattachment } from './upgrade.mjs';
 
 function excludeProjectMetadata(project) {
   const git = (...args) => execFileSync('git', ['-C', project, 'rev-parse', ...args],
@@ -36,14 +36,25 @@ function optionalTimeout(name) {
 
 export async function main(args, { pollInterval = 350, ...options } = {}) {
   const { values } = parseArgs({ args, options: { project: { type: 'string' }, help: { type: 'boolean', short: 'h' },
-    'self-check': { type: 'boolean' }, handoff: { type: 'string' }, 'handoff-recovery': { type: 'boolean' } } });
+    'self-check': { type: 'boolean' }, 'check-attachments': { type: 'boolean' }, handoff: { type: 'string' },
+    'handoff-recovery': { type: 'boolean' } } });
   if (values.help) {
     console.log(`loomd [--project DIR]\n${projectOption}`);
     return;
   }
   if (values['self-check']) { console.log(JSON.stringify(await selfCheck())); return; }
-  const runningRelease = { id: releaseId(), root: releaseRoot, digest: releaseDigest(releaseRoot) };
   const project = projectDirectory(values.project);
+  if (values['check-attachments']) {
+    const { probeAttachments } = await import('./attachment-check.mjs');
+    let roster = '';
+    for await (const chunk of process.stdin) {
+      roster += chunk;
+      if (Buffer.byteLength(roster) > maxLine) throw new Error('Attachment roster is too large');
+    }
+    console.log(JSON.stringify(await probeAttachments(project, JSON.parse(roster))));
+    return;
+  }
+  const runningRelease = { id: releaseId(), root: releaseRoot, digest: releaseDigest(releaseRoot) };
   const metadata = join(project, '.project');
   mkdirSync(metadata, { recursive: true, mode: 0o700 });
   if (realpathSync(metadata) !== metadata) throw new Error('loomd metadata directory must be project-local');
@@ -71,18 +82,23 @@ export async function main(args, { pollInterval = 350, ...options } = {}) {
     ...options,
     sessionOptions: { ...options.sessionOptions, controller },
   });
-  let attached;
-  if (handoff) {
-    attached = await supervisor.reattach(handoff.sessions);
-    if (!values['handoff-recovery']) validateReattachment(handoff, { sessions: attached });
-  }
+  const recovering = Boolean(handoff && values['handoff-recovery']);
+  let ready = !handoff || recovering;
+  let attached, attachmentError;
   let lastPollError;
   let chain = Promise.resolve();
   let closing;
   let timer;
   let switching = false;
+  let activated = !handoff;
   function canDispatch() {
-    return !closing && !switching && (!handoff || activeRelease(project)?.upgradeId === handoff.id);
+    if (!ready || closing || switching) return false;
+    if (activated) return true;
+    const state = upgradeState(project);
+    if (state?.id !== handoff.id || state.pid !== process.pid) return false;
+    activated = recovering ? state.phase === 'failed' :
+      state.phase === 'committed' && activeRelease(project)?.upgradeId === handoff.id;
+    return activated;
   }
   function serial(task) {
     const result = chain.then(task);
@@ -113,13 +129,13 @@ export async function main(args, { pollInterval = 350, ...options } = {}) {
         if (command === 'daemon-status' || command === 'daemon-stop') {
           result = { running: !closing && command === 'daemon-status', pid: process.pid,
             relay: closing ? 'stopping' : lastPollError ? 'degraded' : 'integrated',
-            protocol: daemonProtocol, release: runningRelease,
-            ...(handoff && { handoff: handoff.id, ready: true, sessions: attached }) };
+            protocol: daemonProtocol, release: runningRelease, attachmentCheck: true,
+            ...(handoff && { handoff: handoff.id, ready, sessions: attached, attachmentError }) };
         } else if (command === 'hello') {
           result = { protocol: daemonProtocol, incarnation: controller.id, generation: controller.generation };
         } else if (command === 'upgrade-status') {
           result = { active: { ...activeRelease(project)?.current, ...runningRelease },
-            upgrade: upgradeState(project), sessions: await serial(supervisor.upgradeSessions) };
+            upgrade: upgradeState(project), sessions: canDispatch() ? await serial(supervisor.upgradeSessions) : attached ?? [] };
         } else if (command === 'upgrade-holder') {
           result = await serial(() => {
             if (!canDispatch()) throw Object.assign(new Error('loomd is switching releases'), { code: 'not-ready' });
@@ -128,8 +144,10 @@ export async function main(args, { pollInterval = 350, ...options } = {}) {
         } else if (command === 'upgrade-plan' || command === 'upgrade-apply') {
           if (!canDispatch()) throw Object.assign(new Error('loomd is switching releases'), { code: 'not-ready' });
           const plan = await planUpgrade(project, args, runningRelease, () => serial(supervisor.upgradeSessions));
-          if (command === 'upgrade-plan') result = { ...plan, eligible: !plan.blockers.length };
-          else result = await serial(async () => {
+          if (command === 'upgrade-plan') {
+            const checked = await checkUpgradeAttachments(project, plan);
+            result = { ...checked, eligible: !checked.blockers.length };
+          } else result = await serial(async () => {
             if (!canDispatch()) throw Object.assign(new Error('loomd is switching releases'), { code: 'not-ready' });
             // Capture sessions started while the target was being verified.
             plan.sessions = await supervisor.upgradeSessions();
@@ -167,6 +185,17 @@ export async function main(args, { pollInterval = 350, ...options } = {}) {
   });
   chmodSync(path, 0o600);
 
+  async function verifyAttachments() {
+    try {
+      attached = await supervisor.reattach(handoff.sessions);
+      validateReattachment(handoff, { sessions: attached });
+      ready = true;
+    } catch (error) {
+      attachmentError = error.message;
+      console.error(attachmentError);
+    }
+  }
+
   let polling = false;
   let handoffCheckAt = 0;
   function poll() {
@@ -186,4 +215,5 @@ export async function main(args, { pollInterval = 350, ...options } = {}) {
   }
   timer = setInterval(poll, pollInterval);
   poll();
+  if (handoff && !recovering) await verifyAttachments();
 }

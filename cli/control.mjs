@@ -29,7 +29,7 @@ function sawExit(pid) {
   catch (error) { if (error.code === 'ESRCH') return true; throw error; }
 }
 
-async function start(project) {
+export async function startDaemon(project, fallback) {
   const current = await status(project);
   if (current.running) return current;
   const metadata = join(project, '.project');
@@ -39,7 +39,7 @@ async function start(project) {
   const log = openSync(logFile, constants.O_WRONLY | constants.O_CREAT | constants.O_APPEND | constants.O_NOFOLLOW, 0o600);
   let child;
   try {
-    const active = activeRelease(project)?.current;
+    const active = activeRelease(project)?.current ?? fallback;
     child = spawn(process.execPath, [active ? join(active.root, 'bin', 'loomd') : executable, '--project', project], {
       cwd: project, detached: true, stdio: ['ignore', log, log],
       ...(active && { env: { ...process.env, LOOM_RELEASE_ID: active.id } }),
@@ -108,7 +108,7 @@ export async function control(command, args) {
     await (await import(entry)).main(['--project', project]);
     return;
   }
-  if (action === 'start') return { ...await start(project), ...projectReceipt(project) };
+  if (action === 'start') return { ...await startDaemon(project), ...projectReceipt(project) };
   let result;
   try { result = await request(project, 'daemon-stop'); }
   catch (error) { if (!daemonAbsent(error)) throw error; return { ok: true, running: false, ...projectReceipt(project) }; }

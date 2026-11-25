@@ -1,0 +1,15 @@
+# UPGRADE-FAIL-1 — a failed loomd upgrade left the project with NO loomd (critical)
+
+Base: main @ fbd5a9e8 (PILOT2-FIX-2 + HOTSWAP-4 merged). Do not commit.
+Live incident (pilot-2, /Users/sun/Code/loom-pilot2, read-only): `loom upgrade --project … --to ~/.loom-cell/releases/fbd5a9e8` from active release 9603c9c1 returned `failed: Timed out waiting for loomd to verify session attachments`. Afterwards **no loomd was running at all** (`daemon status` running:false from both releases); `release.json` still pointed at 9603c9c1; TUI panes (Claude Auditor t3fj, agy Leader t3fn, v3 holder) and detached headless hosts survived. Super restarted loomd from 9603c9c1 manually (`loom daemon start`); sessions reattached. Evidence: /Users/sun/Code/loom-pilot2/.project/loomd/{upgrade.json,upgrade.log,upgrade-*.owner.json,sessions/,hosts/} and .project/loomd.log (copies of upgrade.json/log also in /Users/sun/Code/exp-relay/pilot2-held/).
+Sessions at the time: v3 TUI ×2 (one Auditor from release 22b96cca era, one Leader spawned on 9603c9c1), many OAR v1 headless worker hosts (some ended, two W4 workers streaming).
+
+Required:
+1. Root cause of the attachment-verification timeout for 9603c9c1 → fbd5a9e8 (which session kind failed to verify? HOTSWAP-4 changed host protocol lists / codex default host protocol 3 — legacy OAR v1 hosts or v3 TUI holders from older holder digests?). Fix.
+2. **The failure path must always leave a running loomd**: on any upgrade failure after the old loomd released the writer lock, the old release must resume (or the launcher must restart it) — never zero daemons. Add the exact regression: candidate that cannot verify attachments → old loomd serving again, sessions reattached, inbox continues, `upgrade.json` phase `failed` with reason.
+3. Also check `loom upgrade --check` would have caught it (preflight should simulate attachment verification against current sessions) — add that if feasible.
+4. Live repro in an isolated project with mixed sessions (v3 TUI Claude+agy, OAR v1 Codex headless, finished hosts), absolute binaries, local mocks. Then Super will retry the pilot upgrade.
+RESULT.md Chinese, `STATUS: done`. Red lines as before (do not touch pilot panes; read pilot files only).
+
+## Addendum (Super) — false `corrupted` from the new receipt-integrity check
+Pilot-2 delivery db8b48bc (137 chars, Leader reply → Auditor Claude) was marked `corrupted / payload-mismatch`, but the native Claude record (/Users/sun/.claude/projects/-Users-sun-Code-loom-pilot2/*16a4a6b64b32.jsonl, the user line containing db8b48bc) holds the identical text: `"\n\n<pasted_content id=\"4228\">\n[loom:db8b…]\n<text>\n</pasted_content id=\"4228\">\n"`. Leading blank lines before the wrapper (and/or the marker line inside it) appear to defeat inbox/message.mjs wrapper stripping (line ~29 `^<pasted_content…` vs line ~10). Fix with a regression built from this exact string; a false `corrupted` must never be emitted for a byte-identical body. Also re-check the earlier 64e3ea10 verdict stays `corrupted` (it really was truncated).

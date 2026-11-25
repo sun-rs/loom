@@ -118,6 +118,31 @@ test('a native Claude v3 marker with incomplete user text corrects a prior deliv
   assert.deepEqual(f.lookup(id), changed);
 });
 
+test('Claude wrapper from db8b48bc preserves the final payload newline and corrects the old verdict', async t => {
+  const capture = JSON.parse(readFileSync(new URL('../tasks/UPGRADE-FAIL-1/claude-receipt.json', import.meta.url)));
+  const { id, expected: text, observed: prompt, expectedDigest, legacyDigest } = capture;
+  assert.equal(payloadDigest(text), expectedDigest);
+  const target = { addr: 't9', backend: 'tui', provider: 'claude', tui: { transport: 'holder-v3' } };
+  const at = 2000, sessionId = 'native', turnId = 'turn';
+  const events = [{ hook_event_name: 'UserPromptSubmit', session_id: sessionId, turn_id: turnId, receivedAt: at, prompt }];
+  const book = new Map([[id, { digest: expectedDigest, confirmation: { at, sessionId, turnId, count: 1, digests: [legacyDigest] } }]]);
+  const observation = { state: 'idle', provider: 'claude', tui: target.tui, book, terminal: { address: target.addr }, events };
+  const stored = { id, target, text, payloadDigest: expectedDigest, createdAt: 900, attemptAt: 1000,
+    mode: 'queue', requestedMode: 'queue' };
+  for (const phase of ['sending', 'corrupted']) {
+    const f = fixture(t);
+    const store = inbox(f.root, { nativeDelivery, inspect: async () => observation, send: () => assert.fail('No re-submission') });
+    store.enqueue({ ...stored, phase, ...(phase === 'corrupted' && { issue: 'payload-mismatch',
+      corruption: { at, sessionId, turnId, expected: expectedDigest, observed: legacyDigest } }) });
+    await store.step();
+    const verified = f.lookup(id);
+    assert.equal(verified.phase, 'received');
+    assert.equal(verified.payloadVerified, true);
+    assert.equal(verified.corruption, undefined);
+    assert.equal(verified.issue, undefined);
+  }
+});
+
 test('one agy step can corrupt its first delivery and confirm its complete, independently reserved suffix', async t => {
   const f = fixture(t);
   const { parked } = JSON.parse(readFileSync(new URL('../tasks/PILOT2-FIX-2/agy-receipts.json', import.meta.url)));

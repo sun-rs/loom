@@ -66,12 +66,12 @@ export const providers = {
       }
       if (row.tool_name && row.hook_event_name === 'PermissionRequest') return activity('permission');
     },
-    transcriptRow(row) {
+    transcriptRow(row, expectedPayload) {
       if (row.type === 'user' && !row.isMeta && !row.isCompactSummary && !row.isVisibleInTranscriptOnly) {
         const message = content(row.message?.content);
         if (row.interruptedMessageId || /^\[Request interrupted by user/.test(message ?? '')) return activity('idle', { interrupted: true });
         const id = deliveryId(message);
-        if (id) return { ...input(message, row.uuid), payloadDigest: claudeNativeDigest(message, id), phase: 'busy' };
+        if (id) return { ...input(message, row.uuid), payloadDigest: claudeNativeDigest(message, id, expectedPayload?.(id)), phase: 'busy' };
       }
       if (row.type === 'assistant' && row.isApiErrorMessage) {
         const { failure } = stopFailure({ error: row.apiError ?? row.error, error_details: content(row.message?.content) });
@@ -165,7 +165,7 @@ export const providers = {
   },
 };
 
-export function hookObservation(provider, row) {
+export function hookObservation(provider, row, expectedPayload) {
   if (row.agent_id || row.isSidechain) return;
   const native = provider.hooks.normalize(row);
   const detail = provider.hook(row);
@@ -179,7 +179,7 @@ export function hookObservation(provider, row) {
     ...detail,
     interrupted: detail?.interrupted ?? interrupted,
     inputId,
-    ...(inputId && provider.id === 'claude' && { payloadDigest: claudeNativeDigest(row.prompt, inputId) }),
+    ...(inputId && provider.id === 'claude' && { payloadDigest: claudeNativeDigest(row.prompt, inputId, expectedPayload?.(inputId)) }),
     key: row.turn_id ?? row.prompt_id ?? row.initialNumSteps,
     turnId: row.turn_id ?? row.prompt_id ?? (row.executionNum == null ? undefined : String(row.executionNum)),
     sessionId: native?.sessionId ?? row.session_id ?? row.conversationId,

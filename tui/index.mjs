@@ -279,6 +279,7 @@ export function bindTuiSession(terminal, provider, {
     const entry = requests.get(id);
     const observed = native.confirmations(id);
     if (entry && (observed.count > (entry.confirmation?.count ?? 0) ||
+        observed.digestVersion && observed.digestVersion !== entry.confirmation?.digestVersion ||
         observed.digests?.some(digest => !entry.confirmation?.digests?.includes(digest)))) {
       put(id, { ...entry, confirmation: observed });
     }

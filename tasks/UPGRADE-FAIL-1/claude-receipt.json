@@ -1,0 +1,7 @@
+{
+  "id": "db8b48bc-69f6-4823-9c62-ff6bd387556e",
+  "expected": "Loom reply from loom-8d74a63c-6478-4a08-808c-c44d245a3fb5 (dbef294e-cef4-41d6-b7c2-7af804fd6193)\n\n收到，后续同类误报只回“误报”。继续等待 `T8` 与 `T9` 完成推送。\n",
+  "observed": "\n\n<pasted_content id=\"4228\">\n[loom:db8b48bc-69f6-4823-9c62-ff6bd387556e]\nLoom reply from loom-8d74a63c-6478-4a08-808c-c44d245a3fb5 (dbef294e-cef4-41d6-b7c2-7af804fd6193)\n\n收到，后续同类误报只回“误报”。继续等待 `T8` 与 `T9` 完成推送。\n</pasted_content id=\"4228\">\n",
+  "expectedDigest": "dd7efa47ec6ae4887a6745c19116eb080d7dedaabb8cf53f62e7f10a57bbc1ee",
+  "legacyDigest": "64985b37ab8812243ad018d6b7b19a19f123a8523bbbb2e87900c86529d64173"
+}

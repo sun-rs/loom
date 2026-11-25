@@ -60,8 +60,10 @@ export function inbox(project, transport, report = console.error) {
   const store = openStore(project);
   const { messages, save } = store;
   const integrityScanned = new Set();
-  const needsIntegrity = message => checksDeliveryIntegrity(message.target) && isDone(message) && !message.payloadVerified &&
-    !integrityScanned.has(message.id);
+  const legacyCorruption = message => message.target.provider === 'claude' &&
+    message.phase === 'corrupted' && message.corruption && !message.corruption.digestVersion;
+  const needsIntegrity = message => checksDeliveryIntegrity(message.target) && !integrityScanned.has(message.id) &&
+    (legacyCorruption(message) || isDone(message) && !message.payloadVerified);
   const recovering = messages.filter(message =>
     (message.phase === 'sending' && !message.typedAt || message.phase === 'stopping' && !message.stopKeySent) && !message.issue);
   for (const message of recovering) message.issue = message.phase === 'sending' ? 'uncertain' : 'uncertain-stop';
@@ -84,10 +86,17 @@ export function inbox(project, transport, report = console.error) {
 
   function reconcile(message, observation) {
     const complete = Boolean(message.completion?.body || message.completion?.noReply);
-    if (!message.attemptAt || message.phase === 'corrupted' || complete && !needsIntegrity(message)) return;
+    const corrective = legacyCorruption(message);
+    if (!message.attemptAt || (message.phase === 'corrupted' || complete) && !needsIntegrity(message)) return;
     const native = transport.nativeDelivery(message, observation);
     if (complete) integrityScanned.add(message.id);
     if (!native) return;
+    if (corrective) {
+      integrityScanned.add(message.id);
+      const { at, sessionId, turnId } = message.corruption;
+      if (!native.payloadVerified || native.at !== at || native.sessionId !== sessionId || native.turnId !== turnId) return;
+      delete message.corruption;
+    }
     if (native.corrupted) {
       message.corruption = { ...native.corrupted, at: native.at, sessionId: native.sessionId, turnId: native.turnId };
       message.phase = 'corrupted';
@@ -99,7 +108,7 @@ export function inbox(project, transport, report = console.error) {
     }
     if (native.payloadVerified && !message.payloadVerified) {
       message.payloadVerified = true;
-      save();
+      if (isDone(message)) save();
     }
     if (complete) return;
     if (native.dropped) {
@@ -459,8 +468,8 @@ export function inbox(project, transport, report = console.error) {
     if (changed) save();
     const groups = () => Map.groupBy(messages, ({ target }) => JSON.stringify([target.addr, target.createdAt, target.pid]));
     const active = [...groups()].filter(([, group]) =>
-      group.some(message => !rejected(message) && (needsIntegrity(message) ||
-        !isDone(message) || !(message.completion?.body || message.completion?.noReply))));
+      group.some(message => needsIntegrity(message) || !rejected(message) &&
+        (!isDone(message) || !(message.completion?.body || message.completion?.noReply))));
     if (beforeDispatch) {
       const known = new Set(messages.map(message => message.id));
       const observed = new Map(await Promise.all(active.map(async ([key, group]) => [key, await observeTarget(group)])));

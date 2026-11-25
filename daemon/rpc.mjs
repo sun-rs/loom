@@ -5,13 +5,12 @@ import { CommandError } from '../cli/sessions.mjs';
 export const maxLine = 1024 * 1024;
 export const daemonAbsent = error => ['ENOENT', 'ECONNREFUSED'].includes(error.code);
 
-export async function request(project, command, args = {}) {
+export async function request(project, command, args = {}, { timeout = ['spawn', 'switch'].includes(command) ? 180_000 :
+  ['upgrade-plan', 'upgrade-apply'].includes(command) ? 60_000 : 30_000 } = {}) {
   return new Promise((resolve, reject) => {
     const socket = createConnection(socketPath(project));
     let body = '';
     socket.setEncoding('utf8');
-    const timeout = ['spawn', 'switch'].includes(command) ? 180_000 :
-      ['upgrade-plan', 'upgrade-apply'].includes(command) ? 60_000 : 30_000;
     socket.setTimeout(timeout);
     socket.once('connect', () => socket.write(JSON.stringify({
       command, args, caller: callerAddress(), protocol: 1,

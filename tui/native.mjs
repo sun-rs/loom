@@ -1,7 +1,7 @@
 import { realpath } from 'node:fs/promises';
 import { basename, dirname, extname, isAbsolute, join, relative, sep } from 'node:path';
 import { jsonlTail } from '../runtimes/tui/read-jsonl.mjs';
-import { agyDeliveryParts } from '../inbox/message.mjs';
+import { agyDeliveryParts, claudeDigestVersion } from '../inbox/message.mjs';
 import { hookObservation } from './providers.mjs';
 
 function inside(root, path) {
@@ -31,7 +31,7 @@ export function nativeState(provider, { hookSink, evidenceRoot, cwd, sessionId, 
   async function hooks() {
     const observations = [];
     for (const row of await readHook(hookSink)) {
-      const event = hookObservation(provider, row);
+      const event = hookObservation(provider, row, expectedPayload);
       if (!event?.sessionId || row.cwd !== cwd || resumedAt !== undefined && !(row.receivedAt >= resumedAt)) continue;
       if (sessionId && event.sessionId !== sessionId) {
         sessionChanged = true;
@@ -109,7 +109,7 @@ export function nativeState(provider, { hookSink, evidenceRoot, cwd, sessionId, 
         if (row.isSidechain || row.parent_tool_use_id || row.parentToolUseId ||
             row.sessionId && row.sessionId !== sessionId ||
             resumedAt !== undefined && !(Date.parse(row.timestamp ?? row.created_at) >= resumedAt)) continue;
-        const event = provider.transcriptRow(row);
+        const event = provider.transcriptRow(row, expectedPayload);
         if (!event) continue;
         const { userText, ...fields } = event;
         const observedAt = at(row);
@@ -140,7 +140,8 @@ export function nativeState(provider, { hookSink, evidenceRoot, cwd, sessionId, 
       const digests = [...new Set([...hook, ...transcript].map(event => event.payloadDigest).filter(Boolean))];
       return {
         count, hook: hook.length, transcript: transcript.length,
-        ...(digests.length && { digests }),
+        ...(digests.length && { digests,
+          ...(provider.id === 'claude' && expectedPayload?.(id) && { digestVersion: claudeDigestVersion }) }),
         ...(anchor && { source: anchor.source, at: anchor.observedAt, sessionId: anchor.sessionId, turnId: anchor.turnId }),
       };
     },

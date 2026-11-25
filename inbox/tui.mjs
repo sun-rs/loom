@@ -9,7 +9,7 @@ import codex from '../adapters/codex/index.mjs';
 import { parseCodexTranscriptLine } from '../adapters/codex/transcript.mjs';
 import opencode from '../adapters/opencode/index.mjs';
 import { boundTranscript, finalFromStop, terminalEvents, withClaudeTranscriptStops } from '../relay/sources.mjs';
-import { agyDeliveryParts, checksDeliveryIntegrity, claudeNativeDigest, deliveryId, payloadDigest } from './message.mjs';
+import { agyDeliveryParts, checksDeliveryIntegrity, claudeDigestVersion, claudeNativeDigest, deliveryId, payloadDigest } from './message.mjs';
 import { controlTui } from '../runtimes/tui/transport.mjs';
 import { readRequestBook } from '../tui/request-book.mjs';
 
@@ -244,11 +244,14 @@ export function nativeDelivery(message, observation) {
   if (!result) return;
   if (integrity) {
     const expected = message.payloadDigest ?? entry?.digest ?? payloadDigest(message.text);
-    const known = [provider === 'claude' && claudeNativeDigest(anchor?.prompt, message.id),
-      agyRecord?.at >= message.attemptAt && agyRecord.digest,
-      ...(confirmation?.at >= message.attemptAt ? confirmation.digests ?? [] : [])].filter(Boolean);
+    const recorded = confirmation?.at >= message.attemptAt ? confirmation.digests ?? [] : [];
+    const hookDigest = provider === 'claude' && claudeNativeDigest(anchor?.prompt, message.id, expected);
+    const known = (provider === 'claude' ? [hookDigest,
+      ...recorded.filter(digest => confirmation.digestVersion === claudeDigestVersion || digest === expected)] :
+      [agyRecord?.at >= message.attemptAt && agyRecord.digest, ...recorded]).filter(Boolean);
     const mismatch = known.find(value => value !== expected);
-    if (mismatch) return { ...result, corrupted: { expected, observed: mismatch } };
+    if (mismatch) return { ...result, corrupted: { expected, observed: mismatch,
+      ...(provider === 'claude' && { digestVersion: claudeDigestVersion }) } };
     if (!known.length) return;
     result.payloadVerified = true;
   }

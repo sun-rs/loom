@@ -35,7 +35,7 @@ export async function selfCheck() {
   const holder = await checkHolder(releaseRoot, { pipes: true });
   return { root: releaseRoot, digest: releaseDigest(releaseRoot, { legacy: true }), releaseDigest: releaseDigest(releaseRoot),
     daemonProtocol, hostProtocol, hostProtocols: [...hostProtocols, 3], ptyProtocol: controlProtocol, ptyProtocols: [0, 1, 2, 3],
-    defaultTuiProtocol: 3, defaultCodexHostProtocol: 3, holderDigest: holder.digest, storageVersions, packages,
+    defaultTuiProtocol: 3, defaultCodexHostProtocol: 3, holderDigest: holder.digest, attachmentCheck: true, storageVersions, packages,
     platform: process.platform, arch: process.arch, node: process.versions.node };
 }
 
@@ -76,8 +76,8 @@ export function liveHandoff(project, id) {
 }
 
 async function projectStatus(project) {
-  try { return await request(project, 'daemon-status'); }
-  catch (error) { if (!daemonAbsent(error)) throw error; }
+  try { return await request(project, 'daemon-status', {}, { timeout: 1250 }); }
+  catch (error) { if (!daemonAbsent(error) && !['uncertain', 'ECONNRESET', 'EPIPE'].includes(error.code)) throw error; }
 }
 
 function launch(project, entry, args, env = process.env) {
@@ -125,11 +125,34 @@ function blockersFor(sessions, target) {
     session.protocol != null && !(session.backend === 'headless' ? target.hostProtocols : target.ptyProtocols)?.includes(session.protocol));
 }
 
+export async function checkUpgradeAttachments(project, plan) {
+  if (plan.blockers.length || !plan.target.attachmentCheck) {
+    return { ...plan, attachmentCheck: plan.blockers.length ? 'blocked' : 'unsupported' };
+  }
+  try {
+    const checkpoint = exec(process.execPath, [join(plan.target.root, 'bin/loomd'), '--project', project, '--check-attachments'],
+      { cwd: project, timeout: 40_000, maxBuffer: 1024 * 1024 });
+    checkpoint.child.stdin.on('error', () => {}); // The subprocess can exit before accepting input.
+    checkpoint.child.stdin.end(JSON.stringify(plan.sessions));
+    const { stdout } = await checkpoint;
+    const blockers = attachmentFailures(plan.sessions, JSON.parse(stdout));
+    return { ...plan, attachmentCheck: 'checked', blockers };
+  } catch (error) {
+    return { ...plan, attachmentCheck: 'failed', blockers: [{ status: 'unavailable',
+      reason: error.killed ? 'Candidate attachment check timed out' : `Candidate attachment check failed: ${error.stderr?.trim() || error.message}` }] };
+  }
+}
+
 export async function beginUpgrade(project, plan) {
-  if (blockersFor(plan.sessions, plan.target).length) throw new CommandError('not-ready', 'Some sessions could not be verified. Run loom upgrade --check for details.');
+  plan = await checkUpgradeAttachments(project, { ...plan, blockers: blockersFor(plan.sessions, plan.target) });
+  if (plan.blockers.length) throw new CommandError('not-ready', 'Some sessions could not be verified. Run loom upgrade --check for details.');
   const prior = upgradeState(project);
-  if (prior?.phase === 'switching') throw new CommandError('not-ready', 'An upgrade is already switching');
-  const state = { id: randomUUID(), phase: 'switching', startedAt: Date.now(), predecessorPid: process.pid, ...plan };
+  if (prior?.phase === 'switching' || prior?.recoveryPending && liveHandoff(project, prior.id)) {
+    throw new CommandError('not-ready', 'An upgrade is already switching');
+  }
+  const predecessor = processTable().get(process.pid);
+  if (!predecessor) throw new Error('Previous loomd identity unavailable');
+  const state = { id: randomUUID(), phase: 'switching', startedAt: Date.now(), predecessorPid: process.pid, predecessor, ...plan };
   const path = upgradeFile(project);
   writeState(path, JSON.stringify(state));
   try {
@@ -171,17 +194,27 @@ export function validateHandoff(project, id, recovery) {
   return state;
 }
 
-export function validateReattachment(plan, result) {
-  for (const live of result.sessions) {
+function attachmentFailures(expected, sessions) {
+  const before = new Map(expected.map(session => [session.addr, session]));
+  const observed = new Set(sessions.map(session => session.addr));
+  const failures = expected.filter(session => !observed.has(session.addr)).map(session =>
+    ({ ...session, status: 'unavailable', reason: 'Session missing from attachment check' }));
+  for (const live of sessions) {
     if (live.status === 'ended') continue;
-    const before = plan.sessions.find(session => session.addr === live.addr);
-    if (live.status !== 'attached' || before && (live.pid !== before.pid ||
-        live.incarnation !== before.incarnation || before.sessionId && live.sessionId !== before.sessionId ||
-        live.streamId !== before.streamId || before.protocol === 3 && (live.protocol !== 3 || live.pane !== before.pane ||
-          live.paneCreatedAt !== before.paneCreatedAt || live.childPid !== before.childPid))) {
-      throw new Error(`Session ${live.addr} could not reattach: ${live.reason ?? 'identity changed'}`);
+    const prior = before.get(live.addr);
+    if (live.status !== 'attached' || prior && (live.backend !== prior.backend || live.protocol !== prior.protocol ||
+        live.pid !== prior.pid || live.incarnation !== prior.incarnation || prior.sessionId && live.sessionId !== prior.sessionId ||
+        live.streamId !== prior.streamId || prior.protocol === 3 && (live.pane !== prior.pane ||
+          live.paneCreatedAt !== prior.paneCreatedAt || live.childPid !== prior.childPid))) {
+      failures.push({ ...live, status: 'unavailable', reason: live.reason ?? 'identity changed' });
     }
   }
+  return failures;
+}
+
+export function validateReattachment(plan, result) {
+  const [failure] = attachmentFailures(plan.sessions, result.sessions);
+  if (failure) throw new Error(`Session ${failure.addr} could not reattach: ${failure.reason}`);
 }
 
 async function handoff(project, id) {
@@ -202,28 +235,38 @@ async function handoff(project, id) {
     } while (Date.now() < deadline);
     throw new Error(description);
   }
-  async function start(build, recovery) {
+  const exited = child => child.exitCode !== null || child.signalCode !== null;
+  async function terminate(child) {
+    if (!child || exited(child)) return;
+    child.kill('SIGKILL');
+    await waitFor(() => exited(child), 'Failed loomd did not exit');
+  }
+  async function start(build, mode) {
+    const handoff = mode !== 'restart';
     const child = await launch(project, join(build.root, 'bin/loomd'),
-      ['--project', project, '--handoff', id, ...(recovery ? ['--handoff-recovery'] : [])],
+      ['--project', project, ...(handoff ? ['--handoff', id] : []), ...(mode === 'recovery' ? ['--handoff-recovery'] : [])],
       { ...process.env, LOOM_RELEASE_ID: build.id });
     try {
-      return await waitFor(async () => {
-        if (child.exitCode !== null || child.signalCode) throw new Error(`loomd exited during ${recovery ? 'recovery' : 'handoff'}`);
+      const daemon = await waitFor(async () => {
+        if (exited(child)) throw new Error(`loomd exited during ${mode}`);
         const daemon = await projectStatus(project);
-        if (daemon?.pid === child.pid && daemon.handoff === id && daemon.ready) return daemon;
-      }, 'Timed out waiting for loomd to verify session attachments');
+        if (daemon?.pid !== child.pid || daemon.release?.root !== build.root || !daemon.running) return;
+        if (!handoff) return daemon;
+        if (daemon.handoff !== id) throw new Error('loomd reported a different handoff');
+        if (daemon.attachmentError) throw new Error(daemon.attachmentError);
+        if (daemon.ready) return daemon;
+      }, mode === 'handoff' ? 'Timed out waiting for loomd to verify session attachments' :
+        'Timed out waiting for the previous loomd to serve');
+      return { child, daemon };
     } catch (error) {
-      if (child.exitCode === null && !child.signalCode) {
-        child.kill('SIGKILL');
-        await waitFor(() => child.exitCode !== null || child.signalCode, 'Failed candidate did not exit');
-      }
+      await terminate(child);
       throw error;
     }
   }
   try {
     await waitFor(async () => {
       if (upgradeState(project)?.phase !== 'switching') throw new Error('Upgrade launcher no longer owns the handoff');
-      // The previous daemon releases the project writer lock immediately before exit.
+      if (state.predecessor) return !sameProcess(state.predecessor, processTable().get(state.predecessorPid));
       try { process.kill(state.predecessorPid, 0); }
       catch (error) { if (error.code === 'ESRCH') return true; throw error; }
     }, 'Previous loomd did not release the project');
@@ -231,17 +274,30 @@ async function handoff(project, id) {
     if (upgradeState(project)?.phase === 'switching') save('failed', { error: error.message });
     return;
   }
+  let candidate;
   try {
-    const result = await start(state.target, false);
+    candidate = await start(state.target, 'handoff');
     writeState(activeReleaseFile(project), JSON.stringify({ current: state.target, previous: state.current, upgradeId: id }));
-    save('committed', { pid: result.pid, sessions: result.sessions });
+    save('committed', { pid: candidate.daemon.pid, sessions: candidate.daemon.sessions });
   } catch (error) {
+    await terminate(candidate?.child);
+    if (activeRelease(project)?.upgradeId === id) writeState(activeReleaseFile(project), JSON.stringify(previousPointer));
+    let recovery;
     try {
-      const result = await start(state.current, true);
-      writeState(activeReleaseFile(project), JSON.stringify({ current: state.current, previous: previousPointer?.previous, upgradeId: id }));
-      save('recovered', { error: error.message, pid: result.pid, sessions: result.sessions });
-    } catch (recovery) {
-      save('failed', { error: error.message, recoveryError: recovery.message });
+      recovery = await start(state.current, 'recovery');
+      save('failed', { error: error.message, pid: recovery.daemon.pid, recovered: true });
+    } catch (failure) {
+      await terminate(recovery?.child);
+      const extra = { error: error.message, recoveryError: failure.message };
+      // Normal startup binds the control socket without waiting for the
+      // attachment pass. It is also usable by a retained older release.
+      save('failed', { ...extra, recoveryPending: true });
+      try {
+        const { daemon } = await start(state.current, 'restart');
+        save('failed', { ...extra, pid: daemon.pid, recovered: true });
+      } catch (restart) {
+        save('failed', { ...extra, recoveryError: `${failure.message}; restart: ${restart.message}` });
+      }
     }
   }
 }
