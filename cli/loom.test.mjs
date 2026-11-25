@@ -120,7 +120,7 @@ test('classifies hc read JSON and reports the headless stub, exits and read erro
   assert.equal(f.run(1, 'hist', 't1', '--json').error.code, 'not-ready');
 });
 
-test('validates the policy example and rejects malformed capacity, cache and model guidance', t => {
+test('validates the policy example and rejects malformed capacity, drift, fast and model guidance', t => {
   const { cwd } = fixture(t);
   mkdirSync(join(cwd, '.project'));
   const path = join(cwd, '.project', 'policy.json');
@@ -132,10 +132,13 @@ test('validates the policy example and rejects malformed capacity, cache and mod
   assert.notEqual(select('auditor').cli, select('worker').cli);
 
   for (const invalid of [
-    { roles: { leader: { maxActiveWorkers: 6 } } },
+    { roles: { leader: { maxActiveWorkers: 5 } } },
     { roles: { leader: { maxActiveWorkers: 2.5 } } },
     { roles: { worker: { maxActiveWorkers: 3 } } },
-    { keepAlive: 'false' },
+    { drift: { slowCommandFactor: 1 } },
+    { delivery: { coalesceMs: -1 } },
+    { roles: { reviewer: { maxDurationMs: 0 } } },
+    { roles: { worker: { preferred: [{ cli: 'codex', model: 'fixture', effort: 'high', fast: 'true' }] } } },
     { roles: { auditor: { guidance: { vendorFamily: 'same' } } } },
     { roles: { worker: { guidance: { routineEffort: ['xhigh'] } } } },
   ]) {
@@ -165,6 +168,7 @@ test('worker admission counts live sessions by parent and project across waves',
       const { args, caller } = JSON.parse(body);
       try {
         assert.equal(args.workerCaller, caller);
+        if (args.task === 'second') assert.deepEqual([args.deliver, args.barrier], ['barrier', 'W']);
         spawnProfile(cwd, args);
         const session = register(args.task, 'worker', { parent: 'lead', wave: args.wave });
         socket.end(JSON.stringify({ ok: true, session }));
@@ -187,17 +191,43 @@ test('worker admission counts live sessions by parent and project across waves',
       return JSON.parse(error.stdout);
     }
   }
-  assert.equal((await spawn('second', '--parent', 'lead')).ok, true);
+  assert.equal((await spawn('second', '--parent', 'lead', '--deliver', 'barrier', '--barrier', 'W')).ok, true);
   const attempts = await Promise.all([spawn('third'), spawn('fourth', '--parent', 'lead-pane')]);
   assert.equal(attempts.filter(result => result.ok).length, 1);
-  assert.match(attempts.find(result => !result.ok).error.message, /lead.*3 live workers \(limit 3\)/);
+  assert.match(attempts.find(result => !result.ok).error.message, /lead.*3 active workers \(limit 3\)/);
   index.update('initial', { endedAt: 2 });
   assert.equal((await spawn('replacement')).ok, true);
 
-  writeFileSync(policy, '{"roles":{"leader":{"maxActiveWorkers":5}}}');
+  writeFileSync(policy, '{"roles":{"leader":{"maxActiveWorkers":4}}}');
   assert.equal((await spawn('extra-one')).ok, true);
-  assert.equal((await spawn('extra-two')).ok, true);
+  assert.equal((await spawn('extra-two')).error.code, 'worker-capacity');
   assert.equal((await spawn('over-limit')).error.code, 'worker-capacity');
+});
+
+test('prints the project board while offline and sends an explicit switch profile to loomd', async t => {
+  const f = fixture(t);
+  mkdirSync(join(f.cwd, '.project', 'loomd'), { recursive: true });
+  projectIndex(f.cwd).register({ addr: 'lead', role: 'leader', project: f.cwd, backend: 'headless',
+    cli: 'codex', cwd: f.cwd });
+  const board = f.run(0, 'status', '--project', f.cwd, '--json');
+  assert.equal(board.running, false);
+  assert.equal(board.sessions[0].state, 'offline');
+  assert.deepEqual(board.notices, []);
+  assert.match(f.cli('status', '--project', f.cwd).stdout, /Roles.*leader codex offline.*\n.*Waves and cards/s);
+  const server = createServer(socket => {
+    socket.once('data', body => {
+      const { command, args } = JSON.parse(body);
+      socket.end(JSON.stringify({ ok: true, command, ...args }));
+    });
+  }).listen(socketPath(f.cwd));
+  t.after(() => new Promise(resolve => server.close(resolve)));
+  await once(server, 'listening');
+  const { stdout } = await promisify(execFile)(process.execPath, [executable, 'switch', 'worker',
+    '--project', f.cwd, '--to', 'codex/fixture/high/fast'], { env: f.env });
+  const receipt = JSON.parse(stdout);
+  assert.equal(receipt.command, 'switch');
+  assert.equal(receipt.role, 'worker');
+  assert.equal(receipt.to, 'codex/fixture/high/fast');
 });
 
 test('cost totals native usage and counts only calls after the passing result', t => {

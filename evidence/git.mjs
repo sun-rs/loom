@@ -10,7 +10,8 @@ const protectedFiles = [
   '**/memories*', '**/memories*/**', '**/auth.json', '**/credentials.json', '**/.credentials.json',
 ];
 const generated = ['**/.project/evidence/**', '**/.project/relay/**', '**/.project/replies/**', '**/.project/inbox/**',
-  '**/.project/loomd/**', '**/.project/index.sqlite*'];
+  '**/.project/loomd/**', '**/.project/index.sqlite*', '**/.project/workers.md', '**/.project/watch/**', '**/.project/pty/**',
+  '**/.project/loomd.log', '**/.project/loomd.sock', '**/.project/loomd.lock'];
 export const exclusions = [...protectedFiles, ...generated].map(glob => `:(exclude,glob)${glob}`);
 export const diffArgs = ['diff', '--no-ext-diff', '--no-textconv', '--no-color', '--no-relative', '--find-renames'];
 const testPaths = ['**/{test,tests,__tests__,spec,specs}/**', '**/*.{test,spec}.*',

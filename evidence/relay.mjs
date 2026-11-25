@@ -1,7 +1,7 @@
 import { realpath } from 'node:fs/promises';
 import { join } from 'node:path';
 import { forTurn, inside, localText, readTranscript } from './index.mjs';
-import { sandboxMode } from './transcript.mjs';
+import { collectVerification, executionEvidence, sandboxMode } from './transcript.mjs';
 import { readArtifacts, safeName } from '../cli/artifacts.mjs';
 import { turnTools } from '../lib/turn-tools.mjs';
 
@@ -42,7 +42,7 @@ async function relaySession(project, worker, input, oar, index) {
   return projected;
 }
 
-export async function captureRelayTurn(project, worker, reply, turn, input = {}, index) {
+export async function observeRelayTurn(project, worker, reply, input = {}, index) {
   const session = await relaySession(project, worker, input, reply.source === 'OAR turn-end', index);
   let cwd = input.cwd ?? session?.cwd ?? null;
   if (cwd) {
@@ -57,11 +57,20 @@ export async function captureRelayTurn(project, worker, reply, turn, input = {},
     if (reply.source === 'OAR turn-end') {
       const journal = artifacts.journal(worker.addr);
       const end = journal.find(row => row.type === 'turn-end' && row.at === reply.at &&
+        (input.streamId == null || row.streamId === input.streamId) &&
         (input.nativeTurnIndex == null || row.turn === input.nativeTurnIndex));
       if (end) {
         const rows = journal.filter(row => row.streamId === end.streamId && row.turnId === end.turnId).map(row => ({ row }));
+        const calls = Map.groupBy(rows.filter(({ row }) => row.callId != null), ({ row }) => row.callId);
+        const executions = executionEvidence([...calls.values()].flatMap(call => {
+          const start = call.find(({ row }) => row.type === 'tool_call_started')?.row;
+          const finish = call.findLast(({ row }) => row.type === 'tool_call_ended')?.row;
+          if (!finish) return [];
+          const durationMs = start && finish.at >= start.at ? finish.at - start.at : null;
+          return turnTools('opencode', {}, call).map(tool => ({ ...tool, durationMs }));
+        }));
         projected = { turnId: end.nativeTurnId ?? end.turnId, turnStatus: end.outcome?.kind, turnIndex: end.turn,
-          tools: turnTools(worker.provider, {}, rows) };
+          tools: turnTools('opencode', {}, rows), executions };
         gitObservation = end.git ?? gitObservation;
       }
     } else {
@@ -76,11 +85,21 @@ export async function captureRelayTurn(project, worker, reply, turn, input = {},
       transcript = await readTranscript(worker.provider, cwd, path);
     } catch { /* Preserve Git evidence when a bound transcript disappears or is unreadable. */ }
   }
-  return forTurn({
-    project, cwd, task: worker.id, turn, addr: worker.addr, provider: worker.provider,
+  return {
+    project, cwd, task: worker.id, addr: worker.addr, provider: worker.provider,
     baseCommit: session?.baseCommit, gitObservation, projected, transcript, endedAt: reply.at,
     finalReply: hasNativeReply ? reply.body : null, failed: reply.failed,
     nativeTurnId: input.nativeTurnId, nativeTurnIndex: input.nativeTurnIndex,
     sandboxed: launchSandbox(worker.provider, input.argv),
-  });
+  };
+}
+
+export const turnExecutions = observation => {
+  const native = collectVerification(observation).executions ?? [];
+  const projected = observation.projected?.executions ?? [];
+  return native.some(execution => Number.isFinite(execution.durationMs)) || !projected.length ? native : projected;
+};
+
+export async function captureRelayTurn(project, worker, reply, turn, input = {}, index) {
+  return forTurn({ ...await observeRelayTurn(project, worker, reply, input, index), turn, facts: input.facts });
 }

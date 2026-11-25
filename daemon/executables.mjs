@@ -2,6 +2,8 @@ import { accessSync, constants, readdirSync, realpathSync, statSync } from 'node
 import { homedir } from 'node:os';
 import { delimiter, isAbsolute, join } from 'node:path';
 
+export const codexFastArgs = fast => fast === undefined ? [] : ['-c', 'service_tier="' + (fast ? 'fast' : 'default') + '"'];
+
 function executable(path) {
   try {
     const resolved = realpathSync(path);

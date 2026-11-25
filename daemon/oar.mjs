@@ -6,7 +6,7 @@ import claude from '../adapters/claude/index.mjs';
 import codex from '../adapters/codex/index.mjs';
 import { deliveryId, wireText } from '../inbox/message.mjs';
 import { eventPath, jsonRows, prepareJournal } from './io.mjs';
-import { nativeClaude } from './executables.mjs';
+import { codexFastArgs, nativeClaude } from './executables.mjs';
 import { finishHead, headAt } from './turn-heads.mjs';
 import { codexEnvironmentArgs } from '../cli/project.mjs';
 
@@ -36,7 +36,7 @@ export async function openOar(row, project, resume) {
   const env = { HC_TERMINAL_ID: null, LOOM_PROJECT: project, LOOM_ADDR: row.addr };
   let launchArgs;
   if (row.cli === 'codex') {
-    launchArgs = ['-c', 'features.memories=false', '-c', 'sandbox_mode="workspace-write"',
+    launchArgs = ['-c', 'features.memories=false', '-c', 'sandbox_mode="workspace-write"', ...codexFastArgs(row.fast),
       '-c', 'check_for_update_on_startup=false', ...codexEnvironmentArgs(project, row.addr), '-c', `projects.${JSON.stringify(row.cwd)}.trust_level="trusted"`];
     if (process.env.CODEX_HOME && /(?:provider-homes|(?:^|\/)memories|(?:^|\/)\.env)/.test(process.env.CODEX_HOME)) {
       throw new Error('Unsupported CODEX_HOME for loom');
@@ -47,6 +47,7 @@ export async function openOar(row, project, resume) {
   } else if (row.cli === 'claude') {
     Object.assign(env, { OAR_CLAUDE_BIN: nativeClaude(), CLAUDE_CODE_ENTRYPOINT: 'loom', DISABLE_AUTOUPDATER: '1' });
     launchArgs = ['--setting-sources', '', '--strict-mcp-config'];
+    if (row.fast !== undefined) launchArgs.push('--settings', JSON.stringify({ fastMode: row.fast }));
   }
   const installation = await runtime.installation({ env });
   if (installation.kind !== 'available') throw new Error(`${row.cli} unavailable: ${installation.reason ?? installation.kind}`);

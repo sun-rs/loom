@@ -35,7 +35,8 @@ test('registers all roles and queries persisted metadata for evidence and handov
   assert.equal(index.update(successor.addr, { sessionId: 'next', endedAt: 110 }).endedAt, 110);
 
   const reopened = openIndex(path);
-  assert.equal(reopened.query({ project: 'P' }).length, 5);
+  assert.deepEqual(reopened.query({ project: 'P' }).map(row => row.addr).sort(),
+    ['t-auditor', 't-leader', 't-next', 't-reviewer', 't-super', 't-worker']);
   assert.equal(reopened.query({ project: 'Q' }).length, 0);
   const [row] = reopened.query({ project: 'P', parent: 't-leader', runtimeId: 'antigravity' });
   assert.equal(row.cli, 'agy');

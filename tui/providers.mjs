@@ -41,6 +41,7 @@ export const providers = {
       });
       const index = argv.indexOf('--settings') + 1;
       const settings = JSON.parse(argv[index]);
+      if (options.fast !== undefined) settings.fastMode = options.fast;
       const observer = { ...settings.hooks.Stop[0].hooks[0], args: [capture, options.hookSink, sessionId, options.cwd] };
       for (const entries of Object.values(settings.hooks)) for (const entry of entries) entry.hooks = [observer];
       for (const event of ['SessionStart', 'SessionEnd', 'PreCompact', 'PostCompact']) {

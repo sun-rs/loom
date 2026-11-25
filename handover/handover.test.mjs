@@ -43,12 +43,48 @@ test('all unavailable components degrade independently, including the index and 
   assert.equal(output.addr, null);
   assert.match(output.brief, /^# super · P/);
   for (const title of headings) assert.match(output.brief, new RegExp(`## ${title}\n不可用`));
+  assert.match(output.brief, /## 项目章程\n\.project\/charter\.md · 缺失/);
+  assert.match(output.brief, /## 裁决账本\n\.project\/rulings\.md · 缺失/);
 
   await put(projectDir, '.project/workers.md', 'T8 | t8 | claude | dispatched | | wave=W8\n');
   await put(projectDir, '.project/relay/state.json', '{truncated');
   const known = await generateBrief({ role: 'super', project: 'P', projectDir, index });
   assert.match(known.brief, /## 在途 worker\nT8 t8 dispatched W8/);
   assert.match(known.brief, /## relay 波次\n不可用/);
+});
+
+test('projects charter topics and verbatim numbered rulings relevant to the current task or cited by the role', async t => {
+  const projectDir = await workspace(t);
+  await put(projectDir, '.project/charter.md', [
+    '# 项目章程', '## 目标', '- 交付工单队列', '## 非目标', '- 历史迁移',
+    '## 红线', '- 生产数据只读', '## 验收要点', '- 对比两次回执',
+  ].join('\n'));
+  await put(projectDir, '.project/workers.md', 'ACTIVE-7 | t7 | codex | dispatched | | wave=W1\n');
+  await put(projectDir, '.project/inbox/state.json', {
+    messages: [{ id: 'latest', target: 't1', phase: 'queued', text: '沿用裁决 12' }],
+  });
+  await put(projectDir, '.project/rulings.md', [
+    '# 用户裁决账本', '## 11 · 上周', '> 无关的旧工单',
+    '## 12 · 周一', '- 来源原件', '> 重新读原件。',
+    '## 13 · 周二', '> ACTIVE-7：保留  原样。', '> 第二行，仍是原话。',
+    '## 14 · 周三', '> 另一条新裁决',
+  ].join('\n'));
+  const { brief } = await generateBrief({ role: 'leader', project: 'P', projectDir, index: newIndex(session('t1')), locate: false });
+  assert.match(brief, /## 项目章程\n\.project\/charter\.md\n目标 · 交付工单队列\n非目标 · 历史迁移\n红线 · 生产数据只读\n验收 · 对比两次回执/);
+  assert.match(brief, /## 裁决账本\n\.project\/rulings\.md\n裁决 12\n> 重新读原件。\n裁决 13\n> ACTIVE-7：保留  原样。\n> 第二行，仍是原话。/);
+  assert.doesNotMatch(brief, /无关的旧工单|另一条新裁决|来源原件/);
+});
+
+test('retains the rulings pointer and marks a linked ledger as unreadable', async t => {
+  const projectDir = await workspace(t);
+  const other = await workspace(t);
+  const unowned = await put(other, 'unrelated.md', '## 99\n> 外部原文');
+  await mkdir(join(projectDir, '.project'));
+  await symlink(unowned, join(projectDir, '.project/rulings.md'));
+  const { brief } = await generateBrief({ role: 'auditor', project: 'P', projectDir, index: newIndex(), locate: false });
+  assert.match(brief, /## 项目章程\n\.project\/charter\.md · 缺失/);
+  assert.match(brief, /## 裁决账本\n\.project\/rulings\.md · 不可读/);
+  assert.doesNotMatch(brief, /外部原文/);
 });
 
 test('projects the parent chain, latest adapter turns, inbox, relay, watch, claims and git', async t => {
@@ -99,11 +135,17 @@ test('caps the entire brief on UTF-8 boundaries while retaining sections and rep
   const answers = Array.from({ length: 15 }, (_, i) => ({ id: `id${i}`, phase: 'queued', to: 't1', text: '覆核👋'.repeat(200) }));
   await put(projectDir, '.project/inbox/state.json', { messages: answers });
   await put(projectDir, '.project/workers.md', Array.from({ length: 8 }, (_, i) => `TASK${i} | worker${i} | agy | dispatched | | wave=W0${i}\n`).join(''));
+  await put(projectDir, '.project/charter.md', ['目标', '非目标', '红线', '验收']
+    .map(label => '## ' + label + '\n- ' + '章程长段👋'.repeat(500)).join('\n'));
+  await put(projectDir, '.project/rulings.md', [1, 2, 3].map(number =>
+    '## ' + number + '\n> ' + '账本长段🌅'.repeat(500)).join('\n'));
   const output = await generateBrief({ role: 'leader', project, projectDir, index, turns: 5 });
   assert(estimateTokens(output.brief) <= maxBriefTokens);
   assert.doesNotMatch(output.brief, /\ufffd/);
   assert.match(output.brief, /不可用（parent t0-missing 缺失）/);
   for (const title of headings) assert(output.brief.includes(`## ${title}\n`));
+  assert.match(output.brief, /## 项目章程\n\.project\/charter\.md\n目标 · .*?\n非目标 · .*?\n红线 · .*?\n验收 · /);
+  assert.match(output.brief, /## 裁决账本\n\.project\/rulings\.md\n裁决 3\n> /);
   for (const n of [8, 7, 6, 5, 4]) assert(output.brief.includes(`t1#${n} `));
   assert.doesNotMatch(output.brief, /t1#[123] /);
 });
@@ -181,6 +223,7 @@ test('does not follow a linked native file and keeps a missing parent or transcr
 
 test('CLI queues the previous role holder’s brief once and reports an unavailable queue with the brief', async t => {
   const projectDir = await workspace(t);
+  await put(projectDir, '.project/rulings.md', '## 7\n> 先核对原件。');
   const index = newIndex(session('t1'), session('t2', { parent: 't1' }), session('t3', { startedAt: 20 }));
   const output = [];
   const requests = [];
@@ -192,6 +235,8 @@ test('CLI queues the previous role holder’s brief once and reports an unavaila
   assert.equal(requests.length, 0);
   assert.equal(await main(['leader', '--project', 'P', '--to', 't2'], opts), 0);
   assert.equal(output.at(-1).addr, 't1');
+  assert.match(output.at(-1).brief, /## 项目章程\n\.project\/charter\.md · 缺失/);
+  assert.match(output.at(-1).brief, /## 裁决账本\n\.project\/rulings\.md\n裁决 7\n> 先核对原件。/);
   assert.deepEqual(requests, [{ project: 'P', projectDir, from: 't1', to: 't2', mode: 'queue', brief: output.at(-1).brief }]);
   assert.equal(await main(['leader', '--project', 'P', '--to', 't2'], {
     ...opts, queue: () => { throw new Error('收件箱不可用'); },

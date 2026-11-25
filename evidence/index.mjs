@@ -6,6 +6,7 @@ import { collectVerification } from './transcript.mjs';
 import { collectGit, isCredentialPath } from './git.mjs';
 import { compareClaims } from './claims.mjs';
 import { checkEvidence } from './checks.mjs';
+import { checkFacts } from './facts.mjs';
 import { clipTokens } from '../lib/token-budget.mjs';
 
 const safeKey = /^[A-Za-z0-9][A-Za-z0-9_.-]*$/;
@@ -50,7 +51,7 @@ async function writeOnce(path, data) {
   } finally { await rm(temp, { force: true }); }
 }
 
-function cardFor({ claims, git, verification }) {
+function cardFor({ claims, git, verification, facts }) {
   const mismatches = claims.filter(claim => claim.status === 'MISMATCH');
   const uncertain = claims.filter(claim => claim.status === 'UNVERIFIED');
   const headline = `证据 ${mismatches.length ? `MISMATCH ${mismatches.length}` : '卡'}` +
@@ -72,7 +73,9 @@ function cardFor({ claims, git, verification }) {
     '验证 无可确认测试命令';
   const results = [...mismatches, ...uncertain, ...claims.filter(claim => claim.status === 'MATCH')]
     .slice(0, 2).map(claim => `${claim.text} → ${claim.reason}`).join(' · ');
-  return clipTokens([headline, changes, verify, results].filter(Boolean).join('\n'), 299);
+  const misses = facts?.misses ?? [];
+  const factLine = misses.length && `fact-miss ${misses.length} · ${misses.slice(0, 3).map(fact => fact.value).join(' · ')}`;
+  return clipTokens([headline, factLine, changes, verify, results].filter(Boolean).join('\n'), 299);
 }
 
 async function config(project) {
@@ -119,8 +122,10 @@ export async function forTurn(options) {
         return check ? [check] : [];
       }) });
     }
-    const claims = compareClaims(finalReply === undefined ? nativeReply : finalReply, git, verification, failed);
-    const data = { version: 1, task, turn, addr, provider: provider ?? null, endedAt, capturedAt, git, verification, claims };
+    const reply = finalReply === undefined ? nativeReply : finalReply;
+    const claims = compareClaims(reply, git, verification, failed);
+    const facts = options.facts ?? (cwd && reply ? checkFacts(reply, cwd, project) : { checked: 0, misses: [] });
+    const data = { version: 1, task, turn, addr, provider: provider ?? null, endedAt, capturedAt, git, verification, claims, facts };
     data.card = cardFor(data);
     await writeOnce(path, JSON.stringify(data, null, 2) + '\n');
   }

@@ -10,7 +10,8 @@ export async function request(project, command, args = {}) {
     const socket = createConnection(socketPath(project));
     let body = '';
     socket.setEncoding('utf8');
-    const timeout = command === 'spawn' ? 180_000 : ['upgrade-plan', 'upgrade-apply'].includes(command) ? 60_000 : 30_000;
+    const timeout = ['spawn', 'switch'].includes(command) ? 180_000 :
+      ['upgrade-plan', 'upgrade-apply'].includes(command) ? 60_000 : 30_000;
     socket.setTimeout(timeout);
     socket.once('connect', () => socket.write(JSON.stringify({
       command, args, caller: callerAddress(), protocol: 1,

@@ -53,7 +53,8 @@ export async function attachHost(project, row, job, save, controller, { stop = f
     job.host = { incarnation: randomUUID(), release: releaseId(), root: releaseRoot };
     const dir = hostDirectory(project, addr, job.host.incarnation);
     mkdirSync(dir, { recursive: true, mode: 0o700 });
-    writeState(join(dir, 'launch.json'), JSON.stringify({ row: { ...row, sessionId: resume } }));
+    writeState(join(dir, 'launch.json'), JSON.stringify({ row: { ...row, sessionId: resume,
+      ...(job.fast !== undefined && { fast: job.fast }) } }));
     syncDirectory(join(dir, '..'));
     save(job);
   }

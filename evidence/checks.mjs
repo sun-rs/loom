@@ -49,7 +49,7 @@ export function shellBody(command) {
   return match ? unquote(match[1]) : command;
 }
 
-function inspectCommand(command) {
+function inspectCommand(command, classify = runner) {
   const tokens = shellBody(command).match(shellWords) ?? [];
   const groups = [[]];
   const separators = [];
@@ -64,13 +64,27 @@ function inspectCommand(command) {
     separators.pop();
   }
   const stages = groups.map(normalizedWords);
-  const first = stages.findIndex(words => runner(words));
+  const first = stages.findIndex(words => classify(words));
   if (first < 0 || /<<[-]?\s*\S/.test(command)) return null;
   // A compound shell exit is attribution only when there is no other possible exit source.
   const direct = stages.length === 1;
   const checksAfterCd = first === stages.length - 1 && separators.every(operator => operator === '&&') &&
     stages.slice(0, first).every(words => words[0] === 'cd');
-  return { runner: runner(stages[first]), direct, checksAfterCd, selective: stages[first].includes('--test-only') };
+  return { runner: classify(stages[first]), direct, checksAfterCd, selective: stages[first].includes('--test-only') };
+}
+
+export function checkKind(command) {
+  if (typeof command !== 'string') return null;
+  if (inspectCommand(command)) return 'test';
+  const compile = ([exe, ...args]) => {
+    const name = basename(exe ?? '');
+    return /^(?:make|gmake|ninja|tsc|rustc|gcc|g\+\+|clang(?:\+\+)?|javac)$/.test(name) ||
+      name === 'cargo' && /^(?:build|check|clippy)$/.test(args[0]) ||
+      ['go', 'swift', 'gradle', 'gradlew', 'mvn', 'dotnet'].includes(name) && /^(?:build|compile|package)$/.test(args[0]) ||
+      name === 'cmake' && args.includes('--build') ||
+      ['npm', 'pnpm', 'yarn', 'bun'].includes(name) && /^build(?::\S+)?$/.test(args[args[0] === 'run' ? 1 : 0]);
+  };
+  return inspectCommand(command, compile) ? 'compile' : null;
 }
 
 function summary(output) {

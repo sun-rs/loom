@@ -132,6 +132,26 @@ test('reconciles a lost send acknowledgement from the native marker across resta
   assert.equal(f.lookup(id).completion.body, 'recovered reply');
 });
 
+test('reconciles one native acknowledgement for a streamed cohort after restart', async t => {
+  const f = fixture(t);
+  const target = f.terminal('t1', 'codex', 'idle');
+  const streamAt = Date.now();
+  const first = await f.submit(target, 'queue', undefined, { streamAt, waveBatch: 'A', text: 'DONE worker A' });
+  const second = await f.submit(target, 'queue', undefined, { streamAt, waveBatch: 'B', text: 'FAILED worker B' });
+  f.refuse('acknowledgement lost');
+  await f.reopen().step();
+  assert.equal(f.sends.length, 1);
+  assert.match(f.sends[0][1], /DONE worker A.*FAILED worker B/s);
+  assert.equal(f.lookup(second).combinedInto, first);
+  f.refuse(undefined);
+  f.event(target, 'UserPromptSubmit', 'combined', { deliveryId: first });
+  f.event(target, 'Stop', 'combined', { last_assistant_message: 'acknowledged both workers' });
+  await f.reopen().step();
+  assert.equal(f.sends.length, 1);
+  assert.equal(f.lookup(first).phase, 'received');
+  assert.equal(f.lookup(second).completion.body, 'acknowledged both workers');
+});
+
 test('retries after an explicit no-input refusal with the original delivery ID', async t => {
   const f = fixture(t);
   const target = f.terminal('t1', 'codex', 'idle');

@@ -3,6 +3,7 @@ import { readArtifacts, sessionProject } from './artifacts.mjs';
 import { changeReader } from './changes.mjs';
 import { activitySummary, adapterFor, CommandError, parentOrder, readTranscript, transcriptFor, turnActivityFacts } from './sessions.mjs';
 import { nativeRanges, timestamp, transcriptRows, turnTools } from './turns.mjs';
+import { managedWaveKey } from '../relay/project.mjs';
 
 const at = value => Number.isFinite(timestamp(value)) ? timestamp(value) : null;
 const iso = time => at(time) === null ? null : new Date(at(time)).toISOString();
@@ -267,16 +268,17 @@ export async function waveHistory(sessions, reader, project, wave, { evidence, s
   const artifacts = reader.projectData(project);
   const relay = artifacts.relay();
   const messages = artifacts.messages();
-  const rows = sessions.filter(session => session.role === 'worker' && session.wave === wave);
   const groups = new Map();
-  for (const session of rows) {
-    const key = `wave:${session.parent ?? ''}/${encodeURIComponent(session.project)}/${wave}`;
+  for (const session of sessions.filter(session => session.role === 'worker')) {
+    const job = artifacts.job(session.addr);
+    if (session.wave !== wave && job?.barrier !== wave) continue;
+    const key = managedWaveKey(session.parent, session.project, job?.barrier ?? session.wave, job?.deliver);
     const list = groups.get(key) ?? [];
     list.push(session);
     groups.set(key, list);
   }
   for (const [key, saved] of Object.entries(relay.waves ?? {})) {
-    if ((saved.id === wave || key === `wave:${wave}`) && !groups.has(key) && key.startsWith('wave:')) groups.set(key, []);
+    if ((saved.id === wave || key === `wave:${wave}`) && !groups.has(key)) groups.set(key, []);
   }
   if (!groups.size) throw new CommandError('not-found', `No wave ${wave}`);
   return Promise.all([...groups].map(async ([key, group]) => {
@@ -312,14 +314,15 @@ export async function waveHistory(sessions, reader, project, wave, { evidence, s
           files.reduce((net, file) => net + (file.added ?? 0) - (file.deleted ?? 0), 0) : files?.length === 0 ? 0 : null,
         files: files?.map(({ path, added, deleted, previousPath }) => ({ path, added, deleted, previousPath })) ?? null,
         changesSource: files ? observed?.source ?? (fixed?.task.status === 'ok' ? 'commits' : 'evidence-card') : null,
-        late: Number.isFinite(ended) && Number.isFinite(saved?.deadline) ? ended > saved.deadline : null,
+        late: saved?.deliver === 'stream' ? saved.timedOut?.includes(session.task + '/' + session.addr) ?? false :
+          Number.isFinite(ended) && Number.isFinite(saved?.deadline) ? ended > saved.deadline : null,
         superseded: sessions.some(other => other.project === session.project && other.task === session.task &&
-          other.wave !== session.wave && other.startedAt > session.startedAt),
+          other.startedAt > session.startedAt),
         testExitCodes: (entry?.activity.tests ?? card?.verification?.commands ?? [])
           .map(check => ({ command: check.command, exitCode: check.exitCode })),
         ...(fixed && { diff: fixed }), ...(evidence && { evidence: publicCards(cards) }) };
     }));
-    for (const id of saved?.members ?? []) {
+    for (const id of saved?.deliver === 'barrier' && saved.id !== wave ? [] : saved?.members ?? []) {
       const [task, addr] = id.split('/');
       if (!members.some(member => member.addr === addr)) members.push({
         task, addr, outcome: relay.progress?.[id]?.result?.outcome?.toLowerCase() ?? 'unknown',
@@ -347,6 +350,7 @@ export async function waveHistory(sessions, reader, project, wave, { evidence, s
       }
     }
     return { wave, parent: saved?.parent ?? group[0]?.parent ?? null,
+      ...(saved?.deliver && { deliver: saved.deliver, ...(saved.deliver === 'barrier' && { barrier: saved.id }) }),
       state: saved?.closed ? 'closed' : saved?.deadline != null ? 'sealed' : 'unsealed',
       sealedAt: saved?.sealedAt ?? null, deadline: saved?.deadline ?? null, members, destinations,
       ...(!destinations.length && { deliveryObserved: false }) };

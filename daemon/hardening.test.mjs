@@ -73,7 +73,7 @@ function fixtureProject(t, options = {}) {
     JSON.stringify(new URL('../tasks/PROTO-HARDEN-0/fixtures/native.mjs', import.meta.url).href) + ');\n', { mode: 0o700 });
   for (const dir of ['codex-local', 'xdg-state', 'xdg-config', 'xdg-data']) mkdirSync(join(project, dir));
   mkdirSync(join(project, '.project'));
-  write('.project/policy.json', { preferred: [], deny: [] });
+  write('.project/policy.json', { preferred: [], deny: [], delivery: { coalesceMs: 0 } });
   Object.assign(fixtureEnv, { LOOM_CODEX_BIN: codex, LOOM_AGY_BIN: agy,
     OAR_CODEX_BIN: codex, OAR_ANTIGRAVITY_BIN: agy, CODEX_HOME: join(project, 'codex-local'),
     XDG_STATE_HOME: join(project, 'xdg-state'), XDG_CONFIG_HOME: join(project, 'xdg-config'),

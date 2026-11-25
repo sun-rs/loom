@@ -1,6 +1,16 @@
 {
   "note": "Single-account operation only. Use one authorized account per provider for this project. Claude is paused in this example.",
-  "keepAlive": false,
+  "delivery": { "coalesceMs": 45000 },
+  "drift": {
+    "netLines": null,
+    "budgetRaises": 2,
+    "slowCommandFactor": 2,
+    "slowCommandSamples": 1,
+    "planLines": 120,
+    "repeatedFailures": 2,
+    "factMiss": true,
+    "sampleIntervalMs": 30000
+  },
   "deny": [
     { "model": "luna" },
     { "model": "gpt-6-luna" },
@@ -9,16 +19,29 @@
   "roles": {
     "super": {
       "guidance": { "preferLongPromptCacheTtl": true },
-      "preferred": [{ "cli": "codex", "model": "gpt-6.2-sol", "effort": "high", "mode": "tui" }]
+      "preferred": [
+        { "cli": "codex", "model": "gpt-6.2-sol", "effort": "high", "mode": "tui", "fast": false },
+        { "cli": "agy", "model": "gemini-4-neon", "effort": "high", "mode": "tui" }
+      ]
     },
     "leader": {
       "maxActiveWorkers": 3,
       "guidance": { "modelTier": "strong", "effort": ["medium", "high"], "preferLongPromptCacheTtl": true },
-      "preferred": [{ "cli": "codex", "model": "gpt-6.2-sol", "effort": "high", "mode": "tui" }]
+      "preferred": [
+        { "cli": "codex", "model": "gpt-6.2-sol", "effort": "high", "mode": "tui" },
+        { "cli": "agy", "model": "gemini-4-neon", "effort": "high", "mode": "tui" }
+      ]
     },
     "auditor": {
       "guidance": { "modelTier": "strong", "vendorFamily": "different-from-workers", "preferLongPromptCacheTtl": true },
-      "preferred": [{ "cli": "agy", "model": "gemini-4-neon", "effort": "high", "mode": "tui" }]
+      "preferred": [
+        { "cli": "agy", "model": "gemini-4-neon", "effort": "high", "mode": "tui" },
+        { "cli": "codex", "model": "gpt-6.2-sol", "effort": "high", "mode": "tui" }
+      ]
+    },
+    "reviewer": {
+      "maxDurationMs": 1800000,
+      "preferred": [{ "cli": "codex", "model": "gpt-6.2-sol", "effort": "high", "mode": "headless" }]
     },
     "worker": {
       "guidance": { "routineEffort": ["low", "medium"], "hardEffort": ["high", "xhigh"] },

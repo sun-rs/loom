@@ -45,7 +45,7 @@ function afterAcceptance({ session, turn, rows, journalOnly }) {
   };
 }
 
-export function projectCost(directory, sessions) {
+export function projectCost(directory, sessions, { includeAcceptance = true } = {}) {
   const reader = historyReader(directory);
   const byRole = Object.fromEntries([...roles, 'unassigned'].map(role => [role, emptyRole()]));
   const workerTurns = [];
@@ -80,7 +80,7 @@ export function projectCost(directory, sessions) {
         role.modelCalls += usage.calls;
         for (const field of usageFields) role[field] += usage[field] ?? 0;
       }
-      if (session.role === 'worker') {
+      if (includeAcceptance && session.role === 'worker') {
         workerTurns.push({ addr: session.addr, task: session.task, turn: item.index,
           modelCalls: usage?.calls > 0 ? usage.calls : null, ...afterAcceptance(item) });
       }

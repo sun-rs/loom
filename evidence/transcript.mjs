@@ -3,7 +3,7 @@ import { isClaudeToolResultContent, toolExitCode } from '../adapters/claude/tool
 import { codex } from '../adapters/codex/index.mjs';
 import { turnActivity } from '../adapters/codex/activity.mjs';
 import { parseAgy } from '../adapters/agy/lib/parse-agy.mjs';
-import { checkEvidence, shellBody } from './checks.mjs';
+import { checkEvidence, checkKind, shellBody } from './checks.mjs';
 
 function json(text) {
   if (typeof text !== 'string') return text;
@@ -13,6 +13,15 @@ function json(text) {
 const string = value => typeof value === 'string' ? value : null;
 const integer = value => Number.isSafeInteger(value) ? value : null;
 const time = value => typeof value === 'number' ? value : Date.parse(value ?? '');
+const elapsed = (start, end) => Number.isFinite(start) && Number.isFinite(end) && end >= start ? end - start : null;
+
+export function executionEvidence(commands) {
+  return commands.flatMap(({ command, exitCode, durationMs }) => {
+    const kind = checkKind(command);
+    return kind && (Number.isSafeInteger(exitCode) || Number.isFinite(durationMs)) ?
+      [{ command: shellBody(command).trim(), kind, exitCode: exitCode ?? null, durationMs: durationMs ?? null }] : [];
+  });
+}
 
 function turnsAt(session, { nativeTurnId, nativeTurnIndex, endedAt, finalReply }) {
   const turns = session.turns;
@@ -74,10 +83,12 @@ function codexResult(output) {
   const code = integer(result?.exit_code ?? result?.exitCode);
   if (code !== null) return { exitCode: code, output: outputOf(result), sandboxed: sandboxOf(result), chunk: result.chunk_id };
   if (text === null) return null;
-  const header = /^Chunk ID: [^\r\n]+\r?\nWall time: [^\r\n]+\r?\nProcess exited with code (-?\d+)\b/.exec(text);
+  const header = /^Chunk ID: [^\r\n]+\r?\nWall time: ([^\r\n]+)\r?\nProcess exited with code (-?\d+)\b/.exec(text);
   if (!header) return null;
   const marker = /\r?\n(?:Final output|Output):\r?\n/.exec(text);
-  return { exitCode: Number(header[1]), output: marker ? text.slice(marker.index + marker[0].length) : null,
+  const seconds = /^(\d+(?:\.\d+)?) seconds?$/.exec(header[1])?.[1];
+  return { durationMs: seconds == null ? null : Number(seconds) * 1000,
+    exitCode: Number(header[2]), output: marker ? text.slice(marker.index + marker[0].length) : null,
     chunk: /^Chunk ID: ([^\r\n]+)/.exec(text)?.[1] };
 }
 
@@ -104,26 +115,30 @@ export function codexCommands(rows, turn, defaultSandbox) {
       details.cwd = string(args?.workdir ?? args?.cwd) ?? details.cwd;
     } else if (type === 'event_msg' && payload.type === 'exec_command_begin') {
       details.started = true;
+      details.startedAt = at;
       details.callSandbox = sandboxOf(value) ?? details.callSandbox;
       details.cwd = string(value.cwd) ?? details.cwd;
     } else if (type === 'event_msg' && (payload.type === 'exec_command_end' || resultItem)) {
       const exitCode = integer(value.exit_code ?? value.exitCode);
-      details.native = { exitCode, output: outputOf(value), sandboxed: sandboxOf(value), chunk: value.chunk_id ?? value.chunkId };
+      details.native = { exitCode, output: outputOf(value), sandboxed: sandboxOf(value), chunk: value.chunk_id ?? value.chunkId,
+        durationMs: elapsed(details.startedAt ?? time(details.timestamp), at) };
       details.cwd = string(value.cwd) ?? details.cwd;
       details.source = payload.type;
     } else if (type === 'response_item' && typeof payload.type === 'string' && payload.type.endsWith('_call_output')) {
       const result = codexResult(payload.output);
       if (result) details.result = result;
       details.resultPosition = position;
+      details.resultAt = at;
     }
     metadata.set(id, details);
   }
   const commands = [...tools.entries()].flatMap(([id, tool]) => {
-    const { native, result, source, cwd, callSandbox, started, position, resultPosition, timestamp } = metadata.get(id) ?? {};
+    const { native, result, source, cwd, callSandbox, started, position, resultPosition, timestamp, resultAt } = metadata.get(id) ?? {};
     if (!native && !result && !started) return [];
     return [{ id, name: tool.name, command: tool.command, cwd, exitCode: native?.exitCode ?? result?.exitCode ?? tool.exitCode,
       output: native?.output ?? result?.output, chunk: native?.chunk ?? result?.chunk, position, resultPosition, timestamp,
       sandboxed: native?.sandboxed ?? result?.sandboxed ?? callSandbox ?? turnSandbox,
+      durationMs: result?.durationMs ?? native?.durationMs ?? (result && elapsed(time(timestamp), resultAt)),
       started, source: `codex.${source ?? (result ? 'call_output' : 'exec_command_begin')}` }];
   });
   // Code-mode exec returns the same command result as its native child event.
@@ -138,6 +153,7 @@ export function codexCommands(rows, turn, defaultSandbox) {
     child.output ??= wrapper.output;
     child.cwd ??= wrapper.cwd;
     child.sandboxed ??= wrapper.sandboxed;
+    child.durationMs ??= wrapper.durationMs;
     return false;
   });
 
@@ -154,7 +170,7 @@ function claudeCommands(rows, turn, defaultSandbox) {
     const blocks = row.message?.content ?? row.content;
     if (!Array.isArray(blocks)) continue;
     if (row.type === 'assistant') {
-      for (const block of blocks) if (calls.has(block?.id)) inputs.set(block.id, block.input);
+      for (const block of blocks) if (calls.has(block?.id)) inputs.set(block.id, { ...block.input, at });
     } else if (row.type === 'user') {
       const results = blocks.filter(isClaudeToolResultContent);
       const metadata = results.length === 1 ? row.toolUseResult ?? row.tool_use_result : null;
@@ -165,6 +181,7 @@ function claudeCommands(rows, turn, defaultSandbox) {
         const exitCode = toolExitCode(block, metadata) ?? call.exitCode ??
           (!block.is_error && output !== null && !String(block.content?.type ?? '').endsWith('_error') ? 0 : null);
         commands.set(call.id, { command: call.command, cwd: row.cwd, exitCode, output,
+          durationMs: metadata?.durationMs ?? elapsed(inputs.get(call.id)?.at, at),
           sandboxed: sandboxOf(metadata) ?? sandboxOf(block) ?? sandboxOf(inputs.get(call.id)) ?? defaultSandbox,
           source: 'claude.tool_result' });
       }
@@ -207,6 +224,8 @@ export function agyCommands(rows, defaultSandbox, includePending = false) {
       entry.exitCode = code;
       entry.output = generic?.output ?? outputOf(envelope) ?? outputOf(row);
       entry.sandboxed = sandboxOf(envelope) ?? sandboxOf(row) ?? entry.sandboxed;
+      entry.durationMs ??= generic?.durationMs ?? envelope.duration_ms ?? envelope.durationMs ??
+        elapsed(time(entry.timestamp), time(row.completed_at ?? row.created_at));
     }
   }
   for (const [position, row] of rows.entries()) {
@@ -225,10 +244,10 @@ export function agyCommands(rows, defaultSandbox, includePending = false) {
       const content = row.content.replace(agyHeader, '').trimStart();
       const match = /^Command exited with code (-?\d+)\.(?:\s*Command output:\s*([\s\S]*))?/.exec(content);
       if (match) resolve(row, row, position, { exitCode: Number(match[1]), output: match[2] });
-      const verify = edit && /^Verify \[(PASS|FAIL \(exit (-?\d+)\)) in \d+ms\] `([^`\n]+)`:\r?\n([\s\S]*)/m.exec(content);
+      const verify = edit && /^Verify \[(PASS|FAIL \(exit (-?\d+)\)) in (\d+)ms\] `([^`\n]+)`:\r?\n([\s\S]*)/m.exec(content);
       if (verify) {
-        resolve({ command: verify[3], name: 'run_command' }, row, position,
-          { exitCode: verify[1] === 'PASS' ? 0 : Number(verify[2]), output: verify[4] });
+        resolve({ command: verify[4], name: 'run_command' }, row, position,
+          { exitCode: verify[1] === 'PASS' ? 0 : Number(verify[2]), durationMs: Number(verify[3]), output: verify[5] });
         edit = null;
       }
     }
@@ -258,6 +277,6 @@ export function collectVerification(options) {
   }
   return {
     status: 'ok', turnId: turn.id, turnIndex: turn.index, turnStatus: turn.status, finalReply: turn.reply,
-    commands: commands.map(checkEvidence).filter(Boolean),
+    commands: commands.map(checkEvidence).filter(Boolean), executions: executionEvidence(commands),
   };
 }

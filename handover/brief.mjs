@@ -4,6 +4,7 @@ import { readRetained } from './retention.mjs';
 import { clip, evidenceLines, gitLines, inboxLines, oneLine, time, unavailable, watchLines, waveLines, workerLines } from './sources.mjs';
 import { adapterFor, openNative, roles } from './transcript.mjs';
 import { clipTokens, estimateTokens as size } from '../lib/token-budget.mjs';
+import { charterLines, projectDocument, rulingLines } from './organization.mjs';
 
 export const maxBriefTokens = 1500;
 
@@ -89,7 +90,7 @@ function formatLine(line, limit = Infinity) {
 
 function render(role, project, sections) {
   const title = `# ${role} · ${clipTokens(oneLine(project), 100)}`;
-  const headings = sections.map(section => `## ${section.title}\n`);
+  const headings = sections.map(({ title, fixed }) => `## ${title}\n` + (fixed ? fixed + '\n' : ''));
   const available = maxBriefTokens - size([title, ...headings].join('\n\n') + '\n');
   const weight = sections.reduce((sum, part) => sum + (part.weight ?? 1), 0);
   const bodies = sections.map(({ lines }) => lines.map(line => formatLine(line)).join('\n'));
@@ -101,10 +102,10 @@ function render(role, project, sections) {
     budgets[i] += extra;
     spare -= extra;
   }
-  const blocks = sections.map(({ lines, title }, i) => {
+  const blocks = sections.map(({ lines, balance }, i) => {
     const budget = budgets[i];
     let body = bodies[i];
-    if (title === '最近 L1' && desired[i] > budget) {
+    if (balance && desired[i] > budget) {
       const perLine = Math.floor((budget - lines.length + 1) / lines.length);
       if (perLine >= 16) body = lines.map(line => formatLine(line, perLine)).join('\n');
     }
@@ -134,15 +135,25 @@ export async function generateBrief({ role, project, projectDir, from, to, turns
   const addresses = new Set(history.map(row => row.addr));
   const root = await realpath(projectDir).catch(() => null);
   const meta = root && join(root, '.project');
-  const [l1, workers, waves, inbox, watch, evidence, git] = root ? await Promise.all([
-    sample(l1Lines, root, history, turns, locate), sample(workerLines, meta), sample(waveLines, meta),
-    sample(inboxLines, meta, addresses), sample(watchLines, meta), sample(evidenceLines, meta), sample(gitLines, root),
-  ]) : Array(7).fill(unavailable);
+  const [[l1, workers, waves, inbox, watch, evidence, git], charter, rulings] = await Promise.all([
+    root ? Promise.all([
+      sample(l1Lines, root, history, turns, locate), sample(workerLines, meta), sample(waveLines, meta),
+      sample(inboxLines, meta, addresses), sample(watchLines, meta), sample(evidenceLines, meta), sample(gitLines, root),
+    ]) : Array(7).fill(unavailable),
+    projectDocument(root, 'charter'), projectDocument(root, 'rulings'),
+  ]);
   const chainText = chain.map(row => oneLine(row.addr)).join(' ← ');
   const indexStatus = sessions ? '未登记该角色' : '会话索引读取失败';
+  const document = (title, { path, status, text }, summarize) => ({
+    title, fixed: [path, status].filter(Boolean).join(' · '),
+    lines: status ? [] : summarize(text), weight: 2, balance: true,
+  });
+  const context = [workers, waves, inbox, git, ...(Array.isArray(l1) ? l1.map(line => formatLine(line, 160)) : [])].join('\n');
   const sections = [
     { title: '会话链', lines: chainText ? [...(problem ? [clip(problem, 100)] : []), chainText] : [`${unavailable}（${indexStatus}）`], weight: 2 },
-    { title: '最近 L1', lines: Array.isArray(l1) ? l1 : [l1], weight: 4 },
+    document('项目章程', charter, charterLines),
+    document('裁决账本', rulings, text => rulingLines(text, context)),
+    { title: '最近 L1', lines: Array.isArray(l1) ? l1 : [l1], weight: 4, balance: true },
     { title: '在途 worker', lines: [workers] },
     { title: 'relay 波次', lines: [waves] },
     { title: '收件箱', lines: [inbox] },

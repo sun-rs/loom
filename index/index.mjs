@@ -11,7 +11,13 @@ const columns = {
   effort: 'TEXT', pane: 'TEXT',
 };
 const fields = Object.keys(columns);
-export const roles = Object.freeze(['super', 'leader', 'auditor', 'worker']);
+export const roles = Object.freeze(['super', 'leader', 'auditor', 'worker', 'reviewer']);
+export const rotatingRoles = Object.freeze(['leader', 'auditor']);
+const rotationSchema = `CREATE TABLE IF NOT EXISTS rotations (
+  successor TEXT PRIMARY KEY, predecessor TEXT NOT NULL, project TEXT NOT NULL, role TEXT NOT NULL,
+  startedAt INTEGER NOT NULL, boundAt INTEGER, verifiedAt INTEGER, failedAt INTEGER,
+  firstReportAt INTEGER, firstReportMisses INTEGER, verifiedTurn TEXT, failure TEXT
+) STRICT`;
 const schema = `CREATE TABLE IF NOT EXISTS sessions (${fields.map(key => `${key} ${columns[key]}`).join(', ')}) STRICT`;
 const insert = `INSERT INTO sessions (${fields.join(', ')}) VALUES (${fields.map(() => '?').join(', ')})`;
 const mutable = fields.filter(key => key !== 'addr');
@@ -62,6 +68,7 @@ function withDatabase(path, writable, use) {
     if (!writable) return use(db);
     db.exec('BEGIN IMMEDIATE');
     db.exec(schema);
+    db.exec(rotationSchema);
     const present = new Set(db.prepare('PRAGMA table_info(sessions)').all().map(column => column.name));
     for (const key of ['effort', 'pane']) {
       if (!present.has(key)) db.exec(`ALTER TABLE sessions ADD COLUMN ${key} ${columns[key]}`);
@@ -79,6 +86,42 @@ export function openIndex(path = process.env.LOOM_INDEX_PATH ||
   path = resolve(path);
   return {
     initialize() { withDatabase(path, true, () => {}); },
+
+    rotations() {
+      if (!statSync(path, { throwIfNoEntry: false })) return [];
+      return withDatabase(path, false, db => {
+        if (!db.prepare("SELECT 1 FROM sqlite_schema WHERE type = 'table' AND name = 'rotations'").get()) return [];
+        return db.prepare('SELECT * FROM rotations ORDER BY startedAt, successor').all().map(row => ({ ...row }));
+      });
+    },
+
+    beginRotation({ successor, predecessor, project, role, startedAt }) {
+      return withDatabase(path, true, db => {
+        if (db.prepare('SELECT 1 FROM rotations WHERE successor = ?').get(successor)) return;
+        const pending = db.prepare(`SELECT role, successor FROM rotations WHERE project = ? AND
+          verifiedAt IS NULL AND failedAt IS NULL`).get(project);
+        if (pending) return { ...pending };
+        db.prepare('INSERT INTO rotations (successor, predecessor, project, role, startedAt) VALUES (?, ?, ?, ?, ?)')
+          .run(successor, predecessor, project, role, startedAt);
+      });
+    },
+
+    bindRotation(successor, at) {
+      withDatabase(path, true, db => db.prepare('UPDATE rotations SET boundAt = COALESCE(boundAt, ?) WHERE successor = ?')
+        .run(at, successor));
+    },
+
+    reportRotation(successor, { at, turn, misses, verified = misses === 0 }) {
+      withDatabase(path, true, db => db.prepare(`UPDATE rotations SET firstReportAt = COALESCE(firstReportAt, ?),
+        firstReportMisses = COALESCE(firstReportMisses, ?), verifiedAt = ?, verifiedTurn = ?
+        WHERE successor = ? AND boundAt IS NOT NULL AND verifiedAt IS NULL AND failedAt IS NULL`)
+        .run(at, misses, verified ? at : null, verified ? turn : null, successor));
+    },
+
+    failRotation(successor, at, failure) {
+      withDatabase(path, true, db => db.prepare(`UPDATE rotations SET failedAt = ?, failure = ?
+        WHERE successor = ? AND verifiedAt IS NULL AND failedAt IS NULL`).run(at, failure, successor));
+    },
 
     register(values) {
       const row = normalize(values);

@@ -186,8 +186,16 @@ export function inbox(project, transport, report = console.error) {
     save();
   }
 
-  async function send(message, observation) {
+  async function send(message, observation, waves) {
     const pendingPhase = message.phase;
+    message.payloadFrozen = true;
+    if (waves.length) {
+      message.combinedWaves = waves.map(wave => wave.id);
+      for (const wave of waves) wave.combinedInto = message.id;
+      if (!message.allowIdleWithoutEnd && waves.some(wave => wave.allowIdleWithoutEnd)) {
+        message.allowIdleWithoutEnd = message.combinedForcesIdle = true;
+      }
+    }
     message.phase = 'sending';
     message.attemptAt = Date.now();
     message.writeTurn = observation.terminal.turn;
@@ -195,7 +203,12 @@ export function inbox(project, transport, report = console.error) {
     delete message.waitingForWritable;
     save();
     try {
-      const attempt = await transport.send(message, observation);
+      const input = waves.length ? { ...message, text: [
+        ...(message.superPriority ? ['Loom Super message', message.text, '--- Loom wave results ---'] :
+          ['Loom worker results', message.text]),
+        ...waves.map(wave => wave.text),
+      ].join('\n\n') } : message;
+      const attempt = await transport.send(input, observation);
       if (attempt?.requestId) message.nativeAttempt = attempt;
     } catch (error) {
       if (error.kind === 'steer-unavailable') {
@@ -224,6 +237,39 @@ export function inbox(project, transport, report = console.error) {
     }
     message.typedAt = Date.now();
     save();
+  }
+
+  function settleCombined(group) {
+    const primaries = new Map(group.filter(message => message.combinedWaves).map(message => [message.id, message]));
+    let changed = false;
+    for (const wave of group.filter(message => message.combinedInto)) {
+      const primary = primaries.get(wave.combinedInto);
+      if (!primary) continue;
+      if (primary.phase === 'refused') {
+        delete wave.combinedInto;
+        wave.phase = 'queued';
+        for (const key of ['received', 'completion', 'issue', 'refusedAt']) delete wave[key];
+        if (primary.combinedForcesIdle) {
+          delete primary.combinedForcesIdle;
+          delete primary.allowIdleWithoutEnd;
+        }
+        changed = true;
+        continue;
+      }
+      for (const field of ['phase', 'received', 'completion', 'issue', 'refusedAt']) {
+        if (wave[field] === primary[field]) continue;
+        if (wave[field] != null && JSON.stringify(wave[field]) === JSON.stringify(primary[field])) continue;
+        if (primary[field] === undefined) delete wave[field];
+        else wave[field] = primary[field];
+        changed = true;
+      }
+    }
+    for (const primary of primaries.values()) {
+      if (group.some(wave => wave.combinedInto === primary.id)) continue;
+      delete primary.combinedWaves;
+      changed = true;
+    }
+    if (changed) save();
   }
 
   async function inspect(target) {
@@ -277,12 +323,20 @@ export function inbox(project, transport, report = console.error) {
     save();
   }
 
-  async function processTarget(group) {
-    const { target } = group[0];
-    const observation = await inspect(target);
+  async function observeTarget(all) {
+    const observation = await inspect(all[0].target);
     if (!observation) return;
+    const group = all.filter(message => !message.combinedInto);
     for (const message of group) reconcile(message, observation);
     for (const message of group) await recoverAttempt(message, observation);
+    settleCombined(all);
+    return observation;
+  }
+
+  async function processTarget(all, observation, { canDispatch, known, at, coalesceMs } = {}) {
+    const group = all.filter(message => !message.combinedInto);
+    if (!group.length || !observation) return;
+    const { target } = group[0];
     if (observation.state === 'finished') {
       let changed = false;
       for (const message of group) {
@@ -298,33 +352,66 @@ export function inbox(project, transport, report = console.error) {
         }
       }
       if (changed) save();
+      settleCombined(all);
       return;
     }
+    const queued = group.filter(message => message.phase === 'queued');
+    const streams = queued.filter(message => message.streamAt != null).sort((a, b) => a.streamAt - b.streamAt);
+    const receiving = group.some(message => message.phase === 'sending' || isDone(message) && !message.completion);
+    const completed = group.filter(message => message.received?.at != null && message.completion?.at != null);
+    const waiting = streams.filter(message => !message.streamWaited &&
+      (observation.state === 'busy' || receiving || completed.some(turn =>
+        message.streamAt >= turn.received.at && message.streamAt <= turn.completion.at)));
+    for (const message of waiting) message.streamWaited = true;
+    if (waiting.length) save();
+    if (canDispatch && !canDispatch(target)) return;
     if (group.some(message => message.phase === 'sending')) return;
     const stopping = group.find(message => message.phase === 'stopping');
     if (stopping) confirmStop(stopping, observation);
     if (stopping?.phase === 'stopping') return;
-    const pending = group.filter(message => message.phase === 'queued');
+    const cutoff = streams[0]?.streamAt + coalesceMs;
+    const overdue = streams.some(message => message.streamWaited || message.allowIdleWithoutEnd);
+    const cohort = overdue ? streams : at >= cutoff ? streams.filter(message => message.streamAt <= cutoff) : [];
+    const stream = cohort[0];
+    const pending = queued.filter(message => message.streamAt != null ? message === stream : !known || known.has(message.id));
+    const priority = pending.find(message => message.superPriority && message.mode === 'queue');
+    const isWave = message => message.mode === 'queue' && (message.waveBatch || message.continuationBatch);
+    const waves = priority ? queued.filter(isWave) : [];
+    const forcedPriority = waves.some(wave => wave.allowIdleWithoutEnd) ? priority : undefined;
+    const streamPeers = overdue ? [...cohort.slice(1), ...queued.filter(message => message.streamAt == null && isWave(message))] :
+      cohort.slice(1);
+    const forcedStream = [stream, ...streamPeers].some(message => message?.allowIdleWithoutEnd) ? stream : undefined;
     const forced = group.findLastIndex(message => message.allowIdleWithoutEnd && message.received);
     let next = group.find(message => message.phase === 'stopped') ??
-      pending.find(message => message.mode !== 'queue') ?? pending[0];
+      pending.find(message => message.superPriority && message.mode !== 'queue') ??
+      pending.find(message => message.mode !== 'queue') ?? pending.find(message => message.startup) ?? priority ??
+      (overdue ? stream : undefined) ?? pending[0];
     if (next?.mode === 'queue' && group.some((message, index) => index >= forced && isDone(message) && !message.completion &&
       !transport.deliveryTurnReplaced?.(message, observation) &&
       !group.some(item => item.stoppedAt && item.stoppedAt >= message.attemptAt &&
         (message.received.streamId ? item.active.streamId === message.received.streamId &&
           item.active.turnId === message.received.turnId : item.active.hcTurn === message.writeTurn)))) {
-      next = pending.find(message => message.allowIdleWithoutEnd);
+      next = pending.find(message => message.startup && message.allowIdleWithoutEnd) ?? forcedPriority ?? forcedStream ??
+        pending.find(message => message.allowIdleWithoutEnd && message.superPriority) ??
+        pending.find(message => message.allowIdleWithoutEnd);
     }
     if (!next) return;
-    if (!ready(next, observation, group)) return recordWait(next, observation);
+    const combined = next.payloadFrozen || next.combinedWaves ? (next.combinedWaves ?? [])
+      .map(id => all.find(message => message.id === id)).filter(Boolean) :
+      next === priority ? waves : next === stream ? streamPeers : [];
+    const frame = (next === forcedPriority || next === forcedStream) && !next.allowIdleWithoutEnd &&
+      combined.some(message => message.allowIdleWithoutEnd) ?
+      { ...next, allowIdleWithoutEnd: true } : next;
+    if (!ready(frame, observation, group)) return recordWait(next, observation);
     const fresh = await inspect(target);
     if (!fresh) return;
-    if (!ready(next, fresh, group)) return recordWait(next, fresh);
+    if (!ready(frame, fresh, group)) return recordWait(next, fresh);
     if (next.mode === 'interrupt' && next.phase === 'queued') await stop(next, fresh);
-    else await send(next, fresh);
+    else await send(next, fresh, combined);
+    settleCombined(all);
   }
 
-  async function step(routeTarget) {
+  async function step(routeTarget, { beforeDispatch, canDispatch, now = Date.now, coalesceMs = 0 } = {}) {
     store.ingest();
     let changed = false;
     for (const message of messages) {
@@ -340,11 +427,23 @@ export function inbox(project, transport, report = console.error) {
       changed = true;
     }
     if (changed) save();
-    const groups = Map.groupBy(messages, ({ target }) => JSON.stringify([target.addr, target.createdAt, target.pid]));
-    await Promise.all([...groups.values()].filter(group =>
+    const groups = () => Map.groupBy(messages, ({ target }) => JSON.stringify([target.addr, target.createdAt, target.pid]));
+    const active = [...groups()].filter(([, group]) =>
       group.some(message => message.phase !== 'refused' &&
-        (!isDone(message) || !(message.completion?.body || message.completion?.noReply))))
-      .map(group => processTarget(group.sort((a, b) => Number(Boolean(b.startup)) - Number(Boolean(a.startup))))));
+        (!isDone(message) || !(message.completion?.body || message.completion?.noReply))));
+    if (beforeDispatch) {
+      const known = new Set(messages.map(message => message.id));
+      const observed = new Map(await Promise.all(active.map(async ([key, group]) => [key, await observeTarget(group)])));
+      await beforeDispatch();
+      const at = now();
+      await Promise.all([...groups()].filter(([key, group]) => observed.has(key) ||
+        group.some(message => !known.has(message.id) && message.streamAt != null)).map(async ([key, group]) =>
+        processTarget(group, observed.has(key) ? observed.get(key) : await observeTarget(group),
+          { canDispatch, known, at, coalesceMs })));
+    } else {
+      await Promise.all(active.map(async ([, group]) => processTarget(group, await observeTarget(group),
+        { canDispatch, at: now(), coalesceMs })));
+    }
   }
 
   function routesForTurn(addr, reply) {
@@ -363,6 +462,13 @@ export function inbox(project, transport, report = console.error) {
     return message;
   }
 
+  function appendQueued(message, text, ids) {
+    const previous = { text: message.text, orgEvents: message.orgEvents };
+    message.text += '\n' + text;
+    message.orgEvents = [...message.orgEvents, ...ids];
+    try { save(); } catch (error) { Object.assign(message, previous); throw error; }
+  }
+
   function refuseQueued(message, issue) {
     if (message.phase !== 'queued') return;
     message.phase = 'refused';
@@ -376,5 +482,5 @@ export function inbox(project, transport, report = console.error) {
     save();
   }
 
-  return { step, routesForTurn, enqueue, refuseQueued, escalate, messages };
+  return { step, routesForTurn, enqueue, appendQueued, refuseQueued, escalate, messages };
 }

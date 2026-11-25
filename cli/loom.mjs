@@ -4,7 +4,7 @@ import { daemonAbsent, request } from '../daemon/rpc.mjs';
 import { control, daemonUsage, spawnHelp, spawnUsage } from './control.mjs';
 import { upgrade, upgradeUsage } from './upgrade.mjs';
 import { history, historyReader, waveHistory } from './history.mjs';
-import { callerAddress, managedProject, projectDirectory, projectOption, projectReceipt, projectSessions } from './project.mjs';
+import { callerAddress, managedProject, projectDirectory, projectIndex, projectOption, projectReceipt, projectSessions } from './project.mjs';
 import { send, sendAdvancedHelp, sendHelp, sendUsage } from './send.mjs';
 import { CommandError, predecessors, readState, resolveTarget } from './sessions.mjs';
 import { presentState } from './state.mjs';
@@ -27,11 +27,13 @@ const help = {
     'L2 tool filters: [--tool shell|edit|read|other] [--cmd REGEX] [--tail N] [--only-failed] [--with-calls]',
   ],
   state: ['loom state <target> [--project DIR]'],
+  status: ['loom status --project DIR [--json]'],
   cost: ['loom cost [--project DIR]', 'Reports JSON totals from native usage and per-turn acceptance timing.'],
   stop: ['loom stop <target> [--project DIR]'],
   send: [sendUsage, sendHelp],
   handover: ['loom handover <leader|auditor|super> --project DIR [--to ADDR]'],
   spawn: [spawnUsage, spawnHelp],
+  switch: ['loom switch <leader|auditor|worker> --project DIR --to <1-based index|cli/model/effort[/fast]>'],
   daemon: [daemonUsage],
   upgrade: [upgradeUsage],
   ls: ['loom ls [--project DIR]'],
@@ -46,6 +48,8 @@ const commands = {
   hist: { ...strings('turn', 'turns', 'level', 'role', 'project', 'since', 'outcome', 'wave', 'grep', 'tool', 'cmd', 'tail'),
     ...flags('json', 'diff', 'evidence', 'only-failed', 'with-calls') },
   state: projectArgs, stop: projectArgs, ls: projectArgs, cost: projectArgs,
+  status: { ...projectArgs, ...flags('json') },
+  switch: { ...projectArgs, ...strings('to') },
   doctor: { ...projectArgs, ...flags('fix') },
   notifications: { ...projectArgs, ...flags('peek', 'take', 'history'), ...strings('needs-decision', 'audit-escalation', 'complete') },
 };
@@ -217,7 +221,16 @@ export async function main(args) {
     if (command === 'doctor' && values.project === undefined) invalid(help.doctor[0]);
     const directory = projectDirectory(values.project);
     let result;
-    if (command === 'hist') {
+    if (command === 'switch') {
+      const [role] = positionals;
+      if (positionals.length !== 1 || !['leader', 'auditor', 'worker'].includes(role) || !values.to?.trim()) invalid(help.switch[0]);
+      try { result = await request(directory, 'switch', { role, to: values.to }); }
+      catch (error) {
+        if (!daemonAbsent(error)) throw error;
+        throw new CommandError('not-ready', 'loomd is not running for this project');
+      }
+      if (result.session) result = await withTuiVersionWarnings(result, result.session);
+    } else if (command === 'hist') {
       result = await hist(values, positionals, directory);
       if (!values.json) { printHistory(result); return 0; }
     } else if (command === 'state' || command === 'stop') {
@@ -238,10 +251,17 @@ export async function main(args) {
       } else {
         throw new CommandError('unsupported', 'loom stop requires a daemon-managed session');
       }
-      if (command === 'state') result = await withTuiVersionWarnings(presentState(result, session, directory), session);
+      if (command === 'state') {
+        result.rotations ??= projectIndex(directory).rotations().filter(item => item.project === session.project);
+        result = await withTuiVersionWarnings(presentState(result, session, directory), session);
+      }
     } else {
       if (positionals.length) invalid(help[command][0]);
-      if (command === 'cost') {
+      if (command === 'status') {
+        const { projectStatus, printStatus } = await import('./status.mjs');
+        result = await projectStatus(directory);
+        if (!values.json) { printStatus({ ...result, ...projectReceipt(directory) }); return 0; }
+      } else if (command === 'cost') {
         const { projectCost } = await import('./cost.mjs');
         result = { ok: true, ...projectCost(directory, projectSessions(directory)) };
       } else if (command === 'doctor') {

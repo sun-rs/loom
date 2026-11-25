@@ -9,6 +9,8 @@ import { createWatcher } from '../watch/index.mjs';
 import { ownedSessions, validInput } from './sessions.mjs';
 import { jsonRows, prepareJournal, readText } from './io.mjs';
 import { notifyExternal, projectNotifications } from './notifications.mjs';
+import { organization } from './org.mjs';
+import { defaultCoalesceMs, readPolicy, setWorkerProfile, workerLimit } from '../cli/policy.mjs';
 
 function batchDeliveryId(batch, dest) {
   const bytes = createHash('sha256').update(`${batch}\0${dest}`).digest('hex').slice(0, 32);
@@ -37,6 +39,7 @@ export function createSupervisor(project, {
   index.initialize();
   const sessions = ownedSessions(project, index, report, sessionOptions);
   const mail = inbox(project, sessions.transport, report);
+  const org = organization(project, index, sessions, mail, now, report);
   const watchJournal = join(project, '.project', 'watch', 'events.jsonl');
   prepareJournal(watchJournal);
   const notifications = projectNotifications(project, now);
@@ -58,7 +61,7 @@ export function createSupervisor(project, {
       const rows = sessions.rows();
       const superSession = rows.findLast(row => row.role === 'super' &&
         row.project === name && row.endedAt === null && sessions.jobs.has(row.addr));
-      if (superSession) {
+      if (superSession && !batch[0].externalOnly) {
         const details = [...new Set(batch.map(event => terminalText(event.text ??
           `${event.type} ${event.addr ?? ''} ${event.reason ?? ''}`.trim()).slice(0, 4000)))];
         const heading = `Loom 项目通知：${[...new Set(batch.map(event => event.type))].join(', ')}`;
@@ -92,7 +95,32 @@ export function createSupervisor(project, {
 
   const workers = () => sessions.rows().filter(row => row.role === 'worker' && sessions.jobs.has(row.addr));
   const superseded = (worker, rows) => rows.some(row => row.project === worker.project && row.task === worker.task &&
-    row.wave !== worker.wave && row.startedAt > worker.startedAt);
+    row.startedAt > worker.startedAt);
+  const workPending = message => message?.phase !== 'refused' && !message?.completion?.body && !message?.completion?.noReply;
+  const messagesForWorker = (row, job) => deliveries(row.addr).filter(message => message.id !== job.firstId && workPending(message));
+  function occupied(row) {
+    const job = sessions.jobs.get(row.addr);
+    return !job || workPending(mail.messages.find(message => message.id === job.firstId)) || messagesForWorker(row, job).length > 0;
+  }
+
+  function workerSeats(limit) {
+    const assigned = new Set();
+    const scopes = Map.groupBy(workers().filter(row => row.endedAt === null),
+      row => JSON.stringify([row.project, parentFor(row.parent)]));
+    for (const scope of scopes.values()) {
+      const active = scope.filter(row => {
+        const job = sessions.jobs.get(row.addr);
+        return workPending(mail.messages.find(message => message.id === job.firstId)) ||
+          messagesForWorker(row, job).some(message => message.phase !== 'queued');
+      });
+      for (const row of active) assigned.add(row.addr);
+      const waiting = new Set(scope.filter(row => !assigned.has(row.addr)).map(row => row.addr));
+      const next = new Set(mail.messages.filter(message => message.phase === 'queued' && waiting.has(message.target.addr))
+        .map(message => message.target.addr));
+      for (const addr of [...next].slice(0, Math.max(0, limit - active.length))) assigned.add(addr);
+    }
+    return assigned;
+  }
   const stepRelay = relay(project, [], window, undefined, report, undefined, {
     withEvidence: true, index, sealWindow, partialWindow, blockedWindow,
     parentFor,
@@ -126,10 +154,12 @@ export function createSupervisor(project, {
         } : undefined;
         const last = sessions.events(row.addr).at(-1);
         const activityAt = sessions.lastActivity(row, last);
-        const sealed = stepRelay.isSealed(row.parent, row.project, row.wave) || await sessions.sealed(row.parent, job.gate);
+        const sealed = job.deliver !== 'stream' && (stepRelay.isSealed(row.parent, row.project, job.barrier ?? row.wave, job.deliver) ||
+          await sessions.sealed(row.parent, job.gate));
         return { id: row.task, addr: row.addr, provider: row.cli, wave: row.wave, managed: {
           parent: row.parent, project: row.project, startedAt: row.startedAt, activityAt, reply,
           superseded: superseded(row, rows), sealed,
+          deliver: job.deliver, barrier: job.barrier,
         } };
       }));
     },
@@ -139,16 +169,17 @@ export function createSupervisor(project, {
       const late = batch.lateWorker && sessions.rowFor(batch.lateWorker);
       if (late && superseded(late, workers())) return;
       saved(sessions.targetBinding(row), batch.message, { id: batchDeliveryId(batch.id, addr), waveBatch: batch.id, waveKey: batch.waveKey, waveKind: batch.waveKind,
+        ...(batch.streamAt != null && { streamAt: batch.streamAt }),
         ...(late && { lateWorker: late.addr }), ...(batch.forcedSeal && { allowIdleWithoutEnd: true }) });
     },
   });
 
-  async function checkWave(parent, name, wave, gate) {
+  function checkBarrier(parent, name, barrier, gate) {
     const prior = [...sessions.jobs.values()].filter(job => job.row.role === 'worker' && job.row.parent === parent &&
-      job.row.project === name && job.row.wave === wave);
-    if (stepRelay.isSealed(parent, name, wave) || prior.some(job => now() >= job.row.startedAt + sealWindow ||
+      job.row.project === name && job.barrier === barrier);
+    if (stepRelay.isSealed(parent, name, barrier, 'barrier') || prior.some(job => now() >= job.row.startedAt + sealWindow ||
         (Boolean(gate) !== Boolean(job.gate) || (gate && !sessions.transport.sameTurn(job.gate, gate))))) {
-      throw new CommandError('wave-sealed', 'Use a new wave for later dispatch');
+      throw new CommandError('wave-sealed', 'Use a new barrier set for later dispatch');
     }
   }
 
@@ -174,7 +205,7 @@ export function createSupervisor(project, {
         project: row.project, addr: row.addr, at: row.endedAt });
     }
     for (const message of mail.messages) {
-      if (!['sending', 'stopping'].includes(message.phase)) continue;
+      if (message.combinedInto || !['sending', 'stopping'].includes(message.phase)) continue;
       const at = message.attemptAt ?? message.stopAttemptAt;
       if (!at || now() - at < uncertainWindow) continue;
       const row = sessions.rowFor(message.target.addr);
@@ -189,15 +220,6 @@ export function createSupervisor(project, {
       notifications.add({ id, type: 'delivery-uncertain', project: row.project, addr: row.addr, at: at + uncertainWindow,
         deliveryId: message.id, text, ...((message.projectEvents || message.uncertainOf) && { logOnly: true }) });
     }
-  }
-
-  function implicitContinuation(from) {
-    const previous = mail.messages.findLast(message => message.implicitBatch && parentFor(message.from?.addr) === from);
-    if (!previous) return 'auto:' + randomUUID();
-    const first = mail.messages.find(message => message.implicitBatch === previous.implicitBatch);
-    const closed = batchDeliveryId(first.implicitBatch, first.from.addr);
-    if (now() >= first.createdAt + window || mail.messages.some(message => message.id === closed)) return 'auto:' + randomUUID();
-    return first.implicitBatch;
   }
 
   function continuations() {
@@ -249,6 +271,7 @@ export function createSupervisor(project, {
         // Retry publication from the durable delivery if interrupted between the two writes.
         const record = saved(target, text, { id: delivery, continuationBatch: id, continuationKind: kind,
           continuationMembers: selected.map(message => message.id), continuationEvents: events,
+          ...(first.streamContinuation && { streamAt: selected.length ? Math.min(...selected.map(settledAt)) : deadline }),
           ...(kind === 'timeout' && { allowIdleWithoutEnd: true }) });
         notifications.add(...(record.continuationEvents ?? []));
       }
@@ -281,17 +304,104 @@ export function createSupervisor(project, {
     }
   }
 
+  function orgNotices(rows) {
+    const delivered = new Set(mail.messages.filter(message => message.issue !== 'target-exited' || message.received)
+      .flatMap(message => message.orgEvents ?? []));
+    const notices = org.notices().filter(notice => !delivered.has(notice.id));
+    for (const batch of Map.groupBy(notices, notice => JSON.stringify([notice.project, notice.audience])).values()) {
+      const { project: name, audience } = batch[0];
+      const row = rows.findLast(row => row.project === name && row.role === audience &&
+        row.endedAt === null && sessions.jobs.has(row.addr));
+      if (!row) continue;
+      const lines = batch.map(({ type, task, addr, value, kind, command, ...fields }) => {
+        const details = type === 'fact-miss' ? `${kind} ${value}` : type === 'slow-command' ?
+          `${command} ${fields.durationMs} ms (median ${fields.medianMs} ms)` :
+          Object.entries(fields).filter(([key]) => !['id', 'at', 'project', 'audience'].includes(key))
+            .map(([key, value]) => `${key}=${value}`).join(' ');
+        return terminalText(`${type} ${task ?? addr} · ${details}`);
+      }).join('\n');
+      const ids = batch.map(notice => notice.id);
+      const queued = mail.messages.find(message => message.orgEvents && message.target.addr === row.addr &&
+        message.phase === 'queued' && !message.payloadFrozen);
+      if (queued) mail.appendQueued(queued, lines, ids);
+      else saved(sessions.targetBinding(row), 'Loom drift and fact checks\n' + lines, { orgEvents: ids });
+    }
+  }
+
+  async function closeReviews() {
+    for (const job of sessions.jobs.values()) {
+      if (!job.reviewDeadline) continue;
+      const row = sessions.rowFor(job.row.addr);
+      if (!row) continue;
+      const first = mail.messages.find(message => message.id === job.firstId);
+      const result = first?.completion;
+      const expired = now() >= job.reviewDeadline;
+      if (!expired && !result && row.endedAt == null && first?.phase !== 'refused') continue;
+      const id = batchDeliveryId(job.firstId, 'reviewer');
+      if (mail.messages.some(message => message.id === id)) continue;
+      if (row.endedAt == null) {
+        try { await sessions.stop(row); }
+        catch (error) { report(`${row.addr} reviewer stop: ${error.message}`); continue; }
+      }
+      const onTime = result && result.at <= job.reviewDeadline;
+      const detail = onTime && result.body ? result.body : onTime && result.unconfirmedBody ?
+        `UNCONFIRMED\n${result.unconfirmedBody}` :
+        expired && (!onTime || row.endedAt >= job.reviewDeadline) ? 'TIMED OUT' :
+          `FAILED ${result?.outcome?.failure ?? first?.issue ?? 'no native reply'}`;
+      const text = `Loom reviewer ${row.addr}${row.task ? ' · ' + row.task : ''}\n\n${terminalText(detail).slice(0, 16_000)}`;
+      const parent = row.parent && sessions.routeParent(row.parent);
+      if (row.parent) {
+        if (parent?.endedAt === null) saved(sessions.targetBinding(parent), text, { id, reviewerResult: row.addr });
+      } else {
+        notifications.add({ id, type: 'reviewer-result', project: row.project, addr: row.addr,
+          batch: id, at: result?.at ?? row.endedAt ?? job.reviewDeadline, text, externalOnly: true });
+      }
+    }
+  }
+
+  function notifyProfile(name, addr, warnings) {
+    for (const warning of warnings ?? []) {
+      if (warning.code === 'preferred-fallback') {
+        notifications.add({ id: randomUUID(), project: name, type: warning.code, addr, at: now(), text: warning.message });
+      }
+    }
+  }
+
+  async function spawnSession(args, caller) {
+    const job = await sessions.newJob(args, caller, checkBarrier, occupied);
+    let session;
+    try {
+      session = await sessions.activate(job, mail);
+      sessions.requireLive(session);
+    } catch (error) {
+      await sessions.failSpawn(job, error);
+      throw error;
+    }
+    let retirementIssue;
+    const retired = await sessions.retirePredecessor(job).catch(error => { retirementIssue = error.message; });
+    const handoff = codexHandoff(session);
+    notifyProfile(session.project, session.addr, job.warnings);
+    return { session, deliveryId: job.firstId, requested: job.requested, ...sessions.runtimeSelection(session),
+      ...(job.deliver && { deliver: job.deliver, ...(job.barrier && { barrier: job.barrier }) }),
+      ...(handoff && { handoff }), ...(job.handoverFrom && { handoverFrom: job.handoverFrom }),
+      ...(retired && { retired: retired.addr }), ...(retirementIssue && { retirementIssue }) };
+  }
+
   async function tick() {
     await sessions.refresh(mail);
     for (const job of sessions.jobs.values()) {
       await sessions.retirePredecessor(job).catch(error => report(`handover retirement: ${error.message}`));
     }
     const rows = workers();
-    for (const message of mail.messages.filter(message => message.lateWorker && message.phase === 'queued')) {
+    for (const message of mail.messages.filter(message => message.lateWorker && !message.combinedInto && message.phase === 'queued')) {
       const old = rows.find(row => row.addr === message.lateWorker);
       if (old && superseded(old, rows)) mail.refuseQueued(message, 'superseded');
     }
     const routed = new Map();
+    let policy;
+    try { policy = readPolicy(project, { optional: true }); }
+    catch { policy = {}; }
+    let seats;
     await mail.step(({ id, target: { addr } }) => {
       if (id === sessions.jobs.get(addr)?.firstId) return;
       if (!routed.has(addr)) {
@@ -299,9 +409,26 @@ export function createSupervisor(project, {
         routed.set(addr, row?.addr !== addr && row?.endedAt === null ? sessions.targetBinding(row) : undefined);
       }
       return routed.get(addr);
+    }, {
+      async beforeDispatch() {
+        await stepRelay(now());
+        continuations();
+        seats = workerSeats(workerLimit(policy));
+      },
+      now,
+      coalesceMs: policy.delivery?.coalesceMs ?? defaultCoalesceMs,
+      canDispatch(target) {
+        const job = sessions.jobs.get(target.addr);
+        if (job?.row.role === 'worker') return seats.has(target.addr);
+        if (!job?.reviewDeadline) return true;
+        const first = mail.messages.find(message => message.id === job.firstId);
+        return now() < job.reviewDeadline && !first?.completion && first?.phase !== 'refused';
+      },
     });
-    await stepRelay(now());
-    continuations();
+    await closeReviews();
+    const current = sessions.rows();
+    await org.collect(current);
+    orgNotices(current);
     health = new Map((await watcher.poll()).map(row => [row.addr, row]));
     publishNotifications();
     await pushNotifications();
@@ -324,22 +451,22 @@ export function createSupervisor(project, {
     },
     shutdown: sessions.shutdown,
     async handle(command, args, caller) {
-      if (command === 'spawn') {
-        const job = await sessions.newJob(args, caller, checkWave);
-        let session;
-        try {
-          session = await sessions.activate(job, mail);
-          sessions.requireLive(session);
-        } catch (error) {
-          await sessions.failSpawn(job, error);
-          throw error;
+      if (command === 'spawn') return spawnSession(args, caller);
+      if (command === 'switch') {
+        const { role, to } = args;
+        if (!['leader', 'auditor', 'worker'].includes(role) || !validInput(to)) {
+          throw new CommandError('invalid-arguments', 'Switch requires leader, auditor or worker and a profile');
         }
-        let retirementIssue;
-        const retired = await sessions.retirePredecessor(job).catch(error => { retirementIssue = error.message; });
-        const handoff = codexHandoff(session);
-        return { session, deliveryId: job.firstId, requested: job.requested, ...sessions.runtimeSelection(session),
-          ...(handoff && { handoff }), ...(job.handoverFrom && { handoverFrom: job.handoverFrom }),
-          ...(retired && { retired: retired.addr }), ...(retirementIssue && { retirementIssue }) };
+        if (role === 'worker') {
+          const { selected, fastRequested, warnings } = setWorkerProfile(project, to);
+          const actor = sessions.rows().find(row => row.addr === caller || row.pane === caller);
+          const names = new Set(sessions.rows().map(row => row.project));
+          notifyProfile(actor?.project ?? (names.size === 1 ? names.values().next().value : project), actor?.addr, warnings);
+          return { role, selected, ...(fastRequested !== undefined && { fastRequested }), warnings };
+        }
+        const old = sessions.resolve(role, caller);
+        return spawnSession({ role, cwd: old.cwd, 'handover-from': old.addr, profileChoice: to, defaultMode: old.backend,
+          prompt: 'Take over the resident role. In your first report, ground the current state in repository SHAs, paths and any test or metric names you rely on.' }, caller);
       }
       if (command === 'notifications') {
         const names = new Set(sessions.rows().map(row => row.project));
@@ -366,6 +493,12 @@ export function createSupervisor(project, {
         return { notifications: notifications.list(name, args.take === true, args.history === true) };
       }
       if (command === 'ls') return pendingWork(mail.messages, undefined, parentFor);
+      if (command === 'status') return { sessions: await Promise.all(sessions.rows().filter(row => row.endedAt === null)
+        .map(async row => {
+          const incident = health.get(row.addr);
+          const snapshot = await Promise.resolve().then(() => sessions.transport.inspect(sessions.targetBinding(row))).catch(() => undefined);
+          return { addr: row.addr, state: incident?.state === 'needs-you' ? 'stuck' : snapshot?.state ?? 'unknown' };
+        })) };
       const row = sessions.resolve(args.target, caller);
       if (command === 'handover') {
         const old = sessions.rowFor(args.from);
@@ -373,6 +506,7 @@ export function createSupervisor(project, {
         let delivery;
         sessions.bindSuccessor(old, row, () => {
           delivery = saved(sessions.targetBinding(row), args.text, { id: batchDeliveryId(old.addr, row.addr) });
+          return delivery;
         });
         if (old.endedAt === null && sessions.jobs.has(old.addr)) await sessions.retirePredecessor(sessions.jobs.get(row.addr));
         return receiptFor(delivery);
@@ -388,6 +522,7 @@ export function createSupervisor(project, {
           ...(snapshot?.writeEvidence && { writeEvidence: snapshot.writeEvidence }),
           ...(snapshot?.runtimeStatus && { runtimeStatus: snapshot.runtimeStatus }),
           deliveries: deliveries(row.addr).map(receiptFor), notifications: notifications.list(row.project),
+          rotations: index.rotations().filter(item => item.project === row.project),
           ...pendingWork(mail.messages, row.addr, parentFor) };
       }
       if (command === 'stop') {
@@ -405,6 +540,7 @@ export function createSupervisor(project, {
       }
       const from = args.from ? sessions.resolve(args.from, caller) : caller &&
         sessions.rows().find(row => row.addr === caller || row.pane === caller);
+      const actor = caller && sessions.rows().find(row => row.addr === caller || row.pane === caller);
       const existing = args.id && mail.messages.find(message => message.id === args.id);
       if (existing) {
         if ((existing.originalTarget ?? existing.target.addr) !== row.addr || existing.from?.addr !== from?.addr || existing.text !== args.text ||
@@ -439,10 +575,10 @@ export function createSupervisor(project, {
       const mode = sessions.requestedMode(target, args.mode, active);
       const continuation = mode === 'queue' && from?.role === 'leader' && row.role === 'worker' && from.project === row.project;
       const message = saved(target, args.text, { ...(from && { from: sessions.targetBinding(from) }),
+        ...(!actor || actor.role === 'super' ? { superPriority: true } : {}),
         ...(row.addr !== successor.addr && { originalTarget: row.addr }),
         ...(args.id && { id: args.id }), ...(args.batch && { batchId: args.batch, batchSize: args.batchSize }),
-        ...(continuation && { coalesceWindow: blockedWindow }),
-        ...(continuation && !args.batch && { implicitBatch: implicitContinuation(from.addr) }),
+        ...(continuation && !args.batch && { implicitBatch: 'auto:' + randomUUID(), coalesceWindow: 0, streamContinuation: true }),
         requestedMode: args.mode, mode, active, barrier: mode === 'queue' ? active : undefined });
       return { addr: row.addr, ...receiptFor(message) };
     },

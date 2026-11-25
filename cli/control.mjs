@@ -15,8 +15,8 @@ import { roles } from '../index/index.mjs';
 const executable = fileURLToPath(new URL('../bin/loomd', import.meta.url));
 const invalid = message => new CommandError('invalid-arguments', message);
 const named = entries => Object.fromEntries(entries.map(key => [key, { type: 'string' }]));
-export const spawnUsage = 'loom spawn <role> --cwd DIR [--project DIR] [--task T --wave W] [--cli CLI] [--mode tui|headless] [--model MODEL] [--effort EFFORT] [--parent ADDR] [--handover-from OLD_ADDR] "<prompt>"';
-export const spawnHelp = 'Only workers require --task and --wave. --parent defaults to LOOM_ADDR in managed sessions. The required .project/policy.json supplies per-role runtime defaults and roles.leader.maxActiveWorkers (default 3, maximum 5). --handover-from includes the brief on startup and retires the predecessor after binding.';
+export const spawnUsage = 'loom spawn <role> --cwd DIR [--project DIR] [--task T --wave W] [--deliver stream | --deliver barrier --barrier SET] [--cli CLI] [--mode tui|headless] [--model MODEL] [--effort EFFORT] [--parent ADDR] [--handover-from OLD_ADDR] "<prompt>"';
+export const spawnHelp = 'Roles: super, leader, auditor, worker, reviewer. Workers require --task and --wave. Worker results stream by default with delivery.coalesceMs (45 seconds). Use --deliver barrier --barrier SET for a set that must arrive together. --parent defaults to LOOM_ADDR in managed sessions. The required .project/policy.json supplies per-role runtime defaults, roles.leader.maxActiveWorkers (default 3, maximum 4) and roles.reviewer.maxDurationMs (default 30 minutes). A reviewer takes one read-only question. --handover-from includes the brief on startup and retires the predecessor after binding.';
 export const daemonUsage = 'loom daemon start|stop|status [--project DIR] [--foreground]';
 
 async function status(project) {
@@ -68,7 +68,7 @@ async function start(project) {
 export async function control(command, args) {
   let values;
   let positionals;
-  const spawnOptions = ['cli', 'mode', 'model', 'effort', 'cwd', 'project', 'task', 'wave', 'handover-from'];
+  const spawnOptions = ['cli', 'mode', 'model', 'effort', 'cwd', 'project', 'task', 'wave', 'handover-from', 'deliver', 'barrier'];
   try {
     ({ values, positionals } = parseArgs({ args, allowPositionals: true, options: command === 'spawn' ?
       named([...spawnOptions, 'parent']) : { ...named(['project']), foreground: { type: 'boolean' } } }));
@@ -79,6 +79,8 @@ export async function control(command, args) {
     if (positionals.length !== 2 || !roles.includes(role) || !prompt.trim() || !isAbsolute(values.cwd ?? '') ||
         ['cli', 'mode', 'model', 'effort', 'task', 'wave', 'parent', 'handover-from'].some(key => values[key] !== undefined && !values[key].trim()) ||
         role === 'worker' && (!values.task || !values.wave) ||
+        (values.deliver !== undefined || values.barrier !== undefined) && (role !== 'worker' ||
+          !['stream', 'barrier'].includes(values.deliver) || (values.deliver === 'barrier') !== Boolean(values.barrier?.trim())) ||
         values.cli && !providers.includes(values.cli) || values.mode && !['tui', 'headless'].includes(values.mode)) {
       throw invalid(spawnUsage);
     }

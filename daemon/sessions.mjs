@@ -4,7 +4,7 @@ import { mkdirSync, readdirSync, realpathSync, statSync } from 'node:fs';
 import { isAbsolute, join, relative, sep } from 'node:path';
 import { CommandError as ErrorCode, resolveTarget } from '../cli/sessions.mjs';
 import { runtimeDirectory } from '../cli/project.mjs';
-import { roles } from '../index/index.mjs';
+import { roles, rotatingRoles } from '../index/index.mjs';
 import { hc, tui, addressPattern } from '../inbox/tui.mjs';
 import { wireText } from '../inbox/message.mjs';
 import { recordLifecycle } from '../handover/index.mjs';
@@ -14,7 +14,7 @@ import { bindOarTranscript, checkedTranscript, oarControl, oarDelivery, oarEnd, 
 import { openTui, ownedPane, refreshOpenCode } from './tui.mjs';
 import { recoverCodexEnd, recoverNativeDelivery } from './recovery.mjs';
 import { spawnProfile, enforceDeny } from '../cli/policy.mjs';
-import { linkTuiInputHead, observeTuiHeads, saveTuiInputHead } from './turn-heads.mjs';
+import { headAt, linkTuiInputHead, observeTuiHeads, saveTuiInputHead } from './turn-heads.mjs';
 import { wrapperFailedStart } from '../runtimes/tui/transport.mjs';
 import { controlHello, requestControl } from '../tui/pty-control.mjs';
 import { attachHost } from './host-client.mjs';
@@ -24,6 +24,7 @@ const runtimeIds = { codex: 'codex', agy: 'antigravity', claude: 'claude', openc
 const modes = new Set(['tui', 'headless']);
 const guardedAbort = new Set(['codex', 'agy', 'opencode']);
 const hasText = value => typeof value === 'string' && value.trim().length > 0;
+const temporaryRole = role => ['worker', 'reviewer'].includes(role);
 export const validInput = text => hasText(text) && !/[\x00-\x08\x0b\x0c\x0e-\x1f\x7f-\x9f]/.test(text);
 const cardConventions = row => [
   '## Loom task conventions',
@@ -197,7 +198,7 @@ export function ownedSessions(project, index, report, {
 
   async function finish(job, row, at = Date.now()) {
     const final = row.endedAt === null ? index.update(row.addr, { endedAt: Math.max(row.startedAt, at) }) : row;
-    if (row.role !== 'worker' && final.transcriptPath && !job.endRecorded) {
+    if (!temporaryRole(row.role) && final.transcriptPath && !job.endRecorded) {
       const result = await recordLifecycle(project, final, { kind: 'exited', at: final.endedAt, eventId: `${row.addr}:exit` },
         { locate: false }).catch(error => report(error.message));
       if (result?.status === 'recorded') { job.endRecorded = true; save(job); }
@@ -215,7 +216,7 @@ export function ownedSessions(project, index, report, {
 
   function routeParent(addr) {
     const row = rowFor(addr);
-    if (!row || !row.role || row.role === 'worker') return row;
+    if (!row || !row.role || temporaryRole(row.role)) return row;
     let current = row;
     let live = row.endedAt === null ? row : undefined;
     for (let next = successorOf(current.addr); next; next = successorOf(current.addr)) {
@@ -227,21 +228,46 @@ export function ownedSessions(project, index, report, {
       candidate.startedAt > current.startedAt && candidate.endedAt === null && restored.has(candidate.addr)) ?? live ?? current;
   }
 
+  function checkRotation(name, role, successor) {
+    if (!rotatingRoles.includes(role)) return;
+    const pending = index.rotations().find(item => item.project === name && item.successor !== successor &&
+      item.verifiedAt === null && item.failedAt === null);
+    if (pending) throw new ErrorCode('rotation-in-progress', `${pending.role} rotation to ${pending.successor} awaits a verified report`);
+  }
+
+  function beginRotation(job, old) {
+    if (!rotatingRoles.includes(job.row.role)) return;
+    const { addr: successor, project: name, role } = job.row;
+    const pending = index.beginRotation({ successor, predecessor: old.addr, project: name, role, startedAt: Date.now() });
+    if (pending) throw new ErrorCode('rotation-in-progress', `${pending.role} rotation to ${pending.successor} awaits a verified report`);
+  }
+
   function bindSuccessor(old, row, beforeBind) {
     const job = jobs.get(row.addr);
-    if (!old || !job || !restored.has(row.addr) || old.role === 'worker' || old.role !== row.role ||
+    if (!old || !job || !restored.has(row.addr) || temporaryRole(old.role) || old.role !== row.role ||
         old.project !== row.project || !(old.startedAt < row.startedAt) || row.endedAt !== null ||
         job.handoverFrom && job.handoverFrom !== old.addr ||
         successorOf(old.addr) && successorOf(old.addr) !== job) {
       throw new ErrorCode('invalid-arguments', 'Handover requires a newer bound session of the same resident role and project');
     }
-    beforeBind?.();
+    checkRotation(row.project, row.role, row.addr);
+    const notice = beforeBind?.();
     if (job.handoverBound) return;
     const previous = job.handoverFrom;
     job.handoverFrom = old.addr;
     job.handoverBound = true;
+    job.handoverReportId = notice?.id ?? job.firstId;
+    job.handoverBoundAt = Date.now();
     try { save(job); }
-    catch (error) { job.handoverFrom = previous; delete job.handoverBound; throw error; }
+    catch (error) {
+      job.handoverFrom = previous;
+      delete job.handoverBound;
+      delete job.handoverReportId;
+      delete job.handoverBoundAt;
+      throw error;
+    }
+    beginRotation(job, old);
+    if (rotatingRoles.includes(row.role)) index.bindRotation(row.addr, job.handoverBoundAt);
   }
 
   async function retirePredecessor(job) {
@@ -259,30 +285,43 @@ export function ownedSessions(project, index, report, {
     return sessions.find(row => row.pane === target) ?? resolveTarget(sessions, target, callerAddr);
   }
 
-  async function newJob(input, caller, checkWave) {
+  async function newJob(input, caller, checkBarrier, occupies) {
     if (!roles.includes(input.role) || !hasText(input.cwd) || !validInput(input.prompt) ||
         (input.parent !== undefined && !hasText(input.parent)) ||
         (input.cli !== undefined && !Object.hasOwn(runtimeIds, input.cli)) ||
         (input.mode !== undefined && !modes.has(input.mode)) ||
+        (input.defaultMode !== undefined && !modes.has(input.defaultMode)) ||
+        (input.deliver !== undefined || input.barrier !== undefined) &&
+          (input.role !== 'worker' || !['stream', 'barrier'].includes(input.deliver) ||
+            (input.deliver === 'barrier' ? !addressPattern.test(input.barrier ?? '') : input.barrier !== undefined)) ||
         ['model', 'effort'].some(key => input[key] !== undefined && !hasText(input[key])) ||
         ['task', 'wave'].some(key => (input.role === 'worker' || input[key] !== undefined) && !addressPattern.test(input[key] ?? ''))) {
-      throw new ErrorCode('invalid-arguments', 'spawn requires role, cwd and prompt, plus task and wave for workers');
+      throw new ErrorCode('invalid-arguments', 'spawn requires role, cwd and prompt. Workers require task and wave, and barrier delivery requires a set ID.');
     }
-    const { requested, selected, deny } = spawnProfile(project, input);
     const cwd = inProjectDirectory(project, input.cwd);
     const predecessor = input['handover-from'] && rowFor(input['handover-from']);
     if (input['handover-from'] !== undefined && (!predecessor || !jobs.has(predecessor.addr) ||
-        input.role === 'worker' || predecessor.role !== input.role ||
+        temporaryRole(input.role) || predecessor.role !== input.role ||
         input.parent && input.parent !== predecessor.addr || successorOf(predecessor.addr))) {
       throw new ErrorCode('invalid-arguments', '--handover-from requires an unreplaced managed address of the same resident role');
     }
-    const parent = predecessor ?? (input.parent ? resolve(input.parent, caller) :
-      rows().find(row => row.pane === caller || row.addr === caller));
+    const actor = caller && rows().find(row => row.pane === caller || row.addr === caller);
+    const parent = predecessor ?? (input.parent ? resolve(input.parent, caller) : actor);
+    if (input.role === 'reviewer' && parent && (actor && actor.addr !== parent.addr ||
+        parent.endedAt !== null || !jobs.has(parent.addr))) {
+      throw new ErrorCode('invalid-arguments', 'A reviewer result requires its live, managed spawning role');
+    }
     const existing = new Set(rows().map(row => row.project));
     const name = parent?.project ?? (existing.size === 1 ? existing.values().next().value : project);
+    if (predecessor) checkRotation(name, input.role);
+    const deliver = input.role === 'worker' ? input.deliver ?? 'stream' : undefined;
     let gate;
-    if (input.role === 'worker' && parent?.endedAt === null) gate = (await transport.inspect(targetBinding(parent))).active;
-    if (input.role === 'worker') await checkWave?.(parent?.addr ?? null, name, input.wave, gate);
+    if (deliver === 'barrier') {
+      if (parent?.endedAt === null) gate = (await transport.inspect(targetBinding(parent))).active;
+      await checkBarrier(parent?.addr ?? null, name, input.barrier, gate);
+    }
+    const { requested, selected, deny, maxDurationMs, warnings, fastRequested } = spawnProfile(project,
+      input.role === 'worker' ? { ...input, workerCaller: caller ?? null } : input, addr => routeParent(addr)?.addr, occupies);
     const { cli, mode, model, effort } = selected;
     const addr = `${mode === 'headless' ? 'oar' : 'loom'}-${randomUUID()}`;
     const runtimeId = mode === 'tui' ? `${cli}-tui` : runtimeIds[cli];
@@ -296,8 +335,18 @@ export function ownedSessions(project, index, report, {
       prompt = `先读前任简报及任务指定的交接记录，再开始接管。\n\n${brief.trimEnd()}\n\n## 启动指令\n${prompt}`;
     }
     if (row.role === 'worker') prompt += `\n\n${cardConventions(row)}`;
+    if (row.role === 'reviewer') prompt = [
+      'You are a one-turn Loom reviewer. Inspect read-only and answer the one question below. Do not edit files, change repository state, run broad test suites or delegate. Give a concise conclusion and cite any evidence you use.',
+      prompt,
+    ].join('\n\n');
     const job = { row, firstId: randomUUID(), prompt, gate, requested, deny, release: releaseId(),
+      ...(warnings.length && { warnings }),
+      ...(fastRequested !== undefined && { fastRequested }),
+      ...(selected.fast !== undefined && { fast: selected.fast }),
       ...(predecessor && { handoverFrom: predecessor.addr }),
+      ...(row.role === 'worker' && { cardStart: headAt(cwd) }),
+      ...(deliver && { deliver, ...(input.barrier && { barrier: input.barrier }) }),
+      ...(row.role === 'reviewer' && { reviewDeadline: row.startedAt + maxDurationMs }),
       ...(cli === 'opencode' && mode === 'tui' && { plannedNativeId: `ses_${randomUUID().replaceAll('-', '')}` }) };
     save(job);
     jobs.set(addr, job);
@@ -306,17 +355,22 @@ export function ownedSessions(project, index, report, {
 
   function runtimeSelection(row) {
     const runtime = running.get(row.addr)?.session;
-    const selected = { cli: row.cli, model: row.model, effort: row.effort, mode: row.backend };
+    const job = jobs.get(row.addr);
+    const selected = { cli: row.cli, model: row.model, effort: row.effort, mode: row.backend,
+      ...(job?.fast !== undefined && { fast: job.fast }) };
     const effective = { ...selected, model: runtime?.model?.()?.value ?? null, effort: runtime?.effort?.()?.value ?? null };
+    if (job?.fast !== undefined) effective.fast = null;
     const unverified = Object.keys(selected).filter(key => effective[key] == null);
     const differences = Object.keys(selected).filter(key => effective[key] != null && effective[key] !== selected[key]);
     const tui = jobs.get(row.addr)?.tui;
     return { selected, effective, differences, unverified,
+      ...(job?.fastRequested !== undefined && { fastRequested: job.fastRequested }),
+      ...(job?.warnings?.length && { warnings: job.warnings }),
       ...(tui && { transport: tui.transport, ...(tui.reason && { transportReason: tui.reason }) }) };
   }
 
-  async function openFixture(row) {
-    const session = await open(row, project, row.sessionId);
+  async function openFixture(row, job) {
+    const session = await open(job.fast === undefined ? row : { ...row, fast: job.fast }, project, row.sessionId);
     try {
       if (row.sessionId && session.id !== row.sessionId) throw new Error('OAR resumed a different native session');
       return trackOar(project, row, session, error => report(error.message));
@@ -327,6 +381,12 @@ export function ownedSessions(project, index, report, {
   }
 
   async function activate(job, mail) {
+    if (job.handoverFrom && !job.handoverBound) beginRotation(job, rowFor(job.handoverFrom));
+    if (job.handoverBound && rotatingRoles.includes(job.row.role) &&
+        !index.rotations().find(item => item.successor === job.row.addr)?.boundAt) {
+      beginRotation(job, rowFor(job.handoverFrom));
+      index.bindRotation(job.row.addr, job.handoverBoundAt ?? job.row.startedAt);
+    }
     let row = rowFor(job.row.addr) ?? index.register(job.row);
     if (row.endedAt !== null) return row;
     if (job.stopping) return stop(row);
@@ -334,7 +394,7 @@ export function ownedSessions(project, index, report, {
       if (!running.has(row.addr)) {
         const last = events(row.addr).findLast(event => ['stream-opened', 'exited', 'released'].includes(event.type));
         if (!job.host && ['exited', 'released'].includes(last?.type) && !last.suspending) return finish(job, row, last.at);
-        const runtime = open ? await openFixture(row) : await attachHost(project, row, job, save, controller);
+        const runtime = open ? await openFixture(row, job) : await attachHost(project, row, job, save, controller);
         if (runtime.endedAt != null) {
           if (runtime.sessionId && row.sessionId !== runtime.sessionId) row = index.update(row.addr, { sessionId: runtime.sessionId });
           const transcriptPath = checkedTranscript(runtime.transcriptPath, row);
@@ -394,6 +454,7 @@ export function ownedSessions(project, index, report, {
     save(job);
     const row = rowFor(job.row.addr);
     if (row) await stop(row).catch(cleanup => report(cleanup.message));
+    if (job.handoverFrom && rotatingRoles.includes(job.row.role)) index.failRotation(job.row.addr, Date.now(), error.message);
   }
 
   async function refreshTui(job, row) {
@@ -432,7 +493,7 @@ export function ownedSessions(project, index, report, {
   }
 
   async function retainCompaction(job, row) {
-    if (!row.transcriptPath || row.role === 'worker') return;
+    if (!row.transcriptPath || temporaryRole(row.role)) return;
     const handled = new Set(job.compactions);
     for (const event of events(row.addr).filter(event =>
       ['compaction_started', 'compaction_ended'].includes(event.type) ||

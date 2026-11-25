@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { appendFileSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
@@ -12,7 +13,8 @@ function fixture(t, options) {
   const project = mkdtempSync(join(realpathSync(tmpdir()), 'loomd-test-'));
   t.after(() => rmSync(project, { recursive: true, force: true }));
   mkdirSync(join(project, '.project'));
-  writeFileSync(join(project, '.project/policy.json'), '{"preferred":[],"deny":[]}');
+  const policy = settings => writeFileSync(join(project, '.project/policy.json'), JSON.stringify(settings));
+  policy({ preferred: [], deny: [] });
   const sessions = new Map();
   const prompts = [];
   const resumes = [];
@@ -24,6 +26,7 @@ function fixture(t, options) {
     const path = join(project, `${id}.jsonl`);
     writeFileSync(path, '', { flag: 'a' });
     let seq = 0;
+    let nativeStep = 0;
     let observer;
     let active;
     const session = {
@@ -36,14 +39,16 @@ function fixture(t, options) {
       async prompt(input) {
         const inputId = deliveryId(input);
         const requestId = randomUUID();
-        active = { inputId, sinceSeq: seq, spanId: randomUUID(), at: Date.now() };
+        active = { input, inputId, sinceSeq: seq, spanId: randomUUID(), at: Date.now() };
         prompts.push({ addr: row.addr, input });
         emit('turn_started', { requestId, input });
         if (row.cli === 'agy') emit('tool_call_started', { callId: 'fixture-call' });
         else emit('turn_active', { inputId });
-        const body = input.split('\n').slice(1).join('\n').split('\n\n## Loom task conventions', 1)[0];
+        const prompt = input.split('\n').slice(1).join('\n').split('\n\n## Loom task conventions', 1)[0];
+        const body = row.role === 'reviewer' ? prompt.split('\n\n').at(-1) : prompt;
         if (!body.startsWith('HOLD') &&
-            (row.role !== 'leader' || body.includes('波次') || body.includes('续作批次') || body.endsWith('replacement'))) {
+            (row.role !== 'leader' || body.includes('波次') || body.includes('续作批次') || body.endsWith('replacement')) &&
+            (row.task != null || body.startsWith('RETURN '))) {
           finish(body.startsWith('RETURN ') ? body.slice(7) : row.task);
         }
         return { kind: 'accepted', requestId, seq: seq - 1 };
@@ -54,21 +59,34 @@ function fixture(t, options) {
         return { kind: 'accepted', requestId: randomUUID(), seq: seq - 1 };
       },
     };
-    function emit(kind, data = {}) {
-      observer?.({ kind, ...data, agentPath: [], sessionId: id, seq: seq++, receivedAt: Date.now(), spanId: active?.spanId });
+    function emit(kind, data = {}, receivedAt = Date.now()) {
+      observer?.({ kind, ...data, agentPath: [], sessionId: id, seq: seq++, receivedAt, spanId: active?.spanId });
     }
-    function finish(body, outcome = { kind: 'completed' }) {
+    function finish(body, outcome = { kind: 'completed' }, at = Date.now()) {
       if (row.cli === 'codex') {
-        const timestamp = new Date().toISOString();
+        const timestamp = new Date(at).toISOString();
         const turn_id = active.spanId;
         const rows = [{ type: 'task_started', turn_id }, { type: 'task_complete', turn_id, last_agent_message: body }];
         appendFileSync(path, rows.map(payload => JSON.stringify({ type: 'event_msg', timestamp, payload }) + '\n').join(''));
+      } else if (row.cli === 'agy') {
+        const rows = [
+          { source: 'USER_EXPLICIT', type: 'USER_INPUT', content: active.input },
+          { source: 'MODEL', type: 'PLANNER_RESPONSE', status: 'DONE', content: body },
+        ];
+        appendFileSync(path, rows.map(value =>
+          JSON.stringify({ ...value, step_index: nativeStep++, created_at: new Date().toISOString() }) + '\n').join(''));
       }
-      emit('text_delta', { phase: 'final_answer', text: body });
-      emit('turn_ended', { inputId: active.inputId, outcome });
+      emit('text_delta', { phase: 'final_answer', text: body }, at);
+      emit('turn_ended', { inputId: active.inputId, outcome }, at);
       active = undefined;
     }
-    sessions.set(row.addr, { finish, session, loseEnd: () => { active = undefined; } });
+    function check(command, duration, exitCode) {
+      const callId = randomUUID();
+      const end = Date.now();
+      emit('tool_call_started', { callId, toolName: 'exec_command', input: { cmd: command } }, end - duration);
+      emit('tool_call_ended', { callId, toolName: 'exec_command', exitCode }, end);
+    }
+    sessions.set(row.addr, { finish, check, session, loseEnd: () => { active = undefined; } });
     return session;
   }
 
@@ -78,23 +96,30 @@ function fixture(t, options) {
     role, task, wave: role === 'worker' ? 'W' : 'ROOT', cli: 'codex', model: 'model', effort: 'high',
     cwd: project, project, mode: 'headless', prompt: 'start', ...fields,
   }, parent);
-  return { daemon, spawn, read, sessions, prompts, resumes, project };
+  const barrier = (d, task, parent, fields = {}) => spawn(d, 'worker', task, parent,
+    { deliver: 'barrier', barrier: fields.wave ?? 'W', ...fields });
+  const git = (...args) => execFileSync('/usr/bin/git', args, { cwd: project, encoding: 'utf8' }).trim();
+  return { daemon, spawn, barrier, read, policy, git, sessions, prompts, resumes, project };
 }
 
-test('seals a wave at the dispatching root turn and delivers it once across daemon recovery', async t => {
+test('an explicit barrier spans tracking waves and delivers its whole set once across daemon recovery', async t => {
   const f = fixture(t);
   const daemon = f.daemon();
   const { session: leader } = await f.spawn(daemon, 'leader', 'L');
   await daemon.tick();
-  const { session: first } = await f.spawn(daemon, 'worker', 'T1', leader.addr);
+  const { session: first, deliver, barrier } = await f.barrier(daemon, 'T1', leader.addr, { wave: 'W-A', barrier: 'W' });
+  assert.deepEqual([deliver, barrier], ['barrier', 'W']);
   await daemon.tick();
   await daemon.tick();
   assert.equal(Object.values(f.read('relay/state.json').waves)[0].deadline, null);
-  const { session: second } = await f.spawn(daemon, 'worker', 'T2', leader.addr);
+  const { session: second } = await f.barrier(daemon, 'T2', leader.addr, { wave: 'W-B', barrier: 'W', prompt: 'HOLD second' });
   await daemon.tick();
   await daemon.tick();
   assert.equal(f.prompts.filter(item => item.input.includes('波次 W')).length, 0);
   f.sessions.get(leader.addr).finish('leader first turn');
+  await daemon.tick();
+  assert.equal(f.read('inbox/state.json').messages.filter(message => message.waveBatch).length, 0);
+  f.sessions.get(second.addr).finish('DONE T2');
   await daemon.tick();
 
   const before = f.read('inbox/state.json').messages.filter(message => message.waveBatch);
@@ -144,6 +169,135 @@ test('keeps a pending shell request durable and reconciles a missing response fr
   assert.equal(f.prompts.filter(item => item.input.endsWith('shell question')).length, 1);
 });
 
+test('streams a fast result after the default 45 seconds and lets Leader refill the same tracking wave', async t => {
+  let advance = 0;
+  const f = fixture(t, { now: () => Date.now() + advance, watchOptions: { busyMs: 120_000 } });
+  const d = f.daemon();
+  t.after(d.shutdown);
+  const leader = (await f.spawn(d, 'leader', 'L')).session.addr;
+  await d.tick();
+  const held = { prompt: 'HOLD worker' };
+  const fast = await f.spawn(d, 'worker', 'FAST', leader, held);
+  const slow = await f.spawn(d, 'worker', 'SLOW', leader, held);
+  const slower = await f.spawn(d, 'worker', 'SLOWER', leader, held);
+  assert.equal(fast.deliver, 'stream');
+  await assert.rejects(f.spawn(d, 'worker', 'NEXT', leader, held), { code: 'worker-capacity' });
+  await d.tick();
+  f.sessions.get(leader).finish('dispatch ended');
+  await d.tick();
+  f.sessions.get(fast.session.addr).finish('DONE FAST');
+  await d.tick();
+  const wakes = () => f.prompts.filter(row => row.addr === leader && row.input.includes('波次 W'));
+  assert.equal(wakes().length, 0);
+  advance = 43_000;
+  await d.tick();
+  assert.equal(wakes().length, 0);
+  advance = 46_000;
+  await d.tick();
+  assert.equal(wakes().length, 1);
+  assert.match(wakes()[0].input, /DONE FAST/);
+  assert.doesNotMatch(wakes()[0].input, /SLOW/);
+  for (const worker of [slow, slower]) {
+    assert.equal((await d.handle('state', { target: worker.session.addr })).state, 'busy');
+  }
+  const next = await f.spawn(d, 'worker', 'NEXT', leader, held);
+  await d.tick();
+  assert.equal((await d.handle('state', { target: next.session.addr })).state, 'busy');
+  assert.equal((await d.handle('state', { target: fast.session.addr })).state, 'idle');
+  await d.handle('send', { target: fast.session.addr, mode: 'queue', text: 'RETURN DONE FAST follow-up' }, leader);
+  await d.tick();
+  assert.equal(f.prompts.filter(row => row.addr === fast.session.addr).length, 1);
+  f.sessions.get(slow.session.addr).finish('DONE SLOW', undefined, Date.now() + advance);
+  await d.tick();
+  assert.equal(f.prompts.filter(row => row.addr === fast.session.addr).length, 2);
+});
+
+test('coalesces results within the configured window and joins a busy Leader backlog across windows and restart', async t => {
+  let advance = 0;
+  const f = fixture(t, { now: () => Date.now() + advance });
+  f.policy({ delivery: { coalesceMs: 10_000 } });
+  const d = f.daemon();
+  const leader = (await f.spawn(d, 'leader', 'L')).session.addr;
+  await d.tick();
+  const held = { prompt: 'HOLD worker' };
+  const one = (await f.spawn(d, 'worker', 'ONE', leader, held)).session.addr;
+  const two = (await f.spawn(d, 'worker', 'TWO', leader, held)).session.addr;
+  await d.tick();
+  f.sessions.get(leader).finish('dispatch ended');
+  await d.tick();
+  const finish = (addr, body) => f.sessions.get(addr).finish(body, undefined, Date.now() + advance);
+  const wakes = () => f.prompts.filter(row => row.addr === leader && row.input.includes('波次 W'));
+  finish(one, 'DONE ONE');
+  await d.tick();
+  advance = 4_000;
+  finish(two, 'BLOCKED TWO');
+  await d.tick();
+  assert.equal(wakes().length, 0);
+  advance = 12_000;
+  await d.tick();
+  assert.equal(wakes().length, 1);
+  assert.match(wakes()[0].input, /DONE ONE.*BLOCKED TWO/s);
+  await d.tick();
+  await d.handle('send', { target: leader, mode: 'queue', text: 'HOLD leader' });
+  await d.tick();
+  const three = (await f.spawn(d, 'worker', 'THREE', leader, held)).session.addr;
+  const four = (await f.spawn(d, 'worker', 'FOUR', leader, held)).session.addr;
+  await d.tick();
+  finish(three, 'DONE THREE');
+  await d.tick();
+  advance = 27_000;
+  finish(four, 'FAILED FOUR');
+  await d.tick();
+  assert.equal(wakes().length, 1);
+  finish(leader, 'Leader finished');
+  await d.shutdown();
+  const recovered = f.daemon();
+  t.after(recovered.shutdown);
+  await recovered.tick();
+  await recovered.tick();
+  assert.equal(wakes().length, 2);
+  assert.match(wakes()[1].input, /DONE THREE.*FAILED FOUR/s);
+  const records = f.read('inbox/state.json').messages.filter(message => message.waveBatch);
+  assert.equal(records.length, 4);
+  assert.ok(records.every(message => message.phase === 'received'));
+  assert.equal(records.filter(message => message.combinedInto).length, 2);
+});
+
+test('reports a streamed worker timeout and late result once without replaying an already delivered peer', async t => {
+  let advance = 0;
+  const f = fixture(t, { window: 30_000, now: () => Date.now() + advance,
+    watchOptions: { busyMs: 120_000 } });
+  f.policy({ delivery: { coalesceMs: 0 } });
+  const d = f.daemon();
+  t.after(d.shutdown);
+  const leader = (await f.spawn(d, 'leader', 'L')).session.addr;
+  const auditor = (await f.spawn(d, 'auditor', 'A')).session.addr;
+  await d.tick();
+  const fast = (await f.spawn(d, 'worker', 'FAST', leader, { prompt: 'HOLD worker' })).session.addr;
+  const slow = (await f.spawn(d, 'worker', 'SLOW', leader, { prompt: 'HOLD worker' })).session.addr;
+  await d.tick();
+  f.sessions.get(leader).finish('dispatch ended');
+  f.sessions.get(fast).finish('FAILED FAST');
+  await d.tick();
+  await d.tick();
+  const batches = () => f.read('inbox/state.json').messages.filter(message => message.waveBatch);
+  assert.deepEqual(new Set(batches().map(message => message.target.addr)), new Set([leader, auditor]));
+  advance = 31_000;
+  await d.tick();
+  await d.tick();
+  const [timeout] = batches().filter(message => message.waveKind === 'timeout');
+  assert.equal(timeout.target.addr, leader);
+  assert.match(timeout.text, /SLOW.*STUCK.*最近活动/s);
+  assert.doesNotMatch(timeout.text, /FAILED FAST/);
+  f.sessions.get(slow).finish('DONE SLOW', undefined, Date.now() + advance);
+  await d.tick();
+  await d.tick();
+  assert.deepEqual(batches().filter(message => message.target.addr === leader).map(message => message.waveKind),
+    ['stream', 'timeout', 'late']);
+  assert.match(batches().at(-1).text, /DONE SLOW/);
+  assert.equal((await d.handle('notifications', { history: true })).notifications.filter(item => item.type === 'wave-timeout').length, 1);
+});
+
 test('uses native agy activity to interrupt an in-flight queue delivery and continue', async t => {
   const f = fixture(t);
   const daemon = f.daemon();
@@ -183,8 +337,8 @@ test('index membership ignores edited Markdown and seal fallback plus partial wi
   const d = f.daemon();
   const leader = (await f.spawn(d, 'leader', 'L')).session.addr;
   await d.tick();
-  await f.spawn(d, 'worker', 'FAST', leader, { prompt: 'RETURN DONE FAST' });
-  const slow = await f.spawn(d, 'worker', 'SLOW', leader, { prompt: 'HOLD worker' });
+  await f.barrier(d, 'FAST', leader, { prompt: 'RETURN DONE FAST' });
+  const slow = await f.barrier(d, 'SLOW', leader, { prompt: 'HOLD worker' });
   writeFileSync(join(f.project, '.project', 'workers.md'), 'FAKE | t777 | codex | dispatched | | wave=W\n');
   await d.tick();
   await d.tick();
@@ -204,8 +358,8 @@ test('index membership ignores edited Markdown and seal fallback plus partial wi
   assert.doesNotMatch(timeouts[0].text, /FAKE/);
   assert.equal(f.prompts.filter(row => row.input.includes('波次 W')).length, 1);
   assert.ok((await d.handle('state', { target: leader })).notifications.some(event => event.type === 'wave-timeout'));
-  await assert.rejects(f.spawn(d, 'worker', 'EXTRA', leader), { code: 'wave-sealed' });
-  const replacement = await f.spawn(d, 'worker', 'SLOW', leader, { wave: 'W2', prompt: 'RETURN DONE SLOW new wave' });
+  await assert.rejects(f.barrier(d, 'EXTRA', leader), { code: 'wave-sealed' });
+  const replacement = await f.barrier(d, 'SLOW', leader, { wave: 'W2', prompt: 'RETURN DONE SLOW new wave' });
   f.sessions.get(slow.session.addr).finish('DONE SLOW old wave');
   for (let i = 0; i < 4; i++) await d.tick();
   assert.match(readFileSync(join(f.project, '.project/workers.md'), 'utf8'), /SLOW .*superseded.*wave=W/);
@@ -213,42 +367,45 @@ test('index membership ignores edited Markdown and seal fallback plus partial wi
   assert.ok(f.prompts.some(row => row.input.includes('DONE SLOW new wave') && row.addr !== replacement.session.addr));
 });
 
-test('coalesces BLOCKED and finished members once, keeps the wave open, and copies only FAILED/MISMATCH', async t => {
+test('a blocked barrier escalates once while holding the set and copies only FAILED/MISMATCH to Auditor', async t => {
   let advance = 0;
   const f = fixture(t, { now: () => Date.now() + advance, uncertainWindow: 800_000 });
+  f.policy({ roles: { leader: { maxActiveWorkers: 4 } } });
   const d = f.daemon();
   const auditor = (await f.spawn(d, 'auditor', 'AUDIT')).session.addr;
   const leader = (await f.spawn(d, 'leader', 'L')).session.addr;
   await d.tick();
-  await f.spawn(d, 'worker', 'BLOCK1', leader, { prompt: 'RETURN BLOCKED BLOCK1' });
-  await f.spawn(d, 'worker', 'BLOCK2', leader, { prompt: 'RETURN BLOCKED BLOCK2' });
-  await f.spawn(d, 'worker', 'FAILED', leader, { prompt: 'RETURN FAILED FAILED' });
-  const tail = (await f.spawn(d, 'worker', 'TAIL', leader, { prompt: 'HOLD TAIL' })).session.addr;
+  await f.barrier(d, 'BLOCK1', leader, { prompt: 'RETURN BLOCKED BLOCK1' });
+  await f.barrier(d, 'BLOCK2', leader, { prompt: 'RETURN BLOCKED BLOCK2' });
+  await f.barrier(d, 'FAILED', leader, { prompt: 'RETURN FAILED FAILED' });
+  const tail = (await f.barrier(d, 'TAIL', leader, { prompt: 'HOLD TAIL' })).session.addr;
   for (let i = 0; i < 3; i++) await d.tick();
   const batches = () => f.read('inbox/state.json').messages.filter(message => message.waveBatch);
   assert.equal(batches().length, 0);
   f.sessions.get(leader).finish('dispatch ended');
-  await assert.rejects(f.spawn(d, 'worker', 'CROSS', leader), { code: 'wave-sealed' });
+  await assert.rejects(f.barrier(d, 'CROSS', leader), { code: 'wave-sealed' });
   advance = 61_000;
   for (let i = 0; i < 3; i++) await d.tick();
-  const early = batches().filter(message => message.target.addr === leader);
-  assert.equal(early.length, 1);
-  assert.match(early[0].text, /波次 W（阻塞）[\s\S]*BLOCKED BLOCK1[\s\S]*BLOCKED BLOCK2[\s\S]*FAILED FAILED/);
-  const copies = batches().filter(message => message.target.addr === auditor);
-  assert.equal(copies.length, 1);
-  assert.match(copies[0].text, /FAILED FAILED/);
-  assert.doesNotMatch(copies[0].text, /BLOCKED/);
+  assert.equal(batches().length, 0);
+  const blocked = (await d.handle('notifications', { history: true })).notifications.filter(item => item.type === 'blocked-escalation');
+  assert.equal(blocked.length, 1);
+  assert.match(blocked[0].text, /波次 W（阻塞）.*BLOCKED BLOCK1.*BLOCKED BLOCK2/s);
+  assert.doesNotMatch(blocked[0].text, /FAILED/);
   assert.equal(Object.values(f.read('relay/state.json').waves)[0].closed, undefined);
   f.sessions.get(tail).finish('DONE TAIL');
   await d.shutdown();
   const recovered = f.daemon();
   for (let i = 0; i < 4; i++) await recovered.tick();
   const finished = batches().filter(message => message.target.addr === leader);
-  assert.equal(finished.length, 2);
-  assert.match(finished[1].text, /DONE TAIL/);
-  assert.doesNotMatch(finished[1].text, /BLOCKED|FAILED/);
-  assert.equal(f.prompts.filter(row => row.addr === leader && row.input.includes('波次 W')).length, 2);
-  await f.spawn(recovered, 'worker', 'MISMATCH', leader, { wave: 'M', prompt: 'RETURN DONE MISMATCH\n全绿，通过 8 项' });
+  assert.equal(finished.length, 1);
+  assert.match(finished[0].text, /BLOCKED BLOCK1.*BLOCKED BLOCK2.*FAILED FAILED.*DONE TAIL/s);
+  const copies = batches().filter(message => message.target.addr === auditor);
+  assert.equal(copies.length, 1);
+  assert.match(copies[0].text, /FAILED FAILED/);
+  assert.doesNotMatch(copies[0].text, /BLOCKED|DONE TAIL/);
+  assert.equal(f.prompts.filter(row => row.addr === leader && row.input.includes('波次 W')).length, 1);
+  await recovered.handle('stop', { target: tail });
+  await f.barrier(recovered, 'MISMATCH', leader, { wave: 'M', prompt: 'RETURN DONE MISMATCH\n全绿，通过 8 项' });
   for (let i = 0; i < 4; i++) await recovered.tick();
   assert.ok(f.prompts.some(row => row.addr === auditor && /波次 M.*证据 MISMATCH/s.test(row.input)));
 });
@@ -259,9 +416,9 @@ test('a sealed wave whose BLOCKED members and final result arrive within the win
   const d = f.daemon();
   const leader = (await f.spawn(d, 'leader', 'L')).session.addr;
   await d.tick();
-  await f.spawn(d, 'worker', 'B1', leader, { prompt: 'RETURN BLOCKED B1' });
-  await f.spawn(d, 'worker', 'B2', leader, { prompt: 'RETURN BLOCKED B2' });
-  const tail = (await f.spawn(d, 'worker', 'FAST', leader, { prompt: 'HOLD FAST' })).session.addr;
+  await f.barrier(d, 'B1', leader, { prompt: 'RETURN BLOCKED B1' });
+  await f.barrier(d, 'B2', leader, { prompt: 'RETURN BLOCKED B2' });
+  const tail = (await f.barrier(d, 'FAST', leader, { prompt: 'HOLD FAST' })).session.addr;
   f.sessions.get(leader).finish('dispatch ended');
   for (let i = 0; i < 3; i++) await d.tick();
   assert.equal(f.read('inbox/state.json').messages.filter(message => message.waveBatch).length, 0);
@@ -329,8 +486,8 @@ test('ordinary late result gets one supplement across restart under the original
   const d = f.daemon();
   const leader = (await f.spawn(d, 'leader', 'L')).session.addr;
   await d.tick();
-  await f.spawn(d, 'worker', 'FAST', leader, { prompt: 'RETURN DONE FAST' });
-  const late = await f.spawn(d, 'worker', 'LATE', leader, { prompt: 'HOLD worker' });
+  await f.barrier(d, 'FAST', leader, { prompt: 'RETURN DONE FAST' });
+  const late = await f.barrier(d, 'LATE', leader, { prompt: 'HOLD worker' });
   f.sessions.get(leader).finish('dispatch ended');
   for (let i = 0; i < 3; i++) await d.tick();
   advance = 35_000;
@@ -369,15 +526,16 @@ test('a stale headless interrupt leaves the successor root running', async t => 
 });
 
 for (const explicit of [true, false]) {
-  test(`${explicit ? 'explicit' : 'implicit'} worker continuations coalesce BLOCKED into one early wake and one remainder`, async t => {
+  test(`${explicit ? 'explicit' : 'streaming'} worker continuations coalesce BLOCKED into one early wake and one remainder`, async t => {
     let advance = 0;
     const f = fixture(t, { blockedWindow: 10_000, now: () => Date.now() + advance });
+    f.policy({ delivery: { coalesceMs: 10_000 }, roles: { leader: { maxActiveWorkers: 4 } } });
     const d = f.daemon();
     const leader = (await f.spawn(d, 'leader', 'L')).session.addr;
     await d.tick();
     const tasks = ['BLOCK1', 'BLOCK2', 'FINISHED', 'TAIL'];
     const workers = [];
-    for (const task of tasks) workers.push((await f.spawn(d, 'worker', task, leader)).session.addr);
+    for (const task of tasks) workers.push((await f.barrier(d, task, leader)).session.addr);
     f.sessions.get(leader).finish('dispatch done');
     for (let i = 0; i < 4; i++) await d.tick();
     const fields = explicit ? { batch: randomUUID(), batchSize: tasks.length } : {};
@@ -385,18 +543,19 @@ for (const explicit of [true, false]) {
     for (const [i, target] of workers.entries()) await d.handle('send', { target, mode: 'queue', text: messages[i], ...fields }, leader);
     for (let i = 0; i < 3; i++) await d.tick();
     const wakes = () => f.read('inbox/state.json').messages.filter(message => message.continuationBatch);
-    assert.equal(wakes().length, 0);
+    assert.equal(wakes().length, explicit ? 0 : 3);
     advance = 11_000;
     await d.tick();
     await d.tick();
-    assert.equal(wakes().length, 1);
-    assert.match(wakes()[0].text, /BLOCKED BLOCK1.*BLOCKED BLOCK2.*DONE FINISHED/s);
-    assert.doesNotMatch(wakes()[0].text, /TAIL/);
+    assert.equal(wakes().length, explicit ? 1 : 3);
+    const firstWake = f.prompts.find(row => row.addr === leader && row.input.includes('续作批次')).input;
+    assert.match(firstWake, /BLOCKED BLOCK1.*BLOCKED BLOCK2.*DONE FINISHED/s);
+    assert.doesNotMatch(firstWake, /TAIL/);
     f.sessions.get(workers[3]).finish('DONE TAIL');
     for (let i = 0; i < 4; i++) await d.tick();
-    assert.equal(wakes().length, 2);
-    assert.match(wakes()[1].text, /DONE TAIL/);
-    assert.doesNotMatch(wakes()[1].text, /BLOCKED|DONE FINISHED/);
+    assert.equal(wakes().length, explicit ? 2 : 4);
+    assert.match(wakes().at(-1).text, /DONE TAIL/);
+    assert.doesNotMatch(wakes().at(-1).text, /BLOCKED|DONE FINISHED/);
     assert.equal(f.prompts.filter(row => row.addr === leader && row.input.includes('续作批次')).length, 2);
   });
 }
@@ -409,7 +568,7 @@ test('pushes a coalesced BLOCKED wave and explicit project events once to the ma
   const { session: leader } = await f.spawn(d, 'leader', 'L');
   const { session: auditor } = await f.spawn(d, 'auditor', 'A');
   await d.tick();
-  for (const task of ['B1', 'B2']) await f.spawn(d, 'worker', task, leader.addr, { prompt: 'RETURN BLOCKED ' + task });
+  for (const task of ['B1', 'B2']) await f.barrier(d, task, leader.addr, { prompt: 'RETURN BLOCKED ' + task });
   f.sessions.get(leader.addr).finish('dispatch complete');
   await d.tick();
   await d.tick();
@@ -442,6 +601,8 @@ test('pushes a coalesced BLOCKED wave and explicit project events once to the ma
 
 test('switches queued input, a pending wave and a pending continuation after binding the successor', async t => {
   const f = fixture(t);
+  writeFileSync(join(f.project, '.project/charter.md'), '## 目标\n- 验证交接\n');
+  writeFileSync(join(f.project, '.project/rulings.md'), '## 3\n> 先看原件。\n');
   const d = f.daemon();
   const { session: leader } = await f.spawn(d, 'leader', 'L');
   await d.tick();
@@ -460,7 +621,10 @@ test('switches queued input, a pending wave and a pending continuation after bin
   assert.ok(pending.pendingDeliveries.some(message => message.id === input.id && message.target === successor.addr));
   await d.tick();
   assert.equal(f.prompts.find(message => message.addr === successor.addr).input.startsWith('[loom:' + deliveryId + ']'), true);
-  assert.match(f.prompts.find(message => message.addr === successor.addr).input, new RegExp(leader.addr + '.*start replacement', 's'));
+  const prompt = f.prompts.find(message => message.addr === successor.addr).input;
+  assert.match(prompt, new RegExp(leader.addr + '.*start replacement', 's'));
+  assert.match(prompt, /## 项目章程\n\.project\/charter\.md\n目标 · 验证交接/);
+  assert.match(prompt, /## 裁决账本\n\.project\/rulings\.md\n裁决 3\n> 先看原件。/);
 
   f.sessions.get(worker.addr).finish('DONE W1 first wave');
   await d.tick();
@@ -533,4 +697,179 @@ test('refuses to spawn without the required policy and selects role defaults wit
   for (const model of ['blocked-global', 'blocked-worker']) {
     assert.throws(() => spawnProfile(f.project, { role: 'worker', ...profile('codex', model, 'high') }), { code: 'policy-denied' });
   }
+});
+
+test('puts Super first and includes a newly settled wave in the same turn despite more Super mail', async t => {
+  const f = fixture(t);
+  const d = f.daemon();
+  t.after(d.shutdown);
+  const leader = (await f.spawn(d, 'leader', 'L')).session.addr;
+  const superAddr = (await f.spawn(d, 'super', 'S')).session.addr;
+  await d.tick();
+  const worker = (await f.spawn(d, 'worker', 'PRIORITY', leader, { prompt: 'HOLD worker' })).session.addr;
+  await d.tick();
+  await d.handle('send', { target: leader, mode: 'queue', text: 'ordinary worker mail' }, worker);
+  const priority = await d.handle('send', { target: leader, mode: 'queue', text: 'external Super first' });
+  await d.handle('send', { target: leader, mode: 'queue', text: 'managed Super second' }, superAddr);
+  f.sessions.get(worker).finish('DONE PRIORITY');
+  f.sessions.get(leader).finish('dispatch ended');
+  await d.tick();
+  await d.tick();
+  assert.match(f.prompts.filter(row => row.addr === leader)[1].input, /external Super first\n\n--- Loom wave results ---\n\n波次 W.*DONE PRIORITY/s);
+  assert.match(f.prompts.filter(row => row.addr === leader)[2].input, /managed Super second$/);
+  f.sessions.get(leader).finish('second Super answer');
+  await d.tick();
+  assert.match(f.prompts.filter(row => row.addr === leader)[3].input, /ordinary worker mail$/);
+  const waves = f.read('inbox/state.json').messages.filter(message => message.waveBatch);
+  assert.equal(waves.length, 1);
+  assert.equal(waves[0].combinedInto, priority.id);
+  assert.equal(waves[0].phase, 'received');
+});
+
+test('reviewers occupy no worker seat, relay one result, and stop at the deadline', async t => {
+  let advance = 0;
+  const f = fixture(t, { now: () => Date.now() + advance });
+  const d = f.daemon();
+  t.after(d.shutdown);
+  const leader = (await f.spawn(d, 'leader', 'L')).session.addr;
+  await d.tick();
+  for (const task of ['A', 'B', 'C']) await f.spawn(d, 'worker', task, leader, { prompt: 'HOLD worker' });
+  await assert.rejects(f.spawn(d, 'worker', 'D', leader), { code: 'worker-capacity' });
+  const review = (await f.spawn(d, 'reviewer', 'REVIEW', leader, { prompt: 'RETURN review conclusion' })).session;
+  const job = f.read('loomd/sessions/' + review.addr + '.json');
+  assert.equal(job.reviewDeadline - review.startedAt, 1_800_000);
+  await d.tick();
+  await d.handle('send', { target: review.addr, mode: 'queue', text: 'another question' });
+  await d.tick();
+  assert.equal((await d.handle('state', { target: review.addr })).state, 'exited');
+  assert.equal(f.prompts.filter(row => row.addr === review.addr).length, 1);
+  assert.match(f.prompts.find(row => row.addr === review.addr).input, /read-only.*one question/s);
+  f.policy({ roles: { reviewer: { maxDurationMs: 5_000 } } });
+  const late = (await f.spawn(d, 'reviewer', 'LATE', leader, { prompt: 'HOLD reviewer' })).session;
+  await d.tick();
+  advance = 10_000;
+  await d.tick();
+  await d.tick();
+  const results = f.read('inbox/state.json').messages.filter(message => message.reviewerResult);
+  assert.deepEqual(results.map(message => message.target.addr), [leader, leader]);
+  assert.match(results[0].text, /review conclusion/);
+  assert.match(results[1].text, /TIMED OUT/);
+  assert.equal((await d.handle('state', { target: late.addr })).state, 'exited');
+});
+
+test('switches Claude Leader to agy and agy Auditor to Codex under one durable succession guard', async t => {
+  const f = fixture(t);
+  f.git('init', '-q');
+  writeFileSync(join(f.project, 'actual.mjs'), 'export const accepted_metric = 1;\n');
+  f.git('add', 'actual.mjs');
+  f.git('-c', 'user.name=Loom', '-c', 'user.email=loom@example.invalid', 'commit', '-qm', 'fixture');
+  const sha = f.git('rev-parse', 'HEAD');
+  const profile = (cli, model, fast) => ({ cli, model, effort: 'high', mode: 'headless', fast });
+  f.policy({ roles: {
+    leader: { preferred: [profile('claude', 'opus'), profile('agy', 'gemini', true)] },
+    auditor: { preferred: [profile('agy', 'gemini'), profile('codex', 'codex-model', true)] },
+  } });
+  const d = f.daemon();
+  t.after(d.shutdown);
+  const leader = (await f.spawn(d, 'leader', 'L', undefined, { cli: 'claude', model: 'opus' })).session;
+  const auditor = (await f.spawn(d, 'auditor', 'A', undefined, { cli: 'agy', model: 'gemini' })).session;
+  await d.tick();
+  const switched = await d.handle('switch', { role: 'leader', to: '2' });
+  assert.equal(switched.handoverFrom, leader.addr);
+  assert.equal(switched.session.cli, 'agy');
+  assert.deepEqual(switched.warnings.map(warning => warning.code), ['preferred-fallback', 'fast-unsupported']);
+  await assert.rejects(d.handle('switch', { role: 'auditor', to: '2' }), { code: 'rotation-in-progress' });
+  await d.tick();
+  f.sessions.get(switched.session.addr).finish('Current SHA deadbee. Missing file `absent.mjs`.');
+  await d.tick();
+  const rotation = () => d.handle('state', { target: switched.session.addr }).then(value => value.rotations[0]);
+  assert.equal((await rotation()).firstReportMisses, 2);
+  assert.equal((await rotation()).verifiedAt, null);
+  await assert.rejects(d.handle('switch', { role: 'auditor', to: '2' }), { code: 'rotation-in-progress' });
+  const fact = f.read('inbox/state.json').messages.find(message => message.orgEvents);
+  assert.equal(fact.target.addr, auditor.addr);
+  assert.match(fact.text, /fact-miss.*absent\.mjs/);
+  await d.handle('send', { target: switched.session.addr, mode: 'queue', text: 'Please correct the report' });
+  await d.tick();
+  f.sessions.get(switched.session.addr).finish('SHA ' + sha + ' in `actual.mjs` with metric `accepted_metric`.');
+  await d.tick();
+  assert.ok((await rotation()).verifiedAt);
+  const nextAuditor = await d.handle('switch', { role: 'auditor', to: '2' });
+  assert.equal(nextAuditor.handoverFrom, auditor.addr);
+  assert.equal(nextAuditor.session.cli, 'codex');
+  assert.equal(nextAuditor.selected.fast, true);
+  await assert.rejects(d.handle('switch', { role: 'leader', to: '1' }), { code: 'rotation-in-progress' });
+  await d.tick();
+  f.sessions.get(nextAuditor.session.addr).finish('Auditor verified `actual.mjs`.');
+  await d.tick();
+  const state = await d.handle('state', { target: nextAuditor.session.addr });
+  assert.deepEqual(state.rotations.map(item => [item.role, Boolean(item.verifiedAt)]), [['leader', true], ['auditor', true]]);
+  assert.ok((await d.handle('notifications', { history: true })).notifications.some(item => item.type === 'preferred-fallback'));
+});
+
+test('sends one Auditor wake for card drift and includes worker fact misses in its evidence', async t => {
+  const f = fixture(t);
+  f.git('init', '-q');
+  const taskDir = join(f.project, 'tasks/DRIFT');
+  mkdirSync(taskDir, { recursive: true });
+  const budget = n => writeFileSync(join(taskDir, 'TASK.md'), '- 净行数预算上限 ' + n + ' 行\n');
+  budget(1);
+  f.git('add', 'tasks/DRIFT/TASK.md');
+  f.git('-c', 'user.name=Loom', '-c', 'user.email=loom@example.invalid', 'commit', '-qm', 'fixture');
+  f.policy({ drift: { planLines: 2, sampleIntervalMs: 0 } });
+  const d = f.daemon();
+  t.after(d.shutdown);
+  const leader = (await f.spawn(d, 'leader', 'L')).session.addr;
+  const auditor = (await f.spawn(d, 'auditor', 'A', undefined, { prompt: 'HOLD auditor' })).session.addr;
+  await d.tick();
+  const worker = (await f.spawn(d, 'worker', 'DRIFT', leader, { prompt: 'HOLD worker' })).session.addr;
+  await d.tick();
+  budget(2);
+  await d.tick();
+  budget(3);
+  writeFileSync(join(taskDir, 'PLAN-draft.md'), 'one\ntwo\nthree\n');
+  writeFileSync(join(f.project, 'extra.txt'), 'one\ntwo\nthree\nfour\n');
+  f.sessions.get(worker).check('npm test', 100, 1);
+  f.sessions.get(worker).check('npm test', 500, 1);
+  f.sessions.get(worker).finish('DONE DRIFT\nSee `unreal.mjs`.');
+  await d.tick();
+  await d.tick();
+  const notices = f.read('inbox/state.json').messages.filter(message => message.orgEvents);
+  assert.equal(notices.length, 1);
+  assert.equal(notices[0].target.addr, auditor);
+  for (const type of ['budget-raised', 'line-budget', 'plan-growth', 'slow-command', 'repeated-failure', 'fact-miss']) {
+    assert.match(notices[0].text, new RegExp(type));
+  }
+  const evidence = Object.keys(f.read('loomd/org.json').notices).length;
+  assert.equal(evidence, 6);
+  f.sessions.get(leader).finish('dispatch ended');
+  await d.tick();
+  assert.match(f.read('inbox/state.json').messages.find(message => message.waveBatch).text, /fact-miss 1 · unreal\.mjs/);
+});
+
+test('worker switch affects only new spawns and a quota failure keeps the selected CLI', async t => {
+  const f = fixture(t);
+  f.policy({ deny: [{ model: 'denied' }], roles: { worker: { preferred: [
+    { cli: 'codex', model: 'before', effort: 'high' }, { cli: 'agy', model: 'after', effort: 'high' },
+  ] } } });
+  const d = f.daemon();
+  t.after(d.shutdown);
+  const implicit = { cli: undefined, effort: undefined, model: undefined, prompt: 'HOLD worker' };
+  const old = (await f.spawn(d, 'worker', 'OLD', undefined, implicit)).session;
+  assert.equal(old.model, 'before');
+  await assert.rejects(d.handle('switch', { role: 'worker', to: 'codex/denied/high' }), { code: 'policy-denied' });
+  const override = await d.handle('switch', { role: 'worker', to: '2' });
+  assert.equal(override.selected.model, 'after');
+  const after = (await f.spawn(d, 'worker', 'AFTER', undefined, implicit)).session;
+  assert.equal(after.cli, 'agy');
+  await d.tick();
+  f.sessions.get(after.addr).finish('', { kind: 'failed', failure: 'quota' });
+  await d.tick();
+  const live = (await d.handle('status', {})).sessions.map(row => row.addr);
+  assert.deepEqual(new Set(live), new Set([old.addr, after.addr]));
+  await d.shutdown();
+  const recovered = f.daemon();
+  t.after(recovered.shutdown);
+  const next = (await f.spawn(recovered, 'worker', 'NEW', undefined, { ...implicit, wave: 'FUTURE' })).session;
+  assert.equal(next.model, 'after');
 });

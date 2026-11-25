@@ -13,7 +13,7 @@ const firstLine = body => body.trimStart().split(/\r?\n/, 1)[0];
 const sameWorker = ({ id, addr }) => `${id}/${addr}`;
 const registration = worker => `${worker.wave ?? ''}/${sameWorker(worker)}`;
 const terminalText = body => body.replace(/[\x00-\x08\x0b-\x1f\x7f-\x9f]/g, '');
-export const managedWaveKey = (parent, project, wave) => `wave:${parent ?? ''}/${encodeURIComponent(project)}/${wave}`;
+export const managedWaveKey = (parent, project, wave, mode = 'wave') => `${mode}:${parent ?? ''}/${encodeURIComponent(project)}/${wave}`;
 
 function atomic(path, value, beforeRename = () => true) {
   const temp = `${path}.${process.pid}.tmp`;
@@ -123,10 +123,10 @@ export function relay(project, targets, window, call, report = console.log, inbo
   const recipients = batch => batch.recipients ?? (batch.failed === false ? targets.slice(0, 1) : targets);
   function addManaged(waveKey, wave, replies, label, waveKind, pending = [], metadata) {
     const fields = { waveKey, waveKind, ...metadata, ...(wave.forcedSeal && { forcedSeal: true }) };
-    const blocked = replies.some(reply => reply.outcome === 'BLOCKED');
+    const blocked = !wave.blockedNotified && replies.some(reply => reply.outcome === 'BLOCKED');
     if (wave.parent || pending.length || blocked) enqueue(state, replies, label, pending, wave.parent ? [wave.parent] : [], {
       ...fields,
-      ...(pending.length && { timeout: { project: wave.project, addr: wave.parent, at: wave.deadline } }),
+      ...(pending.length && { timeout: { project: wave.project, addr: wave.parent, at: metadata?.streamAt ?? wave.deadline } }),
       ...(blocked && { blocked: { project: wave.project, addr: wave.parent } }),
     });
     const exceptions = replies.filter(reply => reply.outcome !== 'BLOCKED' && (reply.outcome === 'FAILED' || reply.mismatch));
@@ -143,17 +143,22 @@ export function relay(project, targets, window, call, report = console.log, inbo
       state.waves.legacy = { deadline: state.wave.at + window, members: state.wave.members };
       delete state.wave;
     }
-    const waveKey = row => row.managed ? managedWaveKey(row.managed.parent, row.managed.project, row.wave) : `wave:${row.wave}`;
+    const waveKey = row => row.managed ? managedWaveKey(row.managed.parent, row.managed.project,
+      row.managed.barrier ?? row.wave, row.managed.deliver) : `wave:${row.wave}`;
     const groups = Map.groupBy(rows.filter(row => row.wave), waveKey);
     for (const [key, group] of groups) {
       const managed = group[0].managed;
       if (!state.waves[key] && (managed || group.some(row => row.status === 'dispatched'))) {
-        state.waves[key] = { id: group[0].wave, deadline: managed ? null : now + window, members: group.map(sameWorker),
-          ...(managed && { parent: managed.parent, project: managed.project, managed: true, delivered: [] }) };
+        state.waves[key] = { id: managed?.barrier ?? group[0].wave, deadline: managed ? null : now + window, members: group.map(sameWorker),
+          ...(managed && { parent: managed.parent, project: managed.project, managed: true, delivered: [], deliver: managed.deliver }) };
       }
       const wave = state.waves[key];
       if (managed) wave.project ??= managed.project;
       if (wave?.managed) wave.parent = parentFor(wave.parent);
+      if (wave?.deliver === 'stream') {
+        wave.members = group.map(sameWorker);
+        continue;
+      }
       if (wave && managed && wave.deadline === null && !wave.closed) {
         wave.members = group.map(sameWorker);
         wave.sealDeadline ??= Math.min(...group.map(row => row.managed.startedAt)) + sealWindow;
@@ -221,6 +226,29 @@ export function relay(project, targets, window, call, report = console.log, inbo
       if (wave.managed) {
         const waveReplies = state.queue.filter(reply => reply.waveKey === key);
         const currentResult = reply => !currentByKey.get(sameWorker(reply))?.managed.superseded;
+        if (wave.deliver === 'stream') {
+          const replies = new Map(waveReplies.map(reply => [sameWorker(reply), reply]));
+          wave.timedOut ??= [];
+          for (const member of wave.members.filter(member => !wave.delivered.includes(member))) {
+            const worker = currentByKey.get(member)?.managed;
+            const reply = replies.get(member);
+            if (worker?.superseded) {
+              wave.delivered.push(member);
+            } else if (reply) {
+              const late = wave.timedOut.includes(member);
+              addManaged(key, wave, [reply], late ? wave.id + '（补投）' : wave.id, late ? 'late' : 'stream',
+                [], { streamAt: reply.at, ...(late && { lateWorker: reply.addr }) });
+              wave.delivered.push(member);
+            } else if (worker && now >= worker.startedAt + window && !wave.timedOut.includes(member)) {
+              const activity = Number.isFinite(worker.activityAt) ? new Date(worker.activityAt).toISOString() : '未知';
+              addManaged(key, wave, [], wave.id, 'timeout', [member + ' STUCK（最近活动 ' + activity + '）'],
+                { streamAt: worker.startedAt + window, forcedSeal: true });
+              wave.timedOut.push(member);
+            }
+          }
+          wave.closed = wave.members.every(member => wave.delivered.includes(member) || wave.timedOut.includes(member));
+          continue;
+        }
         if (wave.closed) {
           const late = waveReplies.filter(reply => !wave.delivered.includes(sameWorker(reply)));
           for (const reply of late) {
@@ -258,8 +286,14 @@ export function relay(project, targets, window, call, report = console.log, inbo
             if (now >= wave.blockedDeadline) {
               const early = available.filter(reply => reply.at <= wave.blockedDeadline);
               if (early.some(reply => reply.outcome === 'BLOCKED')) {
-                addManaged(key, wave, early, `${wave.id}（阻塞）`, 'blocked');
-                wave.delivered.push(...early.map(sameWorker));
+                if (wave.deliver === 'barrier') {
+                  enqueue(state, early.filter(reply => reply.outcome === 'BLOCKED'), wave.id + '（阻塞）', [], [], {
+                    blocked: { project: wave.project, addr: wave.parent },
+                  });
+                } else {
+                  addManaged(key, wave, early, `${wave.id}（阻塞）`, 'blocked');
+                  wave.delivered.push(...early.map(sameWorker));
+                }
                 wave.blockedNotified = true;
               }
             }
@@ -296,6 +330,7 @@ export function relay(project, targets, window, call, report = console.log, inbo
     state.queue = state.queue.filter(reply => {
       const wave = waveForReply(state.waves, reply);
       if (!reply.wave && !wave && !reply.inboxRecipients) enqueue(state, [reply]);
+      if (wave?.deliver === 'stream') return !wave.delivered.includes(sameWorker(reply));
       return wave && (!wave.closed || wave.managed && !wave.delivered.includes(sameWorker(reply)));
     });
     if (beforeDelivery !== JSON.stringify(state)) save();
@@ -326,8 +361,8 @@ export function relay(project, targets, window, call, report = console.log, inbo
     }
   };
   return Object.assign(step, {
-    isSealed: (parent, name, wave) => {
-      const saved = state.waves[managedWaveKey(parent, name, wave)];
+    isSealed: (parent, name, wave, mode) => {
+      const saved = state.waves[managedWaveKey(parent, name, wave, mode)];
       return Boolean(saved && (saved.closed || saved.deadline !== null));
     },
   });
