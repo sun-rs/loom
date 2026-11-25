@@ -1,0 +1,27 @@
+{
+  "parked": {
+    "deliveryId": "2563eea1-e91b-497f-b06c-b4b33c6069a6",
+    "urgentId": "9d7c2757-8f52-4b83-89ab-13b6feddb958",
+    "stdinStart": 6196,
+    "written": 1022,
+    "segmentBytes": 1058,
+    "urgentStdinStart": 7218,
+    "nativeStep": 67
+  },
+  "handover": {
+    "deliveryId": "5b58581e-f9a6-4b2d-bfe8-508056c06c1f",
+    "segmentBytes": [259, 1821, 1027, 842, 314, 358],
+    "writes": [
+      {"seq": 10, "stdinStart": 135, "bytes": 259, "status": 0},
+      {"seq": 12, "stdinStart": 394, "bytes": 1022, "status": 5, "splitUtf8": true},
+      {"seq": 17, "stdinStart": 1416, "bytes": 1, "status": 0, "hex": "1b"}
+    ],
+    "overlay": {
+      "atEvent": 14,
+      "lastOutputEvent": 16,
+      "title": "┃ Introducing Gemini 4 Neon",
+      "body": "┃ Our best balance of intelligence, cost, and latency. Get building today with Neon.",
+      "dismiss": "┃ esc to dismiss"
+    }
+  }
+}

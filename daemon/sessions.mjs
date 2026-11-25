@@ -98,7 +98,7 @@ export function ownedSessions(project, index, report, {
     jobs.set(job.row.addr, job);
   }
   const save = job => writeState(file(job.row.addr), JSON.stringify(job) + '\n');
-  const holders = tuiHolders(controller, save);
+  const holders = tuiHolders(project, controller, save);
   const events = addr => running.get(addr)?.rows ?? jsonRows(readText(eventPath(project, addr)));
   const transportReceipt = metadata => metadata && { transport: metadata.transport, reason: metadata.reason };
   const bound = (row, extra = {}) => ({ addr: row.addr, cwd: row.cwd, provider: row.cli,

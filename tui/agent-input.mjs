@@ -18,7 +18,7 @@ const sameInput = (before, frame) => frame.humanSequence === before.humanSequenc
   frame.bufferSequence === before.bufferSequence;
 const bracket = text => AGENT_PROMPT_BRACKETED_PASTE_START + text + AGENT_PROMPT_BRACKETED_PASTE_END;
 
-function agyPasteSegments(text, rows) {
+export function agyPasteSegments(text, rows) {
   // Agy 1.5.16 folds large multiline pastes into a chip. Keep each bracketed
   // segment small enough that a shorter viewport can also show some overlap.
   const limit = Math.min(10, Math.max(1, Math.floor((rows - 10) / 2)));
@@ -34,21 +34,23 @@ function agyPasteSegments(text, rows) {
   return [...parts, text.slice(start)];
 }
 
-async function submitAgyComposer(text, { before, read, write, valid, verify }) {
+async function submitAgyComposer(text, { before, read, write, valid, verify, resume }) {
   const pastedAt = performance.now();
   const deadline = pastedAt + 15_000;
   let frame = before;
   let proof;
   let prefix = '';
-  if (before.draft !== '') return denied('draft-unverified');
-  for (const segment of agyPasteSegments(text, before.size.rows)) {
+  if (before.draft !== '' && !resume) return denied('draft-unverified');
+  for (const [index, segment] of agyPasteSegments(text, before.size.rows).entries()) {
+    prefix += segment;
+    if (resume && index < resume.segment) continue;
     if (performance.now() >= deadline) return denied('draft-unverified');
     if (!valid(frame)) return denied('composer-changed-during-paste');
     const priorOutput = frame.outputSequence;
     const readbackDeadline = Math.min(deadline, performance.now() + DRAFT_READBACK_MS);
-    prefix += segment;
     const expected = draftExpectation(prefix);
-    if (await write(bracket(segment), frame) === false) return denied('composer-changed-during-paste');
+    const bytes = resume?.segment === index ? Buffer.from(bracket(segment)).subarray(resume.offset) : bracket(segment);
+    if (await write(bytes, frame) === false) return denied('composer-changed-during-paste');
     let matched;
     do {
       frame = await read();

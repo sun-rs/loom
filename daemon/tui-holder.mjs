@@ -1,3 +1,6 @@
+import { join } from 'node:path';
+import { combinedDeliveryText } from '../inbox/message.mjs';
+import { readJSON } from './host-control.mjs';
 import { randomUUID } from 'node:crypto';
 import { setTimeout as delay } from 'node:timers/promises';
 import { checkHolder } from '../holder/assets.mjs';
@@ -8,7 +11,7 @@ import { providers } from '../tui/providers.mjs';
 
 const absent = new Set(['ENOENT', 'ECONNREFUSED', 'ECONNRESET', 'EPIPE', 'HOLDER_EOF']);
 
-export function tuiHolders(controller, save) {
+export function tuiHolders(project, controller, save) {
   const attached = new Map();
 
   function verifyBuild(job, snapshot) {
@@ -35,6 +38,14 @@ export function tuiHolders(controller, save) {
     const terminal = await holderTerminal(binding, controller, row.cli, pane.pid, binding.childPid);
     const session = bindTuiSession(terminal, providers[row.cli], {
       ...binding.evidence, sessionId: row.sessionId ?? binding.evidence.sessionId,
+      readPending(id) {
+        const { messages } = readJSON(join(project, '.project', 'inbox', 'state.json'), { messages: [] });
+        const message = messages.find(message => message.id === id && message.target.addr === row.addr &&
+          message.phase === 'sending' && !message.received);
+        if (!message) return;
+        const waves = (message.combinedWaves ?? []).map(waveId => messages.find(wave => wave.id === waveId && wave.combinedInto === id));
+        if (!waves.some(wave => !wave)) return { ...message, text: combinedDeliveryText(message, waves) };
+      },
     });
     try {
       verifyBuild(job, terminal.initial);

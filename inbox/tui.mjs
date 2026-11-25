@@ -9,7 +9,7 @@ import codex from '../adapters/codex/index.mjs';
 import { parseCodexTranscriptLine } from '../adapters/codex/transcript.mjs';
 import opencode from '../adapters/opencode/index.mjs';
 import { boundTranscript, finalFromStop, terminalEvents, withClaudeTranscriptStops } from '../relay/sources.mjs';
-import { deliveryId } from './message.mjs';
+import { agyDeliveryParts, checksDeliveryIntegrity, claudeNativeDigest, deliveryId, payloadDigest } from './message.mjs';
 import { controlTui } from '../runtimes/tui/transport.mjs';
 import { readRequestBook } from '../tui/request-book.mjs';
 
@@ -159,13 +159,39 @@ function transcriptContains(provider, rows, stop, id) {
   return false;
 }
 
+function agyIntegrityRecords(observation) {
+  if (observation.agyIntegrity) return observation.agyIntegrity;
+  const records = observation.agyIntegrity = new Map();
+  const binding = observation.events.findLast(row => row.transcriptPath ?? row.transcript_path);
+  if (!binding) return records;
+  const nativeId = session(binding);
+  const expected = id => book(observation).get(id)?.digest;
+  for (const row of boundTranscript('agy', observation.terminal, binding)) {
+    const text = parseAgyTranscriptLine(row, { preserveUserWhitespace: true }).find(item => item.kind === 'user')?.text;
+    const parts = agyDeliveryParts(text, expected);
+    if (!parts.length) continue;
+    const writtenAt = Date.parse(row.created_at ?? row.timestamp);
+    if (!Number.isFinite(writtenAt)) continue;
+    const hook = observation.events.find(event => session(event) === nativeId && start('agy', event) &&
+      (event.deliveryId ?? deliveryId(event.prompt)) === parts[0].id && Math.abs(event.receivedAt - writtenAt) <= 5000);
+    const at = Math.max(writtenAt, hook?.receivedAt ?? 0);
+    for (const part of parts) if (!records.has(part.id)) records.set(part.id, { digest: part.digest, at,
+      sessionId: nativeId, turnId: hook?.turn_id ?? hook?.prompt_id });
+  }
+  return records;
+}
+
 export function nativeDelivery(message, observation) {
   const { provider, terminal } = observation;
   const events = observation.events.filter(row => row.receivedAt >= message.attemptAt);
   const anchor = events.find(row => start(provider, row) && (row.deliveryId ?? deliveryId(row.prompt)) === message.id);
-  const confirmation = !anchor && book(observation).get(message.id)?.confirmation;
-  const confirmed = confirmation?.at >= message.attemptAt ?
-    { at: confirmation.at, sessionId: confirmation.sessionId, turnId: confirmation.turnId } : undefined;
+  const entry = book(observation).get(message.id);
+  const confirmation = entry?.confirmation;
+  const integrity = checksDeliveryIntegrity({ provider, tui: observation.tui });
+  const agyRecord = integrity && provider === 'agy' && agyIntegrityRecords(observation).get(message.id);
+  const confirmed = !anchor && (confirmation?.at >= message.attemptAt ?
+    { at: confirmation.at, sessionId: confirmation.sessionId, turnId: confirmation.turnId } :
+    agyRecord?.at >= message.attemptAt ? agyRecord : undefined);
   const receiptFor = row => ({ at: row.receivedAt, sessionId: session(row), turnId: row.turn_id ?? row.prompt_id });
   const agyReceipt = provider === 'agy' && (anchor ? receiptFor(anchor) : confirmed ?? message.received);
   // Agy's root PreInvocation can omit the marker for human inputs. A later
@@ -216,6 +242,16 @@ export function nativeDelivery(message, observation) {
   const receipt = anchor ?? stop;
   const result = receipt ? receiptFor(receipt) : confirmed ?? agyReceipt;
   if (!result) return;
+  if (integrity) {
+    const expected = message.payloadDigest ?? entry?.digest ?? payloadDigest(message.text);
+    const known = [provider === 'claude' && claudeNativeDigest(anchor?.prompt, message.id),
+      agyRecord?.at >= message.attemptAt && agyRecord.digest,
+      ...(confirmation?.at >= message.attemptAt ? confirmation.digests ?? [] : [])].filter(Boolean);
+    const mismatch = known.find(value => value !== expected);
+    if (mismatch) return { ...result, corrupted: { expected, observed: mismatch } };
+    if (!known.length) return;
+    result.payloadVerified = true;
+  }
   if (!stop) {
     const abort = observation.tui?.bookPath && [...book(observation).values()].find(entry =>
       entry.receipt?.kind === 'confirmed' && entry.active?.inputId === message.id &&
@@ -286,6 +322,8 @@ export function tui(project, call = hc, fixtureSend, control = controlTui) {
       return { ...snapshot, state, active, generation: host.generation, urgentReady: frame.urgentReady && !veto, writeEvidence: {
         transport: binding.transport, screen: screen.kind, native: native.phase ?? 'unknown', hc: status ?? null,
         complete: screen.text !== undefined, humanActive: host.humanActive, composerEmpty: screen.empty,
+        ...(frame.heldDraftProof && { heldDraftProof: frame.heldDraftProof, heldDeliveryId: frame.pending,
+          heldDraftBytes: frame.heldDraftBytes }),
       } };
     }
     if (binding?.transport === 'plain-hc' || (!fixtureSend && binding)) {

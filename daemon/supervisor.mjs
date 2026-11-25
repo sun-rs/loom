@@ -103,7 +103,8 @@ export function createSupervisor(project, {
   const workers = () => sessions.rows().filter(row => row.role === 'worker' && sessions.jobs.has(row.addr));
   const superseded = (worker, rows) => rows.some(row => row.project === worker.project && row.task === worker.task &&
     row.startedAt > worker.startedAt);
-  const workPending = message => message?.phase !== 'refused' && !message?.completion?.body && !message?.completion?.noReply;
+  const failedDelivery = message => ['refused', 'corrupted'].includes(message?.phase);
+  const workPending = message => !failedDelivery(message) && !message?.completion?.body && !message?.completion?.noReply;
   const messagesForWorker = (row, job) => deliveries(row.addr).filter(message => message.id !== job.firstId && workPending(message));
   function occupied(row) {
     const job = sessions.jobs.get(row.addr);
@@ -147,7 +148,7 @@ export function createSupervisor(project, {
         const job = sessions.jobs.get(row.addr);
         const message = byId.get(job.firstId);
         const completion = message?.completion;
-        const settled = completion?.body || completion?.noReply || row.endedAt !== null || message?.phase === 'refused';
+        const settled = completion?.body || completion?.noReply || row.endedAt !== null || failedDelivery(message);
         const unconfirmed = completion?.unconfirmed;
         const reply = settled ? {
           key: job.firstId, at: completion?.at ?? row.endedAt ?? now(),
@@ -196,7 +197,7 @@ export function createSupervisor(project, {
       if (!row) continue;
       const job = sessions.jobs.get(row.addr);
       const coveredByBatch = row.role === 'worker' && deliveries(row.addr).some(message =>
-        (message.id === job?.firstId || continuationGroup(message)) && !message.completion && message.phase !== 'refused');
+        (message.id === job?.firstId || continuationGroup(message)) && !message.completion && !failedDelivery(message));
       notifications.add({ id: event.incidentId, type: 'stuck', project: row.project, addr: row.addr,
         at: event.at, reason: event.reason, ...(coveredByBatch && { logOnly: true }) });
       const pending = deliveries(row.addr).find(message => message.from && message.id !== job?.firstId &&
@@ -212,6 +213,20 @@ export function createSupervisor(project, {
         project: row.project, addr: row.addr, at: row.endedAt });
     }
     for (const message of mail.messages) {
+      if (message.phase === 'corrupted') {
+        const row = sessions.rowFor(message.target.addr);
+        if (!row) continue;
+        const id = `${message.id}:corrupted`;
+        const text = `Loom 投递 CORRUPTED ${message.id}\n${row.addr} 的原生输入与原消息不符，未确认送达。`;
+        const sender = message.from && sessions.routeParent(message.from.addr);
+        if (sender && sender.addr !== row.addr && sender.endedAt === null) {
+          saved(sessions.targetBinding(sender), text, { id: batchDeliveryId(id, sender.addr), corruptedOf: message.id });
+        }
+        notifications.add({ id, type: 'needs-decision', reason: 'payload-mismatch', project: row.project, addr: row.addr,
+          at: message.corruption?.at ?? now(), deliveryId: message.id, text,
+          ...(row.role === 'super' && { externalOnly: true, batch: message.id }) });
+        continue;
+      }
       if (message.combinedInto || !['sending', 'stopping'].includes(message.phase)) continue;
       const at = message.attemptAt ?? message.stopAttemptAt;
       if (!at || message.bypassedAt == null && now() - at < uncertainWindow) continue;
@@ -252,6 +267,24 @@ export function createSupervisor(project, {
     }));
   }
 
+  async function checkHeldDrafts() {
+    const pending = mail.messages.filter(message => message.target.backend === 'tui' && message.phase === 'sending' &&
+      sessions.rowFor(message.target.addr)?.endedAt === null);
+    await Promise.all(pending.map(async message => {
+      const snapshot = await sessions.transport.inspect(message.target).catch(() => undefined);
+      const proof = snapshot?.writeEvidence;
+      if (!['draft-held', 'overlay'].includes(snapshot?.state) || proof?.heldDeliveryId !== message.id ||
+          !['unproven', 'incomplete', 'uncertain-enter'].includes(proof.heldDraftProof)) return;
+      const row = sessions.rowFor(message.target.addr);
+      const bytes = proof.heldDraftBytes;
+      const progress = bytes?.total == null ? '字节数未知' : `${bytes.written ?? '未知'}/${bytes.total} 字节`;
+      notifications.add({ id: `${message.id}:held-draft`, type: 'needs-decision', project: row.project, addr: row.addr,
+        deliveryId: message.id, reason: 'draft-held', at: now(),
+        ...(row.role === 'super' && { externalOnly: true, batch: message.id }),
+        text: `Loom 保留了 ${row.role} ${row.addr} 的草稿 ${message.id}（${progress}）。完整粘贴或 Enter 状态未获确认。` });
+    }));
+  }
+
   const reportedState = (snapshot, incident) => isStartupBlocker(snapshot?.state) ? snapshot.state :
     incident?.state === 'needs-you' ? 'stuck' : snapshot?.state ?? 'unknown';
 
@@ -264,7 +297,7 @@ export function createSupervisor(project, {
     const rows = new Map(sessions.rows().map(row => [row.addr, row]));
     const at = now();
     const settledAt = message => message.completion?.body || message.completion?.noReply ? message.completion.at :
-      rows.get(message.target.addr)?.endedAt ?? (message.phase === 'refused' ? message.refusedAt ?? at : Infinity);
+      rows.get(message.target.addr)?.endedAt ?? (failedDelivery(message) ? message.corruption?.at ?? message.refusedAt ?? at : Infinity);
     for (const [id, group] of groups) {
       const first = group[0];
       const parent = sessions.routeParent(first.from.addr);
@@ -370,7 +403,7 @@ export function createSupervisor(project, {
       const first = mail.messages.find(message => message.id === job.firstId);
       const result = first?.completion;
       const expired = now() >= job.reviewDeadline;
-      if (!expired && !result && row.endedAt == null && first?.phase !== 'refused') continue;
+      if (!expired && !result && row.endedAt == null && !failedDelivery(first)) continue;
       const id = batchDeliveryId(job.firstId, 'reviewer');
       if (mail.messages.some(message => message.id === id)) continue;
       if (row.endedAt == null) {
@@ -456,7 +489,7 @@ export function createSupervisor(project, {
         if (job?.row.role === 'worker') return seats.has(target.addr);
         if (!job?.reviewDeadline) return true;
         const first = mail.messages.find(message => message.id === job.firstId);
-        return now() < job.reviewDeadline && !first?.completion && first?.phase !== 'refused';
+        return now() < job.reviewDeadline && !first?.completion && !failedDelivery(first);
       },
     });
     await closeReviews();
@@ -465,6 +498,7 @@ export function createSupervisor(project, {
     orgNotices(current);
     health = new Map((await watcher.poll()).map(row => [row.addr, row]));
     await checkStartupBlockers();
+    await checkHeldDrafts();
     publishNotifications();
     await pushNotifications();
   }
