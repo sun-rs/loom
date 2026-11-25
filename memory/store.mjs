@@ -74,11 +74,6 @@ function purge(state, entry) {
   }
   state.changes = state.changes.filter(change => change.id !== entry.id);
   for (const { response } of state.receipts) {
-    if (response.candidate?.status === 'merged' && replacements.has(response.candidate.id)
-      && !replacements.has(response.item.id)) {
-      const { body, ...item } = response.item;
-      response.item = item;
-    }
     for (const field of ['item', 'candidate']) {
       const marker = replacements.get(response[field]?.id);
       if (marker) response[field] = marker;
@@ -281,6 +276,7 @@ export function createMemoryStore({ now = Date.now, readState, commitState, evid
 
   function replayMerge(state, binding, request, current, prior, success) {
     if (!access.canReview(binding, current) || !request.cardId || request.cardId !== current.cardId) return forbidden();
+    if (current.status === 'forgotten') return conflict(current.revision);
     if (prior && (prior.candidate?.id !== current.id || prior.candidate.status !== 'merged')) {
       return conflict(current.revision);
     }
@@ -362,7 +358,7 @@ export function createMemoryStore({ now = Date.now, readState, commitState, evid
     const prior = state.receipts.find(row => row.scope === scope && row.requestId === requestId);
     const success = (fields, status = 'accepted') => ({ ok: true, ...fields, receipt: { requestId, status } });
     const current = state.entries.find(entry => entry.id === id);
-    if (op === 'merge' && current?.status === 'merged') {
+    if (op === 'merge' && (current?.status === 'merged' || current?.status === 'forgotten')) {
       return replayMerge(state, binding, request, current, prior?.response, success);
     }
     if (prior) return prior.response;
