@@ -126,7 +126,9 @@ test('validates the policy example and rejects malformed capacity, drift, fast a
   const path = join(cwd, '.project', 'policy.json');
   const example = JSON.parse(readFileSync(file('../examples/policy.json'), 'utf8'));
   assert.ok(!example.deny.some(({ cli }) => cli === 'claude'));
-  assert.deepEqual(['super', 'leader', 'auditor'].map(role => new Set(example.roles[role].preferred.map(({ cli }) => cli)).size), [2, 2, 2]);
+  for (const role of ['super', 'leader', 'auditor', 'reviewer', 'worker']) {
+    assert.ok(new Set(example.roles[role].preferred.map(({ cli }) => cli)).size >= 2, `${role} needs at least two CLI vendors`);
+  }
   const select = role => spawnProfile(cwd, { role }).selected;
   writeFileSync(path, JSON.stringify(example));
   assert.equal(select('leader').effort, 'high');
