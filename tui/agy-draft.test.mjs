@@ -36,9 +36,17 @@ test('the shared verifier uses Claude, Codex and OpenCode composer geometry', as
     assert(verifyDraft(frame, expected));
     assert.equal(verifyDraft({ ...frame, draft: frame.draft + ' edit' }, expected), undefined);
   }
-  const idle = await rendered({ cols: 80, rows: 12,
+  const idle = await rendered({ cols: 80, rows: 12, cursor: { x: 2, y: 0 },
     text: '┃ Ask anything, / for commands, @ for context…\n\nloom · test · ctrl+p menu' }, 'opencode');
   assert.equal(idle.draft, '');
+  const placeholder = '┃ Ask anything, / for commands, @ for context…';
+  const padded = await rendered({ cols: 80, rows: 12, cursor: { x: 2, y: 0 },
+    text: placeholder.padEnd(93) + '\nloom · test · ctrl+p menu' }, 'opencode');
+  assert.equal(padded.draft, '');
+  const paintedRows = [`┃ [loom:${id}]`, '┃ hello world'].map(row => row.padEnd(79));
+  const painted = await rendered({ cols: 80, rows: 12,
+    text: [...paintedRows, '', openCodeFooters[0]].join('\n') }, 'opencode');
+  assert(verifyDraft(painted, expected));
 });
 
 test('the agy capture verifies its wrapped draft and rejects an equal-length edit', async () => {

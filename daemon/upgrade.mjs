@@ -14,6 +14,7 @@ import { readText, writeState } from './io.mjs';
 import { daemonAbsent, request } from './rpc.mjs';
 import { hostUUID, readJSON } from './host-control.mjs';
 import { processTable, sameProcess } from './processes.mjs';
+import { checkHolder } from '../holder/assets.mjs';
 
 const exec = promisify(execFile);
 export const daemonProtocol = 1;
@@ -31,8 +32,10 @@ export async function selfCheck() {
   await import('node-pty');
   await import('@xterm/headless');
   const { controlProtocol } = await import('../tui/pty-control.mjs');
-  return { root: releaseRoot, digest: releaseDigest(releaseRoot), daemonProtocol, hostProtocol, hostProtocols,
-    ptyProtocol: controlProtocol, ptyProtocols: [0, 1, 2], storageVersions, packages,
+  const holder = await checkHolder(releaseRoot);
+  return { root: releaseRoot, digest: releaseDigest(releaseRoot, { legacy: true }), releaseDigest: releaseDigest(releaseRoot),
+    daemonProtocol, hostProtocol, hostProtocols, ptyProtocol: controlProtocol, ptyProtocols: [0, 1, 2, 3],
+    defaultTuiProtocol: 3, holderDigest: holder.digest, storageVersions, packages,
     platform: process.platform, arch: process.arch, node: process.versions.node };
 }
 
@@ -43,14 +46,15 @@ async function verifyRelease(root) {
   const { stdout } = await exec(process.execPath, [join(root, 'bin/loomd'), '--self-check'],
     { cwd: root, timeout: 45_000, maxBuffer: 1024 * 1024 });
   const build = JSON.parse(stdout);
-  if (build.root !== root || build.digest !== digest || build.daemonProtocol !== daemonProtocol ||
+  if (build.root !== root || (build.releaseDigest ?? build.digest) !== digest ||
+      build.digest !== releaseDigest(root, { legacy: true }) || build.daemonProtocol !== daemonProtocol ||
       build.platform !== process.platform || build.arch !== process.arch || build.node !== process.versions.node) {
     throw new Error('Release self-check returned an incompatible build');
   }
   if (!build.hostProtocols?.includes(build.hostProtocol) || !build.ptyProtocols?.includes(build.ptyProtocol)) {
     throw new Error('Release cannot attach its own session protocol');
   }
-  return { ...build, id: digest };
+  return { ...build, legacyDigest: build.digest, digest, id: digest };
 }
 
 function storageVersion(project) {
@@ -96,10 +100,11 @@ export async function planUpgrade(project, args, current, sessions) {
     verifyRelease(args.rollback ? active.previous.root : args.target), verifyRelease(current.root),
   ]);
   if (target.root === current.root) throw new CommandError('invalid-arguments', 'Prepare the new build in a different release directory');
-  if (current.digest !== verifiedCurrent.digest || active?.current.digest && active.current.digest !== current.digest) {
+  if (current.digest !== verifiedCurrent.digest || active?.current.digest &&
+      ![verifiedCurrent.digest, verifiedCurrent.legacyDigest].includes(active.current.digest)) {
     throw new Error('Active release changed since it was verified');
   }
-  if (args.rollback && active.previous.digest && active.previous.digest !== target.digest) {
+  if (args.rollback && active.previous.digest && ![target.digest, target.legacyDigest].includes(active.previous.digest)) {
     throw new Error('Previous release changed since it was verified');
   }
   if (!verifiedCurrent.hostProtocols.includes(target.hostProtocol) || !target.hostProtocols.includes(verifiedCurrent.hostProtocol) ||
@@ -160,7 +165,9 @@ export function validateHandoff(project, id, recovery) {
       !liveHandoff(project, id)) {
     throw new Error('Invalid loomd handoff identity');
   }
-  if (!recovery && releaseDigest(releaseRoot) !== state.target.digest) throw new Error('Target release changed since self-check');
+  if (!recovery && releaseDigest(releaseRoot) !== (state.target.releaseDigest ?? state.target.digest)) {
+    throw new Error('Target release changed since self-check');
+  }
   return state;
 }
 
@@ -170,7 +177,8 @@ export function validateReattachment(plan, result) {
     const before = plan.sessions.find(session => session.addr === live.addr);
     if (live.status !== 'attached' || before && (live.pid !== before.pid ||
         live.incarnation !== before.incarnation || before.sessionId && live.sessionId !== before.sessionId ||
-        live.streamId !== before.streamId)) {
+        live.streamId !== before.streamId || before.protocol === 3 && (live.pane !== before.pane ||
+          live.paneCreatedAt !== before.paneCreatedAt || live.childPid !== before.childPid))) {
       throw new Error(`Session ${live.addr} could not reattach: ${live.reason ?? 'identity changed'}`);
     }
   }

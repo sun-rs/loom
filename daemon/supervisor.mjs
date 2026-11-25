@@ -472,6 +472,7 @@ export function createSupervisor(project, {
   return {
     tick,
     upgradeSessions: sessions.upgradeSessions,
+    upgradeHolder: sessions.upgradeHolder,
     async reattach(expected) {
       await sessions.refresh(mail);
       const attached = await sessions.upgradeSessions();

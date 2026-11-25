@@ -135,7 +135,7 @@ export function bindTuiSession(terminal, provider, {
     } };
   }
 
-  function recoverStartup({ observation: frame, result }) {
+  async function recoverStartup({ observation: frame, result }) {
     if (!terminal.key || !frame.writable || frame.humanActive || frame.quietForMs < QUIET_OUTPUT_MS ||
         ['busy', 'compacting'].includes(result.native.phase) || result.host.title === 'busy') return false;
     const { kind, text } = result.screen;
@@ -165,7 +165,7 @@ export function bindTuiSession(terminal, provider, {
     const stable = startupFrame?.generation === frame.generation && startupFrame.token === token;
     startupFrame = { generation: frame.generation, token };
     if (!stable || attempts >= limit || performance.now() - startupKeyAt < 1000) return false;
-    try { terminal.key(key, frame.generation); }
+    try { await terminal.key(key, frame.generation); }
     catch (error) {
       if (error.code === 'STALE_FRAME') return false;
       throw error;
@@ -176,10 +176,10 @@ export function bindTuiSession(terminal, provider, {
     return true;
   }
 
-  async function read() {
+  async function read({ passive = false } = {}) {
     if (lastExit) return lastExit;
     let frame = await observe();
-    if (!frame.result.exit && recoverStartup(frame)) frame = await observe();
+    if (!passive && !frame.result.exit && await recoverStartup(frame)) frame = await observe();
     if (frame.result.exit) lastExit = frame.result;
     return frame.result;
   }
@@ -215,7 +215,7 @@ export function bindTuiSession(terminal, provider, {
     id: terminal.id,
     hookSink: evidence.hookSink,
     warnings: terminal.warnings ?? [],
-    readState: () => serialize(read),
+    readState: options => serialize(() => read(options)),
     confirmations: id => serialize(async () => { await read(); return confirmations(id); }),
     submit: ({ id = randomUUID(), text, timeoutMs = 5_000, deferMs = 0, generation, urgent = false }) => serialize(async () => {
       if (closed) return refusal('closed');

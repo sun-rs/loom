@@ -1,5 +1,5 @@
 import { createHash, randomUUID } from 'node:crypto';
-import { readdirSync, realpathSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, realpathSync } from 'node:fs';
 import { delimiter, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { runtimeDirectory } from '../cli/project.mjs';
@@ -31,26 +31,32 @@ export function nextController(project) {
 const source = ['adapters', 'bin', 'cli', 'daemon', 'evidence', 'handover', 'inbox', 'index', 'lib', 'memory', 'relay', 'runtimes',
   'schema', 'tui', 'watch', 'package.json', 'package-lock.json'];
 
-export function releaseDigest(root) {
+export function releaseDigest(root, { legacy = false } = {}) {
   const digest = createHash('sha256');
   function visit(path) {
     const entries = readdirSync(path, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name, 'en'));
     for (const entry of entries) {
-      if (/^\.(?:env|test-)/i.test(entry.name) || /^(?:SKILL\.md|skills|auth\.json|memories.*|provider-homes)$/i.test(entry.name)) continue;
+      if (/^\.(?:env|test-|build-)|^\.[\w-]+-test-/i.test(entry.name) || /^(?:SKILL\.md|skills|auth\.json|memories.*|provider-homes)$/i.test(entry.name)) continue;
       const child = join(path, entry.name);
       if (entry.isDirectory()) visit(child);
       else file(child);
     }
   }
   function file(path) {
+    const name = relative(root, path);
+    if (name.startsWith('holder/bin/')) {
+      digest.update(JSON.stringify([name, createHash('sha256').update(readFileSync(path)).digest('hex')]));
+      return;
+    }
     const text = readText(path, null);
-    if (text === null) throw new Error(`Release file missing: ${relative(root, path)}`);
-    digest.update(JSON.stringify([relative(root, path), text]));
+    if (text === null) throw new Error(`Release file missing: ${name}`);
+    digest.update(JSON.stringify([name, text]));
   }
   for (const name of source) {
     const path = join(root, name);
     if (name.endsWith('.json')) file(path);
     else visit(path);
   }
+  if (!legacy && existsSync(join(root, 'holder'))) visit(join(root, 'holder'));
   return digest.digest('hex');
 }

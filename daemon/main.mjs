@@ -120,6 +120,11 @@ export async function main(args, { pollInterval = 350, ...options } = {}) {
         } else if (command === 'upgrade-status') {
           result = { active: { ...activeRelease(project)?.current, ...runningRelease },
             upgrade: upgradeState(project), sessions: await serial(supervisor.upgradeSessions) };
+        } else if (command === 'upgrade-holder') {
+          result = await serial(() => {
+            if (!canDispatch()) throw Object.assign(new Error('loomd is switching releases'), { code: 'not-ready' });
+            return supervisor.upgradeHolder(args);
+          });
         } else if (command === 'upgrade-plan' || command === 'upgrade-apply') {
           if (!canDispatch()) throw Object.assign(new Error('loomd is switching releases'), { code: 'not-ready' });
           const plan = await planUpgrade(project, args, runningRelease, () => serial(supervisor.upgradeSessions));

@@ -117,6 +117,7 @@ export function nativeState(provider, { hookSink, evidenceRoot, cwd, sessionId, 
       return {
         sessionId, phase: sessionChanged ? 'unknown' : state?.phase, source: state?.source, observedAt: state?.observedAt, interruption,
         activeTurn, activeSince, activeInputId, turnSequence, transcriptPath: transcript,
+        ...(sessionChanged && { identityChanged: true }),
       };
     },
     confirmations(id) {

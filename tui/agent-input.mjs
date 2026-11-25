@@ -48,7 +48,7 @@ async function submitAgyComposer(text, { before, read, write, valid, verify }) {
     const readbackDeadline = Math.min(deadline, performance.now() + DRAFT_READBACK_MS);
     prefix += segment;
     const expected = draftExpectation(prefix);
-    write(bracket(segment));
+    if (await write(bracket(segment), frame) === false) return denied('composer-changed-during-paste');
     let matched;
     do {
       frame = await read();
@@ -66,7 +66,7 @@ async function submitAgyComposer(text, { before, read, write, valid, verify }) {
     if (!matched) return denied('draft-unverified');
     proof = matched;
   }
-  write(AGENT_PROMPT_SUBMIT);
+  if (await write(AGENT_PROMPT_SUBMIT, frame) === false) return denied('composer-changed-during-paste');
   return { accepted: true, outcome: proof.hiddenRows ? 'verified-scrolled-draft' : 'verified-normalized-draft',
     readbackMs: Math.round(performance.now() - pastedAt) };
 }
@@ -76,7 +76,7 @@ export async function submitComposer(text, options) {
   if (provider === 'agy') return submitAgyComposer(text, options);
   if (before.draft !== '') return denied('draft-unverified');
   const pastedAt = performance.now();
-  write(bracket(text));
+  if (await write(bracket(text), before) === false) return denied('composer-changed-during-paste');
   const marker = text.split('\n', 1)[0];
   const expected = draftExpectation(text);
   const held = frame => verifyDraft(frame, expected);
@@ -112,11 +112,11 @@ export async function submitComposer(text, options) {
 
   const readbackMs = Math.round(performance.now() - pastedAt);
   if (collapsed || normalized) {
-    write(AGENT_PROMPT_SUBMIT);
+    if (await write(AGENT_PROMPT_SUBMIT, first) === false) return denied('composer-changed-during-paste');
     return { accepted: true, outcome: collapsed ? 'verified-collapsed-paste' : 'verified-normalized-draft', readbackMs };
   }
   const echoed = observeEcho(marker);
-  write(AGENT_PROMPT_SUBMIT);
+  if (await write(AGENT_PROMPT_SUBMIT, first) === false) return denied('composer-changed-during-paste');
   const receipt = { accepted: true, outcome: 'verified-draft', readbackMs };
   const retryAfter = performance.now() + HELD_PROMPT_RECHECK_MS;
   do {
@@ -129,8 +129,7 @@ export async function submitComposer(text, options) {
     // of the whole draft after the write, and stop permanently on any intervening change.
     if (frame.writable && valid(frame) && echoed() && frame.outputSequence > first.outputSequence &&
         frame.quietForMs >= QUIET_OUTPUT_MS) {
-      write(AGENT_PROMPT_SUBMIT);
-      receipt.resubmitted = true;
+      if (await write(AGENT_PROMPT_SUBMIT, frame) !== false) receipt.resubmitted = true;
     }
     return receipt;
   } while (true);

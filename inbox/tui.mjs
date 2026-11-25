@@ -259,20 +259,20 @@ export function nativeDelivery(message, observation) {
   return { ...result, completion: { ...completion, ...reply } };
 }
 
-export function tui(project, call = hc, fixtureSend) {
+export function tui(project, call = hc, fixtureSend, control = controlTui) {
   async function observe(terminal, provider, sessionId, binding) {
     let events = terminalEvents(project, terminal.address, terminal)
       .filter(row => !row.agent_id && session(row) && (!sessionId || session(row) === sessionId));
     if (provider === 'claude') events = withClaudeTranscriptStops(terminal, events, sessionId);
     const snapshot = { terminal, events, provider, tui: binding, strictEnd: true };
     if (terminal.state === 'finished') return { ...snapshot, state: 'finished' };
-    if (binding?.transport === 'loom-pty') {
+    if (['loom-pty', 'holder-v3'].includes(binding?.transport)) {
       const status = terminal.status?.state;
       let frame;
-      try { frame = await controlTui(binding, 'state'); }
+      try { frame = await control(binding, 'state', undefined, terminal.address); }
       catch (error) {
         return { ...snapshot, state: 'unknown', writeEvidence: {
-          transport: 'loom-pty', screen: 'unavailable', hc: status ?? null, reason: error.code ?? 'control-unavailable',
+          transport: binding.transport, screen: 'unavailable', hc: status ?? null, reason: error.code ?? 'control-unavailable',
         } };
       }
       const { screen, host, native } = frame;
@@ -284,7 +284,7 @@ export function tui(project, call = hc, fixtureSend) {
         ['blocked', 'error'].includes(status) ? 'blocked' : screen.kind === 'busy' && active ? 'busy' :
           ['idle', 'busy'].includes(screen.kind) ? 'unknown' : screen.kind);
       return { ...snapshot, state, active, generation: host.generation, urgentReady: frame.urgentReady && !veto, writeEvidence: {
-        transport: 'loom-pty', screen: screen.kind, native: native.phase ?? 'unknown', hc: status ?? null,
+        transport: binding.transport, screen: screen.kind, native: native.phase ?? 'unknown', hc: status ?? null,
         complete: screen.text !== undefined, humanActive: host.humanActive, composerEmpty: screen.empty,
       } };
     }
@@ -337,9 +337,9 @@ export function tui(project, call = hc, fixtureSend) {
     if (!snapshot.tui || snapshot.state !== 'idle' && !(message.urgent && snapshot.urgentReady)) {
       throw Object.assign(new Error('TUI control is unavailable or blocked'), { kind: 'blocked' });
     }
-    const result = await controlTui(snapshot.tui, 'submit', {
+    const result = await control(snapshot.tui, 'submit', {
       id: message.id, text: message.text, generation: snapshot.generation, timeoutMs: 900, urgent: message.urgent,
-    }).catch(error => {
+    }, snapshot.terminal.address).catch(error => {
       if (error.code === 'INPUT_SIZE') error.kind = 'input-refused';
       throw error;
     });
@@ -362,9 +362,9 @@ export function tui(project, call = hc, fixtureSend) {
         throw Object.assign(new Error('TUI turn changed before interruption'), { kind: 'blocked' });
       }
       const { since, turnId, sessionId } = message.active;
-      const result = await controlTui(snapshot.tui, 'interrupt', {
+      const result = await control(snapshot.tui, 'interrupt', {
         id: message.id, generation: snapshot.generation, turnAt: since, sessionId, turnId,
-      });
+      }, snapshot.terminal.address);
       if (result.kind !== 'confirmed') {
         throw Object.assign(new Error(`TUI interrupt ${result.code ?? result.kind}`), {
           kind: result.kind === 'refused' ? 'blocked' : 'unconfirmed',

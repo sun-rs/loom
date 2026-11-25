@@ -8,7 +8,7 @@ import { absoluteCommand, openNativeTui } from '../runtimes/tui/transport.mjs';
 import { codexFastArgs, nativeClaude } from './executables.mjs';
 import { eventPath, readText, writeState } from './io.mjs';
 import { codexEnvironmentArgs } from '../cli/project.mjs';
-import { managedEnvironment } from './release.mjs';
+import { controllerFile, managedEnvironment } from './release.mjs';
 import { workerEnvironment, workerProviderEnvironment } from './worker-environment.mjs';
 
 const exec = promisify(execFile);
@@ -26,14 +26,14 @@ export async function ownedPane(job, row) {
   return terminal;
 }
 
-export async function openTui(job, row, project, recordTemporary, recordBinding) {
+export async function openTui(job, row, project, recordTemporary, recordBinding, controller) {
   const hookSink = eventPath(project, row.addr);
   const env = { ...managedEnvironment(project, row.addr),
     ...(job.isolatedWorkerHome && { ...workerEnvironment(row), ...workerProviderEnvironment(row) }) };
   const name = paneName(row.addr);
   const host = await openNativeTui({
     ...row, fast: job.fast, hookSink, name, env, sessionId: job.plannedNativeId, recordTemporary, recordBinding, previous: job.tui,
-    autoTrustWorkspace: job.autoTrustWorkspace,
+    autoTrustWorkspace: job.autoTrustWorkspace, ...(controller && { controllerPath: controllerFile(project) }),
     stateDir: join(project, '.project', 'pty'),
     ...(row.cli === 'claude' && { command: nativeClaude(), env: { ...env, DISABLE_AUTOUPDATER: '1' },
       unset: ['CLAUDE_CODE_ENTRYPOINT', 'CLAUDECODE'] }),

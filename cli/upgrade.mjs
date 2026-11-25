@@ -6,16 +6,17 @@ import { activeRelease, upgradeState } from '../daemon/release.mjs';
 import { projectDirectory, projectIndex, projectReceipt } from './project.mjs';
 import { CommandError } from './sessions.mjs';
 
-export const upgradeUsage = 'loom upgrade [--project DIR] (--to RELEASE [--check] | --rollback [--check] | --status) [--json]';
+export const upgradeUsage = 'loom upgrade [--project DIR] (--to RELEASE [--check] | --rollback [--check] | --status) [--holder SESSION] [--json]';
 
 export async function upgrade(args) {
   let values;
   try {
     ({ values } = parseArgs({ args, options: { project: { type: 'string' }, to: { type: 'string' },
-      check: { type: 'boolean' }, rollback: { type: 'boolean' }, status: { type: 'boolean' }, json: { type: 'boolean' } } }));
+      check: { type: 'boolean' }, rollback: { type: 'boolean' }, status: { type: 'boolean' }, holder: { type: 'string' },
+      json: { type: 'boolean' } } }));
   } catch (error) { throw new CommandError('invalid-arguments', error.message); }
   if ([values.to !== undefined, values.rollback, values.status].filter(Boolean).length !== 1 ||
-      values.status && values.check || values.to !== undefined && !isAbsolute(values.to)) {
+      values.status && (values.check || values.holder !== undefined) || values.to !== undefined && !isAbsolute(values.to)) {
     throw new CommandError('invalid-arguments', upgradeUsage);
   }
   const project = projectDirectory(values.project);
@@ -30,6 +31,10 @@ export async function upgrade(args) {
         ({ addr, backend, sessionId, pane, status: daemon?.running ? 'legacy' : 'offline' })) };
   }
   if (!daemon?.running) throw new CommandError('not-ready', 'loomd must be running to start an upgrade');
+  if (values.holder !== undefined) {
+    return { ...await request(project, 'upgrade-holder', { addr: values.holder, target: values.to,
+      rollback: values.rollback, check: values.check }), ...context };
+  }
   if (!daemon.protocol) {
     const sessions = projectIndex(project).query({ endedAt: null, backend: 'headless' });
     const reason = 'This loomd predates detached session hosts. Stop or retire its headless sessions before installing a compatible daemon.';

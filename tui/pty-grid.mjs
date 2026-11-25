@@ -65,8 +65,13 @@ export function readGrid(terminal, provider, extractDraft) {
     last = bottom - 1;
   }
   if (first < 0 || last < first || !raw[first].trimStart().startsWith(prompt)) return { text, cursor };
-  const rowText = index => undimmedText(lines[index], terminal.cols, cell, !lines[index + 1]?.isWrapped,
-    provider === 'claude' && index === cursor.y ? cursor.x : undefined);
+  const rowText = index => {
+    const boundary = !lines[index + 1]?.isWrapped || provider === 'opencode' && index === last;
+    const line = undimmedText(lines[index], terminal.cols, cell, boundary,
+      provider === 'claude' && index === cursor.y ? cursor.x : undefined);
+    // OpenCode paints actual spaces to fill each logical composer row.
+    return provider === 'opencode' && boundary ? line.trimEnd() : line;
+  };
   let draft = rowText(first).trimStart().slice(prompt.length).replace(/^[ \u00a0]/, '');
   for (let index = first + 1; index <= last; index++) {
     const line = rowText(index);
@@ -75,7 +80,8 @@ export function readGrid(terminal, provider, extractDraft) {
     else if (provider === 'opencode') draft += '\n' + line.replace(/^\s*┃ ?/, '');
     else draft += '\n' + (provider === 'codex' && line === ' ' ? '' : line.replace(/^ {2}/, ''));
   }
-  if (!draft.trim() || provider === 'opencode' && first === last && draft === miniHint) draft = '';
+  if (!draft.trim() || provider === 'opencode' && first === last && cursor.y === first && cursor.x <= 2 &&
+      draft.trimEnd() === miniHint) draft = '';
   const firstCell = lines[first]?.getCell(2, cell);
   // Claude uses ANSI bright black for the untouched startup suggestion on some themes.
   if (provider === 'claude' && cursor.y === first && cursor.x <= 2 &&

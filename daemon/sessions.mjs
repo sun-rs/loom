@@ -12,10 +12,11 @@ import { generateBrief } from '../handover/brief.mjs';
 import { eventPath, jsonRows, readText, syncDirectory, writeState } from './io.mjs';
 import { bindOarTranscript, checkedTranscript, oarControl, oarDelivery, oarEnd, oarSnapshot, trackOar } from './oar.mjs';
 import { openTui, ownedPane, refreshOpenCode } from './tui.mjs';
+import { tuiHolders } from './tui-holder.mjs';
 import { recoverCodexEnd, recoverNativeDelivery } from './recovery.mjs';
 import { spawnProfile, enforceDeny } from '../cli/policy.mjs';
 import { headAt, linkTuiInputHead, observeTuiHeads, saveTuiInputHead } from './turn-heads.mjs';
-import { wrapperFailedStart } from '../runtimes/tui/transport.mjs';
+import { controlTui, wrapperFailedStart } from '../runtimes/tui/transport.mjs';
 import { controlHello, requestControl } from '../tui/pty-control.mjs';
 import { attachHost } from './host-client.mjs';
 import { releaseId } from './release.mjs';
@@ -97,6 +98,7 @@ export function ownedSessions(project, index, report, {
     jobs.set(job.row.addr, job);
   }
   const save = job => writeState(file(job.row.addr), JSON.stringify(job) + '\n');
+  const holders = tuiHolders(controller, save);
   const events = addr => running.get(addr)?.rows ?? jsonRows(readText(eventPath(project, addr)));
   const transportReceipt = metadata => metadata && { transport: metadata.transport, reason: metadata.reason };
   const bound = (row, extra = {}) => ({ addr: row.addr, cwd: row.cwd, provider: row.cli,
@@ -116,7 +118,18 @@ export function ownedSessions(project, index, report, {
   // Injected protocol fixtures emulate the preexisting hc-shaped native peer.
   const fixtureSend = callHc !== hc && ((message, snapshot) => managedHc('send', message.target.addr,
     wireText(message.id, message.text), ...(snapshot.terminal.status?.state === 'idle' ? ['--if', 'idle'] : [])));
-  const local = tui(project, managedHc, fixtureSend);
+  const local = tui(project, managedHc, fixtureSend, async (binding, method, params, addr) => {
+    if (binding.transport !== 'holder-v3') return controlTui(binding, method, params);
+    const row = rowFor(addr);
+    const job = jobs.get(addr);
+    const pane = await getPane(job, row);
+    if (!pane || completedPane(pane)) throw new Error('Owned holder pane is unavailable');
+    const { session } = await holders.attach(job, row, pane);
+    if (method === 'state') return session.readState();
+    if (method === 'confirmations') return session.confirmations(params.id);
+    if (['submit', 'interrupt', 'dialog'].includes(method)) return session[method](params);
+    throw new Error('Unknown holder controller method');
+  });
   const transport = {
     async inspect(target) {
       const row = rowFor(target.addr);
@@ -205,10 +218,11 @@ export function ownedSessions(project, index, report, {
 
   function canInterrupt(binding) {
     return binding.backend === 'headless' ? guardedAbort.has(binding.provider) :
-      jobs.get(binding.addr)?.tui?.transport === 'loom-pty' && binding.provider !== 'opencode';
+      ['loom-pty', 'holder-v3'].includes(jobs.get(binding.addr)?.tui?.transport) && binding.provider !== 'opencode';
   }
 
   async function finish(job, row, at = Date.now()) {
+    holders.detach(job.tui);
     const final = row.endedAt === null ? index.update(row.addr, { endedAt: Math.max(row.startedAt, at) }) : row;
     if (!temporaryRole(row.role) && final.transcriptPath && !job.endRecorded) {
       const result = await recordLifecycle(project, final, { kind: 'exited', at: final.endedAt, eventId: `${row.addr}:exit` },
@@ -442,7 +456,7 @@ export function ownedSessions(project, index, report, {
         }, binding => {
           job.tui = binding;
           save(job);
-        });
+        }, controller);
         terminal = opened.terminal;
         nativeId = opened.nativeId;
       }
@@ -455,6 +469,7 @@ export function ownedSessions(project, index, report, {
       if (row.pane !== terminal.address || nativeId && row.sessionId !== nativeId) {
         row = index.update(row.addr, { pane: terminal.address, ...(nativeId && { sessionId: nativeId }) });
       }
+      if (job.tui?.transport === 'holder-v3') await holders.attach(job, row, terminal);
       bindings.set(row.addr, bound(row, { ...job.paneBinding, tui: transportReceipt(job.tui) }));
     }
     enforceDeny(runtimeSelection(row).effective, job.deny ?? []);
@@ -598,6 +613,7 @@ export function ownedSessions(project, index, report, {
   }
 
   async function shutdown() {
+    holders.clear();
     await Promise.allSettled([...running.entries()].filter(([, runtime]) => runtime.unsubscribe).map(async ([addr, runtime]) => {
       try {
         runtime.suspend();
@@ -632,6 +648,17 @@ export function ownedSessions(project, index, report, {
           if (row.sessionId && state.native?.sessionId && state.native.sessionId !== row.sessionId) {
             throw new Error('loom-pty native session identity changed');
           }
+        } else if (binding?.transport === 'holder-v3') {
+          protocol = 3;
+          const { terminal: native, session } = await holders.attach(job, row, terminal);
+          const state = await session.readState({ passive: true });
+          if (state.exit || state.native.identityChanged || row.sessionId && state.native.sessionId !== row.sessionId) {
+            throw new Error('Holder native session identity changed');
+          }
+          const snapshot = await native.client.hello();
+          return { ...base, status: 'attached', protocol, transport: binding.transport, incarnation: binding.incarnation,
+            release: binding.holderRelease.root, pid: terminal.pid, paneCreatedAt: terminal.created_ms, childPid: snapshot.childPid,
+            holderGeneration: String(snapshot.generation) };
         }
         return { ...base, status: 'attached', transport: binding?.transport, incarnation: binding?.incarnation, release: job.release,
           pid: terminal.pid, protocol };
@@ -639,6 +666,19 @@ export function ownedSessions(project, index, report, {
         return { ...base, status: 'unavailable', reason: error.message };
       }
     }));
+  }
+
+  async function upgradeHolder({ target, rollback, check, addr }) {
+    const row = rowFor(addr);
+    const job = row && jobs.get(row.addr);
+    if (!job || row.endedAt !== null || job.tui?.transport !== 'holder-v3') {
+      throw new ErrorCode('not-ready', 'Choose a live holder v3 session address');
+    }
+    if (!rollback && !isAbsolute(target ?? '')) throw new ErrorCode('invalid-arguments', 'Holder release path must be absolute');
+    const status = () => getPane(job, row);
+    const pane = await status();
+    if (!pane || completedPane(pane)) throw new ErrorCode('not-ready', 'Owned holder pane is unavailable');
+    return holders.handoff(job, row, pane, status, rollback ? undefined : realpathSync(target), rollback, check);
   }
 
   async function sealed(addr, gate) {
@@ -654,6 +694,6 @@ export function ownedSessions(project, index, report, {
   }
 
   return { rows, rowFor, events, targetBinding, transport, requestedMode, canInterrupt, resolve, requireLive, newJob,
-    activate, failSpawn, runtimeSelection, refresh, stop, shutdown, upgradeSessions, jobs, managedHc, sealed, lastActivity,
+    activate, failSpawn, runtimeSelection, refresh, stop, shutdown, upgradeSessions, upgradeHolder, jobs, managedHc, sealed, lastActivity,
     routeParent, bindSuccessor, retirePredecessor, successorOf };
 }

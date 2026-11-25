@@ -6,7 +6,10 @@ import { homedir, tmpdir } from 'node:os';
 import { performance } from 'node:perf_hooks';
 import { setTimeout as sleep } from 'node:timers/promises';
 import { prepareJournal, readText, syncDirectory } from '../../daemon/io.mjs';
+import { releaseRoot } from '../../daemon/release.mjs';
+import { holderAsset } from '../../holder/assets.mjs';
 import { hcWrappedBackend } from '../../tui/backends.mjs';
+import { holderClient } from '../../holder/protocol.mjs';
 import { requestControl } from '../../tui/pty-control.mjs';
 import { providers } from '../../tui/providers.mjs';
 import { startPane } from './hc.mjs';
@@ -43,7 +46,8 @@ export function wrapperFailedStart(binding) {
 
 export async function openNativeTui({
   cli, cwd, command, hcCommand = 'hc', env = {}, unset = [], name,
-  stateDir, hookSink, recordBinding = () => {}, previous, recordTemporary = () => {}, boundTranscript = true, ...options
+  stateDir, hookSink, recordBinding = () => {}, previous, recordTemporary = () => {}, boundTranscript = true,
+  controllerPath, ...options
 }) {
   const provider = Object.hasOwn(providers, cli) && providers[cli];
   if (!provider) throw new RangeError(`Unsupported TUI: ${cli}`);
@@ -87,6 +91,9 @@ export async function openNativeTui({
     bookPath: binding.bookPath, startPath: binding.startPath, exitPath: binding.exitPath, incarnation: binding.incarnation,
     ...(options.resume && { resumedAt: Date.now() }),
   };
+  if (controllerPath && (!previous || previous.transport === 'holder-v3')) {
+    Object.assign(binding, { transport: 'holder-v3', evidence });
+  }
   const plain = async () => {
     recordBinding({ transport: 'plain-hc', reason: 'loom-pty-start-failed' });
     const pane = await startPane(hcCommand, cwd, argv, { name, env, unset, provider: cli });
@@ -108,6 +115,41 @@ export async function openNativeTui({
   let wrapped;
   try {
     if (previous?.transport === 'plain-hc') return await plain();
+    if (binding.transport === 'holder-v3') {
+      const asset = holderAsset(releaseRoot);
+      binding.holderRelease = { root: releaseRoot, digest: asset.digest };
+      recordBinding(binding);
+      const pane = await startPane(hcCommand, cwd, [asset.path, '--launch', binding.socket, sessionDir,
+        controllerPath, binding.incarnation.replaceAll('-', ''), asset.digest, ...argv], {
+        env, unset, name, provider: cli, nativeCommand: executable,
+      });
+      wrapped = { close: pane.kill };
+      const deadline = performance.now() + 5_000;
+      do {
+        const status = await pane.status();
+        if (status.state === 'finished') throw new Error('Holder v3 exited during TUI startup');
+        try {
+          const initial = await holderClient(binding).hello();
+          if (initial.pid !== status.pid || initial.ended || initial.gap || initial.build !== asset.digest) {
+            throw new Error('Holder v3 launch identity changed');
+          }
+          binding.childPid = initial.childPid;
+          recordBinding(binding);
+          return { id: pane.address, sessionId, hookSink, status: pane.status, warnings: pane.warnings,
+            transport: binding.transport, binding,
+            async close() {
+              const result = await pane.kill();
+              await cleanup();
+              return result;
+            },
+          };
+        } catch (error) {
+          if (!['ENOENT', 'ECONNREFUSED', 'ECONNRESET', 'HOLDER_EOF'].includes(error.code)) throw error;
+          await sleep(50);
+        }
+      } while (performance.now() < deadline);
+      throw new Error('Holder v3 socket did not become ready');
+    }
     recordBinding(binding);
     wrapped = await hcWrappedBackend({ command: hcCommand }).launch({
       cwd, argv, env, unset: ['LOOM_PTY_MODULES', ...unset], name, provider: cli, evidence, sessionDir, socket: binding.socket,
