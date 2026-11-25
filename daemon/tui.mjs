@@ -8,6 +8,7 @@ import { openNativeTui } from '../runtimes/tui/transport.mjs';
 import { codexFastArgs, nativeClaude } from './executables.mjs';
 import { eventPath, readText, writeState } from './io.mjs';
 import { codexEnvironmentArgs } from '../cli/project.mjs';
+import { managedEnvironment } from './release.mjs';
 
 const exec = promisify(execFile);
 export const paneName = addr => `loom-${addr.replace(/^loom-/, '').replaceAll('-', '').slice(0, 22)}`;
@@ -26,14 +27,15 @@ export async function ownedPane(job, row) {
 
 export async function openTui(job, row, project, recordTemporary, recordBinding) {
   const hookSink = eventPath(project, row.addr);
-  const env = { LOOM_PROJECT: project, LOOM_ADDR: row.addr };
+  const env = managedEnvironment(project, row.addr);
   const name = paneName(row.addr);
   const host = await openNativeTui({
     ...row, fast: job.fast, hookSink, name, env, sessionId: job.plannedNativeId, recordTemporary, recordBinding, previous: job.tui,
+    autoTrustWorkspace: job.autoTrustWorkspace,
     stateDir: join(project, '.project', 'pty'),
     ...(row.cli === 'claude' && { command: nativeClaude(), env: { ...env, DISABLE_AUTOUPDATER: '1' },
       unset: ['CLAUDE_CODE_ENTRYPOINT', 'CLAUDECODE'] }),
-    ...(row.cli === 'codex' && { extraArgs: ['--disable', 'memories', ...codexEnvironmentArgs(project, row.addr), ...codexFastArgs(job.fast)] }),
+    ...(row.cli === 'codex' && { extraArgs: ['--disable', 'memories', ...codexEnvironmentArgs(env), ...codexFastArgs(job.fast)] }),
   });
   try { return { terminal: await host.status(), nativeId: host.sessionId }; }
   catch (error) { await host.close(); throw error; }

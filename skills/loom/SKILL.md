@@ -63,3 +63,5 @@ description: 在 Loom 中启动、指挥、复核或接手由 Super、Auditor、
 2. 交班方写一页交接单，记当前任务、在途波次和续作、未决投递与裁决、基线 SHA 和路径、已过门禁、可做和禁做事项、未提交改动及下一步。Loom 交接简报须包含 `.project/charter.md` 和 `.project/rulings.md` 的路径和相关要点，以原件为准。
 3. 用 `loom spawn "$ROLE" --project "$PROJECT" --cwd "$PROJECT" --handover-from "$OLD_ADDR" "$PROMPT"` 换班，由 loomd 绑定继任者并移交在途工作。接手先读交接简报、交接单和两个项目文件。新会话首轮报到的 SHA、路径须现查，由 loomd 机械核验，监督者核对在途事项和未决裁决。第 3 次上下文压缩后，引用的每个数字都须逐项现查。
 4. 项目收尾时归档结果，用 `loom notifications --project "$PROJECT" --complete "$SUMMARY"` 登记完成，用 `loom stop` 关闭会话。清理 worktree 前先把暂存、未暂存及授权范围内未跟踪的草稿归档成可恢复的补丁，记录路径。最后用 `loom doctor --project "$PROJECT"` 核对残留。
+
+在 Loom 管理的会话中，使用 `$LOOM_BIN` 或 `loom`（由 Loom 注入的 `PATH` 解析）。

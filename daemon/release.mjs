@@ -1,11 +1,16 @@
 import { createHash, randomUUID } from 'node:crypto';
 import { readdirSync, realpathSync } from 'node:fs';
-import { join, relative } from 'node:path';
+import { delimiter, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { runtimeDirectory } from '../cli/project.mjs';
 import { readText, writeState } from './io.mjs';
 
 export const releaseRoot = realpathSync(fileURLToPath(new URL('..', import.meta.url)));
+export function managedEnvironment(project, addr) {
+  const bin = join(releaseRoot, 'bin');
+  const inherited = (process.env.PATH ?? '').split(delimiter).filter(path => path && path !== bin);
+  return { LOOM_PROJECT: project, LOOM_ADDR: addr, LOOM_BIN: join(bin, 'loom'), PATH: [bin, ...inherited].join(delimiter) };
+}
 export const activeReleaseFile = project => join(runtimeDirectory(project), 'release.json');
 export const activeRelease = project => JSON.parse(readText(activeReleaseFile(project), 'null'));
 export const releaseId = () => process.env.LOOM_RELEASE_ID ?? releaseRoot;

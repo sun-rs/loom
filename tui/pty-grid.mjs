@@ -1,13 +1,17 @@
 // Adapted from Orca b7fd7caa, shared/terminal/input/terminal-grid-cursor-line-context.ts
 // and terminal-composer-draft.ts. Copyright (c) 2026 Lovecast Inc. See LICENSE.orca.
-function undimmedText(line, cols, cell, trimRight) {
+function undimmedText(line, cols, cell, trimRight, caret) {
   let text = '';
+  let lastWritten = 0;
   for (let column = 0; line && column < Math.min(cols, line.length); column++) {
     const current = line.getCell(column, cell);
     if (!current || current.isDim() || current.getWidth() === 0) continue;
-    text += current.getChars() || ' ';
+    const chars = current.getChars();
+    text += chars || ' ';
+    // Claude draws the end-of-draft caret as a reversed space.
+    if (chars && !(column === caret && chars === ' ' && current.isInverse())) lastWritten = text.length;
   }
-  return trimRight ? text.trimEnd() : text;
+  return trimRight ? text.slice(0, lastWritten) : text;
 }
 
 const prompts = { claude: '❯', codex: '›', agy: '>' };
@@ -34,6 +38,8 @@ export function readGrid(terminal, provider, extractDraft) {
     const footer = status >= 0 && / [·•] /.test(raw[status]) ? status : raw.findLastIndex(row => codexFooter.test(row));
     if (footer < 1) return { text, cursor };
     last = footer - 1;
+    // Codex paints a spacer before the status row while the draft has focus.
+    if (last > 0 && !raw[last].trim()) last--;
     first = raw.findLastIndex((row, index) => index <= last && !lines[index]?.isWrapped && /^\s*›(?:\s|$)/.test(row));
   } else {
     let bottom = raw.findLastIndex(row => rule.test(row));
@@ -48,13 +54,16 @@ export function readGrid(terminal, provider, extractDraft) {
     last = bottom - 1;
   }
   if (first < 0 || last < first || !raw[first].trimStart().startsWith(prompt)) return { text, cursor };
-  const rowText = index => undimmedText(lines[index], terminal.cols, cell, !lines[index + 1]?.isWrapped);
-  let draft = rowText(first).trimStart().slice(prompt.length).trimStart();
+  const rowText = index => undimmedText(lines[index], terminal.cols, cell, !lines[index + 1]?.isWrapped,
+    provider === 'claude' && index === cursor.y ? cursor.x : undefined);
+  let draft = rowText(first).trimStart().slice(prompt.length).replace(/^[ \u00a0]/, '');
   for (let index = first + 1; index <= last; index++) {
-    if (lines[index]?.isWrapped) draft += rowText(index);
-    else draft += '\n' + rowText(index).trimStart();
+    const line = rowText(index);
+    if (lines[index]?.isWrapped) draft += line;
+    // Codex paints one unindented space on a blank paragraph row.
+    else draft += '\n' + (provider === 'codex' && line === ' ' ? '' : line.replace(/^ {2}/, ''));
   }
-  draft = draft.trim();
+  if (!draft.trim()) draft = '';
   const firstCell = lines[first]?.getCell(2, cell);
   // Claude uses ANSI bright black for the untouched startup suggestion on some themes.
   if (provider === 'claude' && cursor.y === first && cursor.x <= 2 &&
@@ -72,12 +81,13 @@ export function readGrid(terminal, provider, extractDraft) {
     /^\s*>\s+(?:accept-edits|plan|auto|yolo) mode: [^\n]+ \(shift\+tab to cycle\)$/i;
   const composerText = provider !== 'codex' && draft === '' && stock.test(raw[first])
     ? raw.map((line, index) => index === first ? prompt : line).join('\n') : text;
-  return { text, composerText, cursor, draft, outsideComposer: [...raw.slice(0, first), ...raw.slice(last + 1)].join('\n') };
+  const outsideComposer = [...raw.slice(0, first), ...raw.slice(last + 1)].join('\n');
+  const vacantText = [...raw.slice(0, first), prompt, ...raw.slice(last + 1)].join('\n');
+  return { text, composerText, cursor, draft, outsideComposer, vacantText };
 }
 
 // Orca's held-prompt guard proves the visible draft still belongs to the current request.
 // The marker and every visible line must match; folded paste previews are left untouched.
 export function matchesDraft(draft, expected) {
-  const normalize = content => content.replaceAll('\r\n', '\n').split('\n').map(line => line.trim()).join('\n').trim();
-  return typeof draft === 'string' && normalize(draft) === normalize(expected);
+  return draft === expected;
 }

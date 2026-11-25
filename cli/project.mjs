@@ -42,8 +42,8 @@ export function projectReceipt(project) {
   return { project, projectId: `${basename(project) || 'root'}-${digest}` };
 }
 
-export function codexEnvironmentArgs(project, addr) {
-  return Object.entries({ LOOM_ADDR: addr, LOOM_PROJECT: project }).flatMap(([key, value]) =>
+export function codexEnvironmentArgs(env) {
+  return Object.entries(env).flatMap(([key, value]) =>
     ['-c', `shell_environment_policy.set.${key}=${JSON.stringify(value).replaceAll('\x7f', '\\u007f')}`]);
 }
 

@@ -9,6 +9,7 @@ import { eventPath, jsonRows, prepareJournal } from './io.mjs';
 import { codexFastArgs, nativeClaude } from './executables.mjs';
 import { finishHead, headAt } from './turn-heads.mjs';
 import { codexEnvironmentArgs } from '../cli/project.mjs';
+import { managedEnvironment } from './release.mjs';
 
 const registry = createRuntimeRegistry([codexRuntime, antigravityRuntime, opencodeRuntime, claudeRuntime]);
 const adapters = { codex, agy, claude };
@@ -33,11 +34,12 @@ export function checkedTranscript(path, row) {
 
 export async function openOar(row, project, resume) {
   const runtime = registry.require(row.runtimeId);
-  const env = { HC_TERMINAL_ID: null, LOOM_PROJECT: project, LOOM_ADDR: row.addr };
+  const managed = managedEnvironment(project, row.addr);
+  const env = { HC_TERMINAL_ID: null, ...managed };
   let launchArgs;
   if (row.cli === 'codex') {
     launchArgs = ['-c', 'features.memories=false', '-c', 'sandbox_mode="workspace-write"', ...codexFastArgs(row.fast),
-      '-c', 'check_for_update_on_startup=false', ...codexEnvironmentArgs(project, row.addr), '-c', `projects.${JSON.stringify(row.cwd)}.trust_level="trusted"`];
+      '-c', 'check_for_update_on_startup=false', ...codexEnvironmentArgs(managed), '-c', `projects.${JSON.stringify(row.cwd)}.trust_level="trusted"`];
     if (process.env.CODEX_HOME && /(?:provider-homes|(?:^|\/)memories|(?:^|\/)\.env)/.test(process.env.CODEX_HOME)) {
       throw new Error('Unsupported CODEX_HOME for loom');
     }

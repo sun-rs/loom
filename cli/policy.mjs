@@ -86,6 +86,9 @@ export function readPolicy(project, { optional = false } = {}) {
         if (!roles.includes(role) || !entry || typeof entry !== 'object' || Array.isArray(entry)) throw new Error(`Invalid role policy: ${role}`);
         validateProfiles(entry);
         validateGuidance(role, entry.guidance);
+        if (entry.trustWorkspace !== undefined && typeof entry.trustWorkspace !== 'boolean') {
+          throw new Error(`Expected roles.${role}.trustWorkspace to be a boolean`);
+        }
         if (Object.hasOwn(entry, 'maxActiveWorkers') && (role !== 'leader' ||
             !Number.isInteger(entry.maxActiveWorkers) || entry.maxActiveWorkers < 1 || entry.maxActiveWorkers > hardMaxActiveWorkers)) {
           throw new Error(`Expected roles.leader.maxActiveWorkers to be an integer from 1 to ${hardMaxActiveWorkers}`);
@@ -183,7 +186,7 @@ export function spawnProfile(project, input, owner, occupies) {
   if (input.role === 'worker' && Object.hasOwn(input, 'workerCaller')) {
     checkWorkerCapacity(project, input, workerLimit(policy), owner, occupies);
   }
-  return { requested, selected, deny, fastRequested, warnings,
+  return { requested, selected, deny, fastRequested, warnings, trustWorkspace: role?.trustWorkspace ?? true,
     ...(input.role === 'reviewer' && { maxDurationMs: role?.maxDurationMs ?? 1_800_000 }) };
 }
 

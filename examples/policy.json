@@ -18,6 +18,7 @@
   ],
   "roles": {
     "super": {
+      "trustWorkspace": true,
       "guidance": { "preferLongPromptCacheTtl": true },
       "preferred": [
         { "cli": "codex", "model": "gpt-6.2-sol", "effort": "high", "mode": "tui", "fast": false },
@@ -25,6 +26,7 @@
       ]
     },
     "leader": {
+      "trustWorkspace": true,
       "maxActiveWorkers": 3,
       "guidance": { "modelTier": "strong", "effort": ["medium", "high"], "preferLongPromptCacheTtl": true },
       "preferred": [
@@ -33,6 +35,7 @@
       ]
     },
     "auditor": {
+      "trustWorkspace": true,
       "guidance": { "modelTier": "strong", "vendorFamily": "different-from-workers", "preferLongPromptCacheTtl": true },
       "preferred": [
         { "cli": "agy", "model": "gemini-4-neon", "effort": "high", "mode": "tui" },
@@ -40,10 +43,12 @@
       ]
     },
     "reviewer": {
+      "trustWorkspace": true,
       "maxDurationMs": 1800000,
       "preferred": [{ "cli": "codex", "model": "gpt-6.2-sol", "effort": "high", "mode": "headless" }]
     },
     "worker": {
+      "trustWorkspace": true,
       "guidance": { "routineEffort": ["low", "medium"], "hardEffort": ["high", "xhigh"] },
       "preferred": [
         { "cli": "codex", "model": "gpt-6.2-sol", "effort": "medium", "mode": "headless" },

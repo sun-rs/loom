@@ -12,6 +12,8 @@ const busyComposer = new RegExp(`^${RULE}\\n${COMPOSER}\\n${RULE}\\nesc to cance
 const modelFooter = /^(?:accept-edits|auto|plan|yolo)\s+·\s+[^·]+\s+·\s+(?:low|medium|high|xhigh|max)$/i;
 const trustFooter = /^↑\/↓\s+Navigate\s+·\s+enter Confirm$/i;
 const pickerFooter = /^Keyboard:.*\besc Go Back$/i;
+const announcementTitle = /^Introducing Gemini \d+(?:\.\d+)? (?:Neon|Carbon|Argon|Hydrogen)[!.]?(?:\s+[·•]\s+|\s{2,}|$)/i;
+const announcementDismiss = /^(?:\(\s*)?(?:press )?esc to dismiss\s*[.)]?$/i;
 const ruleRow = new RegExp(`^${RULE}$`);
 const settingsError = /^failed to (?:load|read|save|write) settings\b/i;
 const interactiveStatus = /[─↑↓⏎]|\b(?:esc|enter|select|cancel|confirm|navigate|for shortcuts)\b|^(?:error|warning|failed|unable)\b/i;
@@ -39,6 +41,14 @@ export function hasEmptyComposer(text) {
     status.every(row => !modelFooter.test(row) && !interactiveStatus.test(row));
 }
 
+export function hasHeldComposer(text) {
+  // Agy hides the shortcuts hint while the draft has focus. Its mode/model
+  // status is still present directly below the two composer borders.
+  const rows = stripAnsiAndControl(text).trimEnd().split('\n').map(line => line.trim());
+  return /^(?:accept-edits|auto|plan|yolo) · [^·]+(?: · (?:low|medium|high|xhigh|max))?$/i.test(rows.at(-1) ?? '') &&
+    ruleRow.test(rows.at(-2) ?? '') && rows.at(-3) === '>' && ruleRow.test(rows.at(-4) ?? '');
+}
+
 export function classify(text) {
   const rows = rowsOf(text);
   const tail = rows.join('\n');
@@ -47,6 +57,15 @@ export function classify(text) {
   if (state === 'trust-dialog' || state === 'auth-fail' || state === 'rate-limit') return state;
   if (/^(?:Select login method:|Welcome to the Antigravity CLI\. You are currently not signed in\.)$/im.test(tail)) {
     return 'auth-fail';
+  }
+  const announcement = rows.slice(-18).map(row => /^[│┃]\s+(.+?)(?:\s*[│┃])?$/.exec(row)?.[1].trim());
+  const title = announcement.findLastIndex(row => row && announcementTitle.test(row));
+  if (title >= 0) {
+    if (announcementDismiss.test(announcement[title].replace(announcementTitle, ''))) return 'overlay';
+    for (const row of announcement.slice(title + 1)) {
+      if (!row) break;
+      if (announcementDismiss.test(row)) return 'overlay';
+    }
   }
   if (/^(?:Switch Model|Select a model:?|Choose a theme:?|Select a conversation:?|Resume Conversation)$/im.test(tail) &&
       pickerFooter.test(footer)) return 'picker';

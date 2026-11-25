@@ -3,6 +3,7 @@ import { randomUUID } from 'node:crypto';
 import claude from '../adapters/claude/index.mjs';
 import codex from '../adapters/codex/index.mjs';
 import agy from '../adapters/agy/index.mjs';
+import { hasHeldComposer } from '../adapters/agy/screen.mjs';
 import opencode, { miniDraft } from '../adapters/opencode/index.mjs';
 import { parseAgyTranscriptLine } from '../adapters/agy/transcript.mjs';
 import { screenEvidence, stopFailure } from '../runtimes/tui/failure.mjs';
@@ -119,6 +120,7 @@ export const providers = {
       },
       interruptions: text => (text.match(/^\s*(?:⎿\s*)?Interrupted · What should Antigravity CLI do instead\?\s*$/gm) ?? []).length,
       hasEmptyComposer: text => agy.screen.hasEmptyComposer(agyScreen(text)),
+      hasHeldComposer,
       dialogKeys(kind, text) {
         if (kind !== 'onboarding') return agy.screen.dialogKeys(kind, agyScreen(text));
         return /^\s*Welcome to Antigravity CLI!\s*$/m.test(text) && /^\s*Choose your color scheme:/m.test(text) &&

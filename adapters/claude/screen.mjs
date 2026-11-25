@@ -444,11 +444,18 @@ export function classify(text) {
   return 'unknown';
 }
 
-export function dialogKeys(kind, text) {
+export function dialogKeys(kind, text, cwd) {
   const cleaned = stripAnsiAndControl(text);
   const rows = dialogRows(cleaned);
   if (kind === 'trust-dialog' && DIALOG_FOOTER_RE.test(rows.at(-1) ?? '') &&
-      rows.some(row => /^(?:Accessing workspace:|Quick safety check:)/i.test(row))) return trustKeys(rows);
+      rows.some(row => /^(?:Accessing workspace:|Quick safety check:)/i.test(row))) {
+    if (cwd !== undefined) {
+      const heading = rows.indexOf('Accessing workspace:');
+      if (heading < 0 || rows.lastIndexOf('Accessing workspace:') !== heading || rows[heading + 1] !== cwd ||
+          !/^Quick safety check:/i.test(rows[heading + 2] ?? '')) return [];
+    }
+    return trustKeys(rows);
+  }
   if (kind === 'picker' && hasBypassMenu(rows)) return choiceKeys(rows, BYPASS_CHOICE_RE);
   if (kind === 'picker' && MODEL_MENU_FOOTER_RE.test(rows.at(-1) ?? '') && rows.includes('Select model')) {
     return ['esc'];

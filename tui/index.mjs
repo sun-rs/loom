@@ -52,7 +52,9 @@ export function createTuiHost(backend) {
   };
 }
 
-export function bindTuiSession(terminal, provider, { ownedStaging, bookPath, incarnation, requireNative, ...evidence }) {
+export function bindTuiSession(terminal, provider, {
+  ownedStaging, bookPath, incarnation, requireNative, autoTrustWorkspace, ...evidence
+}) {
   const native = nativeState(provider, evidence);
   const { requests, put } = openRequestBook(bookPath);
   let sequence = Promise.resolve();
@@ -60,6 +62,11 @@ export function bindTuiSession(terminal, provider, { ownedStaging, bookPath, inc
   let closed;
   let lastExit;
   let interruptionFallback;
+  let paste;
+  let startupFrame;
+  let startupKeyAt = -Infinity;
+  const startupAttempts = new Map();
+  const classify = text => provider.screen.classify(text);
 
   function sameInterruptedTurn(evidence) {
     return evidence.phase === 'busy' && interruptionFallback !== undefined &&
@@ -73,14 +80,16 @@ export function bindTuiSession(terminal, provider, { ownedStaging, bookPath, inc
     return task;
   }
 
-  async function read() {
-    if (lastExit) return lastExit;
+  async function observe() {
     const observation = await terminal.read();
     const observedAt = Date.now();
     const evidence = await native.read();
+    for (const id of native.changedInputs) confirmations(id);
+    native.changedInputs.clear();
     const { text, composerText = text, draft, cursor, state, agent, lastOutputAt, quietForMs, generation,
-      outputSequence, buffer, size, humanActive, humanInputAt, humanSequence, writable, exited, code, reason } = observation;
-    const screen = text == null ? 'unavailable' : provider.screen.classify(composerText);
+      outputSequence, buffer, bufferSequence, resizeSequence, size, humanActive, humanInputAt, humanSequence,
+      writable, exited, code, reason } = observation;
+    const screen = text == null ? 'unavailable' : classify(composerText);
     const host = hostPhase(state);
     const title = currentTitle(observation, evidence, observedAt);
     const fallback = sameInterruptedTurn(evidence);
@@ -101,24 +110,74 @@ export function bindTuiSession(terminal, provider, { ownedStaging, bookPath, inc
       const entry = requests.get(pending);
       const confirmation = native.confirmations(pending);
       if (confirmation.count) {
-        put(pending, { ...entry, confirmation });
         pending = undefined;
+        paste = undefined;
       } else if (frameReady && entry.hostReceipt?.accepted === false) {
         // A held or abandoned paste with no Enter can stop blocking new IDs
         // once the composer is empty. Its own ID remains reserved for reconciliation.
         put(pending, { ...entry, released: true });
         pending = undefined;
+        paste = undefined;
       }
     }
-    const result = {
+    const blocker = screen === 'trust-dialog' || screen === 'overlay' ? screen :
+      pending && draft && !blocksInput(screen) ? 'draft-held' : undefined;
+    return { observation, result: {
       incarnation, ...status, observedAt, native: evidence,
-      host: { state, agent, lastOutputAt, quietForMs, generation, outputSequence, buffer, size, title, humanActive, humanInputAt, humanSequence },
+      host: { state, agent, lastOutputAt, quietForMs, generation, outputSequence, buffer, bufferSequence, resizeSequence,
+        size, title, humanActive, humanInputAt, humanSequence },
       screen: { kind: screen, text, draft, cursor, empty }, pending,
-      ready: frameReady && !pending,
+      blocker, ready: frameReady && !pending, urgentReady: frameReady && Boolean(pending),
       ...(exited ? { exit: { code, reason } } : {}),
-    };
-    if (exited) lastExit = result;
-    return result;
+    } };
+  }
+
+  function recoverStartup({ observation: frame, result }) {
+    if (!terminal.key || !frame.writable || frame.humanActive || frame.quietForMs < QUIET_OUTPUT_MS ||
+        ['busy', 'compacting'].includes(result.native.phase) || result.host.title === 'busy') return false;
+    const { kind, text, draft } = result.screen;
+    let action;
+    if (kind === 'trust-dialog' && autoTrustWorkspace && !pending && !result.native.turnSequence) {
+      const [key] = provider.screen.dialogKeys(kind, text, evidence.cwd);
+      if (key) action = { key, token: `trust:${key}`, limit: 2 };
+    } else if (kind === 'overlay' && !result.native.turnSequence && (!pending || paste?.humanSequence === frame.humanSequence)) {
+      action = { key: 'esc', token: 'overlay', limit: 1 };
+    } else if (result.blocker === 'draft-held' && paste?.id === pending) {
+      const entry = requests.get(pending);
+      const body = draft.slice(draft.indexOf('\n') + 1);
+      if (entry.hostReceipt?.accepted === false && paste.humanSequence === frame.humanSequence &&
+          paste.resizeSequence === frame.resizeSequence && paste.bufferSequence === frame.bufferSequence &&
+          paste.turnSequence === result.native.turnSequence &&
+          frame.outputSequence > paste.outputSequence && draft === wireText(pending, body) &&
+          digestOf(body) === entry.digest && !frame.outsideComposer?.includes(`[loom:${pending}]`) &&
+          frame.vacantText && (classify(frame.vacantText) === 'idle' || provider.screen.hasHeldComposer?.(frame.vacantText)) &&
+          (result.native.phase === 'idle' || provider.screenStartup && !result.native.phase)) {
+        action = { key: 'enter', token: pending, limit: 1, entry };
+      }
+    }
+    if (!action) { startupFrame = undefined; return false; }
+    const { key, token, limit, entry } = action;
+    const attempts = startupAttempts.get(token) ?? 0;
+    const stable = startupFrame?.generation === frame.generation && startupFrame.token === token;
+    startupFrame = { generation: frame.generation, token };
+    if (!stable || attempts >= limit || performance.now() - startupKeyAt < 1000) return false;
+    try { terminal.key(key, frame.generation); }
+    catch (error) {
+      if (error.code === 'STALE_FRAME') return false;
+      throw error;
+    }
+    if (entry) put(token, { ...entry, hostReceipt: { accepted: true, outcome: 'recovered-draft' } });
+    else startupAttempts.set(token, attempts + 1);
+    startupKeyAt = performance.now();
+    return true;
+  }
+
+  async function read() {
+    if (lastExit) return lastExit;
+    let frame = await observe();
+    if (!frame.result.exit && recoverStartup(frame)) frame = await observe();
+    if (frame.result.exit) lastExit = frame.result;
+    return frame.result;
   }
 
   async function until(predicate, timeoutMs) {
@@ -154,7 +213,7 @@ export function bindTuiSession(terminal, provider, { ownedStaging, bookPath, inc
     warnings: terminal.warnings ?? [],
     readState: () => serialize(read),
     confirmations: id => serialize(async () => { await read(); return confirmations(id); }),
-    submit: ({ id = randomUUID(), text, timeoutMs = 5_000, deferMs = 0, generation }) => serialize(async () => {
+    submit: ({ id = randomUUID(), text, timeoutMs = 5_000, deferMs = 0, generation, urgent = false }) => serialize(async () => {
       if (closed) return refusal('closed');
       if (!messageIdPattern.test(id) || typeof text !== 'string' || !text.trim() ||
           /[\x00-\x08\x0b\x0c\x0e-\x1f\x7f-\x9f]/.test(text)) return refusal('invalid-input');
@@ -163,17 +222,20 @@ export function bindTuiSession(terminal, provider, { ownedStaging, bookPath, inc
       const digest = digestOf(text);
       if (requests.has(id)) return requests.get(id).digest === digest ? receipt(id) : refusal('id-conflict');
       if (native.confirmations(id).count) return refusal('id-conflict');
-      if (pending) return refusal('previous-input-unconfirmed');
-      const state = await until(value => value.ready || isDialog(value.screen.kind) || isFailure(value.screen.kind), deferMs);
-      if (!state.ready) {
+      if (pending && urgent !== true) return refusal('previous-input-unconfirmed');
+      const canWrite = value => value.ready || urgent === true && value.urgentReady;
+      const state = await until(value => canWrite(value) || isDialog(value.screen.kind) || isFailure(value.screen.kind), deferMs);
+      if (!canWrite(state)) {
         const blocked = [state.screen.kind, state.phase].find(kind => isDialog(kind) || isFailure(kind));
         const busy = [state.phase, state.screen.kind].some(phase => phase === 'busy' || phase === 'compacting');
         return refusal(state.exit ? 'exited' : state.host.humanActive ? 'human-active' : blocked ?? (busy ? 'busy' : 'composer-not-proven-empty'));
       }
       if (generation !== undefined && state.host.generation !== generation) return refusal('frame-changed');
+      if (pending) put(pending, { ...requests.get(pending), released: true });
       const entry = { digest };
       put(id, entry);
       pending = id;
+      paste = { id, ...state.host, turnSequence: state.native.turnSequence };
       try {
         entry.hostReceipt = await terminal.writeIf(wireText(id, text), state, async frame => {
           const latest = await native.read();
@@ -186,6 +248,7 @@ export function bindTuiSession(terminal, provider, { ownedStaging, bookPath, inc
         if (error.code === 'STALE_FRAME') {
           put(id, null);
           pending = undefined;
+          paste = undefined;
           return refusal('frame-changed');
         }
         entry.hostReceipt = { error: error.code ?? error.message };
@@ -260,7 +323,7 @@ export function bindTuiSession(terminal, provider, { ownedStaging, bookPath, inc
           !(dismissPicker && before.screen.kind === 'picker') && !(onboarding && before.screen.kind === 'onboarding')) return refusal('dialog-not-authorized');
       let current = before;
       for (let step = 0; step < 3; step++) {
-        const keys = provider.screen.dialogKeys(current.screen.kind, current.screen.text);
+        const keys = provider.screen.dialogKeys(current.screen.kind, current.screen.text, evidence.cwd);
         if (!keys.length || (before.screen.kind === 'picker' && keys[0] !== 'esc')) return refusal('unknown-dialog');
         await sleep(100);
         const stable = await read();

@@ -4,6 +4,8 @@ import { refusals } from './tui.mjs';
 
 const terminalText = text => text.replace(/[\x00-\x08\x0b-\x1f\x7f-\x9f]/g, '');
 const isDone = message => message.phase === 'received';
+const isUrgent = message => message.superPriority || message.mode === 'interrupt';
+const awaiting = message => ['sending', 'stopping'].includes(message.phase);
 
 export function receipt(message) {
   const { id, mode, requestedMode, createdAt, received, phase } = message;
@@ -127,9 +129,10 @@ export function inbox(project, transport, report = console.error) {
   }
 
   function ready(message, observation, group) {
-    if (message.phase === 'stopped') return observation.state === 'idle';
+    const idle = observation.state === 'idle' || message.urgent && observation.urgentReady;
+    if (message.phase === 'stopped') return idle;
     if (message.mode !== 'queue') {
-      if (observation.state === 'idle' ||
+      if (idle ||
           (observation.state === 'busy' && !transport.sameTurn(message.active, observation.active))) {
         targetTurnEnded(message);
         return false;
@@ -141,7 +144,7 @@ export function inbox(project, transport, report = console.error) {
       message.barrier = observation.active;
       save();
     }
-    return observation.state === 'idle' && (message.allowIdleWithoutEnd || !message.barrier ||
+    return idle && (message.urgent || message.allowIdleWithoutEnd || !message.barrier ||
       barrierPassed(message.barrier, observation, group));
   }
 
@@ -171,7 +174,7 @@ export function inbox(project, transport, report = console.error) {
       targetTurnEnded(message);
       return;
     }
-    if (observation.state !== 'idle') return;
+    if (observation.state !== 'idle' && !observation.urgentReady) return;
     const ended = transport.turnEnd(message.active, observation);
     if (ended && !ended.canceled) {
       targetTurnEnded(message);
@@ -186,7 +189,7 @@ export function inbox(project, transport, report = console.error) {
     save();
   }
 
-  async function send(message, observation, waves) {
+  async function send(message, observation, waves, urgent) {
     const pendingPhase = message.phase;
     message.payloadFrozen = true;
     if (waves.length) {
@@ -203,11 +206,11 @@ export function inbox(project, transport, report = console.error) {
     delete message.waitingForWritable;
     save();
     try {
-      const input = waves.length ? { ...message, text: [
+      const input = waves.length ? { ...message, urgent, text: [
         ...(message.superPriority ? ['Loom Super message', message.text, '--- Loom wave results ---'] :
           ['Loom worker results', message.text]),
         ...waves.map(wave => wave.text),
-      ].join('\n\n') } : message;
+      ].join('\n\n') } : { ...message, urgent };
       const attempt = await transport.send(input, observation);
       if (attempt?.requestId) message.nativeAttempt = attempt;
     } catch (error) {
@@ -365,15 +368,15 @@ export function inbox(project, transport, report = console.error) {
     for (const message of waiting) message.streamWaited = true;
     if (waiting.length) save();
     if (canDispatch && !canDispatch(target)) return;
-    if (group.some(message => message.phase === 'sending')) return;
-    const stopping = group.find(message => message.phase === 'stopping');
-    if (stopping) confirmStop(stopping, observation);
-    if (stopping?.phase === 'stopping') return;
+    for (const message of group.filter(message => message.phase === 'stopping')) confirmStop(message, observation);
+    const unsettled = group.filter(awaiting);
+    const urgentOnly = unsettled.length > 0;
     const cutoff = streams[0]?.streamAt + coalesceMs;
     const overdue = streams.some(message => message.streamWaited || message.allowIdleWithoutEnd);
     const cohort = overdue ? streams : at >= cutoff ? streams.filter(message => message.streamAt <= cutoff) : [];
     const stream = cohort[0];
-    const pending = queued.filter(message => message.streamAt != null ? message === stream : !known || known.has(message.id));
+    const pending = queued.filter(message => (!urgentOnly || isUrgent(message)) &&
+      (message.streamAt != null ? message === stream : !known || known.has(message.id)));
     const priority = pending.find(message => message.superPriority && message.mode === 'queue');
     const isWave = message => message.mode === 'queue' && (message.waveBatch || message.continuationBatch);
     const waves = priority ? queued.filter(isWave) : [];
@@ -382,11 +385,11 @@ export function inbox(project, transport, report = console.error) {
       cohort.slice(1);
     const forcedStream = [stream, ...streamPeers].some(message => message?.allowIdleWithoutEnd) ? stream : undefined;
     const forced = group.findLastIndex(message => message.allowIdleWithoutEnd && message.received);
-    let next = group.find(message => message.phase === 'stopped') ??
+    let next = group.find(message => message.phase === 'stopped' && (!urgentOnly || isUrgent(message))) ??
       pending.find(message => message.superPriority && message.mode !== 'queue') ??
       pending.find(message => message.mode !== 'queue') ?? pending.find(message => message.startup) ?? priority ??
       (overdue ? stream : undefined) ?? pending[0];
-    if (next?.mode === 'queue' && group.some((message, index) => index >= forced && isDone(message) && !message.completion &&
+    if (next?.mode === 'queue' && !urgentOnly && group.some((message, index) => index >= forced && isDone(message) && !message.completion &&
       !transport.deliveryTurnReplaced?.(message, observation) &&
       !group.some(item => item.stoppedAt && item.stoppedAt >= message.attemptAt &&
         (message.received.streamId ? item.active.streamId === message.received.streamId &&
@@ -396,18 +399,27 @@ export function inbox(project, transport, report = console.error) {
         pending.find(message => message.allowIdleWithoutEnd);
     }
     if (!next) return;
+    // A sealed turn or a fresh interrupt guard still applies. Escalate the
+    // unresolved write without replaying it or merging wave results into it.
+    const urgent = urgentOnly && isUrgent(next);
+    if (next.mode === 'interrupt' && next.phase === 'queued' && unsettled.some(message =>
+      message.phase === 'stopping' && !message.issue?.startsWith('uncertain') &&
+      transport.sameTurn(message.active, next.active))) return;
     const combined = next.payloadFrozen || next.combinedWaves ? (next.combinedWaves ?? [])
       .map(id => all.find(message => message.id === id)).filter(Boolean) :
-      next === priority ? waves : next === stream ? streamPeers : [];
-    const frame = (next === forcedPriority || next === forcedStream) && !next.allowIdleWithoutEnd &&
+      next === priority && !urgent ? waves : next === stream && !urgent ? streamPeers : [];
+    const frame = urgent ? { ...next, urgent } : (next === forcedPriority || next === forcedStream) && !next.allowIdleWithoutEnd &&
       combined.some(message => message.allowIdleWithoutEnd) ?
       { ...next, allowIdleWithoutEnd: true } : next;
     if (!ready(frame, observation, group)) return recordWait(next, observation);
     const fresh = await inspect(target);
     if (!fresh) return;
     if (!ready(frame, fresh, group)) return recordWait(next, fresh);
+    if (urgent) {
+      for (const message of unsettled) escalate(message, at);
+    }
     if (next.mode === 'interrupt' && next.phase === 'queued') await stop(next, fresh);
-    else await send(next, fresh, combined);
+    else await send(next, fresh, combined, urgent);
     settleCombined(all);
   }
 
@@ -476,7 +488,12 @@ export function inbox(project, transport, report = console.error) {
     save();
   }
 
-  function escalate(message) {
+  function escalate(message, bypassAt) {
+    if (bypassAt != null && message.bypassedAt == null) {
+      message.bypassedAt = bypassAt;
+      message.issue ??= message.phase === 'stopping' ? 'uncertain-stop' : 'uncertain';
+      save();
+    }
     if (message.issue?.startsWith('uncertain')) return;
     message.issue = message.phase === 'stopping' ? 'uncertain-stop-timeout' : 'uncertain-timeout';
     save();

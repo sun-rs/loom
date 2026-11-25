@@ -12,6 +12,7 @@ export function nativeState(provider, { hookSink, evidenceRoot, cwd, sessionId, 
   const readHook = jsonlTail();
   const readTranscript = jsonlTail();
   const receipts = new Map();
+  const changedInputs = new Set();
   let transcript;
   let candidate;
   let state;
@@ -19,6 +20,7 @@ export function nativeState(provider, { hookSink, evidenceRoot, cwd, sessionId, 
   let activeSince;
   let activeInputId;
   let activeHookKey;
+  let turnSequence = 0;
   let sessionChanged = false;
   let interruption = 0;
   let transcriptOrder = 0;
@@ -51,6 +53,7 @@ export function nativeState(provider, { hookSink, evidenceRoot, cwd, sessionId, 
       seen.set(event.key ?? event.order, event);
       sources.set(event.source, seen);
       receipts.set(event.inputId, sources);
+      changedInputs.add(event.inputId);
     }
     if (!event.phase || state && (event.observedAt < state.observedAt || event.startup && state.phase === 'busy')) return;
     if (event.phase === 'busy') {
@@ -58,6 +61,7 @@ export function nativeState(provider, { hookSink, evidenceRoot, cwd, sessionId, 
           event.inputId && activeInputId && event.inputId !== activeInputId ||
           event.beginKey != null && activeHookKey != null && event.beginKey !== activeHookKey) {
         activeSince = event.observedAt;
+        turnSequence++;
         activeInputId = undefined;
         activeHookKey = undefined;
       }
@@ -88,6 +92,7 @@ export function nativeState(provider, { hookSink, evidenceRoot, cwd, sessionId, 
   }
 
   return {
+    changedInputs,
     async read() {
       const observations = await hooks();
       if (!transcript && typeof candidate === 'string' && validTranscript(candidate)) {
@@ -111,7 +116,7 @@ export function nativeState(provider, { hookSink, evidenceRoot, cwd, sessionId, 
       for (const observation of observations) record(observation);
       return {
         sessionId, phase: sessionChanged ? 'unknown' : state?.phase, source: state?.source, observedAt: state?.observedAt, interruption,
-        activeTurn, activeSince, activeInputId, transcriptPath: transcript,
+        activeTurn, activeSince, activeInputId, turnSequence, transcriptPath: transcript,
       };
     },
     confirmations(id) {

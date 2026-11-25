@@ -161,9 +161,6 @@ function transcriptContains(provider, rows, stop, id) {
 
 export function nativeDelivery(message, observation) {
   const { provider, terminal } = observation;
-  // A native marker in a draft the wrapper never submitted can belong to
-  // a later manual submission, including a human edit to the original text.
-  if (observation.tui?.bookPath && book(observation).get(message.id)?.hostReceipt?.accepted === false) return;
   const events = observation.events.filter(row => row.receivedAt >= message.attemptAt);
   const anchor = events.find(row => start(provider, row) && (row.deliveryId ?? deliveryId(row.prompt)) === message.id);
   const stops = events.filter(row => end(provider, row));
@@ -256,10 +253,10 @@ export function tui(project, call = hc, fixtureSend) {
         pty: true, hcTurn: terminal.turn, since: native.activeSince, sessionId: native.sessionId, turnId: native.activeTurn,
       };
       const veto = ['working', 'blocked', 'error'].includes(status);
-      const state = frame.exit ? 'finished' : frame.ready && !veto ? 'idle' :
+      const state = frame.exit ? 'finished' : frame.blocker ?? (frame.ready && !veto ? 'idle' :
         ['blocked', 'error'].includes(status) ? 'blocked' : screen.kind === 'busy' && active ? 'busy' :
-          ['idle', 'busy'].includes(screen.kind) ? 'unknown' : screen.kind;
-      return { ...snapshot, state, active, generation: host.generation, writeEvidence: {
+          ['idle', 'busy'].includes(screen.kind) ? 'unknown' : screen.kind);
+      return { ...snapshot, state, active, generation: host.generation, urgentReady: frame.urgentReady && !veto, writeEvidence: {
         transport: 'loom-pty', screen: screen.kind, native: native.phase ?? 'unknown', hc: status ?? null,
         complete: screen.text !== undefined, humanActive: host.humanActive, composerEmpty: screen.empty,
       } };
@@ -310,11 +307,11 @@ export function tui(project, call = hc, fixtureSend) {
   async function send(message, snapshot) {
     if (message.mode === 'steer') throw Object.assign(new Error('TUI steer requires queueing'), { kind: 'steer-unavailable' });
     if (fixtureSend && !snapshot.tui) return fixtureSend(message, snapshot);
-    if (!snapshot.tui || snapshot.state !== 'idle') {
+    if (!snapshot.tui || snapshot.state !== 'idle' && !(message.urgent && snapshot.urgentReady)) {
       throw Object.assign(new Error('TUI control is unavailable or blocked'), { kind: 'blocked' });
     }
     const result = await controlTui(snapshot.tui, 'submit', {
-      id: message.id, text: message.text, generation: snapshot.generation, timeoutMs: 900,
+      id: message.id, text: message.text, generation: snapshot.generation, timeoutMs: 900, urgent: message.urgent,
     }).catch(error => {
       if (error.code === 'INPUT_SIZE') error.kind = 'input-refused';
       throw error;

@@ -9,7 +9,8 @@ export function titlePhase(provider, title) {
   if (provider === 'codex' && /^codex (?:working|thinking)\b/i.test(title)) return 'busy';
 }
 
-export const isDialog = kind => ['trust-dialog', 'picker', 'permission', 'onboarding'].includes(kind);
+export const isDialog = kind => ['trust-dialog', 'overlay', 'picker', 'permission', 'onboarding'].includes(kind);
+export const isStartupBlocker = kind => ['trust-dialog', 'overlay', 'draft-held'].includes(kind);
 export const isFailure = kind => ['rate-limit', 'auth-fail', 'error'].includes(kind);
 export const blocksInput = kind => isDialog(kind) || isFailure(kind) || ['busy', 'compacting', 'blocked'].includes(kind);
 

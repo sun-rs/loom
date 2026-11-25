@@ -11,6 +11,7 @@ import { jsonRows, prepareJournal, readText } from './io.mjs';
 import { notifyExternal, projectNotifications } from './notifications.mjs';
 import { organization } from './org.mjs';
 import { defaultCoalesceMs, readPolicy, setWorkerProfile, workerLimit } from '../cli/policy.mjs';
+import { isStartupBlocker } from '../tui/agent-status.mjs';
 
 function batchDeliveryId(batch, dest) {
   const bytes = createHash('sha256').update(`${batch}\0${dest}`).digest('hex').slice(0, 32);
@@ -50,6 +51,7 @@ export function createSupervisor(project, {
   });
   const parentFor = addr => sessions.routeParent(addr)?.addr ?? addr;
   let health = new Map();
+  const startupBlockers = new Map();
   let externalRetryAt = 0;
 
   async function pushNotifications() {
@@ -66,7 +68,8 @@ export function createSupervisor(project, {
           `${event.type} ${event.addr ?? ''} ${event.reason ?? ''}`.trim()).slice(0, 4000)))];
         const heading = `Loom 项目通知：${[...new Set(batch.map(event => event.type))].join(', ')}`;
         saved(sessions.targetBinding(superSession), [heading, ...details].join('\n\n').slice(0, 16_000),
-          { id, projectEvents: batch.map(event => event.id) });
+          { id, projectEvents: batch.map(event => event.id),
+            ...(batch.some(event => event.type === 'needs-decision') && { superPriority: true }) });
         return superSession.addr;
       }
       if (now() < externalRetryAt) return;
@@ -207,7 +210,7 @@ export function createSupervisor(project, {
     for (const message of mail.messages) {
       if (message.combinedInto || !['sending', 'stopping'].includes(message.phase)) continue;
       const at = message.attemptAt ?? message.stopAttemptAt;
-      if (!at || now() - at < uncertainWindow) continue;
+      if (!at || message.bypassedAt == null && now() - at < uncertainWindow) continue;
       const row = sessions.rowFor(message.target.addr);
       if (!row) continue;
       mail.escalate(message);
@@ -217,10 +220,36 @@ export function createSupervisor(project, {
       if (parent && parent.addr !== row.addr && parent.endedAt === null && !message.uncertainOf) {
         saved(sessions.targetBinding(parent), text, { id: batchDeliveryId(id, parent.addr), uncertainOf: message.id });
       }
-      notifications.add({ id, type: 'delivery-uncertain', project: row.project, addr: row.addr, at: at + uncertainWindow,
+      notifications.add({ id, type: 'delivery-uncertain', project: row.project, addr: row.addr,
+        at: Math.min(at + uncertainWindow, message.bypassedAt ?? Infinity),
         deliveryId: message.id, text, ...((message.projectEvents || message.uncertainOf) && { logOnly: true }) });
     }
   }
+
+  async function checkStartupBlockers() {
+    const pending = mail.messages.filter(message => message.startup && message.target.backend === 'tui' &&
+      ['queued', 'sending'].includes(message.phase) && sessions.rowFor(message.target.addr)?.endedAt === null);
+    const active = new Set(pending.map(message => message.id));
+    for (const id of startupBlockers.keys()) if (!active.has(id)) startupBlockers.delete(id);
+    await Promise.all(pending.map(async message => {
+      const snapshot = await sessions.transport.inspect(message.target).catch(() => undefined);
+      const blocker = snapshot?.state;
+      if (!isStartupBlocker(blocker)) { startupBlockers.delete(message.id); return; }
+      const at = now();
+      const previous = startupBlockers.get(message.id);
+      const since = previous?.blocker === blocker ? previous.since : at;
+      startupBlockers.set(message.id, { blocker, since });
+      if (at - since <= 60_000) return;
+      const row = sessions.rowFor(message.target.addr);
+      notifications.add({ id: `${message.id}:startup:${blocker}`, type: 'needs-decision', project: row.project,
+        addr: row.addr, deliveryId: message.id, reason: blocker, at,
+        ...(row.role === 'super' && { externalOnly: true, batch: message.id }),
+        text: `Loom 启动受阻超过 60 秒，${row.role} ${row.addr} 当前状态为 ${blocker}。请检查会话并决定如何继续。` });
+    }));
+  }
+
+  const reportedState = (snapshot, incident) => isStartupBlocker(snapshot?.state) ? snapshot.state :
+    incident?.state === 'needs-you' ? 'stuck' : snapshot?.state ?? 'unknown';
 
   function continuations() {
     for (const message of mail.messages) {
@@ -430,6 +459,7 @@ export function createSupervisor(project, {
     await org.collect(current);
     orgNotices(current);
     health = new Map((await watcher.poll()).map(row => [row.addr, row]));
+    await checkStartupBlockers();
     publishNotifications();
     await pushNotifications();
   }
@@ -497,7 +527,7 @@ export function createSupervisor(project, {
         .map(async row => {
           const incident = health.get(row.addr);
           const snapshot = await Promise.resolve().then(() => sessions.transport.inspect(sessions.targetBinding(row))).catch(() => undefined);
-          return { addr: row.addr, state: incident?.state === 'needs-you' ? 'stuck' : snapshot?.state ?? 'unknown' };
+          return { addr: row.addr, state: reportedState(snapshot, incident) };
         })) };
       const row = sessions.resolve(args.target, caller);
       if (command === 'handover') {
@@ -515,8 +545,7 @@ export function createSupervisor(project, {
         const incident = health.get(row.addr);
         const tui = sessions.jobs.get(row.addr)?.tui;
         const snapshot = row.endedAt === null && await sessions.transport.inspect(sessions.targetBinding(row)).catch(() => undefined);
-        return { addr: row.addr, state: row.endedAt !== null ? 'exited' :
-          incident?.state === 'needs-you' ? 'stuck' : snapshot?.state ?? 'unknown',
+        return { addr: row.addr, state: row.endedAt !== null ? 'exited' : reportedState(snapshot, incident),
           ...(tui && { transport: tui.transport, ...(tui.reason && { transportReason: tui.reason }) }),
           ...(incident?.reason && { reason: incident.reason }),
           ...(snapshot?.writeEvidence && { writeEvidence: snapshot.writeEvidence }),

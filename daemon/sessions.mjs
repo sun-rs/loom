@@ -29,6 +29,7 @@ export const validInput = text => hasText(text) && !/[\x00-\x08\x0b\x0c\x0e-\x1f
 const cardConventions = row => [
   '## Loom task conventions',
   `Task ${row.task}, working directory ${row.cwd}. Follow the card’s writable scope and acceptance commands. Start with the card and skip environment exploration or searches for AGENTS.md and skills to discover Loom conventions.`,
+  'Use $LOOM_BIN or loom (resolved by loom-injected PATH).',
   'Use relevant fragments of large files and output. Avoid rereading whole files already read. After the final acceptance passes, give the final reply immediately. Skip extra status/diff checks, rereads and reruns unless the card requires them.',
   `Final reply line 1: DONE ${row.task}, BLOCKED ${row.task} or FAILED ${row.task}.`,
   'Line 2: a one-line conclusion with the deliverable or the blocking decision. Line 3: Leftovers & deviations: none, or list the specific items.',
@@ -61,6 +62,16 @@ function inProjectDirectory(project, cwd) {
     throw new ErrorCode('invalid-arguments', 'Session cwd must be a directory inside the project');
   }
   return directory;
+}
+
+function defaultTrustWorkspace(project, cwd) {
+  if (cwd === project) return true;
+  try {
+    const worktrees = execFileSync('git', ['worktree', 'list', '--porcelain', '-z'], {
+      cwd: project, stdio: ['ignore', 'pipe', 'ignore'], encoding: 'utf8', timeout: 5000,
+    });
+    return worktrees.split('\0\0').some(entry => entry.split('\0')[0] === `worktree ${cwd}`);
+  } catch { return false; }
 }
 
 export function ownedSessions(project, index, report, {
@@ -288,6 +299,7 @@ export function ownedSessions(project, index, report, {
   async function newJob(input, caller, checkBarrier, occupies) {
     if (!roles.includes(input.role) || !hasText(input.cwd) || !validInput(input.prompt) ||
         (input.parent !== undefined && !hasText(input.parent)) ||
+        (input['trust-workspace'] !== undefined && typeof input['trust-workspace'] !== 'boolean') ||
         (input.cli !== undefined && !Object.hasOwn(runtimeIds, input.cli)) ||
         (input.mode !== undefined && !modes.has(input.mode)) ||
         (input.defaultMode !== undefined && !modes.has(input.defaultMode)) ||
@@ -320,7 +332,7 @@ export function ownedSessions(project, index, report, {
       if (parent?.endedAt === null) gate = (await transport.inspect(targetBinding(parent))).active;
       await checkBarrier(parent?.addr ?? null, name, input.barrier, gate);
     }
-    const { requested, selected, deny, maxDurationMs, warnings, fastRequested } = spawnProfile(project,
+    const { requested, selected, deny, maxDurationMs, warnings, fastRequested, trustWorkspace } = spawnProfile(project,
       input.role === 'worker' ? { ...input, workerCaller: caller ?? null } : input, addr => routeParent(addr)?.addr, occupies);
     const { cli, mode, model, effort } = selected;
     const addr = `${mode === 'headless' ? 'oar' : 'loom'}-${randomUUID()}`;
@@ -340,6 +352,8 @@ export function ownedSessions(project, index, report, {
       prompt,
     ].join('\n\n');
     const job = { row, firstId: randomUUID(), prompt, gate, requested, deny, release: releaseId(),
+      ...(cli === 'claude' && mode === 'tui' && { autoTrustWorkspace: input['trust-workspace'] ??
+        (trustWorkspace && defaultTrustWorkspace(project, cwd)) }),
       ...(warnings.length && { warnings }),
       ...(fastRequested !== undefined && { fastRequested }),
       ...(selected.fast !== undefined && { fast: selected.fast }),

@@ -119,6 +119,9 @@ test('only sends known menu sequences for the active matching dialog', () => {
   const trust = fixture('live-trust.txt');
   assert.deepEqual(dialogKeys('trust-dialog'), []);
   assert.deepEqual(dialogKeys('trust-dialog', trust), ['down', 'enter']);
+  const exact = trust.replace('<lab>/trust-repo', '/private/lab/trust-repo');
+  assert.deepEqual(dialogKeys('trust-dialog', exact, '/private/lab/trust-repo'), ['down', 'enter']);
+  assert.deepEqual(dialogKeys('trust-dialog', exact, '/private/lab/other-repo'), []);
   assert.deepEqual(dialogKeys('trust-dialog', trust.replace('❯ No, exit', '  No, exit').replace('   Yes,', ' ❯ Yes,')), ['enter']);
   assert.deepEqual(dialogKeys('trust-dialog', `${trust}\n❯ `), []);
   assert.deepEqual(dialogKeys('trust-dialog', fixture('experiment-trust-dialog-synthetic.txt')), []);

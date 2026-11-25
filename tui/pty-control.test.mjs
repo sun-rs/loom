@@ -10,11 +10,21 @@ import xterm from '@xterm/headless';
 import { wireText } from '../inbox/message.mjs';
 import { bindTuiSession } from './index.mjs';
 import { controlHello, listenControl, requestControl } from './pty-control.mjs';
+import { readGrid } from './pty-grid.mjs';
 import { providers } from './providers.mjs';
 import { readRequestBook } from './request-book.mjs';
 import { thinBackend } from './thin.mjs';
 
-async function setup(t, { afterPaste, firstEnter } = {}) {
+test('Codex draft readback skips an empty paragraph placeholder and preserves indented spaces', async () => {
+  const grid = new xterm.Terminal({ cols: 90, rows: 12, allowProposedApi: true });
+  try {
+    await new Promise(resolve => grid.write(
+      '› first\r\n \r\n   \r\n  last\r\n \r\n  gpt-6.2-sol low · /test', resolve));
+    assert.equal(readGrid(grid, 'codex').draft, 'first\n\n \nlast');
+  } finally { grid.dispose(); }
+});
+
+async function setup(t, { afterPaste, firstEnter, announce, hidePart } = {}) {
   const cwd = await mkdtemp(join(tmpdir(), 'lpt-'));
   t.after(() => rm(cwd, { recursive: true, force: true }));
   const socket = join(cwd, 's');
@@ -25,14 +35,22 @@ async function setup(t, { afterPaste, firstEnter } = {}) {
   const hook = fields => appendFile(hookSink, JSON.stringify({ cwd, session_id: sessionId, receivedAt: Date.now(), ...fields }) + '\n');
   await hook({ hook_event_name: 'SessionStart' });
   let draft = '';
+  let overlay = false;
   let enterCount = 0;
+  const provider = announce ? providers.agy : providers.claude;
+  const prompt = announce ? '>' : '❯';
   const writes = [];
   const events = new EventEmitter();
   const subscribe = (event, callback) => {
     events.on(event, callback);
     return { dispose: () => events.off(event, callback) };
   };
-  const draw = () => events.emit('data', Buffer.from(`\x1b[2J\x1b[H──────────\r\n❯ ${draft.replaceAll('\n', '\r\n')}\r\n──────────\r\n? for shortcuts`));
+  const draw = () => {
+    const displayed = hidePart && draft ? draft.slice(0, -1) : draft;
+    const footer = announce && draft ? 'accept-edits · Gemini 4 Neon (Low)' : '? for shortcuts';
+    const card = overlay ? '┃ Introducing Gemini 4 Neon\r\n┃ esc to dismiss\r\n' : '';
+    events.emit('data', Buffer.from(`\x1b[2J\x1b[H${card}──────────\r\n${prompt} ${displayed.replaceAll('\n', '\r\n  ')}\r\n──────────\r\n${footer}`));
+  };
   const pty = {
     spawn: () => ({
       onData: callback => subscribe('data', callback),
@@ -41,14 +59,16 @@ async function setup(t, { afterPaste, firstEnter } = {}) {
         writes.push(bytes);
         if (bytes.startsWith('\x1b[200~')) {
           draft = bytes.slice(6, -6);
+          overlay = announce === true;
           afterPaste?.(terminal, data);
         } else if (bytes === '\r') {
           enterCount++;
-          if (enterCount !== 1 || firstEnter !== 'held') {
-            void hook({ hook_event_name: 'UserPromptSubmit', prompt: draft });
+          if (enterCount !== 1 || !['held', 'discarded'].includes(firstEnter)) {
+            void hook({ hook_event_name: announce ? 'PreInvocation' : 'UserPromptSubmit', prompt: draft });
           }
-          if (enterCount !== 1 || firstEnter === undefined) draft = '';
-        } else if (bytes === '\x15') draft = '';
+          if (enterCount !== 1 || firstEnter === undefined || firstEnter === 'discarded') draft = '';
+        } else if (bytes === '\x1b' && overlay) overlay = false;
+        else if (bytes === '\x15') draft = '';
         else draft += bytes;
         draw();
       },
@@ -58,10 +78,10 @@ async function setup(t, { afterPaste, firstEnter } = {}) {
   };
   const data = bytes => events.emit('data', Buffer.from(bytes));
   const terminal = await thinBackend({ pty, Terminal: xterm.Terminal, humanPauseMs: 400 }).launch({
-    cwd, argv: ['claude'], env: {}, provider: 'claude', unset: [],
+    cwd, argv: [provider.id], env: {}, provider: provider.id, unset: [],
   });
   t.after(() => terminal.close());
-  const bind = () => bindTuiSession(terminal, providers.claude, {
+  const bind = () => bindTuiSession(terminal, provider, {
     hookSink, evidenceRoot: cwd, cwd, bookPath, incarnation, requireNative: true,
   });
   let close = await listenControl(socket, bind(), incarnation);
@@ -143,11 +163,50 @@ test('a repainted, unaccepted draft can receive one more Enter with no second pa
   assert.equal(f.writes.filter(value => value.startsWith('\x1b[200~')).length, 1);
 });
 
+test('recovery dismisses one confirmed announcement and submits only an intact held draft', async t => {
+  for (const hidePart of [false, true]) {
+    const f = await setup(t, { announce: true, hidePart });
+    const id = randomUUID();
+    const text = 'first input';
+    assert.equal((await f.account('submit', { id, text, timeoutMs: 100 })).kind, 'unconfirmed');
+    const deadline = Date.now() + 1800;
+    do {
+      const state = await f.account('state');
+      if (hidePart && state.blocker === 'draft-held') assert.equal(state.ready, false);
+      if (f.writes.includes('\r')) break;
+      await sleep(100);
+    } while (Date.now() < deadline);
+    assert.equal(f.writes.filter(value => value === '\x1b').length, 1);
+    assert.equal(f.writes.filter(value => value === '\r').length, hidePart ? 0 : 1);
+    assert.equal((await f.account('confirmations', { id })).count, hidePart ? 0 : 1);
+    if (hidePart) {
+      f.terminal.writeHuman('\r');
+      await sleep(40);
+      assert.equal((await f.account('confirmations', { id })).count, 1);
+    }
+  }
+});
+
 test('native confirmation vetoes another Enter even while the same draft is painted', async t => {
   const f = await setup(t, { firstEnter: 'confirmed' });
   const result = await f.account('submit', { id: randomUUID(), text: 'stale input paint' });
   assert.equal(result.kind, 'confirmed');
   assert.equal(f.writes.filter(value => value === '\r').length, 1);
+});
+
+test('urgent input can take an independently verified empty composer while a prior Enter remains unconfirmed', async t => {
+  const f = await setup(t, { firstEnter: 'discarded' });
+  const first = randomUUID();
+  const second = randomUUID();
+  assert.equal((await f.account('submit', { id: first, text: 'unknown delivery', timeoutMs: 150 })).kind, 'unconfirmed');
+  const state = await f.account('state');
+  assert.equal(state.urgentReady, true);
+  assert.equal((await f.account('submit', { id: second, text: 'urgent delivery' })).code, 'previous-input-unconfirmed');
+  const result = await f.account('submit', { id: second, text: 'urgent delivery', urgent: true });
+  assert.equal(result.kind, 'confirmed');
+  assert.equal(readRequestBook(f.bookPath).get(first).released, true);
+  assert.equal((await f.account('confirmations', { id: first })).count, 0);
+  assert.equal(f.writes.filter(value => value === '\r').length, 2);
 });
 
 test('resize during paste withholds Enter and the next ID can proceed after the abandoned draft is cleared', async t => {

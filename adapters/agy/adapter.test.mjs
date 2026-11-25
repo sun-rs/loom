@@ -76,7 +76,7 @@ test('launch accepts a workspace-relative sink without adding hook configuration
 });
 
 for (const [name, expected] of Object.entries({
-  'agy-idle.txt': 'idle', 'agy-busy.txt': 'busy', 'agy-trust-dialog.txt': 'trust-dialog',
+  'agy-idle.txt': 'overlay', 'agy-busy.txt': 'busy', 'agy-trust-dialog.txt': 'trust-dialog',
   'agy-sign-in-warning.txt': 'idle', 'agy-auth-fail-synthetic.txt': 'auth-fail', 'agy-rate-limit-synthetic.txt': 'rate-limit',
 })) {
   test(`classifies the experiment screen ${name}`, () => {

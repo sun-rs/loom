@@ -83,6 +83,7 @@ export async function openNativeTui({
   };
   const evidence = {
     cwd, evidenceRoot: stateDir, hookSink, sessionId, boundTranscript, requireNative: true,
+    autoTrustWorkspace: options.autoTrustWorkspace === true,
     bookPath: binding.bookPath, startPath: binding.startPath, exitPath: binding.exitPath, incarnation: binding.incarnation,
     ...(options.resume && { resumedAt: Date.now() }),
   };

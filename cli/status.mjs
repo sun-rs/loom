@@ -7,6 +7,7 @@ import { readNotifications } from '../daemon/notifications.mjs';
 import { isBlockedReply } from '../inbox/message.mjs';
 import { managedProject, projectIndex, projectSessions } from './project.mjs';
 import { pendingWork } from '../inbox/engine.mjs';
+import { isStartupBlocker } from '../tui/agent-status.mjs';
 
 export async function projectStatus(project) {
   const rows = projectSessions(project);
@@ -40,9 +41,11 @@ export async function projectStatus(project) {
       active: row.endedAt == null || selected.has(key) };
   });
   const blocked = [
-    ...cards.filter(card => card.state === 'blocked' || card.lifecycle === 'stuck').map(card => ({ task: card.task, addr: card.addr })),
-    ...rows.filter(row => row.role !== 'worker' && lifecycle(row) === 'stuck')
-      .map(row => ({ addr: row.addr, reason: row.role + ' stuck' })),
+    ...cards.filter(card => card.state === 'blocked' || card.lifecycle === 'stuck' || isStartupBlocker(card.lifecycle))
+      .map(card => ({ task: card.task, addr: card.addr,
+        ...(isStartupBlocker(card.lifecycle) && { reason: card.task + ' ' + card.lifecycle }) })),
+    ...rows.filter(row => row.role !== 'worker' && (lifecycle(row) === 'stuck' || isStartupBlocker(lifecycle(row))))
+      .map(row => ({ addr: row.addr, reason: row.role + ' ' + lifecycle(row) })),
     ...readNotifications(project).filter(event => event.type === 'needs-decision' && event.takenAt == null)
       .map(event => ({ addr: event.addr, reason: event.text })),
   ];

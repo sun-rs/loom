@@ -10,7 +10,7 @@ import { relay as waveRelay } from '../relay/project.mjs';
 import { inbox, receipt } from './engine.mjs';
 import { deliveryId, wireText } from './message.mjs';
 import { lookup, publish } from './store.mjs';
-import { inputPlan, tui } from './tui.mjs';
+import { inputPlan, nativeDelivery, tui } from './tui.mjs';
 
 const exec = promisify(execFile);
 const tuiSamples = file => readFileSync(new URL('../tasks/TUI-REL-0/fixtures/' + file + '.txt', import.meta.url), 'utf8');
@@ -83,6 +83,57 @@ function fixture(t) {
     refuse: kind => { refuse = kind; },
   };
 }
+
+test('a native submission still reconciles when the wrapper withheld Enter', () => {
+  const id = randomUUID();
+  const sessionId = randomUUID();
+  const observation = {
+    provider: 'claude', book: new Map([[id, { hostReceipt: { accepted: false } }]]),
+    tui: { bookPath: 'fixture' },
+    events: [{ hook_event_name: 'UserPromptSubmit', session_id: sessionId, receivedAt: 2000,
+      prompt: wireText(id, 'manually submitted draft') }],
+  };
+  assert.equal(nativeDelivery({ id, attemptAt: 1000 }, observation).sessionId, sessionId);
+});
+
+test('queued Super messages and interrupts bypass uncertain writes and preserve late reconciliation', async t => {
+  const f = fixture(t);
+  const target = f.terminal('t9', 'codex', 'idle');
+  const previous = await f.submit(target);
+  const queued = await f.submit(target);
+  f.refuse('transport lost after write');
+  await f.reopen().step();
+  assert.equal(f.lookup(previous).issue, 'uncertain');
+  f.refuse(undefined);
+
+  const urgent = await f.submit(target, 'queue', undefined, { superPriority: true });
+  await f.reopen().step();
+  assert.deepEqual(f.sends.map(([, input]) => deliveryId(input)), [previous, urgent]);
+  assert.equal(f.lookup(queued).phase, 'queued');
+  assert.ok(f.lookup(previous).bypassedAt);
+
+  const at = Date.now();
+  target.status.state = 'working';
+  f.event(target, 'UserPromptSubmit', 'urgent', { deliveryId: urgent, receivedAt: at });
+  const interrupt = await f.submit(target, 'interrupt');
+  const mail = f.reopen();
+  // This test peer has no guarded PTY socket. Observe dispatch through the
+  // engine's injected transport and check the original turn binding.
+  let stopped;
+  const transport = {
+    inspect: async () => ({ state: 'busy', active: { turnId: 'urgent' }, terminal: { turn: 1 } }),
+    nativeDelivery: message => message.id === urgent ? { at, turnId: 'urgent' } : undefined,
+    sameTurn: (a, b) => a.turnId === b.turnId,
+    plan: () => ({ stop: ['esc'] }),
+    interrupt: async message => { stopped = message.id; },
+  };
+  assert.equal(mail.messages.find(message => message.id === previous).phase, 'sending');
+  await inbox(f.root, transport, () => {}).step();
+  assert.equal(stopped, interrupt);
+  f.event(target, 'UserPromptSubmit', 'prior', { deliveryId: previous });
+  await f.reopen().step();
+  assert.equal(receipt(f.lookup(previous)).deliveryStatus, 'delivered');
+});
 
 test('durably queues duplicate texts in FIFO order and waits for the matching native end', async t => {
   const f = fixture(t);
