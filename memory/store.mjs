@@ -51,20 +51,25 @@ function updateEntry(state, entry, operation) {
   }
 }
 
+function forgetMarker(entry, revision) {
+  return { ...select(entry, ['id', 'project', 'layer', 'kind', 'owner', 'cardId', 'proposedKind']),
+    revision, status: 'forgotten' };
+}
+
 function purge(state, entry) {
-  const tombstone = select(entry, ['id', 'revision', 'project', 'layer', 'kind', 'owner', 'cardId', 'status']);
+  const tombstone = forgetMarker(entry, entry.revision + 1);
   const replacements = new Map([[entry.id, tombstone]]);
   for (const { response } of state.receipts) {
-    if (response.item?.id === entry.id && response.candidate?.status === 'promoted') {
-      const { id } = response.candidate;
-      const candidate = state.entries.find(row => row.id === id);
-      if (!candidate) continue;
-      const marker = select(candidate, ['id', 'revision', 'project', 'layer', 'kind', 'status', 'author',
+    const { id, status } = response.candidate ?? {};
+    if (response.item?.id !== entry.id || !['promoted', 'merged'].includes(status) || replacements.has(id)) continue;
+    const candidate = state.entries.find(row => row.id === id);
+    if (!candidate || candidate.status === 'forgotten') continue;
+    const marker = status === 'merged' ? forgetMarker(candidate, candidate.revision + 1)
+      : select(candidate, ['id', 'revision', 'project', 'layer', 'kind', 'status', 'author',
         'cardId', 'proposedKind', 'reviewer']);
-      replacements.set(id, marker);
-      state.entries[state.entries.indexOf(candidate)] = marker;
-      delete state.files[itemPath(id)];
-    }
+    replacements.set(id, marker);
+    state.entries[state.entries.indexOf(candidate)] = marker;
+    delete state.files[itemPath(id)];
   }
   state.changes = state.changes.filter(change => change.id !== entry.id);
   for (const { response } of state.receipts) {
@@ -160,26 +165,49 @@ export function createMemoryStore({ now = Date.now, readState, commitState, evid
     if (id != null && !current) return forbidden();
     if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return invalid('Invalid memory entry');
     const candidate = op === 'propose';
-    const permitted = candidate ? access.canPropose : access.canWrite;
+    const permitted = candidate ? access.canPropose : access.canRevise;
     const scope = { ...entry, owner: binding.principal, author: binding.principal, cardId: binding.cardId };
-    if (!permitted(binding, scope) || (current && (!permitted(binding, current)
+    if (!permitted(binding, { ...scope, status: current?.status }) || (current && (!permitted(binding, current)
       || current.project !== scope.project || current.layer !== scope.layer || current.kind !== scope.kind))) return forbidden();
     if (current && (candidate ? !['pending', 'returned'].includes(current.status)
       : !['active', 'stale'].includes(current.status))) return invalid('Memory entry cannot be revised');
     const mismatch = expected(expectedRevision, current);
     if (mismatch) return mismatch;
+    const requested = entry.supersedes;
+    if (requested !== undefined && (candidate || !Array.isArray(requested) || !Array.from(requested).every(nonempty))) {
+      return invalid('Invalid memory replacement');
+    }
+    const existing = new Set(current?.supersedes);
+    const added = [...new Set(requested)].filter(targetId => !existing.has(targetId));
+    const targets = [];
+    for (const targetId of added) {
+      const target = state.entries.find(row => row.id === targetId);
+      if (!target || target.id === id) return invalid('Invalid memory replacement target');
+      if (!access.canWrite(binding, target)) return forbidden();
+      if (!['active', 'stale'].includes(target.status)) return invalid('Invalid memory replacement target');
+      targets.push(target);
+    }
+    const supersedes = [...existing, ...added];
+    const extra = current ? select(current, ['original', 'proposer', 'reviewer']) : {};
+    if (requested !== undefined || current?.supersedes !== undefined) extra.supersedes = supersedes;
     const fields = await prepare(draftFields(entry, await observations(binding)));
     if (!fields.ok) return fields;
-    if (!current) {
+    if (!current && !targets.length) {
       const duplicate = state.entries.find(row => (candidate ? row.status === 'pending' : active(row))
         && sameFact(row, { ...fields.entry, owner: entry.layer === 'private' ? binding.principal : undefined,
           author: binding.principal, cardId: binding.cardId }));
       if (duplicate) return success({ item: duplicate }, 'duplicate');
     }
-    const item = version(state, binding, fields.entry, current,
-      current ? select(current, ['original', 'supersedes', 'proposer', 'reviewer']) : {});
+    const item = version(state, binding, fields.entry, current, extra);
     const formatResult = validateEntryFormat(item, format);
     if (!formatResult.ok) return formatResult;
+    for (const target of targets) {
+      const replaced = { ...target, status: 'superseded', revision: target.revision + 1,
+        updatedAt: item.updatedAt, supersededBy: [...(target.supersededBy ?? []), item.id] };
+      const result = validateEntryFormat(replaced, format);
+      if (!result.ok) return result;
+      updateEntry(state, replaced, active(target) ? 'withdraw' : null);
+    }
     updateEntry(state, item, candidate ? null : active(current ?? {}) ? 'update' : 'add');
     return success({ item }, candidate ? 'candidate' : 'accepted');
   }
@@ -222,7 +250,8 @@ export function createMemoryStore({ now = Date.now, readState, commitState, evid
       const targetMismatch = expected(request.targetExpectedRevision, target);
       if (targetMismatch) return targetMismatch;
       if (!active(target)) return invalid('Merge target is not active');
-      const externalSource = [...new Map([...(target.externalSource ?? []), ...(current.externalSource ?? [])]
+      const externalSource = [...new Map([...(target.externalSource ?? []), ...(current.externalSource ?? []),
+        ...await observations(binding)]
         .map(observation => [JSON.stringify(observation), observation])).values()];
       const fields = await prepare(draftFields({ ...target, body: request.body }, externalSource));
       if (!fields.ok) return fields;
@@ -309,7 +338,7 @@ export function createMemoryStore({ now = Date.now, readState, commitState, evid
       const mismatch = expected(expectedRevision, current);
       if (mismatch) return mismatch;
       if (current.status === 'forgotten') return success({ item: current });
-      const item = purge(state, { ...current, status: 'forgotten', revision: current.revision + 1 });
+      const item = purge(state, current);
       result = success({ item });
     } else return invalid('Unknown memory write operation');
     if (!result.ok) return result;

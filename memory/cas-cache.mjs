@@ -70,15 +70,14 @@ export function createCellMemory({ now = Date.now, io, home, isOnline, getBindin
     if (!binding?.sessionId || !binding.principal) return missing();
     bindings.set(binding.sessionId, binding);
     const { online, generation } = await connection();
+    const current = await currentBinding(binding.sessionId, binding.principal);
+    if (!current) return missing();
+    const path = cachePath(generation, current, id, project);
     if (!online) {
-      const path = cachePath(generation, binding, id, project);
       const cached = await read(path, null);
       if (!cached || (cached.until !== null && !(now() < cached.until))) return missing();
       return cached.result;
     }
-    const current = await currentBinding(binding.sessionId, binding.principal);
-    if (!current) return missing();
-    const path = cachePath(generation, current, id, project);
     const result = await home.access.show(current, id, { project });
     if (!result.item) {
       await io.write(path, 'null');

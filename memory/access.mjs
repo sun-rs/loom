@@ -33,7 +33,7 @@ function canReadRole(binding, row, surface) {
       }
       return (surface === 'show' || surface === 'attachments') && row.layer === 'shared'
         && binding.attachments?.includes(row.id)
-        && (!isCrossProject(binding, row) || hasDependency(binding, row, row.cardId != null));
+        && (!isCrossProject(binding, row) || hasDependency(binding, row, false));
     case 'reviewer':
       return binding.authorizedIds?.[history ? 'history' : 'memory']?.includes(row.id);
     default:
@@ -82,7 +82,7 @@ function canWrite(binding, entry) {
   if (project == null || entry.project !== project) return false;
   if (layer === 'private' && (!principal || (entry.owner ?? entry.author) !== principal)) return false;
   if (layer !== 'shared' && layer !== 'private') return false;
-  if (role === 'leader') return kind === 'lesson';
+  if (role === 'leader') return layer === 'shared' && kind === 'lesson';
   return role === 'auditor' && ['ruling', 'preference'].includes(kind);
 }
 
@@ -98,11 +98,14 @@ function canReview(binding, candidate) {
     && canWrite(binding, { project: candidate.project, kind: candidate.proposedKind, layer: 'shared' });
 }
 
-function canForget(binding, entry) {
+function canRevise(binding, entry) {
   if (canWrite(binding, entry)) return true;
-  // An Auditor can make a final decision on a stale project lesson.
   return entry?.status === 'stale' && entry.kind === 'lesson'
     && canWrite(binding, { ...entry, kind: 'ruling' });
+}
+
+function canForget(binding, entry) {
+  return canReview(binding, entry) || canRevise(binding, entry);
 }
 
 export function createAccess({ readState, entries = [], changes = [], history, now = Date.now } = {}) {
@@ -129,12 +132,12 @@ export function createAccess({ readState, entries = [], changes = [], history, n
     return expiry;
   }
 
-  function mayRead(binding, row, surface, time, project) {
+  function mayRead(binding, row, surface, time, project, retry = false) {
     if (!binding || (project !== undefined && row.project !== project)) return false;
     if (surface !== 'history') {
       const candidate = row.kind === 'candidate' || row.layer === 'candidate';
       if (row.status === 'forgotten' && surface !== 'withdraw') return false;
-      if (indexSurfaces.has(surface) && (row.status !== 'active' || candidate)) return false;
+      if (indexSurfaces.has(surface) && (candidate || (!retry && row.status !== 'active'))) return false;
       if (surface === 'withdraw' && candidate) return false;
       if (surface === 'attachments' && row.layer !== 'shared') return false;
     }
@@ -156,7 +159,7 @@ export function createAccess({ readState, entries = [], changes = [], history, n
     return { visible, asOf: cutoff(state, time) };
   }
 
-  function visibleChange(binding, change, currentById, time) {
+  function visibleChange(binding, change, currentById, time, retry = false) {
     const current = currentById.get(change.id);
     const entry = change.entry ?? current;
     const withdrawal = change.operation === 'withdraw';
@@ -165,7 +168,7 @@ export function createAccess({ readState, entries = [], changes = [], history, n
 
     // Check both the publication's original scope and the current scope.
     // A forgotten item can still publish its withdrawal.
-    if (current && !mayRead(binding, current, surface, time)) return null;
+    if (current && !mayRead(binding, current, surface, time, undefined, retry)) return null;
     return entry;
   }
 
@@ -268,20 +271,21 @@ export function createAccess({ readState, entries = [], changes = [], history, n
       const changesBySeq = new Map(state.changes.map(change => [change.seq, change]));
       return original.every(change => {
         const latest = changesBySeq.get(change.seq);
-        return latest?.id === change.id && visibleChange(binding, change, currentById, time)
-          && visibleChange(binding, latest, currentById, time);
+        return latest?.id === change.id && visibleChange(binding, change, currentById, time, true)
+          && visibleChange(binding, latest, currentById, time, true);
       });
     },
 
-    grant(binding, { sourceProject, recipient, reason, expiresAt } = {}) {
+    grant(binding, { sourceProject, targetProject = binding?.project, recipient, reason, expiresAt } = {}) {
       if (binding?.role !== 'super') return { ok: false, code: 'forbidden' };
-      if (typeof sourceProject !== 'string' || !sourceProject.trim() || sourceProject === binding.project
+      if (typeof sourceProject !== 'string' || !sourceProject.trim() || sourceProject === targetProject
+        || typeof targetProject !== 'string' || !targetProject.trim()
         || typeof recipient !== 'string' || !recipient.trim() || typeof reason !== 'string' || !reason.trim()
         || typeof expiresAt !== 'string' || !(Date.parse(expiresAt) > now())) {
         return { ok: false, code: 'invalid-grant' };
       }
       const grant = { id: 'grant-' + ++grantId, sourceProject, recipient, reason, expiresAt,
-        recipientProject: binding.project };
+        recipientProject: targetProject };
       grants.set(grant.id, grant);
       return { ok: true, grant: { ...grant } };
     },
@@ -293,6 +297,7 @@ export function createAccess({ readState, entries = [], changes = [], history, n
     },
 
     canWrite,
+    canRevise,
     canPropose,
     canReview,
     canForget,
