@@ -1,10 +1,5 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import {
-  createCellShipper, createHomeShipper, createOpenCodeAdapter,
-  createHistoryPublisher, createHistoryStore,
-} from './shipper.mjs';
-
 const NOW = Date.parse('2026-01-15T12:00:00Z');
 const DAY = 86_400_000;
 const clock = () => NOW;
@@ -14,6 +9,7 @@ const jsonl = record => Buffer.from(JSON.stringify(record) + '\n', 'utf8');
 const range = (start, bytes) => ({ start, end: start + bytes.length });
 
 test('U15 ships complete UTF-8 lines and checkpoints only contiguous ACKs per generation', async () => {
+  const { createCellShipper, createHomeShipper } = await import('./shipper.mjs');
   const raw = [];
   const conflicts = [];
   const checkpoints = new Map();
@@ -91,6 +87,7 @@ test('U15 ships complete UTF-8 lines and checkpoints only contiguous ACKs per ge
 });
 
 test('U16 projects paged OpenCode records once per native ID and version without SQLite reads', async t => {
+  const { createOpenCodeAdapter } = await import('./shipper.mjs');
   const pending = { id: 'tool-1', version: 1, status: 'running' };
   const prompt = { id: 'prompt-1', version: 1, text: 'check history' };
   const completed = { ...pending, version: 2, status: 'completed' };
@@ -142,6 +139,7 @@ test('U16 projects paged OpenCode records once per native ID and version without
 });
 
 test('U17 publishes and schedules retryable cleanup once after the final raw ACK', async () => {
+  const { createHistoryPublisher } = await import('./shipper.mjs');
   const evidence = [];
   const done = [];
   const cleanup = [];
@@ -160,6 +158,8 @@ test('U17 publishes and schedules retryable cleanup once after the final raw ACK
   const acknowledge = contiguousEnd => publisher.acknowledge({ ...source, contiguousEnd });
   await publisher.completeTurn({ ...source, turnId, deliveryId, start: 10, end: 60 });
   await publisher.requestCleanup({ turnId, paths: ['worker.log', 'worktree'] });
+  await publisher.acknowledge({ ...source, generation: 2, contiguousEnd: 60 });
+  assert.deepEqual([evidence, done, await publisher.pendingCleanup(), cleanup], [[], [], [], []]);
   await acknowledge(59);
   assert.deepEqual([evidence, done, await publisher.pendingCleanup(), cleanup], [[], [], [], []]);
 
@@ -191,6 +191,7 @@ test('U17 publishes and schedules retryable cleanup once after the final raw ACK
 });
 
 test('U18 rebuilds derived history and reports Git gaps and age or size retention boundaries', async t => {
+  const { createHistoryStore } = await import('./shipper.mjs');
   for (const limit of ['age', 'size']) {
     await t.test(`prunes by ${limit} while preserving pending raw and independent memory`, async () => {
       const availableSha = 'a'.repeat(40);
@@ -205,11 +206,11 @@ test('U18 rebuilds derived history and reports Git gaps and age or size retentio
         return row;
       };
       const oldAt = NOW - (limit === 'age' ? 8 : 2) * DAY;
+      const pending = record('pending', NOW - 9 * DAY, availableSha, false);
       const old = record('old', oldAt, availableSha, true, 'x'.repeat(512));
       const current = record('current', NOW - DAY, availableSha);
       const missing = record('missing', NOW, missingSha);
-      const pending = record('pending', NOW, availableSha, false);
-      let raw = [old, current, missing, pending];
+      let raw = [pending, old, current, missing];
       const originalRaw = structuredClone(raw);
       const derived = new Map();
       const git = new Map([[availableSha, { diff: '+ retained line\n' }]]);
@@ -239,7 +240,7 @@ test('U18 rebuilds derived history and reports Git gaps and age or size retentio
       assert.deepEqual(structuredClone(raw), originalRaw);
 
       await history.scanRetention();
-      assert.deepEqual(structuredClone(raw), originalRaw.slice(1));
+      assert.deepEqual(structuredClone(raw), originalRaw.filter(row => row.start !== old.start));
       assert.deepEqual(memory, originalMemory);
       const retained = await query();
       assert.deepEqual(retained.turns, before.turns.slice(1));

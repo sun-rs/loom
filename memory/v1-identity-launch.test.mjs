@@ -2,6 +2,13 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
 const now = () => Date.parse('2026-01-15T12:00:00Z');
+const binding = (sessionId, role, project = null) => ({
+  sessionId, principal: role, role, project, cardId: null, dependencies: [], attachments: [],
+  authorizedIds: { memory: [], history: [] },
+});
+const superBinding = binding('super', 'super');
+const oldAuditor = binding('old-auditor', 'auditor', 'old');
+const unbound = binding('unbound', 'auditor');
 const root = 'a'.repeat(39) + '1';
 const laterRoot = 'a'.repeat(39) + '2';
 const rewrittenRoot = 'c'.repeat(40);
@@ -86,18 +93,14 @@ const newMemory = { id: 'memory-new', revision: 1 };
 const newHistory = { id: 'history-new', memoryId: newMemory.id, memoryRevision: newMemory.revision };
 
 function identityStore(createIdentityStore, identity, extraBindings = [], pathExists = () => true) {
-  const bindings = [{ path: checkout, key: identity.key, projectId: 'old', directoryId: identity.directoryId },
+  const bindings = [{ path: checkout, key: identity.key, project: 'old', directoryId: identity.directoryId },
     ...extraBindings];
-  const sessions = new Map([
-    ['super', { role: 'Super' }],
-    ['old-auditor', { role: 'Auditor', projectId: 'old' }],
-  ]);
   const records = new Map([['old', { memory: [oldMemory], history: [oldHistory] }]]);
-  return createIdentityStore({ bindings, now, pathExists, sessions, records: structuredClone(records) });
+  return createIdentityStore({ bindings, now, pathExists, records: structuredClone(records) });
 }
 
 async function assertOldRecords(store) {
-  assert.deepEqual(await store.readProject('old', { sessionId: 'old-auditor' }), {
+  assert.deepEqual(await store.readProject('old', oldAuditor), {
     memory: [oldMemory], history: [oldHistory],
   });
 }
@@ -111,7 +114,7 @@ test('U13 automatically migrates a unique in-place path-to-Git binding', async (
   await store.reconcile(discovered);
   const upgraded = await store.bindingAt(checkout);
   assert.deepEqual(upgraded.key, discovered.key);
-  assert.equal(upgraded.projectId, 'old');
+  assert.equal(upgraded.project, 'old');
   await assertOldRecords(store);
 });
 
@@ -130,57 +133,58 @@ for (const { name, path, before, after, competing, action } of transfers) {
     const directoryId = action === 'move' ? 'fixture-directory-id' : undefined;
     const old = await identifyWith(identifyProject, checkout, { repository: before, directoryId });
     const discovered = await identifyWith(identifyProject, path, { repository: after, directoryId });
-    const extra = competing ? [{ path: linked, key: discovered.key, projectId: 'other' }] : [];
+    const extra = competing ? [{ path: linked, key: discovered.key, project: 'other' }] : [];
     const store = identityStore(createIdentityStore, old, extra, candidate => action !== 'move' || candidate !== checkout);
     const competingBinding = competing ? structuredClone(await store.bindingAt(linked)) : undefined;
-    const unauthorized = await store.readProject('unknown', { sessionId: 'unbound' });
-    assert.deepEqual(await store.readProject('old', { sessionId: 'unbound' }), unauthorized);
+    const unauthorized = await store.readProject('unknown', unbound);
+    assert.deepEqual(await store.readProject('old', unbound), unauthorized);
 
     const pending = await store.reconcile(discovered);
     assert.ok(['orphan', 'pending'].includes(pending.status));
     if (action === 'move') {
       assert.equal(pending.status, 'orphan');
-      assert.ok(pending.candidates.some(candidate => candidate.projectId === 'old'));
-      const reader = await store.bindSession({ role: 'Auditor', path });
+      assert.ok(pending.candidates.some(candidate => candidate.project === 'old'));
+      const reader = await store.bindSession({ role: 'auditor', path });
       if (reader) {
-        assert.deepEqual(await store.readProject('old', { sessionId: reader }), unauthorized);
+        assert.deepEqual(await store.readProject('old', reader), unauthorized);
       }
     }
-    const decision = { action, projectId: 'old' };
-    for (const options of [{ decision }, { decision, sessionId: 'old-auditor' }]) {
+    const decision = { action, project: 'old' };
+    for (const options of [{ decision }, { decision, binding: oldAuditor }]) {
       const stillBound = await store.bindingAt(checkout);
       assert.deepEqual(stillBound.key, old.key);
-      assert.equal(stillBound.projectId, 'old');
+      assert.equal(stillBound.project, 'old');
       if (path !== checkout) assert.equal(await store.bindingAt(path), undefined);
       if (competing) assert.deepEqual(await store.bindingAt(linked), competingBinding);
-      assert.deepEqual(await store.readProject('old', { sessionId: 'unbound' }), unauthorized);
+      assert.deepEqual(await store.readProject('old', unbound), unauthorized);
       await store.reconcile(discovered, options);
     }
     assert.deepEqual((await store.bindingAt(checkout)).key, old.key);
     if (path !== checkout) assert.equal(await store.bindingAt(path), undefined);
-    assert.deepEqual(await store.readProject('old', { sessionId: 'unbound' }), unauthorized);
+    assert.deepEqual(await store.readProject('old', unbound), unauthorized);
     await assertOldRecords(store);
 
-    await store.reconcile(discovered, { decision, sessionId: 'super' });
+    await store.reconcile(discovered, { decision, binding: superBinding });
     const confirmed = await store.bindingAt(path);
-    if (action !== 'bind') assert.deepEqual(confirmed.key, discovered.key);
+    if (action !== 'bind' || path === checkout) assert.deepEqual(confirmed.key, discovered.key);
+    if (action === 'bind' && path === checkout) assert.notDeepEqual(confirmed.key, old.key);
     await assertOldRecords(store);
-    const sessionId = await store.bindSession({ role: 'Auditor', path });
+    const reader = await store.bindSession({ role: 'auditor', path });
     if (action === 'split') {
-      assert.ok(confirmed.projectId);
-      assert.notEqual(confirmed.projectId, 'old');
-      assert.deepEqual(await store.readProject(confirmed.projectId, { sessionId }), { memory: [], history: [] });
+      assert.ok(confirmed.project);
+      assert.notEqual(confirmed.project, 'old');
+      assert.deepEqual(await store.readProject(confirmed.project, reader), { memory: [], history: [] });
       const newRecords = { memory: [newMemory], history: [newHistory] };
-      await store.recordProjectData(confirmed.projectId, structuredClone(newRecords));
-      assert.deepEqual(await store.readProject(confirmed.projectId, { sessionId }), newRecords);
-      for (const [reader, foreign] of [[sessionId, 'old'], ['old-auditor', confirmed.projectId]]) {
-        assert.deepEqual(await store.readProject(foreign, { sessionId: reader }),
-          await store.readProject('unknown', { sessionId: reader }));
+      await store.recordProjectData(confirmed.project, structuredClone(newRecords));
+      assert.deepEqual(await store.readProject(confirmed.project, reader), newRecords);
+      for (const [binding, foreign] of [[reader, 'old'], [oldAuditor, confirmed.project]]) {
+        assert.deepEqual(await store.readProject(foreign, binding),
+          await store.readProject('unknown', binding));
       }
       await assertOldRecords(store);
     } else {
-      assert.equal(confirmed.projectId, 'old');
-      assert.deepEqual(await store.readProject('old', { sessionId }), { memory: [oldMemory], history: [oldHistory] });
+      assert.equal(confirmed.project, 'old');
+      assert.deepEqual(await store.readProject('old', reader), { memory: [oldMemory], history: [oldHistory] });
     }
   });
 }
@@ -227,13 +231,12 @@ for (const mode of ['tui', 'oar', 'resume', 'switch']) {
       resume: launchConfig.buildResumeLaunch, switch: launchConfig.buildSwitchLaunch,
     }[mode];
     for (const provider of providers) {
-      const launch = await build({
-        provider, cwd: checkout, home, userConfig, sessionId: 'fixture-session',
+      const options = {
+        provider, cwd: checkout, home, userConfig, binding: binding('fixture-session', 'worker', 'old'),
         previousProvider: mode === 'switch' ? (provider === 'codex' ? 'claude' : 'codex') : provider,
-      }, {
-        now, readFile: path => instructions.get(path),
-        readDir: path => path === knowledge ? ['fixture-item.md'] : [],
-      });
+      };
+      const io = { now, readFile: path => instructions.get(path) };
+      const launch = await build(options, { ...io, readDir: path => path === knowledge ? ['fixture-item.md'] : [] });
 
       if (provider === 'claude') assert.equal(launch.env.CLAUDE_CODE_DISABLE_AUTO_MEMORY, '1');
       if (provider === 'codex') {
@@ -242,7 +245,9 @@ for (const mode of ['tui', 'oar', 'resume', 'switch']) {
       }
       if (provider === 'agy' || provider === 'opencode') assert.equal(launch.coverage, 'not covered');
       if (provider === 'agy') {
-        assert.ok(launch.warnings.some(warning => warning.path === knowledge && warning.recipient === 'Super'));
+        assert.ok(launch.warnings.some(warning => warning.path === knowledge && warning.recipient === 'super'));
+        const empty = await build(options, { ...io, readDir: () => [] });
+        assert.deepEqual(empty.warnings, []);
       }
       if (provider === 'opencode') assert.equal(launch.env.OPENCODE_DISABLE_CLAUDE_CODE_SKILLS, '1');
       const instruction = { claude: 'CLAUDE.md', codex: 'AGENTS.md', opencode: 'AGENTS.md' }[provider];

@@ -7,11 +7,14 @@ const notice = '背景笔记，仅供参考，使用前核验';
 const stamp = ms => new Date(ms).toISOString();
 const tokens = text => text.match(/\S+/gu)?.length ?? 0;
 const ids = rows => rows.map(row => row.id);
-const session = (role, extra = {}) => ({ role, project: 'A', principal: role, ...extra });
-const auditor = session('Auditor');
-const leader = session('Leader');
+const session = (role, extra = {}) => ({
+  sessionId: role, role, project: 'A', principal: role, cardId: null,
+  dependencies: [], attachments: [], authorizedIds: { memory: [], history: [] }, ...extra,
+});
+const auditor = session('auditor');
+const leader = session('leader');
 const item = (id, extra = {}) => ({
-  id, project: 'A', revision: 1, kind: 'lesson', visibility: 'shared', status: 'active',
+  id, project: 'A', revision: 1, kind: 'lesson', layer: 'shared', status: 'active',
   importance: 1, title: `Topic ${id}`, keywords: ['probe'], body: `BODY(${id})`,
   effectiveAt: stamp(start), updatedAt: stamp(start), ...extra,
 });
@@ -21,6 +24,7 @@ const absent = (result, ...strings) => {
 };
 
 test('U07 启动索引先授权再排序和截断，search 按标题和关键词匹配，show 返回正文', async () => {
+  const { createAccess } = await import('./access.mjs');
   const { createIndexQuery } = await import('./index-query.mjs');
   const entries = [
     item('00-new', { importance: 0, updatedAt: stamp(start + day) }),
@@ -29,13 +33,14 @@ test('U07 启动索引先授权再排序和截断，search 按标题和关键词
     item('a-used', { usage: 2 }),
     item('z-kind', { kind: 'ruling' }),
     item('zz-important', { kind: 'ruling', importance: 2, updatedAt: stamp(start - day) }),
-    item('a-private', { importance: 9, visibility: 'private', owner: 'Auditor', title: 'Private probe' }),
+    item('a-private', { importance: 9, layer: 'private', owner: 'auditor', title: 'Private probe' }),
     ...Array.from({ length: 28 }, (_, i) => item(`tail-${i}`, {
       importance: 0, title: `Topic ${'word '.repeat(26)}${i}`,
     })),
   ];
-  const query = createIndexQuery({ entries, now: () => start + day, countTokens: tokens });
-  const prefix = await query.startup(leader);
+  const access = createAccess({ entries, now: () => start + day });
+  const query = createIndexQuery({ access, countTokens: tokens });
+  const prefix = await query.index(leader);
   const expected = ['zz-important', 'z-kind', 'a-used', 'b-used', 'c-unused', '00-new'];
   const ruling = entries.find(entry => entry.id === expected[0]);
   const page = await query.search(leader, { query: 'probe', limit: 3 });
@@ -57,34 +62,41 @@ test('U07 启动索引先授权再排序和截断，search 按标题和关键词
   assert.deepEqual(prefix.indexText.split('\n').filter(line => line.trim()), prefix.rows.map(row => row.line));
   assert.deepEqual(prefix.rows.map(row => row.line), all.slice(0, included.length).map(row => row.line));
   absent({ prefix, page, next, all }, 'a-private', 'Private probe', ...entries.map(entry => entry.body));
-  const publicQuery = createIndexQuery({ entries: entries.filter(entry => entry.id !== 'a-private'),
-    now: () => start + day, countTokens: tokens });
-  assert.deepEqual(await publicQuery.startup(leader), prefix);
-  assert.equal((await query.show(leader, ruling.id)).body, ruling.body);
+  const publicAccess = createAccess({ entries: entries.filter(entry => entry.id !== 'a-private'), now: () => start + day });
+  const publicQuery = createIndexQuery({ access: publicAccess, countTokens: tokens });
+  assert.deepEqual(await publicQuery.index(leader), prefix);
+  assert.equal((await access.show(leader, ruling.id)).item.body, ruling.body);
 });
 
 const frozen = '固定前缀\r\n末尾空格 \n';
 
 test('U08 ACK 丢失时复用批次，确认接管后推进游标', async () => {
+  const { createAccess } = await import('./access.mjs');
   const { createDeltaDelivery } = await import('./delta.mjs');
   const changes = Array.from({ length: 31 }, (_, i) => change(i + 1,
     item(`m-${i}`, { revision: i < 2 ? 2 : 1 }), ['update', 'withdraw'][i] ?? 'add'));
   const sent = [];
+  const access = createAccess({ readState: () => ({ changes }), now: () => start });
   const delta = createDeltaDelivery({
-    prefix: frozen, initialCursor: 0, readChanges: () => changes, canRead: () => true,
+    access, binding: leader, prefix: frozen, initialCursor: 0,
     send: delivery => { sent.push(structuredClone(delivery)); },
   });
   const first = await delta.deliver({ deliveryId: 'd1', body: 'first task' });
+  const original = structuredClone(first);
+  changes[0] = change(1, { ...changes[0].entry, revision: 3, title: 'Changed since first send' }, 'update');
   const retry = await delta.deliver({ deliveryId: 'd1', body: 'first task' });
-  assert.deepEqual(retry, first);
-  assert.deepEqual(sent, [first, first]);
+  assert.deepEqual(retry, original);
+  assert.deepEqual(sent, [original, original]);
   assert.equal(first.deliveryId, 'd1');
   assert.equal(first.suffix.baseCursor, 0);
   assert.equal(first.suffix.endCursor, 30);
   assert.equal(first.suffix.truncated, true);
+  assert.equal(first.suffix.rows[0].revision, 2);
   assert.match(first.suffix.text, /省略|截断|omitted|truncated/iu);
   assert.deepEqual(first.suffix.rows.map(({ seq, id, operation }) => ({ seq, id, operation })),
-    changes.slice(0, 30).map(({ seq, id, operation }) => ({ seq, id, operation })));
+    Array.from({ length: 30 }, (_, i) => ({
+      seq: i + 1, id: `m-${i}`, operation: ['update', 'withdraw'][i] ?? 'add',
+    })));
   assert.equal(await delta.cursor(), 0);
   await delta.confirmNativeTakeover('d1');
   assert.equal(await delta.cursor(), 30);
@@ -100,20 +112,22 @@ test('U08 ACK 丢失时复用批次，确认接管后推进游标', async () => 
 });
 
 test('U08 重试前撤权，只有确认未接管才重新调度', async () => {
+  const { createAccess } = await import('./access.mjs');
   const { createDeltaDelivery } = await import('./delta.mjs');
   const changes = [change(1, item('revoked-secret')), change(2, item('retained'))];
   const sent = [], reconciled = [], scheduled = [];
-  let revoked = false, nativeStatus = 'unknown';
+  let nativeStatus = 'unknown';
+  const access = createAccess({ changes, now: () => start });
+  const binding = session('reviewer', { authorizedIds: { memory: ids(changes), history: [] } });
   const delta = createDeltaDelivery({
-    prefix: frozen, initialCursor: 0, readChanges: () => changes,
-    canRead: entry => !revoked || entry.id !== 'revoked-secret',
+    access, binding: () => binding, prefix: frozen, initialCursor: 0,
     send: delivery => { sent.push(structuredClone(delivery)); },
     reconcile: id => { reconciled.push(id); return nativeStatus; },
     reschedule: request => { scheduled.push(structuredClone(request)); return 'replacement'; },
   });
   const request = { deliveryId: 'original', body: 'business payload' };
   assert.deepEqual(ids((await delta.deliver(request)).suffix.rows), ['revoked-secret', 'retained']);
-  revoked = true;
+  binding.authorizedIds.memory = ['retained'];
   const pending = await delta.deliver(request);
   assert.deepEqual(reconciled, ['original']);
   assert.equal(sent.length, 1);
@@ -134,13 +148,22 @@ test('U08 重试前撤权，只有确认未接管才重新调度', async () => {
 });
 
 test('U09 只统计当轮授权的真实根轮引用，按最后有效使用过期，显式遗忘发布撤回', async () => {
+  const { createMemoryStore } = await import('./store.mjs');
   const { createIndexQuery } = await import('./index-query.mjs');
   const { createDeltaDelivery } = await import('./delta.mjs');
   let now = start;
-  const entries = [item('a-unused'), item('z-used'), item('m-once'),
-    item('private', { visibility: 'private', owner: 'Auditor' })];
-  const query = createIndexQuery({ entries, now: () => now, staleDays: 3, countTokens: tokens });
-  const index = async () => (await query.startup(leader)).rows;
+  const createStore = entries => {
+    let state = { entries, changes: [], seq: 0, files: {} };
+    return createMemoryStore({
+      now: () => now, staleDays: 3, readState: () => structuredClone(state),
+      commitState: next => { state = structuredClone(next); },
+    });
+  };
+  const store = createStore([item('a-unused'), item('z-used'), item('m-once'),
+    item('private', { layer: 'private', owner: 'auditor' })]);
+  const { access } = store;
+  const query = createIndexQuery({ access, countTokens: tokens });
+  const index = async () => (await query.index(leader)).rows;
   const usage = async () => Object.fromEntries((await query.search(auditor, { query: 'probe' }))
     .rows.map(row => [row.id, row.usage]));
   assert.deepEqual(ids(await index()), ['a-unused', 'm-once', 'z-used']);
@@ -152,71 +175,78 @@ test('U09 只统计当轮授权的真实根轮引用，按最后有效使用过�
   for (const event of [root, root, { ...root, turnId: 't2', text: '[memory:z-used]' },
     { ...root, turnId: 'child', isRoot: false, text: '[memory:a-unused]' },
     { ...root, turnId: 'replay', replay: true, text: '[memory:a-unused]' }]) {
-    await query.recordTurn(event);
+    await store.recordTurn(event);
   }
   assert.deepEqual(await usage(), { 'a-unused': 0, 'm-once': 1, 'z-used': 2, private: 0 });
   assert.deepEqual(ids(await index()), ['z-used', 'm-once', 'a-unused']);
   now = start + 4 * day - 1;
-  await query.maintain();
+  await store.maintain();
   assert.deepEqual(ids(await index()), ['z-used', 'm-once']);
-  assert.equal((await query.show(auditor, 'a-unused')).status, 'stale');
-  assert.equal((await query.show(auditor, 'z-used')).status, 'active');
+  assert.equal((await access.show(auditor, 'a-unused')).item.status, 'stale');
+  assert.equal((await access.show(auditor, 'z-used')).item.status, 'active');
   now += 1;
-  await query.maintain();
+  await store.maintain();
   assert.deepEqual(await index(), []);
-  const stale = await query.show(auditor, 'z-used');
+  const { item: stale, seq } = await access.show(auditor, 'z-used');
   assert.equal(stale.status, 'stale');
   assert.equal(stale.body, 'BODY(z-used)');
   const delta = createDeltaDelivery({
-    prefix: frozen, initialCursor: await query.cursor(),
-    readChanges: cursor => query.changesSince(cursor), canRead: () => true, send: () => {},
+    access, binding: leader, prefix: frozen, initialCursor: seq, send: () => {},
   });
-  await query.forget(auditor, 'z-used', { expectedRevision: stale.revision });
+  const forget = { op: 'forget', requestId: 'forget', id: 'z-used', expectedRevision: stale.revision };
+  assert.equal((await store.write(auditor, forget)).ok, true);
   assert.deepEqual(await index(), []);
-  absent(await query.show(auditor, 'z-used'), stale.body);
+  absent(await access.show(auditor, 'z-used'), stale.body);
   const { suffix } = await delta.deliver({ deliveryId: 'forget', body: 'business payload' });
   assert.deepEqual(suffix.rows.map(({ id, operation }) => ({ id, operation })),
     [{ id: 'z-used', operation: 'withdraw' }]);
   absent(suffix, stale.body);
   const active = item('still-active', { effectiveAt: stamp(now), updatedAt: stamp(now) });
-  const fresh = createIndexQuery({ entries: [active], now: () => now, staleDays: 3, countTokens: tokens });
-  assert.deepEqual(ids((await fresh.startup(leader)).rows), [active.id]);
-  await fresh.forget(auditor, active.id, { expectedRevision: active.revision });
-  assert.deepEqual((await fresh.startup(leader)).rows, []);
+  const fresh = createStore([{ ...active, kind: 'ruling' }]);
+  assert.deepEqual(ids((await fresh.access.index(leader)).rows), [active.id]);
+  assert.equal((await fresh.write(auditor, { ...forget, id: active.id, expectedRevision: active.revision })).ok, true);
+  assert.deepEqual((await fresh.access.index(leader)).rows, []);
 });
 
 test('U10 各读取入口使用同一角色授权，猜测未授权 ID 与未知 ID 同响应', async () => {
   const { createAccess } = await import('./access.mjs');
-  const entries = [item('shared'), item('attached'),
-    item('auditor-note', { visibility: 'private', owner: 'Auditor' }),
-    item('candidate', { kind: 'candidate', status: 'pending', visibility: 'worker', owner: 'Worker' })];
+  const entries = [item('shared'), item('attached'), item('unmatched', { keywords: ['other'] }),
+    item('stale', { status: 'stale' }),
+    item('auditor-note', { layer: 'private', owner: 'auditor' }),
+    item('super-note', { layer: 'private', owner: 'super' }),
+    item('candidate', { kind: 'candidate', status: 'pending', layer: 'candidate', owner: 'worker' })];
   const history = [
-    { id: 'own', cardId: 'card', visibility: 'worker', owner: 'Worker' },
-    { id: 'lineage', cardId: 'parent', visibility: 'worker', owner: 'Worker' },
-    { id: 'dependency', cardId: 'dep', visibility: 'worker', owner: 'Worker' },
-    { id: 'same-group', cardId: 'peer', visibility: 'worker', owner: 'Worker' },
-    { id: 'other-card', cardId: 'other', visibility: 'worker', owner: 'Worker' },
-    { id: 'auditor-hist', visibility: 'private', owner: 'Auditor' },
-    { id: 'shared-hist', visibility: 'shared' },
+    { id: 'own', cardId: 'card', layer: 'shared', role: 'worker', owner: 'worker' },
+    { id: 'lineage', cardId: 'parent', layer: 'shared', role: 'worker', owner: 'worker' },
+    { id: 'dependency', cardId: 'dep', layer: 'shared', role: 'worker', owner: 'worker' },
+    { id: 'same-group', cardId: 'peer', layer: 'shared', role: 'worker', owner: 'worker' },
+    { id: 'other-card', cardId: 'other', layer: 'shared', role: 'worker', owner: 'worker' },
+    { id: 'auditor-hist', layer: 'private', owner: 'auditor' },
+    { id: 'super-hist', layer: 'private', owner: 'super' },
+    { id: 'shared-hist', layer: 'shared' },
   ].map(row => ({ project: 'A', group: row.id === 'other-card' ? 'other' : 'team',
     body: `HISTORY(${row.id})`, ...row }));
-  const access = createAccess({ entries, history, changes: entries.map((entry, i) => change(i + 1, entry)),
+  const access = createAccess({ entries, history, changes: entries.filter(entry => entry.status !== 'stale').map((entry, i) => change(i + 1, entry)),
     now: () => start });
-  const shared = ['shared', 'attached'];
-  const active = [...shared, 'auditor-note'];
+  const shared = ['shared', 'attached', 'unmatched'];
+  const matching = ['shared', 'attached'];
+  const auditorIndex = [...shared, 'auditor-note'];
+  const superIndex = [...auditorIndex, 'super-note'];
   const workerHistory = ['own', 'lineage', 'dependency', 'same-group', 'other-card', 'shared-hist'];
   const matrix = [
-    [session('Super'), active, [...active, 'candidate'], active, active, ids(history)],
-    [auditor, active, [...active, 'candidate'], active, active, ids(history)],
-    [leader, shared, [...shared, 'candidate'], shared, shared, workerHistory],
-    [session('Worker', { cardId: 'card', group: 'team', ancestors: ['parent'],
-      dependencies: ['dep'], attachments: ['attached'] }), [], ['attached'], [], ['attached'],
-    ['own', 'lineage', 'dependency']],
-    [session('Reviewer', { cardId: 'review', grants: { memory: ['shared'], history: ['dependency'] } }),
+    [session('super'), superIndex, [...superIndex, 'candidate', 'stale'], [...matching, 'auditor-note', 'super-note'],
+      matching, ids(history)],
+    [auditor, auditorIndex, [...auditorIndex, 'candidate', 'stale'], [...matching, 'auditor-note'],
+      matching, ids(history).filter(id => id !== 'super-hist')],
+    [leader, shared, [...shared, 'candidate', 'stale'], matching, matching, workerHistory],
+    [session('worker', { cardId: 'card', group: 'team', ancestors: ['parent'],
+      dependencies: [{ project: 'A', cardId: 'dep' }], attachments: ['attached', 'auditor-note', 'unmatched'] }),
+    [], ['attached', 'unmatched'], [], ['attached'], ['own', 'lineage', 'dependency']],
+    [session('reviewer', { cardId: 'review', authorizedIds: { memory: ['shared'], history: ['dependency'] } }),
       ['shared'], ['shared'], ['shared'], ['shared'], ['dependency']],
   ];
-  const expectRows = (actual, expected, context) =>
-    assert.deepEqual(ids(actual).sort(), [...expected].sort(), context);
+  const expectRows = ({ rows }, expected, context) =>
+    assert.deepEqual(ids(rows).sort(), [...expected].sort(), context);
   for (const [binding, indexed, shown, searched, attached, histories] of matrix) {
     const label = binding.role;
     expectRows(await access.index(binding), indexed, `${label} index`);
@@ -227,10 +257,10 @@ test('U10 各读取入口使用同一角色授权，猜测未授权 ID 与未知
     const unknown = await access.show(binding, 'unknown-item');
     for (const entry of entries) {
       const result = await access.show(binding, entry.id);
-      if (shown.includes(entry.id)) assert.equal(result.body, entry.body, label);
+      if (shown.includes(entry.id)) assert.equal(result.item.body, entry.body, label);
       else assert.deepEqual(result, unknown, `${label} show ${entry.id}`);
-      if (!searched.includes(entry.id)) {
-        assert.deepEqual(await access.search(binding, { query: entry.title }), [], label);
+      if (!shown.includes(entry.id) || binding.role === 'worker') {
+        assert.deepEqual((await access.search(binding, { query: entry.title })).rows, [], label);
       }
     }
     const unknownHist = await access.hist(binding, { id: 'unknown-hist' });
@@ -244,23 +274,24 @@ test('U10 各读取入口使用同一角色授权，猜测未授权 ID 与未知
 
 test('U11 跨项目共享只读授权受角色、期限、撤销和卡片权限约束', async () => {
   const { createAccess } = await import('./access.mjs');
-  const superBinding = session('Super');
-  const worker = session('Worker', { cardId: 'card', attachments: ['b-note', 'b-private'],
+  const superBinding = session('super');
+  const worker = session('worker', { cardId: 'card', attachments: ['b-note', 'b-private'],
     dependencies: [{ project: 'B', cardId: 'dep' }] });
   const otherCard = { ...worker, cardId: 'other', attachments: [], dependencies: [] };
   const entries = [item('a-note'), item('b-note', { project: 'B', asOf: stamp(start) }),
-    item('b-private', { project: 'B', visibility: 'private', owner: 'Auditor' })];
-  const history = [{ id: 'b-hist', project: 'B', cardId: 'dep', visibility: 'shared', asOf: stamp(start) },
-    { id: 'b-private-hist', project: 'B', cardId: 'dep', visibility: 'private', owner: 'Auditor' }];
+    item('b-private', { project: 'B', layer: 'private', owner: 'auditor' })];
+  const history = [{ id: 'b-hist', project: 'B', cardId: 'dep', layer: 'shared', asOf: stamp(start) },
+    { id: 'b-private-hist', project: 'B', cardId: 'dep', layer: 'private', owner: 'auditor' }];
   let now = start;
   const access = createAccess({ entries, history, now: () => now });
   const request = { sourceProject: 'B', recipient: worker.principal, reason: 'Declared dependency',
     expiresAt: stamp(start + day) };
   const check = async (binding, enabled, phase) => {
     const unknown = await access.show(binding, 'unknown-item', { project: 'B' });
-    const shown = await access.show(binding, 'b-note', { project: 'B' });
-    const attached = await access.attachments(binding, { project: 'B', keywords: ['probe'] });
-    const hist = await access.hist(binding, { project: 'B' });
+    const show = await access.show(binding, 'b-note', { project: 'B' });
+    const shown = show.item;
+    const { rows: attached } = await access.attachments(binding, { project: 'B', keywords: ['probe'] });
+    const { rows: hist } = await access.hist(binding, { project: 'B' });
     assert.deepEqual(ids(attached), enabled ? ['b-note'] : [], phase);
     assert.deepEqual(ids(hist), enabled ? ['b-hist'] : [], phase);
     if (enabled) {
@@ -269,14 +300,14 @@ test('U11 跨项目共享只读授权受角色、期限、撤销和卡片权限�
         assert.equal(result.sourceProject, 'B', phase);
         assert.equal(result.asOf, stamp(start), phase);
       }
-    } else assert.deepEqual(shown, unknown, phase);
+    } else assert.deepEqual(show, unknown, phase);
     assert.deepEqual(await access.show(binding, 'b-private', { project: 'B' }), unknown, phase);
     absent({ shown, attached, hist }, 'b-private');
     assert.equal(await access.canWrite(binding, entries[1]), false, phase);
     assert.equal(await access.canWrite(binding, entries[2]), false, phase);
   };
   await check(worker, false, '无授权');
-  for (const binding of [auditor, leader, worker, session('Reviewer')]) {
+  for (const binding of [auditor, leader, worker, session('reviewer')]) {
     assert.equal((await access.grant(binding, request)).ok, false, binding.role);
   }
   assert.equal((await access.grant(superBinding, { ...request, reason: undefined })).ok, false);
@@ -287,6 +318,7 @@ test('U11 跨项目共享只读授权受角色、期限、撤销和卡片权限�
   assert.equal(granted.grant.reason, request.reason);
   assert.equal(granted.grant.expiresAt, request.expiresAt);
   await check(worker, true, '生效');
+  await check({ ...worker, sessionId: 'other-worker', principal: 'other-worker' }, false, '非接收方');
   await check(otherCard, false, '缺少卡片授权');
   const leaderGrant = await access.grant(superBinding, { ...request, recipient: leader.principal });
   assert.equal(leaderGrant.ok, true);

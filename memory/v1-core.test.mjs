@@ -4,41 +4,50 @@ import { test } from 'node:test';
 const roles = ['super', 'auditor', 'leader', 'worker'];
 const kinds = ['ruling', 'preference', 'lesson', 'candidate'];
 const project = 'project-a';
-const scope = { layer: 'shared', project };
-const bindings = Object.fromEntries(roles.map(role => [role, {
-  author: `actor-${role}`, role, project, cardId: role === 'worker' ? 'card-1' : null,
+const bindings = Object.fromEntries([...roles, 'reviewer'].map(role => [role, {
+  sessionId: role, principal: `actor-${role}`, role, project, cardId: role === 'worker' ? 'card-1' : null,
+  dependencies: [], attachments: [], authorizedIds: { memory: [], history: [] },
 }]));
 const source = { path: 'evidence/retry.txt' };
 const correctedSource = { path: 'evidence/retry-correction.txt' };
 const correctedBody = 'Retry twice after confirmation.';
 const fact = {
-  kind: 'lesson', scope, title: 'Retry limits', body: 'Retry once after confirmation.',
-  keywords: ['retry-limit'], source, expectedRevision: null,
+  kind: 'lesson', layer: 'shared', project, title: 'Retry limits', body: 'Retry once after confirmation.',
+  keywords: ['retry-limit'], source, checkedAt: '2026-01-05T12:00:00.000Z',
 };
 const oldRulings = [
   { id: 'old-a', title: 'Release window A', body: 'Release on Mondays.', original: 'rulings/a.md' },
   { id: 'old-b', title: 'Release window B', body: 'Release on Tuesdays.', original: 'rulings/b.md', supersedes: ['old-a'] },
 ];
 
-async function fixture() {
+const put = (requestId, entry = fact, fields = {}) => ({
+  op: 'put', requestId, entry, expectedRevision: null, ...fields,
+});
+
+async function fixture(options = {}) {
   const { createMemoryStore } = await import('./store.mjs');
-  const files = new Map([
-    [source.path, fact.body],
-    [correctedSource.path, correctedBody],
-    ...oldRulings.map(({ original, body }) => [original, body]),
-  ]);
-  let state;
-  return createMemoryStore({
-    now: () => new Date('2026-01-05T12:00:00.000Z'),
-    getBinding: sessionId => bindings[sessionId],
-    readState: () => structuredClone(state),
-    commitState: next => { state = structuredClone(next); },
-    readEvidence: (sourceProject, path) => sourceProject === project ? files.get(path) : undefined,
+  const root = '/fixture/repo';
+  const paths = new Set([source.path, correctedSource.path, ...oldRulings.map(row => row.original)]
+    .map(path => `${root}/${path}`));
+  const commits = [];
+  const readState = () => structuredClone(commits.at(-1));
+  const store = createMemoryStore({
+    now: () => Date.parse(fact.checkedAt),
+    readState,
+    commitState: next => { commits.push(structuredClone(next)); },
+    evidence: {
+      root,
+      realpath: path => paths.has(path) ? path : undefined,
+      hasCommit: () => false,
+    },
+    ...options,
   });
+  return { store, commits, readState };
 }
 
 function saved(result) {
   assert.equal(result.ok, true, JSON.stringify(result));
+  assert.ok(result.receipt.requestId);
   return result.item;
 }
 
@@ -46,10 +55,10 @@ const ids = entries => entries.map(entry => entry.id);
 
 test('U01 fixed role prompts and memory write decisions', async t => {
   const { renderMemoryPrompt, handleMemoryEvent } = await import('./prompts.mjs');
-  const store = await fixture();
+  const { store } = await fixture();
   const callModel = t.mock.fn();
   const remind = t.mock.fn();
-  const write = t.mock.fn(request => store.write('leader', request));
+  const write = t.mock.fn((binding, request) => store.write(binding, request));
   const examples = kinds.map(kind => ({ ...fact, kind, id: `example-${kind}`, title: `Example ${kind}` }));
   const rules = [
     /默认不写/u, /未来的 agent.{0,30}做得更好/iu,
@@ -65,7 +74,7 @@ test('U01 fixed role prompts and memory write decisions', async t => {
 
   for (const role of roles) {
     const template = `Fixed instructions for ${role}`;
-    const prompt = await renderMemoryPrompt({ role, template, entries: examples });
+    const prompt = await renderMemoryPrompt({ binding: bindings[role], template, entries: examples });
     assert.ok(prompt.includes(template), role);
     for (const kind of kinds) assert.match(prompt, new RegExp(`\\b${kind}\\b`), role);
     for (const rule of rules) assert.match(prompt, rule, role);
@@ -74,7 +83,7 @@ test('U01 fixed role prompts and memory write decisions', async t => {
 
     for (const type of [...triggers, 'normal_turn']) {
       const count = remind.mock.callCount();
-      assert.equal(await handleMemoryEvent({ role, type }, io), undefined);
+      assert.equal(await handleMemoryEvent({ binding: bindings[role], type }, io), undefined);
       assert.equal(callModel.mock.callCount(), 0, `${role} ${type}`);
       assert.equal(write.mock.callCount(), 0, `${role} ${type}`);
       if (type === 'normal_turn') {
@@ -86,56 +95,64 @@ test('U01 fixed role prompts and memory write decisions', async t => {
     }
   }
 
-  assert.deepEqual(await store.index('leader'), []);
+  assert.deepEqual((await store.access.index(bindings.leader)).rows, []);
   const item = saved(await handleMemoryEvent({
-    role: 'leader', type: 'normal_turn', explicitWrite: { ...fact, requestId: 'normal-write' },
+    binding: bindings.leader, type: 'normal_turn', explicitWrite: put('normal-write'),
   }, io));
   assert.equal(item.body, fact.body);
   assert.equal(write.mock.callCount(), 1);
   assert.equal(remind.mock.callCount(), roles.length * triggers.length);
   assert.equal(callModel.mock.callCount(), 0);
-  assert.deepEqual(ids(await store.index('leader')), [item.id]);
+  assert.deepEqual(ids((await store.access.index(bindings.leader)).rows), [item.id]);
 });
 
 test('U02 revises one fact in place and forget survives old request replay', async () => {
-  const store = await fixture();
-  const create = { ...fact, requestId: 'create' };
-  const original = saved(await store.write('leader', create));
-  const update = {
-    ...fact, requestId: 'update', targetId: original.id, expectedRevision: original.revision,
-    body: correctedBody, source: correctedSource,
-  };
-  const revised = saved(await store.write('leader', update));
+  const { store, commits, readState } = await fixture();
+  const { leader, worker, reviewer } = bindings;
+  const create = put('create');
+  const original = saved(await store.write(leader, create));
+  const update = put('update', { ...fact, body: correctedBody, source: correctedSource },
+    { id: original.id, expectedRevision: original.revision });
+  const revised = saved(await store.write(leader, update));
   assert.equal(revised.id, original.id);
   assert.equal(revised.revision, original.revision + 1);
-  assert.equal((await store.show('leader', revised.id)).body, update.body);
-  assert.deepEqual(ids(await store.index('leader')), [original.id]);
-  assert.deepEqual(ids(await store.search('leader', 'retry-limit')), [original.id]);
+  assert.equal((await store.access.show(leader, revised.id)).item.body, correctedBody);
+  assert.deepEqual(ids((await store.access.index(leader)).rows), [original.id]);
+  assert.deepEqual(ids((await store.access.search(leader, { query: 'retry-limit' })).rows), [original.id]);
 
-  const forgotten = await store.forget('leader', {
-    requestId: 'forget', targetId: revised.id, expectedRevision: revised.revision,
-  });
-  assert.equal(forgotten.ok, true);
+  const forget = { op: 'forget', requestId: 'forget', id: revised.id, expectedRevision: revised.revision };
+  const before = commits.length;
+  for (const binding of [worker, reviewer]) {
+    const denied = await store.write(binding, { ...forget, requestId: `forget-${binding.role}` });
+    assert.deepEqual([denied.ok, denied.code], [false, 'forbidden']);
+  }
+  const conflict = await store.write(leader, { ...forget, requestId: 'stale-forget', expectedRevision: original.revision });
+  assert.deepEqual([conflict.ok, conflict.code, conflict.currentRevision], [false, 'conflict', revised.revision]);
+  assert.equal(commits.length, before);
+
+  const forgotten = saved(await store.write(leader, forget));
   assert.equal(forgotten.id, original.id);
   assert.equal(forgotten.revision, revised.revision + 1);
+  assert.equal(commits.length, before + 1);
   for (const replay of [null, create, update]) {
-    if (replay) {
-      const response = JSON.stringify(await store.write('leader', replay));
-      assert.ok(!response.includes(create.body) && !response.includes(update.body));
+    const response = replay && await store.write(leader, replay);
+    for (const body of [fact.body, correctedBody]) {
+      assert.ok(!JSON.stringify(response).includes(body));
+      assert.ok(!JSON.stringify(readState()).includes(body), 'persisted state retains forgotten body');
     }
-    assert.equal(await store.show('leader', original.id), null);
-    assert.deepEqual(await store.search('leader', 'retry-limit'), []);
-    assert.deepEqual(await store.index('leader'), []);
+    assert.equal((await store.access.show(leader, original.id)).item, null);
+    assert.deepEqual((await store.access.search(leader, { query: 'retry-limit' })).rows, []);
+    assert.deepEqual((await store.access.index(leader)).rows, []);
   }
 });
 
 test('U03 enforces the role and scope matrix using session identity', async t => {
-  const store = await fixture();
+  const { store } = await fixture();
   const scopes = {
-    local: scope,
+    local: { layer: 'shared', project },
     foreign: { layer: 'shared', project: 'project-b' },
-    user: { layer: 'user' },
-    cross: { layer: 'cross-project' },
+    user: { layer: 'user', project: null },
+    cross: { layer: 'cross_project', project: null },
   };
   const allowed = {
     super: { user: ['preference'], cross: ['ruling', 'lesson'] },
@@ -143,11 +160,14 @@ test('U03 enforces the role and scope matrix using session identity', async t =>
     leader: { local: ['lesson'] },
     worker: {},
   };
-  const forged = { author: 'forged-author', project: 'forged-project', id: 'forged-id', revision: 9000 };
+  const forged = { author: 'forged-author', id: 'forged-id', revision: 9000 };
   const claimedRole = { ruling: 'auditor', preference: 'auditor', lesson: 'leader', candidate: 'worker' };
   const assignedIds = new Set();
   function checkIdentity(item, role, request) {
-    for (const key of ['author', 'role', 'project']) assert.equal(item[key], bindings[role][key]);
+    assert.equal(item.author, bindings[role].principal);
+    assert.equal(item.role, role);
+    assert.equal(item.project, request.project);
+    assert.equal(item.layer, request.layer);
     assert.equal(item.kind, request.kind);
     assert.ok(typeof item.id === 'string' && item.id.length > 0);
     assert.notEqual(item.id, request.id);
@@ -163,17 +183,16 @@ test('U03 enforces the role and scope matrix using session identity', async t =>
         const requestId = `${role}-${kind}-${area}`;
         await t.test(requestId, async () => {
           const request = {
-            ...fact, ...forged, kind, scope: requestedScope, requestId, title: requestId,
-            project: area === 'foreign' ? project : forged.project,
+            ...fact, ...forged, kind, ...requestedScope, title: requestId,
             role: claimedRole[kind] === role ? 'super' : claimedRole[kind],
           };
-          const result = await store.write(role, request);
+          const result = await store.write(bindings[role], put(requestId, request, { project: 'forged-project' }));
           const permitted = allowed[role][area]?.includes(kind) ?? false;
           assert.equal(result.ok, permitted, JSON.stringify(result));
           if (permitted) checkIdentity(result.item, role, request);
           if (role === 'worker') {
-            const proposal = { ...request, requestId: `propose-${requestId}`, proposedKind: 'lesson' };
-            const proposed = await store.propose(role, proposal);
+            const proposal = { ...request, layer: area === 'local' ? 'candidate' : request.layer, proposedKind: 'lesson' };
+            const proposed = await store.write(bindings[role], put(`propose-${requestId}`, proposal, { op: 'propose' }));
             const permittedProposal = kind === 'candidate' && area === 'local';
             assert.equal(proposed.ok, permittedProposal, JSON.stringify(proposed));
             if (permittedProposal) {
@@ -188,23 +207,43 @@ test('U03 enforces the role and scope matrix using session identity', async t =>
 });
 
 test('U04 reviews candidates at card close and imports legacy rulings', async () => {
-  const store = await fixture();
+  const { store, commits, readState } = await fixture();
+  const { worker, leader, auditor } = bindings;
   const decisions = { promote: 'promoted', merge: 'merged', return: 'returned', reject: 'rejected' };
+  const proposal = (label, proposedKind) => ({
+    ...fact, layer: 'candidate', kind: 'candidate', proposedKind,
+    title: label, body: `Verified retry guidance for ${label}.`,
+  });
+  const propose = (label, proposedKind) => store.write(worker,
+    put(`propose-${label}`, proposal(label, proposedKind), { op: 'propose' }));
+  const ruling = saved(await propose('ruling', 'ruling'));
   const candidates = new Map();
+  const priorRevisions = new Map();
   for (const action of Object.keys(decisions)) {
-    const candidate = saved(await store.propose('worker', {
-      ...fact, kind: 'candidate', proposedKind: 'lesson', requestId: `propose-${action}`,
-      title: action, body: `Verified retry guidance for ${action}.`,
-    }));
+    const candidate = saved(await propose(action, 'lesson'));
     assert.equal(candidate.status, 'pending');
-    candidates.set(action, candidate);
+    const entry = proposal(action, 'lesson');
+    const revised = saved(await store.write(worker, put(`revise-${action}`, {
+      ...entry, body: `${entry.body} Applies after confirmation.`,
+    }, { op: 'propose', id: candidate.id, expectedRevision: candidate.revision })));
+    assert.equal(revised.revision, candidate.revision + 1);
+    priorRevisions.set(action, candidate.revision);
+    candidates.set(action, revised);
   }
-  assert.deepEqual(await store.index('leader'), []);
-  assert.deepEqual(await store.index('auditor'), []);
+  assert.deepEqual((await store.access.index(leader)).rows, []);
+  assert.deepEqual((await store.access.index(auditor)).rows, []);
 
-  const existing = saved(await store.write('leader', { ...fact, requestId: 'merge-target' }));
+  const before = commits.length;
+  for (const [binding, candidate] of [[worker, candidates.get('promote')], [leader, ruling]]) {
+    const denied = await store.write(binding, { op: 'promote', requestId: `denied-${binding.role}`,
+      cardId: worker.cardId, id: candidate.id, expectedRevision: candidate.revision });
+    assert.deepEqual([denied.ok, denied.code], [false, 'forbidden']);
+  }
+  assert.equal(commits.length, before);
+
+  const existing = saved(await store.write(leader, put('merge-target')));
   const review = async event => {
-    const result = await store.reviewAtCardClose('leader', event);
+    const result = await store.write(leader, event);
     assert.equal(result.ok, true, JSON.stringify(result));
     return result;
   };
@@ -212,13 +251,21 @@ test('U04 reviews candidates at card close and imports legacy rulings', async ()
   for (const [action, status] of Object.entries(decisions)) {
     const candidate = candidates.get(action);
     const event = {
-      type: 'card_close', cardId: bindings.worker.cardId, requestId: `close-${action}`,
-      candidateId: candidate.id, expectedRevision: candidate.revision, action,
+      op: action, cardId: worker.cardId, requestId: `close-${action}`,
+      id: candidate.id, expectedRevision: candidate.revision,
     };
     if (action === 'merge') {
       event.targetId = existing.id;
       event.targetExpectedRevision = existing.revision;
       event.body = `${existing.body} ${candidate.body}`;
+    }
+    if (action === 'promote' || action === 'merge') {
+      const before = commits.length;
+      const conflict = await store.write(leader, {
+        ...event, requestId: `stale-${action}`, expectedRevision: priorRevisions.get(action),
+      });
+      assert.deepEqual([conflict.ok, conflict.code, conflict.currentRevision], [false, 'conflict', candidate.revision]);
+      assert.equal(commits.length, before);
     }
     const result = await review(event);
     assert.equal(result.candidate.id, candidate.id);
@@ -227,22 +274,28 @@ test('U04 reviews candidates at card close and imports legacy rulings', async ()
       const promoted = result.item;
       assert.equal(promoted.kind, 'lesson');
       assert.equal(promoted.body, candidate.body);
-      assert.equal(promoted.proposer, bindings.worker.author);
-      assert.equal(promoted.reviewer, bindings.leader.author);
+      assert.equal(promoted.proposer, worker.principal);
+      assert.equal(promoted.reviewer, leader.principal);
       assert.deepEqual(promoted.source, source);
       activeIds.push(promoted.id);
       const replay = await review(event);
       assert.equal(replay.item.id, promoted.id);
       assert.equal(replay.item.revision, promoted.revision);
+      const beforeSecondClose = readState();
+      const secondClose = await review({ ...event, requestId: 'second-card-close' });
+      assert.equal(secondClose.item.id, promoted.id);
+      assert.equal(secondClose.item.revision, promoted.revision);
+      assert.deepEqual(readState().entries, beforeSecondClose.entries);
+      assert.equal(readState().seq, beforeSecondClose.seq);
     } else if (action === 'merge') {
       assert.equal(result.item.id, existing.id);
       assert.equal(result.item.revision, existing.revision + 1);
-      assert.equal((await store.show('leader', existing.id)).body, event.body);
+      assert.equal((await store.access.show(leader, existing.id)).item.body, event.body);
     }
-    assert.deepEqual(ids(await store.index('leader')).sort(), activeIds.toSorted());
+    assert.deepEqual(ids((await store.access.index(bindings.leader)).rows).sort(), activeIds.toSorted());
   }
 
-  const imported = await store.importRulings('auditor', { requestId: 'import', entries: oldRulings });
+  const imported = await store.write(auditor, { op: 'import_rulings', requestId: 'import', entries: oldRulings });
   assert.equal(imported.ok, true);
   assert.equal(imported.items.length, 2);
   const first = imported.items.find(item => item.original === oldRulings[0].original);
@@ -254,7 +307,82 @@ test('U04 reviews candidates at card close and imports legacy rulings', async ()
   }
   assert.notEqual(first.id, second.id);
   assert.deepEqual(second.supersedes, [first.id]);
-  const stored = await store.show('auditor', second.id);
+  const { item: stored } = await store.access.show(auditor, second.id);
   assert.equal(stored.original, second.original);
   assert.deepEqual(stored.supersedes, [first.id]);
+  assert.deepEqual((await store.access.show(auditor, first.id)).item.supersededBy, [second.id]);
+  const indexed = ids((await store.access.index(auditor)).rows);
+  assert.ok(indexed.includes(second.id));
+  assert.ok(!indexed.includes(first.id));
+});
+
+test('U04 integrated write applies authorization, validation, redaction, dedup and CAS across reads', async () => {
+  const { createIndexQuery } = await import('./index-query.mjs');
+  const { createDeltaDelivery } = await import('./delta.mjs');
+  const token = 'SYNTH_WRITE_SECRET';
+  const replacement = '[REDACTED]';
+  const { store, commits, readState } = await fixture({
+    replacement,
+    classifySensitive: text => ({
+      reliable: true,
+      spans: [...text.matchAll(/SYNTH_WRITE_SECRET/g)].map(({ index }) => ({ start: index, end: index + token.length })),
+    }),
+  });
+  const { leader, worker } = bindings;
+  const { access } = store;
+  const query = createIndexQuery({ access, countTokens: text => text.split(/\s+/u).length });
+  const original = saved(await store.write(leader, put('seed')));
+  const current = saved(await store.write(leader, put('seed-revision', { ...fact, title: 'Seed revision' },
+    { id: original.id, expectedRevision: original.revision })));
+  const entry = { ...fact, body: `${correctedBody} ${token}`, source: correctedSource };
+  const request = put('integrated', entry, { id: current.id, expectedRevision: current.revision });
+  const before = readState();
+  const commitCount = commits.length;
+  const denied = await store.write(worker, { ...request, requestId: 'worker-denied' });
+  assert.deepEqual([denied.ok, denied.code], [false, 'forbidden']);
+  for (const [name, fields] of [['format', { title: 'Two\nlines' }], ['evidence', { source: { path: 'missing.md' } }]]) {
+    const invalid = await store.write(leader, { ...request, requestId: name, entry: { ...entry, ...fields } });
+    assert.equal(invalid.ok, false, name);
+  }
+  const conflict = await store.write(leader, { ...request, requestId: 'stale', expectedRevision: original.revision });
+  assert.deepEqual([conflict.ok, conflict.code, conflict.currentRevision], [false, 'conflict', current.revision]);
+  assert.equal(commits.length, commitCount);
+  assert.deepEqual(readState(), before);
+
+  const result = await store.write(leader, request);
+  const updated = saved(result);
+  assert.equal(updated.id, current.id);
+  assert.equal(updated.revision, current.revision + 1);
+  assert.equal(updated.body, `${correctedBody} ${replacement}`);
+  assert.equal(commits.length, commitCount + 1);
+  assert.equal(readState().seq, before.seq + 1);
+  assert.deepEqual(await store.write(leader, request), result);
+  assert.equal(commits.length, commitCount + 1);
+  const duplicate = await store.write(leader, put('duplicate', { ...entry, body: updated.body }));
+  assert.equal(duplicate.receipt.status, 'duplicate');
+  assert.equal(saved(duplicate).id, updated.id);
+  assert.equal(readState().seq, before.seq + 1);
+  assert.ok(!JSON.stringify(readState()).includes(token));
+
+  const createDelivery = binding => createDeltaDelivery({
+    access, binding, prefix: '', initialCursor: before.seq, send: () => {},
+  }).deliver({ deliveryId: 'integrated-delivery', body: '' });
+  const index = await query.index(leader);
+  const shown = await access.show(leader, updated.id);
+  const { suffix } = await createDelivery(leader);
+  const delta = await access.delta(leader, { cursor: before.seq });
+  const versions = rows => rows.map(({ id, revision }) => [id, revision]);
+  assert.deepEqual(versions(index.rows), [[updated.id, updated.revision]]);
+  assert.deepEqual((await access.index(leader)).rows, index.rows);
+  assert.deepEqual(shown.item, updated);
+  assert.deepEqual([suffix.baseCursor, suffix.endCursor], [before.seq, shown.seq]);
+  assert.deepEqual(suffix.rows, delta.rows);
+  assert.deepEqual(versions(delta.rows), versions(index.rows));
+  assert.equal(delta.rows[0].operation, 'update');
+  assert.ok(!JSON.stringify({ index, shown, suffix }).includes(token));
+
+  const foreign = { ...leader, sessionId: 'other-project', project: 'project-b' };
+  assert.deepEqual((await query.index(foreign)).rows, []);
+  assert.deepEqual((await createDelivery(foreign)).suffix.rows, []);
+  assert.deepEqual(await access.show(foreign, updated.id), await access.show(foreign, 'unknown-id'));
 });
