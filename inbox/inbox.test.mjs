@@ -96,6 +96,42 @@ test('a native submission still reconciles when the wrapper withheld Enter', () 
   assert.equal(nativeDelivery({ id, attemptAt: 1000 }, observation).sessionId, sessionId);
 });
 
+test('an external agy turn settles an incomplete delivered turn and lets queued worker results through', async t => {
+  const f = fixture(t);
+  const target = f.terminal('t9', 'agy', 'idle');
+  const started = Date.now();
+  const first = await f.submit(target, 'queue', undefined, {
+    startup: true, phase: 'received', attemptAt: started - 1,
+    received: { at: started, sessionId: target.address },
+  });
+  const second = await f.submit(target, 'queue', undefined, { text: 'BLOCKED first worker', waveBatch: true });
+  const third = await f.submit(target, 'queue', undefined, { text: 'BLOCKED second worker', waveBatch: true });
+  f.event(target, 'PreInvocation', undefined, { receivedAt: started, invocationNum: 0, initialNumSteps: 1, deliveryId: first });
+  f.event(target, 'PreInvocation', undefined, { receivedAt: started + 1, invocationNum: 1, initialNumSteps: 12 });
+  await f.reopen().step();
+  assert.equal(f.lookup(first).completion, undefined);
+  assert.equal(f.sends.length, 0);
+
+  f.event(target, 'PreInvocation', undefined, { receivedAt: started + 2, invocationNum: 0, initialNumSteps: 37 });
+  f.event(target, 'Stop', undefined, {
+    receivedAt: started + 3, fullyIdle: true, executionNum: 0, finalReply: 'external reply',
+  });
+  await f.reopen().step();
+  assert.deepEqual(f.lookup(first).completion, {
+    at: started + 2, sessionId: target.address, noReply: true, source: 'agy newer root PreInvocation',
+  });
+  assert.deepEqual(f.sends.map(([, input]) => deliveryId(input)), [second]);
+
+  const end = Date.now() + 1;
+  f.event(target, 'PreInvocation', undefined, { receivedAt: end, invocationNum: 0, initialNumSteps: 40, deliveryId: second });
+  f.event(target, 'Stop', undefined, {
+    receivedAt: end + 1, fullyIdle: true, executionNum: 1, deliveryId: second, finalReply: 'correlated reply',
+  });
+  await f.reopen().step();
+  assert.equal(f.lookup(second).completion.body, 'correlated reply');
+  assert.deepEqual(f.sends.map(([, input]) => deliveryId(input)), [second, third]);
+});
+
 test('queued Super messages and interrupts bypass uncertain writes and preserve late reconciliation', async t => {
   const f = fixture(t);
   const target = f.terminal('t9', 'codex', 'idle');

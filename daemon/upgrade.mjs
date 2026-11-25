@@ -9,7 +9,7 @@ import { promisify } from 'node:util';
 import { runtimeDirectory } from '../cli/project.mjs';
 import { CommandError } from '../cli/sessions.mjs';
 import { hostProtocol, hostProtocols } from './host-control.mjs';
-import { activeRelease, activeReleaseFile, releaseDigest, releaseId, releaseRoot, upgradeFile, upgradeState } from './release.mjs';
+import { activeRelease, activeReleaseFile, releaseDigest, releaseRoot, upgradeFile, upgradeState } from './release.mjs';
 import { readText, writeState } from './io.mjs';
 import { daemonAbsent, request } from './rpc.mjs';
 import { hostUUID, readJSON } from './host-control.mjs';
@@ -89,15 +89,16 @@ function launch(project, entry, args, env = process.env) {
   });
 }
 
-export async function planUpgrade(project, args, sessions) {
+export async function planUpgrade(project, args, current, sessions) {
   const active = activeRelease(project);
-  const current = active?.current ?? { id: releaseId(), root: releaseRoot };
   if (args.rollback && !active?.previous) throw new CommandError('not-ready', 'No previous compatible release');
   const [target, verifiedCurrent] = await Promise.all([
     verifyRelease(args.rollback ? active.previous.root : args.target), verifyRelease(current.root),
   ]);
   if (target.root === current.root) throw new CommandError('invalid-arguments', 'Prepare the new build in a different release directory');
-  if (current.digest && current.digest !== verifiedCurrent.digest) throw new Error('Active release changed since it was verified');
+  if (current.digest !== verifiedCurrent.digest || active?.current.digest && active.current.digest !== current.digest) {
+    throw new Error('Active release changed since it was verified');
+  }
   if (args.rollback && active.previous.digest && active.previous.digest !== target.digest) {
     throw new Error('Previous release changed since it was verified');
   }

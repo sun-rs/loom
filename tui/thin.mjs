@@ -125,7 +125,7 @@ export function thinBackend({ pty, Terminal, cols = 180, rows = 50, mirror, huma
           const before = await read();
           if (before.generation !== expected.generation || !valid(before)) throw stale();
           try {
-            return await submitComposer(text, { before, read, write, valid, verify, observeEcho(marker) {
+            return await submitComposer(text, { before, provider, read, write, valid, verify, observeEcho(marker) {
               echo = { marker, tail: '', found: false };
               return () => echo.found;
             } });

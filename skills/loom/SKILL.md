@@ -17,6 +17,7 @@ description: 在 Loom 中启动、指挥、复核或接手由 Super、Auditor、
 - **Super** 定目标、红线、权限、项目级预算和启动策略，裁决升级事项。首次派工前参照 [策略示例](../../examples/policy.json) 写 `.project/policy.json`。`preferred` 指定 CLI、模型、effort 和 mode，全局与角色的 `deny` 优先。常驻角色默认 TUI，Worker 默认 headless。启动拒绝或有效值有差异时报告 Super。
 - **Auditor** 负责维护 `.project/charter.md` 和 `.project/rulings.md`。章程写目标、非目标、红线和验收，账本按编号逐字记录用户裁决。新裁决另起编号并标明取代关系。参照 [章程模板](../../examples/charter.md) 和 [裁决模板](../../examples/rulings.md)。
 - 需要 Super 裁决时，用 `loom notifications --project "$PROJECT" --needs-decision "$SUMMARY"` 给出事实、选项和建议。托管 Super 由收件箱按批唤醒，外部 Super 收本机通知。`loom notifications --project "$PROJECT"` 预览，`--take` 领取，`--history` 回看。
+- Super 巡检通知时也处理 `blocked-escalation`（工作阻塞升级）和 `delivery-uncertain`（投递缺少原生确认）。
 
 ## Auditor · 用户的默认对接人
 

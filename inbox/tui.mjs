@@ -163,6 +163,18 @@ export function nativeDelivery(message, observation) {
   const { provider, terminal } = observation;
   const events = observation.events.filter(row => row.receivedAt >= message.attemptAt);
   const anchor = events.find(row => start(provider, row) && (row.deliveryId ?? deliveryId(row.prompt)) === message.id);
+  const confirmation = !anchor && book(observation).get(message.id)?.confirmation;
+  const confirmed = confirmation?.at >= message.attemptAt ?
+    { at: confirmation.at, sessionId: confirmation.sessionId, turnId: confirmation.turnId } : undefined;
+  const receiptFor = row => ({ at: row.receivedAt, sessionId: session(row), turnId: row.turn_id });
+  const agyReceipt = provider === 'agy' && (anchor ? receiptFor(anchor) : confirmed ?? message.received);
+  // Agy's root PreInvocation can omit the marker for human inputs. A later
+  // user step in the same conversation ends our claim on subsequent Stops.
+  const newer = agyReceipt?.sessionId && events.find(row =>
+    row.receivedAt > agyReceipt.at && session(row) === agyReceipt.sessionId && start('agy', row) &&
+    (row.deliveryId ?? deliveryId(row.prompt)) !== message.id &&
+    !(Number.isSafeInteger(anchor?.initialNumSteps) && Number.isSafeInteger(row.initialNumSteps) &&
+      row.initialNumSteps <= anchor.initialNumSteps));
   const stops = events.filter(row => end(provider, row));
   const transcript = new Map();
   const rows = stop => {
@@ -181,6 +193,9 @@ export function nativeDelivery(message, observation) {
     return claudeTurns.get(stop);
   }
   const stop = stops.find(row => {
+    if (provider === 'agy' && agyReceipt?.sessionId &&
+        (session(row) !== agyReceipt.sessionId || row.receivedAt < agyReceipt.at ||
+          anchor && events.indexOf(row) <= events.indexOf(anchor))) return false;
     if (row.deliveryId === message.id) return true;
     if (anchor && provider === 'codex') return session(row) === session(anchor) && row.turn_id === anchor.turn_id &&
       events.indexOf(row) > events.indexOf(anchor);
@@ -190,26 +205,30 @@ export function nativeDelivery(message, observation) {
       if (row === sequentialStop) return true;
       return claudeTurn(row)?.prompts.some(prompt => deliveryId(prompt) === message.id);
     }
-    if (provider === 'agy' && row.deliveryId) return false;
+    if (provider === 'agy') {
+      if (row.deliveryId || newer && row.receivedAt >= newer.receivedAt) return false;
+      if (agyReceipt?.sessionId) return true;
+    }
     return transcriptContains(provider, rows(row), row, message.id);
   });
   const receipt = anchor ?? stop;
-  const confirmation = !receipt && book(observation).get(message.id)?.confirmation;
-  if (!receipt && (!confirmation || confirmation.at < message.attemptAt)) return;
-  const result = receipt ? { at: receipt.receivedAt, sessionId: session(receipt), turnId: receipt.turn_id } :
-    { at: confirmation.at, sessionId: confirmation.sessionId, turnId: confirmation.turnId };
+  const result = receipt ? receiptFor(receipt) : confirmed ?? agyReceipt;
+  if (!result) return;
   if (!stop) {
     const abort = observation.tui?.bookPath && [...book(observation).values()].find(entry =>
       entry.receipt?.kind === 'confirmed' && entry.active?.inputId === message.id &&
       entry.active.sessionId === result.sessionId);
-    return abort ? { ...result, completion: { at: abort.receipt.at, sessionId: result.sessionId,
-      turnId: result.turnId, noReply: true } } : result;
+    const at = abort?.receipt.at ?? newer?.receivedAt;
+    return at == null ? result : { ...result, completion: { ...result, at, noReply: true,
+      source: abort ? 'loom-pty confirmed interruption' : 'agy newer root PreInvocation' } };
   }
   const completion = { at: stop.receivedAt, sessionId: session(stop), turnId: stop.turn_id };
   if (canceled(stop) || stop.hook_event_name === 'StopFailure' || stop.error) {
-    return { ...result, completion: { ...completion, noReply: true } };
+    return { ...result, completion: { ...completion, noReply: true, source: `${provider} native ${stop.hook_event_name}` } };
   }
   let reply;
+  const agyAttributed = provider === 'agy' &&
+    (stop.deliveryId === message.id || transcriptContains(provider, rows(stop), stop, message.id));
   if (provider === 'opencode' && stop.last_assistant_message?.trim()) {
     reply = { body: stop.last_assistant_message, source: 'OpenCode session export' };
   } else if (provider === 'codex' && stop.last_assistant_message) {
@@ -221,15 +240,16 @@ export function nativeDelivery(message, observation) {
     } else if ((stop === sequentialStop || anchor?.turn_id && stop.turn_id === anchor.turn_id) && stop.last_assistant_message?.trim()) {
       reply = { body: stop.last_assistant_message, source: 'claude Stop' };
     }
-  } else if (provider !== 'agy' || transcriptContains(provider, rows(stop), stop, message.id)) {
+  } else if (provider !== 'agy' || agyAttributed) {
     reply = finalFromStop(provider, stop, rows(stop));
   }
   // agy reports the final reply in its native done status. Use it only while
   // that status still belongs to this Stop, with no subsequent root invocation.
-  if (!reply && provider === 'agy' && stop === observation.events.findLast(row => start(provider, row) || end(provider, row)) &&
+  if (!reply && agyAttributed && stop === observation.events.findLast(row => start(provider, row) || end(provider, row)) &&
     terminal.status?.state === 'done' && terminal.status_ms >= stop.receivedAt && terminal.status.msg?.trim()) {
     reply = { body: terminal.status.msg, source: 'agy Stop + hc done' };
   }
+  if (!reply && provider === 'agy') return { ...result, completion: { ...completion, noReply: true, source: 'agy native Stop' } };
   return { ...result, completion: { ...completion, ...reply } };
 }
 

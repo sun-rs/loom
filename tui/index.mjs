@@ -237,11 +237,12 @@ export function bindTuiSession(terminal, provider, {
       pending = id;
       paste = { id, ...state.host, turnSequence: state.native.turnSequence };
       try {
-        entry.hostReceipt = await terminal.writeIf(wireText(id, text), state, async frame => {
+        entry.hostReceipt = await terminal.writeIf(wireText(id, text), state, async (frame, { collapsed } = {}) => {
           const latest = await native.read();
           if (native.confirmations(id).count || latest.sessionId !== state.native.sessionId ||
               latest.activeSince !== state.native.activeSince || latest.phase !== state.native.phase) return false;
           return !blocksInput(provider.screen.classify(frame.composerText ?? frame.text)) &&
+            (!collapsed || frame.vacantText && classify(frame.vacantText) === 'idle') &&
             (sameInterruptedTurn(latest) || currentTitle(frame, latest, Date.now()) !== 'busy');
         });
       } catch (error) {

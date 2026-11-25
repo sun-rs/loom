@@ -8,7 +8,7 @@ import { claimProject } from '../relay/lock.mjs';
 import { createSupervisor } from './supervisor.mjs';
 import { maxLine } from './rpc.mjs';
 import { readText, syncDirectory } from './io.mjs';
-import { activeRelease, nextController, releaseId, releaseRoot, upgradeState } from './release.mjs';
+import { activeRelease, nextController, releaseDigest, releaseId, releaseRoot, upgradeState } from './release.mjs';
 import { beginUpgrade, daemonProtocol, liveHandoff, planUpgrade, selfCheck, validateHandoff, validateReattachment } from './upgrade.mjs';
 
 function excludeProjectMetadata(project) {
@@ -42,6 +42,7 @@ export async function main(args, { pollInterval = 350, ...options } = {}) {
     return;
   }
   if (values['self-check']) { console.log(JSON.stringify(await selfCheck())); return; }
+  const runningRelease = { id: releaseId(), root: releaseRoot, digest: releaseDigest(releaseRoot) };
   const project = projectDirectory(values.project);
   const metadata = join(project, '.project');
   mkdirSync(metadata, { recursive: true, mode: 0o700 });
@@ -112,16 +113,16 @@ export async function main(args, { pollInterval = 350, ...options } = {}) {
         if (command === 'daemon-status' || command === 'daemon-stop') {
           result = { running: !closing && command === 'daemon-status', pid: process.pid,
             relay: closing ? 'stopping' : lastPollError ? 'degraded' : 'integrated',
-            protocol: daemonProtocol, release: { id: releaseId(), root: releaseRoot },
+            protocol: daemonProtocol, release: runningRelease,
             ...(handoff && { handoff: handoff.id, ready: true, sessions: attached }) };
         } else if (command === 'hello') {
           result = { protocol: daemonProtocol, incarnation: controller.id, generation: controller.generation };
         } else if (command === 'upgrade-status') {
-          result = { active: activeRelease(project)?.current ?? { id: releaseId(), root: releaseRoot },
+          result = { active: { ...activeRelease(project)?.current, ...runningRelease },
             upgrade: upgradeState(project), sessions: await serial(supervisor.upgradeSessions) };
         } else if (command === 'upgrade-plan' || command === 'upgrade-apply') {
           if (!canDispatch()) throw Object.assign(new Error('loomd is switching releases'), { code: 'not-ready' });
-          const plan = await planUpgrade(project, args, () => serial(supervisor.upgradeSessions));
+          const plan = await planUpgrade(project, args, runningRelease, () => serial(supervisor.upgradeSessions));
           if (command === 'upgrade-plan') result = { ...plan, eligible: !plan.blockers.length };
           else result = await serial(async () => {
             if (!canDispatch()) throw Object.assign(new Error('loomd is switching releases'), { code: 'not-ready' });

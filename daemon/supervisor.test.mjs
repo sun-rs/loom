@@ -6,6 +6,7 @@ import { join } from 'node:path';
 import { test } from 'node:test';
 import { randomUUID } from 'node:crypto';
 import { deliveryId } from '../inbox/message.mjs';
+import { publish } from '../inbox/store.mjs';
 import { estimateTokens } from '../lib/token-budget.mjs';
 import { createSupervisor } from './supervisor.mjs';
 
@@ -595,6 +596,18 @@ test('pushes a coalesced BLOCKED wave and explicit project events once to the ma
   await recovered.tick();
   assert.equal(pushed().length, 2);
   assert.equal((await recovered.handle('notifications', { history: true })).notifications.length, 3);
+  const id = randomUUID();
+  const attemptAt = Date.now() - 61_000;
+  publish(f.project, { id, text: 'unconfirmed test input', phase: 'sending', issue: 'uncertain', attemptAt,
+    createdAt: attemptAt, requestedMode: 'queue', mode: 'queue',
+    target: { addr: auditor.addr, backend: auditor.backend, provider: auditor.cli, createdAt: auditor.startedAt } });
+  await recovered.tick();
+  const uncertain = (await recovered.handle('notifications', { take: true }, superSession.addr)).notifications;
+  assert.equal(uncertain.length, 1);
+  assert.equal(uncertain[0].type, 'delivery-uncertain');
+  assert.equal(uncertain[0].deliveryId, id);
+  assert.equal(pushed().at(-1).target.addr, superSession.addr);
+  assert.match(pushed().at(-1).text, /delivery-uncertain/);
   assert.deepEqual(external, []);
   await recovered.shutdown();
 });

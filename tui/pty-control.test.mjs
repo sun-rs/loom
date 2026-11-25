@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import { EventEmitter } from 'node:events';
-import { appendFile, mkdtemp, rm } from 'node:fs/promises';
+import { appendFile, mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
@@ -24,7 +24,7 @@ test('Codex draft readback skips an empty paragraph placeholder and preserves in
   } finally { grid.dispose(); }
 });
 
-async function setup(t, { afterPaste, firstEnter, announce, hidePart } = {}) {
+async function setup(t, { afterPaste, firstEnter, announce, hidePart, collapsedScreen } = {}) {
   const cwd = await mkdtemp(join(tmpdir(), 'lpt-'));
   t.after(() => rm(cwd, { recursive: true, force: true }));
   const socket = join(cwd, 's');
@@ -46,6 +46,10 @@ async function setup(t, { afterPaste, firstEnter, announce, hidePart } = {}) {
     return { dispose: () => events.off(event, callback) };
   };
   const draw = () => {
+    if (collapsedScreen && draft) {
+      events.emit('data', Buffer.from('\x1b[2J\x1b[H' + collapsedScreen.trimEnd().replaceAll('\n', '\r\n')));
+      return;
+    }
     const displayed = hidePart && draft ? draft.slice(0, -1) : draft;
     const footer = announce && draft ? 'accept-edits · Gemini 4 Neon (Low)' : '? for shortcuts';
     const card = overlay ? '┃ Introducing Gemini 4 Neon\r\n┃ esc to dismiss\r\n' : '';
@@ -77,7 +81,8 @@ async function setup(t, { afterPaste, firstEnter, announce, hidePart } = {}) {
     }),
   };
   const data = bytes => events.emit('data', Buffer.from(bytes));
-  const terminal = await thinBackend({ pty, Terminal: xterm.Terminal, humanPauseMs: 400 }).launch({
+  const terminal = await thinBackend({ pty, Terminal: xterm.Terminal, humanPauseMs: 400,
+    cols: collapsedScreen?.split('\n', 1)[0].length ?? 180 }).launch({
     cwd, argv: [provider.id], env: {}, provider: provider.id, unset: [],
   });
   t.after(() => terminal.close());
@@ -138,6 +143,21 @@ test('socket journals the native proof before returning confirmed and reuses the
   await f.restartControl();
   assert.equal((await f.account('submit', { id, text })).confirmation.count, 1);
   assert.equal(f.writes.filter(value => value === '\r').length, 1);
+});
+
+test('Claude submits its matching collapsed paste once and holds a mismatched line count', async t => {
+  const captured = await readFile(new URL('../tasks/PILOT-FIX-2/claude-collapsed-paste.txt', import.meta.url), 'utf8');
+  for (const [screen, shouldSubmit] of [[captured, true], [captured.replace('+6 lines', '+5 lines'), false]]) {
+    const f = await setup(t, { collapsedScreen: screen, firstEnter: 'held' });
+    const id = randomUUID();
+    const text = ['first', 'second', 'third', 'fourth', 'fifth', 'sixth'].join('\n');
+    const sent = await f.account('submit', { id, text, timeoutMs: 50 });
+    assert.equal(sent.kind, 'unconfirmed');
+    assert.equal(sent.hostReceipt.outcome, shouldSubmit ? 'verified-collapsed-paste' : 'draft-unverified');
+    await sleep(1250);
+    assert.equal((await f.account('state')).blocker, 'draft-held');
+    assert.equal(f.writes.filter(bytes => bytes === '\r').length, shouldSubmit ? 1 : 0);
+  }
 });
 
 test('a later control client attaches to the same incarnation and sees its existing receipt', async t => {

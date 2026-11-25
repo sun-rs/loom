@@ -365,7 +365,7 @@ function matchesBusy(entries) {
 // hc supplies the grid as text without Orca's authoritative rest title.
 // Claude 2.1.331 renders an empty (or suggested) composer inside two rules.
 const COMPOSER_RULE = /^─{8,}$/;
-const COMPOSER_FOOTER = /^(?:⚠ Transcript saving is off — |[⏵⏸]+ ?(?:bypass permissions|don't ask|accept edits|plan mode|auto mode|manual mode) on\b|[?] for shortcuts|esc to interrupt)/i;
+const COMPOSER_FOOTER = /^(?:⚠ Transcript saving is off — |[⏵⏸]+ ?(?:bypass permissions|don't ask|accept edits|plan mode|auto mode|manual mode) on\b|[?] for shortcuts|esc to interrupt|paste again to expand$)/i;
 
 export function hasEmptyComposer(text) {
   const rows = stripAnsiAndControl(text).split('\n').map(stripBoxEdges);

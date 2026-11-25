@@ -87,7 +87,7 @@ export function readGrid(terminal, provider, extractDraft) {
 }
 
 // Orca's held-prompt guard proves the visible draft still belongs to the current request.
-// The marker and every visible line must match; folded paste previews are left untouched.
+// The marker and every visible line must match for full-text proof.
 export function matchesDraft(draft, expected) {
   return draft === expected;
 }
