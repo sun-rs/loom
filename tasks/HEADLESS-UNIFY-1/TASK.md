@@ -1,0 +1,11 @@
+# HEADLESS-UNIFY-1 — all headless workers back on OAR (single path, uniform output)
+
+User ruling 2026-11-25: the worker line stays OAR-managed; any special worker (e.g. a future Claude TUI worker) must be written to OAR's runtime contract, not as a parallel loom-only path. Headless processes are already independent of loomd (detached session-host); host-code hot swap is not required for short-lived workers. Long-lived roles are TUI on holder v3.
+
+Base: main HEAD after PILOT2-TOOLS-1. Do not commit.
+1. Make OAR session-host the only default headless path for every CLI (Codex, agy, Claude, OpenCode). Disable the loom-side Codex app-server pipe path (daemon/codex-pipe-*.mjs, codex-holder/launch) as a default; keep it only behind an explicit, undocumented test flag, or remove it if nothing else depends on it — report which and why. Existing pipe-mode sessions (if any) keep working until they exit; new spawns use OAR.
+2. Port the generally useful ADOPT-1 items to the OAR path where OAR does not already do them (check OAR 0.130.1 first, cite files): per-request deadline / stuck session reported; SIGTERM→SIGKILL escalation on close (session-host owns the child process group); well-formed text (`toWellFormed`) before sending; Codex deterministic refusal mapping and background-terminal cleanup after an interrupted turn if OAR exposes them; billing guard is already generic — verify it applies on the OAR Claude path.
+3. Thinness/isolation audit of session-host: list everything it does; anything not required to own the child process and relay OAR should move to loomd. Keep it small and frozen.
+4. Write `docs/HEADLESS.md` (short): the single headless contract — how a new CLI/worker type plugs in via an OAR runtime (OAR's runtime interface, `agents/types.d.ts` spawn contract), what loom expects from its event stream, and what is explicitly out of scope.
+5. Live check in pilot-like isolation: spawn one headless worker per CLI (Codex, agy, Claude, OpenCode deepseek/deepseek-flash) through `loom spawn worker` on the new release; each completes one turn, evidence card + `loom hist` uniform; then `loom upgrade` loomd mid-turn — all four survive, exactly-once confirmations, zero manual input.
+npm test green; RESULT.md Chinese, `STATUS: done`. Red lines as before.
