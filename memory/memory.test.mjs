@@ -52,6 +52,7 @@ test('checks paths and SHAs at write and filters failed, expired and replaced it
   assert.match(readFileSync(index, 'utf8'), /lost-path/);
   assert.deepEqual(searchMemory(project, 'Retry').map(item => item.id), ['valid-sha']);
   const prompt = await projectMemoryPrompt(project);
+  assert.equal(readFileSync(index, 'utf8'), '- .project/memory/items/valid-sha.md — Retry limits\n');
   assert.match(prompt, /valid-sha/);
   assert.doesNotMatch(prompt, /expired|old\.md|lost-path/);
 });

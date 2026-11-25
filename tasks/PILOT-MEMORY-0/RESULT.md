@@ -28,3 +28,5 @@
 结果：35 项通过，2 项失败，0 项跳过。
 
 两个既有 CLI 用例在绑定 Unix socket 时收到 `listen EPERM`，分别覆盖 worker admission 和显式 switch profile。使用 `TMPDIR=/private/tmp` 缩短路径仍出现同一限制。
+
+FIX-1 补充 Loom skill 的格式、维护职责和查询入口。首轮注入复用同步索引生成的行，并新增断言校验索引剔除了来源失效的旧条目。`node --test memory/memory.test.mjs daemon/supervisor.test.mjs` 通过 28 项，失败和跳过均为 0。FIX-1 的 CLI 用例留给 Leader 在沙箱外验收。

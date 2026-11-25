@@ -99,8 +99,8 @@ export function searchMemory(project, query) {
 }
 
 export async function projectMemoryPrompt(project) {
-  const items = activeItems(project);
-  if (!items.length) return '';
+  const indexLines = syncMemoryIndex(project);
+  if (!indexLines.length) return '';
   const [charter, rulings] = await Promise.all(['charter', 'rulings'].map(name => projectDocument(project, name)));
   const lines = ['## 项目记忆'];
   if (charter.text !== undefined) {
@@ -109,8 +109,7 @@ export async function projectMemoryPrompt(project) {
     lines.push(clipTokens(`红线 · ${redlines}`, 150));
   }
   if (rulings.text !== undefined) lines.push(`项目裁决见 ${rulings.path}`);
-  for (const item of items) {
-    const line = indexLine(item);
+  for (const line of indexLines) {
     if (estimateTokens([...lines, line].join('\n') + '\n\n') <= 400) lines.push(line);
   }
   return lines.join('\n') + '\n\n';
