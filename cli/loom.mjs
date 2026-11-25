@@ -43,6 +43,7 @@ const help = {
   notifications: [
     'loom notifications [--project DIR] [--peek|--take|--history]',
     'loom notifications [--project DIR] [--needs-decision TEXT [--audit-escalation REASON] | --complete TEXT]',
+    'loom notifications [--project DIR] --gate-complete ID',
     'Previews pending events by default. --take acknowledges them. --history includes acknowledged events.',
   ],
 };
@@ -54,7 +55,8 @@ const commands = {
   memory: { ...projectArgs, ...flags('json') },
   switch: { ...projectArgs, ...strings('to') },
   doctor: { ...projectArgs, ...flags('fix') },
-  notifications: { ...projectArgs, ...flags('peek', 'take', 'history'), ...strings('needs-decision', 'audit-escalation', 'complete') },
+  notifications: { ...projectArgs, ...flags('peek', 'take', 'history'),
+    ...strings('needs-decision', 'audit-escalation', 'complete', 'gate-complete') },
 };
 
 const readPendingWork = (project, addr) => pendingWork(
@@ -280,14 +282,16 @@ export async function main(args) {
       } else if (command === 'notifications') {
         const decision = values['needs-decision'];
         const auditEscalation = values['audit-escalation'];
+        const gateComplete = values['gate-complete'];
+        const writes = [values.complete, decision, gateComplete].filter(value => value !== undefined).length;
         if ([values.peek, values.take, values.history].filter(Boolean).length > 1 ||
-            values.complete !== undefined && decision !== undefined || auditEscalation !== undefined && decision === undefined ||
-            (values.take || values.history) && (values.complete !== undefined || decision !== undefined)) invalid(help.notifications[0]);
+            writes > 1 || auditEscalation !== undefined && decision === undefined ||
+            (values.take || values.history) && writes) invalid(help.notifications[0]);
         try { result = await request(directory, command, { take: values.take, history: values.history,
-          decision, auditEscalation, complete: values.complete }); }
+          decision, auditEscalation, gateComplete, complete: values.complete }); }
         catch (error) {
           if (!daemonAbsent(error)) throw error;
-          if (values.take || values.complete !== undefined || decision !== undefined) {
+          if (values.take || writes) {
             throw new CommandError('not-ready', 'loomd is not running for this project');
           }
           result = { ok: true, notifications: readNotifications(directory).filter(event => values.history || event.takenAt == null) };

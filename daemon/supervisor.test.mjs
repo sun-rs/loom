@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
 import { randomUUID } from 'node:crypto';
-import { deliveryId } from '../inbox/message.mjs';
+import { deliveryId, payloadDigest } from '../inbox/message.mjs';
 import { publish } from '../inbox/store.mjs';
 import { estimateTokens } from '../lib/token-budget.mjs';
 import { writeMemory } from '../memory/project.mjs';
@@ -855,9 +855,9 @@ test('switches Claude Leader to agy and agy Auditor to Codex under one durable s
   f.git('-c', 'user.name=Loom', '-c', 'user.email=loom@example.invalid', 'commit', '-qm', 'fixture');
   const sha = f.git('rev-parse', 'HEAD');
   const profile = (cli, model, fast) => ({ cli, model, effort: 'high', mode: 'headless', fast });
-  f.policy({ roles: {
+  f.policy({ drift: { deferAuditorNotices: false }, roles: {
     leader: { preferred: [profile('claude', 'opus'), profile('agy', 'gemini', true)] },
-    auditor: { preferred: [profile('agy', 'gemini'), profile('codex', 'codex-model', true)] },
+    auditor: { rotateAt: 'gate', preferred: [profile('agy', 'gemini'), profile('codex', 'codex-model', true)] },
   } });
   const d = f.daemon();
   t.after(d.shutdown);
@@ -868,9 +868,14 @@ test('switches Claude Leader to agy and agy Auditor to Codex under one durable s
   assert.equal(switched.handoverFrom, leader.addr);
   assert.equal(switched.session.cli, 'agy');
   assert.deepEqual(switched.warnings.map(warning => warning.code), ['preferred-fallback', 'fast-unsupported']);
+  await assert.rejects(d.handle('notifications', { gateComplete: 'tests-v1' }, auditor.addr), { code: 'invalid-arguments' });
+  await d.handle('notifications', { gateComplete: 'tests-v1' }, switched.session.addr);
+  const gates = await d.handle('notifications', { gateComplete: 'tests-v1', history: true }, switched.session.addr);
+  assert.deepEqual(gates.notifications.filter(event => event.gate === 'tests-v1').map(event => event.type),
+    ['auditor-rotation-proposed']);
   await assert.rejects(d.handle('switch', { role: 'auditor', to: '2' }), { code: 'rotation-in-progress' });
   await d.tick();
-  f.sessions.get(switched.session.addr).finish('Current SHA deadbee. Missing file `absent.mjs`.');
+  f.sessions.get(switched.session.addr).finish('Current SHA deadbee. Missing file `./absent.mjs`.');
   await d.tick();
   const rotation = () => d.handle('state', { target: switched.session.addr }).then(value => value.rotations[0]);
   assert.equal((await rotation()).firstReportMisses, 2);
@@ -897,7 +902,7 @@ test('switches Claude Leader to agy and agy Auditor to Codex under one durable s
   assert.ok((await d.handle('notifications', { history: true })).notifications.some(item => item.type === 'preferred-fallback'));
 });
 
-test('sends one Auditor wake for card drift and includes worker fact misses in its evidence', async t => {
+test('attaches drift to the next real Auditor wake and suppresses a reply quoting the prior notices', async t => {
   const f = fixture(t);
   f.git('init', '-q');
   const taskDir = join(f.project, 'tasks/DRIFT');
@@ -921,26 +926,86 @@ test('sends one Auditor wake for card drift and includes worker fact misses in i
   writeFileSync(join(f.project, 'extra.txt'), 'one\ntwo\nthree\nfour\n');
   f.sessions.get(worker).check('npm test', 100, 1);
   f.sessions.get(worker).check('npm test', 500, 1);
-  const missing = ['unreal.mjs', ...Array.from({ length: 5 }, (_, i) => `unreal-${i}.mjs`)];
+  const missing = ['./unreal.mjs', ...Array.from({ length: 5 }, (_, i) => `./unreal-${i}.mjs`)];
   f.sessions.get(worker).finish('DONE DRIFT\nSee ' + missing.map(path => '`' + path + '`').join(', '));
   await d.tick();
   await d.tick();
+  assert.equal(f.read('inbox/state.json').messages.filter(message => message.orgEvents).length, 0);
+  assert.equal(f.prompts.filter(message => message.addr === auditor).length, 1);
+  f.sessions.get(auditor).finish('Initial review completed.');
+  const wake = await d.handle('send', { target: auditor, mode: 'queue', text: 'HOLD review the next real gate' });
+  await d.tick();
   const notices = f.read('inbox/state.json').messages.filter(message => message.orgEvents);
   assert.equal(notices.length, 1);
+  assert.equal(notices[0].id, wake.id);
   assert.equal(notices[0].target.addr, auditor);
   for (const type of ['budget-raised', 'line-budget', 'plan-growth', 'slow-command', 'repeated-failure', 'fact-miss']) {
-    assert.match(notices[0].text, new RegExp(type));
+    assert.match(notices[0].orgAppendix, new RegExp(type));
   }
+  const input = f.prompts.filter(message => message.addr === auditor).at(-1).input;
+  assert.match(input, /HOLD review the next real gate[\s\S]*Loom drift and fact checks/);
+  f.sessions.get(auditor).finish('Two prior misses, `./unreal.mjs` and `./unreal-0.mjs`, were false positives.');
+  await d.tick();
   const evidence = Object.values(f.read('loomd/org.json').notices);
   assert.equal(evidence.length, 6);
   const drift = evidence.filter(item => item.type === 'fact-miss');
   assert.equal(drift.length, 1);
   assert.equal(drift[0].count, 6);
   assert.deepEqual(drift[0].misses.map(item => item.value), missing.slice(0, 5));
-  assert.doesNotMatch(notices[0].text, /unreal-4\.mjs/);
+  assert.doesNotMatch(notices[0].orgAppendix, /unreal-4\.mjs/);
   f.sessions.get(leader).finish('dispatch ended');
   await d.tick();
-  assert.match(f.read('inbox/state.json').messages.find(message => message.waveBatch).text, /fact-miss 6 · unreal\.mjs/);
+  assert.match(f.read('inbox/state.json').messages.find(message => message.waveBatch).text, /fact-miss 6 · \.\/unreal\.mjs/);
+});
+
+test('delivers a short digest pointer for a large automatic reply across restart', async t => {
+  const f = fixture(t);
+  f.policy({ delivery: { replyBytes: 200, coalesceMs: 0 } });
+  let d = f.daemon();
+  t.after(() => d.shutdown());
+  const sender = (await f.spawn(d, 'super', 'S')).session.addr;
+  const target = (await f.spawn(d, 'auditor', 'A')).session.addr;
+  await d.tick();
+  const body = '完整结果🐙'.repeat(30);
+  const send = await d.handle('send', { target, mode: 'queue', text: 'HOLD report' }, sender);
+  await d.tick();
+  f.sessions.get(target).finish(body);
+  await d.tick();
+  const automatic = () => f.read('inbox/state.json').messages.filter(message => message.replyTo === send.id);
+  assert.equal(automatic().length, 1);
+  d = f.daemon();
+  await d.tick();
+  const wire = f.prompts.find(message => message.addr === sender && deliveryId(message.input) === automatic()[0].id).input;
+  assert.ok(Buffer.byteLength(wire) <= 200);
+  const [, path, digest] = /(\.project\/replies\/([a-f0-9]{64})\.txt)/.exec(wire);
+  const saved = readFileSync(join(f.project, path), 'utf8');
+  assert.ok(saved.endsWith(body));
+  assert.equal(payloadDigest(saved), digest);
+  await d.tick();
+  assert.equal(automatic().length, 1);
+
+  const leader = (await f.spawn(d, 'leader', 'L')).session.addr;
+  const worker = (await f.spawn(d, 'worker', 'LONG', leader)).session.addr;
+  await d.tick();
+  f.sessions.get(leader).finish('Ready');
+  await d.tick();
+  if (f.sessions.get(leader).session.status().value.kind === 'running') {
+    f.sessions.get(leader).finish('Initial worker result read');
+  }
+  await d.tick();
+  const long = '连续结果🐙'.repeat(1100);
+  await d.handle('send', { target: worker, mode: 'queue', text: 'HOLD long continuation' }, leader);
+  await d.tick();
+  f.sessions.get(worker).finish(long);
+  await d.tick();
+  await d.tick();
+  const continuation = f.read('inbox/state.json').messages.find(message => message.continuationKind === 'merged');
+  const delivered = f.prompts.find(message => message.addr === leader && deliveryId(message.input) === continuation.id).input;
+  const [, fullPath, fullDigest] = /(\.project\/replies\/([a-f0-9]{64})\.txt)/.exec(delivered);
+  const fullReply = readFileSync(join(f.project, fullPath), 'utf8');
+  assert.ok(Buffer.byteLength(delivered) <= 200);
+  assert.ok(fullReply.endsWith(long));
+  assert.equal(payloadDigest(fullReply), fullDigest);
 });
 
 test('worker switch affects only new spawns and a quota failure keeps the selected CLI', async t => {

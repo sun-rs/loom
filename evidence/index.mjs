@@ -5,7 +5,7 @@ import { isAbsolute, join, relative } from 'node:path';
 import { collectVerification } from './transcript.mjs';
 import { collectGit, isCredentialPath } from './git.mjs';
 import { compareClaims } from './claims.mjs';
-import { checkEvidence } from './checks.mjs';
+import { checkEvidence, sandboxDenialCounts } from './checks.mjs';
 import { checkFacts } from './facts.mjs';
 import { clipTokens } from '../lib/token-budget.mjs';
 
@@ -75,7 +75,8 @@ function cardFor({ claims, git, verification, facts }) {
     .slice(0, 2).map(claim => `${claim.text} → ${claim.reason}`).join(' · ');
   const misses = facts?.misses ?? [];
   const factLine = misses.length && `fact-miss ${misses.length} · ${misses.slice(0, 3).map(fact => fact.value).join(' · ')}`;
-  return clipTokens([headline, factLine, changes, verify, results].filter(Boolean).join('\n'), 299);
+  const denials = verification.sandboxDenials ? `沙箱拒绝 ${verification.sandboxDenials}` : '';
+  return clipTokens([headline, factLine, denials, changes, verify, results].filter(Boolean).join('\n'), 299);
 }
 
 async function config(project) {
@@ -114,7 +115,11 @@ export async function forTurn(options) {
       extraTestPaths: globs(options.testPaths ?? settings.testPaths),
       mergeRef: options.mergeRef ?? settings.mergeRef,
     }) : { status: 'missing-cwd' });
-    const { finalReply: nativeReply, ...verification } = collectVerification({ ...options, transcript });
+    const { finalReply: nativeReply, denialCounts = new Map(), ...verification } = collectVerification({ ...options, transcript });
+    for (const [key, count] of sandboxDenialCounts(options.projected?.tools ?? [])) {
+      denialCounts.set(key, Math.max(count, denialCounts.get(key) ?? 0));
+    }
+    verification.sandboxDenials = [...denialCounts.values()].reduce((sum, count) => sum + count, 0);
     if (!verification.commands.length && options.projected) {
       const { tools, ...turn } = options.projected;
       Object.assign(verification, turn, { status: 'ok', commands: tools.flatMap(tool => {

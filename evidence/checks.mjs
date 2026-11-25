@@ -7,6 +7,23 @@ const assignment = /^[A-Za-z_]\w*=/;
 const clean = text => text.replace(/\x1b\[[0-?]*[ -/]*[@-~]|[\x00-\x08\x0b-\x1f\x7f-\x9f]/g, '');
 const unquote = word => word?.replace(/^(['"])([\s\S]*)\1$/, '$2');
 
+export function sandboxDenialCounts(commands) {
+  const explicit = /\bsandbox(?:-exec)?(?::|\b[^\r\n]{0,40}\b(?:denied|blocked|violation)\b)/i;
+  const permission = /(?:permission denied|operation not permitted|read-only file system)(?:[.!)]?\s*$|:\s+\S)/i;
+  const refusal = /^\s*(?:sandbox (?:denied|blocked)|(?:tool )?permission (?:denied|refused))\b/i;
+  const counts = new Map();
+  for (const { command, output, status, denied, sandboxed } of commands) {
+    const lines = clean(typeof output === 'string' ? output : '').split(/\r?\n/).filter(line =>
+      (sandboxed !== false || explicit.test(line)) && permission.test(line) || refusal.test(line));
+    if (!lines.length && (denied === true || status === 'denied')) lines.push('permission denied');
+    for (const line of lines) {
+      const key = JSON.stringify([command ? shellBody(command).trim() : '', line.trim()]);
+      counts.set(key, (counts.get(key) ?? 0) + 1);
+    }
+  }
+  return counts;
+}
+
 export function clip(text, limit) {
   if (limit < Buffer.byteLength('…')) return '';
   if (Buffer.byteLength(text) <= limit) return text;

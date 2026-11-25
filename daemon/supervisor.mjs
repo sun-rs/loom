@@ -11,7 +11,8 @@ import { opencodeExportFailureLimit, ownedSessions, validInput } from './session
 import { jsonRows, prepareJournal, readText } from './io.mjs';
 import { notifyExternal, projectNotifications } from './notifications.mjs';
 import { organization } from './org.mjs';
-import { defaultCoalesceMs, readPolicy, setWorkerProfile, workerLimit } from '../cli/policy.mjs';
+import { clip } from '../evidence/checks.mjs';
+import { defaultCoalesceMs, driftDefaults, readPolicy, setWorkerProfile, workerLimit } from '../cli/policy.mjs';
 import { isStartupBlocker } from '../tui/agent-status.mjs';
 
 function batchDeliveryId(batch, dest) {
@@ -40,7 +41,12 @@ export function createSupervisor(project, {
   const index = projectIndex(project);
   index.initialize();
   const sessions = ownedSessions(project, index, report, sessionOptions);
-  const mail = inbox(project, sessions.transport, report);
+  const policyForTick = () => {
+    try { return readPolicy(project, { optional: true }); }
+    catch { return {}; }
+  };
+  let policy = policyForTick();
+  const mail = inbox(project, sessions.transport, report, { replyLimit: () => policy.delivery?.replyBytes });
   const org = organization(project, index, sessions, mail, now, report);
   const watchJournal = join(project, '.project', 'watch', 'events.jsonl');
   prepareJournal(watchJournal);
@@ -317,16 +323,15 @@ export function createSupervisor(project, {
       const completed = new Set([...(early?.continuationMembers ?? []), ...(final?.continuationMembers ?? []),
         ...mail.messages.filter(message => message.continuationBatch === id && message.continuationKind === 'late')
           .flatMap(message => message.continuationMembers)]);
-      const resultText = (message, limit) => {
+      const resultText = message => {
         const row = rows.get(message.target.addr);
         const result = message.completion;
         const detail = result?.body ?? (result?.unconfirmed ? `UNCONFIRMED 未确认正文\n${result.unconfirmedBody ?? ''}` :
           `FAILED ${message.issue ?? '无原生最终回复'}`);
-        return `${row?.task ?? ''} ${message.target.addr}\n${terminalText(detail).slice(0, limit)}`;
+        return `${row?.task ?? ''} ${message.target.addr}\n${terminalText(detail)}`;
       };
       function announce(delivery, kind, selected, pending = [], missing = 0, deadline = at) {
-        const limit = Math.min(4000, Math.floor(32_000 / Math.max(1, selected.length)));
-        const results = selected.map(message => resultText(message, limit));
+        const results = selected.map(resultText);
         for (const message of pending) {
           const row = rows.get(message.target.addr);
           const activity = row && sessions.lastActivity(row, sessions.events(row.addr).at(-1));
@@ -378,23 +383,33 @@ export function createSupervisor(project, {
     }
   }
 
-  function orgNotices(rows) {
-    const delivered = new Set(mail.messages.filter(message => message.issue !== 'target-exited' || message.received)
+  function pendingOrgNotices() {
+    const delivered = new Set(mail.messages.filter(message => message.phase !== 'refused')
       .flatMap(message => message.orgEvents ?? []));
-    const notices = org.notices().filter(notice => !delivered.has(notice.id));
-    for (const batch of Map.groupBy(notices, notice => JSON.stringify([notice.project, notice.audience])).values()) {
+    return org.notices().filter(notice => !delivered.has(notice.id));
+  }
+
+  function noticeLines(batch) {
+    return batch.map(({ type, task, addr, command, ...fields }) => {
+      const details = type === 'fact-miss' ? fields.misses.map(({ kind, value }) => `${kind} ${value}`).join(', ') +
+        (fields.count > fields.misses.length ? ` (+${fields.count - fields.misses.length} more)` : '') : type === 'slow-command' ?
+        `${command} ${fields.durationMs} ms (median ${fields.medianMs} ms)` :
+        Object.entries(fields).filter(([key]) => !['id', 'at', 'project', 'audience'].includes(key))
+          .map(([key, value]) => `${key}=${value}`).join(' ');
+      return terminalText(`${type} ${task ?? addr} · ${details}`);
+    }).join('\n');
+  }
+
+  const deferAuditorNotices = () => policy.drift?.deferAuditorNotices ?? driftDefaults.deferAuditorNotices;
+
+  function orgNotices(rows) {
+    for (const batch of Map.groupBy(pendingOrgNotices(), notice => JSON.stringify([notice.project, notice.audience])).values()) {
       const { project: name, audience } = batch[0];
+      if (audience === 'auditor' && deferAuditorNotices()) continue;
       const row = rows.findLast(row => row.project === name && row.role === audience &&
         row.endedAt === null && sessions.jobs.has(row.addr));
       if (!row) continue;
-      const lines = batch.map(({ type, task, addr, command, ...fields }) => {
-        const details = type === 'fact-miss' ? fields.misses.map(({ kind, value }) => `${kind} ${value}`).join(', ') +
-          (fields.count > fields.misses.length ? ` (+${fields.count - fields.misses.length} more)` : '') : type === 'slow-command' ?
-          `${command} ${fields.durationMs} ms (median ${fields.medianMs} ms)` :
-          Object.entries(fields).filter(([key]) => !['id', 'at', 'project', 'audience'].includes(key))
-            .map(([key, value]) => `${key}=${value}`).join(' ');
-        return terminalText(`${type} ${task ?? addr} · ${details}`);
-      }).join('\n');
+      const lines = noticeLines(batch);
       const ids = batch.map(notice => notice.id);
       const queued = mail.messages.find(message => message.orgEvents && message.target.addr === row.addr &&
         message.phase === 'queued' && !message.payloadFrozen);
@@ -423,13 +438,13 @@ export function createSupervisor(project, {
         `UNCONFIRMED\n${result.unconfirmedBody}` :
         expired && (!onTime || row.endedAt >= job.reviewDeadline) ? 'TIMED OUT' :
           `FAILED ${result?.outcome?.failure ?? first?.issue ?? 'no native reply'}`;
-      const text = `Loom reviewer ${row.addr}${row.task ? ' · ' + row.task : ''}\n\n${terminalText(detail).slice(0, 16_000)}`;
+      const text = `Loom reviewer ${row.addr}${row.task ? ' · ' + row.task : ''}\n\n${terminalText(detail)}`;
       const parent = row.parent && sessions.routeParent(row.parent);
       if (row.parent) {
         if (parent?.endedAt === null) saved(sessions.targetBinding(parent), text, { id, reviewerResult: row.addr });
       } else {
         notifications.add({ id, type: 'reviewer-result', project: row.project, addr: row.addr,
-          batch: id, at: result?.at ?? row.endedAt ?? job.reviewDeadline, text, externalOnly: true });
+          batch: id, at: result?.at ?? row.endedAt ?? job.reviewDeadline, text: text.slice(0, 16_000), externalOnly: true });
       }
     }
   }
@@ -463,6 +478,7 @@ export function createSupervisor(project, {
   }
 
   async function tick() {
+    policy = policyForTick();
     await sessions.refresh(mail);
     for (const job of sessions.jobs.values()) {
       await sessions.retirePredecessor(job).catch(error => report(`handover retirement: ${error.message}`));
@@ -473,9 +489,12 @@ export function createSupervisor(project, {
       if (old && superseded(old, rows)) mail.refuseQueued(message, 'superseded');
     }
     const routed = new Map();
-    let policy;
-    try { policy = readPolicy(project, { optional: true }); }
-    catch { policy = {}; }
+    if (deferAuditorNotices()) {
+      for (const message of mail.messages) {
+        if (message.orgEvents && !message.orgAppendix && !message.attemptAt &&
+            sessions.rowFor(message.target.addr)?.role === 'auditor') mail.refuseQueued(message, 'org-notice-deferred');
+      }
+    }
     let seats;
     await mail.step(({ id, target: { addr } }) => {
       if (id === sessions.jobs.get(addr)?.firstId) return;
@@ -492,6 +511,17 @@ export function createSupervisor(project, {
       },
       now,
       coalesceMs: policy.delivery?.coalesceMs ?? defaultCoalesceMs,
+      decorate(message) {
+        const row = sessions.rowFor(message.target.addr);
+        if (!deferAuditorNotices() || row?.role !== 'auditor' || message.orgEvents) return;
+        const batch = pendingOrgNotices().filter(notice => notice.project === row.project && notice.audience === 'auditor');
+        if (batch.length) {
+          const lines = noticeLines(batch);
+          const summary = Buffer.byteLength(lines) > 1200 ?
+            clip(lines, 1200) + '\n完整记录见 loom status --json。' : lines;
+          return { orgEvents: batch.map(notice => notice.id), orgAppendix: 'Loom drift and fact checks\n' + summary };
+        }
+      },
       canDispatch(target) {
         const job = sessions.jobs.get(target.addr);
         if (job?.row.role === 'worker') return seats.has(target.addr);
@@ -558,6 +588,22 @@ export function createSupervisor(project, {
             throw new CommandError('invalid-arguments', 'Project name and completion summary required');
           }
           notifications.add({ id: `completed:${name}`, project: name, at: now(), type: 'project-completed', text: args.complete });
+        }
+        if (args.gateComplete !== undefined) {
+          if (!name || !names.has(name) && name !== project || actor &&
+              (!['leader', 'super'].includes(actor.role) || actor.endedAt !== null || actor.project !== name) ||
+              typeof args.gateComplete !== 'string' ||
+              !/^[A-Za-z0-9][A-Za-z0-9_.-]{0,127}$/.test(args.gateComplete)) {
+            throw new CommandError('invalid-arguments', 'A Leader or Super must supply a completed gate ID in this project');
+          }
+          const gate = args.gateComplete;
+          const id = 'gate:' + batchDeliveryId(name, gate);
+          const currentPolicy = policyForTick();
+          const proposal = currentPolicy.roles?.auditor?.rotateAt === 'gate';
+          notifications.add({ id, gate, project: name, at: now(), type: proposal ? 'auditor-rotation-proposed' : 'gate-completed',
+            ...(actor && { addr: actor.addr }), logOnly: !proposal,
+            text: proposal ? `门禁 ${gate} 已完成。建议由 Leader 监督 Auditor 换班；已有换班须先结算。` :
+              `门禁 ${gate} 已完成。` });
         }
         if (args.decision !== undefined || args.auditEscalation !== undefined) {
           if (!name || !validInput(args.decision) || actor?.role === 'worker' ||

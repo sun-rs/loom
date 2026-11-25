@@ -258,6 +258,28 @@ test('busy spinner seconds do not count as output, while text and tool hooks do'
   ]);
 });
 
+test('native background task rows hold busy beyond the idle and busy timers', async t => {
+  const rule = '─'.repeat(24);
+  for (const [cli, text] of [
+    ['agy', [rule, '>', rule, '● [00:03:00] npm test', rule, '? for shortcuts'].join('\n')],
+    ['claude', ['✻ waiting on 1 command, 1 monitor · 2m 34s', rule, '❯', rule, '⏵⏵ accept edits on'].join('\n')],
+  ]) {
+    const f = setup(t, { cli, text });
+    f.hooks.push({ type: 'turn-start', addr: 't1', sessionId: 's1', at: f.at });
+    const watcher = f.create();
+    for (let n = 0; n < 3; n++) {
+      assert.equal((await watcher.poll())[0].state, 'busy');
+      f.advance(5_000);
+    }
+    assert.deepEqual(f.events(), []);
+    f.text = cli === 'agy' ? [rule, '>', rule, '? for shortcuts'].join('\n') :
+      [rule, '❯', rule, '⏵⏵ accept edits on'].join('\n');
+    assert.equal((await watcher.poll())[0].state, 'idle');
+    f.advance(5_000);
+    assert.equal((await watcher.poll())[0].reason, 'idle-without-stop');
+  }
+});
+
 test('rate limit pins retry time and enqueues once across restarts', async t => {
   const f = setup(t, { text: `${rate}Retry-After: 60\n` });
   let watcher = f.create();

@@ -57,13 +57,17 @@ loom=/path/to/loom_new/bin/loom
 
 启动回执的 `requested` 保留显式值，`selected` 为补齐后的启动参数，`effective` 记录运行时确认值。`differences` 列出已确认的差异，`unverified` 列出运行时尚无确认值的字段。没配置策略时可以传完整的 CLI、model 和 effort。Leader 先创建工作树，再把路径传给 Worker 的 `--cwd`。
 
-Worker 用 `"$LOOM_BIN"` 的绝对路径调用 Loom。启动时分配私有可写的主目录、XDG 配置、缓存、数据和状态目录，`TMPDIR` 同时用作 `XDG_RUNTIME_DIR`。私有 Git 全局配置从启动环境继承 `user.name` 和 `user.email`，已有的仓库级配置优先。
+Worker 用 `"$LOOM_BIN"` 的绝对路径调用 Loom。启动时分配私有可写的主目录、XDG 配置、缓存、数据和状态目录，`TMPDIR` 同时用作 `XDG_RUNTIME_DIR`，zsh 的 `TMPPREFIX` 也指向该临时目录。私有 Git 全局配置从启动环境继承 `user.name` 和 `user.email`，已有的仓库级身份优先。Worker 关闭 Git 自动维护，并保留提交 hooks。
 
-无头 Codex Worker 用命名权限配置开放工作目录、私有 `HOME` 和 `TMPDIR`。工作目录下的 `.git`、`.agents`、`.codex` 和 `.aws` 保持只读。关联的 Git 工作树额外可写其专属的 `<common>/worktrees/<name>`、共享的 `<common>/objects`、当前分支的 `<common>/refs/heads/<branch>` 及对应的 `.lock` 和 `<common>/logs/refs/heads/<branch>`。Detached 工作树只授予自己的工作树元数据目录和共享对象目录。Unix socket 权限只授予该 Worker 的 `TMPDIR`，本地 TCP 监听关闭。
+无头 Codex Worker 用命名权限配置开放工作目录、私有 `HOME` 和 `TMPDIR`。工作目录下的 `.git`、`.agents`、`.codex` 和 `.aws` 保持只读。关联的 Git 工作树额外可写其专属的 `<common>/worktrees/<name>`、共享的 `<common>/objects` 与 `<common>/packed-refs.lock`。有分支时还可写当前分支的 `<common>/refs/heads/<branch>`、对应的 `.lock` 和 `<common>/logs/refs/heads/<branch>`。Git 提交清理会使用 `packed-refs.lock`，而共享的 `packed-refs` 数据文件仍只读。Unix socket 权限只授予该 Worker 的 `TMPDIR`，本地 TCP 监听关闭。
 
 macOS 无头 agy 和 Claude Worker 的原生进程使用原来的 `HOME` 定位登录。Seatbelt 将普通文件写入限制在工作树、对应 Git 元数据、Worker 私有主目录和临时目录，以及已存在的原生会话数据子目录。agy 的原生例外是 `brain`、`conversations`、`log` 和命令工具生成的单个 `bin/agentapi` 文件。命令工具的 PTY 只额外获得设备数据写入权限。Claude 的原生例外是 `projects`、`sessions`，其内部临时文件通过 `CLAUDE_CODE_TMPDIR` 写入 Worker 私有目录。登录目录根和凭据仍为只读，XDG 目录继续指向 Worker 私有位置。
 
 托管会话的 `LOOM_ADDR` 默认提供 `send --from`，也用于启动子会话时的父会话寻址。`send --wait` 只供非托管调用方同步取一次回复。项目通知用 `loom notifications` 一次领取，`--peek` 只查看。
+
+- `drift.deferAuditorNotices` 默认为 `true`。事实检查和走偏通知随 Auditor 的下一条实际投递附送；完整通知仍可用 `loom status --json` 查看。
+- `delivery.replyBytes` 默认 600，最小 160，按 UTF-8 正文计量。超限的自动回传通过 `.project/replies/<sha256>.txt` 交付，文件名是保存内容的 SHA-256。
+- 配置 `roles.auditor.rotateAt: "gate"` 后，由 Leader 或 Super 用 `loom notifications --gate-complete ID` 记录门禁完成。loomd 就每个门禁向 Super 提议一次 Auditor 换班。实际换班仍使用 `loom switch` 和现有的 Leader、Auditor 错峰校验。
 
 ## 历史与巡检
 

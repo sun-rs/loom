@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { execFileSync } from 'node:child_process';
+import { execFileSync, spawnSync } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
 import { lstatSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -17,7 +17,7 @@ test('worker launch grants only its worktree Git metadata and private HOME, XDG 
   git('worktree', 'add', '-qb', 'topic/worker', cwd);
   const common = join(project, '.git');
   const branch = join('refs', 'heads', 'topic', 'worker');
-  const gitWrites = [join(common, 'worktrees', 'worker'), join(common, 'objects'),
+  const gitWrites = [join(common, 'worktrees', 'worker'), join(common, 'objects'), join(common, 'packed-refs.lock'),
     join(common, branch), join(common, branch) + '.lock', join(common, 'logs', branch)];
   assert.deepEqual(workerGitWritePaths(project, cwd), gitWrites);
   assert.deepEqual(workerGitWritePaths(project, project), []);
@@ -39,6 +39,7 @@ test('worker launch grants only its worktree Git metadata and private HOME, XDG 
   assert.equal(env.GIT_CONFIG_GLOBAL, join(env.HOME, '.gitconfig'));
   assert.equal(readFileSync(env.GIT_CONFIG_GLOBAL, 'utf8'), '[user]\n\tname = "Loom Test"\n\temail = "loom@example.invalid"\n');
   assert.equal(env.XDG_RUNTIME_DIR, env.TMPDIR);
+  assert.equal(env.TMPPREFIX, join(env.TMPDIR, 'zsh'));
   for (const key of ['XDG_CONFIG_HOME', 'XDG_CACHE_HOME', 'XDG_DATA_HOME', 'XDG_STATE_HOME']) {
     assert.equal(dirname(env[key]), env.HOME);
   }
@@ -51,7 +52,7 @@ test('worker launch grants only its worktree Git metadata and private HOME, XDG 
   assert.ok(permission.includes(`unix_sockets={"${env.TMPDIR}"="allow"}`));
   assert.match(permission, /allow_local_binding=false/);
   git('-C', cwd, 'switch', '--detach', '-q');
-  assert.deepEqual(workerGitWritePaths(project, cwd), gitWrites.slice(0, 2));
+  assert.deepEqual(workerGitWritePaths(project, cwd), gitWrites.slice(0, 3));
 });
 
 test('macOS native workers can write their worktree and state without making the login home writable',
@@ -76,4 +77,39 @@ test('macOS native workers can write their worktree and state without making the
       'loom-fixture', env.TMPDIR], { cwd, env: { ...process.env, ...env, ...login },
       encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], timeout: 5000 });
     assert.match(pty, /loom-pty-fixture/);
+  });
+
+test('restricted worker runs zsh heredocs and commits with hooks without the shared packed-refs lock',
+  { skip: process.platform !== 'darwin' }, t => {
+    const project = mkdtempSync(join(realpathSync(tmpdir()), 'loom-worker-refs-'));
+    t.after(() => rmSync(project, { recursive: true, force: true }));
+    const git = (...args) => execFileSync('/usr/bin/git', args, { cwd: project, stdio: 'pipe' });
+    git('init', '-qb', 'main');
+    git('config', 'user.name', 'Loom');
+    git('config', 'user.email', 'loom@example.invalid');
+    git('config', 'maintenance.auto', 'true');
+    git('commit', '--allow-empty', '-qm', 'base');
+    const cwd = join(project, 'work');
+    git('worktree', 'add', '-qb', 'worker', cwd);
+    git('pack-refs', '--all');
+    const packed = join(project, '.git', 'packed-refs');
+    const original = readFileSync(packed);
+    writeFileSync(join(project, '.git', 'hooks', 'pre-commit'), '#!/bin/sh\nprintf ran > hook-proof\n', { mode: 0o755 });
+    const login = { HOME: join(project, 'login') };
+    mkdirSync(login.HOME);
+    const row = { role: 'worker', cli: 'claude', addr: `oar-${randomUUID()}`, cwd };
+    const env = workerEnvironment(row);
+    t.after(() => rmSync(dirname(env.HOME), { recursive: true, force: true }));
+    const launch = sandboxNativeWorker(project, row, login, env, '/bin/zsh');
+    const result = spawnSync(launch, ['-fc', [
+      'set -e', '/bin/cat > content <<\'END\'', 'here document', 'END',
+      'test "$(/usr/bin/git config --get maintenance.auto)" = false',
+      '/usr/bin/git add content', '/usr/bin/git commit -qm worker',
+      'test "$(cat hook-proof)" = ran',
+    ].join('\n')], { cwd, env: { ...process.env, ...env, ...login }, encoding: 'utf8' });
+    assert.equal(result.status, 0, result.stderr);
+    assert.doesNotMatch(result.stderr, /packed-refs\.lock|temp file for here document/);
+    assert.equal(readFileSync(join(cwd, 'content'), 'utf8'), 'here document\n');
+    assert.deepEqual(readFileSync(packed), original);
+    assert.equal(lstatSync(packed + '.lock', { throwIfNoEntry: false }), undefined);
   });

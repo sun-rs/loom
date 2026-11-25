@@ -4,6 +4,9 @@ import { basename, extname, isAbsolute, relative, resolve, sep } from 'node:path
 import { exclusions, isCredentialPath } from './git.mjs';
 
 const sha = /(?<![\w-])(?:[0-9a-f]{40}|[0-9a-f]{64}|[0-9a-f]{7,39})(?![\w-])/gi;
+const opaqueReference = /\[loom:[^\]\r\n]+\]|\b[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}\b/gi;
+const gitReference = /(?:\b(?:git\s+(?:show|rev-parse|checkout|merge|cherry-pick)|sha(?:-?[12])?|commit(?:ted)?|head)|提交(?:号|哈希)?|基线|合入(?:到|至)?)(?:\s*(?:是|为|为：|[:：=@#（(]|\b(?:is|at|to)\b))*\s*$/i;
+const noticeLine = /^\s*(?:[-*]\s+)?(?:Loom drift and fact checks|fact-miss\s+\S+\s+·\s+.+)\s*$/i;
 const pathToken = /(?<![\w/~@+-])(?:\/?[\w.@+-]+(?:\/[\w.@+-]+)+\/?|[\w.-]+\.[a-z][a-z0-9]{0,9})(?![\w/@+-])/gi;
 const named = /\b(tests?|metrics?)(?:\s+names?)?\s*(?::|=|\s)\s*([\x60"'][^\x60"'\r\n]+[\x60"'](?:\s*(?:,|\band\b)\s*[\x60"'][^\x60"'\r\n]+[\x60"'])*)|(?:测试(?:名(?:称)?)?|指标(?:名(?:称)?)?)\s*[:：]?\s*([\x60"'][^\x60"'\r\n]+[\x60"'])/gi;
 const bareName = /\b(tests?|metrics?)(?:\s+names?)?\s*[:=]\s*([A-Za-z_][\w:-]*)|(?:测试(?:名(?:称)?)?|指标(?:名(?:称)?)?)\s*[:：]\s*([A-Za-z_][\w:-]*)/gi;
@@ -11,7 +14,9 @@ const identifier = /^(?:test[_A-Z]\w*|[a-z]\w*(?:::\w+)+)$/;
 const specialFile = /^(?:Makefile|Dockerfile|README|LICENSE|AGENTS\.md|\.gitignore|\.gitattributes)$/i;
 const commandPrefix = /^(?:git|loom|npm|node|cargo|pytest|make|cd|npx|pnpm|yarn|bun|go|python[23]?|"?\$LOOM_BIN"?)\s|^-/;
 const pathExtensions = new Set('bash bat bz2 c cc cfg cjs cmake conf cpp css csv diff dockerfile env go gz h hpp html ini java js json jsonl jsx kt lock log md mjs patch pdf plist png proto py rb rs sh sql sqlite svg swift tar toml ts tsx txt xml yaml yml zip zsh'.split(' '));
-const planned = /(?:\b(?:will|plan to|going to) (?:add|create|write|generate)(?: (?:the )?file)?|(?:随后|准备|计划|将|待|接下来)(?:[要再先]?)(?:创建|新建|写入|写|生成))(?:\s*[:：])?\s*$/i;
+const planned = /(?:\b(?:will|plan to|going to) (?:add|create|write|generate|implement)(?: (?:the )?(?:files?|modules?))?|(?:随后|准备|计划|将|待|接下来)(?:[要再先]?)(?:创建|新建|新增|写入|写|生成|实现))(?:\s*[:：])?\s*(?:[\x60\w./-]+\s*[,、，]\s*)*$/i;
+const stillPlanned = /^(?:\s*(?:是|为)?\s*(?:待实现|待新建|尚未实现|尚未创建|计划新增)|\s+(?:(?:is|are)\s+(?:planned|not yet (?:created|implemented))|will be (?:created|implemented))\b)/i;
+const cardCreation = /^\s*(?:[-*]|\d+\.)?\s*(?:add|create|implement|generate|新增|创建|新建|新写|补写|实现)\s*[:：]?\s*$/i;
 const ratio = /^\d+(?:\.\d+)?\/\d+(?:\.\d+)?$/;
 const oid = /^(?:[a-f0-9]{40}|[a-f0-9]{64})$/i;
 const quotedSha = /^(?:[a-f0-9]{7,40}|[a-f0-9]{64})$/i;
@@ -71,13 +76,34 @@ function hasName(roots, name) {
     ':(exclude,glob)**/tasks/**', ':(exclude,glob)**/docs/**', ':(exclude,glob)**/.project/**', ...exclusions).status === 0);
 }
 
-export function checkFacts(body, cwd, project = cwd, snapshot, { pathBoundary } = {}) {
+export function plannedCardPaths(card) {
+  const paths = new Set();
+  for (const line of card.split(/\r?\n/)) {
+    if (/^\s*>/.test(line)) continue;
+    for (const match of line.matchAll(pathToken)) {
+      if (!match[0].includes('/')) continue;
+      const before = line.slice(0, match.index).trimEnd().replace(/\x60$/, '');
+      if (planned.test(before) || cardCreation.test(before) || stillPlanned.test(line.slice(match.index + match[0].length).replace(/^\x60/, ''))) {
+        paths.add(match[0].replace(/^\.\//, ''));
+      }
+    }
+  }
+  return paths;
+}
+
+export function checkFacts(body, cwd, project = cwd, snapshot,
+  { pathBoundary, quotedMisses = [], noticeIds, plannedPaths } = {}) {
   const gitRoot = cwd && git(cwd, 'rev-parse', '--show-toplevel').stdout?.trim();
   const roots = [...new Set([gitRoot, cwd, project].filter(Boolean))];
   const { checkable, found } = pathFacts(roots, gitRoot, snapshot, pathBoundary);
-  const text = (body ?? '').replace(/^\s*>[^\r\n]*$/gm, '').replace(/\b(?:https?|file):\/\/[^\s\x60<>)]+/gi, '');
+  const text = (body ?? '').split(/\r?\n/).filter(line => !/^\s*>/.test(line) && !noticeLine.test(line)).join('\n')
+    .replace(opaqueReference, '').replace(/\b(?:https?|file):\/\/[^\s\x60<>)]+/gi, '');
   const facts = new Map();
-  const add = (kind, value) => facts.set(JSON.stringify([kind, value]), { kind, value });
+  const ignore = new Set(quotedMisses.map(({ kind, value }) => JSON.stringify([kind, value])));
+  const add = (kind, value) => {
+    const key = JSON.stringify([kind, value]);
+    if (!ignore.has(key)) facts.set(key, { kind, value });
+  };
   let prose = text.replace(named, (_, kind, english, chinese, offset) => {
     const label = kind?.toLowerCase().replace(/s$/, '') ?? (/^测试/.test(text.slice(offset)) ? 'test' : 'metric');
     const commands = [];
@@ -94,9 +120,12 @@ export function checkFacts(body, cwd, project = cwd, snapshot, { pathBoundary } 
     }
     return '';
   });
-  const addPath = (value, offset) => {
+  const addPath = (value, offset, end = offset + value.length) => {
     const token = value.replace(/:\d+(?::\d+)?$/, '').replace(/[.,;:]+$/, '').replace(/\/$/, '');
-    if (token.length <= 512 && checkable(token) && !planned.test(prose.slice(Math.max(0, offset - 90), offset))) {
+    const start = Math.max(prose.lastIndexOf('\n', offset) + 1, offset - 180);
+    if (token.length <= 512 && (pathBoundary || token.includes('/')) && checkable(token) &&
+        (pathBoundary || !plannedPaths?.has(token.replace(/^\.\//, '')) &&
+          !planned.test(prose.slice(start, offset)) && !stillPlanned.test(prose.slice(end)))) {
       add('path', token);
     }
   };
@@ -111,7 +140,7 @@ export function checkFacts(body, cwd, project = cwd, snapshot, { pathBoundary } 
     const command = commandPrefix.test(token) || /\s--?\S/.test(token) || first !== token &&
       (/\/bin\//.test(first) || firstStat?.isFile() && (firstStat.mode & 0o111) !== 0);
     if (!command && (first === token || token.includes('/') || pathExtensions.has(extname(token).slice(1).toLowerCase()))) {
-      addPath(token, offset);
+      addPath(token, offset, offset + quoted.length);
     }
     return !command && quotedSha.test(token) ? token : ' ';
   });
@@ -120,8 +149,12 @@ export function checkFacts(body, cwd, project = cwd, snapshot, { pathBoundary } 
     return ' ';
   });
   for (const match of prose.matchAll(sha)) {
-    if (/[a-f]/i.test(match[0]) || match[0].length >= 40 || /\b(?:sha|commit|head)\s*[:=]?\s*$/i.test(prose.slice(0, match.index))) {
-      add('sha', match[0].toLowerCase());
+    const value = match[0].toLowerCase();
+    if (noticeIds?.has(value)) continue;
+    const start = Math.max(prose.lastIndexOf('\n', match.index) + 1, match.index - 100);
+    if (gitReference.test(prose.slice(start, match.index)) || pathBoundary && /[a-f]/.test(value) ||
+        oid.test(match[0]) && !/(?:\b(?:digest|sha256|delivery|notice|id)\b|投递|通知|摘要)\s*[:：=]?\s*$/i.test(prose.slice(start, match.index))) {
+      add('sha', value);
     }
   }
   const misses = [];

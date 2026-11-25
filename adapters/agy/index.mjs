@@ -1,5 +1,5 @@
 import { launch } from './launch.mjs';
-import { classify, dialogKeys, hasEmptyComposer } from './screen.mjs';
+import { classify, dialogKeys, hasEmptyComposer, hasRunningBackgroundTask } from './screen.mjs';
 import { inspectScreen } from '../tui-screen.mjs';
 import { normalize } from './hooks.mjs';
 import { locate, parse, turnSummary } from './transcript.mjs';
@@ -26,7 +26,7 @@ export const agy = {
     hookInjection: 'project-file',
   },
   launch,
-  screen: { classify, dialogKeys, hasEmptyComposer, inspect: text => inspectScreen(classify, text) },
+  screen: { classify, dialogKeys, hasEmptyComposer, hasRunningBackgroundTask, inspect: text => inspectScreen(classify, text) },
   hooks: { normalize },
   transcript: { locate, parse, turnSummary },
   input: { plan },

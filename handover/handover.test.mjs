@@ -87,6 +87,21 @@ test('retains the rulings pointer and marks a linked ledger as unreadable', asyn
   assert.doesNotMatch(brief, /外部原文/);
 });
 
+test('excerpts numbered R entries from a ledger and explains a ledger with no numbered entries', async t => {
+  const projectDir = await workspace(t);
+  const options = { role: 'leader', project: 'P', projectDir, index: newIndex(session('t1')), locate: false };
+  await put(projectDir, '.project/inbox/state.json', {
+    messages: [{ id: 'latest', target: 't1', phase: 'queued', text: '按 R2 核查' }],
+  });
+  await put(projectDir, '.project/rulings.md', '# 裁决账本\nR2. worker 不发消息，只回 DONE / BLOCKED / FAILED。\nR3. 保活不划算。\n');
+  let { brief } = await generateBrief(options);
+  assert.match(brief, /## 裁决账本\n\.project\/rulings\.md\n裁决 2\n> worker 不发消息/);
+  assert.doesNotMatch(brief, /保活不划算/);
+  await put(projectDir, '.project/rulings.md', '# 裁决账本\n仍在整理。\n');
+  ({ brief } = await generateBrief(options));
+  assert.match(brief, /## 裁决账本\n\.project\/rulings\.md\n未找到可摘录的编号裁决/);
+});
+
 test('projects the parent chain, latest adapter turns, inbox, relay, watch, claims and git', async t => {
   const projectDir = await workspace(t);
   execFileSync('git', ['init', '-q', '--template=', projectDir]);

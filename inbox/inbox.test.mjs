@@ -170,6 +170,36 @@ test('one agy step can corrupt its first delivery and confirm its complete, inde
   assert.equal(f.lookup(second).payloadVerified, true);
 });
 
+test('repairs both pilot-2 agy batch receipts from the bound native step without resubmitting', async t => {
+  const capture = JSON.parse(readFileSync(new URL('../tasks/PILOT2-TOOLS-1/agy-receipt.json', import.meta.url)));
+  const { primary, peer, expected, observed, receivedAt } = capture;
+  const sessionId = 'native';
+  for (const changeBody of [false, true]) {
+    const f = fixture(t);
+    const transcript = join(f.root, 'transcript_full.jsonl');
+    const record = structuredClone(capture.native);
+    if (changeBody) record.content = record.content.replace('worker results', 'worker result');
+    writeFileSync(transcript, JSON.stringify(record) + '\n');
+    const target = { addr: 't9', provider: 'agy', tui: { transport: 'holder-v3' } };
+    const observation = { state: 'idle', provider: 'agy', tui: target.tui, terminal: { cwd: f.root },
+      events: [{ hook_event_name: 'PreInvocation', invocationNum: 0, conversationId: sessionId,
+        receivedAt, deliveryId: primary.id, transcriptPath: transcript }] };
+    const transport = { nativeDelivery, inspect: async () => observation, send: () => assert.fail('No resend') };
+    const store = inbox(f.root, transport);
+    const old = { target, createdAt: receivedAt - 100, mode: 'queue', requestedMode: 'queue', phase: 'corrupted',
+      issue: 'payload-mismatch', corruption: { expected, observed, at: receivedAt, sessionId } };
+    store.enqueue({ ...old, ...primary, attemptAt: receivedAt - 50, payloadDigest: expected, combinedWaves: [peer.id] });
+    store.enqueue({ ...old, ...peer, combinedInto: primary.id });
+    await inbox(f.root, transport).step();
+    for (const { id } of [primary, peer]) {
+      const receipt = f.lookup(id);
+      assert.equal(receipt.phase, changeBody ? 'corrupted' : 'received');
+      if (!changeBody) assert.equal(receipt.corruption, undefined);
+    }
+    if (!changeBody) assert.equal(f.lookup(primary.id).payloadVerified, true);
+  }
+});
+
 test('Claude root transcript completion of a human-submitted delivery releases its FIFO queue', async t => {
   const f = fixture(t);
   const target = f.terminal('t9', 'claude', 'idle', false);

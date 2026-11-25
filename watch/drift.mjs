@@ -24,6 +24,8 @@ function text(path) {
   return '';
 }
 
+export const cardTexts = (row, project) => taskDirectories(row, project).map(directory => text(join(directory, 'TASK.md')));
+
 export function sampleCard(row, project, start, policy, card, emit) {
   const directories = taskDirectories(row, project);
   const declared = directories.map(directory => budgetLine.exec(text(join(directory, 'TASK.md')))?.[1])

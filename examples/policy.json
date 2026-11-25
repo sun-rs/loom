@@ -1,6 +1,6 @@
 {
   "note": "Single-account operation only. Use one authorized account per provider for this project.",
-  "delivery": { "coalesceMs": 45000 },
+  "delivery": { "coalesceMs": 45000, "replyBytes": 600 },
   "drift": {
     "netLines": null,
     "budgetRaises": 2,
@@ -9,6 +9,7 @@
     "planLines": 120,
     "repeatedFailures": 2,
     "factMiss": true,
+    "deferAuditorNotices": true,
     "sampleIntervalMs": 30000
   },
   "deny": [
@@ -35,6 +36,7 @@
     },
     "auditor": {
       "trustWorkspace": true,
+      "rotateAt": "gate",
       "guidance": { "modelTier": "strong", "vendorFamily": "different-from-workers", "preferLongPromptCacheTtl": true },
       "preferred": [
         { "cli": "agy", "model": "gemini-4-neon", "effort": "high", "mode": "tui" },

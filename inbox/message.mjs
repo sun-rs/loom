@@ -17,10 +17,11 @@ export function wireText(id, message) {
 export const payloadDigest = text => createHash('sha256').update(text).digest('hex');
 export const checksDeliveryIntegrity = target => ['claude', 'agy'].includes(target.provider) && target.tui?.transport === 'holder-v3';
 
-export function combinedDeliveryText(message, waves) {
-  if (!waves.length) return message.text;
-  return [...(message.superPriority ? ['Loom Super message', message.text, '--- Loom wave results ---'] :
-    ['Loom worker results', message.text]), ...waves.map(wave => wave.text)].join('\n\n');
+export function combinedDeliveryText(message, waves, separator = message.waveSeparator ?? '\n\n') {
+  if (message.wireBody !== undefined) return message.wireBody;
+  const body = waves.length ? [...(message.superPriority ? ['Loom Super message', message.text, '--- Loom wave results ---'] :
+    ['Loom worker results', message.text]), ...waves.map(wave => wave.text)].join(separator) : message.text;
+  return message.orgAppendix ? body + '\n\n' + message.orgAppendix : body;
 }
 
 export const claudeDigestVersion = 2;

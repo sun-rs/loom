@@ -37,6 +37,7 @@ const cardConventions = row => [
   '## Loom task conventions',
   `Task ${row.task}, working directory ${row.cwd}. Follow the card’s writable scope and acceptance commands. Start with the card and skip environment exploration or searches for AGENTS.md and skills to discover Loom conventions.`,
   'Invoke Loom commands through "$LOOM_BIN", the absolute executable path.',
+  'Keep Git hooks enabled. Git --no-verify, core.hooksPath overrides, and equivalent bypasses are forbidden.',
   'Use relevant fragments of large files and output. Avoid rereading whole files already read. After the final acceptance passes, give the final reply immediately. Skip extra status/diff checks, rereads and reruns unless the card requires them.',
   `Final reply line 1: DONE ${row.task}, BLOCKED ${row.task} or FAILED ${row.task}.`,
   'Line 2: a one-line conclusion with the deliverable or the blocking decision. Line 3: Leftovers & deviations: none, or list the specific items.',

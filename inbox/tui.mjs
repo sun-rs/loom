@@ -249,7 +249,8 @@ export function nativeDelivery(message, observation) {
     const known = (provider === 'claude' ? [hookDigest,
       ...recorded.filter(digest => confirmation.digestVersion === claudeDigestVersion || digest === expected)] :
       [agyRecord?.at >= message.attemptAt && agyRecord.digest, ...recorded]).filter(Boolean);
-    const mismatch = known.find(value => value !== expected);
+    const mismatch = known.find(value => value !== expected &&
+      !(provider === 'agy' && message.compatibleDigests?.includes(value)));
     if (mismatch) return { ...result, corrupted: { expected, observed: mismatch,
       ...(provider === 'claude' && { digestVersion: claudeDigestVersion }) } };
     if (!known.length) return;

@@ -273,7 +273,8 @@ export function createWatcher({
       return snapshot(entry, 'unknown', 'exited');
     }
     if (!isVisibleFrame(terminal, frame)) return snapshot(entry, 'unknown');
-    const screen = adapters.get(session.cli).screen.classify(frame.text);
+    const adapter = adapters.get(session.cli).screen;
+    const screen = adapter.classify(frame.text);
     if (screen === 'unknown') return snapshot(entry, screen);
     let hooks;
     try {
@@ -282,9 +283,10 @@ export function createWatcher({
     } catch { /* Timing evidence is unavailable. */ }
     const at = now();
     const reason = reasons.get(screen);
-    if (!reason && !hooks) return snapshot(entry, 'unknown');
-    const condition = reason ? { reason, since: at } : timedCondition(entry, screen, frame.text, hooks, at);
-    if (reason) entry.timer = null;
+    const background = screen === 'busy' && adapter.hasRunningBackgroundTask?.(frame.text);
+    if (!reason && !hooks && !background) return snapshot(entry, 'unknown');
+    const condition = reason ? { reason, since: at } : background ? null : timedCondition(entry, screen, frame.text, hooks, at);
+    if (reason || background) entry.timer = null;
 
     await updateRateLimit(entry, session, screen, frame, condition, hooks, at);
     const incident = entry.incident;

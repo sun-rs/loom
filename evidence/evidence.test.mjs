@@ -136,6 +136,28 @@ test('keeps a started Codex check with an unknown exit and reads structured tool
   assert.equal(compareClaims(verification.finalReply, {}, verification)[0].status, 'UNVERIFIED');
 });
 
+test('counts every sandbox denial, including stderr on successful non-test commands', async t => {
+  const project = directory(t);
+  const output = [
+    "error: Unable to create '/fixture/.git/packed-refs.lock': Operation not permitted",
+    "zsh:1: can't create temp file for here document: operation not permitted",
+    'zsh:2: operation not permitted: /fixture/external',
+  ].join('\n');
+  const transcript = jsonl(makeCodexTurn('denial', { command: 'git commit', exitCode: 0, output }));
+  const { data, card } = await evidence.forTurn({
+    project, cwd: null, task: 'PILOT-TOOLS', turn: 'denial', provider: 'codex', nativeTurnId: 'denial', transcript,
+    projected: { tools: [{ tool: 'shell', command: 'git commit', output }], turnStatus: 'completed' },
+  });
+  assert.equal(data.verification.sandboxDenials, 3);
+  assert.deepEqual(data.verification.commands, []);
+  assert.match(card, /沙箱拒绝 3/);
+  const projected = await evidence.forTurn({
+    project, cwd: null, task: 'PILOT-TOOLS', turn: 'fallback', provider: 'codex',
+    projected: { tools: [{ tool: 'shell', output }], turnStatus: 'completed' },
+  });
+  assert.equal(projected.data.verification.sandboxDenials, 3);
+});
+
 test('persists one bounded card and retains the first observation across retries', async t => {
   const project = directory(t);
   const finalReply = 'DONE EVID\n全绿\n已合入';

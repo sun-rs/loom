@@ -39,8 +39,10 @@ export function workerEnvironment(row) {
       writeFileSync(gitConfig, ['[user]', ...identity, ''].join('\n'), { flag: 'wx', mode: 0o600 });
     } catch (error) { if (error.code !== 'EEXIST') throw error; }
   }
-  return { HOME: home, TMPDIR: tmp, TMP: tmp, TEMP: tmp,
-    GIT_CONFIG_GLOBAL: gitConfig,
+  // Zsh uses TMPPREFIX for heredocs, independently of TMPDIR.
+  return { HOME: home, TMPDIR: tmp, TMP: tmp, TEMP: tmp, TMPPREFIX: join(tmp, 'zsh'), ZDOTDIR: home,
+    GIT_CONFIG_GLOBAL: gitConfig, GIT_CONFIG_COUNT: '1',
+    GIT_CONFIG_KEY_0: 'maintenance.auto', GIT_CONFIG_VALUE_0: 'false',
     XDG_CONFIG_HOME: privateDirectory(join(home, 'config')), XDG_CACHE_HOME: privateDirectory(join(home, 'cache')),
     XDG_DATA_HOME: privateDirectory(join(home, 'data')), XDG_STATE_HOME: privateDirectory(join(home, 'state')),
     XDG_RUNTIME_DIR: tmp };
@@ -148,11 +150,19 @@ export function workerGitWritePaths(project, cwd) {
     if (realpathSync(path) !== path || !lstatSync(path).isDirectory()) throw new Error('Git writable path must be a real directory');
   }
   const branch = git(cwd, 'symbolic-ref', '--quiet', 'HEAD');
-  const paths = [dir, objects];
-  if (!branch) return paths;
   if (git(cwd, 'rev-parse', '--show-ref-format') === 'reftable') {
+    if (!branch) return [dir, objects];
     throw new Error('A shared reftable cannot grant writes to one worker branch');
   }
+  // Git versions that lock packed refs when removing per-worktree root refs
+  // (such as AUTO_MERGE) need only the temporary lock during commit cleanup.
+  const packedLock = join(common, 'packed-refs.lock');
+  const lock = lstatSync(packedLock, { throwIfNoEntry: false });
+  if (lock && (!lock.isFile() || lock.nlink !== 1)) {
+    throw new Error('Git packed-refs lock path must be a regular file');
+  }
+  const paths = [dir, objects, packedLock];
+  if (!branch) return paths;
   if (!branch.startsWith('refs/heads/') || git(cwd, 'check-ref-format', branch) === undefined) {
     throw new Error('Invalid worker branch ref');
   }

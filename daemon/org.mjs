@@ -5,11 +5,11 @@ import { adapterFor } from '../cli/sessions.mjs';
 import { timestamp } from '../cli/turns.mjs';
 import { driftDefaults, readPolicy } from '../cli/policy.mjs';
 import { runtimeDirectory } from '../cli/project.mjs';
-import { checkFacts } from '../evidence/facts.mjs';
+import { checkFacts, plannedCardPaths } from '../evidence/facts.mjs';
 import { forTurn, readTranscript } from '../evidence/index.mjs';
 import { observeRelayTurn, turnExecutions } from '../evidence/relay.mjs';
 import { isBlockedReply } from '../inbox/message.mjs';
-import { observeExecutions, sampleCard } from '../watch/drift.mjs';
+import { cardTexts, observeExecutions, sampleCard } from '../watch/drift.mjs';
 import { readText, writeState } from './io.mjs';
 
 const orgPath = project => join(runtimeDirectory(project), 'org.json');
@@ -83,8 +83,25 @@ export function organization(project, index, sessions, mail, now, report) {
     const executions = [];
     const pending = new Map(index.rotations().filter(item => !item.verifiedAt && !item.failedAt).map(item => [item.successor, item]));
     const byAddr = Map.groupBy(mail.messages.filter(message => !message.combinedInto), message => message.target.addr);
+    const noticeIds = new Set([...Object.keys(next.notices), ...mail.messages.map(message => message.id)]
+      .flatMap(id => [id, id.slice(0, 8)]));
     const owned = rows.filter(row => row.role !== 'reviewer' && sessions.jobs.has(row.addr));
     const latestCards = new Map(owned.filter(row => row.role === 'worker').map(row => [JSON.stringify([row.project, row.task]), row]));
+    const activePlans = new Map();
+    function plannedFor(name) {
+      if (!activePlans.has(name)) {
+        const paths = new Set();
+        for (const worker of latestCards.values()) {
+          if (worker.project !== name || worker.endedAt !== null) continue;
+          const job = sessions.jobs.get(worker.addr);
+          const first = byAddr.get(worker.addr)?.find(message => message.id === job.firstId);
+          if (!first || first.completion || ['corrupted', 'refused'].includes(first.phase)) continue;
+          for (const path of plannedCardPaths([job.prompt, ...cardTexts(worker, project)].join('\n'))) paths.add(path);
+        }
+        activePlans.set(name, paths);
+      }
+      return activePlans.get(name);
+    }
 
     for (const row of owned) {
       const job = sessions.jobs.get(row.addr);
@@ -112,7 +129,11 @@ export function organization(project, index, sessions, mail, now, report) {
           nativeTurnId: turn.nativeTurnId ?? turn.turnId, streamId: turn.streamId,
           transcriptPath: () => row.transcriptPath,
         }, index);
-        const facts = body ? checkFacts(body, row.cwd, project, observation.gitObservation) : { checked: 0, misses: [] };
+        const quotedMisses = (byAddr.get(row.addr) ?? []).filter(message => inputIds?.includes(message.id))
+          .flatMap(message => (message.orgEvents ?? []).flatMap(id => next.notices[id]?.misses ?? []));
+        const plannedPaths = body && ['leader', 'auditor'].includes(row.role) ? plannedFor(row.project) : undefined;
+        const facts = body ? checkFacts(body, row.cwd, project, observation.gitObservation, { quotedMisses, noticeIds, plannedPaths }) :
+          { checked: 0, misses: [] };
         if (facts.misses.length && (settings.factMiss || ['leader', 'auditor'].includes(row.role))) {
           add('fact-miss', key, { turn: key, misses: facts.misses.slice(0, 5), count: facts.misses.length },
             row.role === 'auditor' ? 'leader' : 'auditor');

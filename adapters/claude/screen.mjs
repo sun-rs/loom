@@ -443,10 +443,20 @@ export function classify(text) {
   if (matchesPicker(rows)) return 'picker';
   if (matchesError(entries, AUTH_FAIL_PATTERNS)) return 'auth-fail';
   if (matchesError(entries, RATE_LIMIT_PATTERNS)) return 'rate-limit';
-  if (matchesBusy(entries)) return 'busy';
+  if (matchesBusy(entries) || hasRunningBackgroundTask(text)) return 'busy';
   if (hasEmptyComposer(text)) return 'idle';
   if (matchesTrustDialog(entries)) return 'trust-dialog';
   return 'unknown';
+}
+
+export function hasRunningBackgroundTask(text) {
+  const tail = dialogRows(stripAnsiAndControl(text)).slice(-10);
+  const prompt = tail.findLastIndex(row => /^❯(?:\s|$)/u.test(row));
+  const waiting = /^waiting on (?:background work|[1-9]\d* (?:commands?|monitors?|subagents?)(?:, [1-9]\d* (?:commands?|monitors?|subagents?))*)(?:\s*(?:[·(…]|$))/i;
+  const spinner = /^[✻✳✶✢✽✺✹✸✷✴✵\u2800-\u28ff]\s+/u;
+  return tail.some((row, index) => spinner.test(row) && waiting.test(row.replace(spinner, '')) ||
+    prompt >= 0 && index > prompt && (waiting.test(row) ||
+      /^(?:[⏵›]+\s*)?(?:[^·]+\s+·\s+)*[1-9]\d*\s+(?:background tasks?|bash(?: commands?)?)\s+running(?:\s*(?:[·(]|$))/i.test(row)));
 }
 
 export function dialogKeys(kind, text, cwd) {

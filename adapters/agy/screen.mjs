@@ -9,6 +9,9 @@ const idleComposer = new RegExp(
   `^${RULE}\\n${COMPOSER}\\n${RULE}\\n(?:${TASKS}${RULE}\\n)?\\? for shortcuts[^\\n]*$`, 'im',
 );
 const busyComposer = new RegExp(`^${RULE}\\n${COMPOSER}\\n${RULE}\\nesc to cancel[^\\n]*$`, 'im');
+const backgroundComposer = new RegExp(
+  `^${RULE}\\n${COMPOSER}\\n${RULE}\\n${TASKS}${RULE}\\n\\? for shortcuts[^\\n]*$`, 'im',
+);
 const heldComposer = new RegExp(`(?:^|\\n)${RULE}\\n>\\n${RULE}(?:\\n${TASKS}${RULE})?$`);
 const modelFooter = /^(?:accept-edits|auto|plan|yolo)\s+·\s+[^·]+\s+·\s+(?:low|medium|high|xhigh|max)$/i;
 const trustFooter = /^↑\/↓\s+Navigate\s+·\s+enter Confirm$/i;
@@ -88,8 +91,13 @@ export function classify(text) {
   const emptyAboveSettingsError = rows.at(-3) === '>' && ruleRow.test(rows.at(-2)) && ruleRow.test(rows.at(-4));
   if (emptyAboveSettingsError && settingsError.test(footer) ||
       /^(?:⎿\s*)?(?:Error: (?:failed to|request failed)|Request failed with status [45]\d\d)\b/im.test(tail)) return 'error';
+  if (hasRunningBackgroundTask(text)) return 'busy';
   if (!/^esc to cancel\b/i.test(footer) && hasEmptyComposer(text)) return 'idle';
   return 'unknown';
+}
+
+export function hasRunningBackgroundTask(text) {
+  return backgroundComposer.test(rowsOf(text).join('\n'));
 }
 
 export function dialogKeys(kind, text) {

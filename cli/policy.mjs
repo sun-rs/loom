@@ -14,9 +14,10 @@ const example = fileURLToPath(new URL('../examples/policy.json', import.meta.url
 const defaultMaxActiveWorkers = 3;
 const hardMaxActiveWorkers = 4;
 export const defaultCoalesceMs = 45_000;
+export const defaultReplyBytes = 600;
 export const driftDefaults = Object.freeze({
   netLines: null, budgetRaises: 2, slowCommandFactor: 2, slowCommandSamples: 1,
-  planLines: 120, repeatedFailures: 2, factMiss: true, sampleIntervalMs: 30_000,
+  planLines: 120, repeatedFailures: 2, factMiss: true, deferAuditorNotices: true, sampleIntervalMs: 30_000,
 });
 const guidanceFields = {
   super: { preferLongPromptCacheTtl: 'boolean' },
@@ -65,14 +66,14 @@ export function readPolicy(project, { optional = false } = {}) {
     validateProfiles(policy);
     if (policy.delivery !== undefined && (!policy.delivery || typeof policy.delivery !== 'object' ||
         Array.isArray(policy.delivery) || Object.entries(policy.delivery).some(([key, value]) =>
-          key !== 'coalesceMs' || !Number.isSafeInteger(value) || value < 0))) {
-      throw new Error('Expected delivery.coalesceMs to be a nonnegative integer in milliseconds');
+          !Number.isSafeInteger(value) || (key === 'coalesceMs' ? value < 0 : key !== 'replyBytes' || value < 160)))) {
+      throw new Error('Expected delivery.coalesceMs in milliseconds (≥ 0) or delivery.replyBytes (≥ 160)');
     }
     if (policy.drift !== undefined) {
       if (!policy.drift || typeof policy.drift !== 'object' || Array.isArray(policy.drift)) throw new Error('Expected a drift object');
       for (const [key, value] of Object.entries(policy.drift)) {
         if (!Object.hasOwn(driftDefaults, key) ||
-            (key === 'factMiss' ? typeof value !== 'boolean' :
+            (['factMiss', 'deferAuditorNotices'].includes(key) ? typeof value !== 'boolean' :
               key === 'slowCommandFactor' ? value !== null && !(Number.isFinite(value) && value > 1) :
               !(value === null && !['sampleIntervalMs', 'slowCommandSamples'].includes(key)) &&
                 !(Number.isSafeInteger(value) && value >= (['netLines', 'sampleIntervalMs'].includes(key) ? 0 : 1)))) {
@@ -86,6 +87,9 @@ export function readPolicy(project, { optional = false } = {}) {
         if (!roles.includes(role) || !entry || typeof entry !== 'object' || Array.isArray(entry)) throw new Error(`Invalid role policy: ${role}`);
         validateProfiles(entry);
         validateGuidance(role, entry.guidance);
+        if (entry.rotateAt !== undefined && (role !== 'auditor' || entry.rotateAt !== 'gate')) {
+          throw new Error('Expected roles.auditor.rotateAt to be gate');
+        }
         if (entry.trustWorkspace !== undefined && typeof entry.trustWorkspace !== 'boolean') {
           throw new Error(`Expected roles.${role}.trustWorkspace to be a boolean`);
         }

@@ -41,10 +41,12 @@
 |---|---|---|---|
 | Claude Code（2.1.331） | auto memory | 环境变量 `CLAUDE_CODE_DISABLE_AUTO_MEMORY=1`，进程级生效 | 官方文档；raft 已实测；OpenCode 的 claude-agent provider 也设置这个变量 |
 | Codex（0.171.0） | 后台流水线 + 注入 | `features.memories=false`、`memories.generate_memories=false`、`memories.use_memories=false` | 官方配置参考；raft 实测 `config/read` 返回三项均为 false |
-| agy（1.5.16） | 内置 Knowledge Items 自动生成，外加 "Persistent Context" 提示（读 KI 摘要和过往对话日志） | **没有官方开关**。内置默认 `cascade-knowledge-config` 为 `enabled:false`；`cascade-conversation-history-config` 为 `enabled:true, max_conversations:20`；服务端能否覆盖未核实 | 二进制 strings；官方 CLI 参考；论坛 |
+| agy（1.5.17，2026-11-25 复核） | 二进制仍包含 Knowledge Items 和 Persistent Context 提示 | 官方 CLI 参考和本机 `agy --help` 均未列出记忆开关。二进制内置 `cascade-knowledge-config` 为 `enabled:false`，`cascade-conversation-history-config` 为 `enabled:true, max_conversations:20` | 本机 `agy --version`、`--help`、二进制 `strings`；[官方 CLI 参考](https://antigravity.google/docs/cli/reference/) |
 | OpenCode（2.3.0） | **没有**长期记忆。启动只注入 AGENTS.md 和 instructions，另读 `~/.claude` 的 skills | `OPENCODE_DISABLE_CLAUDE_CODE_SKILLS=1`，不读 Claude 侧的 skills | 源码 `packages/core/src/config/plugin/instruction.ts`、`packages/cli/src/server-process.ts` |
 
 直接问两个 CLI 自己的回答：agy 称系统指令里没有 KI 相关内容；OpenCode 只提到 `import-memory` 这个 skill。模型自述不可靠，以源码和二进制为准。
+
+agy 1.5.17 复核仅查看命令帮助和二进制内置值。登录后下发的配置、项目间复用以及知识条目的实际写入行为仍待验证。
 
 ## 4. 对 loom 的取舍
 

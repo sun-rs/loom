@@ -2,8 +2,8 @@ import { randomUUID } from 'node:crypto';
 import { openStore } from './store.mjs';
 import { refusals } from './tui.mjs';
 import { checksDeliveryIntegrity, combinedDeliveryText, payloadDigest } from './message.mjs';
+import { replyForDelivery } from './reply-file.mjs';
 
-const terminalText = text => text.replace(/[\x00-\x08\x0b-\x1f\x7f-\x9f]/g, '');
 const isDone = message => message.phase === 'received';
 const isUrgent = message => message.superPriority || message.mode === 'interrupt';
 const awaiting = message => ['sending', 'stopping'].includes(message.phase);
@@ -57,12 +57,29 @@ export function pendingWork(messages, addr, parentFor = value => value) {
 
 // The adapter-facing transport supplies pane binding, events and native input.
 // A headless runtime can supply the same operations when it owns its event stream.
-export function inbox(project, transport, report = console.error) {
+export function inbox(project, transport, report = console.error, { replyLimit } = {}) {
   const store = openStore(project);
   const { messages, save } = store;
   const integrityScanned = new Set();
-  const legacyCorruption = message => message.target.provider === 'claude' &&
-    message.phase === 'corrupted' && message.corruption && !message.corruption.digestVersion;
+  function legacyAgyDigests(message) {
+    if (message.target.provider !== 'agy' || !message.combinedWaves?.length ||
+        message.waveSeparator || message.wireBody !== undefined || message.orgAppendix) return;
+    const peers = message.combinedWaves.map(id => messages.find(item => item.id === id));
+    if (peers.some(peer => peer?.combinedInto !== message.id) ||
+        payloadDigest(combinedDeliveryText(message, peers)) !== message.payloadDigest) return;
+    // Pilot-2's segmented composer consumed one newline at a Loom-inserted
+    // result boundary. Compare only that exact byte change, never body whitespace.
+    const bodies = [message, ...peers].map(item => item.text);
+    const headings = message.superPriority ? ['Loom Super message', bodies.shift(), '--- Loom wave results ---'] :
+      ['Loom worker results', bodies.shift()];
+    const first = headings.join('\n\n');
+    const parts = [first, ...bodies];
+    return peers.map((_, index) => payloadDigest(parts.slice(0, index + 1).join('\n\n') +
+      '\n' + parts.slice(index + 1).join('\n\n')));
+  }
+  const legacyCorruption = message => message.phase === 'corrupted' && message.corruption &&
+    (message.target.provider === 'claude' && !message.corruption.digestVersion ||
+      legacyAgyDigests(message)?.includes(message.corruption.observed));
   const needsIntegrity = message => checksDeliveryIntegrity(message.target) && !integrityScanned.has(message.id) &&
     (legacyCorruption(message) || isDone(message) && !message.payloadVerified);
   const recovering = messages.filter(message =>
@@ -81,7 +98,7 @@ export function inbox(project, transport, report = console.error) {
     messages.push({
       id: randomUUID(), replyKey: key, replyTo: message.id, createdAt: Date.now(), target: from,
       requestedMode: 'queue', mode: 'queue', phase: 'queued',
-      text: `Loom reply from ${target.addr} (${message.id})\n\n${terminalText(completion.body)}`,
+      text: `Loom reply from ${target.addr} (${message.id})\n\n${completion.body}`,
     });
   }
 
@@ -91,7 +108,8 @@ export function inbox(project, transport, report = console.error) {
     if (!(message.attemptAt || message.phase === 'stopping' && message.stopAttemptAt) ||
         (message.phase === 'corrupted' || complete) && !needsIntegrity(message) ||
         message.phase === 'refused' && providerFailures.has(message.issue)) return;
-    const native = transport.nativeDelivery(message, observation);
+    const compatibleDigests = legacyAgyDigests(message);
+    const native = transport.nativeDelivery(compatibleDigests ? { ...message, compatibleDigests } : message, observation);
     if (complete) integrityScanned.add(message.id);
     if (!native) return;
     if (native.failed) {
@@ -141,8 +159,8 @@ export function inbox(project, transport, report = console.error) {
     }
     const completion = native.completion;
     if (completion && (!message.completion || completion.body || completion.noReply)) {
-      message.completion = completion;
       route(message, completion);
+      message.completion = completion;
       save();
     }
   }
@@ -242,8 +260,24 @@ export function inbox(project, transport, report = console.error) {
     save();
   }
 
-  async function send(message, observation, waves, urgent) {
+  async function send(message, observation, waves, urgent, decorate) {
     const pendingPhase = message.phase;
+    const extras = message.payloadFrozen ? {} : decorate?.(message);
+    const waveSeparator = waves.length && message.target.provider === 'agy' && !message.combinedWaves ?
+      '\n--- Loom result ---\n' : message.waveSeparator;
+    const decorated = { ...message, ...extras, waveSeparator };
+    const combined = combinedDeliveryText(decorated, waves);
+    const automatic = message.replyKey || message.waveBatch || message.continuationBatch || message.reviewerResult;
+    let text = combined;
+    if (automatic) text = replyForDelivery(project, combined, replyLimit?.());
+    else if (waves.length && message.wireBody === undefined) {
+      const batch = waves.map(wave => wave.text).join('\n\n');
+      const brief = replyForDelivery(project, batch, replyLimit?.());
+      if (brief !== batch) text = combinedDeliveryText(decorated, [{ text: brief }]);
+    }
+    Object.assign(message, extras);
+    if (waveSeparator) message.waveSeparator = waveSeparator;
+    if (text !== combined) message.wireBody = text;
     message.payloadFrozen = true;
     if (waves.length) {
       message.combinedWaves = waves.map(wave => wave.id);
@@ -256,7 +290,7 @@ export function inbox(project, transport, report = console.error) {
     message.attemptAt = Date.now();
     message.writeTurn = observation.terminal.turn;
     if (observation.hostIncarnation) message.hostAttempt = observation.hostIncarnation;
-    const input = { ...message, urgent, text: combinedDeliveryText(message, waves) };
+    const input = { ...message, urgent, text };
     if (checksDeliveryIntegrity(message.target)) message.payloadDigest = payloadDigest(input.text);
     delete message.waitingForWritable;
     save();
@@ -414,7 +448,7 @@ export function inbox(project, transport, report = console.error) {
     return observation;
   }
 
-  async function processTarget(all, observation, { canDispatch, known, at, coalesceMs } = {}) {
+  async function processTarget(all, observation, { canDispatch, known, at, coalesceMs, decorate } = {}) {
     const group = all.filter(message => !message.combinedInto);
     if (!group.length || !observation) return;
     const { target } = group[0];
@@ -497,11 +531,11 @@ export function inbox(project, transport, report = console.error) {
       for (const message of unsettled) escalate(message, at);
     }
     if (next.mode === 'interrupt' && next.phase === 'queued') await stop(next, fresh);
-    else await send(next, fresh, combined, urgent);
+    else await send(next, fresh, combined, urgent, decorate);
     settleCombined(all);
   }
 
-  async function step(routeTarget, { beforeDispatch, canDispatch, now = Date.now, coalesceMs = 0 } = {}) {
+  async function step(routeTarget, { beforeDispatch, canDispatch, now = Date.now, coalesceMs = 0, decorate } = {}) {
     store.ingest();
     let changed = false;
     for (const message of messages) {
@@ -529,10 +563,10 @@ export function inbox(project, transport, report = console.error) {
       await Promise.all([...groups()].filter(([key, group]) => observed.has(key) ||
         group.some(message => !known.has(message.id) && message.streamAt != null)).map(async ([key, group]) =>
         processTarget(group, observed.has(key) ? observed.get(key) : await observeTarget(group),
-          { canDispatch, known, at, coalesceMs })));
+          { canDispatch, known, at, coalesceMs, decorate })));
     } else {
       await Promise.all(active.map(async ([, group]) => processTarget(group, await observeTarget(group),
-        { canDispatch, at: now(), coalesceMs })));
+        { canDispatch, at: now(), coalesceMs, decorate })));
     }
   }
 

@@ -3,7 +3,7 @@ import { isClaudeToolResultContent, toolExitCode } from '../adapters/claude/tool
 import { codex } from '../adapters/codex/index.mjs';
 import { turnActivity } from '../adapters/codex/activity.mjs';
 import { parseAgy } from '../adapters/agy/lib/parse-agy.mjs';
-import { checkEvidence, checkKind, shellBody } from './checks.mjs';
+import { checkEvidence, checkKind, sandboxDenialCounts, shellBody } from './checks.mjs';
 
 function json(text) {
   if (typeof text !== 'string') return text;
@@ -140,7 +140,7 @@ export function codexCommands(rows, turn, defaultSandbox, includePending = false
       output: native?.output ?? result?.output, chunk: native?.chunk ?? result?.chunk, position, resultPosition, timestamp,
       sandboxed: native?.sandboxed ?? result?.sandboxed ?? callSandbox ?? turnSandbox,
       durationMs: result?.durationMs ?? native?.durationMs ?? (result && elapsed(time(timestamp), resultAt)),
-      started, ...(includePending && { nativeStatus: native?.status, ended: Boolean(native || result) }),
+      started, status: native?.status, ...(includePending && { nativeStatus: native?.status, ended: Boolean(native || result) }),
       source: `codex.${source ?? (result ? 'call_output' : started ? 'exec_command_begin' : 'call')}` }];
   });
   // Code-mode exec returns the same command result as its native child event.
@@ -279,6 +279,7 @@ export function collectVerification(options) {
   }
   return {
     status: 'ok', turnId: turn.id, turnIndex: turn.index, turnStatus: turn.status, finalReply: turn.reply,
+    denialCounts: sandboxDenialCounts(commands),
     commands: commands.map(checkEvidence).filter(Boolean), executions: executionEvidence(commands),
   };
 }

@@ -10,6 +10,7 @@
 ## 施工边界
 
 工作者调用 Loom 命令一律使用绝对可执行路径 `"$LOOM_BIN"`。
+保留 Git hooks。禁止使用 `--no-verify`、覆盖 `core.hooksPath` 或以其他方式绕过 hooks。
 
 - 工作目录 <绝对路径>
 - 基线 <分支或 SHA>

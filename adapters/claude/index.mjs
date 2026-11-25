@@ -2,7 +2,7 @@ import { normalizeHook } from './hooks.mjs';
 import { launch } from './launch.mjs';
 import { locate } from './locate.mjs';
 import { parseClaude } from './parse.mjs';
-import { classify, dialogKeys, hasEmptyComposer } from './screen.mjs';
+import { classify, dialogKeys, hasEmptyComposer, hasRunningBackgroundTask } from './screen.mjs';
 import { inspectScreen } from '../tui-screen.mjs';
 import { turnSummary } from './summary.mjs';
 
@@ -33,7 +33,7 @@ export const claude = {
   id: 'claude',
   capabilities,
   launch,
-  screen: { classify, dialogKeys, hasEmptyComposer, inspect: text => inspectScreen(classify, text) },
+  screen: { classify, dialogKeys, hasEmptyComposer, hasRunningBackgroundTask, inspect: text => inspectScreen(classify, text) },
   hooks: { normalize: normalizeHook },
   transcript: { locate, parse: parseClaude, turnSummary },
   input: { plan },
