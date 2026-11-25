@@ -7,6 +7,7 @@
 | 2026-11-25 | 记忆系统：单机、跨机，以及各 CLI 原生记忆的关闭方式 | [2026-11-25-memory-systems.md](2026-11-25-memory-systems.md) |
 | 2026-11-25 | 热升级：hc/Herdr、Orca 的做法，loom 现状与计划 | [2026-11-25-hot-upgrade.md](2026-11-25-hot-upgrade.md) |
 | 2026-11-25 | Paseo 如何驱动多个 CLI provider | [2026-11-25-paseo.md](2026-11-25-paseo.md) |
+| 2026-11-25 | 无头 Claude 的计费与条款：claude -p、OAR、Agent SDK | [2026-11-25-claude-headless-billing.md](2026-11-25-claude-headless-billing.md) |
 | 2026-11-25 | 组织结构、成本与 pilot-1 复盘 | [2026-11-25-org-cost-pilot.md](2026-11-25-org-cost-pilot.md) |
 | 2026-11-24 | 外部编排产品：Devin、agy、Claude projects 等 | [tasks/RESEARCH-ORCH-0/RESULT.md](../../tasks/RESEARCH-ORCH-0/RESULT.md) |
 | 2026-11-24 | 各家提示缓存的存活时间；保活是否划算 | [tasks/CACHE-TTL-0/RESULT.md](../../tasks/CACHE-TTL-0/RESULT.md) |
