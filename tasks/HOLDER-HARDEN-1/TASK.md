@@ -1,6 +1,6 @@
 # HOLDER-HARDEN-1 — make the native holder boring and proven
 
-Base: main after HOTSWAP-4 is committed. The holder (holder/holder.c, ~700 lines C, owns every live PTY/pipe) must be the most stable component in loom: if it crashes, the CLI's terminal is lost. Do not add features; only prove and harden.
+Base: main @ 52219963 (HOTSWAP-3/4, UPGRADE-FAIL-1, ADOPT-1 merged). The holder (holder/holder.c, ~700 lines C, owns every live PTY/pipe) must be the most stable component in loom: if it crashes, the CLI's terminal is lost. Do not add features; only prove and harden.
 
 1. **Memory/UB safety**: build test variants with `-fsanitize=address,undefined` (and `-fsanitize=thread` if threads exist) and run the whole holder test suite + the HOTSWAP-3 matrix runner against them. `clang --analyze` / `-Weverything` with justified suppressions only. Zero findings or each fixed.
 2. **Fuzzing**: libFuzzer (or AFL++) harnesses for the frame decoder, manifest parser, journal segment reader and write-guard evaluation; ≥ 30 min per harness; corpus + any crashers committed as regression tests.
