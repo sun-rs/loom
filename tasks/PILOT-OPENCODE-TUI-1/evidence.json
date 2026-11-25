@@ -1,13 +1,12 @@
 {
   "model": "deepseek/deepseek-flash",
   "opencodeBin": "/opt/homebrew/bin/opencode",
-  "sessionId": "ses_7919b4358b5f4aa893f25793bef638ce",
   "tests": {
     "coldStart": {
       "passed": true,
-      "elapsedMs": 4856,
+      "elapsedMs": 3978,
       "transport": "loom-pty",
-      "paneId": "t3d1",
+      "paneId": "t3dh",
       "phase": "idle",
       "source": "hook",
       "ready": true,
@@ -18,44 +17,122 @@
     },
     "queuedDeliveries": {
       "passed": true,
+      "source": "candidate loomd inbox",
+      "busyTurn": {
+        "deliveryId": "6ec3c253-c80e-4ed1-a851-bd7f8910148c",
+        "turnId": "msg_21252deaf001PWEahZ5QMId5N4",
+        "screen": "busy",
+        "nativePhase": "busy",
+        "endedAt": 1795603768506
+      },
       "count": 5,
       "missing": 0,
       "duplicates": 0,
       "receipts": [
         {
           "index": 1,
-          "deliveryId": "46e822ad-e963-4c36-b2aa-59894f9a583a",
-          "kind": "confirmed",
-          "count": 1,
-          "turnId": "msg_211c4e1e2001W1v5OvydpFmOoN"
+          "deliveryId": "d0eecc79-4388-479d-bce3-62581e0bc2e6",
+          "mode": "queue",
+          "queued": {
+            "phase": "queued",
+            "status": "queued",
+            "at": 1795603752054
+          },
+          "final": {
+            "phase": "received",
+            "status": "delivered",
+            "deliveryStatus": "answered",
+            "at": 1795603768893
+          },
+          "native": {
+            "count": 1,
+            "turnId": "msg_212532635001RvcRidq2CWT8b2",
+            "reply": "Q1"
+          }
         },
         {
           "index": 2,
-          "deliveryId": "cb0a77ea-6358-4c9b-8bd7-b61eb2594560",
-          "kind": "confirmed",
-          "count": 1,
-          "turnId": "msg_211c4ea1e001v618RNLd6LBgka"
+          "deliveryId": "20e03f47-afe2-44b7-ad53-c868da63c89a",
+          "mode": "queue",
+          "queued": {
+            "phase": "queued",
+            "status": "queued",
+            "at": 1795603752063
+          },
+          "final": {
+            "phase": "received",
+            "status": "delivered",
+            "deliveryStatus": "answered",
+            "at": 1795603770630
+          },
+          "native": {
+            "count": 1,
+            "turnId": "msg_212532cff001mCpCenvOsZjVFq",
+            "reply": "Q2"
+          }
         },
         {
           "index": 3,
-          "deliveryId": "82c736db-f929-4170-a1f4-e9195ec1ff7d",
-          "kind": "confirmed",
-          "count": 1,
-          "turnId": "msg_211c4f106001Bnl3tbHJMZ16lX"
+          "deliveryId": "734fe1d9-a859-4867-84c5-272c481cc3c3",
+          "mode": "queue",
+          "queued": {
+            "phase": "queued",
+            "status": "queued",
+            "at": 1795603752072
+          },
+          "final": {
+            "phase": "received",
+            "status": "delivered",
+            "deliveryStatus": "answered",
+            "at": 1795603772348
+          },
+          "native": {
+            "count": 1,
+            "turnId": "msg_2125333b4001JP8bKEDFN0zQW3",
+            "reply": "Q3"
+          }
         },
         {
           "index": 4,
-          "deliveryId": "ed93c069-f324-4e26-89ca-df1a513fc5d4",
-          "kind": "confirmed",
-          "count": 1,
-          "turnId": "msg_211c4f780001BlWGvJ76drpuxT"
+          "deliveryId": "0b6302dc-b7df-4ab7-a403-f5724946d0b6",
+          "mode": "queue",
+          "queued": {
+            "phase": "queued",
+            "status": "queued",
+            "at": 1795603752081
+          },
+          "final": {
+            "phase": "received",
+            "status": "delivered",
+            "deliveryStatus": "answered",
+            "at": 1795603774053
+          },
+          "native": {
+            "count": 1,
+            "turnId": "msg_212533a5e00127xF8X7OXW940R",
+            "reply": "Q4"
+          }
         },
         {
           "index": 5,
-          "deliveryId": "57ab529f-6d3c-481a-8295-9b6577567587",
-          "kind": "confirmed",
-          "count": 1,
-          "turnId": "msg_211c4fe100017tmf3PwwNoLCb2"
+          "deliveryId": "5f631c11-8159-4cde-b345-0e39e2cadeb9",
+          "mode": "queue",
+          "queued": {
+            "phase": "queued",
+            "status": "queued",
+            "at": 1795603752090
+          },
+          "final": {
+            "phase": "received",
+            "status": "delivered",
+            "deliveryStatus": "answered",
+            "at": 1795603775768
+          },
+          "native": {
+            "count": 1,
+            "turnId": "msg_212534111001EfqtQe0xVb0Elk",
+            "reply": "Q5"
+          }
         }
       ],
       "replies": [
@@ -68,7 +145,7 @@
     },
     "interruptAndResume": {
       "passed": true,
-      "interruptedDeliveryId": "bce91e95-60df-4e56-a88a-8ec73b249acd",
+      "interruptedDeliveryId": "48cfc62e-b14a-4784-8f60-5760395140aa",
       "hostInterruptProbe": {
         "kind": "refused",
         "code": "not-interruptible"
@@ -76,7 +153,7 @@
       "interruptMethod": "double-esc (hc keys escape x2)",
       "nativeInterruptionCount": 1,
       "interruptedTurnStatus": "interrupted",
-      "resumedDeliveryId": "c4dbca33-ef1b-4771-ab9b-f6848c441c56",
+      "resumedDeliveryId": "c1d48a42-00c5-4f1e-9275-7a40d26251fd",
       "resumedTurnStatus": "completed",
       "resumedReply": "RESUMED_OK"
     },
@@ -89,66 +166,73 @@
         "code": "composer-not-proven-empty"
       },
       "blockedDeliveryLeaked": false,
-      "afterClearDeliveryId": "a62e9297-55f9-4cc3-9947-0d6af0f82ecf",
+      "afterClearDeliveryId": "a58deef7-8a8d-44ae-8b1e-0e829ad506ce",
       "afterClearKind": "confirmed",
       "afterClearReply": "DRAFT_OK"
     }
   },
+  "sessionId": "ses_2bae1ed0a1944ff8aea2c82a9e5a6085",
   "reconciliation": {
-    "nativeSessionId": "ses_7919b4358b5f4aa893f25793bef638ce",
+    "nativeSessionId": "ses_2bae1ed0a1944ff8aea2c82a9e5a6085",
     "nativeModel": {
       "id": "deepseek-flash",
       "providerID": "deepseek",
       "variant": "default"
     },
-    "totalNativeMessages": 32,
-    "projectedEventsCount": 16,
+    "totalNativeMessages": 36,
+    "projectedEventsCount": 18,
     "turns": [
       {
         "index": 1,
-        "id": "msg_211c4e1e2001W1v5OvydpFmOoN",
+        "id": "msg_21252deaf001PWEahZ5QMId5N4",
+        "status": "completed",
+        "reply": "**The Water Cycle**\n\n1. The water cycle is Earth's ceaseless system for moving water between ocean, atmosphere, and land, and it has quietly sustained every living thing on the planet for billions of years.\n2. Powered by sunlight and gravity, the cycle has no true beginning or end, yet evaporation remains the most natural place to begin explaining it in detail.\n3. Heat from the sun warms oceans, lakes, and rivers, allowing liquid water to escape upward into the air as invisible vapor in a familiar process called evaporation.\n4. Plants add their own moisture through transpiration, quietly releasing water from tiny pores in their leaves into the surrounding atmosphere throughout the day.\n5. Together, evaporation and transpiration form evapotranspiration, which lifts enormous quantities of water from land surfaces into the sky every single day around the world.\n6. Rising warm vapor eventually meets cooler air and condenses onto microscopic particles of dust, salt, smoke, and pollen floating invisibly in the atmosphere.\n7. This condensation creates droplets small enough to float on air currents, gathering by the billions to form the familiar white and grey clouds we see above us.\n8. Winds then carry those clouds across continents and seas, distributing moisture far from the places where it first rose into the sky from land or sea.\n9. When droplets collide and grow heavy enough, gravity pulls them down as precipitation, falling as rain, snow, sleet, or hail depending on the temperature.\n10. Some precipitation drops directly onto oceans, while the rest lands on soil, rock faces, ice sheets, and the leaves of countless plants across the world.\n11. A portion of that water flows across the surface as runoff, feeding small streams that merge into larger rivers on their long way downhill.\n12. Rivers return their load to lakes and oceans, completing one visible loop in this vast and remarkably resilient planetary system that never stops working.\n13. Other water sinks slowly into soil and rock, becoming groundwater stored within porous layers called aquifers deep beneath the Earth's surface.\n14. Groundwater can remain hidden for centuries before emerging through springs, seeping into streambeds, or being drawn up by wells drilled by people.\n15. Snow and ice hold water in frozen reservoirs, releasing it gradually as glaciers and mountain snowpack melt during the warmer months of each year.\n16. Plants absorb soil moisture through their roots and release it again through transpiration, linking living ecosystems directly to the cycle every day.\n17. Animals, including humans, drink water and return much of it through respiration, perspiration, and waste, keeping the cycle moving through living bodies.\n18. Human activity alters the cycle through dams, irrigation, deforestation, and the pumping of ancient aquifers that took thousands of years to fill.\n19. Climate change intensifies evaporation and shifts rainfall patterns, producing more severe floods in some regions and prolonged droughts in others.\n20. Understanding the water cycle reminds us that every drop is borrowed, shared, and endlessly renewed, making careful stewardship an obligation for all of us.\n\nThat's about 495 words across the 20 numbered paragraphs. Want it as a Word or PDF file instead?"
+      },
+      {
+        "index": 2,
+        "id": "msg_212532635001RvcRidq2CWT8b2",
         "status": "completed",
         "reply": "Q1"
       },
       {
-        "index": 2,
-        "id": "msg_211c4ea1e001v618RNLd6LBgka",
+        "index": 3,
+        "id": "msg_212532cff001mCpCenvOsZjVFq",
         "status": "completed",
         "reply": "Q2"
       },
       {
-        "index": 3,
-        "id": "msg_211c4f106001Bnl3tbHJMZ16lX",
+        "index": 4,
+        "id": "msg_2125333b4001JP8bKEDFN0zQW3",
         "status": "completed",
         "reply": "Q3"
       },
       {
-        "index": 4,
-        "id": "msg_211c4f780001BlWGvJ76drpuxT",
+        "index": 5,
+        "id": "msg_212533a5e00127xF8X7OXW940R",
         "status": "completed",
         "reply": "Q4"
       },
       {
-        "index": 5,
-        "id": "msg_211c4fe100017tmf3PwwNoLCb2",
+        "index": 6,
+        "id": "msg_212534111001EfqtQe0xVb0Elk",
         "status": "completed",
         "reply": "Q5"
       },
       {
-        "index": 6,
-        "id": "msg_211c505670016C5FqjpKPFDdm6",
+        "index": 7,
+        "id": "msg_212534964001Dhg4RVJS3dlyfU",
         "status": "interrupted",
         "reply": null
       },
       {
-        "index": 7,
-        "id": "msg_211c50bf8001ZLP4N9qCuxaFF1",
+        "index": 8,
+        "id": "msg_212535195001cuXfPas1iZtpcx",
         "status": "completed",
         "reply": "RESUMED_OK"
       },
       {
-        "index": 8,
-        "id": "msg_211c5214200186O6EZjDcvimE4",
+        "index": 9,
+        "id": "msg_212536ff30016ZH2BQoleYx8a1",
         "status": "completed",
         "reply": "DRAFT_OK"
       }
@@ -156,18 +240,37 @@
     "projectedEvents": [
       {
         "cwd": "<isolated-temp-cwd>",
-        "session_id": "ses_7919b4358b5f4aa893f25793bef638ce",
-        "turn_id": "msg_211c4e1e2001W1v5OvydpFmOoN",
-        "deliveryId": "46e822ad-e963-4c36-b2aa-59894f9a583a",
-        "receivedAt": 1795594445317,
+        "session_id": "ses_2bae1ed0a1944ff8aea2c82a9e5a6085",
+        "turn_id": "msg_21252deaf001PWEahZ5QMId5N4",
+        "deliveryId": "6ec3c253-c80e-4ed1-a851-bd7f8910148c",
+        "receivedAt": 1795603750588,
         "hook_event_name": "UserPromptSubmit"
       },
       {
         "cwd": "<isolated-temp-cwd>",
-        "session_id": "ses_7919b4358b5f4aa893f25793bef638ce",
-        "turn_id": "msg_211c4e1e2001W1v5OvydpFmOoN",
-        "deliveryId": "46e822ad-e963-4c36-b2aa-59894f9a583a",
-        "receivedAt": 1795594446566,
+        "session_id": "ses_2bae1ed0a1944ff8aea2c82a9e5a6085",
+        "turn_id": "msg_21252deaf001PWEahZ5QMId5N4",
+        "deliveryId": "6ec3c253-c80e-4ed1-a851-bd7f8910148c",
+        "receivedAt": 1795603768506,
+        "hook_event_name": "Stop",
+        "is_interrupt": false,
+        "last_assistant_message": "**The Water Cycle**\n\n1. The water cycle is Earth's ceaseless system for moving water between ocean, atmosphere, and land, and it has quietly sustained every living thing on the planet for billions of years.\n2. Powered by sunlight and gravity, the cycle has no true beginning or end, yet evaporation remains the most natural place to begin explaining it in detail.\n3. Heat from the sun warms oceans, lakes, and rivers, allowing liquid water to escape upward into the air as invisible vapor in a familiar process called evaporation.\n4. Plants add their own moisture through transpiration, quietly releasing water from tiny pores in their leaves into the surrounding atmosphere throughout the day.\n5. Together, evaporation and transpiration form evapotranspiration, which lifts enormous quantities of water from land surfaces into the sky every single day around the world.\n6. Rising warm vapor eventually meets cooler air and condenses onto microscopic particles of dust, salt, smoke, and pollen floating invisibly in the atmosphere.\n7. This condensation creates droplets small enough to float on air currents, gathering by the billions to form the familiar white and grey clouds we see above us.\n8. Winds then carry those clouds across continents and seas, distributing moisture far from the places where it first rose into the sky from land or sea.\n9. When droplets collide and grow heavy enough, gravity pulls them down as precipitation, falling as rain, snow, sleet, or hail depending on the temperature.\n10. Some precipitation drops directly onto oceans, while the rest lands on soil, rock faces, ice sheets, and the leaves of countless plants across the world.\n11. A portion of that water flows across the surface as runoff, feeding small streams that merge into larger rivers on their long way downhill.\n12. Rivers return their load to lakes and oceans, completing one visible loop in this vast and remarkably resilient planetary system that never stops working.\n13. Other water sinks slowly into soil and rock, becoming groundwater stored within porous layers called aquifers deep beneath the Earth's surface.\n14. Groundwater can remain hidden for centuries before emerging through springs, seeping into streambeds, or being drawn up by wells drilled by people.\n15. Snow and ice hold water in frozen reservoirs, releasing it gradually as glaciers and mountain snowpack melt during the warmer months of each year.\n16. Plants absorb soil moisture through their roots and release it again through transpiration, linking living ecosystems directly to the cycle every day.\n17. Animals, including humans, drink water and return much of it through respiration, perspiration, and waste, keeping the cycle moving through living bodies.\n18. Human activity alters the cycle through dams, irrigation, deforestation, and the pumping of ancient aquifers that took thousands of years to fill.\n19. Climate change intensifies evaporation and shifts rainfall patterns, producing more severe floods in some regions and prolonged droughts in others.\n20. Understanding the water cycle reminds us that every drop is borrowed, shared, and endlessly renewed, making careful stewardship an obligation for all of us.\n\nThat's about 495 words across the 20 numbered paragraphs. Want it as a Word or PDF file instead?",
+        "error": false
+      },
+      {
+        "cwd": "<isolated-temp-cwd>",
+        "session_id": "ses_2bae1ed0a1944ff8aea2c82a9e5a6085",
+        "turn_id": "msg_212532635001RvcRidq2CWT8b2",
+        "deliveryId": "d0eecc79-4388-479d-bce3-62581e0bc2e6",
+        "receivedAt": 1795603768893,
+        "hook_event_name": "UserPromptSubmit"
+      },
+      {
+        "cwd": "<isolated-temp-cwd>",
+        "session_id": "ses_2bae1ed0a1944ff8aea2c82a9e5a6085",
+        "turn_id": "msg_212532635001RvcRidq2CWT8b2",
+        "deliveryId": "d0eecc79-4388-479d-bce3-62581e0bc2e6",
+        "receivedAt": 1795603769925,
         "hook_event_name": "Stop",
         "is_interrupt": false,
         "last_assistant_message": "Q1",
@@ -175,18 +278,18 @@
       },
       {
         "cwd": "<isolated-temp-cwd>",
-        "session_id": "ses_7919b4358b5f4aa893f25793bef638ce",
-        "turn_id": "msg_211c4ea1e001v618RNLd6LBgka",
-        "deliveryId": "cb0a77ea-6358-4c9b-8bd7-b61eb2594560",
-        "receivedAt": 1795594447418,
+        "session_id": "ses_2bae1ed0a1944ff8aea2c82a9e5a6085",
+        "turn_id": "msg_212532cff001mCpCenvOsZjVFq",
+        "deliveryId": "20e03f47-afe2-44b7-ad53-c868da63c89a",
+        "receivedAt": 1795603770630,
         "hook_event_name": "UserPromptSubmit"
       },
       {
         "cwd": "<isolated-temp-cwd>",
-        "session_id": "ses_7919b4358b5f4aa893f25793bef638ce",
-        "turn_id": "msg_211c4ea1e001v618RNLd6LBgka",
-        "deliveryId": "cb0a77ea-6358-4c9b-8bd7-b61eb2594560",
-        "receivedAt": 1795594448586,
+        "session_id": "ses_2bae1ed0a1944ff8aea2c82a9e5a6085",
+        "turn_id": "msg_212532cff001mCpCenvOsZjVFq",
+        "deliveryId": "20e03f47-afe2-44b7-ad53-c868da63c89a",
+        "receivedAt": 1795603771049,
         "hook_event_name": "Stop",
         "is_interrupt": false,
         "last_assistant_message": "Q2",
@@ -194,18 +297,18 @@
       },
       {
         "cwd": "<isolated-temp-cwd>",
-        "session_id": "ses_7919b4358b5f4aa893f25793bef638ce",
-        "turn_id": "msg_211c4f106001Bnl3tbHJMZ16lX",
-        "deliveryId": "82c736db-f929-4170-a1f4-e9195ec1ff7d",
-        "receivedAt": 1795594449186,
+        "session_id": "ses_2bae1ed0a1944ff8aea2c82a9e5a6085",
+        "turn_id": "msg_2125333b4001JP8bKEDFN0zQW3",
+        "deliveryId": "734fe1d9-a859-4867-84c5-272c481cc3c3",
+        "receivedAt": 1795603772348,
         "hook_event_name": "UserPromptSubmit"
       },
       {
         "cwd": "<isolated-temp-cwd>",
-        "session_id": "ses_7919b4358b5f4aa893f25793bef638ce",
-        "turn_id": "msg_211c4f106001Bnl3tbHJMZ16lX",
-        "deliveryId": "82c736db-f929-4170-a1f4-e9195ec1ff7d",
-        "receivedAt": 1795594450289,
+        "session_id": "ses_2bae1ed0a1944ff8aea2c82a9e5a6085",
+        "turn_id": "msg_2125333b4001JP8bKEDFN0zQW3",
+        "deliveryId": "734fe1d9-a859-4867-84c5-272c481cc3c3",
+        "receivedAt": 1795603772703,
         "hook_event_name": "Stop",
         "is_interrupt": false,
         "last_assistant_message": "Q3",
@@ -213,18 +316,18 @@
       },
       {
         "cwd": "<isolated-temp-cwd>",
-        "session_id": "ses_7919b4358b5f4aa893f25793bef638ce",
-        "turn_id": "msg_211c4f780001BlWGvJ76drpuxT",
-        "deliveryId": "ed93c069-f324-4e26-89ca-df1a513fc5d4",
-        "receivedAt": 1795594450822,
+        "session_id": "ses_2bae1ed0a1944ff8aea2c82a9e5a6085",
+        "turn_id": "msg_212533a5e00127xF8X7OXW940R",
+        "deliveryId": "0b6302dc-b7df-4ab7-a403-f5724946d0b6",
+        "receivedAt": 1795603774053,
         "hook_event_name": "UserPromptSubmit"
       },
       {
         "cwd": "<isolated-temp-cwd>",
-        "session_id": "ses_7919b4358b5f4aa893f25793bef638ce",
-        "turn_id": "msg_211c4f780001BlWGvJ76drpuxT",
-        "deliveryId": "ed93c069-f324-4e26-89ca-df1a513fc5d4",
-        "receivedAt": 1795594451879,
+        "session_id": "ses_2bae1ed0a1944ff8aea2c82a9e5a6085",
+        "turn_id": "msg_212533a5e00127xF8X7OXW940R",
+        "deliveryId": "0b6302dc-b7df-4ab7-a403-f5724946d0b6",
+        "receivedAt": 1795603775074,
         "hook_event_name": "Stop",
         "is_interrupt": false,
         "last_assistant_message": "Q4",
@@ -232,18 +335,18 @@
       },
       {
         "cwd": "<isolated-temp-cwd>",
-        "session_id": "ses_7919b4358b5f4aa893f25793bef638ce",
-        "turn_id": "msg_211c4fe100017tmf3PwwNoLCb2",
-        "deliveryId": "57ab529f-6d3c-481a-8295-9b6577567587",
-        "receivedAt": 1795594452516,
+        "session_id": "ses_2bae1ed0a1944ff8aea2c82a9e5a6085",
+        "turn_id": "msg_212534111001EfqtQe0xVb0Elk",
+        "deliveryId": "5f631c11-8159-4cde-b345-0e39e2cadeb9",
+        "receivedAt": 1795603775768,
         "hook_event_name": "UserPromptSubmit"
       },
       {
         "cwd": "<isolated-temp-cwd>",
-        "session_id": "ses_7919b4358b5f4aa893f25793bef638ce",
-        "turn_id": "msg_211c4fe100017tmf3PwwNoLCb2",
-        "deliveryId": "57ab529f-6d3c-481a-8295-9b6577567587",
-        "receivedAt": 1795594453505,
+        "session_id": "ses_2bae1ed0a1944ff8aea2c82a9e5a6085",
+        "turn_id": "msg_212534111001EfqtQe0xVb0Elk",
+        "deliveryId": "5f631c11-8159-4cde-b345-0e39e2cadeb9",
+        "receivedAt": 1795603776366,
         "hook_event_name": "Stop",
         "is_interrupt": false,
         "last_assistant_message": "Q5",
@@ -251,36 +354,36 @@
       },
       {
         "cwd": "<isolated-temp-cwd>",
-        "session_id": "ses_7919b4358b5f4aa893f25793bef638ce",
-        "turn_id": "msg_211c505670016C5FqjpKPFDdm6",
-        "deliveryId": "bce91e95-60df-4e56-a88a-8ec73b249acd",
-        "receivedAt": 1795594454403,
+        "session_id": "ses_2bae1ed0a1944ff8aea2c82a9e5a6085",
+        "turn_id": "msg_212534964001Dhg4RVJS3dlyfU",
+        "deliveryId": "48cfc62e-b14a-4784-8f60-5760395140aa",
+        "receivedAt": 1795603777899,
         "hook_event_name": "UserPromptSubmit"
       },
       {
         "cwd": "<isolated-temp-cwd>",
-        "session_id": "ses_7919b4358b5f4aa893f25793bef638ce",
-        "turn_id": "msg_211c505670016C5FqjpKPFDdm6",
-        "deliveryId": "bce91e95-60df-4e56-a88a-8ec73b249acd",
-        "receivedAt": 1795594454869,
+        "session_id": "ses_2bae1ed0a1944ff8aea2c82a9e5a6085",
+        "turn_id": "msg_212534964001Dhg4RVJS3dlyfU",
+        "deliveryId": "48cfc62e-b14a-4784-8f60-5760395140aa",
+        "receivedAt": 1795603778817,
         "hook_event_name": "StopFailure",
         "is_interrupt": true,
         "error": true
       },
       {
         "cwd": "<isolated-temp-cwd>",
-        "session_id": "ses_7919b4358b5f4aa893f25793bef638ce",
-        "turn_id": "msg_211c50bf8001ZLP4N9qCuxaFF1",
-        "deliveryId": "c4dbca33-ef1b-4771-ab9b-f6848c441c56",
-        "receivedAt": 1795594456062,
+        "session_id": "ses_2bae1ed0a1944ff8aea2c82a9e5a6085",
+        "turn_id": "msg_212535195001cuXfPas1iZtpcx",
+        "deliveryId": "c1d48a42-00c5-4f1e-9275-7a40d26251fd",
+        "receivedAt": 1795603779996,
         "hook_event_name": "UserPromptSubmit"
       },
       {
         "cwd": "<isolated-temp-cwd>",
-        "session_id": "ses_7919b4358b5f4aa893f25793bef638ce",
-        "turn_id": "msg_211c50bf8001ZLP4N9qCuxaFF1",
-        "deliveryId": "c4dbca33-ef1b-4771-ab9b-f6848c441c56",
-        "receivedAt": 1795594457626,
+        "session_id": "ses_2bae1ed0a1944ff8aea2c82a9e5a6085",
+        "turn_id": "msg_212535195001cuXfPas1iZtpcx",
+        "deliveryId": "c1d48a42-00c5-4f1e-9275-7a40d26251fd",
+        "receivedAt": 1795603783764,
         "hook_event_name": "Stop",
         "is_interrupt": false,
         "last_assistant_message": "RESUMED_OK",
@@ -288,18 +391,18 @@
       },
       {
         "cwd": "<isolated-temp-cwd>",
-        "session_id": "ses_7919b4358b5f4aa893f25793bef638ce",
-        "turn_id": "msg_211c5214200186O6EZjDcvimE4",
-        "deliveryId": "a62e9297-55f9-4cc3-9947-0d6af0f82ecf",
-        "receivedAt": 1795594461539,
+        "session_id": "ses_2bae1ed0a1944ff8aea2c82a9e5a6085",
+        "turn_id": "msg_212536ff30016ZH2BQoleYx8a1",
+        "deliveryId": "a58deef7-8a8d-44ae-8b1e-0e829ad506ce",
+        "receivedAt": 1795603787770,
         "hook_event_name": "UserPromptSubmit"
       },
       {
         "cwd": "<isolated-temp-cwd>",
-        "session_id": "ses_7919b4358b5f4aa893f25793bef638ce",
-        "turn_id": "msg_211c5214200186O6EZjDcvimE4",
-        "deliveryId": "a62e9297-55f9-4cc3-9947-0d6af0f82ecf",
-        "receivedAt": 1795594462402,
+        "session_id": "ses_2bae1ed0a1944ff8aea2c82a9e5a6085",
+        "turn_id": "msg_212536ff30016ZH2BQoleYx8a1",
+        "deliveryId": "a58deef7-8a8d-44ae-8b1e-0e829ad506ce",
+        "receivedAt": 1795603790335,
         "hook_event_name": "Stop",
         "is_interrupt": false,
         "last_assistant_message": "DRAFT_OK",
@@ -309,6 +412,8 @@
   },
   "cleanup": {
     "paneCleaned": true,
-    "remainingMatchingPanes": 0
+    "remainingMatchingPanes": 0,
+    "supervisorStopped": true,
+    "tempRootRemoved": true
   }
 }

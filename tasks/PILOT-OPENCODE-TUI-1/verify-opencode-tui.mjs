@@ -8,7 +8,9 @@ import { promisify } from 'node:util';
 import { setTimeout as sleep } from 'node:timers/promises';
 import opencode, { projectMessages } from '../../adapters/opencode/index.mjs';
 import { eventPath } from '../../daemon/io.mjs';
-import { refreshOpenCode } from '../../daemon/tui.mjs';
+import { createSupervisor } from '../../daemon/supervisor.mjs';
+import { paneName as managedPaneName, refreshOpenCode } from '../../daemon/tui.mjs';
+import { deliveryId } from '../../inbox/message.mjs';
 import { openNativeTui } from '../../runtimes/tui/transport.mjs';
 
 const exec = promisify(execFile);
@@ -36,50 +38,74 @@ async function waitFor(label, fn, { timeoutMs = 25_000, intervalMs = 250 } = {})
 
 const root = await realpath(await mkdtemp(join(tmpdir(), 'loom-oc-verify-')));
 const project = join(root, 'project');
-const cwd = join(root, 'workspace');
-await mkdir(join(project, '.project', 'pty'), { recursive: true });
-await mkdir(cwd, { recursive: true });
+const cwd = join(project, 'workspace');
+const previousOpenCodeBin = process.env.LOOM_OPENCODE_BIN;
 
-const sessionId = `ses_${randomUUID().replaceAll('-', '')}`;
-const addr = `oc-verify-${sessionId.slice(4, 10)}`;
-const paneName = `loom-${addr.replaceAll('-', '').slice(0, 22)}`;
-const hookSink = eventPath(project, addr);
-const row = { addr, cli: 'opencode', cwd };
-const job = { plannedNativeId: sessionId, paneBinding: { createdAt: Date.now() } };
-
+let supervisor;
 let host;
+let paneName;
+let hookSink;
+let syncInFlight;
 let stopPoller = false;
 let pollerPromise;
 const evidence = {
   model: MODEL,
   opencodeBin: OPENCODE_BIN,
-  sessionId,
   tests: {},
 };
 
-const syncOnce = () => refreshOpenCode(job, row, project).catch(() => null);
-
 try {
+  await mkdir(join(project, '.project'), { recursive: true });
+  await mkdir(cwd, { recursive: true });
+  await writeFile(join(project, '.project', 'policy.json'), '{}\n');
+  process.env.LOOM_OPENCODE_BIN = OPENCODE_BIN;
+
+  let sessionJob;
+  supervisor = createSupervisor(project, {
+    report: message => console.error(message),
+    externalNotification: async () => {},
+    sessionOptions: {
+      // Retain the real host for the manual checks and keep the unqualified
+      // OpenCode model while satisfying Loom's required spawn effort field.
+      async openPane(job, row, projectDir, recordTemporary, recordBinding) {
+        sessionJob = job;
+        paneName = managedPaneName(row.addr);
+        hookSink = eventPath(projectDir, row.addr);
+        host = await openNativeTui({
+          cli: row.cli,
+          cwd: row.cwd,
+          command: OPENCODE_BIN,
+          model: row.model,
+          sessionId: job.plannedNativeId,
+          name: paneName,
+          stateDir: join(projectDir, '.project', 'pty'),
+          hookSink,
+          env: { LOOM_PROJECT: projectDir, LOOM_ADDR: row.addr },
+          recordTemporary,
+          recordBinding,
+          previous: job.tui,
+        });
+        return { terminal: await host.status(), nativeId: host.sessionId };
+      },
+    },
+  });
+
   // 1. Cold start
   const t0 = Date.now();
-  host = await openNativeTui({
+  const { session: row, deliveryId: primerId } = await supervisor.handle('spawn', {
+    role: 'leader',
     cli: 'opencode',
     cwd,
-    command: OPENCODE_BIN,
     model: MODEL,
-    sessionId,
-    name: paneName,
-    stateDir: join(project, '.project', 'pty'),
-    hookSink,
+    effort: 'default',
+    mode: 'tui',
+    prompt: 'Write a 500-word essay about the water cycle using 20 numbered paragraphs.',
   });
-  job.paneBinding = { createdAt: Date.now() };
-
-  pollerPromise = (async () => {
-    while (!stopPoller) {
-      await syncOnce();
-      await sleep(350);
-    }
-  })();
+  const { addr, sessionId } = row;
+  evidence.sessionId = sessionId;
+  assert.equal(host.transport, 'loom-pty');
+  const syncOnce = () => syncInFlight ??= refreshOpenCode(sessionJob, row, project)
+    .finally(() => { syncInFlight = undefined; });
 
   const readyState = await waitFor('cold-start ready', async () => {
     await syncOnce();
@@ -99,7 +125,17 @@ try {
   };
   console.log('1. COLD START PASS:', JSON.stringify(evidence.tests.coldStart));
 
-  // 2. 5 queued deliveries with native confirmation (0 loss, 0 duplicate)
+  // 2. Dispatch the spawn prompt and enqueue all five while that turn is active.
+  const busy = await waitFor('busy startup turn', async () => {
+    await supervisor.tick();
+    const { screen, native } = await host.readState();
+    return {
+      ok: screen.kind === 'busy' && native.phase === 'busy' && native.activeInputId === primerId,
+      screen: screen.kind,
+      nativePhase: native.phase,
+      turnId: native.activeTurn,
+    };
+  }, { intervalMs: 150 });
   const queue = Array.from({ length: 5 }, (_, i) => ({
     index: i + 1,
     deliveryId: randomUUID(),
@@ -109,52 +145,84 @@ try {
   const deliveryReceipts = [];
 
   for (const item of queue) {
-    const before = await waitFor(`ready before ${item.token}`, async () => {
-      await syncOnce();
-      const st = await host.readState();
-      return { ok: st.ready === true && st.screen?.empty === true, st };
-    }, { timeoutMs: 20_000 });
-
-    const submitRes = await host.submit({
+    const queued = await supervisor.handle('send', {
+      target: addr,
+      mode: 'queue',
       id: item.deliveryId,
       text: item.text,
-      generation: before.st.host.generation,
-      timeoutMs: 15_000,
     });
-    assert.equal(submitRes.kind, 'confirmed', `Expected confirmed for ${item.token}, got ${JSON.stringify(submitRes)}`);
-    assert.equal(submitRes.confirmation?.count, 1, `Expected count=1 for ${item.token}`);
-
-    await waitFor(`idle after ${item.token}`, async () => {
-      await syncOnce();
-      const st = await host.readState();
-      return { ok: st.ready === true && st.native?.phase === 'idle' && st.screen?.kind === 'idle', phase: st.phase, screen: st.screen?.kind, native: st.native?.phase };
-    }, { timeoutMs: 25_000 });
-
-    const conf = await host.confirmations(item.deliveryId);
-    assert.equal(conf.count, 1, `Expected confirmation count 1 for ${item.token}`);
-    deliveryReceipts.push({ index: item.index, deliveryId: item.deliveryId, kind: submitRes.kind, count: conf.count, turnId: conf.turnId });
+    assert.equal(queued.deliveryId, item.deliveryId);
+    assert.equal(queued.mode, 'queue');
+    assert.equal(queued.phase, 'queued', item.token);
+    assert.equal(queued.status, 'queued', item.token);
+    assert.ok(Number.isFinite(queued.at), `Missing enqueue timestamp for ${item.token}`);
+    deliveryReceipts.push({
+      index: item.index,
+      deliveryId: item.deliveryId,
+      mode: queued.mode,
+      queued: { phase: queued.phase, status: queued.status, at: queued.at },
+    });
   }
+  const { screen, native } = await host.readState();
+  assert.equal(screen.kind, 'busy', 'Startup turn ended before all five sends were queued');
+  assert.equal(native.phase, 'busy');
+  assert.ok(busy.turnId, 'Missing native ID for the busy startup turn');
+  assert.equal(native.activeTurn, busy.turnId);
+
+  const settled = await waitFor('five answered inbox deliveries', async () => {
+    await supervisor.tick();
+    const { deliveries } = await supervisor.handle('state', { target: addr });
+    const byId = new Map(deliveries.map(receipt => [receipt.deliveryId, receipt]));
+    const receipts = queue.map(({ deliveryId: id }) => byId.get(id));
+    return {
+      ok: receipts.every(receipt => receipt?.status === 'delivered' && receipt.deliveryStatus === 'answered'),
+      receipts,
+    };
+  }, { timeoutMs: 150_000 });
 
   const after5Export = await exportSession(sessionId, cwd);
   const after5Rows = projectMessages(after5Export, sessionId, cwd);
+  assert.ok(after5Rows, 'Native export must match the managed session');
   const after5Parsed = opencode.transcript.parse(after5Rows.map(r => JSON.stringify(r)).join('\n'));
-  const userIdsAfter5 = after5Rows.filter(r => r.hook_event_name === 'UserPromptSubmit').map(r => r.deliveryId);
-  for (const item of queue) {
-    const matches = userIdsAfter5.filter(id => id === item.deliveryId).length;
-    assert.equal(matches, 1, `Native export mismatch for ${item.token}: count=${matches}`);
+  const nativeIds = after5Export.messages.filter(entry => entry.type === 'user').map(entry => deliveryId(entry.text));
+  const queuedIds = new Set(queue.map(item => item.deliveryId));
+  const primerEnd = after5Rows.find(row => row.deliveryId === primerId && row.hook_event_name === 'Stop');
+  assert.equal(primerEnd?.turn_id, busy.turnId, 'Expected native completion for the observed startup turn');
+  assert.deepEqual(nativeIds.filter(id => queuedIds.has(id)), [...queuedIds], 'Native deliveries must be unique and in queue order');
+
+  for (const [index, item] of queue.entries()) {
+    const receipt = deliveryReceipts[index];
+    const start = after5Rows.find(row => row.deliveryId === item.deliveryId && row.hook_event_name === 'UserPromptSubmit');
+    const turn = after5Parsed.turns.find(turn => turn.id === start?.turn_id);
+    assert.ok(receipt.queued.at < primerEnd.receivedAt, `${item.token} was queued after the startup turn finished`);
+    assert.ok(start?.receivedAt >= primerEnd.receivedAt, `${item.token} reached OpenCode before the startup turn finished`);
+    assert.equal(turn?.status, 'completed', item.token);
+    assert.ok(turn.reply?.trim(), `Missing native reply for ${item.token}`);
+
+    const { phase, status, deliveryStatus, at } = settled.receipts[index];
+    receipt.final = { phase, status, deliveryStatus, at };
+    receipt.native = { count: 1, turnId: turn.id, reply: turn.reply };
   }
-  assert.equal(after5Parsed.turns.length, 5);
-  assert.ok(after5Parsed.turns.every(t => t.status === 'completed'));
 
   evidence.tests.queuedDeliveries = {
     passed: true,
+    source: 'candidate loomd inbox',
+    busyTurn: { deliveryId: primerId, turnId: busy.turnId, screen: busy.screen, nativePhase: busy.nativePhase,
+      endedAt: primerEnd.receivedAt },
     count: queue.length,
     missing: 0,
     duplicates: 0,
     receipts: deliveryReceipts,
-    replies: after5Parsed.turns.map(t => t.reply),
+    replies: deliveryReceipts.map(receipt => receipt.native.reply),
   };
   console.log('2. 5 QUEUED DELIVERIES PASS:', JSON.stringify(evidence.tests.queuedDeliveries));
+
+  pollerPromise = (async () => {
+    while (!stopPoller) {
+      await syncOnce().catch(() => null);
+      await sleep(350);
+    }
+  })();
 
   // 3. Interrupt and resume in same session/pane
   const intId = randomUUID();
@@ -217,10 +285,12 @@ try {
   const afterResumeExport = await exportSession(sessionId, cwd);
   const afterResumeRows = projectMessages(afterResumeExport, sessionId, cwd);
   const afterResumeParsed = opencode.transcript.parse(afterResumeRows.map(r => JSON.stringify(r)).join('\n'));
-  const intTurn = afterResumeParsed.turns[5];
-  const resumeTurn = afterResumeParsed.turns[6];
-  assert.equal(intTurn?.status, 'interrupted', `Expected turn 6 interrupted, got ${JSON.stringify(intTurn)}`);
-  assert.equal(resumeTurn?.status, 'completed', `Expected turn 7 completed, got ${JSON.stringify(resumeTurn)}`);
+  const turnsByDelivery = new Map(afterResumeRows.filter(row => row.hook_event_name === 'UserPromptSubmit')
+    .map(row => [row.deliveryId, row.turn_id]));
+  const intTurn = afterResumeParsed.turns.find(turn => turn.id === turnsByDelivery.get(intId));
+  const resumeTurn = afterResumeParsed.turns.find(turn => turn.id === turnsByDelivery.get(resumeId));
+  assert.equal(intTurn?.status, 'interrupted', `Expected interrupted turn for ${intId}`);
+  assert.equal(resumeTurn?.status, 'completed', `Expected completed turn for ${resumeId}`);
 
   evidence.tests.interruptAndResume = {
     passed: true,
@@ -319,9 +389,18 @@ try {
   };
 } finally {
   stopPoller = true;
-  await pollerPromise?.catch(() => {});
-  if (host) await host.close().catch(e => console.error('close error:', e));
-  await rm(root, { recursive: true, force: true });
+  try {
+    await pollerPromise;
+    await host?.close();
+  } finally {
+    try {
+      await supervisor?.shutdown();
+    } finally {
+      if (previousOpenCodeBin === undefined) delete process.env.LOOM_OPENCODE_BIN;
+      else process.env.LOOM_OPENCODE_BIN = previousOpenCodeBin;
+      await rm(root, { recursive: true, force: true });
+    }
+  }
 }
 
 // Verify pane cleanup
@@ -330,7 +409,7 @@ const parsedLs = JSON.parse(lsOut);
 const panes = Array.isArray(parsedLs) ? parsedLs : (parsedLs.terminals ?? []);
 const remaining = panes.filter(p => p.name === paneName || p.address === evidence.tests.coldStart?.paneId);
 assert.equal(remaining.length, 0, `Temporary pane not cleaned up: ${JSON.stringify(remaining)}`);
-evidence.cleanup = { paneCleaned: true, remainingMatchingPanes: remaining.length };
+evidence.cleanup = { paneCleaned: true, remainingMatchingPanes: remaining.length, supervisorStopped: true, tempRootRemoved: true };
 
 await writeFile(EVIDENCE_OUT, JSON.stringify(evidence, null, 2) + '\n', 'utf8');
 console.log('ALL 4 LIVE TESTS PASSED & CLEANED UP. Evidence saved to tasks/PILOT-OPENCODE-TUI-1/evidence.json');
