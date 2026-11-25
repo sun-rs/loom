@@ -2,7 +2,7 @@ import { spawnSync } from 'node:child_process';
 import { readArtifacts } from './artifacts.mjs';
 import { projectCost } from './cost.mjs';
 import { request, daemonAbsent } from '../daemon/rpc.mjs';
-import { readOrg } from '../daemon/org.mjs';
+import { activeOrgNotices, readOrg } from '../daemon/org.mjs';
 import { readNotifications } from '../daemon/notifications.mjs';
 import { isBlockedReply } from '../inbox/message.mjs';
 import { managedProject, projectIndex, projectSessions } from './project.mjs';
@@ -49,7 +49,7 @@ export async function projectStatus(project) {
     ...readNotifications(project).filter(event => event.type === 'needs-decision' && event.takenAt == null)
       .map(event => ({ addr: event.addr, reason: event.text })),
   ];
-  const notices = Object.values(readOrg(project).notices).sort((a, b) => b.at - a.at);
+  const notices = activeOrgNotices(readOrg(project)).sort((a, b) => b.at - a.at);
   const git = spawnSync('git', ['--no-pager', 'log', '--first-parent', '--merges', '-5', '--format=%H%x09%ct%x09%s'],
     { cwd: project, encoding: 'utf8', timeout: 5000, stdio: ['ignore', 'pipe', 'ignore'] });
   const history = (git.stdout ?? '').trim().split('\n').filter(Boolean).map(line => {
@@ -93,7 +93,8 @@ export function printStatus(result) {
       ['continuation', row.batch, row.pending.length + ' pending'].join(' ') : [row.task, row.wave, row.state].join(' '), 6);
   section('Blocked', result.blocked, row => row.reason ?? row.task ?? row.addr, 2);
   section('Drift and fact checks', result.notices, row =>
-    [row.type, row.task ?? row.addr, row.value ?? row.command ?? row.file ?? row.failureClass].join(' '), 3);
+    [row.type, row.task ?? row.addr, row.misses?.map(miss => miss.value).join(', ') ??
+      row.command ?? row.file ?? row.failureClass].join(' '), 3);
   section('Last merges', result.merges, row => [row.sha.slice(0, 12), row.subject].join(' '), 3);
   const shares = Object.entries(result.cost.byRole).map(([role, count]) =>
     role + ' ' + (result.cost.rawTokens ? (100 * count / result.cost.rawTokens).toFixed(1) + '%' : '—'));

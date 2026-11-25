@@ -82,8 +82,8 @@ OpenCode 使用 SQLite 会话存储。适配器经 `opencode session export <id>
 | --- | --- |
 | Claude Code | TUI 与 OAR 都在原生进程启动时设置 `CLAUDE_CODE_DISABLE_AUTO_MEMORY=1`。交互检查 `/memory` 的生效状态，OAR 用有效启动证据及隔离探针核对。 [Claude Code 记忆设置](https://code.claude.com/docs/en/memory#enable-or-disable-auto-memory) |
 | Codex | TUI 经 argv，OAR 经 app-server argv 或 thread config，设置 `features.memories=false`、`memories.generate_memories=false`、`memories.use_memories=false`。切换和恢复沿用。读取生效设置或握手，核对覆盖到实际线程。 [Codex 配置](https://learn.chatgpt.com/docs/config-file/config-reference) · [App Server](https://learn.chatgpt.com/docs/app-server) |
-| agy | **未覆盖（not covered）**。官方 CLI 参数、设置表和 ACP 说明不足以确认永久记忆关闭开关。会话恢复和输入历史的设置不能证明关闭跨会话记忆。 [Antigravity CLI 参数与设置](https://antigravity.google/docs/cli/reference) · [ACP 发布说明](https://antigravity.google/docs/changelog) |
-| OpenCode | **未覆盖（not covered）**。官方 CLI 设置、进程隔离与会话压缩说明不足以确认原生长期记忆的关闭开关。`--standalone` 用于独立服务，不作为记忆关闭证据。 [OpenCode CLI 设置](https://opencode.ai/docs/cli/config) · [独立服务](https://opencode.ai/docs/cli/#background-service) · [会话压缩](https://opencode.ai/docs/compaction/) |
+| agy | **部分覆盖，无官方开关**（1.5.16 二进制核查）。内置 Knowledge Items 自动生成与"# Persistent Context"提示（启动注入 KI 摘要，按需读 `brain/<id>/.system_generated/logs/transcript.jsonl` 过往对话）。内置默认实验配置 `cascade-knowledge-config` 为 `enabled:false`；`cascade-conversation-history-config` 为 `enabled:true, max_conversations:20`。服务端能否远程覆盖未核实。文档无关闭 flag/env。Loom 做法：启动时检查 `~/.gemini/antigravity-cli/knowledge/` 非空则告警 Super；角色规则写明不使用 KI 和过往对话日志；`/learn` 不由 Loom 触发。 [CLI 参考](https://antigravity.google/docs/cli/reference) · [论坛](https://discuss.ai.google.dev/t/knowledge-items/126774) |
+| OpenCode | **无原生长期记忆**（v2.3.0 源码核查：无 memory 工具、无自动写入）。启动只注入全局 `<config>/AGENTS.md`、项目向上逐级的 `AGENTS.md`、配置 `instructions` 文件，并读取 `~/.claude` 下的 skills。Loom 启动设 `OPENCODE_DISABLE_CLAUDE_CODE_SKILLS=1`，避免读入 Claude 侧的 skills（含 `import-memory`）。 源码：`packages/core/src/config/plugin/instruction.ts`、`packages/cli/src/server-process.ts` |
 
 `CLAUDE.md` 和 `AGENTS.md` 继续正常提供指令。claude-mem 等插件不在本设计覆盖范围。
 
@@ -95,4 +95,4 @@ OpenCode 使用 SQLite 会话存储。适配器经 `opencode session export <id>
 4. 跨机 home 和 cell 如何建立身份、加密联接，以及离线授权缓存最长保留多久。
 5. 按实际运行时延迟确定 flush 等候上限，以及在线缓慢和完全离线的观测阈值。
 6. 各 CLI 哪些版本有可验证的预压缩／压缩后边界，哪些只能在可观测的下次交付补注入。
-7. agy 和 OpenCode 是否提供版本可验证的原生记忆关闭开关。
+7. agy 的 KI 与过往对话检索能否在启动时可验证地关闭（当前只有内置默认关闭和规则约束）。

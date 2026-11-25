@@ -14,6 +14,8 @@ import { readText, writeState } from './io.mjs';
 
 const orgPath = project => join(runtimeDirectory(project), 'org.json');
 export const readOrg = project => JSON.parse(readText(orgPath(project), '{"seen":{},"cards":{},"timings":{},"notices":{},"samples":{}}'));
+export const activeOrgNotices = state => Object.values(state.notices).filter(notice =>
+  notice.type !== 'fact-miss' || Array.isArray(notice.misses));
 const digest = value => createHash('sha256').update(value).digest('hex').slice(0, 20);
 const failedReply = body => /^\**FAILED(?:\s|$)/i.test(body?.trimStart() ?? '');
 
@@ -104,11 +106,16 @@ export function organization(project, index, sessions, mail, now, report) {
       }
       for (const turn of fresh) {
         const { key, body, inputIds, at: endedAt, outcome } = turn;
-        const facts = body ? checkFacts(body, row.cwd, project) : { checked: 0, misses: [] };
-        for (const miss of facts.misses) {
-          const factKey = JSON.stringify(miss);
-          if (settings.factMiss || row.role === 'leader') add('fact-miss', factKey, miss);
-          if (row.role === 'auditor') add('fact-miss', factKey, miss, 'leader');
+        const worker = { id: row.task ?? row.role, addr: row.addr, provider: row.cli };
+        const observation = await observeRelayTurn(project, worker, { ...turn, body, failed: outcome?.kind === 'failed' }, {
+          cwd: row.cwd, sessionId: row.sessionId, nativeTurnIndex: turn.nativeTurnIndex,
+          nativeTurnId: turn.nativeTurnId ?? turn.turnId, streamId: turn.streamId,
+          transcriptPath: () => row.transcriptPath,
+        }, index);
+        const facts = body ? checkFacts(body, row.cwd, project, observation.gitObservation) : { checked: 0, misses: [] };
+        if (facts.misses.length && (settings.factMiss || ['leader', 'auditor'].includes(row.role))) {
+          add('fact-miss', key, { turn: key, misses: facts.misses.slice(0, 5), count: facts.misses.length },
+            row.role === 'auditor' ? 'leader' : 'auditor');
         }
         if (rotation?.boundAt != null && body && (turn === handoverTurn ||
             endedAt >= (rotation.firstReportAt ?? handoverTurn?.at ?? Infinity))) {
@@ -116,12 +123,6 @@ export function organization(project, index, sessions, mail, now, report) {
             (!outcome || outcome.kind === 'completed');
           recordings.push([row.addr, { at: endedAt, turn: key, misses: facts.misses.length, verified }]);
         }
-        const worker = { id: row.task ?? row.role, addr: row.addr, provider: row.cli };
-        const observation = await observeRelayTurn(project, worker, { ...turn, body, failed: outcome?.kind === 'failed' }, {
-          cwd: row.cwd, sessionId: row.sessionId, nativeTurnIndex: turn.nativeTurnIndex,
-          nativeTurnId: turn.nativeTurnId ?? turn.turnId, streamId: turn.streamId,
-          transcriptPath: () => row.transcriptPath,
-        }, index);
         const timing = next.timings[JSON.stringify(row.project)] ??= {};
         const failure = outcome?.failure ?? (outcome?.kind === 'failed' || failedReply(body) ? 'turn-failed' : undefined);
         executions.push({ card, timing, observations: turnExecutions(observation), failure, add, endedAt });
@@ -148,5 +149,5 @@ export function organization(project, index, sessions, mail, now, report) {
     }
   }
 
-  return { collect, notices: () => Object.values(state.notices) };
+  return { collect, notices: () => activeOrgNotices(state) };
 }

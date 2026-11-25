@@ -71,11 +71,11 @@ export async function observeRelayTurn(project, worker, reply, input = {}, index
         }));
         projected = { turnId: end.nativeTurnId ?? end.turnId, turnStatus: end.outcome?.kind, turnIndex: end.turn,
           tools: turnTools('opencode', {}, rows), executions };
-        gitObservation = end.git ?? gitObservation;
+        gitObservation = { ...(end.git ?? gitObservation), ...(end.head && { head: end.head }) };
       }
     } else {
       const exact = artifacts.turnHeads(worker.addr).find(row => row.endedAt === reply.at);
-      gitObservation = exact?.end?.git ?? gitObservation;
+      gitObservation = { ...(exact?.end?.git ?? gitObservation), ...(exact?.end?.head && { head: exact.end.head }) };
     }
   }
   let transcript;

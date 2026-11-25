@@ -99,7 +99,7 @@ export function worktreeDelta(cwd, start, end, settings = {}) {
       '--output-indicator-old=-'], [file.previousPath, file.path].filter(Boolean).map(literalPath)));
     const added = files.reduce((total, file) => total + (file.added ?? 0), 0);
     const deleted = files.reduce((total, file) => total + (file.deleted ?? 0), 0);
-    return { status: 'ok', source: 'git-worktree', baseCommit: start.head, head: end.head,
+    return { status: 'ok', source: 'git-worktree', baseCommit: start.head, head: end.head, tree: end.tree,
       uncommitted: end.dirty.length > 0, files, ...facts, numstat: { added, deleted, net: added - deleted },
       merge: mergeStatus(cwd, settings.mergeRef, start, end),
       testAssertions: facts.tests.flatMap(file => file.assertions.map(assertion => ({

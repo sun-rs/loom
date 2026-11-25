@@ -124,7 +124,7 @@ export async function forTurn(options) {
     }
     const reply = finalReply === undefined ? nativeReply : finalReply;
     const claims = compareClaims(reply, git, verification, failed);
-    const facts = options.facts ?? (cwd && reply ? checkFacts(reply, cwd, project) : { checked: 0, misses: [] });
+    const facts = options.facts ?? (cwd && reply ? checkFacts(reply, cwd, project, git) : { checked: 0, misses: [] });
     const data = { version: 1, task, turn, addr, provider: provider ?? null, endedAt, capturedAt, git, verification, claims, facts };
     data.card = cardFor(data);
     await writeOnce(path, JSON.stringify(data, null, 2) + '\n');

@@ -346,8 +346,9 @@ export function createSupervisor(project, {
       const row = rows.findLast(row => row.project === name && row.role === audience &&
         row.endedAt === null && sessions.jobs.has(row.addr));
       if (!row) continue;
-      const lines = batch.map(({ type, task, addr, value, kind, command, ...fields }) => {
-        const details = type === 'fact-miss' ? `${kind} ${value}` : type === 'slow-command' ?
+      const lines = batch.map(({ type, task, addr, command, ...fields }) => {
+        const details = type === 'fact-miss' ? fields.misses.map(({ kind, value }) => `${kind} ${value}`).join(', ') +
+          (fields.count > fields.misses.length ? ` (+${fields.count - fields.misses.length} more)` : '') : type === 'slow-command' ?
           `${command} ${fields.durationMs} ms (median ${fields.medianMs} ms)` :
           Object.entries(fields).filter(([key]) => !['id', 'at', 'project', 'audience'].includes(key))
             .map(([key, value]) => `${key}=${value}`).join(' ');
