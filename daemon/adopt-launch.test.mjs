@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
-import { execFile } from 'node:child_process';
+import { execFile, spawn } from 'node:child_process';
+import { once } from 'node:events';
 import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -78,4 +79,31 @@ test('a stuck OAR dispose is bounded and preserves late settlement', async () =>
   await assert.rejects(disposeSession({ dispose: () => pending.promise }, 15), { code: 'close-timeout' });
   pending.reject(new Error('late ACP cleanup failure'));
   await disposeSession({ dispose: async () => {} });
+});
+
+test('host close terminates a detached child that ignores SIGTERM', { skip: process.platform === 'win32' }, async () => {
+  const close = new URL('./session-close.mjs', import.meta.url).href;
+  const processes = new URL('./processes.mjs', import.meta.url).href;
+  const script = `import assert from 'node:assert/strict';
+import { spawn } from 'node:child_process';
+import { once } from 'node:events';
+import { processTable } from ${JSON.stringify(processes)};
+import { closeHostChildren } from ${JSON.stringify(close)};
+const child = spawn(process.execPath, ['-e',
+  "process.on('SIGTERM', () => console.log('TERM')); console.log('ready'); setInterval(() => {}, 1000)"],
+  { detached: true, stdio: ['ignore', 'pipe', 'ignore'] });
+let output = '';
+child.stdout.on('data', bytes => { output += bytes.toString(); });
+const exited = once(child, 'exit');
+try {
+  await once(child.stdout, 'data');
+  await closeHostChildren(processTable().get(process.pid));
+  assert.deepEqual(await exited, [null, 'SIGKILL']);
+  assert.match(output, /TERM/);
+} finally { child.kill('SIGKILL'); }`;
+  const host = spawn(process.execPath, ['--input-type=module', '-e', script],
+    { detached: true, stdio: ['ignore', 'ignore', 'pipe'], timeout: 12_000 });
+  let stderr = '';
+  host.stderr.on('data', chunk => { stderr += chunk; });
+  assert.deepEqual(await once(host, 'exit'), [0, null], stderr);
 });

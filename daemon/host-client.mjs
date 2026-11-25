@@ -103,7 +103,9 @@ export async function attachHost(project, row, job, save, controller, { stop = f
     if (ended) return { endedAt: ended.at, sessionId: ended.sessionId, transcriptPath: ended.transcriptPath };
     if (failure) throw new Error(failure.message);
     const owner = readJSON(join(dir, 'owner.json'));
-    if (owner && !sameProcess(owner.identity, processTable().get(owner.identity.pid))) throw new Error('Session host exited during startup');
+    if (owner && !sameProcess(owner.identity, processTable().get(owner.identity.pid))) {
+      throw new Error(readJSON(join(dir, 'failed.json'))?.message ?? 'Session host exited during startup');
+    }
     if (Date.now() >= deadline) throw new Error('Session host did not become ready');
     await delay(125);
     hello = await connect();
@@ -148,6 +150,7 @@ export async function attachHost(project, row, job, save, controller, { stop = f
     get rows() { return readRows(); },
     get endedAt() { return current.endedAt; },
     get transcriptPath() { return current.transcriptPath; },
+    get stuck() { return current.stuck; },
     active: () => current.active && { ...current.active, turn: current.active.hcTurn },
     error: () => current.error,
     receipt: (action, id) => call('receipt', { action, id }),

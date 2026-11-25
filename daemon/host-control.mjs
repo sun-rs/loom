@@ -47,7 +47,7 @@ export function hostRequest(path, owner, method, params, protocol, controller) {
     const fail = error => { socket.destroy(); reject(error); };
     const request = JSON.stringify({ owner, method, params, protocol, controller }) + '\n';
     if (Buffer.byteLength(request) > hostLineLimit) return fail(new Error('Session host request is too large'));
-    socket.setTimeout(15_000, () => fail(new Error('Session host request timed out')));
+    socket.setTimeout(method === 'close' ? 22_000 : 15_000, () => fail(new Error('Session host request timed out')));
     socket.once('error', fail);
     socket.once('close', () => fail(new Error('Session host closed without a receipt')));
     socket.once('connect', () => socket.write(request));

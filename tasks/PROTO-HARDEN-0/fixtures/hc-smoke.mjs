@@ -21,7 +21,7 @@ writeFileSync(codex, '#!' + process.execPath + '\nimport(' + JSON.stringify(new 
   { mode: 0o700 });
 mkdirSync(join(project, 'codex-local'));
 const env = { ...process.env, OAR_CODEX_BIN: codex, CODEX_HOME: join(project, 'codex-local'),
-  LOOM_REAL_HC: '1', LOOM_FAULT_PROJECT: project };
+  LOOM_REAL_HC: '1', LOOM_FAULT_PROJECT: project, LOOM_DESKTOP_NOTIFY: '0' };
 const ledger = () => JSON.parse(readFileSync(join(project, '.project/inbox/state.json'), 'utf8')).messages;
 const call = (command, args) => request(project, command, args);
 const action = (role, task, mode, fields) => call('spawn', { mode, role, task, wave: 'HC', cli: 'codex',

@@ -24,7 +24,7 @@ await mkdir(join(project, 'tmp'), { mode: 0o700 });
 const log = async (cli, test, data) => appendFile(join(project, 'results.jsonl'),
   JSON.stringify({ cli, test, at: new Date().toISOString(), ...data }) + '\n');
 const file = await open(join(project, 'loomd.log'), 'w', 0o600);
-const childEnv = { ...process.env, TMPDIR: join(project, 'tmp') };
+const childEnv = { ...process.env, TMPDIR: join(project, 'tmp'), LOOM_DESKTOP_NOTIFY: '0' };
 delete childEnv.HC_TERMINAL_ID;
 delete childEnv.LOOM_ADDR;
 const loomd = spawn(process.execPath, [join(repo, 'bin/loomd'), '--project', project],

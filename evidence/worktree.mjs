@@ -76,11 +76,17 @@ export function worktreeAt(cwd) {
 }
 
 const oid = /^(?:[0-9a-f]{40}|[0-9a-f]{64})$/;
-function mergeStatus(cwd, ref, start, end) {
+export function mergeBoundary(cwd, ref) {
   if (typeof ref !== 'string' || !ref || ref.startsWith('-') || /\s/.test(ref)) return null;
-  let target;
-  try { target = run(cwd, ['rev-parse', '--verify', '--end-of-options', `${ref}^{commit}`]).trim(); }
-  catch { return { ref, target: null, integrated: null }; }
+  try { return { ref, target: run(cwd, ['rev-parse', '--verify', '--end-of-options', `${ref}^{commit}`]).trim() }; }
+  catch { return { ref, target: null }; }
+}
+
+function mergeStatus(cwd, ref, start, end) {
+  const boundary = Object.hasOwn(end, 'mergeBoundary') ? end.mergeBoundary : mergeBoundary(cwd, ref);
+  if (!boundary) return null;
+  const { target } = boundary;
+  if (!target) return { ref, target, integrated: null };
   if (!end.head || start.head === end.head || end.dirty.length) return { ref, target, integrated: false };
   try {
     run(cwd, ['merge-base', '--is-ancestor', end.head, target]);

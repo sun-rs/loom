@@ -43,15 +43,16 @@ export function organization(project, index, sessions, mail, now, report) {
     let native;
     for (const end of endEvents) {
       const { at, streamId, turnId, nativeTurnId, inputIds, outcome } = end;
-      let body = end.finalReply;
-      if (end.unconfirmed && end.unconfirmedBody) {
+      const receipt = messages.find(message => inputIds?.includes(message.id) && message.completion?.body)?.completion;
+      let body = end.finalReply ?? receipt?.body;
+      if (!body && end.unconfirmed && end.unconfirmedBody) {
         native ??= await nativeTurns(row);
         const observed = native.find(turn => turn.id === nativeTurnId) ?? native[end.turn - 1];
         if (observed?.status === 'completed' && observed.reply?.trim() === end.unconfirmedBody.trim()) body = observed.reply;
       }
       output.push({ key: JSON.stringify([row.addr, streamId, turnId]), at, body, streamId, turnId, nativeTurnId,
         inputIds, outcome, nativeTurnIndex: end.turn, source: 'OAR turn-end',
-        corroborated: Boolean(end.unconfirmed && body), waiting: end.unconfirmed && !body });
+        corroborated: Boolean(end.unconfirmed && body && !receipt), waiting: end.unconfirmed && !body });
     }
     for (const { id, completion } of messages) {
       if (!completion || output.some(turn => turn.inputIds?.includes(id) || turn.streamId &&

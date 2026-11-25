@@ -77,7 +77,7 @@ function fixtureProject(t, options = {}) {
   Object.assign(fixtureEnv, { LOOM_CODEX_BIN: codex, LOOM_AGY_BIN: agy,
     OAR_CODEX_BIN: codex, OAR_ANTIGRAVITY_BIN: agy, CODEX_HOME: join(project, 'codex-local'),
     XDG_STATE_HOME: join(project, 'xdg-state'), XDG_CONFIG_HOME: join(project, 'xdg-config'),
-    XDG_DATA_HOME: join(project, 'xdg-data'), LOOM_FAULT_PROJECT: project,
+    XDG_DATA_HOME: join(project, 'xdg-data'), LOOM_FAULT_PROJECT: project, LOOM_DESKTOP_NOTIFY: '0',
     NODE_OPTIONS: '--import=' + new URL('../tasks/HOTSWAP-1/fault-host.mjs', import.meta.url).href, ...options.env });
   write('panes.json', []);
   const children = [];
@@ -215,6 +215,25 @@ test('definitive Codex native refusals do not escalate as uncertain', { timeout:
   }
   const notices = (await f.rpc('state', { target: session.addr })).notifications;
   assert(!notices.some(notice => notice.type === 'delivery-uncertain' && [...downgraded, refused.id].includes(notice.deliveryId)));
+});
+
+test('an unanswered OAR control is bounded, reported stuck, and never resubmitted', { timeout: 28_000 }, async t => {
+  const f = fixtureProject(t);
+  await f.start();
+  const { session, deliveryId } = await f.spawn('leader', 'ACK-DEADLINE');
+  await f.waitMail(deliveryId);
+  const formed = await f.send(session.addr, 'A\uD800B');
+  await f.waitMail(formed.id);
+  assert.equal(f.deliveries(formed.id)[0].text.split('\n').at(-1), 'A\uFFFDB');
+  f.write('codex-rpc-case.json', { method: 'turn/start', noAck: true });
+  const input = await f.send(session.addr, 'No native acknowledgement');
+  await f.waitMail(input.id, message => message?.issue === 'uncertain');
+  const state = await f.rpc('state', { target: session.addr });
+  assert.equal(state.state, 'stuck');
+  assert.equal(state.reason, 'request-timeout');
+  assert.equal(f.lines('silent-requests.jsonl').length, 1);
+  assert.equal(f.deliveries(input.id).length, 0);
+  await f.rpc('stop', { target: session.addr });
 });
 
 test('SIGKILL around delivery, registry, relay and history durability boundaries', { concurrency: 3, timeout: 120_000 }, async t => {

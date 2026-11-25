@@ -15,6 +15,7 @@ const defaultMaxActiveWorkers = 3;
 const hardMaxActiveWorkers = 4;
 export const defaultCoalesceMs = 45_000;
 export const defaultReplyBytes = 600;
+export const costPriceFields = ['freshInput', 'cacheWrite', 'cacheRead', 'output'];
 export const driftDefaults = Object.freeze({
   netLines: null, budgetRaises: 2, slowCommandFactor: 2, slowCommandSamples: 1,
   planLines: 120, repeatedFailures: 2, factMiss: true, deferAuditorNotices: true, sampleIntervalMs: 30_000,
@@ -64,6 +65,17 @@ export function readPolicy(project, { optional = false } = {}) {
     if (!policy || typeof policy !== 'object' || Array.isArray(policy)) throw new Error('Expected a policy object');
     if (Object.hasOwn(policy, 'maxActiveWorkers')) throw new Error('Set maxActiveWorkers under roles.leader');
     validateProfiles(policy);
+    if (policy.cost !== undefined) {
+      const prices = policy.cost?.prices;
+      if (!prices || typeof prices !== 'object' || Array.isArray(prices) ||
+          Object.keys(policy.cost).some(key => key !== 'prices') ||
+          Object.entries(prices).some(([cli, rate]) => !providers.includes(cli) ||
+            !rate || typeof rate !== 'object' || Array.isArray(rate) ||
+            Object.entries(rate).some(([field, value]) => !costPriceFields.includes(field) ||
+              !Number.isFinite(value) || value < 0))) {
+        throw new Error('Expected cost.prices with nonnegative USD rates per million tokens, keyed by CLI');
+      }
+    }
     if (policy.delivery !== undefined && (!policy.delivery || typeof policy.delivery !== 'object' ||
         Array.isArray(policy.delivery) || Object.entries(policy.delivery).some(([key, value]) =>
           !Number.isSafeInteger(value) || (key === 'coalesceMs' ? value < 0 : key !== 'replyBytes' || value < 160)))) {

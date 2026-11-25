@@ -42,6 +42,10 @@ function codex({ method, id, params }) {
     const fault = JSON.parse(readFileSync(faultPath, 'utf8'));
     if (fault.method === method) {
       unlinkSync(faultPath);
+      if (fault.noAck) {
+        log('silent-requests.jsonl', { method, id });
+        return;
+      }
       return out({ id, error: fault.error });
     }
   }

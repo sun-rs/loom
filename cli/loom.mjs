@@ -30,7 +30,7 @@ const help = {
   state: ['loom state <target> [--project DIR]'],
   memory: ['loom memory search <query> [--project DIR] [--json]'],
   status: ['loom status --project DIR [--json]'],
-  cost: ['loom cost [--project DIR]', 'Reports JSON totals from native usage and per-turn acceptance timing.'],
+  cost: ['loom cost [--project DIR]', 'Reports raw tokens, estimated USD costs by role and per-turn acceptance timing.'],
   stop: ['loom stop <target> [--project DIR]'],
   send: [sendUsage, sendHelp],
   handover: ['loom handover <leader|auditor|super> --project DIR [--to ADDR]'],

@@ -10,14 +10,19 @@ import { request } from './rpc.mjs';
 const logPath = project => resolve(runtimeDirectory(project), 'notifications.json');
 export const readNotifications = project => JSON.parse(readText(logPath(project), '[]'));
 const exec = promisify(execFile);
+const desktopTypes = new Set(['needs-decision', 'project-completed', 'audit-escalation', 'leader-exited']);
+export const desktopIntervalMs = 5 * 60_000;
+export const desktopEnabled = () => process.platform === 'darwin' &&
+  process.env.LOOM_DESKTOP_NOTIFY !== '0' && process.env.NODE_TEST_CONTEXT === undefined;
 const appleScript = `on run argv
   display notification (item 2 of argv) with title (item 1 of argv)
 end run`;
 
-export async function notifyExternal(project, events) {
-  if (process.platform !== 'darwin') return;
-  const types = [...new Set(events.map(event => event.type))].join(', ');
-  await exec('/usr/bin/osascript', ['-e', appleScript, '--', `Loom · ${basename(project)}`,
+export async function notifyExternal(project, events, execute = exec) {
+  if (!desktopEnabled()) return;
+  const types = [...new Set(events.map(event => event.type).filter(type => desktopTypes.has(type)))].join(', ');
+  if (!types) return;
+  await execute('/usr/bin/osascript', ['-e', appleScript, '--', `Loom · ${basename(project)}`,
     `${types.slice(0, 180)}. Open loom notifications for details.`], { timeout: 3000 });
 }
 
@@ -26,6 +31,13 @@ export function projectNotifications(project, now = Date.now) {
   const events = readNotifications(project);
   const ids = new Set(events.map(event => event.id));
   function save() { writeState(path, JSON.stringify(events) + '\n'); }
+  function mark(batch, route) {
+    for (const event of batch) { event.pushedAt = now(); event.pushRoute = route; }
+    try { save(); } catch (error) {
+      for (const event of batch) { delete event.pushedAt; delete event.pushRoute; }
+      throw error;
+    }
+  }
   return {
     add(...incoming) {
       const fresh = incoming.filter(event => !ids.has(event.id));
@@ -47,7 +59,7 @@ export function projectNotifications(project, now = Date.now) {
       }
       return result;
     },
-    async push(deliver) {
+    async push(deliver, desktop) {
       const pending = events.filter(event => event.pushedAt == null && !event.logOnly);
       const unassigned = pending.filter(event => !event.pushBatch);
       for (const group of Map.groupBy(unassigned, event => event.project).values()) {
@@ -62,14 +74,22 @@ export function projectNotifications(project, now = Date.now) {
           throw error;
         }
       }
+      const unrouted = [];
       for (const batch of Map.groupBy(pending, event => event.pushBatch).values()) {
         const route = await deliver(batch);
-        if (!route) continue;
-        for (const event of batch) { event.pushedAt = now(); event.pushRoute = route; }
-        try { save(); } catch (error) {
-          for (const event of batch) { delete event.pushedAt; delete event.pushRoute; }
-          throw error;
-        }
+        if (route) mark(batch, route);
+        else unrouted.push(...batch);
+      }
+      const ledgerOnly = unrouted.filter(event => !desktop || !desktopTypes.has(event.type));
+      if (ledgerOnly.length) mark(ledgerOnly, 'log');
+      if (!desktop) return;
+      const eligible = unrouted.filter(event => desktopTypes.has(event.type));
+      for (const [name, batch] of Map.groupBy(eligible, event => event.project)) {
+        if (events.some(event => event.project === name && event.pushRoute === 'external' &&
+            desktopTypes.has(event.type) && now() - event.pushedAt < desktopIntervalMs)) continue;
+        // Reserve a banner durably before the desktop side effect, including across loomd restarts.
+        mark(batch, 'external');
+        await desktop(name, batch);
       }
     },
   };

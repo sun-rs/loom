@@ -6,15 +6,15 @@ import { readText, writeState } from './io.mjs';
 export const oarProcessPath = project => join(runtimeDirectory(project), 'oar-processes.json');
 
 export function processTable() {
-  const text = execFileSync('ps', ['-axo', 'pid=,ppid=,uid=,lstart=,comm='], {
+  const text = execFileSync('ps', ['-axo', 'pid=,ppid=,pgid=,uid=,lstart=,comm='], {
     encoding: 'utf8', timeout: 3000, maxBuffer: 4 * 1024 * 1024, env: { ...process.env, LC_ALL: 'C' },
   });
   const rows = new Map();
   for (const line of text.split('\n')) {
-    const match = /^\s*(\d+)\s+(\d+)\s+(\d+)\s+(\w{3}\s+\w{3}\s+\d+\s+[\d:]+\s+\d{4})\s+(.+)$/.exec(line);
+    const match = /^\s*(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\w{3}\s+\w{3}\s+\d+\s+[\d:]+\s+\d{4})\s+(.+)$/.exec(line);
     if (!match) continue;
-    const [, pid, ppid, uid, started, executable] = match;
-    rows.set(Number(pid), { pid: Number(pid), ppid: Number(ppid), uid: Number(uid), started, executable });
+    const [, pid, ppid, pgid, uid, started, executable] = match;
+    rows.set(Number(pid), { pid: Number(pid), ppid: Number(ppid), pgid: Number(pgid), uid: Number(uid), started, executable });
   }
   return rows;
 }

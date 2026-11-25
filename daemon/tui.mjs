@@ -43,23 +43,28 @@ export async function openTui(job, row, project, recordTemporary, recordBinding,
   catch (error) { await host.close(); throw error; }
 }
 
-export async function refreshOpenCode(job, row, project) {
+export async function openCodeExport(row, sessionId, env, command = 'opencode') {
   let data;
   try {
-    const executable = await absoluteCommand('opencode', 'opencode');
-    const { stdout } = await exec(executable, ['session', 'export', job.plannedNativeId, '--standalone'],
-      { cwd: row.cwd, ...(job.isolatedWorkerHome && { env: { ...process.env, ...workerEnvironment(row) } }),
-        timeout: 5000, maxBuffer: 32 * 1024 * 1024 });
+    const executable = await absoluteCommand(command, 'opencode');
+    const { stdout } = await exec(executable, ['session', 'export', sessionId, '--standalone'],
+      { cwd: row.cwd, env, timeout: 5000, maxBuffer: 32 * 1024 * 1024 });
     data = JSON.parse(stdout);
   } catch (error) {
     const reason = error.code === 'ERR_CHILD_PROCESS_STDIO_MAXBUFFER' ? 'size-limit' : error.killed ? 'timeout' :
       error.code === 'ENOENT' ? 'executable-unavailable' : error instanceof SyntaxError ? 'invalid-json' : 'command-failed';
     throw Object.assign(new Error(`OpenCode session export failed (${reason})`), { kind: reason });
   }
-  const path = eventPath(project, row.addr);
-  const events = data && projectMessages(data, job.plannedNativeId, row.cwd);
+  const events = data && projectMessages(data, sessionId, row.cwd);
   if (!events) throw Object.assign(new Error('OpenCode session export returned an invalid session'), { kind: 'invalid-session' });
-  if (data.messages.length === 0 && job.paneBinding) {
+  return { events, empty: data.messages.length === 0 };
+}
+
+export async function refreshOpenCode(job, row, project) {
+  const { events, empty } = await openCodeExport(row, job.plannedNativeId,
+    job.isolatedWorkerHome ? { ...process.env, ...workerEnvironment(row) } : undefined);
+  const path = eventPath(project, row.addr);
+  if (empty && job.paneBinding) {
     events.push({ cwd: row.cwd, session_id: job.plannedNativeId, receivedAt: job.paneBinding.createdAt,
       hook_event_name: 'SessionStart' });
   }

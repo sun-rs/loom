@@ -4,6 +4,7 @@ import { changeReader } from './changes.mjs';
 import { activitySummary, adapterFor, CommandError, parentOrder, readTranscript, transcriptFor, turnActivityFacts } from './sessions.mjs';
 import { nativeRanges, timestamp, transcriptRows, turnTools } from './turns.mjs';
 import { managedWaveKey } from '../relay/project.mjs';
+import { oarTurnEndHead } from '../daemon/turn-heads.mjs';
 
 const at = value => Number.isFinite(timestamp(value)) ? timestamp(value) : null;
 const iso = time => at(time) === null ? null : new Date(at(time)).toISOString();
@@ -91,9 +92,10 @@ function matchingCards(session, turns, artifacts) {
   return entries.map(entry => {
     const { turn, observation, completion, hook } = entry;
     const cards = artifacts ? cardsFor(artifacts.cards(session.addr), turn, observation, completion) : [];
-    return { ...entry, cards, journalPath: journal?.path, heads: {
+    return { ...entry, turn: !turn.reply && completion?.body ? { ...turn, reply: completion.body } : turn,
+      cards, journalPath: journal?.path, heads: {
       start: observation?.start.observedAt ? { head: observation.start.head, observedAt: observation.start.observedAt } : hook?.start ?? null,
-      end: observation?.end?.observedAt ? { head: observation.end.head, observedAt: observation.end.observedAt, git: observation.end.git } : hook?.end ?? null,
+      end: oarTurnEndHead(artifacts?.project, session, observation?.start, observation?.end) ?? hook?.end ?? null,
     } };
   });
 }

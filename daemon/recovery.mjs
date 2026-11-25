@@ -34,6 +34,20 @@ function userTurnId(provider, text, id) {
   }
 }
 
+function agyFinal(text, id, reply) {
+  let matching = false;
+  let final;
+  for (const row of jsonRows(text)) {
+    if (['USER', 'USER_EXPLICIT'].includes(row.source) && ['REQUEST', 'USER_INPUT'].includes(row.type)) {
+      if (matching) break;
+      matching = deliveryId(row.content) === id;
+    } else if (matching && row.source === 'MODEL' && row.type === 'PLANNER_RESPONSE' && row.content?.trim()) {
+      final = row;
+    }
+  }
+  return final?.status === 'DONE' && final.content.trim() === reply?.trim();
+}
+
 export function recoverNativeDelivery(row, message) {
   const adapter = adapters[row?.cli];
   const path = adapter && checkedTranscript(row.transcriptPath, row);
@@ -49,7 +63,7 @@ export function recoverNativeDelivery(row, message) {
   const result = { at: Number.isFinite(at) ? at : message.attemptAt, sessionId: row.sessionId, turnId: turn.id };
   if (turn.status === 'incomplete' || !Number.isFinite(endedAt)) return result;
   const outcome = { kind: turn.status === 'interrupted' ? 'aborted' : 'completed' };
-  const unconfirmed = row.cli === 'agy' && outcome.kind === 'completed';
+  const unconfirmed = row.cli === 'agy' && outcome.kind === 'completed' && !agyFinal(text, message.id, turn.reply);
   return { ...result, completion: { at: endedAt, sessionId: row.sessionId, turnId: turn.id, nativeTurnId: turn.id,
     nativeTurnIndex: turn.index, outcome, source: 'native transcript',
     ...(unconfirmed ? { noReply: true, unconfirmed: true, unconfirmedBody: turn.reply } :

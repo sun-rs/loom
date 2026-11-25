@@ -39,6 +39,7 @@ export function readArtifacts(project) {
   }
   let messages;
   return {
+    project,
     messages: () => messages ??= json('inbox', 'state.json')?.messages ?? [],
     relay: () => json('relay', 'state.json') ?? {},
     job: addr => safeName.test(addr) ? json('loomd', 'sessions', `${addr}.json`) : null,

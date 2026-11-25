@@ -22,7 +22,8 @@ test('failed post-lock session verification restores the old writer and its nati
   const candidate = join(dir, 'candidate');
   const cli = join(root, 'bin', 'loom');
   const codex = join(dir, 'codex');
-  const env = { HOME: dir, TMPDIR: dir, CODEX_HOME: dir, PATH: process.env.PATH, LOOM_CODEX_BIN: codex };
+  const env = { HOME: dir, TMPDIR: dir, CODEX_HOME: dir, PATH: process.env.PATH, LOOM_CODEX_BIN: codex,
+    OAR_CODEX_BIN: codex, LOOM_DESKTOP_NOTIFY: '0', LOOM_TEST_CODEX_PIPES: '1' };
   const run = async (...args) => {
     const result = await exec(process.execPath, [cli, ...args, '--project', project], { cwd: project, env, timeout: 25_000 })
       .catch(error => {

@@ -1,19 +1,43 @@
 import { join } from 'node:path';
 import { runtimeDirectory } from '../cli/project.mjs';
 import { projectText } from '../cli/artifacts.mjs';
-import { worktreeAt, worktreeDelta } from '../evidence/worktree.mjs';
+import { mergeBoundary, worktreeAt, worktreeDelta } from '../evidence/worktree.mjs';
 import { readText, writeState } from './io.mjs';
 
 export const headAt = worktreeAt;
+function settingsFor(project, row) {
+  const settings = JSON.parse(projectText(project, 'evidence.json') ?? '{}');
+  return { ...settings, ...settings.tasks?.[row.task] };
+}
+
 export function finishHead(project, row, start, end = headAt(row.cwd)) {
   let git;
   try {
-    const settings = JSON.parse(projectText(project, 'evidence.json') ?? '{}');
-    git = worktreeDelta(row.cwd, start, end, { ...settings, ...settings.tasks?.[row.task] });
+    git = worktreeDelta(row.cwd, start, end, settingsFor(project, row));
   } catch {
     git = { status: 'unavailable' };
   }
   return { head: end.head, observedAt: end.observedAt, git };
+}
+
+export function captureOarTurnEnd(project, row) {
+  const gitBoundary = headAt(row.cwd);
+  try {
+    const { mergeRef, protectedPaths, testPaths, allowedPaths } = settingsFor(project, row);
+    gitBoundary.settings = { mergeRef, protectedPaths, testPaths, allowedPaths };
+    gitBoundary.mergeBoundary = mergeBoundary(row.cwd, mergeRef);
+  } catch { gitBoundary.settings = null; }
+  return { head: gitBoundary.head, observedAt: gitBoundary.observedAt, gitBoundary };
+}
+
+export function oarTurnEndHead(project, row, start, end) {
+  if (end?.gitBoundary) {
+    const { settings } = end.gitBoundary;
+    if (settings === undefined) return finishHead(project, row, start, end.gitBoundary);
+    return { head: end.head, observedAt: end.observedAt,
+      git: settings ? worktreeDelta(row.cwd, start, end.gitBoundary, settings) : { status: 'unavailable' } };
+  }
+  if (end?.observedAt) return { head: end.head, observedAt: end.observedAt, git: end.git };
 }
 
 export const turnHeadsPath = (project, addr) => join(runtimeDirectory(project), 'sessions', `${addr}.turn-heads.json`);

@@ -2,13 +2,20 @@ import { checkEvidence } from '../evidence/checks.mjs';
 import { codexCommands } from '../evidence/transcript.mjs';
 import { roles } from '../index/index.mjs';
 import { historyReader } from './history.mjs';
+import { readPolicy } from './policy.mjs';
 import { timestamp, turnTools } from './turns.mjs';
 
 const usageFields = ['inputTokens', 'cachedInputTokens', 'cacheWriteInputTokens', 'outputTokens', 'reasoningOutputTokens'];
+const referencePrices = {
+  codex: { freshInput: 2.5, cacheWrite: 2.5, cacheRead: 0.25, output: 15 },
+  agy: { freshInput: 2, cacheWrite: 2, cacheRead: 0.2, output: 12 },
+  claude: { freshInput: 3, cacheWrite: 3.75, cacheRead: 0.3, output: 15 },
+  opencode: { freshInput: 0.3, cacheWrite: 0.3, cacheRead: 0.006, output: 1.2 },
+};
 const emptyRole = () => ({
   sessions: 0, turns: 0, turnsWithUsage: 0, modelCalls: 0,
   rawTokens: 0, inputTokens: 0, freshInputTokens: 0, cachedInputTokens: 0, cacheWriteInputTokens: 0,
-  outputTokens: 0, reasoningOutputTokens: 0,
+  outputTokens: 0, reasoningOutputTokens: 0, estimatedCostUsd: 0,
 });
 const eventTime = row => timestamp(row.timestamp ?? row.created_at ?? row.receivedAt ?? row.at);
 
@@ -47,6 +54,9 @@ function afterAcceptance({ session, turn, rows, journalOnly }) {
 
 export function projectCost(directory, sessions, { includeAcceptance = true } = {}) {
   const reader = historyReader(directory);
+  const overrides = readPolicy(directory, { optional: true }).cost?.prices ?? {};
+  const prices = Object.fromEntries(Object.entries(referencePrices)
+    .map(([cli, defaults]) => [cli, { ...defaults, ...overrides[cli] }]));
   const byRole = Object.fromEntries([...roles, 'unassigned'].map(role => [role, emptyRole()]));
   const workerTurns = [];
   const missing = [];
@@ -79,6 +89,11 @@ export function projectCost(directory, sessions, { includeAcceptance = true } = 
         role.turnsWithUsage++;
         role.modelCalls += usage.calls;
         for (const field of usageFields) role[field] += usage[field] ?? 0;
+        const fresh = Math.max(0, (usage.inputTokens ?? 0) - (usage.cachedInputTokens ?? 0) - (usage.cacheWriteInputTokens ?? 0));
+        role.freshInputTokens += fresh;
+        const price = prices[session.cli];
+        if (price) role.estimatedCostUsd += (fresh * price.freshInput + (usage.cacheWriteInputTokens ?? 0) * price.cacheWrite
+          + (usage.cachedInputTokens ?? 0) * price.cacheRead + (usage.outputTokens ?? 0) * price.output) / 1_000_000;
       }
       if (includeAcceptance && session.role === 'worker') {
         workerTurns.push({ addr: session.addr, task: session.task, turn: item.index,
@@ -89,9 +104,14 @@ export function projectCost(directory, sessions, { includeAcceptance = true } = 
 
   for (const totals of Object.values(byRole)) {
     totals.rawTokens = totals.inputTokens + totals.outputTokens;
-    totals.freshInputTokens = totals.inputTokens - totals.cachedInputTokens - totals.cacheWriteInputTokens;
   }
   const rawTokens = Object.values(byRole).reduce((sum, totals) => sum + totals.rawTokens, 0);
+  const estimatedCostUsd = Object.values(byRole).reduce((sum, totals) => sum + totals.estimatedCostUsd, 0);
+  for (const totals of Object.values(byRole)) {
+    totals.estimatedCostShare = estimatedCostUsd ? totals.estimatedCostUsd / estimatedCostUsd : null;
+  }
   return { byRole, rawTokens, workerShare: rawTokens ? byRole.worker.rawTokens / rawTokens : null,
+    estimatedCostUsd, estimatedWorkerShare: byRole.worker.estimatedCostShare,
+    pricing: { estimate: true, unit: 'USD per million tokens', prices },
     leaderWakes, workerTurns, missing };
 }

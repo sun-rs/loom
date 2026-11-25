@@ -4,6 +4,7 @@ import { forTurn, inside, localText, readTranscript } from './index.mjs';
 import { collectVerification, executionEvidence, sandboxMode } from './transcript.mjs';
 import { readArtifacts, safeName } from '../cli/artifacts.mjs';
 import { turnTools } from '../lib/turn-tools.mjs';
+import { oarTurnEndHead } from '../daemon/turn-heads.mjs';
 
 function launchSandbox(provider, argv = []) {
   if (!Array.isArray(argv)) return null;
@@ -71,7 +72,9 @@ export async function observeRelayTurn(project, worker, reply, input = {}, index
         }));
         projected = { turnId: end.nativeTurnId ?? end.turnId, turnStatus: end.outcome?.kind, turnIndex: end.turn,
           tools: turnTools('opencode', {}, rows), executions };
-        gitObservation = { ...(end.git ?? gitObservation), ...(end.head && { head: end.head }) };
+        const start = rows.find(({ row }) => row.type === 'turn-start')?.row;
+        const head = oarTurnEndHead(project, { cwd, task: worker.id }, start, end);
+        gitObservation = { ...(head?.git ?? gitObservation), ...(end.head && { head: end.head }) };
       }
     } else {
       const exact = artifacts.turnHeads(worker.addr).find(row => row.endedAt === reply.at);

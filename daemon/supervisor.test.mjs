@@ -389,9 +389,9 @@ test('uses native agy activity to interrupt an in-flight queue delivery and cont
   const { messages } = f.read('inbox/state.json');
   assert.equal(messages.find(message => message.id === first).completion.outcome.kind, 'aborted');
   const replacement = messages.find(message => message.id === receipt.id).completion;
-  assert.equal(replacement.body, undefined);
-  assert.equal(replacement.unconfirmedBody, 'L');
-  assert.equal(replacement.unconfirmed, true);
+  assert.equal(replacement.body, 'L');
+  assert.equal(replacement.replySource, 'native transcript');
+  assert.equal(replacement.unconfirmed, undefined);
   assert.equal(f.prompts.length, 2);
 });
 
@@ -753,7 +753,8 @@ test('times out a hanging single continuation, reports its last activity and sup
   assert.equal(summaries().length, 1);
   assert.equal(summaries()[0].target.addr, leader.addr);
   assert.match(summaries()[0].text, /CONT.*STUCK.*最近活动/s);
-  assert.deepEqual(external, [['continuation-timeout']]);
+  assert.deepEqual(external, []);
+  assert.ok((await d.handle('notifications', {})).notifications.some(event => event.type === 'continuation-timeout'));
 
   f.sessions.get(worker.addr).finish('DONE CONT late');
   await d.tick();

@@ -8,7 +8,7 @@ import { history, historyReader } from '../../cli/history.mjs';
 import { worktreeAt, worktreeDelta } from '../../evidence/worktree.mjs';
 import { forTurn } from '../../evidence/index.mjs';
 import { collectVerification } from '../../evidence/transcript.mjs';
-import { linkTuiInputHead, observeTuiHeads, saveTuiInputHead, turnHeadsPath } from '../../daemon/turn-heads.mjs';
+import { linkTuiInputHead, oarTurnEndHead, observeTuiHeads, saveTuiInputHead, turnHeadsPath } from '../../daemon/turn-heads.mjs';
 import { eventPath } from '../../daemon/io.mjs';
 import { trackOar } from '../../daemon/oar.mjs';
 
@@ -221,8 +221,10 @@ test('TUI managed delivery and OAR journal persist independent Git facts at the 
   put(cwd, 'from-oar.txt', 'new\n');
   emit('text_delta', 4, { phase: 'final_answer', messageId: 'reply', text: 'DONE OAR' });
   emit('turn_ended', 5, { outcome: { kind: 'completed' } });
+  const start = runtime.rows.find(row => row.type === 'turn-start');
   const end = runtime.rows.find(row => row.type === 'turn-end');
-  assert.deepEqual(end.git.files.map(file => file.path), ['from-oar.txt']);
+  put(cwd, 'after-oar.txt', 'later\n');
+  assert.deepEqual(oarTurnEndHead(cwd, oar, start, end).git.files.map(file => file.path), ['from-oar.txt']);
   const oarRow = { ...oar, project: cwd, endedAt: null, transcriptPath: eventPath(cwd, oar.addr) };
   const [details] = await read(cwd, oarRow, { showDiff: true });
   assert.equal(details.diff.turn.files[0].path, 'from-oar.txt');

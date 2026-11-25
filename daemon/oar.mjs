@@ -8,8 +8,9 @@ import codex from '../adapters/codex/index.mjs';
 import { deliveryId, wireText } from '../inbox/message.mjs';
 import { eventPath, jsonRows, prepareJournal } from './io.mjs';
 import { nativeClaude } from './executables.mjs';
-import { finishHead, headAt } from './turn-heads.mjs';
+import { captureOarTurnEnd, headAt } from './turn-heads.mjs';
 import { codexConfiguration } from './codex-launch.mjs';
+import { codexRefusal } from './codex-pipe-errors.mjs';
 import { claudeApiEnvKeys } from '../adapters/claude/launch.mjs';
 import { claudeAuthMode } from '../cli/policy.mjs';
 import { managedEnvironment } from './release.mjs';
@@ -70,7 +71,8 @@ export async function openOar(row, project, resume) {
   if (installation.kind !== 'available') throw new Error(`${row.cli} unavailable: ${installation.reason ?? installation.kind}`);
   if (login) installation = { ...installation, command: sandboxNativeWorker(project, row, login, isolated, installation.command) };
   const { cwd, model, effort } = row;
-  return runtime.session(installation, { cwd, model, effort, env, launchArgs, ...(resume ? { resume } : {}) });
+  return runtime.session(installation, { cwd, model, effort, env, launchArgs,
+    ...(row.cli === 'codex' && { endTurnProcessesOnAbort: true }), ...(resume ? { resume } : {}) });
 }
 
 export async function bindOarTranscript(session, row) {
@@ -125,7 +127,7 @@ export function trackOar(project, row, session, onError, incarnation) {
       const sinceSeq = pending?.seq ?? status.sinceSeq ?? event.seq;
       const turnId = event.spanId ?? event.turnId ?? `${streamId}:${turn}`;
       const start = nextHead ?? headAt(row.cwd);
-      active = { sinceSeq, turnId, turn, since: event.receivedAt, inputIds: new Set(), text: '', start };
+    active = { sinceSeq, turnId, turn, since: event.receivedAt, inputIds: new Set(), text: '' };
       append(event, 'turn-start', { turn, turnId, sinceSeq, ...start });
       nextHead = undefined;
     }
@@ -171,7 +173,7 @@ export function trackOar(project, row, session, onError, incarnation) {
     const unconfirmed = outcome.kind === 'completed' && acpProviders.has(row.cli);
     append(event, 'turn-end', {
       turn, turnId, nativeTurnId: active.nativeTurnId, sinceSeq, outcome, inputIds: [...active.inputIds],
-      ...finishHead(project, row, active.start),
+      ...captureOarTurnEnd(project, row),
       ...(outcome.kind === 'aborted' && { interruptedBy: active.interruptedBy ?? outcome.by ?? null }),
       finalReply: unconfirmed ? null : text,
       ...(unconfirmed && { unconfirmed: true, unconfirmedBody: text }),
@@ -192,7 +194,7 @@ export function trackOar(project, row, session, onError, incarnation) {
     append({ seq, receivedAt: Date.now() }, 'turn-unconfirmed', { turn, turnId, sinceSeq });
     active = pending = undefined;
   }
-  return { session, streamId, rows, active: () => active, clearInactive, unsubscribe,
+  return { session, provider: row.cli, streamId, rows, active: () => active, clearInactive, unsubscribe,
     sampleInputHead: () => { nextHead = headAt(row.cwd); },
     noteAbort: () => {
       const turn = active;
@@ -270,15 +272,18 @@ export async function oarControl(runtime, action, message, observation) {
   let result;
   try {
     result = action === 'abort' ? await session.abort() :
-      await session[action](wireText(message.id, message.text), { inputId: message.id });
+      await session[action](wireText(message.id, message.text.toWellFormed()), { inputId: message.id });
   } catch (error) {
     undoAbort?.();
     throw error;
   }
   if (result.kind === 'accepted') return result;
   undoAbort?.();
-  const kind = action === 'steer' && ['unsupported', 'no_active_turn'].includes(result.code) ? 'steer-unavailable' :
+  const native = result.response?.body?.native;
+  const mapped = runtime.provider === 'codex' && native && codexRefusal(
+    { prompt: 'turn/start', steer: 'turn/steer', abort: 'turn/interrupt' }[action], native);
+  const kind = mapped || (action === 'steer' && ['unsupported', 'no_active_turn'].includes(result.code) ? 'steer-unavailable' :
     ['busy', 'no_active_turn', 'disposed'].includes(result.code) ? 'status_mismatch' :
-      ['runtime_exited', 'runtime_refused', 'error'].includes(result.code) ? undefined : 'input-refused';
+      ['runtime_exited', 'runtime_refused', 'error'].includes(result.code) ? undefined : 'input-refused');
   throw Object.assign(new Error(`OAR ${action}: ${result.code}`), { kind });
 }

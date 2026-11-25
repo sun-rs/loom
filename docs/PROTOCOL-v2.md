@@ -78,7 +78,7 @@ SQLite 中的受管 worker 索引由持久的 spawn 意图补齐。`workers.md` 
 
 Super 的通知包含 `blocked-escalation`（工作阻塞升级）和 `delivery-uncertain`（投递缺少原生确认），以及项目的其他事件类型。
 
-`--needs-decision TEXT` 登记裁决请求，`--complete TEXT` 登记该项目完成。Leader 异常退出、BLOCKED 合并、波次或续作超时和投递不明也会自动登记。Worker 的卡死事件保留在日志中，由在途批次统一唤醒。单个结算批次的多个项目事件合为一个提示。其他同一扫描到达的事件按项目合并。管理内 Super 的唤醒通过稳定 ID 入箱去重。外部 Super 由本机 `/usr/bin/osascript` 发系统通知。系统通知仅提供类型和项目，具体正文可从日志查看。系统通知调用失败后重试，系统接收与本地落盘之间被强杀时可能再显示一次。
+`--needs-decision TEXT` 登记裁决请求，`--complete TEXT` 登记该项目完成。Leader 异常退出、BLOCKED 合并、波次或续作超时和投递不明也会自动登记。Worker 的卡死事件保留在日志中，由在途批次统一唤醒。单个结算批次的多个项目事件合为一个提示。其他同一扫描到达的事件按项目合并。管理内 Super 的唤醒通过稳定 ID 入箱去重。macOS 桌面提示仅包含裁决、项目完成、审计升级和 Leader 异常退出，每个项目每五分钟至多一条，正文可从通知账本查看。先在账本预留提示，再调用系统；关闭提示可设置 `LOOM_DESKTOP_NOTIFY=0`，测试自动关闭。
 
 Auditor 默认只读历史和证据。合入前做一次独立复核，出现红色事实时只读核查。每次介入只发一条汇总结论，只有可复现的阻断缺陷才能中断。每个交付最多两轮审计。第二轮仍有阻断时用 `--needs-decision TEXT --audit-escalation blocking-disagreement` 请 Super 裁决重设计。重大风险和越权可分别用 `major-risk` 与 `overreach` 升级。
 

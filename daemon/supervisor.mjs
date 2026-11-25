@@ -9,7 +9,7 @@ import { withClaudeTranscriptStops } from '../relay/sources.mjs';
 import { createWatcher } from '../watch/index.mjs';
 import { opencodeExportFailureLimit, ownedSessions, validInput } from './sessions.mjs';
 import { jsonRows, prepareJournal, readText } from './io.mjs';
-import { notifyExternal, projectNotifications } from './notifications.mjs';
+import { desktopEnabled, notifyExternal, projectNotifications } from './notifications.mjs';
 import { organization } from './org.mjs';
 import { clip } from '../evidence/checks.mjs';
 import { defaultCoalesceMs, driftDefaults, readPolicy, setWorkerProfile, workerLimit } from '../cli/policy.mjs';
@@ -59,7 +59,10 @@ export function createSupervisor(project, {
   const parentFor = addr => sessions.routeParent(addr)?.addr ?? addr;
   let health = new Map();
   const startupBlockers = new Map();
-  let externalRetryAt = 0;
+  const desktop = externalNotification !== notifyExternal || desktopEnabled() ? async (name, batch) => {
+    try { await externalNotification(name, batch); }
+    catch (error) { report(`macOS project notification: ${error.message}`); }
+  } : undefined;
 
   async function pushNotifications() {
     await notifications.push(async batch => {
@@ -79,13 +82,7 @@ export function createSupervisor(project, {
             ...(batch.some(event => event.type === 'needs-decision') && { superPriority: true }) });
         return superSession.addr;
       }
-      if (now() < externalRetryAt) return;
-      try { await externalNotification(project, batch); return 'external'; }
-      catch (error) {
-        externalRetryAt = now() + 30_000;
-        report(`macOS project notification: ${error.message}`);
-      }
-    });
+    }, desktop);
   }
 
   const watcher = createWatcher({
@@ -99,7 +96,7 @@ export function createSupervisor(project, {
     async inspectRuntime(row) {
       const snapshot = await sessions.transport.inspect(sessions.targetBinding(row));
       const last = snapshot.events.findLast(event => ['stuck', 'recovered'].includes(event.type));
-      return { state: snapshot.state, reason: last?.type === 'stuck' ? last.reason : undefined,
+      return { state: snapshot.state, reason: snapshot.reason ?? (last?.type === 'stuck' ? last.reason : undefined),
         lastEventAt: snapshot.runtimeStatus?.lastEventAt ?? snapshot.active?.since ?? row.startedAt };
     },
     enqueue: async ({ addr, message, eventId }) => receiptFor(saved(sessions.targetBinding(sessions.rowFor(addr)), message,

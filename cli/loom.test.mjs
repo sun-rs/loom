@@ -327,10 +327,14 @@ test('cost totals native usage and counts only calls after the passing result', 
   f.register('foreign', { role: 'worker', project: join(f.cwd, 'other') });
 
   const report = f.run(0, 'cost', '--project', f.cwd);
-  assert.deepEqual(report.byRole.worker, {
+  const { estimatedCostUsd, estimatedCostShare, ...totals } = report.byRole.worker;
+  assert.deepEqual(totals, {
     sessions: 2, turns: 2, turnsWithUsage: 2, modelCalls: 4, rawTokens: 380, inputTokens: 360,
     freshInputTokens: 160, cachedInputTokens: 190, cacheWriteInputTokens: 10, outputTokens: 20, reasoningOutputTokens: 0,
   });
+  assert.equal(estimatedCostUsd, (160 * 2.5 + 10 * 2.5 + 190 * 0.25 + 20 * 15) / 1_000_000);
+  assert.equal(estimatedCostShare, report.estimatedWorkerShare);
+  assert.equal(report.pricing.estimate, true);
   assert.equal(report.leaderWakes, 1);
   assert.equal(report.rawTokens, 420);
   assert.equal(report.workerShare, 380 / 420);
@@ -342,6 +346,10 @@ test('cost totals native usage and counts only calls after the passing result', 
 
 test('cost splits Claude and agy cache usage and pairs their passing results', t => {
   const f = fixture(t);
+  mkdirSync(join(f.cwd, '.project'), { recursive: true });
+  writeFileSync(join(f.cwd, '.project', 'policy.json'), JSON.stringify({
+    cost: { prices: { agy: { freshInput: 4, cacheWrite: 5, cacheRead: 0.4, output: 20 } } },
+  }));
   const time = seconds => new Date(seconds * 1000).toISOString();
   const add = (cli, rows) => {
     const transcriptPath = join(f.cwd, `${cli}.jsonl`);
@@ -371,6 +379,8 @@ test('cost splits Claude and agy cache usage and pairs their passing results', t
   const report = f.run(0, 'cost', '--project', f.cwd);
   const { rawTokens, freshInputTokens, cachedInputTokens, cacheWriteInputTokens } = report.byRole.worker;
   assert.deepEqual([rawTokens, freshInputTokens, cachedInputTokens, cacheWriteInputTokens], [80, 40, 20, 12]);
+  assert.equal(report.byRole.worker.estimatedCostUsd,
+    (20 * 4 + 6 * 5 + 10 * 0.4 + 4 * 20 + 20 * 3 + 6 * 3.75 + 10 * 0.3 + 4 * 15) / 1_000_000);
   assert.deepEqual(report.workerTurns.map(turn => [turn.addr, turn.lastPassingAcceptanceAt, turn.callsAfterAcceptance]),
     [['agy', time(3), 1], ['claude', time(3), 1]]);
 });

@@ -11,7 +11,7 @@ import { recordLifecycle } from '../handover/index.mjs';
 import { generateBrief } from '../handover/brief.mjs';
 import { eventPath, jsonRows, readText, syncDirectory, writeState } from './io.mjs';
 import { bindOarTranscript, checkedTranscript, oarControl, oarDelivery, oarEnd, oarSnapshot, trackOar } from './oar.mjs';
-import { openTui, ownedPane, refreshOpenCode } from './tui.mjs';
+import { openCodeExport, openTui, ownedPane, refreshOpenCode } from './tui.mjs';
 import { tuiHolders } from './tui-holder.mjs';
 import { recoverCodexEnd, recoverNativeDelivery } from './recovery.mjs';
 import { claudeAuthMode, spawnProfile, enforceDeny } from '../cli/policy.mjs';
@@ -23,6 +23,7 @@ import { attachCodexHolder, pipeTransport, useCodexHolder } from './codex-holder
 import { releaseId } from './release.mjs';
 import { projectMemoryPrompt } from '../memory/project.mjs';
 import { disposeSession } from './session-close.mjs';
+import { workerEnvironment } from './worker-environment.mjs';
 
 const runtimeIds = { codex: 'codex', agy: 'antigravity', claude: 'claude', opencode: 'opencode' };
 const modes = new Set(['tui', 'headless']);
@@ -94,6 +95,7 @@ export function ownedSessions(project, index, report, {
   const bindings = new Map();
   const activity = new Map();
   const retryAt = new Map();
+  const openCodeProofs = new Map();
   const rows = addr => index.query(addr ? { addr } : {});
   const rowFor = addr => addr ? rows(addr)[0] : undefined;
   const file = addr => join(path, `${addr}.json`);
@@ -143,7 +145,8 @@ export function ownedSessions(project, index, report, {
         const runtime = running.get(target.addr);
         if (row?.endedAt == null) await runtime?.pull?.();
         const snapshot = oarSnapshot(runtime, events(target.addr), row?.endedAt != null || runtime?.endedAt != null);
-        return { ...snapshot, ...(row?.endedAt === null && jobs.get(row.addr)?.pipeRecovery?.exhausted &&
+        return { ...snapshot, ...(row?.endedAt === null && runtime?.stuck &&
+          { state: 'stuck', reason: runtime.stuck.reason }), ...(row?.endedAt === null && jobs.get(row.addr)?.pipeRecovery?.exhausted &&
           { state: 'stuck', reason: 'codex-resume-exhausted' }),
           hostIncarnation: runtime?.incarnation, row };
       }
@@ -183,9 +186,31 @@ export function ownedSessions(project, index, report, {
       }
       const recorded = oarDelivery(message, observation);
       const runtime = running.get(message.target.addr);
+      const completion = recorded?.completion;
+      const row = rowFor(message.target.addr);
+      if (completion?.outcome?.kind === 'completed' && !completion.body) {
+        let body;
+        let replySource = 'native transcript';
+        if (['codex', 'agy'].includes(row?.cli)) {
+          const native = recoverNativeDelivery(row, message)?.completion;
+          if (native?.sessionId === completion.sessionId &&
+              (row.cli === 'agy' || !completion.nativeTurnId || completion.nativeTurnId === native.nativeTurnId)) body = native.body;
+        } else if (row?.cli === 'opencode') {
+          const proof = openCodeProofs.get(row.addr);
+          if (proof?.turnId === completion.turnId) {
+            body = proof.events?.find(event => event.session_id === completion.sessionId &&
+              event.deliveryId === message.id && event.hook_event_name === 'Stop')?.last_assistant_message;
+            replySource = 'OpenCode session export';
+          }
+        }
+        if (body && (!completion.unconfirmedBody || completion.unconfirmedBody.trim() === body.trim())) {
+          const { noReply, unconfirmed, unconfirmedBody, ...verified } = completion;
+          return { ...recorded, completion: { ...verified, body, replySource } };
+        }
+      }
       if (recorded?.completion || recorded?.dropped || recorded?.failed || runtime?.streamId &&
           runtime.streamId === message.nativeAttempt?.streamId && !message.issue) return recorded;
-      const native = recoverNativeDelivery(rowFor(message.target.addr), message);
+      const native = recoverNativeDelivery(row, message);
       return native?.completion ? native : recorded ?? native;
     },
     plan: (provider, mode) => local.plan(provider, mode),
@@ -235,6 +260,7 @@ export function ownedSessions(project, index, report, {
   }
 
   async function finish(job, row, at = Date.now()) {
+    openCodeProofs.delete(row.addr);
     holders.detach(job.tui);
     const final = row.endedAt === null ? index.update(row.addr, { endedAt: Math.max(row.startedAt, at) }) : row;
     if (!temporaryRole(row.role) && final.transcriptPath && !job.endRecorded) {
@@ -580,8 +606,21 @@ export function ownedSessions(project, index, report, {
   }
 
   async function getOarTranscript(runtime, row) {
-    if (runtime.hosted) return checkedTranscript(runtime.transcriptPath, row);
-    return await bindOarTranscript(runtime.session, row) ?? (row.cli === 'opencode' ? checkedTranscript(eventPath(project, row.addr)) : null);
+    return checkedTranscript(runtime.transcriptPath, row) ?? await bindOarTranscript(runtime.session, row) ??
+      (row.cli === 'opencode' ? checkedTranscript(eventPath(project, row.addr)) : null);
+  }
+
+  async function refreshOpenCodeProof(runtime, row) {
+    if (row.cli !== 'opencode' || !runtime.hosted || !row.sessionId) return;
+    const turn = runtime.rows.findLast(event => event.type === 'turn-end' && event.streamId === runtime.streamId && event.unconfirmedBody);
+    if (!turn || turn.turnId === openCodeProofs.get(row.addr)?.turnId) return;
+    const proof = { turnId: turn.turnId };
+    openCodeProofs.set(row.addr, proof);
+    try {
+      const { events } = await openCodeExport(row, row.sessionId, { ...process.env, ...workerEnvironment(row) },
+        process.env.OAR_OPENCODE_BIN ?? process.env.LOOM_OPENCODE_BIN);
+      proof.events = events;
+    } catch (error) { report(`${row.addr}: ${error.message}`); }
   }
 
   async function retainCompaction(job, row) {
@@ -629,6 +668,7 @@ export function ownedSessions(project, index, report, {
             }
             const transcript = await getOarTranscript(runtime, row);
             if (row.transcriptPath !== transcript && transcript) row = index.update(addr, { transcriptPath: transcript });
+            await refreshOpenCodeProof(runtime, row);
             const exit = runtime.rows.findLast(event => ['exited', 'released'].includes(event.type) && event.streamId === runtime.streamId);
             if (exit || runtime.endedAt != null) {
               try { if (!runtime.hosted) await disposeSession(runtime.session); }

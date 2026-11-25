@@ -5,13 +5,14 @@ import { join } from 'node:path';
 import { controllerFile, releaseRoot } from './release.mjs';
 import { hostDirectory, hostMethods, hostProtocol, hostSocket, hostUUID, privateHostSocket,
   readJSON, receiveHostLine } from './host-control.mjs';
-import { eventPath, jsonRows, prepareJournal, syncDirectory, writeState } from './io.mjs';
-import { bindOarTranscript, checkedTranscript, oarControl, oarSnapshot, openOar, trackOar } from './oar.mjs';
+import { jsonRows, prepareJournal, syncDirectory, writeState } from './io.mjs';
+import { oarControl, oarSnapshot, openOar, trackOar } from './oar.mjs';
 import { processTable } from './processes.mjs';
-import { disposeSession } from './session-close.mjs';
+import { closeHostChildren, disposeSession, ownedHostChildren, withDeadline } from './session-close.mjs';
 
 const oarVersion = () => JSON.parse(readFileSync(new URL('../package.json', import.meta.resolve('@botiverse/oar')))).version;
 const refused = (message, kind = 'input-refused') => Object.assign(new Error(message), { kind });
+const controlTimeoutMs = 10_000;
 
 async function main(project, addr, incarnation, release) {
   if (!/^oar-/.test(addr) || !hostUUID.test(addr.slice(4)) || !hostUUID.test(incarnation)) throw new Error('Invalid host identity');
@@ -36,6 +37,7 @@ async function main(project, addr, incarnation, release) {
   let listening = false;
   let endedAt;
   let closing;
+  let stalled;
   let controller = readJSON(join(dir, 'controller.json'));
   let chain = Promise.resolve();
   const journal = join(dir, 'requests.jsonl');
@@ -47,37 +49,52 @@ async function main(project, addr, incarnation, release) {
   let transcript;
   let lastTranscriptCheck = 0;
   let locating;
-  async function checkTranscript() {
-    if (transcript || !session || Date.now() - lastTranscriptCheck < 100) return;
-    lastTranscriptCheck = Date.now();
-    locating ??= bindOarTranscript(session, { ...row, sessionId: session.id }).then(candidate => {
-      transcript = candidate ?? (row.cli === 'opencode' ? checkedTranscript(eventPath(project, addr)) : null);
-    }).catch(error => console.error(error.message)).finally(() => { locating = undefined; });
-    await locating;
+  function unlinkSocket() {
+    if (!listening) return;
+    try { unlinkSync(path); }
+    catch (error) { if (error.code !== 'ENOENT') throw error; }
+    finally { listening = false; }
   }
-  async function state() {
-    if (runtime.rows.length > 1) await checkTranscript();
+  function locateTranscript() {
+    if (transcript || locating || !session?.nativeSessionFile || Date.now() - lastTranscriptCheck < 350) return;
+    lastTranscriptCheck = Date.now();
+    locating = Promise.resolve().then(() => session.nativeSessionFile()).then(candidate => {
+      if (typeof candidate === 'string') transcript = candidate;
+    }).catch(error => console.error(error.message)).finally(() => { locating = undefined; });
+  }
+  function state() {
+    if (runtime.rows.length > 1) locateTranscript();
     const snapshot = oarSnapshot(runtime, runtime.rows, endedAt != null);
     const exit = runtime.rows.findLast(event => ['exited', 'released'].includes(event.type) && event.streamId === runtime.streamId);
     return { ...binding, sessionId: session.id, streamId: runtime.streamId, status: snapshot.runtimeStatus,
       active: snapshot.active, error: runtime.error()?.message,
       endedAt: endedAt ?? exit?.at, transcriptPath: transcript,
+      ...(stalled && { stuck: { reason: 'request-timeout', at: stalled.at } }),
       model: session.model().value, effort: session.effort().value, steer: Boolean(session.steer) };
   }
 
   function close() {
     return closing ??= (async () => {
-      if (session) await disposeSession(session);
-      await checkTranscript();
+      await releaseSession();
       runtime?.unsubscribe();
       endedAt = Date.now();
       writeState(join(dir, 'ended.json'), JSON.stringify({ at: endedAt, sessionId: session?.id, transcriptPath: transcript }));
       setImmediate(() => {
         server?.close();
-        if (listening) unlinkSync(path);
+        unlinkSocket();
       });
       return { endedAt };
     })().catch(error => { closing = undefined; throw error; });
+  }
+
+  async function releaseSession() {
+    const children = ownedHostChildren(identity);
+    if (session) {
+      locateTranscript();
+      try { await disposeSession(session, 4_000); }
+      catch (error) { console.error(error.message); }
+    }
+    await closeHostChildren(identity, children);
   }
 
   async function handle({ owner, method, params, protocol, controller: sender }) {
@@ -101,12 +118,13 @@ async function main(project, addr, incarnation, release) {
     }
     if (method === 'claim') return state();
     if (method === 'close') return close();
-    const { action, id, text, active } = params ?? {};
+    const { action, id, text: input, active } = params ?? {};
     if (!['prompt', 'steer', 'abort'].includes(action) || !hostUUID.test(id)) throw refused('Invalid session host request');
     const key = `${action}:${id}`;
     const previous = receipts.get(key);
     if (method === 'receipt') return previous ?? { status: 'absent' };
-    if (action !== 'abort' && (typeof text !== 'string' || !text.trim())) throw refused('Invalid session host input');
+    if (action !== 'abort' && (typeof input !== 'string' || !input.trim())) throw refused('Invalid session host input');
+    const text = action === 'abort' ? input : input.toWellFormed();
     const digest = createHash('sha256').update(JSON.stringify([text, active?.streamId, active?.sinceSeq, active?.turnId])).digest('hex');
     if (previous) {
       if (previous.digest !== digest) throw refused('Session host request ID conflicts with prior input');
@@ -115,33 +133,47 @@ async function main(project, addr, incarnation, release) {
       // Guard failures prove the provider received nothing. The same
       // delivery can be scheduled again after the daemon rechecks state.
     }
-    if (closing) throw refused('Session host is closing', 'status_mismatch');
+    if (closing || stalled) throw refused('Session host is not ready for another request', 'status_mismatch');
     const entry = { key, id, action, digest, streamId: runtime.streamId, generation: sender.generation,
       sinceSeq: active?.sinceSeq, turnId: active?.turnId, at: Date.now() };
     save({ ...entry, status: 'pending' });
-    let result;
-    try { result = await oarControl(runtime, action, { id, text, active }, { state: 'idle' }); }
-    catch (error) {
-      const definite = ['steer-unavailable', 'status_mismatch', 'input-refused', 'blocked'].includes(error.kind);
+    const operation = oarControl(runtime, action, { id, text, active }, { state: 'idle' }).then(({ kind, requestId, seq }) => {
+      const result = { kind, requestId, seq };
+      save({ ...entry, status: 'accepted', result });
+      return result;
+    }, error => {
+      const definite = ['steer-unavailable', 'status_mismatch', 'input-refused', 'blocked', 'provider-overloaded'].includes(error.kind);
       save({ ...entry, status: definite ? 'refused' : 'uncertain', kind: error.kind });
       throw error;
+    }).finally(() => {
+      if (stalled?.key === key) stalled = undefined;
+    });
+    try { return await withDeadline(operation, controlTimeoutMs, 'OAR request acknowledgement timed out', 'request-timeout'); }
+    catch (error) {
+      if (error.code !== 'request-timeout') throw error;
+      stalled = entry;
+      save({ ...entry, status: 'uncertain', kind: 'request-timeout' });
+      throw refused(error.message, 'uncertain');
     }
-    save({ ...entry, status: 'accepted', result });
-    return result;
   }
 
   try {
     for (const receipt of jsonRows(prepareJournal(journal))) receipts.set(receipt.key, receipt);
-    session = await openOar(row, project, row.sessionId);
+    session = await withDeadline(openOar(row, project, row.sessionId), 35_000, 'OAR host startup timed out', 'startup-timeout');
     if (row.sessionId && session.id !== row.sessionId) throw new Error('OAR resumed a different native session');
     runtime = trackOar(project, row, session, error => console.error(error.message), incarnation);
     writeState(join(dir, 'native.json'), JSON.stringify({ sessionId: session.id, streamId: runtime.streamId }));
     server = createServer(socket => {
       socket.on('error', () => {});
-      socket.setTimeout(20_000, () => socket.destroy());
+      socket.setTimeout(25_000, () => socket.destroy());
       receiveHostLine(socket, line => {
-        const call = chain.then(() => handle(JSON.parse(line)));
-        chain = call.catch(() => {});
+        const call = Promise.resolve().then(() => {
+          const request = JSON.parse(line);
+          if (['hello', 'state', 'receipt'].includes(request.method)) return handle(request);
+          const pending = chain.then(() => handle(request));
+          chain = pending.catch(() => {});
+          return pending;
+        });
         void call.then(result => ({ ok: true, result }), error => ({ ok: false, error: error.message, kind: error.kind }))
           .then(reply => socket.end(JSON.stringify(reply) + '\n'));
       });
@@ -158,16 +190,15 @@ async function main(project, addr, incarnation, release) {
         void close().then(() => clearInterval(timer), error => console.error(error.message));
         return;
       }
-      void checkTranscript();
     }, 350);
     timer.unref();
     for (const signal of ['SIGHUP', 'SIGTERM', 'SIGINT']) process.once(signal, () => {
       void close().catch(error => console.error(error));
     });
   } catch (error) {
-    if (session) await disposeSession(session).catch(() => {});
+    await releaseSession().catch(error => console.error(error.message));
     writeState(join(dir, 'failed.json'), JSON.stringify({ message: error.message }));
-    if (listening) { server.close(); unlinkSync(path); }
+    if (listening) { server.close(); unlinkSocket(); }
     throw error;
   }
 }

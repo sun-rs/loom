@@ -47,7 +47,7 @@ async function verifyController({ cli, cwd, parent, env, extraArgs, model }) {
     [...overrides, quote(commands[cli]), ...extraArgs.map(quote)].join(' ') + ' "$@"\n', { mode: 0o700 });
   await mkdir(meta, { mode: 0o700 });
   await writeFile(join(meta, 'policy.json'), '{"preferred":[],"deny":[]}\n', { mode: 0o600 });
-  const cliEnv = { ...process.env, LOOM_INDEX_PATH: join(parent, 'scratch.sqlite'),
+  const cliEnv = { ...process.env, LOOM_INDEX_PATH: join(parent, 'scratch.sqlite'), LOOM_DESKTOP_NOTIFY: '0',
     LOOM_PROJECT: parent, [`LOOM_${cli.toUpperCase()}_BIN`]: shim };
   for (const key of ['LOOM_ADDR', 'HC_TERMINAL_ID']) delete cliEnv[key];
   const runLoom = async (...args) => JSON.parse((await exec(process.execPath,

@@ -55,7 +55,7 @@ export function isolatedEnvironment(root, port) {
     TERM: 'xterm-256color', LANG: 'en_US.UTF-8', LC_ALL: 'en_US.UTF-8', NO_PROXY: '127.0.0.1,localhost',
     XDG_CONFIG_HOME: join(home, 'config'), XDG_STATE_HOME: join(home, 'state'), XDG_DATA_HOME: join(home, 'data'),
     GIT_CONFIG_NOSYSTEM: '1', GIT_CONFIG_GLOBAL: '/dev/null', OAR_CODEX_BIN: join(bin, 'codex'), LOOM_CODEX_BIN: join(bin, 'codex'),
-    LOOM_WAVE_WINDOW_MS: '90000', LOOM_WAVE_SEAL_MS: '60000' };
+    LOOM_WAVE_WINDOW_MS: '90000', LOOM_WAVE_SEAL_MS: '60000', LOOM_DESKTOP_NOTIFY: '0' };
   for (const path of [bin, env.CODEX_HOME, env.TMPDIR, env.XDG_CONFIG_HOME, env.XDG_STATE_HOME, env.XDG_DATA_HOME]) mkdir(path);
   if (!port) return env;
 
