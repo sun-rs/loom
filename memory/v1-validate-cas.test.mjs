@@ -81,21 +81,38 @@ test('Goal 3c store.write refuses every body-writing operation without a sensiti
     }],
   ];
   const before = readState();
+  const reopenWithoutClassifier = () => {
+    const commits = [];
+    const readState = () => structuredClone(commits.at(-1) ?? before);
+    const store = createMemoryStore({
+      now, readState, commitState: next => { commits.push(structuredClone(next)); }, evidence: draftEvidence,
+    });
+    return { store, commits, readState };
+  };
   for (const [actor, request] of requests) {
     await t.test(request.op, async () => {
-      let state = structuredClone(before);
-      let commits = 0;
-      const store = createMemoryStore({
-        now,
-        readState: () => structuredClone(state),
-        commitState: next => { state = structuredClone(next); commits++; },
-        evidence: draftEvidence,
-      });
+      const { store, commits, readState } = reopenWithoutClassifier();
       const result = await store.write(actor, request);
-      assert.deepEqual([result.ok, commits], [false, 0]);
-      assert.deepEqual(state, before);
+      assert.deepEqual([result.ok, commits.length], [false, 0]);
+      assert.deepEqual(readState(), before);
     });
   }
+
+  await t.test('forget still deletes content', async () => {
+    const { store, commits, readState } = reopenWithoutClassifier();
+    const { id, revision } = target.item;
+    assert.equal((await store.access.show(auditor, id)).item.body, draft.body);
+    const result = await store.write(auditor, {
+      op: 'forget', requestId: 'no-classifier-forget', id, expectedRevision: revision,
+    });
+    assert.equal(result.ok, true, JSON.stringify(result));
+    assert.equal(result.item.status, 'forgotten');
+    assert.equal(commits.length, 1);
+    assert.equal((await store.access.show(auditor, id)).item, null);
+    const state = readState();
+    assert.ok(!Object.hasOwn(state.files, itemPath(id)));
+    assert.ok(!JSON.stringify(state).includes(draft.body));
+  });
 });
 
 test('U05 validates Markdown, deduplicates by layer and rebuilds the index', async () => {

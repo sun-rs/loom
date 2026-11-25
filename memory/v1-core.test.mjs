@@ -418,6 +418,13 @@ test('Goal 3e replaying a merge is idempotent and changing its target or body co
   assert.equal(commits.length, replayCommits);
   assert.deepEqual(readState(), beforeReplay);
 
+  await t.test('unchanged merge with a new request ID', async () => {
+    const retry = await store.write(leader, { ...request, requestId: 'merge-retry' });
+    assert.deepEqual([saved(retry), retry.candidate], [accepted.item, accepted.candidate]);
+    assert.equal(commits.length, replayCommits);
+    assert.deepEqual(readState(), beforeReplay);
+  });
+
   const variants = {
     target: { targetId: other.id, targetExpectedRevision: other.revision },
     body: { body: 'Retry three times after confirmation.' },
@@ -434,6 +441,36 @@ test('Goal 3e replaying a merge is idempotent and changing its target or body co
       });
     }
   }
+});
+
+test('Goal 3e merge redacts the body in the receipt and throughout persisted state', async () => {
+  const marker = 'SYNTHETIC_MERGE_SECRET';
+  const replacement = '[REDACTED]';
+  const { store, readState } = await fixture({
+    replacement,
+    classifySensitive: text => ({
+      reliable: true,
+      spans: [...text.matchAll(/SYNTHETIC_MERGE_SECRET/g)]
+        .map(({ index }) => ({ start: index, end: index + marker.length })),
+    }),
+  });
+  const { leader, worker } = bindings;
+  const target = saved(await store.write(leader, put('merge-target')));
+  const candidate = saved(await store.write(worker, put('merge-candidate', {
+    ...fact, kind: 'candidate', layer: 'candidate', proposedKind: 'lesson',
+  }, { op: 'propose' })));
+  const merged = await store.write(leader, {
+    op: 'merge', requestId: 'redacted-merge', cardId: worker.cardId,
+    id: candidate.id, expectedRevision: candidate.revision,
+    targetId: target.id, targetExpectedRevision: target.revision, body: `${correctedBody} ${marker}`,
+  });
+  const redacted = `${correctedBody} ${replacement}`;
+  assert.equal(saved(merged).body, redacted);
+  const state = readState();
+  assert.equal(state.entries.find(entry => entry.id === target.id)?.body, redacted);
+  assert.ok(state.files[`memory/items/${target.id}.md`].includes(redacted));
+  assert.ok(!JSON.stringify(merged).includes(marker));
+  assert.ok(!JSON.stringify(state).includes(marker), 'persisted merge data contains the original sensitive text');
 });
 
 test('U04 integrated write applies authorization, validation, redaction, dedup and CAS across reads', async () => {
@@ -652,46 +689,70 @@ test('Goal 3a put returns identical errors for foreign and unknown supersedes ta
   const { auditor } = bindings;
   const foreign = { ...auditor, sessionId: 'foreign-auditor', project: 'project-b' };
   const ruling = { ...fact, kind: 'ruling' };
-  const existing = saved(await store.write(foreign, put('foreign-ruling', { ...ruling, project: foreign.project })));
+  const targets = [];
+  for (const layer of ['shared', 'private']) {
+    targets.push(saved(await store.write(foreign, put(`foreign-${layer}`, { ...ruling, project: foreign.project, layer }))));
+  }
   const before = readState();
   const commitCount = commits.length;
-  const revisions = { current: existing.revision, wrong: existing.revision + 99, missing: undefined };
-  for (const [name, revision] of Object.entries(revisions)) {
-    await t.test(`${name} target revision`, async () => {
-      const reject = async id => {
-        const fields = revision === undefined ? {} : { supersedeExpectedRevisions: { [id]: revision } };
-        const result = await store.write(auditor,
-          put(`replace-${name}-${id}`, { ...ruling, supersedes: [id] }, fields));
-        assert.equal(result.ok, false);
-        assert.equal(commits.length, commitCount);
-        assert.deepEqual(readState(), before);
-        return result;
-      };
-      const unknown = await reject('unknown-ruling');
-      assert.equal(typeof unknown.code, 'string');
-      assert.equal(typeof unknown.error, 'string');
-      assert.deepEqual(await reject(existing.id), unknown);
-      assert.notEqual(unknown.code, 'conflict');
-    });
+  for (const existing of targets) {
+    const revisions = { current: existing.revision, wrong: existing.revision + 99, missing: undefined };
+    for (const [name, revision] of Object.entries(revisions)) {
+      await t.test(`${existing.layer} with ${name} target revision`, async () => {
+        const reject = async id => {
+          const fields = revision === undefined ? {} : { supersedeExpectedRevisions: { [id]: revision } };
+          const result = await store.write(auditor,
+            put(`replace-${existing.layer}-${name}-${id}`, { ...ruling, supersedes: [id] }, fields));
+          assert.equal(result.ok, false);
+          assert.equal(commits.length, commitCount);
+          assert.deepEqual(readState(), before);
+          return result;
+        };
+        const unknown = await reject('unknown-ruling');
+        assert.equal(typeof unknown.code, 'string');
+        assert.equal(typeof unknown.error, 'string');
+        assert.deepEqual(await reject(existing.id), unknown);
+        assert.notEqual(unknown.code, 'conflict');
+      });
+    }
   }
 });
 
-test('Goal 3b a private ruling cannot supersede a shared ruling', async () => {
+for (const kind of ['ruling', 'preference']) {
+  test(`Goal 3b a private ${kind} cannot supersede a shared ruling`, async () => {
+    const { store, commits, readState } = await fixture();
+    const { auditor, leader } = bindings;
+    const ruling = { ...fact, kind: 'ruling' };
+    const old = saved(await store.write(auditor, put('shared-ruling', ruling)));
+    const before = readState();
+    const commitCount = commits.length;
+    const result = await store.write(auditor, put('private-replacement', {
+      ...ruling, kind, layer: 'private', body: correctedBody, supersedes: [old.id],
+    }, { supersedeExpectedRevisions: { [old.id]: old.revision } }));
+    const indexed = ids((await store.access.index(leader)).rows);
+    assert.deepEqual({ ok: result.ok, commits: commits.length - commitCount, indexed },
+      { ok: false, commits: 0, indexed: [old.id] });
+    assert.deepEqual(readState(), before);
+  });
+}
+
+test('Goal 3b a private ruling can supersede another private ruling', async () => {
   const { store, commits, readState } = await fixture();
-  const { auditor } = bindings;
-  const ruling = { ...fact, kind: 'ruling' };
-  const old = saved(await store.write(auditor, put('shared-ruling', ruling)));
-  const before = readState();
+  const { auditor, leader } = bindings;
+  const ruling = { ...fact, kind: 'ruling', layer: 'private' };
+  const old = saved(await store.write(auditor, put('private-ruling', ruling)));
   const commitCount = commits.length;
-  const result = await store.write(auditor, put('private-replacement', {
-    ...ruling, layer: 'private', body: correctedBody, supersedes: [old.id],
-  }, { supersedeExpectedRevisions: { [old.id]: old.revision } }));
-  assert.deepEqual({ ok: result.ok, commits: commits.length - commitCount, indexed: ids((await store.access.index(auditor)).rows) },
-    { ok: false, commits: 0, indexed: [old.id] });
-  assert.deepEqual(readState(), before);
+  const replacement = saved(await store.write(auditor, put('private-replacement', {
+    ...ruling, body: correctedBody, supersedes: [old.id],
+  }, { supersedeExpectedRevisions: { [old.id]: old.revision } })));
+  assert.equal(commits.length, commitCount + 1);
+  const replaced = readState().entries.find(entry => entry.id === old.id);
+  assert.deepEqual([replaced.status, replaced.supersededBy], ['superseded', [replacement.id]]);
+  assert.deepEqual(ids((await store.access.index(auditor)).rows), [replacement.id]);
+  assert.deepEqual(ids((await store.access.index(leader)).rows), []);
 });
 
-for (const version of ['missing', 'stale']) {
+for (const version of ['missing', 'stale', 'future']) {
   test(`Goal 3d put rejects a ${version} supersedes target revision`, async () => {
     const { store, commits, readState } = await fixture();
     const { auditor } = bindings;
@@ -703,7 +764,8 @@ for (const version of ['missing', 'stale']) {
     assert.equal(revised.revision, original.revision + 1);
     const before = readState();
     const commitCount = commits.length;
-    const targetCAS = version === 'missing' ? {} : { supersedeExpectedRevisions: { [original.id]: original.revision } };
+    const revision = version === 'future' ? revised.revision + 1 : original.revision;
+    const targetCAS = version === 'missing' ? {} : { supersedeExpectedRevisions: { [original.id]: revision } };
     const result = await store.write(auditor, put('replace', {
       ...ruling, title: 'New release ruling', supersedes: [original.id],
     }, targetCAS));
@@ -712,6 +774,26 @@ for (const version of ['missing', 'stale']) {
     assert.deepEqual(readState(), before);
   });
 }
+
+test('Goal 3d put rejects the whole replacement when only the second target revision is stale', async () => {
+  const { store, commits, readState } = await fixture();
+  const { auditor } = bindings;
+  const ruling = { ...fact, kind: 'ruling' };
+  const first = saved(await store.write(auditor, put('first-ruling', ruling)));
+  const secondDraft = { ...ruling, title: 'Second ruling' };
+  const second = saved(await store.write(auditor, put('second-ruling', secondDraft)));
+  const revised = saved(await store.write(auditor, put('revise-second', { ...secondDraft, body: correctedBody }, {
+    id: second.id, expectedRevision: second.revision,
+  })));
+  assert.equal(revised.revision, second.revision + 1);
+  const before = readState();
+  const commitCount = commits.length;
+  const result = await store.write(auditor, put('replace-both', {
+    ...ruling, title: 'Combined ruling', supersedes: [first.id, second.id],
+  }, { supersedeExpectedRevisions: { [first.id]: first.revision, [second.id]: second.revision } }));
+  assert.deepEqual([result.ok, result.code, commits.length], [false, 'conflict', commitCount]);
+  assert.deepEqual(readState(), before);
+});
 
 test('M10 fixed role prompts explain citation syntax and show for reading on demand', async () => {
   const { renderMemoryPrompt } = await import('./prompts.mjs');

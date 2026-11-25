@@ -273,7 +273,7 @@ test('U10 各读取入口使用同一角色授权，猜测未授权 ID 与未知
   }
 });
 
-test('Goal 3f user preferences and rulings are visible to Auditor and Leader only among project roles', async t => {
+test('Goal 3f user entries are visible according to role and review-card authorization', async t => {
   const { createAccess } = await import('./access.mjs');
   const userEntries = ['preference', 'ruling', 'lesson'].map(kind =>
     item(`user-${kind}`, { project: null, layer: 'user', kind }));
@@ -284,14 +284,18 @@ test('Goal 3f user preferences and rulings are visible to Auditor and Leader onl
   ];
   const access = createAccess({ entries, now: () => start });
   const readable = userEntries.filter(entry => entry.kind !== 'lesson');
+  const reviewEntries = userEntries.filter(entry => entry.kind !== 'ruling');
   const matrix = [
-    [auditor, readable],
-    [leader, readable],
-    [session('worker', { cardId: 'card', attachments: ids(userEntries) }), []],
-    [session('reviewer', { authorizedIds: { memory: ids(userEntries), history: [] } }), []],
+    ['auditor', auditor, readable],
+    ['leader', leader, readable],
+    ['worker', session('worker', { cardId: 'card', attachments: ids(userEntries) }), []],
+    ['reviewer with explicit IDs', session('reviewer', {
+      cardId: 'review', authorizedIds: { memory: ids(reviewEntries), history: [] },
+    }), reviewEntries],
+    ['reviewer without authorization', session('reviewer', { cardId: 'other-review' }), []],
   ];
-  for (const [binding, expected] of matrix) {
-    await t.test(binding.role, async () => {
+  for (const [name, binding, expected] of matrix) {
+    await t.test(name, async () => {
       const index = await access.index(binding);
       const search = await access.search(binding, { query: 'probe' });
       const unknown = await access.show(binding, 'unknown-user-entry');
@@ -306,6 +310,29 @@ test('Goal 3f user preferences and rulings are visible to Auditor and Leader onl
       for (const [index, entry] of entries.entries()) {
         if (!expected.includes(entry)) assert.deepEqual(shown[index], unknown, entry.id);
       }
+    });
+  }
+});
+
+test('Goal 3f Auditor and Leader receive user preference and ruling additions and withdrawals in delta', async t => {
+  const { createAccess } = await import('./access.mjs');
+  const entries = ['preference', 'ruling', 'lesson'].map(kind =>
+    item(`user-${kind}`, { project: null, layer: 'user', kind }));
+  const additions = createAccess({ entries, now: () => start,
+    changes: entries.map((entry, index) => change(index + 1, entry)) });
+  const tombstones = entries.map(({ id, project, layer, kind, revision }) =>
+    ({ id, project, layer, kind, revision: revision + 1, status: 'forgotten' }));
+  const withdrawals = createAccess({ entries: tombstones, now: () => start,
+    changes: tombstones.map((entry, index) => change(entries.length + index + 1, entry, 'withdraw')) });
+  const operations = rows => rows.map(({ id, operation }) => [id, operation]);
+  for (const binding of [auditor, leader]) {
+    await t.test(binding.role, async () => {
+      const added = await additions.delta(binding, { cursor: 0 });
+      const withdrawn = await withdrawals.delta(binding, { cursor: added.endCursor });
+      assert.deepEqual({ added: operations(added.rows), withdrawn: operations(withdrawn.rows) }, {
+        added: [['user-preference', 'add'], ['user-ruling', 'add']],
+        withdrawn: [['user-preference', 'withdraw'], ['user-ruling', 'withdraw']],
+      });
     });
   }
 });
