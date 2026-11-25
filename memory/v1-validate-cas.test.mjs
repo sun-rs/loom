@@ -20,6 +20,11 @@ const draft = {
   body: 'Verify release evidence before approval.', source: { path: 'docs/release.md' },
   checkedAt,
 };
+const draftEvidence = {
+  root,
+  realpath: path => path === `${root}/${draft.source.path}` ? path : undefined,
+  hasCommit: () => false,
+};
 
 function memoryIO() {
   const files = new Map();
@@ -41,28 +46,56 @@ async function fixture(options = {}) {
   const store = createMemoryStore({
     now, readState, commitState: next => { state = structuredClone(next); },
     classifySensitive: () => ({ reliable: true, spans: [] }),
-    evidence: {
-      root,
-      realpath: path => path === `${root}/${draft.source.path}` ? path : undefined,
-      hasCommit: () => false,
-    },
+    evidence: draftEvidence,
     ...options,
   });
   return { store, readState, corruptIndex: () => { state.files[indexPath] = 'stale index\n'; } };
 }
 
-test('Goal 3c store.write refuses a valid write without a sensitivity classifier', async () => {
+test('Goal 3c store.write refuses every body-writing operation without a sensitivity classifier', async t => {
   const { createMemoryStore } = await import('./store.mjs');
-  const commits = [];
-  const readState = () => structuredClone(commits.at(-1));
-  const store = createMemoryStore({
-    now, readState, commitState: next => { commits.push(structuredClone(next)); },
-    evidence: { root, realpath: path => path === `${root}/${draft.source.path}` ? path : undefined },
-  });
+  const { store: seedStore, readState } = await fixture();
+  const candidateDraft = {
+    ...draft, kind: 'candidate', layer: 'candidate', proposedKind: 'ruling',
+    body: 'Confirm the checks before approving the release.',
+  };
+  const target = await seedStore.write(auditor, put('seed-target'));
+  const candidate = await seedStore.write(worker, put('seed-candidate', candidateDraft, { op: 'propose' }));
+  assert.equal(target.ok, true);
+  assert.equal(candidate.ok, true);
+  const review = { cardId: worker.cardId, id: candidate.item.id, expectedRevision: candidate.item.revision };
+  const requests = [
+    [auditor, put('no-classifier-put', { ...draft, body: 'Record the evidence review before release.' })],
+    [worker, put('no-classifier-propose', { ...candidateDraft, body: 'Recheck the release evidence on Mondays.' },
+      { op: 'propose' })],
+    [auditor, { op: 'promote', requestId: 'no-classifier-promote', ...review }],
+    [auditor, {
+      op: 'merge', requestId: 'no-classifier-merge', ...review,
+      targetId: target.item.id, targetExpectedRevision: target.item.revision, body: candidateDraft.body,
+    }],
+    [auditor, {
+      op: 'import_rulings', requestId: 'no-classifier-import', entries: [{
+        id: 'legacy-ruling', original: draft.source.path, title: 'Legacy release ruling',
+        body: 'Review the original release evidence before approval.',
+      }],
+    }],
+  ];
   const before = readState();
-  const result = await store.write(auditor, put('no-classifier'));
-  assert.deepEqual([result.ok, commits.length], [false, 0]);
-  assert.deepEqual(readState(), before);
+  for (const [actor, request] of requests) {
+    await t.test(request.op, async () => {
+      let state = structuredClone(before);
+      let commits = 0;
+      const store = createMemoryStore({
+        now,
+        readState: () => structuredClone(state),
+        commitState: next => { state = structuredClone(next); commits++; },
+        evidence: draftEvidence,
+      });
+      const result = await store.write(actor, request);
+      assert.deepEqual([result.ok, commits], [false, 0]);
+      assert.deepEqual(state, before);
+    });
+  }
 });
 
 test('U05 validates Markdown, deduplicates by layer and rebuilds the index', async () => {

@@ -156,7 +156,7 @@ test('U03 enforces the role and scope matrix using session identity', async t =>
     cross: { layer: 'cross_project', project: null },
   };
   const allowed = {
-    super: { user: ['preference'], cross: ['ruling', 'lesson'] },
+    super: { user: ['preference', 'ruling'], cross: ['ruling', 'lesson'] },
     auditor: { local: ['ruling', 'preference'] },
     leader: { local: ['lesson'] },
     worker: {},
@@ -181,8 +181,6 @@ test('U03 enforces the role and scope matrix using session identity', async t =>
   for (const role of roles) {
     for (const kind of kinds) {
       for (const [area, requestedScope] of Object.entries(scopes)) {
-        // R18 assigns user rulings to Super. The read-only tests use preexisting entries.
-        if (role === 'super' && kind === 'ruling' && area === 'user') continue;
         const requestId = `${role}-${kind}-${area}`;
         await t.test(requestId, async () => {
           const request = {
@@ -649,7 +647,7 @@ for (const invalidTarget of ['missing', 'out of scope']) {
   });
 }
 
-test('Goal 3a put returns identical errors for foreign and unknown supersedes targets', async () => {
+test('Goal 3a put returns identical errors for foreign and unknown supersedes targets', async t => {
   const { store, commits, readState } = await fixture();
   const { auditor } = bindings;
   const foreign = { ...auditor, sessionId: 'foreign-auditor', project: 'project-b' };
@@ -657,19 +655,25 @@ test('Goal 3a put returns identical errors for foreign and unknown supersedes ta
   const existing = saved(await store.write(foreign, put('foreign-ruling', { ...ruling, project: foreign.project })));
   const before = readState();
   const commitCount = commits.length;
-  const reject = async id => {
-    const result = await store.write(auditor, put(`replace-${id}`, { ...ruling, supersedes: [id] }, {
-      supersedeExpectedRevisions: { [id]: existing.revision },
-    }));
-    assert.equal(result.ok, false);
-    assert.equal(commits.length, commitCount);
-    assert.deepEqual(readState(), before);
-    return result;
-  };
-  const unknown = await reject('unknown-ruling');
-  assert.equal(typeof unknown.code, 'string');
-  assert.equal(typeof unknown.error, 'string');
-  assert.deepEqual(await reject(existing.id), unknown);
+  const revisions = { current: existing.revision, wrong: existing.revision + 99, missing: undefined };
+  for (const [name, revision] of Object.entries(revisions)) {
+    await t.test(`${name} target revision`, async () => {
+      const reject = async id => {
+        const fields = revision === undefined ? {} : { supersedeExpectedRevisions: { [id]: revision } };
+        const result = await store.write(auditor,
+          put(`replace-${name}-${id}`, { ...ruling, supersedes: [id] }, fields));
+        assert.equal(result.ok, false);
+        assert.equal(commits.length, commitCount);
+        assert.deepEqual(readState(), before);
+        return result;
+      };
+      const unknown = await reject('unknown-ruling');
+      assert.equal(typeof unknown.code, 'string');
+      assert.equal(typeof unknown.error, 'string');
+      assert.deepEqual(await reject(existing.id), unknown);
+      assert.notEqual(unknown.code, 'conflict');
+    });
+  }
 });
 
 test('Goal 3b a private ruling cannot supersede a shared ruling', async () => {
