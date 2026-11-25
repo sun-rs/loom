@@ -1,0 +1,31 @@
+{
+  "note": "Single-account operation only. Use one authorized account per provider for this project. Claude is paused in this example.",
+  "keepAlive": false,
+  "deny": [
+    { "model": "luna" },
+    { "model": "gpt-6-luna" },
+    { "cli": "claude" }
+  ],
+  "roles": {
+    "super": {
+      "guidance": { "preferLongPromptCacheTtl": true },
+      "preferred": [{ "cli": "codex", "model": "gpt-6.2-sol", "effort": "high", "mode": "tui" }]
+    },
+    "leader": {
+      "maxActiveWorkers": 3,
+      "guidance": { "modelTier": "strong", "effort": ["medium", "high"], "preferLongPromptCacheTtl": true },
+      "preferred": [{ "cli": "codex", "model": "gpt-6.2-sol", "effort": "high", "mode": "tui" }]
+    },
+    "auditor": {
+      "guidance": { "modelTier": "strong", "vendorFamily": "different-from-workers", "preferLongPromptCacheTtl": true },
+      "preferred": [{ "cli": "agy", "model": "gemini-4-neon", "effort": "high", "mode": "tui" }]
+    },
+    "worker": {
+      "guidance": { "routineEffort": ["low", "medium"], "hardEffort": ["high", "xhigh"] },
+      "preferred": [
+        { "cli": "codex", "model": "gpt-6.2-sol", "effort": "medium", "mode": "headless" },
+        { "cli": "codex", "model": "gpt-6.2-sol", "effort": "xhigh", "mode": "headless" }
+      ]
+    }
+  }
+}
