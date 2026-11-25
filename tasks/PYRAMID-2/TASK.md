@@ -21,3 +21,6 @@ Goal-3 phase raw tokens: Auditor ~14.55M > Leader ~7.69M > Worker ~2.99M (still 
 5. Regression: replay pilot-2 goal 3 (read-only from /Users/sun/Code/loom-pilot2/.project) and report Auditor wakes per gate under the new flow.
 
 npm test green; RESULT.md Chinese, `STATUS: done`. Red lines as before (no credentials, no user config writes, absolute CLI paths, isolated HOME for live checks, don't touch Solars/CCP/loom-next).
+
+## Addendum (live in pilot-2, blocks delivery now)
+Auditor loom-d173a83a transcript (/Users/sun/.claude/projects/-Users-sun-Code-loom-pilot2/14725def-5d16-473c-9ff8-028392f02a77.jsonl) ends with `system compact_boundary` (trigger auto, preTokens 275692) → `user` with `isCompactSummary:true` → attachments → `system informational "Compacted while idle…"`, and no assistant turn. Delivery bde1c080 is stuck in `waitingForWritable {screen: idle, native: busy}`. The Claude native-state reader must treat a trailing compact summary/compact_boundary (and informational system lines) as idle, not as a pending user prompt. Fixture from that tail; this goes in item 1 and must be fixed before the rest so it can be hot-deployed first.
