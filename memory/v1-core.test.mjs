@@ -583,6 +583,58 @@ test('M1 forgetting a merge target purges the source candidate and its old recei
   }, { candidateVisible: false, targetVisible: false, persistedBodies: [], replayedBodies: [] });
 });
 
+for (const forgottenEntry of ['candidate', 'target']) {
+  for (const targetChoice of ['same', 'other']) {
+    for (const requestIdChoice of ['original', 'new']) {
+      test(`M1 merge after forgetting the ${forgottenEntry} rejects the ${targetChoice} target with the ${requestIdChoice} request ID`, async () => {
+        const { store, readState, commits } = await fixture();
+        const { leader, worker } = bindings;
+        const foreignLeader = { ...leader, project: 'project-b' };
+        const target = saved(await store.write(leader, put('merge-target')));
+        const otherTarget = saved(await store.write(leader, put('other-target', {
+          ...fact, title: 'Escalation threshold', body: 'Escalate after the second failure.',
+        })));
+        const candidate = saved(await store.write(worker, proposeForReview('lesson')));
+        const merge = {
+          op: 'merge', requestId: 'merge-candidate', id: candidate.id, cardId: worker.cardId,
+          expectedRevision: candidate.revision, targetId: target.id, targetExpectedRevision: target.revision,
+          body: `${target.body} ${candidate.body}`,
+        };
+        const merged = await store.write(leader, merge);
+        const mergedTarget = saved(merged);
+        assert.equal(merged.candidate.status, 'merged');
+        const toForget = forgottenEntry === 'candidate' ? merged.candidate : mergedTarget;
+        const forgotten = saved(await store.write(leader, {
+          op: 'forget', requestId: 'forget', id: toForget.id, expectedRevision: toForget.revision,
+        }));
+        assert.equal(forgotten.status, 'forgotten');
+        const before = readState();
+        assert.equal(before.entries.find(entry => entry.id === candidate.id)?.status, 'forgotten');
+        const commitCount = commits.length;
+
+        const retry = { ...merge };
+        if (requestIdChoice === 'new') retry.requestId = 'merge-retry';
+        if (targetChoice === 'other') {
+          retry.targetId = otherTarget.id;
+          retry.targetExpectedRevision = otherTarget.revision;
+        }
+        const oldBodies = {
+          candidate: candidate.body, target: target.body, mergedTarget: mergedTarget.body, otherTarget: otherTarget.body,
+        };
+        for (const binding of [worker, foreignLeader, leader]) {
+          const result = await store.write(binding, retry);
+          const serialized = JSON.stringify(result);
+          const exposedBodies = Object.keys(oldBodies).filter(name => serialized.includes(oldBodies[name]));
+          assert.deepEqual(readState(), before, `${binding.role} changed state`);
+          assert.deepEqual({ ok: result.ok, commits: commits.length - commitCount, exposedBodies },
+            { ok: false, commits: 0, exposedBodies: [] }, `${binding.role} merge after forget`);
+          if (binding !== leader) assert.equal(result.code, 'forbidden');
+        }
+      });
+    }
+  }
+}
+
 for (const [role, kind, otherRole] of [['leader', 'lesson', 'auditor'], ['auditor', 'ruling', 'leader']]) {
   for (const [op, status] of [[null, 'pending'], ['return', 'returned'], ['reject', 'rejected'], ['merge', 'merged']]) {
     test(`M1 ${role} can forget a ${status} ${kind} candidate`, async () => {

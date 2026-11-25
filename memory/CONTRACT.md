@@ -18,7 +18,7 @@
 
 - `store.mjs` 导出 `createMemoryStore({ now, readState, commitState, evidence, ...options })`。`store.write(binding, request)` 是 home 的写入口。请求有 `op, requestId`，以及适用的 `id, expectedRevision, entry`。创建声明 `expectedRevision: null`。
 - `op` 支持 `put, propose, forget, promote, merge, return, reject, import_rulings`。修改待审候选使用 `propose` 并带原 ID 和预期修订。审结用候选 `id, cardId, expectedRevision`，merge 另带 `targetId, targetExpectedRevision, body`。导入用 `entries`。
-- `put` 可通过 `entry.supersedes` 增加替代关系，修订时保留已有关系。每个新增目标须为调用者有权维护的生效或陈旧条目，且不能指向自身。私有条目不能替代共享裁决。调用者无权访问的跨项目目标与未知 ID 返回完全相同的 `{ ok, code, error }`。
+- `put` 可通过 `entry.supersedes` 增加替代关系，修订时保留已有关系。每个新增目标须为调用者有权维护的生效或陈旧条目，且不能指向自身。替代双方须同层。私有条目不能替代共享裁决。调用者无权访问的跨项目目标与未知 ID 返回完全相同的 `{ ok, code, error }`。
 - 写请求顶层用 `supersedeExpectedRevisions: { [id]: revision }` 声明每个新增替代目标的预期修订。先核对目标权限，再核对修订。缺少目标修订或修订不匹配时返回 `conflict`。任一目标无效、未获授权或冲突时不提交。成功时推进目标修订、标记为 `superseded`、在 `supersededBy` 记录新条目 ID，并使目标退出索引。
 - Auditor 可用带原 ID 和预期修订的 `put` 恢复或修订本项目有权读取的 `stale` 经验，成功后恢复为 `active`。生效经验仍由原有写权限约束。Leader 只能维护本项目共享经验。
 - 写核心串联绑定授权、格式及证据校验、脱敏、同层去重、CAS 与幂等检查。修订、变更序号、Markdown、索引和重放记录经一次 `commitState` 原子提交。
@@ -26,6 +26,7 @@
 - 有审结权的角色可遗忘对应候选，包括 `pending, returned, rejected, merged`。遗忘并入目标时一并遗忘源候选，删除 Markdown 正文、清理旧回执，并使源候选和目标的 `show` 均返回空。
 - `evidence` 提供 `root, realpath(path), hasCommit(sha)`。可信观察与脱敏用 `getObservations(sessionId), classifySensitive(text), replacement`。未向 `createMemoryStore` 注入 `classifySensitive` 时，落正文的写操作（`put`、`propose`、`promote`、`merge`、`import_rulings`）返回 `ok: false`，不提交且持久状态不变。符合权限与修订要求的 `forget` 仍可删除内容。`readRaw(sessionId)` 提供待派生的历史。
 - `merge` 将目标和候选已有的外部来源与审查者会话的 web/MCP 观察合并，经脱敏后存入结果的 `externalSource`。并入正文经脱敏后写入条目、Markdown 和回执，持久快照各处均须去除敏感原文。对已并入候选更换 `targetId` 或 `body` 的请求返回 `conflict`，不提交且持久状态不变。原样重放复用回执，仅更换 `requestId` 的重试也幂等成功且不新增提交。
+- 来源候选为 `forgotten` 时，任何 `merge`（包括重放和改用其他目标）均返回 `ok: false`，不提交且持久状态不变，回应不含候选或目标的旧正文。无审结权的调用者仍返回 `forbidden`。
 - 成功回执为 `{ ok: true, item, receipt, ... }`。`receipt` 含 `requestId, status`，状态为 `accepted | duplicate | candidate`。导入用 `items`，审结另带 `candidate`，遗忘的 `item` 为墓碑。
 - 失败回执为 `{ ok: false, code, error, currentRevision? }`。`error` 为脱敏字符串，授权失败用 `forbidden`，CAS 失败用 `conflict`。同请求重放复用回执，审结幂等也按卡片与候选识别。
 - `format.mjs` 的 `validateEntry` 和 `sanitize.mjs` 的 `sanitizeEntry` 为可独立测试的纯函数。
