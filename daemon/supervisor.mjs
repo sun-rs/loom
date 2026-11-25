@@ -7,7 +7,7 @@ import { isBlockedReply, messageIdPattern } from '../inbox/message.mjs';
 import { relay } from '../relay/project.mjs';
 import { withClaudeTranscriptStops } from '../relay/sources.mjs';
 import { createWatcher } from '../watch/index.mjs';
-import { ownedSessions, validInput } from './sessions.mjs';
+import { opencodeExportFailureLimit, ownedSessions, validInput } from './sessions.mjs';
 import { jsonRows, prepareJournal, readText } from './io.mjs';
 import { notifyExternal, projectNotifications } from './notifications.mjs';
 import { organization } from './org.mjs';
@@ -192,6 +192,13 @@ export function createSupervisor(project, {
   }
 
   function publishNotifications() {
+    for (const row of sessions.rows().filter(row => row.endedAt === null)) {
+      const job = sessions.jobs.get(row.addr);
+      const mark = (event, reason) => notifications.add({ id: `${row.addr}:${reason}:${event.at}`,
+        type: 'stuck', project: row.project, addr: row.addr, at: event.at, reason });
+      if (job?.exportFailure?.count >= opencodeExportFailureLimit) mark(job.exportFailure, 'opencode-export-failed');
+      if (job?.pipeRecovery?.exhausted) mark(job.pipeRecovery, 'codex-resume-exhausted');
+    }
     for (const event of jsonRows(readText(watchJournal)).filter(event => event.type === 'stuck')) {
       const row = sessions.rowFor(event.addr);
       if (!row) continue;
@@ -228,6 +235,7 @@ export function createSupervisor(project, {
         continue;
       }
       if (message.combinedInto || !['sending', 'stopping'].includes(message.phase)) continue;
+      if (message.providerPendingUntil !== undefined) continue;
       const at = message.attemptAt ?? message.stopAttemptAt;
       if (!at || message.bypassedAt == null && now() - at < uncertainWindow) continue;
       const row = sessions.rowFor(message.target.addr);
@@ -587,7 +595,7 @@ export function createSupervisor(project, {
         const snapshot = row.endedAt === null && await sessions.transport.inspect(sessions.targetBinding(row)).catch(() => undefined);
         return { addr: row.addr, state: row.endedAt !== null ? 'exited' : reportedState(snapshot, incident),
           ...(tui && { transport: tui.transport, ...(tui.reason && { transportReason: tui.reason }) }),
-          ...(incident?.reason && { reason: incident.reason }),
+          ...((snapshot?.reason ?? incident?.reason) && { reason: snapshot?.reason ?? incident.reason }),
           ...(snapshot?.writeEvidence && { writeEvidence: snapshot.writeEvidence }),
           ...(snapshot?.runtimeStatus && { runtimeStatus: snapshot.runtimeStatus }),
           deliveries: deliveries(row.addr).map(receiptFor), notifications: notifications.list(row.project),

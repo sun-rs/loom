@@ -592,8 +592,8 @@ static void dispatch(struct client *c) {
     if (!cols || !rows || cols > UINT16_MAX || rows > UINT16_MAX) respond(c, INVALID, 0);
     else { note_size(cols, rows); respond(c, s.eof ? EXITED : OK, snapshot(out)); }
   } else if (method == SIGNAL && length == 1) {
-    const int allowed[] = {SIGINT, SIGTERM, SIGHUP};
-    if (*body >= sizeof(allowed) / sizeof(allowed[0])) respond(c, INVALID, 0);
+    const int allowed[] = {SIGINT, SIGTERM, SIGHUP, SIGKILL};
+    if (*body >= sizeof(allowed) / sizeof(allowed[0]) || (allowed[*body] == SIGKILL && !pipe_mode())) respond(c, INVALID, 0);
     else if (s.reaped) respond(c, EXITED, 0);
     else { deliver_signal(allowed[*body]); respond(c, OK, 0); }
   } else if (method == HANDOFF) respond(c, replace_image(body, length), 0);

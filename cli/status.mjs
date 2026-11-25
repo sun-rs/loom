@@ -67,10 +67,12 @@ export async function projectStatus(project) {
   const rotating = new Set(rotations.filter(item => item.boundAt != null && item.verifiedAt == null && item.failedAt == null)
     .map(item => item.successor));
   return { ok: true, running: Boolean(live),
-    sessions: rows.filter(row => row.endedAt == null).map(row => ({
-      role: row.role, addr: row.addr, cli: row.cli, task: row.task, state: lifecycle(row),
-      ...(rotating.has(row.addr) && { awaitingVerifiedReport: true }),
-    })),
+    sessions: rows.filter(row => row.endedAt == null).map(row => {
+      const authMode = row.cli === 'claude' ? artifacts.job(row.addr)?.authMode : undefined;
+      return { role: row.role, addr: row.addr, cli: row.cli, task: row.task, state: lifecycle(row),
+        ...(authMode && { authMode }),
+        ...(rotating.has(row.addr) && { awaitingVerifiedReport: true }) };
+    }),
     waves, pendingContinuations, cards: cards.filter(card => card.active || card.state === 'blocked'),
     blocked, notices, merges, rotations,
     cost: { rawTokens, byRole: Object.fromEntries(Object.entries(byRole).map(([role, value]) => [role, value.rawTokens])),

@@ -130,7 +130,7 @@ export function holderClient(binding, controller) {
     },
     async resize(cols, rows) { return decodeSnapshot(checked(await mutate('resize', u32(cols, rows)))); },
     async signal(name) {
-      const number = ['SIGINT', 'SIGTERM', 'SIGHUP'].indexOf(name);
+      const number = ['SIGINT', 'SIGTERM', 'SIGHUP', 'SIGKILL'].indexOf(name);
       if (number < 0) throw holderError('HOLDER_SIGNAL');
       checked(await mutate('signal', Buffer.of(number)));
     },

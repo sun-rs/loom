@@ -7,6 +7,8 @@ import { hostAbsent, hostDirectory, hostHello, hostRequest, hostSocket, hostUUID
 import { eventPath, jsonRows, readText, syncDirectory, writeState } from './io.mjs';
 import { processTable, sameProcess } from './processes.mjs';
 import { releaseId, releaseRoot } from './release.mjs';
+import { claudeApiEnvKeys } from '../adapters/claude/launch.mjs';
+import { claudeAuthMode } from '../cli/policy.mjs';
 
 const lastExit = path => jsonRows(readText(path)).findLast(event => ['stream-opened', 'exited', 'released'].includes(event.type));
 
@@ -50,11 +52,13 @@ export async function attachHost(project, row, job, save, controller, { stop = f
     if (stop && (start || !owner)) return { endedAt: Date.now() };
   } else if (stop) return { endedAt: Date.now() };
   if (start) {
+    if (row.cli === 'claude') job.authMode = claudeAuthMode(project, row.role);
     job.host = { incarnation: randomUUID(), release: releaseId(), root: releaseRoot };
     const dir = hostDirectory(project, addr, job.host.incarnation);
     mkdirSync(dir, { recursive: true, mode: 0o700 });
     writeState(join(dir, 'launch.json'), JSON.stringify({ row: { ...row, sessionId: resume,
-      ...(job.fast !== undefined && { fast: job.fast }) } }));
+      ...(job.fast !== undefined && { fast: job.fast }),
+      ...(job.authMode && { authMode: job.authMode }) } }));
     syncDirectory(join(dir, '..'));
     save(job);
   }
@@ -69,11 +73,22 @@ export async function attachHost(project, row, job, save, controller, { stop = f
   }
   let hello = await connect();
   if (!hello && !readJSON(join(dir, 'owner.json'))) {
+    let env;
+    if (row.role === 'worker' && row.cli === 'codex') env = { ...process.env, OAR_CODEX_SANDBOX: 'inherit' };
+    if (row.cli === 'claude' && (job.authMode !== 'api-key' || claudeAuthMode(project, row.role) !== 'api-key')) {
+      // This also fences a retained release launching an unfinished intent.
+      env = Object.fromEntries(Object.keys(process.env).filter(key => !claudeApiEnvKeys.includes(key))
+        .map(key => [key, process.env[key]]));
+      if (job.authMode !== 'subscription') {
+        job.authMode = 'subscription';
+        save(job);
+      }
+    }
     const log = openSync(join(dir, 'host.log'), constants.O_WRONLY | constants.O_CREAT | constants.O_APPEND | constants.O_NOFOLLOW, 0o600);
     try {
       const child = spawn(process.execPath, [join(root, 'daemon', 'session-host.mjs'), project, addr, incarnation, release], {
         cwd: row.cwd, detached: true, stdio: ['ignore', log, log],
-        ...(row.role === 'worker' && row.cli === 'codex' && { env: { ...process.env, OAR_CODEX_SANDBOX: 'inherit' } }),
+        env,
       });
       child.once('error', error => { spawnError = error; });
       child.unref();

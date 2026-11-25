@@ -82,6 +82,43 @@ test('lists the index and reads the newest requested turns from native Codex and
   assert.equal(f.run(3, 'hist', 'nobody', '--json').error.code, 'not-found');
 });
 
+test('L2 distinguishes explicit tool cancellation from work still open at interruption', t => {
+  const f = fixture(t);
+  const path = join(f.cwd, 'interrupted.jsonl');
+  const time = new Date().toISOString();
+  const call = id => ({ type: 'tool_use', id, name: 'Bash', input: { command: 'echo ' + id } });
+  const result = (id, fields = {}) => ({ ...fields, message: { content: [{ type: 'tool_result', tool_use_id: id,
+    ...(fields.is_error && { is_error: true }), content: 'tool response' }] }, type: 'user' });
+  const rows = [
+    { type: 'user', uuid: 'input', message: { content: 'Start several tools' } },
+    { type: 'assistant', uuid: 'tools', message: { content: ['done', 'fail', 'cancel', 'open'].map(call) } },
+    result('done'),
+    result('fail', { is_error: true }),
+    result('cancel', { toolUseResult: { interrupted: true } }),
+    { type: 'user', message: { content: '[Request interrupted by user]' } },
+  ].map(row => JSON.stringify({ ...row, timestamp: time }));
+  writeFileSync(path, rows.join('\n') + '\n');
+  f.register('t-interrupted', { cli: 'claude', transcriptPath: path });
+  const [turn] = f.run(0, 'hist', 't-interrupted', '--level', 'L2', '--json').turns;
+  assert.equal(turn.status, 'interrupted');
+  assert.deepEqual(turn.tools.map(tool => tool.status), ['completed', 'failed', 'canceled', 'open']);
+  assert.equal(turn.facts.openCalls, 1);
+  assert.deepEqual(f.run(0, 'hist', 't-interrupted', '--only-failed', '--json').turns[0].tools.map(tool => tool.status), ['failed']);
+});
+
+test('status JSON shows the auth mode from Claude launch evidence even offline', t => {
+  const f = fixture(t);
+  const jobs = join(f.cwd, '.project', 'loomd', 'sessions');
+  mkdirSync(jobs, { recursive: true });
+  for (const authMode of ['subscription', 'api-key']) {
+    const addr = 'loom-' + authMode;
+    projectIndex(f.cwd).register({ addr, project: f.cwd, cwd: f.cwd, cli: 'claude', backend: 'tui' });
+    writeFileSync(join(jobs, addr + '.json'), JSON.stringify({ authMode }));
+  }
+  const result = f.run(0, 'status', '--project', f.cwd, '--json');
+  assert.deepEqual(result.sessions.map(row => row.authMode).sort(), ['api-key', 'subscription']);
+});
+
 test('queries parent chains and role timelines by time and turn across sessions', t => {
   const f = fixture(t);
   function transcript(name, time) {
@@ -165,6 +202,7 @@ test('validates the policy example and rejects malformed capacity, drift, fast a
     { drift: { slowCommandFactor: 1 } },
     { delivery: { coalesceMs: -1 } },
     { roles: { reviewer: { maxDurationMs: 0 } } },
+    { roles: { leader: { auth: 'yes' } } },
     { roles: { worker: { preferred: [{ cli: 'codex', model: 'fixture', effort: 'high', fast: 'true' }] } } },
     { roles: { auditor: { guidance: { vendorFamily: 'same' } } } },
     { roles: { worker: { guidance: { routineEffort: ['xhigh'] } } } },

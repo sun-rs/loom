@@ -8,6 +8,7 @@ const isDone = message => message.phase === 'received';
 const isUrgent = message => message.superPriority || message.mode === 'interrupt';
 const awaiting = message => ['sending', 'stopping'].includes(message.phase);
 const rejected = message => ['refused', 'corrupted'].includes(message.phase);
+const providerFailures = new Set(['request-timeout', 'runtime-exited', 'retry-exhausted', 'provider-overloaded']);
 
 export function receipt(message) {
   const { id, mode, requestedMode, createdAt, received, phase } = message;
@@ -87,10 +88,16 @@ export function inbox(project, transport, report = console.error) {
   function reconcile(message, observation) {
     const complete = Boolean(message.completion?.body || message.completion?.noReply);
     const corrective = legacyCorruption(message);
-    if (!message.attemptAt || (message.phase === 'corrupted' || complete) && !needsIntegrity(message)) return;
+    if (!(message.attemptAt || message.phase === 'stopping' && message.stopAttemptAt) ||
+        (message.phase === 'corrupted' || complete) && !needsIntegrity(message) ||
+        message.phase === 'refused' && providerFailures.has(message.issue)) return;
     const native = transport.nativeDelivery(message, observation);
     if (complete) integrityScanned.add(message.id);
     if (!native) return;
+    if (native.failed) {
+      failRequest(message, native.failed, native.at);
+      return;
+    }
     if (corrective) {
       integrityScanned.add(message.id);
       const { at, sessionId, turnId } = message.corruption;
@@ -111,6 +118,7 @@ export function inbox(project, transport, report = console.error) {
       if (isDone(message)) save();
     }
     if (complete) return;
+    delete message.providerPendingUntil;
     if (native.dropped) {
       if (isDone(message)) return;
       message.issue = 'input-dropped';
@@ -158,6 +166,14 @@ export function inbox(project, transport, report = console.error) {
       group.some(message => message.stoppedAt && transport.sameTurn(barrier, message.active));
   }
 
+  function failRequest(message, issue, at = Date.now()) {
+    message.phase = 'refused';
+    message.issue = issue;
+    message.refusedAt = at;
+    delete message.providerPendingUntil;
+    save();
+  }
+
   function ready(message, observation, group) {
     const idle = observation.state === 'idle' || message.urgent && observation.urgentReady;
     if (message.phase === 'stopped') return idle;
@@ -184,8 +200,15 @@ export function inbox(project, transport, report = console.error) {
     if (observation.hostIncarnation) message.hostStopAttempt = observation.hostIncarnation;
     save();
     try {
-      await transport.interrupt(message, transport.plan(message.target.provider, 'interrupt').stop, observation);
+      const attempt = await transport.interrupt(message, transport.plan(message.target.provider, 'interrupt').stop, observation);
+      if (Number.isFinite(attempt?.deadlineAt)) {
+        message.providerPendingUntil = attempt.deadlineAt;
+        save();
+        return;
+      }
     } catch (error) {
+      if (providerFailures.has(error.kind)) return failRequest(message, error.kind);
+      if (error.kind === 'status_mismatch') return targetTurnEnded(message);
       if (refusals.has(error.kind)) message.phase = 'queued';
       else if (error.kind === 'input-refused') {
         message.phase = 'refused';
@@ -240,7 +263,13 @@ export function inbox(project, transport, report = console.error) {
     try {
       const attempt = await transport.send(input, observation);
       if (attempt?.requestId) message.nativeAttempt = attempt;
+      if (Number.isFinite(attempt?.deadlineAt)) {
+        message.providerPendingUntil = attempt.deadlineAt;
+        save();
+        return;
+      }
     } catch (error) {
+      if (providerFailures.has(error.kind)) return failRequest(message, error.kind);
       if (error.kind === 'steer-unavailable') {
         message.mode = 'queue';
         message.barrier = message.active;
@@ -325,7 +354,25 @@ export function inbox(project, transport, report = console.error) {
     let result;
     try { result = await transport.recoverAttempt(message, observation); }
     catch (error) { report(error.message); return; }
-    if (!result || !['absent', 'refused', 'accepted'].includes(result.status)) return;
+    if (!result) return;
+    if (result.status === 'pending' && Number.isFinite(result.deadlineAt)) {
+      if (message.providerPendingUntil !== result.deadlineAt || message.issue?.startsWith('uncertain')) {
+        message.providerPendingUntil = result.deadlineAt;
+        delete message.issue;
+        save();
+      }
+      return;
+    }
+    if (result.status === 'uncertain' && message.providerPendingUntil !== undefined) {
+      delete message.providerPendingUntil;
+      message.issue = stopping ? 'uncertain-stop' : 'uncertain';
+      save();
+      return;
+    }
+    if (!['absent', 'refused', 'accepted'].includes(result.status)) return;
+    delete message.providerPendingUntil;
+    if (providerFailures.has(result.kind)) return failRequest(message, result.kind);
+    if (stopping && result.kind === 'status_mismatch') return targetTurnEnded(message);
     if (result.status === 'accepted') {
       if (stopping) message.stopKeySent = true;
       else {
@@ -355,10 +402,14 @@ export function inbox(project, transport, report = console.error) {
 
   async function observeTarget(all) {
     const observation = await inspect(all[0].target);
-    if (!observation) return;
     const group = all.filter(message => !message.combinedInto);
-    for (const message of group) reconcile(message, observation);
-    for (const message of group) await recoverAttempt(message, observation);
+    if (observation) {
+      for (const message of group) reconcile(message, observation);
+      for (const message of group) await recoverAttempt(message, observation);
+    }
+    for (const message of group) {
+      if (awaiting(message) && message.providerPendingUntil <= Date.now()) failRequest(message, 'request-timeout');
+    }
     settleCombined(all);
     return observation;
   }

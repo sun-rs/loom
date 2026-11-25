@@ -36,7 +36,7 @@ export async function openTui(job, row, project, recordTemporary, recordBinding,
     autoTrustWorkspace: job.autoTrustWorkspace, ...(controller && { controllerPath: controllerFile(project) }),
     stateDir: join(project, '.project', 'pty'),
     ...(row.cli === 'claude' && { command: nativeClaude(), env: { ...env, DISABLE_AUTOUPDATER: '1' },
-      unset: ['CLAUDE_CODE_ENTRYPOINT', 'CLAUDECODE'] }),
+      authMode: job.authMode, unset: ['CLAUDE_CODE_ENTRYPOINT', 'CLAUDECODE'] }),
     ...(row.cli === 'codex' && { extraArgs: ['--disable', 'memories', ...codexEnvironmentArgs(env), ...codexFastArgs(job.fast)] }),
   });
   try { return { terminal: await host.status(), nativeId: host.sessionId }; }
@@ -49,15 +49,16 @@ export async function refreshOpenCode(job, row, project) {
     const executable = await absoluteCommand('opencode', 'opencode');
     const { stdout } = await exec(executable, ['session', 'export', job.plannedNativeId, '--standalone'],
       { cwd: row.cwd, ...(job.isolatedWorkerHome && { env: { ...process.env, ...workerEnvironment(row) } }),
-        timeout: 5000, maxBuffer: 8 * 1024 * 1024 });
+        timeout: 5000, maxBuffer: 32 * 1024 * 1024 });
     data = JSON.parse(stdout);
   } catch (error) {
-    if (error.code === 'ENOENT') throw error;
-    return null;
+    const reason = error.code === 'ERR_CHILD_PROCESS_STDIO_MAXBUFFER' ? 'size-limit' : error.killed ? 'timeout' :
+      error.code === 'ENOENT' ? 'executable-unavailable' : error instanceof SyntaxError ? 'invalid-json' : 'command-failed';
+    throw Object.assign(new Error(`OpenCode session export failed (${reason})`), { kind: reason });
   }
   const path = eventPath(project, row.addr);
-  const events = projectMessages(data, job.plannedNativeId, row.cwd);
-  if (!events) return null;
+  const events = data && projectMessages(data, job.plannedNativeId, row.cwd);
+  if (!events) throw Object.assign(new Error('OpenCode session export returned an invalid session'), { kind: 'invalid-session' });
   if (data.messages.length === 0 && job.paneBinding) {
     events.push({ cwd: row.cwd, session_id: job.plannedNativeId, receivedAt: job.paneBinding.createdAt,
       hook_event_name: 'SessionStart' });

@@ -8,6 +8,7 @@ import { hostDirectory, hostMethods, hostProtocol, hostSocket, hostUUID, private
 import { eventPath, jsonRows, prepareJournal, syncDirectory, writeState } from './io.mjs';
 import { bindOarTranscript, checkedTranscript, oarControl, oarSnapshot, openOar, trackOar } from './oar.mjs';
 import { processTable } from './processes.mjs';
+import { disposeSession } from './session-close.mjs';
 
 const oarVersion = () => JSON.parse(readFileSync(new URL('../package.json', import.meta.resolve('@botiverse/oar')))).version;
 const refused = (message, kind = 'input-refused') => Object.assign(new Error(message), { kind });
@@ -66,19 +67,17 @@ async function main(project, addr, incarnation, release) {
 
   function close() {
     return closing ??= (async () => {
-      try { await session?.dispose(); }
-      finally {
-        await checkTranscript();
-        runtime?.unsubscribe();
-        endedAt = Date.now();
-        writeState(join(dir, 'ended.json'), JSON.stringify({ at: endedAt, sessionId: session?.id, transcriptPath: transcript }));
-        setImmediate(() => {
-          server?.close();
-          if (listening) unlinkSync(path);
-        });
-      }
+      if (session) await disposeSession(session);
+      await checkTranscript();
+      runtime?.unsubscribe();
+      endedAt = Date.now();
+      writeState(join(dir, 'ended.json'), JSON.stringify({ at: endedAt, sessionId: session?.id, transcriptPath: transcript }));
+      setImmediate(() => {
+        server?.close();
+        if (listening) unlinkSync(path);
+      });
       return { endedAt };
-    })();
+    })().catch(error => { closing = undefined; throw error; });
   }
 
   async function handle({ owner, method, params, protocol, controller: sender }) {
@@ -154,10 +153,9 @@ async function main(project, addr, incarnation, release) {
     listening = true;
     privateHostSocket(path);
     const timer = setInterval(() => {
-      if (closing) return clearInterval(timer);
+      if (closing) return;
       if (runtime.rows.some(event => ['exited', 'released'].includes(event.type) && event.streamId === runtime.streamId)) {
-        clearInterval(timer);
-        void close().catch(error => console.error(error));
+        void close().then(() => clearInterval(timer), error => console.error(error.message));
         return;
       }
       void checkTranscript();
@@ -167,7 +165,7 @@ async function main(project, addr, incarnation, release) {
       void close().catch(error => console.error(error));
     });
   } catch (error) {
-    if (session) await session.dispose().catch(() => {});
+    if (session) await disposeSession(session).catch(() => {});
     writeState(join(dir, 'failed.json'), JSON.stringify({ message: error.message }));
     if (listening) { server.close(); unlinkSync(path); }
     throw error;

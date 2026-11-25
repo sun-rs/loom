@@ -92,7 +92,7 @@ function codexResult(output) {
     chunk: /^Chunk ID: ([^\r\n]+)/.exec(text)?.[1] };
 }
 
-export function codexCommands(rows, turn, defaultSandbox) {
+export function codexCommands(rows, turn, defaultSandbox, includePending = false) {
   const tools = turnActivity.get(turn)?.tools ?? new Map();
   const metadata = new Map();
   let turnSandbox = defaultSandbox;
@@ -121,6 +121,7 @@ export function codexCommands(rows, turn, defaultSandbox) {
     } else if (type === 'event_msg' && (payload.type === 'exec_command_end' || resultItem)) {
       const exitCode = integer(value.exit_code ?? value.exitCode);
       details.native = { exitCode, output: outputOf(value), sandboxed: sandboxOf(value), chunk: value.chunk_id ?? value.chunkId,
+        status: value.status,
         durationMs: elapsed(details.startedAt ?? time(details.timestamp), at) };
       details.cwd = string(value.cwd) ?? details.cwd;
       details.source = payload.type;
@@ -134,12 +135,13 @@ export function codexCommands(rows, turn, defaultSandbox) {
   }
   const commands = [...tools.entries()].flatMap(([id, tool]) => {
     const { native, result, source, cwd, callSandbox, started, position, resultPosition, timestamp, resultAt } = metadata.get(id) ?? {};
-    if (!native && !result && !started) return [];
+    if (!native && !result && !started && !(includePending && position != null)) return [];
     return [{ id, name: tool.name, command: tool.command, cwd, exitCode: native?.exitCode ?? result?.exitCode ?? tool.exitCode,
       output: native?.output ?? result?.output, chunk: native?.chunk ?? result?.chunk, position, resultPosition, timestamp,
       sandboxed: native?.sandboxed ?? result?.sandboxed ?? callSandbox ?? turnSandbox,
       durationMs: result?.durationMs ?? native?.durationMs ?? (result && elapsed(time(timestamp), resultAt)),
-      started, source: `codex.${source ?? (result ? 'call_output' : 'exec_command_begin')}` }];
+      started, ...(includePending && { nativeStatus: native?.status, ended: Boolean(native || result) }),
+      source: `codex.${source ?? (result ? 'call_output' : started ? 'exec_command_begin' : 'call')}` }];
   });
   // Code-mode exec returns the same command result as its native child event.
   // Constrain matching to the wrapper's lifetime so genuine reruns survive.

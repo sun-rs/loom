@@ -1,0 +1,60 @@
+{
+  "initialize": {
+    "id": 1,
+    "result": {
+      "userAgent": "loom/0.171.0 (Mac OS 26.6.2; arm64) xterm-256color (loom; 0)",
+      "platformFamily": "unix",
+      "platformOs": "macos"
+    }
+  },
+  "thread": {
+    "id": 2,
+    "result": {
+      "thread": {
+        "id": "thread-recorded"
+      },
+      "model": "gpt-5.4",
+      "reasoningEffort": "low"
+    }
+  },
+  "start": {
+    "id": 3,
+    "result": {
+      "turn": {
+        "id": "turn-recorded",
+        "rootTurnId": "01a21306-1a81-73b3-8a5c-3876d0f05130",
+        "items": [],
+        "itemsView": "notLoaded",
+        "status": "inProgress",
+        "error": null,
+        "startedAt": null,
+        "completedAt": null,
+        "durationMs": null
+      }
+    }
+  },
+  "started": {
+    "method": "turn/started",
+    "params": {
+      "threadId": "thread-recorded",
+      "turn": {
+        "id": "turn-recorded",
+        "status": "inProgress",
+        "items": []
+      }
+    },
+    "emittedAtMs": 1795615496959
+  },
+  "completed": {
+    "method": "turn/completed",
+    "params": {
+      "threadId": "thread-recorded",
+      "turn": {
+        "id": "turn-recorded",
+        "status": "completed",
+        "items": []
+      }
+    },
+    "emittedAtMs": 1795615497173
+  }
+}

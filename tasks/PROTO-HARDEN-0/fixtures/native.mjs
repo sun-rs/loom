@@ -1,4 +1,4 @@
-import { appendFileSync, mkdirSync, writeFileSync } from 'node:fs';
+import { appendFileSync, existsSync, mkdirSync, readFileSync, unlinkSync, writeFileSync } from 'node:fs';
 import { createInterface } from 'node:readline';
 import { randomUUID } from 'node:crypto';
 import { basename, dirname, join } from 'node:path';
@@ -37,6 +37,14 @@ function open(id) {
   log('runtime-pids.jsonl', { pid: process.pid, session, cli });
 }
 function codex({ method, id, params }) {
+  const faultPath = join(root, 'codex-rpc-case.json');
+  if (existsSync(faultPath)) {
+    const fault = JSON.parse(readFileSync(faultPath, 'utf8'));
+    if (fault.method === method) {
+      unlinkSync(faultPath);
+      return out({ id, error: fault.error });
+    }
+  }
   if (method === 'initialize') return reply(id, { userAgent: 'codex/0.171.0' });
   if (method === 'thread/start' || method === 'thread/resume') {
     open(params.threadId);

@@ -214,3 +214,32 @@ test('pipe holder isolates stderr and inherits both output fds and stdin across 
   assert.deepEqual(readStream(events.stderr), [[0n, 'err'], [3n, 'done']]);
   assert.equal(records.at(-1).data.readUInt32BE(4), 42);
 });
+
+test('only an owning pipe controller can escalate to SIGKILL for the native group', { skip: !supported }, async t => {
+  const dir = fixture(t);
+  const binding = { socket: join(dir, 's'), incarnation: randomUUID() };
+  const controller = { generation: 1, id: randomUUID() };
+  const controllerPath = join(dir, 'controller');
+  writeFileSync(controllerPath, JSON.stringify(controller));
+  const asset = await checkHolder(root, { pipes: true });
+  const holder = spawn(asset.path, ['--pipes', binding.socket, dir, controllerPath, binding.incarnation.replaceAll('-', ''), asset.digest,
+    '/bin/sh', '-c', 'trap "" TERM; sleep 30 & printf READY; wait'], { cwd: dir, stdio: 'ignore' });
+  const gone = new Promise(resolve => holder.once('exit', resolve));
+  const peer = holderClient(binding, controller);
+  t.after(async () => {
+    if (holder.exitCode === null) await peer.signal('SIGKILL').catch(() => {});
+    await gone;
+  });
+  await until(() => peer.hello(), snapshot => snapshot?.outputOffset === 5n);
+  await peer.claim();
+  const stranger = holderClient(binding, { ...controller, id: randomUUID() });
+  await assert.rejects(stranger.signal('SIGKILL'), { code: 'HOLDER_STALE' });
+  await peer.signal('SIGTERM');
+  await delay(100);
+  assert.equal((await peer.snapshot()).ended, false);
+  await peer.signal('SIGKILL');
+  assert.equal(await gone, 137);
+  const native = decodeEvents(readFileSync(join(dir, 'events-0000000000000000'))).at(-1);
+  assert.equal(native.type, events.exit);
+  assert.equal(native.data.readUInt32BE(), 9);
+});

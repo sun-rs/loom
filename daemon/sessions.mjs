@@ -14,7 +14,7 @@ import { bindOarTranscript, checkedTranscript, oarControl, oarDelivery, oarEnd, 
 import { openTui, ownedPane, refreshOpenCode } from './tui.mjs';
 import { tuiHolders } from './tui-holder.mjs';
 import { recoverCodexEnd, recoverNativeDelivery } from './recovery.mjs';
-import { spawnProfile, enforceDeny } from '../cli/policy.mjs';
+import { claudeAuthMode, spawnProfile, enforceDeny } from '../cli/policy.mjs';
 import { headAt, linkTuiInputHead, observeTuiHeads, saveTuiInputHead } from './turn-heads.mjs';
 import { controlTui, wrapperFailedStart } from '../runtimes/tui/transport.mjs';
 import { controlHello, requestControl } from '../tui/pty-control.mjs';
@@ -22,10 +22,14 @@ import { attachHost } from './host-client.mjs';
 import { attachCodexHolder, pipeTransport, useCodexHolder } from './codex-holder.mjs';
 import { releaseId } from './release.mjs';
 import { projectMemoryPrompt } from '../memory/project.mjs';
+import { disposeSession } from './session-close.mjs';
 
 const runtimeIds = { codex: 'codex', agy: 'antigravity', claude: 'claude', opencode: 'opencode' };
 const modes = new Set(['tui', 'headless']);
 const guardedAbort = new Set(['codex', 'agy', 'opencode']);
+export const opencodeExportFailureLimit = 3;
+const pipeRecoveryLimit = 4;
+const pipeRecoveryWindow = 120_000;
 const hasText = value => typeof value === 'string' && value.trim().length > 0;
 const temporaryRole = role => ['worker', 'reviewer'].includes(role);
 export const validInput = text => hasText(text) && !/[\x00-\x08\x0b\x0c\x0e-\x1f\x7f-\x9f]/.test(text);
@@ -137,14 +141,21 @@ export function ownedSessions(project, index, report, {
       if (target.backend === 'headless') {
         const runtime = running.get(target.addr);
         if (row?.endedAt == null) await runtime?.pull?.();
-        return { ...oarSnapshot(runtime, events(target.addr), row?.endedAt != null || runtime?.endedAt != null),
+        const snapshot = oarSnapshot(runtime, events(target.addr), row?.endedAt != null || runtime?.endedAt != null);
+        return { ...snapshot, ...(row?.endedAt === null && jobs.get(row.addr)?.pipeRecovery?.exhausted &&
+          { state: 'stuck', reason: 'codex-resume-exhausted' }),
           hostIncarnation: runtime?.incarnation, row };
       }
       if (row?.endedAt != null) return { state: 'finished', provider: row.cli, tui: jobs.get(row.addr)?.tui,
         terminal: { cwd: row.cwd, address: target.addr },
         events: events(target.addr).filter(event => !event.agent_id &&
           (!row.sessionId || (event.session_id ?? event.conversationId) === row.sessionId)) };
-      return local.inspect({ ...target, tui: jobs.get(target.addr)?.tui, sessionId: row?.sessionId });
+      const job = jobs.get(target.addr);
+      const snapshot = await local.inspect({ ...target, tui: job?.tui, sessionId: row?.sessionId });
+      if (job?.exportFailure?.count >= opencodeExportFailureLimit && snapshot.state !== 'finished') {
+        return { ...snapshot, state: 'stuck', reason: 'opencode-export-failed', urgentReady: false, active: undefined };
+      }
+      return snapshot;
     },
     sameTurn(frame, current) {
       return frame?.streamId ? current?.streamId === frame.streamId && current?.sinceSeq === frame.sinceSeq :
@@ -171,7 +182,7 @@ export function ownedSessions(project, index, report, {
       }
       const recorded = oarDelivery(message, observation);
       const runtime = running.get(message.target.addr);
-      if (recorded?.completion || recorded?.dropped || runtime?.streamId &&
+      if (recorded?.completion || recorded?.dropped || recorded?.failed || runtime?.streamId &&
           runtime.streamId === message.nativeAttempt?.streamId && !message.issue) return recorded;
       const native = recoverNativeDelivery(rowFor(message.target.addr), message);
       return native?.completion ? native : recorded ?? native;
@@ -186,7 +197,7 @@ export function ownedSessions(project, index, report, {
       const runtime = running.get(message.target.addr);
       const action = message.mode === 'steer' ? 'steer' : 'prompt';
       const result = runtime.hosted ? await runtime.control(action, message) : await oarControl(runtime, action, message, observation);
-      return { streamId: runtime.streamId, requestId: result.requestId, seq: result.seq };
+      return { streamId: runtime.streamId, requestId: result.requestId, seq: result.seq, deadlineAt: result.deadlineAt };
     },
     async interrupt(message, _keys, observation) {
       if (!canInterrupt(message.target)) throw Object.assign(new Error('Target does not support guarded interruption'), { kind: 'input-refused' });
@@ -399,13 +410,39 @@ export function ownedSessions(project, index, report, {
     const differences = Object.keys(selected).filter(key => effective[key] != null && effective[key] !== selected[key]);
     const transport = job?.tui ?? job?.host;
     return { selected, effective, differences, unverified,
+      ...(job?.authMode && { authMode: job.authMode }),
       ...(job?.fastRequested !== undefined && { fastRequested: job.fastRequested }),
       ...(job?.warnings?.length && { warnings: job.warnings }),
       ...(transport?.transport && { transport: transport.transport, ...(transport.reason && { transportReason: transport.reason }) }) };
   }
 
-  const attachHeadless = (row, job, options) => (useCodexHolder(row, job) ? attachCodexHolder : attachHost)(
-    project, row, job, save, controller, options);
+  function recordPipeRecovery(job) {
+    if (job.host?.transport !== pipeTransport || job.pipeRecovery?.exhausted) return;
+    const previous = job.pipeRecovery;
+    const at = Date.now();
+    const count = (previous?.count ?? 0) + 1;
+    const startedAt = previous?.startedAt ?? at;
+    job.pipeRecovery = { count, startedAt, at, exhausted: count >= pipeRecoveryLimit || at - startedAt >= pipeRecoveryWindow };
+    save(job);
+  }
+
+  async function attachHeadless(row, job, options) {
+    const pipe = useCodexHolder(row, job);
+    const recovery = job.pipeRecovery;
+    if (pipe && recovery && !options?.stop && (recovery.exhausted || Date.now() - recovery.startedAt >= pipeRecoveryWindow)) {
+      if (!recovery.exhausted) {
+        job.pipeRecovery = { ...recovery, exhausted: true, at: Date.now() };
+        save(job);
+      }
+      throw new ErrorCode('not-ready', 'Codex attachment retry budget exhausted');
+    }
+    try {
+      return await (pipe ? attachCodexHolder : attachHost)(project, row, job, save, controller, options);
+    } catch (error) {
+      if (pipe && !options?.stop) recordPipeRecovery(job);
+      throw error;
+    }
+  }
 
   async function openFixture(row, job) {
     const session = await open(job.fast === undefined ? row : { ...row, fast: job.fast }, project, row.sessionId);
@@ -413,7 +450,7 @@ export function ownedSessions(project, index, report, {
       if (row.sessionId && session.id !== row.sessionId) throw new Error('OAR resumed a different native session');
       return trackOar(project, row, session, error => report(error.message));
     } catch (error) {
-      await session.dispose();
+      await disposeSession(session).catch(failure => report(failure.message));
       throw error;
     }
   }
@@ -454,6 +491,10 @@ export function ownedSessions(project, index, report, {
         terminal = undefined;
       }
       if (!terminal && !job.paneBinding) {
+        if (row.cli === 'claude') {
+          job.authMode = claudeAuthMode(project, row.role);
+          save(job);
+        }
         const opened = await openPane(job, row, project, temporary => {
           job.temporary = temporary;
           save(job);
@@ -500,9 +541,20 @@ export function ownedSessions(project, index, report, {
     const terminal = await getPane(job, row);
     if (terminal) activity.set(row.addr, terminal.status_ms);
     if (row.cli === 'opencode' && terminal) {
-      const transcriptPath = await refreshOpenCode(job, row, project);
-      if (transcriptPath && row.transcriptPath !== transcriptPath) {
-        row = index.update(row.addr, { sessionId: job.plannedNativeId, transcriptPath });
+      try {
+        const transcriptPath = await refreshOpenCode(job, row, project);
+        if (job.exportFailure) {
+          delete job.exportFailure;
+          save(job);
+        }
+        if (row.transcriptPath !== transcriptPath) row = index.update(row.addr, { sessionId: job.plannedNativeId, transcriptPath });
+      } catch (error) {
+        const count = Math.min((job.exportFailure?.count ?? 0) + 1, opencodeExportFailureLimit);
+        if (count !== job.exportFailure?.count) {
+          job.exportFailure = { count, at: Date.now(), kind: error.kind ?? 'export-failed' };
+          save(job);
+          if (count === opencodeExportFailureLimit) report(`${row.addr}: OpenCode export failed ${count} times (${job.exportFailure.kind})`);
+        }
       }
     }
     const hooks = events(row.addr);
@@ -554,6 +606,7 @@ export function ownedSessions(project, index, report, {
       try {
         let row = rowFor(addr);
         if (!row || row.endedAt === null) {
+          if (job.pipeRecovery?.exhausted && !job.stopping) continue;
           if (!restored.has(addr) || job.stopping) {
             if (retryAt.get(addr) > Date.now()) continue;
             row = await activate(job, mail);
@@ -566,13 +619,18 @@ export function ownedSessions(project, index, report, {
             catch (error) {
               running.delete(addr);
               restored.delete(addr);
+              recordPipeRecovery(job);
               throw error;
+            }
+            if (job.pipeRecovery) {
+              delete job.pipeRecovery;
+              save(job);
             }
             const transcript = await getOarTranscript(runtime, row);
             if (row.transcriptPath !== transcript && transcript) row = index.update(addr, { transcriptPath: transcript });
             const exit = runtime.rows.findLast(event => ['exited', 'released'].includes(event.type) && event.streamId === runtime.streamId);
             if (exit || runtime.endedAt != null) {
-              try { if (!runtime.hosted) await runtime.session.dispose(); }
+              try { if (!runtime.hosted) await disposeSession(runtime.session); }
               catch (error) { report(`${addr} dispose: ${error.message}`); }
               finally { runtime.unsubscribe?.(); running.delete(addr); }
               row = await finish(job, row, exit?.at ?? runtime.endedAt);
@@ -601,7 +659,7 @@ export function ownedSessions(project, index, report, {
     if (row.backend === 'headless') {
       if (!runtime && job.host) runtime = await attachHeadless(row, job, { stop: true });
       if (runtime?.hosted) endedAt = (await runtime.close()).endedAt;
-      else if (runtime?.session) await runtime.session.dispose();
+      else if (runtime?.session) await disposeSession(runtime.session);
       else endedAt = runtime?.endedAt;
       runtime?.unsubscribe?.();
       running.delete(row.addr);
@@ -621,9 +679,9 @@ export function ownedSessions(project, index, report, {
     await Promise.allSettled([...running.entries()].filter(([, runtime]) => runtime.unsubscribe).map(async ([addr, runtime]) => {
       try {
         runtime.suspend();
-        await runtime.session.dispose();
-        runtime.unsubscribe();
+        await disposeSession(runtime.session);
       } catch (error) { report(`${addr}: ${error.message}`); }
+      finally { runtime.unsubscribe(); }
     }));
   }
 

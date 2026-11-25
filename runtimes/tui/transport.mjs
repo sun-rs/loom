@@ -13,6 +13,7 @@ import { holderClient } from '../../holder/protocol.mjs';
 import { requestControl } from '../../tui/pty-control.mjs';
 import { providers } from '../../tui/providers.mjs';
 import { startPane } from './hc.mjs';
+import { claudeApiEnvKeys } from '../../adapters/claude/launch.mjs';
 
 export async function absoluteCommand(command, provider = basename(command)) {
   const variable = `LOOM_${provider.toUpperCase()}_BIN`;
@@ -45,7 +46,7 @@ export function wrapperFailedStart(binding) {
 }
 
 export async function openNativeTui({
-  cli, cwd, command, hcCommand = 'hc', env = {}, unset = [], name,
+  cli, cwd, command, hcCommand = 'hc', env = {}, unset = [], name, authMode,
   stateDir, hookSink, recordBinding = () => {}, previous, recordTemporary = () => {}, boundTranscript = true,
   controllerPath, ...options
 }) {
@@ -61,7 +62,12 @@ export async function openNativeTui({
   prepareJournal(hookSink);
   const { argv, env: launchEnv, sessionId } = await provider.start({ ...options, cwd, hookSink, boundTranscript });
   argv[0] = executable;
-  env = { ...env, ...launchEnv };
+  if (cli === 'claude') {
+    if (authMode !== 'api-key') unset = [...new Set([...unset, ...claudeApiEnvKeys])];
+    // Opt in through inherited credentials, never via hc's command arguments.
+    env = Object.fromEntries([env, launchEnv].flatMap(source => Object.keys(source).filter(key => !claudeApiEnvKeys.includes(key))
+      .map(key => [key, source[key]])));
+  } else env = { ...env, ...launchEnv };
   const workspace = launchEnv.LOOM_AGY_HOOK_WORKSPACE;
   let staging;
   if (workspace) {
@@ -182,7 +188,7 @@ export async function openNativeTui({
               }
               const requestedEnv = { ...env };
               delete requestedEnv.LOOM_AGY_HOOK_WORKSPACE;
-              return openNativeTui({ ...options, cli, cwd, stateDir, hcCommand, env: requestedEnv, unset,
+              return openNativeTui({ ...options, cli, cwd, stateDir, hcCommand, env: requestedEnv, unset, authMode,
                 command: executable, name, resume, recordBinding, recordTemporary, boundTranscript });
             })().catch(error => { restarting = undefined; throw error; });
             return restarting;

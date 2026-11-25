@@ -4,6 +4,7 @@ import { performance } from 'node:perf_hooks';
 import { setTimeout as sleep } from 'node:timers/promises';
 import { promisify } from 'node:util';
 import { tuiVersionLabels, verifiedTuiVersions, versionWarnings } from '../../adapters/tui-version.mjs';
+import { claudeApiEnvKeys } from '../../adapters/claude/launch.mjs';
 
 export const exec = promisify(execFile);
 
@@ -31,8 +32,9 @@ export async function startPane(command, cwd, argv, {
   const processArgs = [
     ...unset.flatMap(key => ['-u', key]), ...Object.entries(launchEnv).map(([key, value]) => `${key}=${value}`),
   ];
-  const probeEnv = { ...process.env, ...launchEnv };
-  for (const key of unset) delete probeEnv[key];
+  const omitted = new Set(provider === 'claude' ? [...unset, ...claudeApiEnvKeys] : unset);
+  const probeEnv = Object.fromEntries([process.env, launchEnv].flatMap(source => Object.keys(source)
+    .filter(key => !omitted.has(key)).map(key => [key, source[key]])));
   const labels = await tuiVersionLabels(provider, nativeCommand, { cwd, env: probeEnv });
   let started;
   try {

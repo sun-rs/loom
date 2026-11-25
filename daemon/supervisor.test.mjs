@@ -129,6 +129,57 @@ test('only Leader and Auditor get a bounded project memory block on spawn', asyn
   assert.doesNotMatch(f.prompts.find(item => item.addr === worker.addr).input, /项目记忆|memory\/items/);
 });
 
+test('large OpenCode exports recover the consecutive-failure stuck state', async t => {
+  let terminal;
+  const logs = [];
+  const f = fixture(t, { report: message => logs.push(message), sessionOptions: {
+    async openPane(_job, row) {
+      terminal = { address: 't1', cwd: row.cwd, pid: 101, created_ms: 1, status_ms: 1, state: 'live', status: { state: 'idle' } };
+      return { terminal };
+    },
+    getPane: async () => terminal,
+    async callHc(command) {
+      if (command === 'get') return terminal;
+      if (command === 'read') return { text: 'idle' };
+      throw new Error('Unexpected fixture hc command');
+    },
+  } });
+  const binary = join(f.project, 'opencode');
+  const broken = join(f.project, 'export-broken');
+  mkdirSync(join(f.project, '.project', 'relay', 'events'), { recursive: true });
+  writeFileSync(binary, `#!${process.execPath}
+import { existsSync } from 'node:fs';
+if (existsSync(${JSON.stringify(broken)})) process.exit(4);
+console.log(JSON.stringify({ info: { id: process.argv[4] }, messages: [], padding: 'x'.repeat(9 * 1024 * 1024) }));
+`, { mode: 0o700 });
+  const previous = process.env.LOOM_OPENCODE_BIN;
+  process.env.LOOM_OPENCODE_BIN = binary;
+  t.after(() => {
+    if (previous === undefined) delete process.env.LOOM_OPENCODE_BIN;
+    else process.env.LOOM_OPENCODE_BIN = previous;
+  });
+  const d = f.daemon();
+  const { session } = await f.spawn(d, 'super', 'OPENCODE-EXPORT', undefined, { cli: 'opencode', mode: 'tui' });
+  const state = () => d.handle('state', { target: session.addr });
+  const job = () => f.read(`loomd/sessions/${session.addr}.json`);
+  writeFileSync(broken, '');
+  for (let n = 1; n <= 3; n++) {
+    await d.tick();
+    assert.equal(job().exportFailure.count, n);
+    if (n < 3) assert.notEqual((await state()).state, 'stuck');
+  }
+  const stuck = await state();
+  assert.equal(stuck.state, 'stuck');
+  assert.equal(stuck.reason, 'opencode-export-failed');
+  assert(stuck.notifications.some(event => event.type === 'stuck' && event.reason === 'opencode-export-failed'));
+  assert.equal(logs.filter(value => value.includes('OpenCode export failed 3 times')).length, 1);
+  rmSync(broken);
+  await d.tick();
+  assert.equal(job().exportFailure, undefined, JSON.stringify(logs));
+  assert.notEqual((await state()).state, 'stuck');
+  assert.match(readFileSync(join(f.project, '.project/relay/events', session.addr + '.jsonl'), 'utf8'), /SessionStart/);
+});
+
 test('an explicit barrier spans tracking waves and delivers its whole set once across daemon recovery', async t => {
   const f = fixture(t);
   const daemon = f.daemon();

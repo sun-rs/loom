@@ -10,6 +10,8 @@ import { eventPath, jsonRows, prepareJournal } from './io.mjs';
 import { nativeClaude } from './executables.mjs';
 import { finishHead, headAt } from './turn-heads.mjs';
 import { codexConfiguration } from './codex-launch.mjs';
+import { claudeApiEnvKeys } from '../adapters/claude/launch.mjs';
+import { claudeAuthMode } from '../cli/policy.mjs';
 import { managedEnvironment } from './release.mjs';
 import { sandboxNativeWorker, workerEnvironment, workerNativeLogin,
   workerProviderEnvironment } from './worker-environment.mjs';
@@ -52,6 +54,9 @@ export async function openOar(row, project, resume) {
       eventPath(project, row.addr).replace(/\.jsonl$/, '.agy.log')];
   } else if (row.cli === 'claude') {
     Object.assign(env, { OAR_CLAUDE_BIN: nativeClaude(), CLAUDE_CODE_ENTRYPOINT: 'loom', DISABLE_AUTOUPDATER: '1' });
+    if (row.authMode === 'subscription' || claudeAuthMode(project, row.role) !== 'api-key') {
+      for (const key of claudeApiEnvKeys) env[key] = null;
+    }
     if (login) env.CLAUDE_CODE_TMPDIR = isolated.TMPDIR;
     launchArgs = ['--setting-sources', '', '--strict-mcp-config'];
     if (row.fast !== undefined) launchArgs.push('--settings', JSON.stringify({ fastMode: row.fast }));
@@ -152,7 +157,7 @@ export function trackOar(project, row, session, onError, incarnation) {
     }
     if (['tool_call_started', 'tool_call_input', 'tool_call_ended'].includes(event.kind)) {
       append(event, event.kind, { turnId, turn, callId: event.callId, tool: event.toolName ?? event.tool,
-        input: event.input, exitCode: event.exitCode, result: event.result,
+        input: event.input, exitCode: event.exitCode, result: event.result, status: event.status,
         content: event.content?.filter(part => part.type === 'text') });
     }
     if (event.kind === 'usage') append(event, 'usage', { turn, usage: event.usage });
@@ -219,11 +224,16 @@ export function oarEnd(frame, observation) {
 }
 
 export function oarDelivery(message, observation) {
-  const events = observation.events.filter(event => event.at >= message.attemptAt);
+  const stopping = message.phase === 'stopping';
+  const action = stopping ? 'abort' : message.mode === 'steer' ? 'steer' : 'prompt';
+  const events = observation.events.filter(event => event.at >= (stopping ? message.stopAttemptAt : message.attemptAt));
   const start = events.find(event => event.type === 'input-received' && event.inputId === message.id);
   const end = events.find(event => event.type === 'turn-end' && (event.inputIds?.includes(message.id) ||
     (start && start.turnId === event.turnId && start.streamId === event.streamId)));
   if (!start && !end) {
+    const failure = events.find(event => event.type === 'input-failed' && event.inputId === message.id && event.action === action &&
+      (!message.hostAttempt || event.incarnation === (stopping ? message.hostStopAttempt : message.hostAttempt)));
+    if (failure) return { failed: failure.reason, at: failure.at };
     if (events.some(event => event.type === 'input-dropped' && event.inputId === message.id)) return { dropped: true };
     return;
   }

@@ -187,6 +187,36 @@ test('real ACP text chunks without a final boundary produce an UNCONFIRMED wave 
   assert.equal(f.deliveries(message.id).length, 1);
 });
 
+test('definitive Codex native refusals do not escalate as uncertain', { timeout: 25_000 }, async t => {
+  const f = fixtureProject(t, { env: { LOOM_UNCERTAIN_MS: '1500' } });
+  await f.start();
+  const { session, deliveryId: startup } = await f.spawn('leader', 'RPC-REFUSALS');
+  await f.waitMail(startup);
+  const held = await f.send(session.addr, 'HOLD for the native guard');
+  await f.waitMail(held.id, message => message?.received);
+  const downgraded = [];
+  for (const error of [{ message: 'no active turn to steer' }, { message: 'not steerable',
+    data: { codexErrorInfo: { activeTurnNotSteerable: { turnKind: 'review' } } } },
+  { message: 'active turn uses a different output schema' }]) {
+    f.write('codex-rpc-case.json', { method: 'turn/steer', error: { code: -32600, ...error } });
+    const queued = await f.send(session.addr, 'deliver after the guard', { mode: 'steer' });
+    await f.waitMail(queued.id, message => message?.mode === 'queue' && message.phase === 'queued');
+    downgraded.push(queued.id);
+  }
+  f.write('codex-rpc-case.json', { method: 'turn/interrupt', error: { code: -32600, message: 'no active turn to interrupt' } });
+  const refused = await f.send(session.addr, 'do not submit this', { mode: 'interrupt' });
+  const rejected = await f.waitMail(refused.id, message => message?.phase === 'refused');
+  assert.equal(rejected.issue, 'target-turn-ended');
+  const release = await f.send(session.addr, 'release the native turn', { mode: 'interrupt' });
+  await f.waitMail(release.id);
+  for (const id of downgraded) {
+    await f.waitMail(id);
+    assert.equal(f.deliveries(id).length, 1);
+  }
+  const notices = (await f.rpc('state', { target: session.addr })).notifications;
+  assert(!notices.some(notice => notice.type === 'delivery-uncertain' && [...downgraded, refused.id].includes(notice.deliveryId)));
+});
+
 test('SIGKILL around delivery, registry, relay and history durability boundaries', { concurrency: 3, timeout: 120_000 }, async t => {
   const stages = [];
   for (const stage of ['accepted', 'attempt', 'native-ack', 'receipt', 'completion', 'turn-start', 'input-received', 'turn-end']) {

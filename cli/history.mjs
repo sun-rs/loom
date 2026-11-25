@@ -235,13 +235,14 @@ export async function history(sessions, reader, options) {
       ...(rows.length && { startLine: rows[0].number, endLine: rows.at(-1).number }) };
     const diffs = showDiff ? await reader.diff(entry) : null;
     const facts = { exitCodes: exitCodes(tools), status: activity.lifecycle,
+      ...(activity.openCalls && { openCalls: activity.openCalls }),
       changedFiles: git ? git.status === 'ok' ? git.files.length : null : await reader.changedFiles(entry), claims: verdict(claims) };
     const headInfo = value => value ? { head: value.head, observedAt: value.observedAt } : null;
     const extra = { ...source, facts, outcomes: tags, heads: { start: headInfo(heads.start), end: headInfo(heads.end) },
       ...(diffs && { diff: diffs }), ...(evidence && { evidence: publicCards(cards) }) };
     if (level === 'L2') {
       const selectedTools = tools.filter(item => (!tool || tool === item.tool) && (!command || command.test(item.command ?? '')) &&
-        (!onlyFailed || item.denied || item.exitCode != null && item.exitCode !== 0))
+        (!onlyFailed || item.status === 'failed'))
         .map(item => {
           const lines = item.output?.trimEnd().split(/\r?\n/);
           const output = lines?.length > tail + 3 ? [...lines.slice(0, 3), '…', ...lines.slice(-tail)].join('\n') : lines?.join('\n') ?? null;

@@ -18,12 +18,12 @@ export function queueFrame(rpc, message, tag = '') {
     requestId: message.method && typeof message.id === 'number' ? message.id : undefined });
 }
 
-export function queueCall(rpc, method, params, meta) {
+export function queueCall(rpc, method, params, meta, timing) {
   const id = rpc.nextId + 1;
   if (!Number.isSafeInteger(id)) throw new Error('Codex RPC ID space exhausted');
   queueFrame(rpc, { id, method, params });
   rpc.nextId = id;
-  rpc.calls[id] = { id, method, meta, phase: 'pending' };
+  rpc.calls[id] = { id, method, meta, phase: 'pending', ...(timing && { params, ...timing }) };
   return rpc.calls[id];
 }
 
