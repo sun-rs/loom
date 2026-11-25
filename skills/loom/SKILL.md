@@ -18,6 +18,9 @@ description: 在 Loom 中启动、指挥、复核或接手由 Super、Auditor、
 - **Auditor** 负责维护 `.project/charter.md` 和 `.project/rulings.md`。章程写目标、非目标、红线和验收，账本按编号逐字记录用户裁决。新裁决另起编号并标明取代关系。参照 [章程模板](../../examples/charter.md) 和 [裁决模板](../../examples/rulings.md)。
 - 需要 Super 裁决时，用 `loom notifications --project "$PROJECT" --needs-decision "$SUMMARY"` 给出事实、选项和建议。托管 Super 由收件箱按批唤醒，外部 Super 收本机通知。`loom notifications --project "$PROJECT"` 预览，`--take` 领取，`--history` 回看。
 - Super 巡检通知时也处理 `blocked-escalation`（工作阻塞升级）和 `delivery-uncertain`（投递缺少原生确认）。
+- 项目记忆 v0 保存在 `.project/memory/items/<id>.md`，该目录是 [v1 设计](../../docs/MEMORY.md)的导入来源。每条 ≤200 tokens。用两行 `---` 包裹单行 JSON，必填 `id/scope/owner/source/verified`（`scope` 为 `project`），可选 `expires/supersededBy/keywords`，随后写 `# 标题`、空行和正文。Leader 写入已证实的坑、环境条件和入口，Auditor 裁决争议。首轮注入重建 `.project/memory/INDEX.md`，可用 `"$LOOM_BIN" memory search <query> --project "$PROJECT"` 查询。
+  - `id` 与 `owner` 仅使用小写字母、数字、`-` 和 `_`。`verified` 和 `expires` 使用 `YYYY-MM-DD`，`source` 使用项目内相对路径或 Git SHA，`keywords` 为单个字符串（非数组）。
+  - 标题和正文避免计数斜杠写法（如 `37/37`）及项目外路径。写完运行 `"$LOOM_BIN" memory search <query> --project "$PROJECT"`，确认结果包含该条目。
 
 ## Auditor · 用户的默认对接人
 
@@ -65,4 +68,4 @@ description: 在 Loom 中启动、指挥、复核或接手由 Super、Auditor、
 3. 用 `loom spawn "$ROLE" --project "$PROJECT" --cwd "$PROJECT" --handover-from "$OLD_ADDR" "$PROMPT"` 换班，由 loomd 绑定继任者并移交在途工作。接手先读交接简报、交接单和两个项目文件。新会话首轮报到的 SHA、路径须现查，由 loomd 机械核验，监督者核对在途事项和未决裁决。第 3 次上下文压缩后，引用的每个数字都须逐项现查。
 4. 项目收尾时归档结果，用 `loom notifications --project "$PROJECT" --complete "$SUMMARY"` 登记完成，用 `loom stop` 关闭会话。清理 worktree 前先把暂存、未暂存及授权范围内未跟踪的草稿归档成可恢复的补丁，记录路径。最后用 `loom doctor --project "$PROJECT"` 核对残留。
 
-在 Loom 管理的会话中，使用 `$LOOM_BIN` 或 `loom`（由 Loom 注入的 `PATH` 解析）。
+Worker 调用 Loom 命令使用绝对可执行路径 `"$LOOM_BIN"`。其他托管角色可使用 `"$LOOM_BIN"` 或由 Loom 注入的 `PATH` 解析的 `loom`。

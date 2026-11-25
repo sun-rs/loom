@@ -11,6 +11,8 @@ import { promisify } from 'node:util';
 import { openIndex } from '../index/index.mjs';
 import { spawnProfile } from './policy.mjs';
 import { projectIndex, socketPath } from './project.mjs';
+import { estimateTokens } from '../lib/token-budget.mjs';
+import { writeMemory } from '../memory/project.mjs';
 
 const executable = fileURLToPath(new URL('../bin/loom', import.meta.url));
 const file = path => new URL(path, import.meta.url);
@@ -30,6 +32,27 @@ function fixture(t) {
   const register = (addr, changes = {}) => index.register({ addr, project: cwd, backend: 'tui', cli: 'codex', cwd, ...changes });
   return { cwd, index, env, cli, run, register };
 }
+
+test('memory search limits count and serialized tokens across title and keyword matches', t => {
+  const f = fixture(t);
+  const project = join(f.cwd, 'other');
+  mkdirSync(project);
+  writeFileSync(join(project, 'proof.txt'), 'proof');
+  for (let n = 0; n < 12; n++) {
+    writeMemory(project, { id: `fact-${n}`, scope: 'project', owner: 'leader',
+      source: 'proof.txt', verified: '2025-01-01', keywords: n < 6 ? 'short' : 'long',
+      title: n < 6 ? `Fact ${n}` : '限'.repeat(115) + n, body: 'Confirmed.' });
+  }
+  const args = ['--project', project, '--json'];
+  assert.equal(f.run(0, 'memory', 'search', 'short', ...args).length, 5);
+  const long = f.cli('memory', 'search', '限', ...args);
+  assert.equal(long.status, 0, long.stderr || long.stdout);
+  assert.equal(JSON.parse(long.stdout).length, 3);
+  assert.ok(estimateTokens(long.stdout) <= 500);
+  assert.match(f.cli('memory', 'search', 'Fact 0', '--project', project).stdout, /fact-0\.md.*Fact 0/);
+  assert.deepEqual(f.run(0, 'memory', 'search', 'short', '--json'), []);
+  assert.equal(f.run(2, 'memory', 'search').error.code, 'invalid-arguments');
+});
 
 test('lists the index and reads the newest requested turns from native Codex and agy headless logs', t => {
   const f = fixture(t);
@@ -125,6 +148,10 @@ test('validates the policy example and rejects malformed capacity, drift, fast a
   mkdirSync(join(cwd, '.project'));
   const path = join(cwd, '.project', 'policy.json');
   const example = JSON.parse(readFileSync(file('../examples/policy.json'), 'utf8'));
+  assert.ok(!example.deny.some(({ cli }) => cli === 'claude'));
+  for (const role of ['super', 'leader', 'auditor', 'reviewer', 'worker']) {
+    assert.ok(new Set(example.roles[role].preferred.map(({ cli }) => cli)).size >= 2, `${role} needs at least two CLI vendors`);
+  }
   const select = role => spawnProfile(cwd, { role }).selected;
   writeFileSync(path, JSON.stringify(example));
   assert.equal(select('leader').effort, 'high');

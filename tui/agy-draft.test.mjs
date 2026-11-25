@@ -28,12 +28,17 @@ test('the shared verifier uses Claude, Codex and OpenCode composer geometry', as
   const expected = draftExpectation(`[loom:${id}]\nhello world`);
   const codex = await rendered({ cols: 80, rows: 12,
     text: `› [loom:${id}]\n  hello\n  world\n  gpt-6.2-sol low · /test` }, 'codex');
-  const opencode = await rendered({ cols: 80, rows: 12,
-    text: `┃ [loom:${id}]\n┃ hello\n┃ world\n\nloom · test · OpenCode · ctrl+p menu` }, 'opencode');
-  for (const frame of [codex, opencode]) {
+  const openCodeFooters = ['loom · test · OpenCode · ctrl+p menu', 'loom · test · ctrl+p menu',
+    'Press esc again to interrupt'];
+  const openCodeDrafts = await Promise.all(openCodeFooters.map(footer => rendered({ cols: 80, rows: 12,
+    text: `┃ [loom:${id}]\n┃ hello\n┃ world\n\n${footer}` }, 'opencode')));
+  for (const frame of [codex, ...openCodeDrafts]) {
     assert(verifyDraft(frame, expected));
     assert.equal(verifyDraft({ ...frame, draft: frame.draft + ' edit' }, expected), undefined);
   }
+  const idle = await rendered({ cols: 80, rows: 12,
+    text: '┃ Ask anything, / for commands, @ for context…\n\nloom · test · ctrl+p menu' }, 'opencode');
+  assert.equal(idle.draft, '');
 });
 
 test('the agy capture verifies its wrapped draft and rejects an equal-length edit', async () => {

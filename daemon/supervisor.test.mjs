@@ -8,6 +8,7 @@ import { randomUUID } from 'node:crypto';
 import { deliveryId } from '../inbox/message.mjs';
 import { publish } from '../inbox/store.mjs';
 import { estimateTokens } from '../lib/token-budget.mjs';
+import { writeMemory } from '../memory/project.mjs';
 import { createSupervisor } from './supervisor.mjs';
 
 function fixture(t, options) {
@@ -102,6 +103,31 @@ function fixture(t, options) {
   const git = (...args) => execFileSync('/usr/bin/git', args, { cwd: project, encoding: 'utf8' }).trim();
   return { daemon, spawn, barrier, read, policy, git, sessions, prompts, resumes, project };
 }
+
+test('only Leader and Auditor get a bounded project memory block on spawn', async t => {
+  const f = fixture(t);
+  writeFileSync(join(f.project, 'proof.txt'), 'proof');
+  writeFileSync(join(f.project, '.project/charter.md'), '## 红线\n- Require approval\n');
+  writeFileSync(join(f.project, '.project/rulings.md'), '## 1\n> Record decisions\n');
+  for (let n = 0; n < 6; n++) {
+    writeMemory(f.project, { id: `fact-${n}`, scope: 'project', owner: 'leader', source: 'proof.txt',
+      verified: '2025-01-01', title: '记'.repeat(125) + n, body: 'Confirmed.' });
+  }
+  const daemon = f.daemon();
+  const { session: leader } = await f.spawn(daemon, 'leader', 'L');
+  const { session: auditor } = await f.spawn(daemon, 'auditor', 'A');
+  const { session: worker } = await f.spawn(daemon, 'worker', 'W', leader.addr);
+  await daemon.tick();
+  for (const { addr } of [leader, auditor]) {
+    const prompt = f.prompts.find(item => item.addr === addr).input;
+    assert.ok(prompt.endsWith('\n\nstart'));
+    const memory = prompt.slice(0, -'start'.length);
+    assert.ok(estimateTokens(memory) <= 400);
+    assert.match(memory, /charter\.md.*Require approval.*rulings\.md.*items\/fact-0\.md/s);
+    assert.doesNotMatch(memory, /fact-5\.md/);
+  }
+  assert.doesNotMatch(f.prompts.find(item => item.addr === worker.addr).input, /项目记忆|memory\/items/);
+});
 
 test('an explicit barrier spans tracking waves and delivers its whole set once across daemon recovery', async t => {
   const f = fixture(t);
