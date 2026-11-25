@@ -26,15 +26,17 @@ function inside(root, path) {
   return !isAbsolute(part) && part !== '..' && !part.startsWith(`..${sep}`);
 }
 
-function pathStat(path) {
+function pathStat(path, boundary) {
   if (isCredentialPath(path.replace(/^\//, ''))) return;
   try {
     const canonical = realpathSync(path);
-    if (!isCredentialPath(canonical.replace(/^\//, ''))) return statSync(canonical);
+    if ((!boundary || inside(boundary, canonical)) && !isCredentialPath(canonical.replace(/^\//, ''))) {
+      return statSync(canonical);
+    }
   } catch { /* Missing or inaccessible. */ }
 }
 
-function pathFacts(roots, gitRoot, snapshot) {
+function pathFacts(roots, gitRoot, snapshot, boundary) {
   const ref = snapshot?.tree ?? snapshot?.head;
   const tree = oid.test(ref ?? '') ? ref : undefined;
   const atEnd = path => Boolean(tree && gitRoot && git(gitRoot, 'cat-file', '-e', `${tree}:${path}`).status === 0);
@@ -50,10 +52,10 @@ function pathFacts(roots, gitRoot, snapshot) {
   function found(token) {
     const paths = isAbsolute(token) ? [resolve(token)] : roots.map(root => resolve(root, token))
       .filter(path => roots.some(root => inside(root, path)));
-    if (paths.some(path => pathStat(path))) return true;
-    if (isAbsolute(token) && !roots.some(root => inside(root, paths[0]))) return null;
+    if (paths.some(path => pathStat(path, boundary))) return true;
+    if (isAbsolute(token) && !roots.some(root => inside(root, paths[0]))) return boundary ? false : null;
     return Boolean(gitRoot && paths.some(path => {
-      if (!inside(gitRoot, path)) return false;
+      if (!inside(gitRoot, path) || boundary && !inside(boundary, path)) return false;
       const key = relative(gitRoot, path);
       return snapshot?.files?.some(file => ['A', '?', 'C', 'R'].includes(file.status) &&
         (file.path === key || key && file.path.startsWith(`${key}/`))) || atEnd(key);
@@ -69,10 +71,10 @@ function hasName(roots, name) {
     ':(exclude,glob)**/tasks/**', ':(exclude,glob)**/docs/**', ':(exclude,glob)**/.project/**', ...exclusions).status === 0);
 }
 
-export function checkFacts(body, cwd, project = cwd, snapshot) {
+export function checkFacts(body, cwd, project = cwd, snapshot, { pathBoundary } = {}) {
   const gitRoot = cwd && git(cwd, 'rev-parse', '--show-toplevel').stdout?.trim();
   const roots = [...new Set([gitRoot, cwd, project].filter(Boolean))];
-  const { checkable, found } = pathFacts(roots, gitRoot, snapshot);
+  const { checkable, found } = pathFacts(roots, gitRoot, snapshot, pathBoundary);
   const text = (body ?? '').replace(/^\s*>[^\r\n]*$/gm, '').replace(/\b(?:https?|file):\/\/[^\s\x60<>)]+/gi, '');
   const facts = new Map();
   const add = (kind, value) => facts.set(JSON.stringify([kind, value]), { kind, value });

@@ -58,7 +58,7 @@ loomd 复用证据核验来检查引用的 SHA 与项目内规范化路径，拒
 
 home loomd 是控制面，持有项目身份、权限、记忆修订、历史和汇总状态。cell loomd 是执行面，持有会话和可重放的采集进度。单台 Mac 由同一进程承担两者，仍遵守写入顺序和授权。
 
-home 私有数据目录下按项目保存 `memory/INDEX.md`、`memory/items/<id>.md`、`hist/raw/` 和 `hist/derived/`，Super 的用户级条目放独立空间。cell 只保留受限缓存、发件箱和采集检查点。目录均在仓库之外。现有 `.project/` 仍承载项目运行状态。Pilot 的 `.project/memory/` 格式可作导入来源，导入要经归属与引用核验。
+home 私有数据目录下按项目保存 `memory/INDEX.md`、`memory/items/<id>.md`、`hist/raw/` 和 `hist/derived/`，Super 的用户级条目放独立空间。cell 只保留受限缓存、发件箱和采集检查点。目录均在仓库之外。现有 `.project/` 仍承载项目运行状态。本仓库已接入 Pilot 记忆 v0，其 `.project/memory/` 目录可作 v1 导入来源，导入要经归属与引用核验。
 
 在线写入经 home 单写者校验后持久提交。离线读只返回最近的授权缓存，注明缓存 seq 与时间，授权到期即停止显示对应层。cell 离线提交只得到存入本地 outbox 的 `candidate` 回执，无法视为生效修订。重连后按原请求 ID 送 home，重新核对绑定、授权、证据及预期修订，再由有权角色决定是否采用。断线期间无法收到实时撤权消息，重连先同步授权，再读写或重播。
 

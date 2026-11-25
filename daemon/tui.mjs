@@ -4,7 +4,7 @@ import { join } from 'node:path';
 import { promisify } from 'node:util';
 import { projectMessages } from '../adapters/opencode/index.mjs';
 import { hc } from '../inbox/tui.mjs';
-import { openNativeTui } from '../runtimes/tui/transport.mjs';
+import { absoluteCommand, openNativeTui } from '../runtimes/tui/transport.mjs';
 import { codexFastArgs, nativeClaude } from './executables.mjs';
 import { eventPath, readText, writeState } from './io.mjs';
 import { codexEnvironmentArgs } from '../cli/project.mjs';
@@ -46,7 +46,8 @@ export async function openTui(job, row, project, recordTemporary, recordBinding)
 export async function refreshOpenCode(job, row, project) {
   let data;
   try {
-    const { stdout } = await exec('opencode', ['session', 'export', job.plannedNativeId, '--standalone'],
+    const executable = await absoluteCommand('opencode', 'opencode');
+    const { stdout } = await exec(executable, ['session', 'export', job.plannedNativeId, '--standalone'],
       { cwd: row.cwd, ...(job.isolatedWorkerHome && { env: { ...process.env, ...workerEnvironment(row) } }),
         timeout: 5000, maxBuffer: 8 * 1024 * 1024 });
     data = JSON.parse(stdout);

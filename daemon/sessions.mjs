@@ -19,6 +19,7 @@ import { wrapperFailedStart } from '../runtimes/tui/transport.mjs';
 import { controlHello, requestControl } from '../tui/pty-control.mjs';
 import { attachHost } from './host-client.mjs';
 import { releaseId } from './release.mjs';
+import { projectMemoryPrompt } from '../memory/project.mjs';
 
 const runtimeIds = { codex: 'codex', agy: 'antigravity', claude: 'claude', opencode: 'opencode' };
 const modes = new Set(['tui', 'headless']);
@@ -345,6 +346,10 @@ export function ownedSessions(project, index, report, {
       const { brief } = await generateBrief({ role: input.role, project: name, projectDir: project, from: predecessor.addr,
         index, locate: false });
       prompt = `先读前任简报及任务指定的交接记录，再开始接管。\n\n${brief.trimEnd()}\n\n## 启动指令\n${prompt}`;
+    }
+    if (row.role === 'leader' || row.role === 'auditor') {
+      try { prompt = await projectMemoryPrompt(project) + prompt; }
+      catch (error) { report(`Project memory unavailable: ${error.message}`); }
     }
     if (row.role === 'worker') prompt += `\n\n${cardConventions(row)}`;
     if (row.role === 'reviewer') prompt = [

@@ -28,7 +28,7 @@ export function nextController(project) {
   return controller;
 }
 
-const source = ['adapters', 'bin', 'cli', 'daemon', 'evidence', 'handover', 'inbox', 'index', 'lib', 'relay', 'runtimes',
+const source = ['adapters', 'bin', 'cli', 'daemon', 'evidence', 'handover', 'inbox', 'index', 'lib', 'memory', 'relay', 'runtimes',
   'schema', 'tui', 'watch', 'package.json', 'package-lock.json'];
 
 export function releaseDigest(root) {

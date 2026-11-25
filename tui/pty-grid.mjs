@@ -1,5 +1,7 @@
 // Adapted from Orca b7fd7caa, shared/terminal/input/terminal-grid-cursor-line-context.ts
 // and terminal-composer-draft.ts. Copyright (c) 2026 Lovecast Inc. See LICENSE.orca.
+import { isMiniComposerFooter, miniHint } from '../adapters/opencode/index.mjs';
+
 function undimmedText(line, cols, cell, trimRight, caret) {
   let text = '';
   let lastWritten = 0;
@@ -20,7 +22,6 @@ const codexFooter = /^\s*(?:gpt-\S+|o\d\S*).* [·•] /i;
 const codexKeys = /^\s*← for agents · \? for shortcuts\b/i;
 const agyTask = /^\s*●\s+\[\d{1,2}:\d{2}:\d{2}\]\s+\S/;
 const openCodeRow = /^\s*┃(?: |$)/;
-const openCodeFooter = / · OpenCode · ctrl\+p menu\s*$/i;
 
 export function readGrid(terminal, provider, extractDraft) {
   const buffer = terminal.buffer.active;
@@ -44,7 +45,7 @@ export function readGrid(terminal, provider, extractDraft) {
     if (last > 0 && !raw[last].trim()) last--;
     first = raw.findLastIndex((row, index) => index <= last && !lines[index]?.isWrapped && /^\s*›(?:\s|$)/.test(row));
   } else if (provider === 'opencode') {
-    const footer = raw.findLastIndex(row => openCodeFooter.test(row));
+    const footer = raw.findLastIndex(isMiniComposerFooter);
     if (footer < 1) return { text, cursor };
     last = footer - 1;
     while (last >= 0 && !raw[last].trim()) last--;
@@ -74,7 +75,7 @@ export function readGrid(terminal, provider, extractDraft) {
     else if (provider === 'opencode') draft += '\n' + line.replace(/^\s*┃ ?/, '');
     else draft += '\n' + (provider === 'codex' && line === ' ' ? '' : line.replace(/^ {2}/, ''));
   }
-  if (!draft.trim()) draft = '';
+  if (!draft.trim() || provider === 'opencode' && first === last && draft === miniHint) draft = '';
   const firstCell = lines[first]?.getCell(2, cell);
   // Claude uses ANSI bright black for the untouched startup suggestion on some themes.
   if (provider === 'claude' && cursor.y === first && cursor.x <= 2 &&

@@ -12,6 +12,7 @@ import { withTuiVersionWarnings } from './tui-version.mjs';
 import { pendingWork } from '../inbox/engine.mjs';
 import { readText } from '../daemon/io.mjs';
 import { readNotifications } from '../daemon/notifications.mjs';
+import { indexLine, searchMemory } from '../memory/project.mjs';
 import { join } from 'node:path';
 
 const strings = (...keys) => Object.fromEntries(keys.map(key => [key, { type: 'string' }]));
@@ -27,6 +28,7 @@ const help = {
     'L2 tool filters: [--tool shell|edit|read|other] [--cmd REGEX] [--tail N] [--only-failed] [--with-calls]',
   ],
   state: ['loom state <target> [--project DIR]'],
+  memory: ['loom memory search <query> [--project DIR] [--json]'],
   status: ['loom status --project DIR [--json]'],
   cost: ['loom cost [--project DIR]', 'Reports JSON totals from native usage and per-turn acceptance timing.'],
   stop: ['loom stop <target> [--project DIR]'],
@@ -49,6 +51,7 @@ const commands = {
     ...flags('json', 'diff', 'evidence', 'only-failed', 'with-calls') },
   state: projectArgs, stop: projectArgs, ls: projectArgs, cost: projectArgs,
   status: { ...projectArgs, ...flags('json') },
+  memory: { ...projectArgs, ...flags('json') },
   switch: { ...projectArgs, ...strings('to') },
   doctor: { ...projectArgs, ...flags('fix') },
   notifications: { ...projectArgs, ...flags('peek', 'take', 'history'), ...strings('needs-decision', 'audit-escalation', 'complete') },
@@ -221,7 +224,14 @@ export async function main(args) {
     if (command === 'doctor' && values.project === undefined) invalid(help.doctor[0]);
     const directory = projectDirectory(values.project);
     let result;
-    if (command === 'switch') {
+    if (command === 'memory') {
+      const [action, query] = positionals;
+      if (positionals.length !== 2 || action !== 'search' || !query.trim()) invalid(help.memory[0]);
+      const matches = searchMemory(directory, query);
+      if (values.json) emit(matches);
+      else if (matches.length) console.log(matches.map(indexLine).join('\n'));
+      return 0;
+    } else if (command === 'switch') {
       const [role] = positionals;
       if (positionals.length !== 1 || !['leader', 'auditor', 'worker'].includes(role) || !values.to?.trim()) invalid(help.switch[0]);
       try { result = await request(directory, 'switch', { role, to: values.to }); }
