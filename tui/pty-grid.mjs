@@ -14,11 +14,13 @@ function undimmedText(line, cols, cell, trimRight, caret) {
   return trimRight ? text.slice(0, lastWritten) : text;
 }
 
-const prompts = { claude: '❯', codex: '›', agy: '>' };
+const prompts = { claude: '❯', codex: '›', agy: '>', opencode: '┃' };
 const rule = /^\s*─{8,}\s*$/;
 const codexFooter = /^\s*(?:gpt-\S+|o\d\S*).* [·•] /i;
 const codexKeys = /^\s*← for agents · \? for shortcuts\b/i;
 const agyTask = /^\s*●\s+\[\d{1,2}:\d{2}:\d{2}\]\s+\S/;
+const openCodeRow = /^\s*┃(?: |$)/;
+const openCodeFooter = / · OpenCode · ctrl\+p menu\s*$/i;
 
 export function readGrid(terminal, provider, extractDraft) {
   const buffer = terminal.buffer.active;
@@ -41,6 +43,14 @@ export function readGrid(terminal, provider, extractDraft) {
     // Codex paints a spacer before the status row while the draft has focus.
     if (last > 0 && !raw[last].trim()) last--;
     first = raw.findLastIndex((row, index) => index <= last && !lines[index]?.isWrapped && /^\s*›(?:\s|$)/.test(row));
+  } else if (provider === 'opencode') {
+    const footer = raw.findLastIndex(row => openCodeFooter.test(row));
+    if (footer < 1) return { text, cursor };
+    last = footer - 1;
+    while (last >= 0 && !raw[last].trim()) last--;
+    first = last;
+    while (first >= 0 && (lines[first]?.isWrapped || openCodeRow.test(raw[first]))) first--;
+    first++;
   } else {
     let bottom = raw.findLastIndex(row => rule.test(row));
     // Agy adds a second rule below task notifications. The input is above them.
@@ -61,6 +71,7 @@ export function readGrid(terminal, provider, extractDraft) {
     const line = rowText(index);
     if (lines[index]?.isWrapped) draft += line;
     // Codex paints one unindented space on a blank paragraph row.
+    else if (provider === 'opencode') draft += '\n' + line.replace(/^\s*┃ ?/, '');
     else draft += '\n' + (provider === 'codex' && line === ' ' ? '' : line.replace(/^ {2}/, ''));
   }
   if (!draft.trim()) draft = '';
@@ -84,12 +95,6 @@ export function readGrid(terminal, provider, extractDraft) {
   const outsideComposer = [...raw.slice(0, first), ...raw.slice(last + 1)].join('\n');
   const vacantText = [...raw.slice(0, first), prompt, ...raw.slice(last + 1)].join('\n');
   const clip = provider === 'agy' && /^↑ ([1-9]\d*) more lines?\n/.exec(draft);
-  const agyScroll = clip && cursor.y === last && { hiddenRows: Number(clip[1]), tail: draft.slice(clip[0].length) };
-  return { text, composerText, cursor, draft, outsideComposer, vacantText, agyScroll };
-}
-
-// Orca's held-prompt guard proves the visible draft still belongs to the current request.
-// The marker and every visible line must match for full-text proof.
-export function matchesDraft(draft, expected) {
-  return draft === expected;
+  const scrolledDraft = clip && cursor.y === last && { hiddenRows: Number(clip[1]), tail: draft.slice(clip[0].length) };
+  return { text, composerText, cursor, draft, outsideComposer, vacantText, scrolledDraft };
 }

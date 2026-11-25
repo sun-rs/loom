@@ -9,6 +9,7 @@ import { codexFastArgs, nativeClaude } from './executables.mjs';
 import { eventPath, readText, writeState } from './io.mjs';
 import { codexEnvironmentArgs } from '../cli/project.mjs';
 import { managedEnvironment } from './release.mjs';
+import { workerEnvironment, workerProviderEnvironment } from './worker-environment.mjs';
 
 const exec = promisify(execFile);
 export const paneName = addr => `loom-${addr.replace(/^loom-/, '').replaceAll('-', '').slice(0, 22)}`;
@@ -27,7 +28,8 @@ export async function ownedPane(job, row) {
 
 export async function openTui(job, row, project, recordTemporary, recordBinding) {
   const hookSink = eventPath(project, row.addr);
-  const env = managedEnvironment(project, row.addr);
+  const env = { ...managedEnvironment(project, row.addr),
+    ...(job.isolatedWorkerHome && { ...workerEnvironment(row), ...workerProviderEnvironment(row) }) };
   const name = paneName(row.addr);
   const host = await openNativeTui({
     ...row, fast: job.fast, hookSink, name, env, sessionId: job.plannedNativeId, recordTemporary, recordBinding, previous: job.tui,
@@ -45,7 +47,8 @@ export async function refreshOpenCode(job, row, project) {
   let data;
   try {
     const { stdout } = await exec('opencode', ['session', 'export', job.plannedNativeId, '--standalone'],
-      { cwd: row.cwd, timeout: 5000, maxBuffer: 8 * 1024 * 1024 });
+      { cwd: row.cwd, ...(job.isolatedWorkerHome && { env: { ...process.env, ...workerEnvironment(row) } }),
+        timeout: 5000, maxBuffer: 8 * 1024 * 1024 });
     data = JSON.parse(stdout);
   } catch (error) {
     if (error.code === 'ENOENT') throw error;

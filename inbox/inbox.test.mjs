@@ -96,6 +96,46 @@ test('a native submission still reconciles when the wrapper withheld Enter', () 
   assert.equal(nativeDelivery({ id, attemptAt: 1000 }, observation).sessionId, sessionId);
 });
 
+test('Claude root transcript completion of a human-submitted delivery releases its FIFO queue', async t => {
+  const f = fixture(t);
+  const target = f.terminal('t9', 'claude', 'idle', false);
+  const sessionId = randomUUID();
+  const promptId = randomUUID();
+  const path = join(target.cwd, `${sessionId}.jsonl`);
+  const hook = (name, fields) => f.event(target, name, undefined, {
+    session_id: sessionId, transcript_path: path, ...fields,
+  });
+  hook('SessionStart');
+  const first = await f.submit(target);
+  const second = await f.submit(target);
+  f.refuse('held draft');
+  await f.reopen().step();
+  assert.equal(f.lookup(first).issue, 'uncertain');
+  f.refuse();
+  const at = Date.now();
+  const prompt = wireText(first, 'identical input');
+  hook('UserPromptSubmit', { prompt_id: promptId, receivedAt: at, prompt });
+  const transcript = (offset, row) => appendFileSync(path, JSON.stringify({
+    sessionId, cwd: target.cwd, timestamp: new Date(at + offset).toISOString(), ...row,
+  }) + '\n');
+  transcript(0, { type: 'user', message: { content: prompt } });
+  transcript(1, { type: 'assistant', message: { id: 'reply', content: 'correlated reply' } });
+  transcript(2, { type: 'system', subtype: 'stop_hook_summary' });
+  transcript(3, { type: 'system', subtype: 'turn_duration', isSidechain: true });
+  transcript(4, { type: 'system', subtype: 'turn_duration', sessionId: randomUUID() });
+  await f.reopen().step();
+  assert.equal(f.lookup(first).received.turnId, promptId);
+  assert.equal(f.lookup(first).completion, undefined);
+  assert.deepEqual(f.sends.map(([, input]) => deliveryId(input)), [first]);
+
+  transcript(5, { type: 'system', subtype: 'turn_duration' });
+  await f.reopen().step();
+  assert.deepEqual(f.lookup(first).completion, {
+    at: at + 5, sessionId, turnId: promptId, body: 'correlated reply', source: 'claude transcript turn_duration',
+  });
+  assert.deepEqual(f.sends.map(([, input]) => deliveryId(input)), [first, second]);
+});
+
 test('an external agy turn settles an incomplete delivered turn and lets queued worker results through', async t => {
   const f = fixture(t);
   const target = f.terminal('t9', 'agy', 'idle');

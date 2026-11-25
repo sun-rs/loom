@@ -73,6 +73,7 @@ export async function attachHost(project, row, job, save, controller, { stop = f
     try {
       const child = spawn(process.execPath, [join(root, 'daemon', 'session-host.mjs'), project, addr, incarnation, release], {
         cwd: row.cwd, detached: true, stdio: ['ignore', log, log],
+        ...(row.role === 'worker' && row.cli === 'codex' && { env: { ...process.env, OAR_CODEX_SANDBOX: 'inherit' } }),
       });
       child.once('error', error => { spawnError = error; });
       child.unref();

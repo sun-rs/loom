@@ -8,7 +8,7 @@ import claude from '../adapters/claude/index.mjs';
 import codex from '../adapters/codex/index.mjs';
 import { parseCodexTranscriptLine } from '../adapters/codex/transcript.mjs';
 import opencode from '../adapters/opencode/index.mjs';
-import { boundTranscript, finalFromStop, terminalEvents } from '../relay/sources.mjs';
+import { boundTranscript, finalFromStop, terminalEvents, withClaudeTranscriptStops } from '../relay/sources.mjs';
 import { deliveryId } from './message.mjs';
 import { controlTui } from '../runtimes/tui/transport.mjs';
 import { readRequestBook } from '../tui/request-book.mjs';
@@ -73,7 +73,7 @@ function activeTurn(terminal, current) {
   if (!current) return;
   return {
     hcTurn: terminal.turn,
-    since: current.receivedAt, sessionId: session(current), turnId: current.turn_id,
+    since: current.receivedAt, sessionId: session(current), turnId: current.turn_id ?? current.prompt_id,
   };
 }
 
@@ -127,15 +127,15 @@ function nativeInputState(provider, events) {
       opened ??= event;
       state = 'busy';
     } else if (end(provider, event)) {
-      const expected = opened?.turn_id ?? opened?.executionNum;
-      const actual = event.turn_id ?? event.executionNum;
+      const expected = opened?.turn_id ?? opened?.prompt_id ?? opened?.executionNum;
+      const actual = event.turn_id ?? event.prompt_id ?? event.executionNum;
       if (expected !== undefined && actual !== undefined && String(expected) !== String(actual)) continue;
       opened = undefined;
       state = 'idle';
     } else {
       continue;
     }
-    proof = { event: kind, at: event.receivedAt, turnId: event.turn_id };
+    proof = { event: kind, at: event.receivedAt, turnId: event.turn_id ?? event.prompt_id };
   }
   return { state: compacting ? 'busy' : state, proof, opened };
 }
@@ -166,7 +166,7 @@ export function nativeDelivery(message, observation) {
   const confirmation = !anchor && book(observation).get(message.id)?.confirmation;
   const confirmed = confirmation?.at >= message.attemptAt ?
     { at: confirmation.at, sessionId: confirmation.sessionId, turnId: confirmation.turnId } : undefined;
-  const receiptFor = row => ({ at: row.receivedAt, sessionId: session(row), turnId: row.turn_id });
+  const receiptFor = row => ({ at: row.receivedAt, sessionId: session(row), turnId: row.turn_id ?? row.prompt_id });
   const agyReceipt = provider === 'agy' && (anchor ? receiptFor(anchor) : confirmed ?? message.received);
   // Agy's root PreInvocation can omit the marker for human inputs. A later
   // user step in the same conversation ends our claim on subsequent Stops.
@@ -201,7 +201,9 @@ export function nativeDelivery(message, observation) {
       events.indexOf(row) > events.indexOf(anchor);
     if (provider === 'claude') {
       if (anchor && (session(row) !== session(anchor) || events.indexOf(row) <= events.indexOf(anchor))) return false;
-      if (anchor?.turn_id && row.turn_id) return row.turn_id === anchor.turn_id;
+      const anchorTurn = anchor?.turn_id ?? anchor?.prompt_id;
+      const stopTurn = row.turn_id ?? row.prompt_id;
+      if (anchorTurn && stopTurn) return stopTurn === anchorTurn;
       if (row === sequentialStop) return true;
       return claudeTurn(row)?.prompts.some(prompt => deliveryId(prompt) === message.id);
     }
@@ -222,11 +224,15 @@ export function nativeDelivery(message, observation) {
     return at == null ? result : { ...result, completion: { ...result, at, noReply: true,
       source: abort ? 'loom-pty confirmed interruption' : 'agy newer root PreInvocation' } };
   }
-  const completion = { at: stop.receivedAt, sessionId: session(stop), turnId: stop.turn_id };
+  const completion = receiptFor(stop);
   if (canceled(stop) || stop.hook_event_name === 'StopFailure' || stop.error) {
     return { ...result, completion: { ...completion, noReply: true, source: `${provider} native ${stop.hook_event_name}` } };
   }
   let reply;
+  if (provider === 'claude' && stop.source === 'claude transcript turn_duration') {
+    return { ...result, completion: { ...completion, source: stop.source,
+      ...(stop.last_assistant_message ? { body: stop.last_assistant_message } : { noReply: true }) } };
+  }
   const agyAttributed = provider === 'agy' &&
     (stop.deliveryId === message.id || transcriptContains(provider, rows(stop), stop, message.id));
   if (provider === 'opencode' && stop.last_assistant_message?.trim()) {
@@ -237,7 +243,7 @@ export function nativeDelivery(message, observation) {
     const turn = claudeTurn(stop);
     if (turn?.prompts.some(prompt => deliveryId(prompt) === message.id) && turn.reply) {
       reply = { body: turn.reply, source: 'claude Stop + transcript' };
-    } else if ((stop === sequentialStop || anchor?.turn_id && stop.turn_id === anchor.turn_id) && stop.last_assistant_message?.trim()) {
+    } else if ((stop === sequentialStop || result.turnId && completion.turnId === result.turnId) && stop.last_assistant_message?.trim()) {
       reply = { body: stop.last_assistant_message, source: 'claude Stop' };
     }
   } else if (provider !== 'agy' || agyAttributed) {
@@ -255,8 +261,9 @@ export function nativeDelivery(message, observation) {
 
 export function tui(project, call = hc, fixtureSend) {
   async function observe(terminal, provider, sessionId, binding) {
-    const events = terminalEvents(project, terminal.address, terminal)
+    let events = terminalEvents(project, terminal.address, terminal)
       .filter(row => !row.agent_id && session(row) && (!sessionId || session(row) === sessionId));
+    if (provider === 'claude') events = withClaudeTranscriptStops(terminal, events, sessionId);
     const snapshot = { terminal, events, provider, tui: binding, strictEnd: true };
     if (terminal.state === 'finished') return { ...snapshot, state: 'finished' };
     if (binding?.transport === 'loom-pty') {

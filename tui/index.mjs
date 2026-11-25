@@ -5,7 +5,7 @@ import { performance } from 'node:perf_hooks';
 import { setTimeout as sleep } from 'node:timers/promises';
 import { deliveryId, messageIdPattern, wireText } from '../inbox/message.mjs';
 import { QUIET_OUTPUT_MS } from './agent-input.mjs';
-import { agyDraftExpectation, verifyAgyDraft } from './agy-draft.mjs';
+import { draftExpectation, verifyDraft } from './composer-draft.mjs';
 import { blocksInput, currentTitle, isDialog, isFailure } from './agent-status.mjs';
 import { hcBackend, hcWrappedBackend } from './backends.mjs';
 import { nativeState } from './native.mjs';
@@ -138,13 +138,16 @@ export function bindTuiSession(terminal, provider, {
   function recoverStartup({ observation: frame, result }) {
     if (!terminal.key || !frame.writable || frame.humanActive || frame.quietForMs < QUIET_OUTPUT_MS ||
         ['busy', 'compacting'].includes(result.native.phase) || result.host.title === 'busy') return false;
-    const { kind, text, draft } = result.screen;
+    const { kind, text } = result.screen;
     let action;
     if (kind === 'trust-dialog' && autoTrustWorkspace && !pending && !result.native.turnSequence) {
       const [key] = provider.screen.dialogKeys(kind, text, evidence.cwd);
       if (key) action = { key, token: `trust:${key}`, limit: 2 };
-    } else if (kind === 'overlay' && !result.native.turnSequence && (!pending || paste?.humanSequence === frame.humanSequence)) {
-      action = { key: 'esc', token: 'overlay', limit: 1 };
+    } else if (kind === 'overlay' && (!pending || paste?.humanSequence === frame.humanSequence)) {
+      const [key] = provider.screen.dialogKeys(kind, frame.outsideComposer ?? text);
+      if (key === '0' || key === 'esc' && !result.native.turnSequence) {
+        action = { key, token: `overlay:${key}`, limit: 1 };
+      }
     } else if (result.blocker === 'draft-held' && paste?.id === pending) {
       const entry = requests.get(pending);
       if (entry.hostReceipt?.accepted === false && paste.humanSequence === frame.humanSequence &&
@@ -153,10 +156,7 @@ export function bindTuiSession(terminal, provider, {
           frame.outputSequence > paste.outputSequence && heldComposer(frame) &&
           !frame.outsideComposer?.includes(`[loom:${pending}]`) &&
           (result.native.phase === 'idle' || provider.screenStartup && !result.native.phase)) {
-        const body = draft.slice(draft.indexOf('\n') + 1);
-        const matches = provider.id === 'agy' ? verifyAgyDraft(frame, paste.agy) :
-          draft === wireText(pending, body) && digestOf(body) === entry.digest;
-        if (matches) action = { key: 'enter', token: pending, limit: 1, entry };
+        if (verifyDraft(frame, paste.expected)) action = { key: 'enter', token: pending, limit: 1, entry };
       }
     }
     if (!action) { startupFrame = undefined; return false; }
@@ -240,16 +240,15 @@ export function bindTuiSession(terminal, provider, {
       put(id, entry);
       pending = id;
       const input = wireText(id, text);
-      paste = { id, ...state.host, turnSequence: state.native.turnSequence,
-        agy: provider.id === 'agy' ? agyDraftExpectation(input) : undefined };
+      paste = { id, ...state.host, turnSequence: state.native.turnSequence, expected: draftExpectation(input) };
       try {
-        entry.hostReceipt = await terminal.writeIf(input, state, async (frame, { collapsed, agyDraft } = {}) => {
+        entry.hostReceipt = await terminal.writeIf(input, state, async (frame, { collapsed, held } = {}) => {
           const latest = await native.read();
           if (native.confirmations(id).count || latest.sessionId !== state.native.sessionId ||
               latest.turnSequence !== state.native.turnSequence || latest.activeSince !== state.native.activeSince ||
               latest.phase !== state.native.phase) return false;
           return !blocksInput(provider.screen.classify(frame.composerText ?? frame.text)) &&
-            (!agyDraft || heldComposer(frame)) &&
+            (!held || heldComposer(frame)) &&
             (!collapsed || frame.vacantText && classify(frame.vacantText) === 'idle') &&
             (sameInterruptedTurn(latest) || currentTitle(frame, latest, Date.now()) !== 'busy');
         });

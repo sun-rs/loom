@@ -1,10 +1,12 @@
 import { fileURLToPath } from 'node:url';
 import { randomUUID } from 'node:crypto';
 import claude from '../adapters/claude/index.mjs';
+import { matchesPastePlaceholder } from '../adapters/claude/screen.mjs';
+import { isClaudeTranscriptEnd } from '../adapters/claude/parse.mjs';
 import codex from '../adapters/codex/index.mjs';
 import agy from '../adapters/agy/index.mjs';
 import { hasHeldComposer } from '../adapters/agy/screen.mjs';
-import opencode, { miniDraft } from '../adapters/opencode/index.mjs';
+import opencode from '../adapters/opencode/index.mjs';
 import { parseAgyTranscriptLine } from '../adapters/agy/transcript.mjs';
 import { screenEvidence, stopFailure } from '../runtimes/tui/failure.mjs';
 import { deliveryId } from '../inbox/message.mjs';
@@ -27,6 +29,7 @@ export const providers = {
     restoresInterruptedDraft: true, // Escape can return the just-submitted prompt to the composer.
     screen: {
       ...claude.screen,
+      pastePlaceholder: matchesPastePlaceholder,
       classify(text) {
         if (/^\s*[⏺⎿]\s+API Error:\s+4(?!29)\d{2}\b/m.test(text)) return 'error';
         if (/^\s*[✻✳✶✢✽✺✹✸✷✴✵]\s+429\b[^\n]*retrying in /m.test(text)) return 'rate-limit';
@@ -74,6 +77,7 @@ export const providers = {
         return activity(failure === 'rate_limited' || failure === 'quota' ? 'rate-limit' : 'error');
       }
       if (row.type === 'system' && row.subtype === 'turn_aborted') return activity('idle', { interrupted: true });
+      if (isClaudeTranscriptEnd(row)) return activity('idle');
     },
   },
   codex: {
@@ -153,7 +157,7 @@ export const providers = {
   },
   opencode: {
     ...opencode,
-    screen: { ...opencode.screen, draft: miniDraft, hasEmptyComposer: text => opencode.screen.classify(text) === 'idle' },
+    screen: { ...opencode.screen, hasEmptyComposer: text => opencode.screen.classify(text) === 'idle' },
     start: options => ({ ...opencode.launch(options), sessionId: options.sessionId }),
     hook: row => row.hook_event_name === 'SessionStart' ? activity('idle') : undefined,
     transcriptRow: () => undefined,

@@ -29,7 +29,7 @@ export const validInput = text => hasText(text) && !/[\x00-\x08\x0b\x0c\x0e-\x1f
 const cardConventions = row => [
   '## Loom task conventions',
   `Task ${row.task}, working directory ${row.cwd}. Follow the card’s writable scope and acceptance commands. Start with the card and skip environment exploration or searches for AGENTS.md and skills to discover Loom conventions.`,
-  'Use $LOOM_BIN or loom (resolved by loom-injected PATH).',
+  'Invoke Loom commands through "$LOOM_BIN", the absolute executable path.',
   'Use relevant fragments of large files and output. Avoid rereading whole files already read. After the final acceptance passes, give the final reply immediately. Skip extra status/diff checks, rereads and reruns unless the card requires them.',
   `Final reply line 1: DONE ${row.task}, BLOCKED ${row.task} or FAILED ${row.task}.`,
   'Line 2: a one-line conclusion with the deliverable or the blocking decision. Line 3: Leftovers & deviations: none, or list the specific items.',
@@ -352,6 +352,7 @@ export function ownedSessions(project, index, report, {
       prompt,
     ].join('\n\n');
     const job = { row, firstId: randomUUID(), prompt, gate, requested, deny, release: releaseId(),
+      ...(row.role === 'worker' && { isolatedWorkerHome: true }),
       ...(cli === 'claude' && mode === 'tui' && { autoTrustWorkspace: input['trust-workspace'] ??
         (trustWorkspace && defaultTrustWorkspace(project, cwd)) }),
       ...(warnings.length && { warnings }),

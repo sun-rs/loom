@@ -1,8 +1,9 @@
 import assert from 'node:assert/strict';
-import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { appendFileSync, existsSync, mkdtempSync, readFileSync, realpathSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import test from 'node:test';
+import { withClaudeTranscriptStops } from '../relay/sources.mjs';
 import { createWatcher } from './index.mjs';
 import { parseResetAt } from './reset.mjs';
 
@@ -208,6 +209,29 @@ test('idle-without-stop requires an open matching turn and recovers when its Sto
   await watcher.poll();
   assert.deepEqual(f.events().map(event => event.type), ['stuck', 'recovered']);
   assert.ok(f.calls.every(([command]) => command !== 'send'));
+});
+
+test('a matching Claude transcript boundary clears a persisted idle-without-stop incident', async t => {
+  const f = setup(t, { cli: 'claude', text: fixture('claude', 'live-idle') });
+  f.session.cwd = f.terminal.cwd = realpathSync(f.cwd);
+  const transcript_path = join(f.session.cwd, 's1.jsonl');
+  const prompt = 'manual Enter';
+  f.hooks.push({ receivedAt: f.at, hook_event_name: 'UserPromptSubmit', session_id: 's1',
+    prompt_id: 'p1', transcript_path, prompt });
+  const transcript = row => appendFileSync(transcript_path, JSON.stringify({
+    sessionId: 's1', cwd: f.session.cwd, timestamp: new Date(f.at).toISOString(), ...row,
+  }) + '\n');
+  transcript({ type: 'user', message: { content: prompt } });
+  const create = () => f.create({ readHooks: session => withClaudeTranscriptStops(session, f.hooks, session.sessionId) });
+  const watcher = create();
+  await watcher.poll();
+  f.advance(4_000);
+  transcript({ type: 'system', subtype: 'stop_hook_summary' });
+  assert.equal((await watcher.poll())[0].reason, 'idle-without-stop');
+  f.advance(1);
+  transcript({ type: 'system', subtype: 'turn_duration' });
+  assert.equal((await create().poll())[0].state, 'idle');
+  assert.deepEqual(f.events().map(event => event.type), ['stuck', 'recovered']);
 });
 
 test('busy spinner seconds do not count as output, while text and tool hooks do', async t => {

@@ -23,7 +23,7 @@ export function hookTiming(session, rows, now) {
     const sessionId = native?.sessionId ?? row.sessionId;
     if (!native || !Number.isFinite(at) || at < (session.startedAt ?? 0) || at > now ||
         (session.sessionId && sessionId && session.sessionId !== sessionId)) continue;
-    const turn = row.turn ?? row.turnId ?? payload.turn_id ?? payload.turnId ?? null;
+    const turn = row.turn ?? row.turnId ?? payload.turn_id ?? payload.turnId ?? payload.prompt_id ?? null;
     events.push({ type: native.type, at, sessionId, turn });
   }
 

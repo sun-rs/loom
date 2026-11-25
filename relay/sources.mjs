@@ -1,14 +1,16 @@
-import { readFileSync, realpathSync } from 'node:fs';
+import { lstatSync, readFileSync, realpathSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { basename, dirname, join } from 'node:path';
 import { parseAgyTranscriptLine } from '../adapters/agy/transcript.mjs';
-import { parseTranscriptRow } from '../adapters/claude/parse.mjs';
+import { isClaudeTranscriptEnd, parseClaude, parseTranscriptRow } from '../adapters/claude/parse.mjs';
 import { parseCodexTranscriptLine } from '../adapters/codex/transcript.mjs';
+import { deliveryId } from '../inbox/message.mjs';
 
 const grace = 2500;
 const oarAddress = /^oar-[\da-f]{8}(?:-[\da-f]{4}){3}-[\da-f]{12}$/;
 const nonempty = value => typeof value === 'string' && value.trim() ? value : undefined;
 const within = (parent, path) => path === parent || path?.startsWith(`${parent}/`);
+const claudeTurnCache = new Map();
 function existingPath(path) {
   try { return path && realpathSync(path); } catch (error) {
     if (error.code !== 'ENOENT') throw error;
@@ -61,6 +63,62 @@ export function terminalEvents(project, addr, terminal) {
 
 export function boundTranscript(provider, terminal, stop) {
   return jsonl(transcriptPath(provider, realpathSync(terminal.cwd), terminal, stop));
+}
+
+function completedClaudeTurns(path, id, cwd) {
+  const stat = lstatSync(path, { bigint: true, throwIfNoEntry: false });
+  if (!stat?.isFile()) return [];
+  const revision = `${stat.dev}:${stat.ino}:${stat.size}:${stat.mtimeNs}`;
+  const cached = claudeTurnCache.get(path);
+  if (cached?.revision === revision && cached.cwd === cwd) return cached.turns;
+  const rows = jsonl(path).filter(row => row.sessionId === id && (!row.cwd || row.cwd === cwd) && !row.agent_id);
+  const boundaries = new Set(rows.filter(isClaudeTranscriptEnd).map(row => row.timestamp));
+  const turns = boundaries.size ? parseClaude(rows.map(row => JSON.stringify(row)).join('\n'))
+    .turns.filter(turn => turn.status === 'completed' && boundaries.has(turn.endedAt))
+    .map(({ endedAt, prompts, reply }) => ({ endedAt, prompts, reply })) : [];
+  claudeTurnCache.delete(path);
+  if (claudeTurnCache.size >= 16) claudeTurnCache.delete(claudeTurnCache.keys().next().value);
+  claudeTurnCache.set(path, { revision, cwd, turns });
+  return turns;
+}
+
+export function withClaudeTranscriptStops(terminal, events, sessionId) {
+  const bound = events.filter(row => !row.agent_id && !row.isSidechain && row.session_id);
+  const id = sessionId ?? bound.at(-1)?.session_id;
+  if (!id) return events;
+  const session = bound.filter(row => row.session_id === id);
+  const starts = [];
+  const byPrompt = new Map();
+  for (const row of session) {
+    const key = row.prompt_id ?? row.turn_id;
+    if (row.hook_event_name === 'UserPromptSubmit') {
+      const entry = { row, key };
+      starts.push(entry);
+      if (key) byPrompt.set(key, entry);
+    } else if (['Stop', 'StopFailure', 'Interrupt'].includes(row.hook_event_name)) {
+      const entry = key ? byPrompt.get(key) : starts.at(-1);
+      if (entry) entry.ended = true;
+    }
+  }
+  if (starts.every(entry => entry.ended)) return events;
+  const binding = session.findLast(row => row.transcript_path ?? row.transcriptPath);
+  const path = binding?.transcript_path ?? binding?.transcriptPath ?? terminal.transcriptPath;
+  if (typeof path !== 'string' || basename(path) !== `${id}.jsonl` || existingPath(path) !== path ||
+      transcriptPath('claude', realpathSync(terminal.cwd), terminal, { transcript_path: path }) !== path) return events;
+  const turns = completedClaudeTurns(path, id, terminal.cwd);
+  if (!turns.length) return events;
+  const stops = starts.flatMap(({ row, key, ended }, index) => {
+    if (ended) return [];
+    const next = starts[index + 1]?.row.receivedAt ?? Infinity;
+    const marker = row.deliveryId ?? deliveryId(row.prompt);
+    const turn = turns.find(({ endedAt, prompts }) =>
+      Date.parse(endedAt) >= row.receivedAt && Date.parse(endedAt) < next && prompts.some(prompt =>
+        marker ? deliveryId(prompt) === marker : prompt === row.prompt?.trim()));
+    if (!turn) return [];
+    return [{ cwd: terminal.cwd, session_id: id, prompt_id: key, receivedAt: Date.parse(turn.endedAt),
+      hook_event_name: 'Stop', deliveryId: marker, last_assistant_message: turn.reply, source: 'claude transcript turn_duration' }];
+  });
+  return stops.length ? [...events, ...stops].sort((a, b) => a.receivedAt - b.receivedAt) : events;
 }
 
 export function finalFromStop(provider, stop, rows) {

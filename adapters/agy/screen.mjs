@@ -15,6 +15,7 @@ const trustFooter = /^↑\/↓\s+Navigate\s+·\s+enter Confirm$/i;
 const pickerFooter = /^Keyboard:.*\besc Go Back$/i;
 const announcementTitle = /^Introducing Gemini \d+(?:\.\d+)? (?:Neon|Carbon|Argon|Hydrogen)[!.]?(?:\s+[·•]\s+|\s{2,}|$)/i;
 const announcementDismiss = /^(?:\(\s*)?(?:press )?esc to dismiss\s*[.)]?$/i;
+const survey = /^How['’]s the CLI experience so far\? Help us improve: \[1\] Good \[2\] Fine \[3\] Bad \[0\] Skip$/i;
 const ruleRow = new RegExp(`^${RULE}$`);
 const settingsError = /^failed to (?:load|read|save|write) settings\b/i;
 const interactiveStatus = /[─↑↓⏎]|\b(?:esc|enter|select|cancel|confirm|navigate|for shortcuts)\b|^(?:error|warning|failed|unable)\b/i;
@@ -50,6 +51,24 @@ export function hasHeldComposer(text) {
     heldComposer.test(rows.slice(-12, -1).join('\n'));
 }
 
+function overlayKey(rows) {
+  const lines = rows.slice(-18).map(row => row.replace(/^[│┃]\s+|\s+[│┃]$/g, '').trim());
+  for (let start = 0; start < lines.length; start++) {
+    if (!/^How['’]s the CLI experience so far\?/i.test(lines[start])) continue;
+    for (let end = start + 1; end <= Math.min(lines.length, start + 5); end++) {
+      if (survey.test(lines.slice(start, end).join(' ').replace(/\s+/g, ' '))) return '0';
+    }
+  }
+  const announcement = rows.slice(-18).map(row => /^[│┃]\s+(.+?)(?:\s*[│┃])?$/.exec(row)?.[1].trim());
+  const title = announcement.findLastIndex(row => row && announcementTitle.test(row));
+  if (title < 0) return;
+  if (announcementDismiss.test(announcement[title].replace(announcementTitle, ''))) return 'esc';
+  for (const row of announcement.slice(title + 1)) {
+    if (!row) break;
+    if (announcementDismiss.test(row)) return 'esc';
+  }
+}
+
 export function classify(text) {
   const rows = rowsOf(text);
   const tail = rows.join('\n');
@@ -59,15 +78,7 @@ export function classify(text) {
   if (/^(?:Select login method:|Welcome to the Antigravity CLI\. You are currently not signed in\.)$/im.test(tail)) {
     return 'auth-fail';
   }
-  const announcement = rows.slice(-18).map(row => /^[│┃]\s+(.+?)(?:\s*[│┃])?$/.exec(row)?.[1].trim());
-  const title = announcement.findLastIndex(row => row && announcementTitle.test(row));
-  if (title >= 0) {
-    if (announcementDismiss.test(announcement[title].replace(announcementTitle, ''))) return 'overlay';
-    for (const row of announcement.slice(title + 1)) {
-      if (!row) break;
-      if (announcementDismiss.test(row)) return 'overlay';
-    }
-  }
+  if (overlayKey(rows)) return 'overlay';
   if (/^(?:Switch Model|Select a model:?|Choose a theme:?|Select a conversation:?|Resume Conversation)$/im.test(tail) &&
       pickerFooter.test(footer)) return 'picker';
   if (/(?:Allow once|Allow for this session|Do you want to (?:allow|run)|Permission Required)/i.test(tail) &&
@@ -83,6 +94,10 @@ export function classify(text) {
 
 export function dialogKeys(kind, text) {
   const rows = rowsOf(text);
+  if (kind === 'overlay') {
+    const key = overlayKey(rows);
+    return key ? [key] : [];
+  }
   if (kind === 'trust-dialog' && trustFooter.test(rows.at(-1) ?? '') &&
       rows.at(-2) === 'No, exit' && rows.at(-3) === '> Yes, I trust this folder' &&
       rows.some(line => line === 'Do you trust the contents of this project?')) return ['enter'];

@@ -1,7 +1,6 @@
 import { performance } from 'node:perf_hooks';
 import { setTimeout as sleep } from 'node:timers/promises';
-import { matchesDraft } from './pty-grid.mjs';
-import { agyDraftExpectation, verifyAgyDraft } from './agy-draft.mjs';
+import { draftExpectation, verifyDraft } from './composer-draft.mjs';
 
 // Orca b7fd7caa3, shared/agent-launch/startup/agent-prompt-injection.ts.
 export const AGENT_PROMPT_BRACKETED_PASTE_START = '\x1b[200~';
@@ -48,7 +47,7 @@ async function submitAgyComposer(text, { before, read, write, valid, verify }) {
     const priorOutput = frame.outputSequence;
     const readbackDeadline = Math.min(deadline, performance.now() + DRAFT_READBACK_MS);
     prefix += segment;
-    const expected = agyDraftExpectation(prefix);
+    const expected = draftExpectation(prefix);
     write(bracket(segment));
     let matched;
     do {
@@ -56,9 +55,9 @@ async function submitAgyComposer(text, { before, read, write, valid, verify }) {
       if (frame.exited || frame.humanSequence !== before.humanSequence) return denied('human-or-exit-during-paste');
       if (!sameInput(before, frame)) return denied('composer-changed-during-paste');
       if (frame.writable && frame.outputSequence > priorOutput && frame.quietForMs >= QUIET_OUTPUT_MS) {
-        const observed = verifyAgyDraft(frame, expected, proof);
+        const observed = verifyDraft(frame, expected, proof);
         if (observed) {
-          if (verify && !await verify(frame, { agyDraft: true })) return denied('composer-blocked-during-paste');
+          if (verify && !await verify(frame, { held: true })) return denied('composer-blocked-during-paste');
           if (valid(frame)) { matched = observed; break; }
         }
       }
@@ -73,26 +72,24 @@ async function submitAgyComposer(text, { before, read, write, valid, verify }) {
 }
 
 export async function submitComposer(text, options) {
-  const { before, provider, read, write, valid, verify, observeEcho } = options;
+  const { before, provider, pastePlaceholder, read, write, valid, verify, observeEcho } = options;
   if (provider === 'agy') return submitAgyComposer(text, options);
+  if (before.draft !== '') return denied('draft-unverified');
   const pastedAt = performance.now();
   write(bracket(text));
   const marker = text.split('\n', 1)[0];
-  const held = frame => matchesDraft(frame.draft, text) && !frame.outsideComposer?.includes(marker);
+  const expected = draftExpectation(text);
+  const held = frame => verifyDraft(frame, expected);
   // Orca native-chat-paste-landed.ts checks a paste chip after an empty
   // composer and an unchanged reread. Claude's +N counts line breaks.
-  const lineBreaks = (text.match(/\r\n?|\n/g) ?? []).length;
-  const showsPaste = frame => {
-    if (provider !== 'claude' || before.draft !== '' || !lineBreaks || frame.outsideComposer?.includes(marker)) return false;
-    const chip = /^\[Pasted text #[1-9]\d* \+([1-9]\d*) lines\]$/.exec(frame.draft);
-    return chip && Number(chip[1]) === lineBreaks;
-  };
+  const showsPaste = frame => !frame.outsideComposer?.includes(marker) && pastePlaceholder?.(frame.draft, text);
 
   // Adapted from Orca terminal-agent-prompt-submit.ts and terminal-agent-prompt-resubmit.ts.
   // Every Enter needs a current view of this draft and a check of native turn activity.
   let first;
   let previousPasteFrame;
   let collapsed;
+  let normalized;
   do {
     const frame = await read();
     if (frame.exited || frame.humanSequence !== before.humanSequence) return denied('human-or-exit-during-paste');
@@ -100,9 +97,13 @@ export async function submitComposer(text, options) {
     const paste = showsPaste(frame);
     collapsed = paste && previousPasteFrame === frame.generation && frame.quietForMs >= QUIET_OUTPUT_MS;
     previousPasteFrame = paste ? frame.generation : undefined;
-    if (frame.writable && (held(frame) || collapsed) && frame.outputSequence > before.outputSequence &&
+    normalized = frame.draft !== text;
+    if (frame.writable && (collapsed || held(frame) && (!normalized || frame.quietForMs >= QUIET_OUTPUT_MS)) &&
+        frame.outputSequence > before.outputSequence &&
         performance.now() - pastedAt >= AGENT_PROMPT_POST_PASTE_SUBMIT_DELAY_MS) {
-      if (verify && !await verify(frame, { collapsed: Boolean(collapsed) })) return denied('composer-blocked-during-paste');
+      if (verify && !await verify(frame, { collapsed: Boolean(collapsed), held: normalized && !collapsed })) {
+        return denied('composer-blocked-during-paste');
+      }
       if (valid(frame)) { first = frame; break; }
     }
     await sleep(35);
@@ -110,9 +111,9 @@ export async function submitComposer(text, options) {
   if (!first) return denied('draft-unverified');
 
   const readbackMs = Math.round(performance.now() - pastedAt);
-  if (collapsed) {
+  if (collapsed || normalized) {
     write(AGENT_PROMPT_SUBMIT);
-    return { accepted: true, outcome: 'verified-collapsed-paste', readbackMs };
+    return { accepted: true, outcome: collapsed ? 'verified-collapsed-paste' : 'verified-normalized-draft', readbackMs };
   }
   const echoed = observeEcho(marker);
   write(AGENT_PROMPT_SUBMIT);
@@ -121,7 +122,7 @@ export async function submitComposer(text, options) {
   do {
     await sleep(100);
     const frame = await read();
-    if (frame.exited || !sameInput(before, frame) || !held(frame)) return receipt;
+    if (frame.exited || !sameInput(before, frame) || frame.draft !== text || !held(frame)) return receipt;
     if (verify && !await verify(frame)) return receipt;
     if (performance.now() < retryAfter) continue;
     // A pre-Enter paint cannot prove a prompt was held. Require a new child paint

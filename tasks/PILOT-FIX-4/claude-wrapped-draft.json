@@ -1,0 +1,6 @@
+{
+  "cols": 200,
+  "rows": 12,
+  "payload": "[loom:2d7cf3f7-1262-467c-ad42-6321e28a35fd]\nPILOT-FIX-4. Reply with only OK and use no tools. The isolated native Claude terminal renders this long Loom delivery in a wrapped editable line. The verifier checks the original text from the rendered rows and submits once with the original marker.",
+  "text": "────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\n❯ [loom:2d7cf3f7-1262-467c-ad42-6321e28a35fd]\n  PILOT-FIX-4. Reply with only OK and use no tools. The isolated native Claude terminal renders this long Loom delivery in a wrapped editable line. The verifier checks the original text from the\n  rendered rows and submits once with the original marker.\n────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\n  ⏵⏵ bypass permissions on (shift+tab to cycle)"
+}

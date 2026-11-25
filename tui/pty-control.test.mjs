@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import { EventEmitter } from 'node:events';
-import { appendFile, mkdtemp, readFile, rm } from 'node:fs/promises';
+import { appendFile, mkdtemp, readFile, realpath, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
@@ -24,21 +24,22 @@ test('Codex draft readback skips an empty paragraph placeholder and preserves in
   } finally { grid.dispose(); }
 });
 
-async function setup(t, { afterPaste, firstEnter, announce, hidePart, collapsedScreen } = {}) {
-  const cwd = await mkdtemp(join(tmpdir(), 'lpt-'));
+async function setup(t, { afterPaste, firstEnter, announce, hidePart, collapsedScreen, feedback, transcript } = {}) {
+  const cwd = await mkdtemp(join(await realpath(tmpdir()), 'lpt-'));
   t.after(() => rm(cwd, { recursive: true, force: true }));
   const socket = join(cwd, 's');
   const sessionId = randomUUID();
   const incarnation = randomUUID();
   const hookSink = join(cwd, 'hooks.jsonl');
   const bookPath = join(cwd, 'requests.jsonl');
+  const transcriptPath = join(cwd, `${sessionId}.jsonl`);
   const hook = fields => appendFile(hookSink, JSON.stringify({ cwd, session_id: sessionId, receivedAt: Date.now(), ...fields }) + '\n');
-  await hook({ hook_event_name: 'SessionStart' });
+  await hook({ hook_event_name: 'SessionStart', ...(transcript && { transcript_path: transcriptPath }) });
   let draft = '';
   let overlay = false;
   let enterCount = 0;
-  const provider = announce ? providers.agy : providers.claude;
-  const prompt = announce ? '>' : '❯';
+  const provider = announce || feedback ? providers.agy : providers.claude;
+  const prompt = provider.id === 'agy' ? '>' : '❯';
   const writes = [];
   const events = new EventEmitter();
   const subscribe = (event, callback) => {
@@ -53,7 +54,8 @@ async function setup(t, { afterPaste, firstEnter, announce, hidePart, collapsedS
     const displayed = hidePart && draft ? draft.slice(0, -1) : draft;
     const footer = announce && draft ? 'accept-edits · Gemini 4 Neon (Low)' : '? for shortcuts';
     const card = overlay ? '┃ Introducing Gemini 4 Neon\r\n┃ esc to dismiss\r\n' : '';
-    events.emit('data', Buffer.from(`\x1b[2J\x1b[H${card}──────────\r\n${prompt} ${displayed.replaceAll('\n', '\r\n  ')}\r\n──────────\r\n${footer}`));
+    const survey = feedback && enterCount ? "How's the CLI experience so far? Help us improve:\r\n[1] Good [2] Fine [3] Bad [0] Skip\r\n" : '';
+    events.emit('data', Buffer.from(`\x1b[2J\x1b[H${card}${survey}──────────\r\n${prompt} ${displayed.replaceAll('\n', '\r\n  ')}\r\n──────────\r\n${footer}`));
   };
   const pty = {
     spawn: () => ({
@@ -68,10 +70,12 @@ async function setup(t, { afterPaste, firstEnter, announce, hidePart, collapsedS
         } else if (bytes === '\r') {
           enterCount++;
           if (enterCount !== 1 || !['held', 'discarded'].includes(firstEnter)) {
-            void hook({ hook_event_name: announce ? 'PreInvocation' : 'UserPromptSubmit', prompt: draft });
+            void hook({ hook_event_name: provider.id === 'agy' ? 'PreInvocation' : 'UserPromptSubmit', prompt: draft })
+              .then(() => feedback && hook({ hook_event_name: 'Stop', fullyIdle: true, executionNum: 1 }));
           }
           if (enterCount !== 1 || firstEnter === undefined || firstEnter === 'discarded') draft = '';
-        } else if (bytes === '\x1b' && overlay) overlay = false;
+        } else if (bytes === '0' && feedback) return; // Keep the survey painted to exercise the retry bound.
+        else if (bytes === '\x1b' && overlay) overlay = false;
         else if (bytes === '\x15') draft = '';
         else draft += bytes;
         draw();
@@ -101,8 +105,43 @@ async function setup(t, { afterPaste, firstEnter, announce, hidePart, collapsedS
   }
   assert.equal(ready.ready, true);
   return { terminal, writes, account, socket, bookPath, ready, incarnation, data,
+    appendTranscript: row => appendFile(transcriptPath, JSON.stringify({ sessionId, cwd, timestamp: new Date().toISOString(), ...row }) + '\n'),
     restartControl: async () => { await close(); close = await listenControl(socket, bind(), incarnation); } };
 }
+
+test('an agy feedback survey after a native turn sends only Skip once', async t => {
+  const f = await setup(t, { feedback: true });
+  assert.equal((await f.account('submit', { id: randomUUID(), text: 'first' })).kind, 'confirmed');
+  let state;
+  for (let i = 0; i < 20; i++) {
+    state = await f.account('state');
+    if (f.writes.includes('0')) break;
+    await sleep(35);
+  }
+  assert(state.native.turnSequence > 0);
+  assert.equal(state.blocker, 'overlay');
+  await sleep(1050);
+  assert.equal((await f.account('state')).blocker, 'overlay');
+  assert.deepEqual(f.writes.slice(1), ['\r', '0']);
+});
+
+test('Claude releases an idle composer when the bound root transcript records turn_duration', async t => {
+  const f = await setup(t, { transcript: true });
+  assert.equal((await f.account('submit', { id: randomUUID(), text: 'first' })).kind, 'confirmed');
+  assert.equal((await f.account('state')).native.phase, 'busy');
+  await f.appendTranscript({ type: 'system', subtype: 'stop_hook_summary' });
+  await f.appendTranscript({ type: 'system', subtype: 'turn_duration', isSidechain: true });
+  assert.equal((await f.account('state')).native.phase, 'busy');
+  await f.appendTranscript({ type: 'system', subtype: 'turn_duration' });
+  assert.equal((await f.account('state')).native.phase, 'idle');
+  let state;
+  for (let i = 0; i < 20; i++) {
+    state = await f.account('state');
+    if (state.ready) break;
+    await sleep(20);
+  }
+  assert.equal(state.ready, true);
+});
 
 test('socket rejects a stale frame or a recent human draft without writing any automated bytes', async t => {
   const f = await setup(t);

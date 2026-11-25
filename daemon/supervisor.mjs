@@ -5,6 +5,7 @@ import { projectIndex } from '../cli/project.mjs';
 import { inbox, pendingWork, receipt } from '../inbox/engine.mjs';
 import { isBlockedReply, messageIdPattern } from '../inbox/message.mjs';
 import { relay } from '../relay/project.mjs';
+import { withClaudeTranscriptStops } from '../relay/sources.mjs';
 import { createWatcher } from '../watch/index.mjs';
 import { ownedSessions, validInput } from './sessions.mjs';
 import { jsonRows, prepareJournal, readText } from './io.mjs';
@@ -83,7 +84,10 @@ export function createSupervisor(project, {
 
   const watcher = createWatcher({
     listSessions: () => sessions.rows().filter(row => row.backend === 'headless' || row.pane),
-    readHooks: row => sessions.events(row.addr),
+    readHooks(row) {
+      const events = sessions.events(row.addr);
+      return row.cli === 'claude' && row.backend === 'tui' ? withClaudeTranscriptStops(row, events, row.sessionId) : events;
+    },
     eventFile: watchJournal,
     hc: sessions.managedHc, report, now, ...watchOptions,
     async inspectRuntime(row) {
