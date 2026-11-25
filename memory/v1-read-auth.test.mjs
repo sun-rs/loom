@@ -335,3 +335,123 @@ test('U11 跨项目共享只读授权受角色、期限、撤销和卡片权限�
   assert.equal((await access.revoke(superBinding, renewed.grant.id)).ok, true);
   await check(worker, false, '已撤销');
 });
+
+for (const [name, superProject, targetProject] of [
+  ['no session or target project is denied', null, undefined],
+  ['an explicit target works without a session project', null, 'A'],
+  ['an explicit target works from the source project', 'B', 'A'],
+]) {
+  test(`M2 cross-project grant: ${name}`, async () => {
+    const { createAccess } = await import('./access.mjs');
+    const entry = item('foreign-note', { project: 'B' });
+    const access = createAccess({ entries: [entry], now: () => start });
+    const options = {
+      sourceProject: 'B', recipient: leader.principal, reason: 'Approved reference',
+      expiresAt: stamp(start + day),
+    };
+    if (targetProject !== undefined) options.targetProject = targetProject;
+    const result = await access.grant(session('super', { project: superProject }), options);
+    const shown = await access.show(leader, entry.id, { project: 'B' });
+    if (targetProject === undefined) {
+      assert.deepEqual([result.ok, shown.item], [false, null]);
+    } else {
+      assert.deepEqual([result.ok, shown.item?.id, shown.item?.body], [true, entry.id, entry.body]);
+    }
+  });
+}
+
+function timedStore(createMemoryStore, now) {
+  let state;
+  return createMemoryStore({
+    now, staleDays: 1, readState: () => structuredClone(state),
+    commitState: next => { state = structuredClone(next); },
+    evidence: { root: '/fixture', realpath: path => path },
+  });
+}
+
+const lesson = {
+  kind: 'lesson', layer: 'shared', project: 'A', title: 'Check the release notes',
+  body: 'Review the notes before release.', source: { path: 'release.md' }, checkedAt: stamp(start),
+};
+
+test('M4 an Auditor can revise and restore a stale lesson and cannot edit an active lesson', async () => {
+  const { createMemoryStore } = await import('./store.mjs');
+  let time = start;
+  const store = timedStore(createMemoryStore, () => time);
+  const created = await store.write(leader, {
+    op: 'put', requestId: 'create', expectedRevision: null, entry: lesson,
+  });
+  assert.equal(created.ok, true);
+  const { id, revision } = created.item;
+  const update = { op: 'put', id, entry: { ...lesson, body: 'Review the notes and the rollback plan.' } };
+  const denied = await store.write(auditor, { ...update, requestId: 'active', expectedRevision: revision });
+  assert.deepEqual([denied.ok, denied.code], [false, 'forbidden']);
+
+  time += 2 * day;
+  await store.maintain();
+  const { item: stale } = await store.access.show(leader, id);
+  assert.equal(stale.status, 'stale');
+  const restored = await store.write(auditor, {
+    ...update, requestId: 'restore', expectedRevision: stale.revision,
+    entry: { ...update.entry, checkedAt: stamp(time) },
+  });
+  assert.equal(restored.ok, true, JSON.stringify(restored));
+  const { item: active } = await store.access.show(leader, id);
+  assert.deepEqual([active.id, active.status, active.revision, active.body],
+    [id, 'active', stale.revision + 1, update.entry.body]);
+  assert.deepEqual(ids((await store.access.index(leader)).rows), [id]);
+
+  const deniedAgain = await store.write(auditor, {
+    ...update, requestId: 'active-again', expectedRevision: active.revision,
+  });
+  assert.deepEqual([deniedAgain.ok, deniedAgain.code], [false, 'forbidden']);
+});
+
+test('M6 a cross-project Worker attachment uses the receiving card permissions', async () => {
+  const { createAccess } = await import('./access.mjs');
+  const entry = item('authored-abroad', { project: 'B', cardId: 'author-card-99' });
+  const worker = session('worker', {
+    cardId: 'receiving-card', attachments: [entry.id], dependencies: [{ project: 'B', cardId: 'dependency-card' }],
+  });
+  const access = createAccess({ entries: [entry], now: () => start });
+  const granted = await access.grant(session('super'), {
+    sourceProject: 'B', recipient: worker.principal, reason: 'Declared dependency', expiresAt: stamp(start + day),
+  });
+  assert.equal(granted.ok, true);
+  for (const binding of [{ ...worker, attachments: [] }, { ...worker, dependencies: [] }]) {
+    assert.equal((await access.show(binding, entry.id, { project: 'B' })).item, null);
+  }
+  const shown = await access.show(worker, entry.id, { project: 'B' });
+  const attached = await access.attachments(worker, { project: 'B', keywords: ['probe'] });
+  assert.deepEqual([shown.item?.body, ids(attached.rows)], [entry.body, [entry.id]]);
+});
+
+test('M8 delta retry reuses the original batch after an entry ages to stale', async () => {
+  const { createMemoryStore } = await import('./store.mjs');
+  const { createDeltaDelivery } = await import('./delta.mjs');
+  let time = start;
+  const store = timedStore(createMemoryStore, () => time);
+  const create = (requestId, entry) => store.write(leader, {
+    op: 'put', requestId, expectedRevision: null, entry,
+  });
+  const first = await create('older', lesson);
+  time += day / 2;
+  const second = await create('newer', { ...lesson, title: 'Confirm the release window' });
+  assert.equal(first.ok, true);
+  assert.equal(second.ok, true);
+  const sent = [];
+  const delta = createDeltaDelivery({
+    access: store.access, binding: leader, prefix: frozen, initialCursor: 0,
+    send: delivery => { sent.push(delivery); },
+  });
+  const task = { deliveryId: 'retry-stale', body: 'Check release readiness.' };
+  const original = await delta.deliver(task);
+  assert.deepEqual(ids(original.suffix.rows), [first.item.id, second.item.id]);
+
+  time = start + day;
+  await store.maintain();
+  assert.equal((await store.access.show(leader, first.item.id)).item.status, 'stale');
+  assert.equal((await store.access.show(leader, second.item.id)).item.status, 'active');
+  const retry = await delta.deliver(task);
+  assert.deepEqual([retry, sent, await delta.cursor()], [original, [original, original], 0]);
+});

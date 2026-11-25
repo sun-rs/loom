@@ -241,3 +241,55 @@ test('U14 preserves CAS and replay receipts while disconnected writes stay in th
   assert.deepEqual(await cell.show(auditor, id), cached);
   assert.deepEqual(await home.access.show(auditor, id), authoritative);
 });
+
+for (const [name, replacement] of [
+  ['invalidated', null],
+  ['switched to an unauthorized role', { ...auditor, role: 'worker' }],
+]) {
+  test(`M7 offline show hides a cached body when the local binding is ${name}`, async () => {
+    const { createCellMemory } = await import('./cas-cache.mjs');
+    const { store: home } = await fixture();
+    const created = await home.write(auditor, put('cache-entry'));
+    assert.equal(created.ok, true);
+    const { id } = created.item;
+    let current = auditor;
+    let online = true;
+    const cell = createCellMemory({
+      now, io: memoryIO(), home, isOnline: () => online,
+      getBinding: sessionId => sessionId === auditor.sessionId ? current : null,
+    });
+    assert.equal((await cell.show(auditor, id)).item.body, draft.body);
+    online = false;
+    assert.equal((await cell.show(auditor, id)).item.body, draft.body);
+
+    current = replacement;
+    assert.deepEqual(await cell.show(auditor, id), { item: null, seq: null });
+  });
+}
+
+test('M9 merging a candidate records web and MCP observations from the reviewer session', async () => {
+  const reviewer = binding('merge-review-session', 'auditor');
+  const observations = [
+    { kind: 'web', location: 'https://example.test/merge-review', observedAt: checkedAt },
+    { kind: 'mcp', location: 'mcp://fixture/merge-review', observedAt: checkedAt },
+  ];
+  const { store } = await fixture({
+    getObservations: sessionId => sessionId === reviewer.sessionId ? observations : [],
+  });
+  const target = await store.write(auditor, put('merge-target'));
+  const candidate = await store.write(worker, put('merge-candidate', {
+    ...draft, kind: 'candidate', layer: 'candidate', proposedKind: 'ruling',
+    body: 'Confirm the checks before approving the release.',
+  }, { op: 'propose' }));
+  assert.equal(target.ok, true);
+  assert.equal(candidate.ok, true);
+  const merged = await store.write(reviewer, {
+    op: 'merge', requestId: 'merge', cardId: worker.cardId,
+    id: candidate.item.id, expectedRevision: candidate.item.revision,
+    targetId: target.item.id, targetExpectedRevision: target.item.revision, body: candidate.item.body,
+  });
+  assert.equal(merged.ok, true, JSON.stringify(merged));
+  assert.equal(merged.item.id, target.item.id);
+  const { item: saved } = await store.access.show(reviewer, target.item.id);
+  assert.deepEqual([merged.item.externalSource, saved.externalSource], [observations, observations]);
+});

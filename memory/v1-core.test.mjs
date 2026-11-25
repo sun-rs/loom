@@ -434,3 +434,149 @@ test('U04 integrated write applies authorization, validation, redaction, dedup a
   assert.deepEqual((await createDelivery(foreign)).suffix.rows, []);
   assert.deepEqual(await access.show(foreign, updated.id), await access.show(foreign, 'unknown-id'));
 });
+
+function proposeForReview(proposedKind) {
+  return put('propose-for-review', {
+    ...fact, kind: 'candidate', layer: 'candidate', proposedKind,
+    body: 'Candidate guidance unique to the source proposal.',
+  }, { op: 'propose' });
+}
+
+test('M1 forgetting a merge target purges the source candidate and its old receipts', async () => {
+  const { store, readState } = await fixture();
+  const { leader, worker } = bindings;
+  const create = put('create-target');
+  const target = saved(await store.write(leader, create));
+  const propose = proposeForReview('lesson');
+  const candidate = saved(await store.write(worker, propose));
+  const merge = {
+    op: 'merge', requestId: 'merge-candidate', id: candidate.id, cardId: worker.cardId,
+    expectedRevision: candidate.revision, targetId: target.id, targetExpectedRevision: target.revision,
+    body: `${target.body} ${candidate.body}`,
+  };
+  const merged = await store.write(leader, merge);
+  const item = saved(merged);
+  assert.equal(merged.candidate.status, 'merged');
+  assert.equal((await store.access.show(leader, candidate.id)).item.body, candidate.body);
+  saved(await store.write(leader, {
+    op: 'forget', requestId: 'forget-target', id: target.id, expectedRevision: item.revision,
+  }));
+
+  const snapshot = JSON.stringify(readState());
+  const replay = JSON.stringify([
+    await store.write(worker, propose), await store.write(leader, merge), await store.write(leader, create),
+  ]);
+  assert.deepEqual({
+    candidateVisible: (await store.access.show(leader, candidate.id)).item !== null,
+    targetVisible: (await store.access.show(leader, target.id)).item !== null,
+    persistedBodies: [target.body, candidate.body].filter(body => snapshot.includes(body)),
+    replayedBodies: [target.body, candidate.body].filter(body => replay.includes(body)),
+  }, { candidateVisible: false, targetVisible: false, persistedBodies: [], replayedBodies: [] });
+});
+
+for (const [role, kind, otherRole] of [['leader', 'lesson', 'auditor'], ['auditor', 'ruling', 'leader']]) {
+  for (const [op, status] of [[null, 'pending'], ['return', 'returned'], ['reject', 'rejected'], ['merge', 'merged']]) {
+    test(`M1 ${role} can forget a ${status} ${kind} candidate`, async () => {
+      const { store, commits, readState } = await fixture();
+      const reviewer = bindings[role];
+      const { worker } = bindings;
+      let candidate = saved(await store.write(worker, proposeForReview(kind)));
+      if (op) {
+        const decision = {
+          op, requestId: 'review-candidate', id: candidate.id, cardId: worker.cardId,
+          expectedRevision: candidate.revision,
+        };
+        if (op === 'merge') {
+          const target = saved(await store.write(reviewer, put('create-target', { ...fact, kind })));
+          Object.assign(decision, {
+            targetId: target.id, targetExpectedRevision: target.revision, body: target.body,
+          });
+        }
+        const result = await store.write(reviewer, decision);
+        saved(result);
+        candidate = result.candidate;
+      }
+      assert.equal(candidate.status, status);
+      const before = readState();
+      const commitCount = commits.length;
+      const forget = { op: 'forget', id: candidate.id, expectedRevision: candidate.revision };
+      for (const denied of [worker, bindings[otherRole]]) {
+        const result = await store.write(denied, { ...forget, requestId: `deny-${denied.role}` });
+        assert.deepEqual([result.ok, result.code], [false, 'forbidden']);
+      }
+      assert.deepEqual(readState(), before);
+      assert.equal(commits.length, commitCount);
+      const forgotten = saved(await store.write(reviewer, { ...forget, requestId: 'forget-candidate' }));
+      assert.equal(forgotten.status, 'forgotten');
+      assert.equal((await store.access.show(reviewer, candidate.id)).item, null);
+    });
+  }
+}
+
+test('M3 a Leader cannot commit a private lesson', async () => {
+  const { store, commits } = await fixture();
+  const result = await store.write(bindings.leader, put('private-lesson', { ...fact, layer: 'private' }));
+  assert.deepEqual([result.ok, result.code, commits.length], [false, 'forbidden', 0]);
+});
+
+test('M5 put atomically supersedes an old ruling and removes it from the index', async () => {
+  const { store, commits, readState } = await fixture();
+  const { auditor } = bindings;
+  const ruling = { ...fact, kind: 'ruling' };
+  const old = saved(await store.write(auditor, put('old-ruling', ruling)));
+  assert.deepEqual(ids((await store.access.index(auditor)).rows), [old.id]);
+  const before = commits.length;
+  const replacement = saved(await store.write(auditor, put('replacement', {
+    ...ruling, body: correctedBody, supersedes: [old.id],
+  })));
+  const { entries, files } = readState();
+  const oldEntry = entries.find(entry => entry.id === old.id);
+  const newEntry = entries.find(entry => entry.id === replacement.id);
+  const persistedIndex = files['memory/INDEX.md'];
+  assert.deepEqual({
+    commits: commits.length - before,
+    returnedSupersedes: replacement.supersedes,
+    persistedSupersedes: newEntry.supersedes,
+    oldStatus: oldEntry.status,
+    supersededBy: oldEntry.supersededBy,
+    indexed: ids((await store.access.index(auditor)).rows),
+    persistedIndexIds: [old.id, replacement.id].filter(id => persistedIndex.includes(`memory/items/${id}.md`)),
+  }, {
+    commits: 1, returnedSupersedes: [old.id], persistedSupersedes: [old.id],
+    oldStatus: 'superseded', supersededBy: [replacement.id], indexed: [replacement.id],
+    persistedIndexIds: [replacement.id],
+  });
+});
+
+for (const invalidTarget of ['missing', 'out of scope']) {
+  test(`M5 put rolls back when a supersedes target is ${invalidTarget}`, async () => {
+    const { store, commits, readState } = await fixture();
+    const { auditor } = bindings;
+    const ruling = { ...fact, kind: 'ruling' };
+    const old = saved(await store.write(auditor, put('local-ruling', ruling)));
+    let invalidId = 'unknown-ruling';
+    if (invalidTarget === 'out of scope') {
+      const foreign = { ...auditor, sessionId: 'foreign-auditor', project: 'project-b' };
+      const entry = { ...ruling, project: foreign.project };
+      invalidId = saved(await store.write(foreign, put('foreign-ruling', entry))).id;
+    }
+    const before = readState();
+    const commitCount = commits.length;
+    const result = await store.write(auditor, put('invalid-replacement', {
+      ...ruling, body: correctedBody, supersedes: [old.id, invalidId],
+    }));
+    assert.deepEqual({ ok: result.ok, commits: commits.length, state: readState() },
+      { ok: false, commits: commitCount, state: before });
+  });
+}
+
+test('M10 fixed role prompts explain citation syntax and show for reading on demand', async () => {
+  const { renderMemoryPrompt } = await import('./prompts.mjs');
+  const missing = [];
+  for (const role of roles) {
+    const prompt = await renderMemoryPrompt({ binding: bindings[role] });
+    if (!prompt.includes('[memory:<id>]')) missing.push(`${role}: [memory:<id>]`);
+    if (!/\bshow\b\s+`?<id>/u.test(prompt)) missing.push(`${role}: show <id>`);
+  }
+  assert.deepEqual(missing, []);
+});
