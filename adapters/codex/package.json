@@ -1,0 +1,10 @@
+{
+  "name": "@loom/codex-tui-adapter",
+  "private": true,
+  "type": "module",
+  "main": "./index.js",
+  "exports": "./index.mjs",
+  "engines": {
+    "node": ">=22.18.0"
+  }
+}

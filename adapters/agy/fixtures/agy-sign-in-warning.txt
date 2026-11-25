@@ -1,0 +1,24 @@
+
+      ▄▀▀▄        Antigravity CLI 1.5.16
+     ▀▀▀▀▀▀       <ACCOUNT> (<PLAN>)
+    ▀▀▀▀▀▀▀▀      Gemini 4 Neon (XHigh)
+   ▄▀▀    ▀▀▄     <HOME_PATH>
+  ▄▀▀      ▀▀▄
+
+────────────────────────────────────────────────────────────
+> <hc from="<HC_SENDER>">样本 A 🌌。请只在当前 fixture-lab 操作，不访问其他目录、会话、配置、账号或网络。请用读文件工具读 sample.txt，再实际执行 cat
+  sample.txt。不要改文件。结束只回复：星河样本已读取 🌌</hc>
+
+⚠ Sign-in update needed
+  ⎿  Your sign-in is missing permissions that are now required, so some requests may fail. Run /logout to sign in again.
+
+○ Thought for 8.8s (Initial focus is on strictly adhering to the specified environment: the "fixture-lab" context. The request explicitly limits operations to this scope, disallowing access to ot...)
+● Explored 1 file (sample.txt)
+● Ran (cat sample.txt) (ctrl+o to expand)
+
+  星河样本已读取 🌌
+
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+>
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+? for shortcuts                                                                                                                                                             auto · Gemini 4 Neon · xhigh

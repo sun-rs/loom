@@ -1,0 +1,34 @@
+{"type":"session_meta","timestamp":"2000-01-01T00:00:09.941Z","payload":{"id":"00000000-0000-4000-8000-000000000001","cwd":"/isolated/workspace","source":"cli"}}
+{"type":"event_msg","timestamp":"2000-01-01T00:00:09.942Z","payload":{"type":"task_started","turn_id":"turn-1"}}
+{"type":"response_item","timestamp":"2000-01-01T00:00:10.002Z","payload":{"type":"message","role":"user","content":[{"type":"input_text","text":"What is 2 + 2? Reply with just the number."}]}}
+{"type":"response_item","timestamp":"2000-01-01T00:00:18.862Z","payload":{"type":"message","role":"assistant","content":[{"type":"output_text","text":"4"}]}}
+{"type":"event_msg","timestamp":"2000-01-01T00:00:18.917Z","payload":{"type":"task_complete","turn_id":"turn-1","last_agent_message":"4"}}
+{"type":"event_msg","timestamp":"2000-01-01T00:02:07.029Z","payload":{"type":"task_started","turn_id":"turn-2"}}
+{"type":"response_item","timestamp":"2000-01-01T00:02:07.096Z","payload":{"type":"message","role":"user","content":[{"type":"input_text","text":"QUEUE-BASE. Reply with only the number 7."}]}}
+{"type":"response_item","timestamp":"2000-01-01T00:02:23.998Z","payload":{"type":"message","role":"assistant","content":[{"type":"output_text","text":"7"}]}}
+{"type":"event_msg","timestamp":"2000-01-01T00:02:24.051Z","payload":{"type":"task_complete","turn_id":"turn-2","last_agent_message":"7"}}
+{"type":"event_msg","timestamp":"2000-01-01T00:02:24.055Z","payload":{"type":"task_started","turn_id":"turn-3"}}
+{"type":"response_item","timestamp":"2000-01-01T00:02:24.108Z","payload":{"type":"message","role":"user","content":[{"type":"input_text","text":"QUEUE-NEXT. Reply with only the number 8."}]}}
+{"type":"response_item","timestamp":"2000-01-01T00:02:24.285Z","payload":{"type":"message","role":"assistant","content":[{"type":"output_text","text":"8"}]}}
+{"type":"event_msg","timestamp":"2000-01-01T00:02:24.337Z","payload":{"type":"task_complete","turn_id":"turn-3","last_agent_message":"8"}}
+{"type":"event_msg","timestamp":"2000-01-01T00:02:25.138Z","payload":{"type":"task_started","turn_id":"turn-4"}}
+{"type":"response_item","timestamp":"2000-01-01T00:02:25.216Z","payload":{"type":"message","role":"user","content":[{"type":"input_text","text":"STEER-BASE. Reply with only the number 7."}]}}
+{"type":"response_item","timestamp":"2000-01-01T00:02:36.465Z","payload":{"type":"message","role":"user","content":[{"type":"input_text","text":"STEER-NEXT. Reply with only the number 9."}]}}
+{"type":"response_item","timestamp":"2000-01-01T00:04:06.708Z","payload":{"type":"message","role":"assistant","content":[{"type":"output_text","text":"9"}]}}
+{"type":"event_msg","timestamp":"2000-01-01T00:04:06.761Z","payload":{"type":"task_complete","turn_id":"turn-4","last_agent_message":"9"}}
+{"type":"event_msg","timestamp":"2000-01-01T00:04:32.944Z","payload":{"type":"task_started","turn_id":"turn-5"}}
+{"type":"response_item","timestamp":"2000-01-01T00:04:33.022Z","payload":{"type":"message","role":"user","content":[{"type":"input_text","text":"STOP-ESC. Reply with only the number 7."}]}}
+{"type":"response_item","timestamp":"2000-01-01T00:04:34.120Z","payload":{"type":"message","role":"user","content":[{"type":"input_text","text":"<turn_aborted>\nThe user interrupted the previous turn on purpose. Any running unified exec processes may still be running in the background. If any tools/commands were aborted, they may have partially executed.\n</turn_aborted>"}]}}
+{"type":"event_msg","timestamp":"2000-01-01T00:04:34.200Z","payload":{"type":"turn_aborted","turn_id":"turn-5","reason":"interrupted"}}
+{"type":"event_msg","timestamp":"2000-01-01T00:04:35.286Z","payload":{"type":"task_started","turn_id":"turn-6"}}
+{"type":"response_item","timestamp":"2000-01-01T00:04:35.341Z","payload":{"type":"message","role":"user","content":[{"type":"input_text","text":"AFTER-ESC. Reply with only the number 6."}]}}
+{"type":"response_item","timestamp":"2000-01-01T00:04:35.678Z","payload":{"type":"message","role":"assistant","content":[{"type":"output_text","text":"6"}]}}
+{"type":"event_msg","timestamp":"2000-01-01T00:04:35.730Z","payload":{"type":"task_complete","turn_id":"turn-6","last_agent_message":"6"}}
+{"type":"event_msg","timestamp":"2000-01-01T00:04:36.550Z","payload":{"type":"task_started","turn_id":"turn-7"}}
+{"type":"response_item","timestamp":"2000-01-01T00:04:36.622Z","payload":{"type":"message","role":"user","content":[{"type":"input_text","text":"STOP-CTRL. Reply with only the number 7."}]}}
+{"type":"response_item","timestamp":"2000-01-01T00:04:37.632Z","payload":{"type":"message","role":"user","content":[{"type":"input_text","text":"<turn_aborted>\nThe user interrupted the previous turn on purpose. Any running unified exec processes may still be running in the background. If any tools/commands were aborted, they may have partially executed.\n</turn_aborted>"}]}}
+{"type":"event_msg","timestamp":"2000-01-01T00:04:37.692Z","payload":{"type":"turn_aborted","turn_id":"turn-7","reason":"interrupted"}}
+{"type":"event_msg","timestamp":"2000-01-01T00:04:38.857Z","payload":{"type":"task_started","turn_id":"turn-8"}}
+{"type":"response_item","timestamp":"2000-01-01T00:04:38.935Z","payload":{"type":"message","role":"user","content":[{"type":"input_text","text":"AFTER-CTRL. Reply with only the number 6."}]}}
+{"type":"response_item","timestamp":"2000-01-01T00:04:39.272Z","payload":{"type":"message","role":"assistant","content":[{"type":"output_text","text":"6"}]}}
+{"type":"event_msg","timestamp":"2000-01-01T00:04:39.323Z","payload":{"type":"task_complete","turn_id":"turn-8","last_agent_message":"6"}}

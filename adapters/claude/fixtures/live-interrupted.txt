@@ -1,0 +1,14 @@
+⏺ ADAPT_RESUME_ESC_OK
+
+✻ Cooked for 1s · done <time>
+
+❯ <hc from="sender">Use Bash to run exactly sleep 16; printf "ADAPT_CANCEL_CTRL_C_MARKER\n". After it finishes, reply exactly ADAPT_CANCEL_CTRL_C_ENDED.</hc>
+
+⏺ Bash(sleep 16; printf "ADAPT_CANCEL_CTRL_C_MARKER\n")
+  ⎿  Interrupted · What should Claude do instead?
+
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+❯ 
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  ⚠ Transcript saving is off — CLAUDE_CODE_SKIP_PROMPT_HISTORY is set · --resume will not find this session; if unintended, unset it and restart
+  ⏵⏵ bypass permissions on (shift+tab to cycle)

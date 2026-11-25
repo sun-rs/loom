@@ -1,0 +1,2 @@
+>_ OpenAI Codex (example)
+Error: HTTP 429

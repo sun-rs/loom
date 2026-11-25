@@ -1,0 +1,68 @@
+{
+  "hooks": [
+    {
+      "hookEventName": "PreInvocation",
+      "receivedAt": 0,
+      "cwd": "/fixture/workspace",
+      "conversationId": "live-fixture-001",
+      "transcriptPath": "/fixture/.gemini/antigravity-cli/brain/live-fixture-001/.system_generated/logs/transcript_full.jsonl",
+      "invocationNum": 0,
+      "initialNumSteps": 1,
+      "modelName": "gemini-3.8-flash-low"
+    },
+    {
+      "hookEventName": "Stop",
+      "receivedAt": 2885,
+      "cwd": "/fixture/workspace",
+      "conversationId": "live-fixture-001",
+      "transcriptPath": "/fixture/.gemini/antigravity-cli/brain/live-fixture-001/.system_generated/logs/transcript_full.jsonl",
+      "executionNum": 0,
+      "terminationReason": "NO_TOOL_CALL",
+      "fullyIdle": true,
+      "modelName": "gemini-3.8-flash-low"
+    },
+    {
+      "hookEventName": "PreInvocation",
+      "receivedAt": 4019,
+      "cwd": "/fixture/workspace",
+      "conversationId": "live-fixture-001",
+      "transcriptPath": "/fixture/.gemini/antigravity-cli/brain/live-fixture-001/.system_generated/logs/transcript_full.jsonl",
+      "invocationNum": 0,
+      "initialNumSteps": 3,
+      "modelName": "gemini-3.8-flash-low"
+    },
+    {
+      "hookEventName": "PreToolUse",
+      "receivedAt": 6911,
+      "cwd": "/fixture/workspace",
+      "conversationId": "live-fixture-001",
+      "transcriptPath": "/fixture/.gemini/antigravity-cli/brain/live-fixture-001/.system_generated/logs/transcript_full.jsonl",
+      "stepIdx": 4,
+      "modelName": "gemini-3.8-flash-low",
+      "toolName": "read_file"
+    },
+    {
+      "hookEventName": "PostToolUse",
+      "receivedAt": 6963,
+      "cwd": "/fixture/workspace",
+      "conversationId": "live-fixture-001",
+      "transcriptPath": "/fixture/.gemini/antigravity-cli/brain/live-fixture-001/.system_generated/logs/transcript_full.jsonl",
+      "stepIdx": 4,
+      "modelName": "gemini-3.8-flash-low",
+      "error": true,
+      "toolName": "read_file"
+    },
+    {
+      "hookEventName": "Stop",
+      "receivedAt": 9343,
+      "cwd": "/fixture/workspace",
+      "conversationId": "live-fixture-001",
+      "transcriptPath": "/fixture/.gemini/antigravity-cli/brain/live-fixture-001/.system_generated/logs/transcript_full.jsonl",
+      "executionNum": 0,
+      "terminationReason": "NO_TOOL_CALL",
+      "fullyIdle": true,
+      "modelName": "gemini-3.8-flash-low"
+    }
+  ],
+  "firstDone": "AGY-ADAPTER-OK"
+}

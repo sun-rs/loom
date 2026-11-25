@@ -1,0 +1,29 @@
+
+
+  >_ OpenAI Codex (v0.171.0)
+     /isolated/workspace
+
+  Tip: Maximize usage with GPT-6.1 Sol. Try it on complex work for near-Astra performance at a lower cost.
+
+
+› What is 2 + 2? Reply with just the number.
+
+
+• 4
+
+  Worked for 8s • 01:45
+
+
+› QUEUE-BASE. Reply with only the number 7.
+
+
+• Working (1s • esc to interrupt)
+
+• Queued follow-up inputs
+  ↳ QUEUE-NEXT. Reply with only the number 8.
+    ⇧← edit last queued message
+
+› Ask Codex to do anything
+
+  qwen2.5-coder-0.5b-instruct low · /isolated/workspace · 2+2` - Answer with just the number
+  ← for agents · ? for shortcuts    ⚠ 1 warning · f2 to view
