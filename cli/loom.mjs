@@ -32,6 +32,8 @@ const help = {
   status: ['loom status --project DIR [--json]'],
   cost: ['loom cost [--project DIR]', 'Reports role usage, the rolling consumption pyramid, estimated USD costs and per-turn acceptance timing.'],
   gate: ['loom gate pack <gate-id> [--project DIR] [--base REF] [--candidate REF] [--question TEXT]'],
+  escalate: ['loom escalate <gate-id> --reason REASON --evidence TEXT [--project DIR] [--base REF] [--candidate REF]',
+    'Leader only. Reasons: protected-file, assertion, skip-only, confirmed-fact-miss, sandbox-escape.'],
   stop: ['loom stop <target> [--project DIR]'],
   send: [sendUsage, sendHelp],
   handover: ['loom handover <leader|auditor|super> --project DIR [--to ADDR]'],
@@ -54,6 +56,7 @@ const commands = {
   state: projectArgs, stop: projectArgs, ls: projectArgs, cost: projectArgs,
   status: { ...projectArgs, ...flags('json') },
   gate: { ...projectArgs, ...strings('base', 'candidate', 'question') },
+  escalate: { ...projectArgs, ...strings('base', 'candidate', 'reason', 'evidence') },
   memory: { ...projectArgs, ...flags('json') },
   switch: { ...projectArgs, ...strings('to') },
   doctor: { ...projectArgs, ...flags('fix') },
@@ -235,11 +238,15 @@ export async function main(args) {
       if (values.json) emit(matches);
       else if (matches.length) console.log(matches.map(indexLine).join('\n'));
       return 0;
-    } else if (command === 'gate') {
-      const [action, gate] = positionals;
-      if (positionals.length !== 2 || action !== 'pack') invalid(help.gate[0]);
-      try { result = await request(directory, 'gate-pack', { gate, base: values.base, candidate: values.candidate,
-        question: values.question }); }
+    } else if (command === 'gate' || command === 'escalate') {
+      const escalate = command === 'escalate';
+      const gate = positionals[escalate ? 0 : 1];
+      if (escalate ? positionals.length !== 1 || !values.reason || !values.evidence :
+        positionals.length !== 2 || positionals[0] !== 'pack') invalid(help[command][0]);
+      try { result = await request(directory, escalate ? 'escalate' : 'gate-pack', {
+        gate, base: values.base, candidate: values.candidate, question: values.question, reason: values.reason,
+        evidence: values.evidence,
+      }); }
       catch (error) {
         if (!daemonAbsent(error)) throw error;
         throw new CommandError('not-ready', 'loomd is not running for this project');

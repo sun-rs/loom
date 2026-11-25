@@ -8,6 +8,7 @@ import { isBlockedReply } from '../inbox/message.mjs';
 import { managedProject, projectIndex, projectSessions } from './project.mjs';
 import { pendingWork } from '../inbox/engine.mjs';
 import { isStartupBlocker } from '../tui/agent-status.mjs';
+import { auditorWakeFiltered } from '../daemon/routing.mjs';
 
 export async function projectStatus(project) {
   const rows = projectSessions(project);
@@ -20,6 +21,7 @@ export async function projectStatus(project) {
   const lifecycle = row => states.get(row.addr) ?? (row.endedAt == null ? 'offline' : 'exited');
   const artifacts = readArtifacts(project);
   const messages = artifacts.messages();
+  const notifications = readNotifications(project);
   const relay = artifacts.relay();
   const pendingWaves = new Set(messages.filter(message => message.waveKey &&
     ['queued', 'sending', 'stopped', 'stopping'].includes(message.phase)).map(message => message.waveKey));
@@ -46,10 +48,18 @@ export async function projectStatus(project) {
         ...(isStartupBlocker(card.lifecycle) && { reason: card.task + ' ' + card.lifecycle }) })),
     ...rows.filter(row => row.role !== 'worker' && (lifecycle(row) === 'stuck' || isStartupBlocker(lifecycle(row))))
       .map(row => ({ addr: row.addr, reason: row.role + ' ' + lifecycle(row) })),
-    ...readNotifications(project).filter(event => event.type === 'needs-decision' && event.takenAt == null)
+    ...notifications.filter(event => event.type === 'needs-decision' && event.takenAt == null)
       .map(event => ({ addr: event.addr, reason: event.text })),
   ];
-  const notices = activeOrgNotices(readOrg(project)).sort((a, b) => b.at - a.at);
+  const workers = new Set(rows.filter(row => row.role === 'worker').map(row => row.addr));
+  const notices = [...activeOrgNotices(readOrg(project)).map(notice => ({ ...notice, audience: 'leader' })),
+    ...notifications.flatMap(event =>
+      event.type === 'auditor-budget-exceeded' || event.type === 'stuck' && workers.has(event.addr) ?
+        [{ ...event, audience: 'leader' }] : event.type === 'red-escalation' ? [event] : []),
+  ].sort((a, b) => b.at - a.at);
+  const filtered = messages.filter(message => message.issue === auditorWakeFiltered).map(message => ({
+    id: message.id, target: message.target.addr, from: message.from?.addr, at: message.refusedAt ?? message.createdAt,
+  }));
   const git = spawnSync('git', ['--no-pager', 'log', '--first-parent', '--merges', '-5', '--format=%H%x09%ct%x09%s'],
     { cwd: project, encoding: 'utf8', timeout: 5000, stdio: ['ignore', 'pipe', 'ignore'] });
   const history = (git.stdout ?? '').trim().split('\n').filter(Boolean).map(line => {
@@ -74,7 +84,7 @@ export async function projectStatus(project) {
         ...(rotating.has(row.addr) && { awaitingVerifiedReport: true }) };
     }),
     waves, pendingContinuations, cards: cards.filter(card => card.active || card.state === 'blocked'),
-    blocked, notices, merges, rotations,
+    blocked, notices, merges, rotations, routing: { filtered },
     cost: { rawTokens, byRole: Object.fromEntries(Object.entries(byRole).map(([role, value]) => [role, value.rawTokens])),
       usageByRole: byRole, pyramid, missingSessions: missing.length },
   };
@@ -96,7 +106,8 @@ export function printStatus(result) {
   section('Blocked', result.blocked, row => row.reason ?? row.task ?? row.addr, 2);
   section('Drift and fact checks', result.notices, row =>
     [row.type, row.task ?? row.addr, row.misses?.map(miss => miss.value).join(', ') ??
-      row.command ?? row.file ?? row.failureClass].join(' '), 3);
+      row.command ?? row.file ?? row.failureClass ?? row.reason ?? row.text].join(' '), 3);
+  if (result.routing.filtered.length) console.log(`Auditor routing · ${result.routing.filtered.length} filtered deliveries in --json`);
   section('Last merges', result.merges, row => [row.sha.slice(0, 12), row.subject].join(' '), 3);
   console.log('Cost · ' + result.cost.rawTokens.toLocaleString() + ' recorded tokens' +
     (result.cost.missingSessions ? ' · ' + result.cost.missingSessions + ' sessions with transcript gaps' : ''));

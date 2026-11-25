@@ -49,7 +49,7 @@ function fixture(t, options) {
         const prompt = input.split('\n').slice(1).join('\n').split('\n\n## Loom task conventions', 1)[0]
           .split('\n\n## Startup request\n').at(-1);
         const body = row.role === 'reviewer' ? prompt.split('\n\n').at(-1) : prompt;
-        if (!body.startsWith('HOLD') &&
+        if (!/^(?:Loom Super message\n\n)?HOLD/.test(body) &&
             (row.role !== 'leader' || body.includes('波次') || body.includes('续作批次') || body.endsWith('replacement')) &&
             (row.task != null || body.startsWith('RETURN '))) {
           finish(body.startsWith('RETURN ') ? body.slice(7) : row.task);
@@ -196,7 +196,11 @@ test('Auditor wakes and context have independent budgets and rotation waits for 
   assert.deepEqual((await budgets())[0].usage,
     { wakes: 4, contextTokens: 10, maxWakesPerGate: 3, maxContextTokens: 150_000 });
   assert.deepEqual((await proposals()).map(event => event.gate), ['G1']);
-  const notes = () => f.read('inbox/state.json').messages.filter(message => message.text.includes('请把常规材料合并'));
+  const notes = () => f.read('inbox/state.json').messages.filter(message => message.orgAppendix?.includes('请把常规材料合并'));
+  assert.equal(notes().length, 0);
+  f.sessions.get(leader.addr).finish('Initial dispatch complete');
+  await d.handle('send', { target: leader.addr, mode: 'queue', text: 'HOLD next task' });
+  await d.tick();
   assert.deepEqual(notes().map(message => message.target.addr), [leader.addr]);
   await d.handle('notifications', { gateComplete: 'G1' }, leader.addr);
   f.policy({ roles: { auditor: { maxWakesPerGate: 10, maxContextTokens: 100 } } });
@@ -212,6 +216,10 @@ test('Auditor wakes and context have independent budgets and rotation waits for 
   assert.equal((await proposals()).length, 1);
   await d.handle('notifications', { gateComplete: 'G2' }, leader.addr);
   assert.deepEqual((await proposals()).map(event => event.gate), ['G1', 'G2']);
+  assert.equal(notes().length, 1);
+  f.sessions.get(leader.addr).finish('Next task complete');
+  await d.handle('send', { target: leader.addr, mode: 'queue', text: 'HOLD another task' });
+  await d.tick();
   assert.deepEqual(notes().map(message => message.target.addr), [leader.addr, leader.addr]);
   assert.notEqual((await d.handle('state', { target: auditor.addr })).state, 'exited');
 });
@@ -240,6 +248,10 @@ test('gate pack snapshots scoped evidence into one compact file and enqueues one
   f.sessions.get(worker.addr).check('npm test', 5, 0);
   f.sessions.get(worker.addr).finish('DONE W');
   for (let i = 0; i < 3; i++) await d.tick();
+  writeFileSync(join(f.project, '.project', 'evidence', 'red-fixture.json'), JSON.stringify({
+    addr: worker.addr, card: 'Planned safeguards', git: { protectedHits: [{ path: 'fence.md' }],
+      tests: [{ path: 'case.test.mjs', changes: { removedAssertions: 1, addedSkip: 1 } }] },
+  }));
   await assert.rejects(d.handle('gate-pack', { gate: '../elsewhere' }, leader.addr), { code: 'invalid-arguments' });
   await assert.rejects(d.handle('gate-pack', { gate: 'GATE' }, worker.addr), { code: 'invalid-arguments' });
   const packet = await d.handle('gate-pack', { gate: 'GATE', base, candidate, question: '答'.repeat(1900) }, leader.addr);
@@ -247,6 +259,7 @@ test('gate pack snapshots scoped evidence into one compact file and enqueues one
   const contents = readFileSync(packet.path, 'utf8');
   assert.ok(Buffer.byteLength(contents) <= 2048);
   assert.match(contents, /Evidence cards.*\.project\/evidence\/.*Diff --stat.*fixture\.mjs.*Test summary.*1 passed.*Reviewer verdicts.*PASS fixed candidate.*Open questions.*答.*Pointers/s);
+  assert.match(contents, /Red facts.*protected-file.*fence\.md.*assertion.*case\.test\.mjs.*skip-only/s);
   assert.doesNotMatch(contents, /unrelated verdict/);
   await d.shutdown();
   d = f.daemon();
@@ -263,6 +276,53 @@ test('gate pack snapshots scoped evidence into one compact file and enqueues one
   const auditMessages = f.read('inbox/state.json').messages.filter(message => message.target.addr === auditor.addr && !message.startup);
   assert.deepEqual(auditMessages.map(message => message.text), [`Read gate packet ${packet.path}`]);
   assert.equal(f.prompts.filter(message => message.addr === auditor.addr && message.input.includes(packet.path)).length, 1);
+  const related = f.read('inbox/state.json').messages.filter(message => message.replyTo === packet.deliveryId);
+  assert.deepEqual(related.map(message => message.target.addr), [leader.addr]);
+});
+
+test('Auditor dispatch admits only user messages and one Leader gate or red escalation per gate', async t => {
+  const f = fixture(t);
+  f.git('init', '-q');
+  f.git('-c', 'user.name=Loom', '-c', 'user.email=loom@example.invalid', 'commit', '--allow-empty', '-qm', 'candidate');
+  let d = f.daemon();
+  t.after(() => d.shutdown());
+  const { session: leader } = await f.spawn(d, 'leader', 'L');
+  const { session: auditor } = await f.spawn(d, 'auditor', 'A');
+  const { session: superSession } = await f.spawn(d, 'super', 'S');
+  await d.tick();
+  const invalid = await d.handle('send', { target: auditor.addr, mode: 'interrupt', text: 'Routine gate note' }, leader.addr);
+  assert.equal(invalid.issue, 'auditor-wake-filtered');
+  const legacy = randomUUID();
+  publish(f.project, { id: legacy, createdAt: Date.now(), requestedMode: 'queue', mode: 'queue', phase: 'queued',
+    target: { addr: auditor.addr, backend: 'headless', provider: auditor.cli, createdAt: auditor.startedAt },
+    text: 'Legacy drift', superPriority: true, orgEvents: ['legacy'] });
+  const args = { gate: 'G1', reason: 'confirmed-fact-miss', evidence: 'I checked the claimed SHA against the Git object database.' };
+  await assert.rejects(d.handle('escalate', { ...args, reason: 'ordinary-failure' }, leader.addr), { code: 'invalid-arguments' });
+  await assert.rejects(d.handle('escalate', { ...args, evidence: '' }, leader.addr), { code: 'invalid-arguments' });
+  await assert.rejects(d.handle('escalate', args, superSession.addr), { code: 'invalid-arguments' });
+  const red = await d.handle('escalate', args, leader.addr);
+  assert.equal(red.wakeQueued, true);
+  assert.match(readFileSync(red.path, 'utf8'), /Red facts.*confirmed-fact-miss.*Git object database/s);
+  await d.shutdown();
+  d = f.daemon();
+  assert.equal((await d.handle('escalate', args, leader.addr)).wakeQueued, false);
+  assert.equal((await d.handle('gate-pack', { gate: 'G1' }, leader.addr)).deliveryId, red.deliveryId);
+  const gate = await d.handle('gate-pack', { gate: 'G2' }, leader.addr);
+  const followup = await d.handle('escalate', { ...args, gate: 'G2', reason: 'protected-file' }, leader.addr);
+  assert.equal(followup.deliveryId, gate.deliveryId);
+  assert.equal(followup.wakeQueued, false);
+  const user = await d.handle('send', { target: auditor.addr, mode: 'queue', text: 'RETURN user decision' }, superSession.addr);
+  for (let i = 0; i < 6; i++) await d.tick();
+  const messages = f.read('inbox/state.json').messages;
+  assert.equal(messages.find(message => message.id === legacy).issue, 'auditor-wake-filtered');
+  assert.deepEqual(new Set(f.prompts.filter(message => message.addr === auditor.addr).slice(1)
+    .map(message => deliveryId(message.input))), new Set([red.deliveryId, gate.deliveryId, user.deliveryId]));
+  assert.equal(f.prompts.filter(message => message.addr === auditor.addr).length, 4);
+  assert.equal(messages.some(message => message.replyTo === user.deliveryId), false);
+  assert.equal((await d.handle('notifications', { history: true })).notifications.filter(event => event.type === 'red-escalation').length, 2);
+  const { projectStatus } = await import('../cli/status.mjs');
+  const status = await projectStatus(f.project);
+  assert.deepEqual(status.routing.filtered.map(item => item.id), [invalid.deliveryId, legacy]);
 });
 
 test('large OpenCode exports recover the consecutive-failure stuck state', async t => {
@@ -495,7 +555,8 @@ test('reports a streamed worker timeout and late result once without replaying a
   await d.tick();
   await d.tick();
   const batches = () => f.read('inbox/state.json').messages.filter(message => message.waveBatch);
-  assert.deepEqual(new Set(batches().map(message => message.target.addr)), new Set([leader, auditor]));
+  assert.deepEqual(new Set(batches().map(message => message.target.addr)), new Set([leader]));
+  assert.equal(f.prompts.filter(message => message.addr === auditor).length, 1);
   advance = 31_000;
   await d.tick();
   await d.tick();
@@ -581,7 +642,7 @@ test('index membership ignores edited Markdown and seal fallback plus partial wi
   assert.ok(f.prompts.some(row => row.input.includes('DONE SLOW new wave') && row.addr !== replacement.session.addr));
 });
 
-test('a blocked barrier escalates once while holding the set and copies only FAILED/MISMATCH to Auditor', async t => {
+test('a blocked barrier escalates once while holding the set and keeps FAILED/MISMATCH with the Leader', async t => {
   let advance = 0;
   const f = fixture(t, { now: () => Date.now() + advance, uncertainWindow: 800_000 });
   f.policy({ roles: { leader: { maxActiveWorkers: 4 } } });
@@ -614,14 +675,16 @@ test('a blocked barrier escalates once while holding the set and copies only FAI
   assert.equal(finished.length, 1);
   assert.match(finished[0].text, /BLOCKED BLOCK1.*BLOCKED BLOCK2.*FAILED FAILED.*DONE TAIL/s);
   const copies = batches().filter(message => message.target.addr === auditor);
-  assert.equal(copies.length, 1);
-  assert.match(copies[0].text, /FAILED FAILED/);
-  assert.doesNotMatch(copies[0].text, /BLOCKED|DONE TAIL/);
-  assert.equal(f.prompts.filter(row => row.addr === leader && row.input.includes('波次 W')).length, 1);
+  assert.equal(copies.length, 0);
+  assert.equal(f.prompts.filter(row => row.addr === leader && deliveryId(row.input) === finished[0].id).length, 1);
+  if (f.sessions.get(leader).session.status().value.kind === 'running') f.sessions.get(leader).finish('Wave read.');
   await recovered.handle('stop', { target: tail });
   await f.barrier(recovered, 'MISMATCH', leader, { wave: 'M', prompt: 'RETURN DONE MISMATCH\n全绿，通过 8 项' });
   for (let i = 0; i < 4; i++) await recovered.tick();
-  assert.ok(f.prompts.some(row => row.addr === auditor && /波次 M.*证据 MISMATCH/s.test(row.input)));
+  const mismatch = batches().find(message => message.target.addr === leader && /波次 M.*证据 MISMATCH/s.test(message.text));
+  assert.ok(mismatch);
+  assert.ok(f.prompts.some(row => row.addr === leader && deliveryId(row.input) === mismatch.id));
+  assert.equal(f.prompts.filter(row => row.addr === auditor).length, 1);
 });
 
 test('a sealed wave whose BLOCKED members and final result arrive within the window wakes Leader once', async t => {
@@ -1018,11 +1081,12 @@ test('switches Claude Leader to agy and agy Auditor to Codex under one durable s
   assert.equal((await rotation()).firstReportMisses, 2);
   assert.equal((await rotation()).verifiedAt, null);
   await assert.rejects(d.handle('switch', { role: 'auditor', to: '2' }), { code: 'rotation-in-progress' });
-  const fact = f.read('inbox/state.json').messages.find(message => message.orgEvents);
-  assert.equal(fact.target.addr, auditor.addr);
-  assert.match(fact.text, /fact-miss.*absent\.mjs/);
+  assert.equal(f.read('inbox/state.json').messages.filter(message => message.orgEvents).length, 0);
   await d.handle('send', { target: switched.session.addr, mode: 'queue', text: 'Please correct the report' });
   await d.tick();
+  const fact = f.read('inbox/state.json').messages.find(message => message.orgEvents);
+  assert.equal(fact.target.addr, switched.session.addr);
+  assert.match(fact.orgAppendix, /fact-miss.*absent\.mjs/);
   f.sessions.get(switched.session.addr).finish('SHA ' + sha + ' in `actual.mjs` with metric `accepted_metric`.');
   await d.tick();
   assert.ok((await rotation()).verifiedAt);
@@ -1039,7 +1103,7 @@ test('switches Claude Leader to agy and agy Auditor to Codex under one durable s
   assert.ok((await d.handle('notifications', { history: true })).notifications.some(item => item.type === 'preferred-fallback'));
 });
 
-test('attaches drift to the next real Auditor wake and suppresses a reply quoting the prior notices', async t => {
+test('attaches drift to the next real Leader wake and suppresses a reply quoting the prior notices', async t => {
   const f = fixture(t);
   f.git('init', '-q');
   const taskDir = join(f.project, 'tasks/DRIFT');
@@ -1056,6 +1120,9 @@ test('attaches drift to the next real Auditor wake and suppresses a reply quotin
   await d.tick();
   const worker = (await f.spawn(d, 'worker', 'DRIFT', leader, { prompt: 'HOLD worker' })).session.addr;
   await d.tick();
+  appendFileSync(join(f.project, '.project', 'watch', 'events.jsonl'), JSON.stringify({
+    type: 'stuck', incidentId: 'fixture-stuck', at: Date.now(), addr: worker, reason: 'fixture stalled',
+  }) + '\n');
   budget(2);
   await d.tick();
   budget(3);
@@ -1070,18 +1137,22 @@ test('attaches drift to the next real Auditor wake and suppresses a reply quotin
   assert.equal(f.read('inbox/state.json').messages.filter(message => message.orgEvents).length, 0);
   assert.equal(f.prompts.filter(message => message.addr === auditor).length, 1);
   f.sessions.get(auditor).finish('Initial review completed.');
-  const wake = await d.handle('send', { target: auditor, mode: 'queue', text: 'HOLD review the next real gate' });
+  await d.handle('send', { target: auditor, mode: 'queue', text: 'HOLD user audit update' });
+  await d.tick();
+  assert.doesNotMatch(f.prompts.filter(message => message.addr === auditor).at(-1).input, /drift and fact checks/);
+  f.sessions.get(leader).finish('Initial dispatch complete');
+  const wake = await d.handle('send', { target: leader, mode: 'queue', text: 'HOLD review the next real gate' });
   await d.tick();
   const notices = f.read('inbox/state.json').messages.filter(message => message.orgEvents);
   assert.equal(notices.length, 1);
   assert.equal(notices[0].id, wake.id);
-  assert.equal(notices[0].target.addr, auditor);
-  for (const type of ['budget-raised', 'line-budget', 'plan-growth', 'slow-command', 'repeated-failure', 'fact-miss']) {
+  assert.equal(notices[0].target.addr, leader);
+  for (const type of ['budget-raised', 'line-budget', 'plan-growth', 'slow-command', 'repeated-failure', 'fact-miss', 'stuck']) {
     assert.match(notices[0].orgAppendix, new RegExp(type));
   }
-  const input = f.prompts.filter(message => message.addr === auditor).at(-1).input;
+  const input = f.prompts.filter(message => message.addr === leader).at(-1).input;
   assert.match(input, /HOLD review the next real gate[\s\S]*Loom drift and fact checks/);
-  f.sessions.get(auditor).finish('Two prior misses, `./unreal.mjs` and `./unreal-0.mjs`, were false positives.');
+  f.sessions.get(leader).finish('Two prior misses, `./unreal.mjs` and `./unreal-0.mjs`, were false positives.');
   await d.tick();
   const evidence = Object.values(f.read('loomd/org.json').notices);
   assert.equal(evidence.length, 6);
@@ -1090,9 +1161,9 @@ test('attaches drift to the next real Auditor wake and suppresses a reply quotin
   assert.equal(drift[0].count, 6);
   assert.deepEqual(drift[0].misses.map(item => item.value), missing.slice(0, 5));
   assert.doesNotMatch(notices[0].orgAppendix, /unreal-4\.mjs/);
-  f.sessions.get(leader).finish('dispatch ended');
-  await d.tick();
   assert.match(f.read('inbox/state.json').messages.find(message => message.waveBatch).text, /fact-miss 6 · \.\/unreal\.mjs/);
+  const packet = await d.handle('gate-pack', { gate: 'W' }, leader);
+  assert.match(readFileSync(packet.path, 'utf8'), /Drift and fact checks\n7 signals/);
 });
 
 test('delivers a short digest pointer for a large automatic reply across restart', async t => {
@@ -1104,7 +1175,7 @@ test('delivers a short digest pointer for a large automatic reply across restart
   const target = (await f.spawn(d, 'auditor', 'A')).session.addr;
   await d.tick();
   const body = '完整结果🐙'.repeat(30);
-  const send = await d.handle('send', { target, mode: 'queue', text: 'HOLD report' }, sender);
+  const send = await d.handle('send', { target, mode: 'queue', text: 'HOLD report', expectReply: true }, sender);
   await d.tick();
   f.sessions.get(target).finish(body);
   await d.tick();

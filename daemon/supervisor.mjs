@@ -12,10 +12,11 @@ import { jsonRows, prepareJournal, readText } from './io.mjs';
 import { desktopEnabled, notifyExternal, projectNotifications } from './notifications.mjs';
 import { organization } from './org.mjs';
 import { clip } from '../evidence/checks.mjs';
-import { defaultCoalesceMs, driftDefaults, readPolicy, setWorkerProfile, workerLimit } from '../cli/policy.mjs';
+import { defaultCoalesceMs, readPolicy, setWorkerProfile, workerLimit } from '../cli/policy.mjs';
 import { isStartupBlocker } from '../tui/agent-status.mjs';
 import { gateId, saveGatePacket } from './gate-packet.mjs';
 import { roleBudget } from './role-budget.mjs';
+import { auditorWakeFiltered, auditorWakeSource, redReasons } from './routing.mjs';
 
 function batchDeliveryId(batch, dest) {
   const bytes = createHash('sha256').update(`${batch}\0${dest}`).digest('hex').slice(0, 32);
@@ -49,7 +50,8 @@ export function createSupervisor(project, {
     catch { return {}; }
   };
   let policy = policyForTick();
-  const mail = inbox(project, sessions.transport, report, { replyLimit: () => policy.delivery?.replyBytes });
+  const mail = inbox(project, sessions.transport, report, { replyLimit: () => policy.delivery?.replyBytes,
+    canRelayReply: addr => sessions.rowFor(addr)?.role !== 'auditor' });
   const org = organization(project, index, sessions, mail, now, report);
   const watchJournal = join(project, '.project', 'watch', 'events.jsonl');
   prepareJournal(watchJournal);
@@ -59,10 +61,10 @@ export function createSupervisor(project, {
   const saved = (target, text, fields = {}) => mail.enqueue({
     id: randomUUID(), createdAt: now(), target, text, requestedMode: 'queue', mode: 'queue', phase: 'queued', ...fields,
   });
-  const budget = roleBudget(project, { now, sessions, notifications, batchDeliveryId, report,
-    tellLeader: (row, text, id) => saved(sessions.targetBinding(row), text, { id }),
-  });
+  const budget = roleBudget(project, { now, sessions, notifications, batchDeliveryId, report });
   const parentFor = addr => sessions.routeParent(addr)?.addr ?? addr;
+  const liveRole = (name, role) => sessions.rows().findLast(row =>
+    row.project === name && row.role === role && row.endedAt === null && sessions.jobs.has(row.addr));
   let health = new Map();
   const startupBlockers = new Map();
   const desktop = externalNotification !== notifyExternal || desktopEnabled() ? async (name, batch) => {
@@ -148,8 +150,6 @@ export function createSupervisor(project, {
         batch.blocked && { id: `${batch.id}:blocked`, type: 'blocked-escalation', at: now(), ...batch.blocked, ...fields },
       ].filter(Boolean));
     },
-    auditors: name => sessions.rows().filter(row => row.project === name && row.role === 'auditor' &&
-      row.endedAt === null && sessions.jobs.has(row.addr)).map(row => row.addr),
     async managedWorkers() {
       const rows = workers();
       const byId = new Map(mail.messages.map(message => [message.id, message]));
@@ -174,15 +174,19 @@ export function createSupervisor(project, {
         const sealed = job.deliver !== 'stream' && (stepRelay.isSealed(row.parent, row.project, job.barrier ?? row.wave, job.deliver) ||
           await sessions.sealed(row.parent, job.gate));
         return { id: row.task, addr: row.addr, provider: row.cli, wave: row.wave, managed: {
-          parent: row.parent, project: row.project, startedAt: row.startedAt, activityAt, reply,
+          parent: row.parent ?? liveRole(row.project, 'leader')?.addr, project: row.project, startedAt: row.startedAt, activityAt, reply,
           superseded: superseded(row, rows), sealed,
           deliver: job.deliver, barrier: job.barrier,
         } };
       }));
     },
     async deliver(addr, batch) {
-      const row = sessions.routeParent(addr);
-      if (!row) throw new Error(`No wave recipient ${addr}`);
+      const parent = sessions.routeParent(addr);
+      if (!parent) throw new Error(`No wave recipient ${addr}`);
+      // Old outboxes may still contain a copy to the Auditor.
+      if (parent.role === 'auditor' && !batch.waveKey?.split('/', 1)[0].endsWith(':' + addr)) return;
+      const row = parent.role === 'leader' ? parent : liveRole(parent.project, 'leader');
+      if (!row) return;
       const late = batch.lateWorker && sessions.rowFor(batch.lateWorker);
       if (late && superseded(late, workers())) return;
       saved(sessions.targetBinding(row), batch.message, { id: batchDeliveryId(batch.id, addr), waveBatch: batch.id, waveKey: batch.waveKey, waveKind: batch.waveKind,
@@ -204,7 +208,8 @@ export function createSupervisor(project, {
     for (const row of sessions.rows().filter(row => row.endedAt === null)) {
       const job = sessions.jobs.get(row.addr);
       const mark = (event, reason) => notifications.add({ id: `${row.addr}:${reason}:${event.at}`,
-        type: 'stuck', project: row.project, addr: row.addr, at: event.at, reason });
+        type: 'stuck', project: row.project, addr: row.addr, at: event.at, reason,
+        ...(row.role === 'worker' && { logOnly: true }) });
       if (job?.exportFailure?.count >= opencodeExportFailureLimit) mark(job.exportFailure, 'opencode-export-failed');
       if (job?.pipeRecovery?.exhausted) mark(job.pipeRecovery, 'codex-resume-exhausted');
     }
@@ -212,10 +217,9 @@ export function createSupervisor(project, {
       const row = sessions.rowFor(event.addr);
       if (!row) continue;
       const job = sessions.jobs.get(row.addr);
-      const coveredByBatch = row.role === 'worker' && deliveries(row.addr).some(message =>
-        (message.id === job?.firstId || continuationGroup(message)) && !message.completion && !failedDelivery(message));
       notifications.add({ id: event.incidentId, type: 'stuck', project: row.project, addr: row.addr,
-        at: event.at, reason: event.reason, ...(coveredByBatch && { logOnly: true }) });
+        at: event.at, reason: event.reason, ...(row.role === 'worker' && { logOnly: true }) });
+      if (row.role === 'worker') continue;
       const pending = deliveries(row.addr).find(message => message.from && message.id !== job?.firstId &&
         message.attemptAt <= event.at && message.received && !message.completion && !continuationGroup(message));
       const parent = pending && sessions.routeParent(pending.from.addr);
@@ -386,39 +390,37 @@ export function createSupervisor(project, {
     }
   }
 
-  function pendingOrgNotices() {
-    const delivered = new Set(mail.messages.filter(message => message.phase !== 'refused')
-      .flatMap(message => message.orgEvents ?? []));
-    return org.notices().filter(notice => !delivered.has(notice.id));
+  function leaderSignals(name) {
+    return [...org.notices().filter(notice => notice.project === name), ...notifications.list(name, false, true)
+      .filter(event => event.type === 'auditor-budget-exceeded' ||
+        event.type === 'stuck' && sessions.rowFor(event.addr)?.role === 'worker')];
   }
 
   function noticeLines(batch) {
     return batch.map(({ type, task, addr, command, ...fields }) => {
-      const details = type === 'fact-miss' ? fields.misses.map(({ kind, value }) => `${kind} ${value}`).join(', ') +
+      const details = fields.text ?? (type === 'fact-miss' ? fields.misses.map(({ kind, value }) => `${kind} ${value}`).join(', ') +
         (fields.count > fields.misses.length ? ` (+${fields.count - fields.misses.length} more)` : '') : type === 'slow-command' ?
         `${command} ${fields.durationMs} ms (median ${fields.medianMs} ms)` :
         Object.entries(fields).filter(([key]) => !['id', 'at', 'project', 'audience'].includes(key))
-          .map(([key, value]) => `${key}=${value}`).join(' ');
+          .map(([key, value]) => `${key}=${value}`).join(' '));
       return terminalText(`${type} ${task ?? addr} · ${details}`);
     }).join('\n');
   }
 
-  const deferAuditorNotices = () => policy.drift?.deferAuditorNotices ?? driftDefaults.deferAuditorNotices;
-
-  function orgNotices(rows) {
-    for (const batch of Map.groupBy(pendingOrgNotices(), notice => JSON.stringify([notice.project, notice.audience])).values()) {
-      const { project: name, audience } = batch[0];
-      if (audience === 'auditor' && deferAuditorNotices()) continue;
-      const row = rows.findLast(row => row.project === name && row.role === audience &&
-        row.endedAt === null && sessions.jobs.has(row.addr));
-      if (!row) continue;
-      const lines = noticeLines(batch);
-      const ids = batch.map(notice => notice.id);
-      const queued = mail.messages.find(message => message.orgEvents && message.target.addr === row.addr &&
-        message.phase === 'queued' && !message.payloadFrozen);
-      if (queued) mail.appendQueued(queued, lines, ids);
-      else saved(sessions.targetBinding(row), 'Loom drift and fact checks\n' + lines, { orgEvents: ids });
+  function messageIssue(message) {
+    const row = sessions.rowFor(message.target.addr);
+    if (row?.role === 'leader') {
+      const stuck = message.stuckOf && mail.messages.find(item => item.id === message.stuckOf);
+      if (message.orgEvents && !message.orgAppendix || stuck && sessions.rowFor(stuck.target.addr)?.role === 'worker' ||
+          notifications.list(row.project, false, true).some(event =>
+            event.type === 'auditor-budget-exceeded' && batchDeliveryId(event.id, 'leader') === message.id)) {
+        return 'leader-signal-deferred';
+      }
     }
+    if (row?.role !== 'auditor') return;
+    const job = sessions.jobs.get(message.target.addr);
+    if (!auditorWakeSource(message, { startupId: job?.firstId,
+      handoverId: job?.handoverReportId, senderRole: sessions.rowFor(message.from?.addr)?.role })) return auditorWakeFiltered;
   }
 
   async function closeReviews() {
@@ -432,10 +434,11 @@ export function createSupervisor(project, {
       if (!expired && !result && row.endedAt == null && !failedDelivery(first)) continue;
       const id = batchDeliveryId(job.firstId, 'reviewer');
       const owner = row.parent && sessions.routeParent(row.parent);
-      const gate = owner?.role === 'auditor' && row.wave && mail.messages.some(message =>
+      const audit = owner?.role === 'auditor';
+      const gate = audit && row.wave && mail.messages.some(message =>
         message.id === packetDeliveryId(row.project, row.wave) && message.gatePacket) ? row.wave : undefined;
       if (mail.messages.some(message => message.id === id) ||
-          gate && notifications.list(row.project, false, true).some(event => event.id === id)) continue;
+          audit && notifications.list(row.project, false, true).some(event => event.id === id)) continue;
       if (row.endedAt == null) {
         try { await sessions.stop(row); }
         catch (error) { report(`${row.addr} reviewer stop: ${error.message}`); continue; }
@@ -446,7 +449,7 @@ export function createSupervisor(project, {
         expired && (!onTime || row.endedAt >= job.reviewDeadline) ? 'TIMED OUT' :
           `FAILED ${result?.outcome?.failure ?? first?.issue ?? 'no native reply'}`;
       const text = `Loom reviewer ${row.addr}${row.task ? ' · ' + row.task : ''}\n\n${terminalText(detail)}`;
-      if (gate) {
+      if (audit) {
         notifications.add({ id, gate, type: 'reviewer-result', project: row.project, addr: row.addr,
           at: result?.at ?? row.endedAt ?? job.reviewDeadline, text: text.slice(0, 16_000), logOnly: true });
       } else if (row.parent) {
@@ -467,6 +470,12 @@ export function createSupervisor(project, {
   }
 
   async function spawnSession(args, caller) {
+    const actor = caller && sessions.rows().find(row => row.addr === caller || row.pane === caller);
+    if (args.role === 'auditor' && actor &&
+        (actor.endedAt !== null || actor.role !== 'super' &&
+          !(actor.role === 'leader' && sessions.rowFor(args['handover-from'])?.project === actor.project))) {
+      throw new CommandError('invalid-arguments', 'Auditor startup requires Super or a Leader supervising succession');
+    }
     const job = await sessions.newJob(args, caller, checkBarrier, occupied);
     let session;
     try {
@@ -498,12 +507,6 @@ export function createSupervisor(project, {
       if (old && superseded(old, rows)) mail.refuseQueued(message, 'superseded');
     }
     const routed = new Map();
-    if (deferAuditorNotices()) {
-      for (const message of mail.messages) {
-        if (message.orgEvents && !message.orgAppendix && !message.attemptAt &&
-            sessions.rowFor(message.target.addr)?.role === 'auditor') mail.refuseQueued(message, 'org-notice-deferred');
-      }
-    }
     let seats;
     await mail.step(({ id, target: { addr } }) => {
       if (id === sessions.jobs.get(addr)?.firstId) return;
@@ -514,16 +517,21 @@ export function createSupervisor(project, {
       return routed.get(addr);
     }, {
       async beforeDispatch() {
+        await org.collect(sessions.rows());
         await stepRelay(now());
         continuations();
         seats = workerSeats(workerLimit(policy));
       },
       now,
+      messageIssue,
       coalesceMs: policy.delivery?.coalesceMs ?? defaultCoalesceMs,
       decorate(message) {
         const row = sessions.rowFor(message.target.addr);
-        if (!deferAuditorNotices() || row?.role !== 'auditor' || message.orgEvents || message.gatePacket) return;
-        const batch = pendingOrgNotices().filter(notice => notice.project === row.project && notice.audience === 'auditor');
+        if (row?.role !== 'leader' || message.orgEvents || message.stuckOf) return;
+        const delivered = new Set(mail.messages.filter(item =>
+          !['refused', 'corrupted'].includes(item.phase) && sessions.rowFor(item.target.addr)?.role === 'leader')
+          .flatMap(item => item.orgEvents ?? []));
+        const batch = leaderSignals(row.project).filter(notice => !delivered.has(notice.id));
         if (batch.length) {
           const lines = noticeLines(batch);
           const summary = Buffer.byteLength(lines) > 1200 ?
@@ -544,8 +552,6 @@ export function createSupervisor(project, {
     for (const [name, rows] of Map.groupBy(current, row => row.project)) {
       await budget.check(name, rows, policy).catch(error => report(`Role budget ${name}: ${error.message}`));
     }
-    await org.collect(current);
-    orgNotices(current);
     health = new Map((await watcher.poll()).map(row => [row.addr, row]));
     await checkStartupBlockers();
     await checkHeldDrafts();
@@ -588,32 +594,52 @@ export function createSupervisor(project, {
         return spawnSession({ role, cwd: old.cwd, 'handover-from': old.addr, profileChoice: to, defaultMode: old.backend,
           prompt: 'Take over the resident role. In your first report, ground the current state in repository SHAs, paths and any test or metric names you rely on.' }, caller);
       }
-      if (command === 'notifications' || command === 'gate-pack') {
+      if (['notifications', 'gate-pack', 'escalate'].includes(command)) {
         const rows = sessions.rows();
         const names = new Set(rows.map(row => row.project));
         const actor = caller && rows.find(row => row.addr === caller || row.pane === caller);
         const name = args.project ?? actor?.project ?? (names.size <= 1 ? (names.values().next().value ?? project) : undefined);
         const gateWriter = name && (names.has(name) || name === project) && (!actor ||
           ['leader', 'super'].includes(actor.role) && actor.endedAt === null && actor.project === name);
-        if (command === 'gate-pack') {
+        if (command !== 'notifications') {
+          const escalation = command === 'escalate';
           if (!gateWriter || typeof args.gate !== 'string' || !gateId.test(args.gate) ||
               ['base', 'candidate', 'question'].some(key => args[key] !== undefined && !validInput(args[key]))) {
             throw new CommandError('invalid-arguments', 'A Leader or Super must supply a gate ID in this project');
           }
+          if (escalation && (actor?.role !== 'leader' || !redReasons.has(args.reason) ||
+              !validInput(args.evidence) || Buffer.byteLength(args.evidence) > 2048)) {
+            throw new CommandError('invalid-arguments', 'Escalation requires the live Leader, a red reason and up to 2048 bytes of evidence');
+          }
           const { gate } = args;
           const id = packetDeliveryId(name, gate);
           const existing = mail.messages.find(message => message.id === id);
-          if (existing) return { gate, path: existing.gatePacket, ...receiptFor(existing) };
-          const auditor = rows.findLast(row => row.role === 'auditor' && row.project === name &&
-            row.endedAt === null && sessions.jobs.has(row.addr));
+          const red = escalation && { id: `red:${id}`, gate, project: name, addr: actor.addr, at: now(),
+            type: 'red-escalation', reason: args.reason, text: args.evidence, logOnly: true };
+          if (existing) {
+            if (red) notifications.add(red);
+            return { gate, path: existing.gatePacket, ...(red && { wakeQueued: false }), ...receiptFor(existing) };
+          }
+          const auditor = liveRole(name, 'auditor');
           if (!auditor) throw new CommandError('not-ready', 'No live managed Auditor in this project');
           const members = rows.filter(row => row.project === name && ['worker', 'reviewer'].includes(row.role) &&
             (row.wave === gate || sessions.jobs.get(row.addr)?.barrier === gate));
           const decisions = notifications.list(name).filter(event => event.type === 'needs-decision' &&
             (event.gate === gate || members.some(row => row.addr === event.addr)));
-          const path = saveGatePacket(project, { ...args, id }, { members, jobs: sessions.jobs, messages: mail.messages, decisions });
-          const delivery = saved(sessions.targetBinding(auditor), `Read gate packet ${path}`, { id, gatePacket: path });
-          return { gate, path, ...receiptFor(delivery) };
+          const workerAddrs = new Set(members.filter(row => row.role === 'worker').map(row => row.addr));
+          const boundary = notifications.list(name, false, true)
+            .findLast(event => ['gate-completed', 'auditor-rotation-proposed'].includes(event.type))?.at ?? 0;
+          const signals = leaderSignals(name).filter(notice => workerAddrs.has(notice.addr) ||
+            notice.type === 'auditor-budget-exceeded' && notice.at >= boundary);
+          const path = saveGatePacket(project, { ...args, id }, { members, jobs: sessions.jobs, messages: mail.messages,
+            decisions, signalSummary: noticeLines(signals), signalCount: signals.length, red });
+          const delivery = saved(sessions.targetBinding(auditor), red ?
+            `Loom red escalation (${red.reason}). Read gate packet ${path}` : `Read gate packet ${path}`, {
+            id, gatePacket: path, ...(red && { redEscalation: red.reason }),
+            ...(actor && { from: sessions.targetBinding(actor), expectReply: true }),
+          });
+          if (red) notifications.add(red);
+          return { gate, path, ...(red && { wakeQueued: true }), ...receiptFor(delivery) };
         }
         if (args.take && actor && actor.role !== 'super') {
           throw new CommandError('invalid-arguments', 'Only the Super takes project notifications');
@@ -662,6 +688,11 @@ export function createSupervisor(project, {
       if (command === 'handover') {
         const old = sessions.rowFor(args.from);
         if (!validInput(args.text)) throw new CommandError('invalid-arguments', 'Handover brief is required');
+        const actor = caller && sessions.rows().find(item => item.addr === caller || item.pane === caller);
+        if (row.role === 'auditor' && actor && (actor.endedAt !== null || actor.project !== row.project ||
+            !['leader', 'super'].includes(actor.role))) {
+          throw new CommandError('invalid-arguments', 'Auditor succession requires Super or the project Leader');
+        }
         let delivery;
         sessions.bindSuccessor(old, row, () => {
           delivery = saved(sessions.targetBinding(row), args.text, { id: batchDeliveryId(old.addr, row.addr) });
@@ -688,7 +719,8 @@ export function createSupervisor(project, {
         return { addr: row.addr, endedAt: closed.endedAt };
       }
       if (command !== 'send') throw new CommandError('invalid-arguments', 'Unknown loomd request');
-      if (!validInput(args.text) || !['queue', 'steer', 'interrupt'].includes(args.mode)) {
+      if (!validInput(args.text) || !['queue', 'steer', 'interrupt'].includes(args.mode) ||
+          args.expectReply !== undefined && typeof args.expectReply !== 'boolean') {
         throw new CommandError('invalid-arguments', 'Invalid send request');
       }
       if (args.id !== undefined && !messageIdPattern.test(args.id) ||
@@ -702,7 +734,8 @@ export function createSupervisor(project, {
       const existing = args.id && mail.messages.find(message => message.id === args.id);
       if (existing) {
         if ((existing.originalTarget ?? existing.target.addr) !== row.addr || existing.from?.addr !== from?.addr || existing.text !== args.text ||
-            existing.requestedMode !== args.mode || existing.batchId !== args.batch || existing.batchSize !== args.batchSize) {
+            existing.requestedMode !== args.mode || existing.batchId !== args.batch || existing.batchSize !== args.batchSize ||
+            Boolean(existing.expectReply) !== Boolean(args.expectReply)) {
           throw new CommandError('id-conflict', 'Delivery ID is already bound to a different request');
         }
         return { addr: row.addr, ...receiptFor(existing) };
@@ -723,6 +756,18 @@ export function createSupervisor(project, {
         }
       }
       const target = sessions.targetBinding(successor);
+      const userWake = actor ? actor.role === 'super' && actor.endedAt === null : !from || from.role === 'super';
+      const fields = { ...(from && { from: sessions.targetBinding(from) }), ...(args.expectReply && { expectReply: true }),
+        ...(userWake && { superPriority: true, ...(successor.role === 'auditor' && { userWake: true }) }),
+        ...(row.addr !== successor.addr && { originalTarget: row.addr }),
+        ...(args.id && { id: args.id }), ...(args.batch && { batchId: args.batch, batchSize: args.batchSize }),
+        requestedMode: args.mode,
+      };
+      if (successor.role === 'auditor' && !userWake) {
+        const message = saved(target, args.text, { ...fields, mode: args.mode, phase: 'refused',
+          issue: auditorWakeFiltered, refusedAt: now() });
+        return { addr: row.addr, ...receiptFor(message) };
+      }
       if (args.mode === 'interrupt' && !sessions.canInterrupt(target)) {
         throw new CommandError('unsupported', 'Runtime cannot guard the requested turn at interrupt submission');
       }
@@ -732,12 +777,9 @@ export function createSupervisor(project, {
       if (args.mode === 'interrupt' && !active) throw new CommandError('not-ready', 'interrupt requires an active turn');
       const mode = sessions.requestedMode(target, args.mode, active);
       const continuation = mode === 'queue' && from?.role === 'leader' && row.role === 'worker' && from.project === row.project;
-      const message = saved(target, args.text, { ...(from && { from: sessions.targetBinding(from) }),
-        ...(!actor || actor.role === 'super' ? { superPriority: true } : {}),
-        ...(row.addr !== successor.addr && { originalTarget: row.addr }),
-        ...(args.id && { id: args.id }), ...(args.batch && { batchId: args.batch, batchSize: args.batchSize }),
+      const message = saved(target, args.text, { ...fields,
         ...(continuation && !args.batch && { implicitBatch: 'auto:' + randomUUID(), coalesceWindow: 0, streamContinuation: true }),
-        requestedMode: args.mode, mode, active, barrier: mode === 'queue' ? active : undefined });
+        mode, active, barrier: mode === 'queue' ? active : undefined });
       return { addr: row.addr, ...receiptFor(message) };
     },
   };

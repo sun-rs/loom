@@ -402,8 +402,8 @@ export function ownedSessions(project, index, report, {
     }
     if (row.role === 'leader' || row.role === 'auditor') {
       const guidance = row.role === 'leader' ?
-        'Coordinate work. Workers reproduce issues and run full test suites in their own sandboxes. Review their receipts and evidence, and use loom gate pack to send the Auditor one packet per gate.' :
-        'For gate review, read only the gate packet and reviewer conclusions. Delegate deep checks to one ephemeral read-only reviewer. Keep interventions to user messages, gate decisions, and escalations.';
+        'Coordinate work. Workers reproduce issues and run full test suites in their own sandboxes. Review their receipts and signals. Use loom gate pack for the Auditor, or loom escalate for confirmed red facts, sharing one wake per gate.' :
+        'For gate review, read only the gate packet and reviewer conclusions. Delegate deep checks to one ephemeral read-only reviewer. Wake sources are user or Super messages, a gate packet or red escalation from Leader, and succession supervision.';
       prompt = `## Loom role guidance\n${guidance}\n\n## Startup request\n${prompt}`;
       try { prompt = await projectMemoryPrompt(project) + prompt; }
       catch (error) { report(`Project memory unavailable: ${error.message}`); }

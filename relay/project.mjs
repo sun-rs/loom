@@ -109,7 +109,7 @@ function waveForReply(waves, reply) {
 
 export function relay(project, targets, window, call, report = console.log, inboxRoutes = () => undefined, {
   withEvidence = false, managedWorkers, deliver, index, sealWindow = window, partialWindow, blockedWindow = 60_000,
-  auditors = () => [], onBatch, parentFor = addr => addr,
+  onBatch, parentFor = addr => addr,
 } = {}) {
   const work = join(project, '.project/workers.md');
   const dir = join(project, '.project/relay');
@@ -129,11 +129,6 @@ export function relay(project, targets, window, call, report = console.log, inbo
       ...(pending.length && { timeout: { project: wave.project, addr: wave.parent, at: metadata?.streamAt ?? wave.deadline } }),
       ...(blocked && { blocked: { project: wave.project, addr: wave.parent } }),
     });
-    const exceptions = replies.filter(reply => reply.outcome !== 'BLOCKED' && (reply.outcome === 'FAILED' || reply.mismatch));
-    if (exceptions.length) {
-      const copies = auditors(wave.project).filter(addr => addr !== wave.parent);
-      if (copies.length) enqueue(state, exceptions, label, [], copies, fields);
-    }
   }
 
   async function step(now = Date.now()) {

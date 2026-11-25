@@ -7,7 +7,7 @@ import { addressPattern } from './tui.mjs';
 import { managedProject, projectDirectory } from '../cli/project.mjs';
 import { daemonAbsent, request } from '../daemon/rpc.mjs';
 
-const usage = 'Usage: loom send <target> [--mode queue|steer|interrupt] [--from <addr>] [--project <dir>] [--id UUID] [--batch UUID --batch-size N] [--wait] "<msg>"';
+const usage = 'Usage: loom send <target> [--mode queue|steer|interrupt] [--from <addr>] [--project <dir>] [--id UUID] [--batch UUID --batch-size N] [--expect-reply|--wait] "<msg>"';
 
 const emit = value => console.log(JSON.stringify(value));
 
@@ -23,7 +23,7 @@ export async function main(args) {
       args, allowPositionals: true,
       options: { mode: { type: 'string', default: 'queue' }, from: { type: 'string' },
         project: { type: 'string' }, id: { type: 'string' }, batch: { type: 'string' }, 'batch-size': { type: 'string' },
-        wait: { type: 'boolean' }, help: { type: 'boolean', short: 'h' } },
+        'expect-reply': { type: 'boolean' }, wait: { type: 'boolean' }, help: { type: 'boolean', short: 'h' } },
     });
   } catch (error) {
     return fail('invalid-arguments', error.message, 2);
@@ -42,7 +42,7 @@ export async function main(args) {
     const managed = projectDirectory(projectArg);
     if (managedProject(managed)) {
       const response = await request(managed, 'send', { target: targetArg, mode: requestedMode, from, text,
-        id, batch, batchSize: size === undefined ? undefined : Number(size) });
+        id, batch, expectReply: parsed.values['expect-reply'], batchSize: size === undefined ? undefined : Number(size) });
       if (wait) {
         const deadline = Date.now() + 300_000;
         let current;

@@ -68,7 +68,7 @@ SQLite 中的受管 worker 索引由持久的 spawn 意图补齐。`workers.md` 
 | `LOOM_BLOCKED_COALESCE_MS` | 默认 60000。从首个确认的 BLOCKED 结果算起，适用于 spawn 波次与一组同会话续作。全员结算或整波截止先到时可直接结算。 |
 | `LOOM_UNCERTAIN_MS` | 默认 60000。从不明输入或取消尝试算起。一次性按 ID 入项目通知队列，父会话或原发起方仍可达时另入其收件箱。 |
 
-普通波次一次结算。到期带已到结果和未落定成员，逐项显示 `STUCK` 及最近观测到的活动时间，晚到的确认结果先归档再补投。首个 `BLOCKED` 启动短合并窗口。若全员在窗口内落定，Leader 只收到一次汇总。若窗后仍有未落定成员，Leader 收到一次包含已到 BLOCKED 与同批其他结果的提前通知，波次保持开放。最终结算省略提前发送过的成员正文。活跃的同项目 Auditor 只收到 `FAILED`、证据卡中结构化 `MISMATCH` 对应的结果，混合批次里的 BLOCKED 仅发给 Leader。`UNCONFIRMED` 表示 ACP 轮末有输入归属但缺最终消息边界，附带标明未经确认的文本；该文本仍可从历史查看。新波重派同项目、同 task 后，旧正文继续归档，账本与视图标记 `superseded`，已排队且还没开始发送的旧补投也按该状态结束。
+普通波次一次结算。到期带已到结果和未落定成员，逐项显示 `STUCK` 及最近观测到的活动时间，晚到的确认结果先归档再补投。首个 `BLOCKED` 启动短合并窗口。若全员在窗口内落定，Leader 只收到一次汇总。若窗后仍有未落定成员，Leader 收到一次包含已到 BLOCKED 与同批其他结果的提前通知，波次保持开放。最终结算省略提前发送过的成员正文。所有 Worker 波次结算（含 `FAILED` 和 `MISMATCH`）由 Leader 接收。`UNCONFIRMED` 表示 ACP 轮末有输入归属但缺最终消息边界，附带标明未经确认的文本；该文本仍可从历史查看。新波重派同项目、同 task 后，旧正文继续归档，账本与视图标记 `superseded`，已排队且还没开始发送的旧补投也按该状态结束。
 
 普通 `send` 可按来源返回同根轮结果。同一个来源已经通过 spawn 首轮波次取得该轮结果时不重复单发。Leader 对同项目 Worker 的在途 queue 续作自动形成一组。显式批次用同一个 `--batch UUID --batch-size N`，参见 `loom send --help-advanced`。两种模式均按提交顺序汇总，并应用 BLOCKED 短窗、整批和部分结果截止时间。短窗先投已到结果，结算省略此前已投成员。超时逐项注明 STUCK、最近活动和未提交数量，晚到时按输入 ID 补投一次。重新派发同一任务后，旧 Worker 的迟到结果保留在账本中。 `ls` 和 `state` 显示 `pendingContinuations` 与 `pendingDeliveries`。
 
@@ -91,7 +91,7 @@ Leader 用 `loom gate pack <gate-id>` 向 Auditor 投递一条门禁包指针，
 | 命令 | loom 到 OAR 的映射 |
 | --- | --- |
 | `loom spawn` | Worker 先按父地址与项目检查活跃席位。将 `--cli` 解析为 `Runtime.id`。headless Codex 走 app-server，agy 与 OpenCode 走 ACP，Claude 走 OAR 的 Claude runtime。TUI 绑定本地 hc 窗格，Claude TUI 使用 `claude-tui`。先保存 spawn 意图与首轮 ID，再登记、打开和绑定原生会话，首轮经收件箱投递。 |
-| `loom send` | 先登记收件箱，再按上表调用 `prompt`、`steer` 或 `abort` 后 `prompt`。回执给出 `deliveryId`、`deliveryStatus`、`requestedMode` 及当前有效模式。后续变化从 `state` 查询。 |
+| `loom send` | 先登记收件箱，再按上表调用 `prompt`、`steer` 或 `abort` 后 `prompt`。用 `--expect-reply` 请求一次回送。回执给出 `deliveryId`、`deliveryStatus`、`requestedMode` 及当前有效模式。后续变化从 `state` 查询。 |
 | `loom hist` | 归并适配器的原生 transcript 投影、OAR 根轮日志及可归属的账本记录。L1 摘要、L2 轮次详情按有证据的根轮查询。`ViewTurn` 可在同一轮内产生多个展示段，按轮归并后再应用 `--turns`。 |
 | `loom state` | 读取 `Session.status()`，结合记录中的 `exited`／`released` 和 loom 的投递账本。受管会话 daemon 停止时报告离线或已退出。活跃 headless 返回 OAR 根状态及巡检状态。`src/observe/index.ts:8-15` |
 | `loom cost` | 从会话索引和原生历史汇总 [角色用量、Leader 唤醒与 Worker 验收后调用](PILOT-COST.md)。 |
@@ -127,7 +127,7 @@ Leader 用 `loom gate pack <gate-id>` 向 Auditor 投递一条门禁包指针，
 | G3 共享账本的 FIFO | 普通输入按目标队列顺序出列，目标持续忙时保留，无覆盖。显式控制模式和失去父轮末时的兜底唤醒可以优先。TUI 与 headless 共享逻辑去重和回执，只有到达传输边界时选择 hc 或 OAR。 | 两个发送方并发、忙轮持有、1,000 条逐条比对。 |
 | G4 工作结果回送 | 原生结果可绑定根轮时，受管首轮按波、普通回复按根轮与来源地址去重。可达且最终可写的收件人会收到持久结果。已退出的接收方不能被唤醒；正文不明时保留已知状态和可查询证据。 | 单轮早完、崩溃恢复回送、ACP 无边界、TUI/OAR 混合波。 |
 | G5 封存与唤醒 | 有确定的封存和结算截止点，Leader 忙时通知留在账本。同一正常结算只生成一条给 Leader 的批次，一次 BLOCKED 提前汇总和晚到补投各持稳定身份。无限忙或已退出的目标只能保留通知；超时本身不杀 worker。 | 根轮末丢失、跨轮补派、部分窗口、永不结束、迟到与重派。 |
-| G6 抄送和留存 | 首行 BLOCKED 短窗合并，Auditor 只收到 FAILED 或确认 MISMATCH 的成员结果，抄送对象在创建批次时固化。证据卡校验、轮次归属和交接留存基于可读原生证据；采集缺口会留在证据或历史中。 | BLOCKED、FAILED、MISMATCH 对照，卡片与交接发布点前后 SIGKILL。 |
+| G6 路由和留存 | 首行 BLOCKED 短窗合并，结算交给 Leader。Auditor 唤醒按 [R20 白名单](ORG.md#消息路由r202026-11-25) 校验。证据卡校验、轮次归属和交接留存基于可读原生证据；采集缺口留在证据或历史中。 | BLOCKED、FAILED、MISMATCH 对照，卡片与交接发布点前后 SIGKILL。 |
 | G7 指定轮中断 | 要求受管运行时能守住发出时的原生轮槽或 turn ID。仅对应轮取消已证明且同会话可写时续投。退出、release、取消回执和已打入终端的字符都不足以证明续投安全。 | 原轮替换、abort 意图及 ACK 前后 SIGKILL、目标进程退出。 |
 | G8 崩溃恢复 | 原子 JSON 快照、SQLite 事务及 JSONL 完整前缀可重放。已经落盘的 relay 批次用派生 ID 重送给 inbox 可去重。存在“原生可能接管、证据尚未持久化”的跨进程缺口，保留意图并升级，禁止盲重投。已提交文件被人为篡改或稳定介质损坏须恢复可信副本。 | SQLite 热回滚与坏头、OAR/watch JSONL 半行、波次入 inbox 前后 SIGKILL、原生丢帧对账。 |
 | G9 监控与外部通知 | headless 的静默忙轮和明确 429/配额事件可产生单边沿记录。已有 OAR/PTY 身份能重挂时原位恢复。已接管但未结束的单发续作可向原发起方发卡死通知。通知可一次领取，领取事务落盘后回复方断线可能导致调用方未收到该次批量结果；通知档案保留。 | headless 卡死与限流、外部领取重放、真实 hc 服务重启。 |

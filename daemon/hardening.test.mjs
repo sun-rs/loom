@@ -258,7 +258,7 @@ test('SIGKILL around delivery, registry, relay and history durability boundaries
     if (kind === 'send') {
       const sender = await f.spawn('super', 'SENDER', { mode: 'tui' });
       await f.waitMail(sender.deliveryId);
-      const options = { id, from: sender.session.addr };
+      const options = { id, from: sender.session.addr, expectReply: true };
       f.arm(stage, moment);
       await f.send(target, 'FAULT REQUEST', options).catch(() => {});
       await f.killed(proc, stage, moment);

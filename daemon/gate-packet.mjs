@@ -5,6 +5,7 @@ import { readArtifacts } from '../cli/artifacts.mjs';
 import { CommandError } from '../cli/sessions.mjs';
 import { clip } from '../evidence/checks.mjs';
 import { readText, writeState } from './io.mjs';
+import { workerRedFacts } from './routing.mjs';
 
 export const gateId = /^[A-Za-z0-9][A-Za-z0-9_.-]{0,127}$/;
 const oneLine = text => String(text ?? '').replace(/\s+/g, ' ').replace(/[\x00-\x1f\x7f-\x9f]/g, '').trim();
@@ -22,7 +23,7 @@ function commit(project, ref) {
 }
 
 export function saveGatePacket(project, { id, gate, base: baseRef, candidate: candidateRef = 'HEAD', question },
-  { members, jobs, messages, decisions }) {
+  { members, jobs, messages, decisions, signalSummary, signalCount, red }) {
   const baseDirectory = join(project, '.project');
   const directory = join(baseDirectory, 'gates');
   if (realpathSync(baseDirectory) !== baseDirectory) throw new Error('Gate directory must be project-local');
@@ -49,6 +50,9 @@ export function saveGatePacket(project, { id, gate, base: baseRef, candidate: ca
   const cards = members.flatMap(row => artifacts.cards(row.addr))
     .sort((a, b) => (b.data.endedAt ?? 0) - (a.data.endedAt ?? 0));
   const evidence = cards.map(card => `- ${relative(project, card.path)} · ${oneLine(card.summary)}`);
+  const redFacts = cards.flatMap(card => workerRedFacts(card.data.git));
+  const redLines = [...new Set(redFacts.map(fact => `- ${fact.reason} · ${oneLine(fact.file)}`))];
+  if (red) redLines.unshift(`- Leader confirmed ${red.reason} · ${oneLine(red.text)}`);
   const checks = cards.flatMap(({ data }) => data.verification?.commands ?? []);
   const passed = checks.filter(check => check.result === 'passed').length;
   const failed = checks.filter(check => check.result === 'failed').length;
@@ -64,11 +68,13 @@ export function saveGatePacket(project, { id, gate, base: baseRef, candidate: ca
     .map(oneLine).filter(Boolean).map(value => '- ' + value);
   const sections = [
     `# Gate ${gate}\n\nBase: ${base ?? '(root)'}\nCandidate: ${candidate}`,
-    `## Evidence cards\n${cards.length} cards · .project/evidence/\n` + clip(bullet(evidence, 'No recorded cards.'), 400),
+    `## Evidence cards\n${cards.length} cards · .project/evidence/\n` + clip(bullet(evidence, 'No recorded cards.'), 250),
     '## Diff --stat\n' + diff,
     `## Test summary\n${checks.length ? `${passed} passed, ${failed} failed, ${checks.length - passed - failed} inconclusive commands; ${sandboxed} ran in a sandbox.` : 'No verified test commands.'}`,
-    `## Reviewer verdicts\n${reviews.length} reviewers\n` + clip(bullet(reviews, 'No recorded reviewer.'), 240),
-    '## Open questions\n' + clip(bullet(questions, 'None recorded.'), 280),
+    `## Reviewer verdicts\n${reviews.length} reviewers\n` + clip(bullet(reviews, 'No recorded reviewer.'), 175),
+    '## Open questions\n' + clip(bullet(questions, 'None recorded.'), 110),
+    '## Red facts\n' + clip(bullet(redLines, 'None recorded.'), 170),
+    `## Drift and fact checks\n${signalCount} signals · \`loom status --json\`\n` + clip(signalSummary || 'None recorded.', 165),
     `## Pointers\n- \`${statCommand}\`\n- Reviewer transcripts: \`loom hist <reviewer-addr> --turns 1\`\n- Pending decisions: \`loom notifications\``,
   ];
   writeState(path, sections.join('\n\n') + '\n');

@@ -9,7 +9,6 @@
     "planLines": 120,
     "repeatedFailures": 2,
     "factMiss": true,
-    "deferAuditorNotices": true,
     "sampleIntervalMs": 30000
   },
   "deny": [

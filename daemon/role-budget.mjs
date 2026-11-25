@@ -8,7 +8,7 @@ const sampleIntervalMs = 30_000;
 const driftType = 'consumption-pyramid';
 const budgetType = 'auditor-budget-exceeded';
 
-export function roleBudget(project, { now, sessions, notifications, batchDeliveryId, tellLeader, report }) {
+export function roleBudget(project, { now, sessions, notifications, batchDeliveryId, report }) {
   const sampled = new Map();
 
   async function assessAuditor(rows, reader, boundary, policy) {
@@ -56,10 +56,6 @@ export function roleBudget(project, { now, sessions, notifications, batchDeliver
           over = { id, project: name, type: budgetType, at, text, usage, logOnly: true };
           notifications.add(over);
         }
-      }
-      if (over) {
-        const leader = rows.findLast(row => row.role === 'leader' && row.endedAt === null && sessions.jobs.has(row.addr));
-        if (leader) tellLeader(leader, over.text, batchDeliveryId(id, 'leader'));
       }
       if (completeGate) return over?.usage;
       const lastDrift = events.findLast(event => event.type === driftType);

@@ -401,7 +401,7 @@ test('queues TUI steering and routes only the final from the new prompt turn', a
   const target = f.terminal('t1');
   const sender = f.terminal('t2', 'agy', 'idle');
   f.event(target, 'UserPromptSubmit', 'original');
-  const id = await f.submit(target, 'steer', sender);
+  const id = await f.submit(target, 'steer', sender, { expectReply: true });
   await f.reopen().step();
   assert.deepEqual(f.sends, []);
   target.status.state = 'idle';
@@ -431,6 +431,21 @@ test('queues TUI steering and routes only the final from the new prompt turn', a
   await f.reopen().step();
   assert.equal(f.lookup(replyId).completion.body, 'RECEIVED');
   assert.equal(f.sends.length, 2);
+});
+
+test('an automatic reply cannot produce another reply even if old metadata requests one', async t => {
+  const f = fixture(t);
+  const target = f.terminal('t1', 'codex', 'idle');
+  const sender = f.terminal('t2', 'codex', 'idle');
+  const id = await f.submit(target, 'queue', sender, { expectReply: true, replyTo: randomUUID() });
+  const mail = f.reopen();
+  await mail.step();
+  f.event(target, 'UserPromptSubmit', 'received', { deliveryId: id });
+  f.event(target, 'Stop', 'received', { last_assistant_message: 'confirmation' });
+  await mail.step();
+  assert.equal(f.lookup(id).completion.body, 'confirmation');
+  assert.equal(mail.messages.filter(message => message.replyTo === id).length, 0);
+  assert.deepEqual(mail.routesForTurn('t1', f.lookup(id).completion), []);
 });
 
 test('downgrades stale steering rather than typing into the new working turn', async t => {
@@ -480,7 +495,7 @@ test('reconciles a previous Claude TUI steer only in the transcript turn contain
   const target = f.terminal('t1', 'claude');
   const from = f.terminal('t2', 'codex', 'idle');
   f.event(target, 'UserPromptSubmit');
-  const id = await f.submit(target, 'steer', from, { mode: 'steer', phase: 'sending', attemptAt: Date.now() });
+  const id = await f.submit(target, 'steer', from, { mode: 'steer', phase: 'sending', attemptAt: Date.now(), expectReply: true });
   await f.reopen().step();
   const when = f.lookup(id).attemptAt;
   const file = join(target.cwd, 'claude-session.jsonl');
@@ -526,7 +541,7 @@ test('keeps a queued worker in its wave and avoids a duplicate copy to from', as
   const from = f.terminal('t2', 'codex', 'idle');
   const other = f.terminal('t3', 'codex', 'idle');
   f.event(target, 'UserPromptSubmit', 'original');
-  const id = await f.submit(target, 'steer', from);
+  const id = await f.submit(target, 'steer', from, { expectReply: true });
   const mail = f.reopen();
   await mail.step();
   target.status.state = 'idle';

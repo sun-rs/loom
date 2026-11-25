@@ -109,9 +109,11 @@ export function organization(project, index, sessions, mail, now, report) {
       const taskKey = JSON.stringify([row.project, row.task]);
       const scope = row.task && row.role === 'worker' ? taskKey : JSON.stringify([row.project, row.role, row.addr]);
       const card = next.cards[scope] ??= {};
-      const add = (type, key, detail, audience = 'auditor') => {
-        const id = digest(JSON.stringify([scope, audience, type, key]));
-        next.notices[id] ??= { id, type, audience, project: row.project, addr: row.addr, task: row.task, at, ...detail };
+      const add = (type, key, detail) => {
+        // Keep IDs emitted by prior versions so restoring a queue cannot repeat a signal.
+        const priorAudience = type === 'fact-miss' && row.role === 'auditor' ? 'leader' : 'auditor';
+        const id = digest(JSON.stringify([scope, priorAudience, type, key]));
+        next.notices[id] ??= { id, type, audience: 'leader', project: row.project, addr: row.addr, task: row.task, at, ...detail };
       };
       const turns = await observations(row, byAddr.get(row.addr) ?? []);
       const fresh = turns.filter(turn => !next.seen[turn.key] && !turn.waiting);
@@ -136,8 +138,7 @@ export function organization(project, index, sessions, mail, now, report) {
         const facts = body ? checkFacts(body, row.cwd, project, observation.gitObservation, { quotedMisses, noticeIds, plannedPaths }) :
           { checked: 0, misses: [] };
         if (facts.misses.length && (settings.factMiss || ['leader', 'auditor'].includes(row.role))) {
-          add('fact-miss', key, { turn: key, misses: facts.misses.slice(0, 5), count: facts.misses.length },
-            row.role === 'auditor' ? 'leader' : 'auditor');
+          add('fact-miss', key, { turn: key, misses: facts.misses.slice(0, 5), count: facts.misses.length });
         }
         if (rotation?.boundAt != null && body && (turn === handoverTurn ||
             endedAt >= (rotation.firstReportAt ?? handoverTurn?.at ?? Infinity))) {

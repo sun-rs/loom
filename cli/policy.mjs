@@ -18,7 +18,7 @@ export const defaultReplyBytes = 600;
 export const costPriceFields = ['freshInput', 'cacheWrite', 'cacheRead', 'output'];
 export const driftDefaults = Object.freeze({
   netLines: null, budgetRaises: 2, slowCommandFactor: 2, slowCommandSamples: 1,
-  planLines: 120, repeatedFailures: 2, factMiss: true, deferAuditorNotices: true, sampleIntervalMs: 30_000,
+  planLines: 120, repeatedFailures: 2, factMiss: true, sampleIntervalMs: 30_000,
 });
 const guidanceFields = {
   super: { preferLongPromptCacheTtl: 'boolean' },
@@ -84,8 +84,9 @@ export function readPolicy(project, { optional = false } = {}) {
     if (policy.drift !== undefined) {
       if (!policy.drift || typeof policy.drift !== 'object' || Array.isArray(policy.drift)) throw new Error('Expected a drift object');
       for (const [key, value] of Object.entries(policy.drift)) {
+        if (key === 'deferAuditorNotices' && typeof value === 'boolean') continue;
         if (!Object.hasOwn(driftDefaults, key) ||
-            (['factMiss', 'deferAuditorNotices'].includes(key) ? typeof value !== 'boolean' :
+            (key === 'factMiss' ? typeof value !== 'boolean' :
               key === 'slowCommandFactor' ? value !== null && !(Number.isFinite(value) && value > 1) :
               !(value === null && !['sampleIntervalMs', 'slowCommandSamples'].includes(key)) &&
                 !(Number.isSafeInteger(value) && value >= (['netLines', 'sampleIntervalMs'].includes(key) ? 0 : 1)))) {

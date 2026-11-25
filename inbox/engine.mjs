@@ -57,7 +57,7 @@ export function pendingWork(messages, addr, parentFor = value => value) {
 
 // The adapter-facing transport supplies pane binding, events and native input.
 // A headless runtime can supply the same operations when it owns its event stream.
-export function inbox(project, transport, report = console.error, { replyLimit } = {}) {
+export function inbox(project, transport, report = console.error, { replyLimit, canRelayReply } = {}) {
   const store = openStore(project);
   const { messages, save } = store;
   const integrityScanned = new Set();
@@ -89,7 +89,8 @@ export function inbox(project, transport, report = console.error, { replyLimit }
 
   function route(message, completion) {
     const { from, target } = message;
-    if (!from || !completion.body || message.batchId || message.implicitBatch) return;
+    if (!message.expectReply || !from || !completion.body || message.replyKey || message.replyTo ||
+        message.batchId || message.implicitBatch || canRelayReply && !canRelayReply(from.addr)) return;
     if (messages.some(item => item.waveParent === from.addr && item.target.addr === target.addr &&
         item.completion?.sessionId === completion.sessionId && item.completion?.turnId === completion.turnId)) return;
     const key = JSON.stringify([target.addr, target.createdAt, completion.sessionId,
@@ -535,7 +536,7 @@ export function inbox(project, transport, report = console.error, { replyLimit }
     settleCombined(all);
   }
 
-  async function step(routeTarget, { beforeDispatch, canDispatch, now = Date.now, coalesceMs = 0, decorate } = {}) {
+  async function step(routeTarget, { beforeDispatch, canDispatch, messageIssue, now = Date.now, coalesceMs = 0, decorate } = {}) {
     store.ingest();
     let changed = false;
     for (const message of messages) {
@@ -551,6 +552,20 @@ export function inbox(project, transport, report = console.error, { replyLimit }
       changed = true;
     }
     if (changed) save();
+    function filterMessages() {
+      let filtered = false;
+      for (const message of messages) {
+        if (!['queued', 'stopped'].includes(message.phase) || message.combinedInto) continue;
+        const issue = messageIssue?.(message);
+        if (!issue) continue;
+        message.phase = 'refused';
+        message.refusedAt = now();
+        message.issue = issue;
+        filtered = true;
+      }
+      if (filtered) save();
+    }
+    if (messageIssue) filterMessages();
     const groups = () => Map.groupBy(messages, ({ target }) => JSON.stringify([target.addr, target.createdAt, target.pid]));
     const active = [...groups()].filter(([, group]) =>
       group.some(message => needsIntegrity(message) || !rejected(message) &&
@@ -559,6 +574,7 @@ export function inbox(project, transport, report = console.error, { replyLimit }
       const known = new Set(messages.map(message => message.id));
       const observed = new Map(await Promise.all(active.map(async ([key, group]) => [key, await observeTarget(group)])));
       await beforeDispatch();
+      if (messageIssue) filterMessages();
       const at = now();
       await Promise.all([...groups()].filter(([key, group]) => observed.has(key) ||
         group.some(message => !known.has(message.id) && message.streamAt != null)).map(async ([key, group]) =>
@@ -575,7 +591,8 @@ export function inbox(project, transport, report = console.error, { replyLimit }
       completion && completion.sessionId === reply.sessionId &&
       (completion.at === reply.at || (reply.turnId && completion.turnId === reply.turnId)));
     if (related.length) return [...new Set(related.flatMap(message =>
-      message.from && message.completion.body ? [message.from.addr] : []))];
+      message.expectReply && message.from && !message.replyKey && !message.replyTo && message.completion.body ?
+        [message.from.addr] : []))];
   }
 
   function enqueue(message) {
@@ -584,13 +601,6 @@ export function inbox(project, transport, report = console.error, { replyLimit }
     messages.push(message);
     try { save(); } catch (error) { messages.pop(); throw error; }
     return message;
-  }
-
-  function appendQueued(message, text, ids) {
-    const previous = { text: message.text, orgEvents: message.orgEvents };
-    message.text += '\n' + text;
-    message.orgEvents = [...message.orgEvents, ...ids];
-    try { save(); } catch (error) { Object.assign(message, previous); throw error; }
   }
 
   function refuseQueued(message, issue) {
@@ -611,5 +621,5 @@ export function inbox(project, transport, report = console.error, { replyLimit }
     save();
   }
 
-  return { step, routesForTurn, enqueue, appendQueued, refuseQueued, escalate, messages };
+  return { step, routesForTurn, enqueue, refuseQueued, escalate, messages };
 }

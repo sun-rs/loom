@@ -15,7 +15,7 @@
 1. 用户消息永远插队：任何角色收到 Super 消息，排在 worker 结果之前，在下一轮最先处理。
 2. 并发：活跃写代码 worker 默认 2–3，硬上限 4；更多先拆成独立协调域。
 3. 换班交叉监督：Leader 换班由在任 Auditor 监督，Auditor 换班由在任 Leader 监督；两者不得同时换，至少错开一个任务阶段；只在任务卡边界换；新会话首轮报到中的 SHA/路径必须现查（loomd 机械核验）。
-4. 走偏信号（loomd 机械检测，报给 Auditor）：预算反复上调或实际净行数超预算；单次测试/编译耗时明显变长；计划文件膨胀；同类失败第二次出现；首次出现查无此物的 SHA/路径/指标。
+4. 走偏信号由 loomd 记录，附在 Leader 下一次实际唤醒，并纳入所属门禁包。信号包括预算反复上调或实际净行数超预算、测试或编译变慢、计划文件膨胀、同类失败再次出现、事实核验和 Worker 卡死。
 5. Auditor 根据门禁包及 Reviewer 结论审查，深入核查交给临时 Reviewer。审查最多 2 轮，仍阻塞升级 Super 改设计。Auditor 自查验收要求是否过重。
 6. 派卡模板：目标、可写范围、预算上限、测试行数不超过产品行数、只跑受影响的测试、停工触发器、三行回报格式。
 7. 不新增常驻角色。不做缓存保活。
@@ -30,7 +30,7 @@
 目标结构：**worker 消耗最多，Leader 次之，Auditor 最少**。按 token 和调用次数衡量，不按价格。
 - **Auditor 只看证据，不重新做一遍工作。**
   - 门禁复核时，只读证据卡、diff 统计和 reviewer 的结论，不通读代码，也不自己跑探针。需要深入核查时，派一个短期 reviewer，这部分消耗记在 reviewer 名下。
-  - 只在三种情况下被唤醒：用户消息、门禁裁决（每道门禁一次，材料由 Leader 整理好）、升级事项。
+  - loomd 只允许用户或 Super 消息、Leader 的门禁包或红色升级，以及换班监督唤醒 Auditor。
 - **Leader 只协调，不施工。**
   - 不自己跑全量测试，也不自己复现问题，这些交给 worker 或 reviewer。
   - 只读三行回执和证据卡。
@@ -40,3 +40,9 @@
 - **loomd 统计各角色的调用次数和 token。** `loom cost` 和 `loom status` 显示累计调用、原始 token、新输入和输出，同时检查最近一小时的调用数和原始 token。Claude 写入缓存的输入计入新输入。某项出现倒金字塔（Auditor 高于 Leader，或 Leader 高于 worker 合计）时，loomd 每项目每小时最多提醒 Super 一次。
 - **门禁包是常规门禁的单次唤醒。** Leader 用 `loom gate pack <gate-id> --base <ref> --candidate <ref> --question <text>` 固定候选并打包同名 `--wave` 或 `--barrier` 的 Worker/Reviewer 证据，附测试摘要、审查结论、待决问题和指针。默认候选为 `HEAD`，基线为其第一父提交。门禁包保存在 `.project/gates/`，≤2 KB。同一 ID 的重试沿用原门禁包和投递；修订候选时使用新 ID。Reviewer 用与门禁相同的 `--wave` 登记。Auditor 对已打包门禁发起的追加审查将结论记入通知账本，Auditor 随时可查询。
 - **Auditor 的门禁预算。** `roles.auditor.maxWakesPerGate` 默认 3，`maxContextTokens` 默认 150000。loomd 计两次门禁完成之间实际开始的原生轮次，含启动、用户消息和升级。当唤醒或当前上下文超限时，提醒 Leader 批量整理材料；Leader 或 Super 用 `loom notifications --gate-complete <gate-id>` 登记下一个安全边界，届时 loomd 建议换班。
+
+## 消息路由（R20，2026-11-25）
+
+- Worker 的首轮和批量续作结果发给 Leader。普通角色收件人仅在发送者使用 `loom send --expect-reply` 或请求门禁裁决时回送一次；自动回送从此结束。Auditor 发出的请求如需查询正文，可查看目标会话的 `loom state` 或历史。
+- Leader 核实红色事项后可运行 `loom escalate <gate-id> --reason REASON --evidence TEXT`。原因限 `protected-file`（保护或越界文件）、`assertion`（删除或削弱断言）、`skip-only`、`confirmed-fact-miss`、`sandbox-escape`。升级附证据，和门禁包共用每门禁一次的投递额度。额度已用时，结论记入通知账本，供查询。
+- Worker 的卡死、事实核验和其他常规信号随 Leader 的实际消息送达。`loom status --json` 可查看完整信号及被白名单过滤的投递。旧项目中的 `drift.deferAuditorNotices` 字段可继续读取，路由由本规则统一执行。
