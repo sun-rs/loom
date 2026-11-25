@@ -17,6 +17,9 @@ description: 在 Loom 中启动、指挥、复核或接手由 Super、Auditor、
 - **Super** 定目标、红线、权限、项目级预算和启动策略，裁决升级事项。首次派工前参照 [策略示例](../../examples/policy.json) 写 `.project/policy.json`。`preferred` 指定 CLI、模型、effort 和 mode，全局与角色的 `deny` 优先。常驻角色默认 TUI，Worker 默认 headless。启动拒绝或有效值有差异时报告 Super。
 - **Auditor** 负责维护 `.project/charter.md` 和 `.project/rulings.md`。章程写目标、非目标、红线和验收，账本按编号逐字记录用户裁决。新裁决另起编号并标明取代关系。参照 [章程模板](../../examples/charter.md) 和 [裁决模板](../../examples/rulings.md)。
 - 需要 Super 裁决时，用 `loom notifications --project "$PROJECT" --needs-decision "$SUMMARY"` 给出事实、选项和建议。托管 Super 由收件箱按批唤醒，外部 Super 收本机通知。`loom notifications --project "$PROJECT"` 预览，`--take` 领取，`--history` 回看。
+- 项目记忆保存在 `.project/memory/items/<id>.md`，每条 ≤200 tokens。用两行 `---` 包裹单行 JSON，必填 `id/scope/owner/source/verified`（`scope` 为 `project`），可选 `expires/supersededBy/keywords`，随后写 `# 标题`、空行和正文。Leader 写入已证实的坑、环境条件和入口，Auditor 裁决争议。首轮注入重建 `.project/memory/INDEX.md`，可用 `loom memory search <query> --project "$PROJECT"` 查询。
+  - `id` 与 `owner` 仅使用小写字母、数字、`-` 和 `_`。`verified` 和 `expires` 使用 `YYYY-MM-DD`，`source` 使用项目内相对路径或 Git SHA，`keywords` 为单个字符串（非数组）。
+  - 标题和正文避免计数斜杠写法（如 `37/37`）及项目外路径。写完运行 `loom memory search <query> --project "$PROJECT"`，确认结果包含该条目。
 
 ## Auditor · 用户的默认对接人
 
