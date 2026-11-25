@@ -1,0 +1,183 @@
+import { appendFileSync, chmodSync, constants, lstatSync, mkdirSync, realpathSync, unlinkSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
+import { createServer } from 'node:net';
+import { dirname, join } from 'node:path';
+import { parseArgs } from 'node:util';
+import { projectDirectory, projectOption, runtimeDirectory, socketPath } from '../cli/project.mjs';
+import { claimProject } from '../relay/lock.mjs';
+import { createSupervisor } from './supervisor.mjs';
+import { maxLine } from './rpc.mjs';
+import { readText, syncDirectory } from './io.mjs';
+import { activeRelease, nextController, releaseId, releaseRoot, upgradeState } from './release.mjs';
+import { beginUpgrade, daemonProtocol, liveHandoff, planUpgrade, selfCheck, validateHandoff, validateReattachment } from './upgrade.mjs';
+
+function excludeProjectMetadata(project) {
+  const git = (...args) => execFileSync('git', ['-C', project, 'rev-parse', ...args],
+    { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trimEnd();
+  let prefix, exclude;
+  try {
+    prefix = git('--show-prefix');
+    exclude = git('--path-format=absolute', '--git-path', 'info/exclude');
+  } catch { return; } // Non-Git projects have no exclude file.
+  const entry = `/${prefix.replace(/[\\*?\[\] ]/g, '\\$&')}.project/`;
+  const previous = readText(exclude);
+  if (previous.split(/\r?\n/).includes(entry)) return;
+  mkdirSync(dirname(exclude), { recursive: true });
+  appendFileSync(exclude, (previous && !previous.endsWith('\n') ? '\n' : '') + entry + '\n',
+    { mode: 0o600, flag: constants.O_WRONLY | constants.O_CREAT | constants.O_APPEND | constants.O_NOFOLLOW, flush: true });
+}
+
+function optionalTimeout(name) {
+  const raw = process.env[name];
+  if (raw === undefined) return undefined;
+  if (!/^\d+$/.test(raw)) throw new RangeError(`${name} must be a nonnegative integer in milliseconds`);
+  return Number(raw);
+}
+
+export async function main(args, { pollInterval = 350, ...options } = {}) {
+  const { values } = parseArgs({ args, options: { project: { type: 'string' }, help: { type: 'boolean', short: 'h' },
+    'self-check': { type: 'boolean' }, handoff: { type: 'string' }, 'handoff-recovery': { type: 'boolean' } } });
+  if (values.help) {
+    console.log(`loomd [--project DIR]\n${projectOption}`);
+    return;
+  }
+  if (values['self-check']) { console.log(JSON.stringify(await selfCheck())); return; }
+  const project = projectDirectory(values.project);
+  const metadata = join(project, '.project');
+  mkdirSync(metadata, { recursive: true, mode: 0o700 });
+  if (realpathSync(metadata) !== metadata) throw new Error('loomd metadata directory must be project-local');
+  syncDirectory(project);
+  const release = claimProject(project);
+  process.once('exit', release);
+  excludeProjectMetadata(project);
+  mkdirSync(runtimeDirectory(project), { recursive: true, mode: 0o700 });
+  mkdirSync(join(metadata, 'relay', 'events'), { recursive: true, mode: 0o700 });
+  syncDirectory(metadata);
+  syncDirectory(join(metadata, 'relay'));
+  const handoff = validateHandoff(project, values.handoff, values['handoff-recovery']);
+  const controller = nextController(project);
+
+  const path = socketPath(project);
+  const previous = lstatSync(path, { throwIfNoEntry: false });
+  if (previous) {
+    if (!previous.isSocket()) throw new Error('loomd socket path is occupied');
+    unlinkSync(path);
+  }
+  const supervisor = createSupervisor(project, {
+    window: optionalTimeout('LOOM_WAVE_WINDOW_MS'), sealWindow: optionalTimeout('LOOM_WAVE_SEAL_MS'),
+    partialWindow: optionalTimeout('LOOM_WAVE_PARTIAL_MS'), uncertainWindow: optionalTimeout('LOOM_UNCERTAIN_MS'),
+    blockedWindow: optionalTimeout('LOOM_BLOCKED_COALESCE_MS'),
+    ...options,
+    sessionOptions: { ...options.sessionOptions, controller },
+  });
+  let attached;
+  if (handoff) {
+    attached = await supervisor.reattach(handoff.sessions);
+    if (!values['handoff-recovery']) validateReattachment(handoff, { sessions: attached });
+  }
+  let lastPollError;
+  let chain = Promise.resolve();
+  let closing;
+  let timer;
+  let switching = false;
+  function canDispatch() {
+    return !closing && !switching && (!handoff || activeRelease(project)?.upgradeId === handoff.id);
+  }
+  function serial(task) {
+    const result = chain.then(task);
+    chain = result.catch(() => {});
+    return result;
+  }
+
+  const server = createServer(socket => {
+    socket.setEncoding('utf8');
+    socket.setTimeout(10_000, () => socket.destroy());
+    socket.on('error', () => {});
+    let data = '';
+    socket.on('data', function receive(chunk) {
+      data += chunk;
+      if (Buffer.byteLength(data) > maxLine) return socket.destroy();
+      if (!data.includes('\n')) return;
+      socket.off('data', receive);
+      socket.setTimeout(0);
+      serve().catch(error => socket.end(JSON.stringify({
+        ok: false, error: { code: error.code && typeof error.code === 'string' && /^[a-z-]+$/.test(error.code) ?
+          error.code : 'unavailable', message: error.message },
+      }) + '\n'));
+
+      async function serve() {
+        const { command, args, caller, protocol } = JSON.parse(data);
+        if (protocol !== undefined && protocol !== daemonProtocol) throw new Error('Unsupported loomd protocol');
+        let result;
+        if (command === 'daemon-status' || command === 'daemon-stop') {
+          result = { running: !closing && command === 'daemon-status', pid: process.pid,
+            relay: closing ? 'stopping' : lastPollError ? 'degraded' : 'integrated',
+            protocol: daemonProtocol, release: { id: releaseId(), root: releaseRoot },
+            ...(handoff && { handoff: handoff.id, ready: true, sessions: attached }) };
+        } else if (command === 'hello') {
+          result = { protocol: daemonProtocol, incarnation: controller.id, generation: controller.generation };
+        } else if (command === 'upgrade-status') {
+          result = { active: activeRelease(project)?.current ?? { id: releaseId(), root: releaseRoot },
+            upgrade: upgradeState(project), sessions: await serial(supervisor.upgradeSessions) };
+        } else if (command === 'upgrade-plan' || command === 'upgrade-apply') {
+          if (!canDispatch()) throw Object.assign(new Error('loomd is switching releases'), { code: 'not-ready' });
+          const plan = await planUpgrade(project, args, () => serial(supervisor.upgradeSessions));
+          if (command === 'upgrade-plan') result = { ...plan, eligible: !plan.blockers.length };
+          else result = await serial(async () => {
+            if (!canDispatch()) throw Object.assign(new Error('loomd is switching releases'), { code: 'not-ready' });
+            // Capture sessions started while the target was being verified.
+            plan.sessions = await supervisor.upgradeSessions();
+            const receipt = await beginUpgrade(project, plan);
+            switching = true;
+            return receipt;
+          });
+        } else {
+          result = await serial(() => {
+            if (!canDispatch()) throw Object.assign(new Error('loomd is switching releases'), { code: 'not-ready' });
+            return supervisor.handle(command, args, caller);
+          });
+        }
+        socket.end(JSON.stringify({ ok: true, ...result }) + '\n');
+        if (command === 'daemon-stop' || command === 'upgrade-apply') void stop();
+      }
+    });
+  });
+
+  function stop() {
+    return closing ??= (async () => {
+      clearInterval(timer);
+      server.close();
+      await chain;
+      await supervisor.shutdown();
+      release();
+      process.exit(0);
+    })();
+  }
+
+  for (const signal of ['SIGHUP', 'SIGTERM', 'SIGINT']) process.once(signal, stop);
+  await new Promise((resolve, reject) => {
+    server.once('error', reject);
+    server.listen(path, resolve);
+  });
+  chmodSync(path, 0o600);
+
+  let polling = false;
+  let handoffCheckAt = 0;
+  function poll() {
+    if (polling || closing) return;
+    if (!canDispatch()) {
+      if (handoff && !switching && Date.now() >= handoffCheckAt) {
+        handoffCheckAt = Date.now() + 1000;
+        if (!liveHandoff(project, handoff.id)) void stop();
+      }
+      return;
+    }
+    polling = true;
+    void serial(() => canDispatch() && supervisor.tick()).then(() => { lastPollError = undefined; }, error => {
+      lastPollError = error;
+      console.error(error.message);
+    }).finally(() => { polling = false; });
+  }
+  timer = setInterval(poll, pollInterval);
+  poll();
+}
