@@ -157,6 +157,7 @@ test('U09 只统计当轮授权的真实根轮引用，按最后有效使用过�
     return createMemoryStore({
       now: () => now, staleDays: 3, readState: () => structuredClone(state),
       commitState: next => { state = structuredClone(next); },
+      classifySensitive: () => ({ reliable: true, spans: [] }),
     });
   };
   const store = createStore([item('a-unused'), item('z-used'), item('m-once'),
@@ -272,6 +273,43 @@ test('U10 各读取入口使用同一角色授权，猜测未授权 ID 与未知
   }
 });
 
+test('Goal 3f user preferences and rulings are visible to Auditor and Leader only among project roles', async t => {
+  const { createAccess } = await import('./access.mjs');
+  const userEntries = ['preference', 'ruling', 'lesson'].map(kind =>
+    item(`user-${kind}`, { project: null, layer: 'user', kind }));
+  const entries = [
+    ...userEntries,
+    item('super-note', { layer: 'private', owner: 'super' }),
+    item('cross-project', { project: null, layer: 'cross_project', kind: 'ruling' }),
+  ];
+  const access = createAccess({ entries, now: () => start });
+  const readable = userEntries.filter(entry => entry.kind !== 'lesson');
+  const matrix = [
+    [auditor, readable],
+    [leader, readable],
+    [session('worker', { cardId: 'card', attachments: ids(userEntries) }), []],
+    [session('reviewer', { authorizedIds: { memory: ids(userEntries), history: [] } }), []],
+  ];
+  for (const [binding, expected] of matrix) {
+    await t.test(binding.role, async () => {
+      const index = await access.index(binding);
+      const search = await access.search(binding, { query: 'probe' });
+      const unknown = await access.show(binding, 'unknown-user-entry');
+      const shown = await Promise.all(entries.map(entry => access.show(binding, entry.id)));
+      assert.deepEqual({
+        index: ids(index.rows).sort(),
+        search: ids(search.rows).sort(),
+        bodies: shown.flatMap(({ item }) => item ? [item.body] : []),
+      }, {
+        index: ids(expected).sort(), search: ids(expected).sort(), bodies: expected.map(entry => entry.body),
+      });
+      for (const [index, entry] of entries.entries()) {
+        if (!expected.includes(entry)) assert.deepEqual(shown[index], unknown, entry.id);
+      }
+    });
+  }
+});
+
 test('U11 跨项目共享只读授权受角色、期限、撤销和卡片权限约束', async () => {
   const { createAccess } = await import('./access.mjs');
   const superBinding = session('super');
@@ -365,6 +403,7 @@ function timedStore(createMemoryStore, now) {
   return createMemoryStore({
     now, staleDays: 1, readState: () => structuredClone(state),
     commitState: next => { state = structuredClone(next); },
+    classifySensitive: () => ({ reliable: true, spans: [] }),
     evidence: { root: '/fixture', realpath: path => path },
   });
 }

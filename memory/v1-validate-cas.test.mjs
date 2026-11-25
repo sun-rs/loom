@@ -40,6 +40,7 @@ async function fixture(options = {}) {
   const readState = () => structuredClone(state);
   const store = createMemoryStore({
     now, readState, commitState: next => { state = structuredClone(next); },
+    classifySensitive: () => ({ reliable: true, spans: [] }),
     evidence: {
       root,
       realpath: path => path === `${root}/${draft.source.path}` ? path : undefined,
@@ -49,6 +50,20 @@ async function fixture(options = {}) {
   });
   return { store, readState, corruptIndex: () => { state.files[indexPath] = 'stale index\n'; } };
 }
+
+test('Goal 3c store.write refuses a valid write without a sensitivity classifier', async () => {
+  const { createMemoryStore } = await import('./store.mjs');
+  const commits = [];
+  const readState = () => structuredClone(commits.at(-1));
+  const store = createMemoryStore({
+    now, readState, commitState: next => { commits.push(structuredClone(next)); },
+    evidence: { root, realpath: path => path === `${root}/${draft.source.path}` ? path : undefined },
+  });
+  const before = readState();
+  const result = await store.write(auditor, put('no-classifier'));
+  assert.deepEqual([result.ok, commits.length], [false, 0]);
+  assert.deepEqual(readState(), before);
+});
 
 test('U05 validates Markdown, deduplicates by layer and rebuilds the index', async () => {
   const sha = '22b96ccab9e766cd6a73162d5f9d8951128584a4';

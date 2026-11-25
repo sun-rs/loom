@@ -243,8 +243,8 @@ for (const mode of ['tui', 'oar', 'resume', 'switch']) {
         const overrides = codexOverrides(mode === 'tui' ? { argv: launch.argv } : launch);
         assert.deepEqual(overrides, Object.fromEntries(codexKeys.map(key => [key, false])));
       }
-      if (provider === 'agy' || provider === 'opencode') assert.equal(launch.coverage, 'not covered');
       if (provider === 'agy') {
+        assert.equal(launch.coverage, 'not covered');
         assert.ok(launch.warnings.some(warning => warning.path === knowledge && warning.recipient === 'super'));
         const empty = await build(options, { ...io, readDir: () => [] });
         assert.deepEqual(empty.warnings, []);
@@ -252,6 +252,7 @@ for (const mode of ['tui', 'oar', 'resume', 'switch']) {
       if (provider === 'opencode') assert.equal(launch.env.OPENCODE_DISABLE_CLAUDE_CODE_SKILLS, '1');
       const instruction = { claude: 'CLAUDE.md', codex: 'AGENTS.md', opencode: 'AGENTS.md' }[provider];
       if (instruction) assert.ok(launch.instructionFiles.includes(checkout + '/' + instruction));
+      if (provider === 'opencode') assert.equal(launch.coverage, 'not needed');
     }
   });
 }
