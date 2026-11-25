@@ -1,0 +1,81 @@
+#!/usr/bin/env node
+import { execFileSync } from 'node:child_process';
+import { createRequire } from 'node:module';
+import { basename, join } from 'node:path';
+import { bindTuiSession } from './index.mjs';
+import { providers } from './providers.mjs';
+import { listenControl } from './pty-control.mjs';
+import { thinBackend } from './thin.mjs';
+import { writeState } from '../daemon/io.mjs';
+
+async function main() {
+  const [cli, ...args] = process.argv.slice(2);
+  const { LOOM_PTY_CLI, LOOM_PTY_SOCKET, LOOM_PTY_EVIDENCE, LOOM_PTY_PROVIDER, LOOM_PTY_MODULES } = process.env;
+  if (cli === '--version') {
+    process.stdout.write(LOOM_PTY_CLI ? execFileSync(LOOM_PTY_CLI, ['--version'], { timeout: 2_000 }) : 'loom-pty\n');
+    return 0;
+  }
+  if (!cli || !process.stdin.isTTY || !process.stdout.isTTY) throw new Error('Usage in a terminal: loom-pty <cli> [args...]');
+  const provider = LOOM_PTY_PROVIDER ?? basename(cli);
+  if (LOOM_PTY_SOCKET && (!Object.hasOwn(providers, provider) || !LOOM_PTY_EVIDENCE)) {
+    throw new Error('Control requested without a supported provider and session evidence');
+  }
+  const require = createRequire(LOOM_PTY_MODULES ? join(LOOM_PTY_MODULES, 'package.json') : import.meta.url);
+  const backend = thinBackend({
+    pty: require('node-pty'), Terminal: require('@xterm/headless').Terminal,
+    cols: process.stdout.columns || 80, rows: process.stdout.rows || 24, mirror: process.stdout,
+  });
+  const evidence = LOOM_PTY_SOCKET ? JSON.parse(LOOM_PTY_EVIDENCE) : {};
+  const plugin = providers[provider];
+  if (evidence.startPath) writeState(evidence.startPath, 'starting\n');
+  let terminal;
+  try {
+    terminal = await backend.launch({ cwd: process.cwd(), argv: [cli, ...args], env: {}, provider,
+      extractDraft: plugin?.screen.draft, unset: Object.keys(process.env).filter(name => name.startsWith('LOOM_PTY_')) });
+  } catch (error) {
+    if (evidence.startPath) writeState(evidence.startPath, 'failed\n');
+    throw error;
+  }
+  const resize = () => terminal.resize(process.stdout.columns, process.stdout.rows);
+  const human = bytes => terminal.writeHuman(bytes);
+  const abort = () => human('\x03');
+  const terminate = () => terminal.signal('SIGTERM');
+  const hangup = () => terminal.signal('SIGHUP');
+  const raw = process.stdin.isRaw;
+  let closeControl;
+  try {
+    process.stdin.setRawMode(true);
+    process.stdin.on('data', human);
+    process.stdout.on('resize', resize);
+    process.on('SIGWINCH', resize);
+    process.on('SIGINT', abort);
+    process.on('SIGTERM', terminate);
+    process.on('SIGHUP', hangup);
+    if (LOOM_PTY_SOCKET) {
+      closeControl = await listenControl(LOOM_PTY_SOCKET, bindTuiSession(terminal, plugin, evidence), evidence.incarnation);
+    }
+    const exit = await terminal.exited;
+    if (evidence.exitPath) {
+      try { writeState(evidence.exitPath, JSON.stringify({ incarnation: evidence.incarnation, ...exit }) + '\n'); }
+      catch (error) { process.stderr.write(`loom-pty: could not record exit (${error.code ?? 'write failed'})\n`); }
+    }
+    return exit.code;
+  } finally {
+    process.stdin.removeListener('data', human);
+    process.stdin.setRawMode(raw);
+    process.stdin.pause();
+    process.stdout.removeListener('resize', resize);
+    process.removeListener('SIGWINCH', resize);
+    process.removeListener('SIGINT', abort);
+    process.removeListener('SIGTERM', terminate);
+    process.removeListener('SIGHUP', hangup);
+    try { await closeControl?.(); } finally { await terminal.close(); }
+  }
+}
+
+try {
+  process.exitCode = await main();
+} catch (error) {
+  process.stderr.write(`loom-pty: ${error.message}\n`);
+  process.exitCode = 1;
+}
