@@ -1,0 +1,10 @@
+  >_ OpenAI Codex (v0.171.0)
+     <TEST>/codex/repo
+  Tip: Maximize usage with GPT-6.1 Sol. Try it on complex work for near-Astra performance at a lower cost.
+› INBOX-CODEX-INTERRUPT-BASE
+■ Conversation interrupted - use /feedback if something went wrong
+› TUIREL-429
+■ exceeded retry limit, last status: 429 Too Many Requests
+› Ask Codex to do anything
+  inbox-test default · <TEST>/codex/repo · INBOX-CODEX-INTERRUPT-BASE
+  ← for agents · ? for shortcuts                                                                                                                                               ⚠ 1 warning · f2 to view

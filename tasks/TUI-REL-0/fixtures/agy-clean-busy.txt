@@ -1,0 +1,16 @@
+      ▄▀▀▄        Antigravity CLI 1.5.16
+     ▀▀▀▀▀▀       <ACCOUNT>
+    ▀▀▀▀▀▀▀▀      Gemini 3.8 Flash (Low)
+   ▄▀▀    ▀▀▄     <TEST>/agy/repo
+  ▄▀▀      ▀▀▄
+────────────────────────────────────────────────────────────
+> a
+  Print integers 1 through 260 inclusive as separate lines and finish with TUIREL-AGY-OK. Do not use tools.
+⚠ Sign-in update needed
+  ⎿  Your sign-in is missing permissions that are now required, so some requests may fail. Run /logout to sign in again.
+⢿  Generating...
+└ Tip: Use /cs to search in your codebase.
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+>
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+esc to cancel                                                                                                                                                              auto · Gemini 3.8 Flash · low

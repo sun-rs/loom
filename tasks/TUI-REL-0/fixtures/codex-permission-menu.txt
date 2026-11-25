@@ -1,0 +1,13 @@
+  >_ OpenAI Codex (v0.171.0)
+     <TEST>/codex/repo
+  Tip: Maximize usage with GPT-6.1 Sol. Try it on complex work for near-Astra performance at a lower cost.
+› INBOX-CODEX-INTERRUPT-BASE
+■ Conversation interrupted - use /feedback if something went wrong
+› TUIREL-429
+■ exceeded retry limit, last status: 429 Too Many Requests
+  Update Model Permissions
+› 1. Ask for approval (current)  Read and edit workspace files and run commands, with approval required for internet access or edits outside the workspace
+  2. Approve for me              Only ask for actions detected as potentially unsafe
+  3. Full Access                 Use with caution: Codex can edit files outside this workspace and access the internet without approval
+  4. Read Only                   Read workspace files, with approval required for edits or internet access
+  enter select · esc back

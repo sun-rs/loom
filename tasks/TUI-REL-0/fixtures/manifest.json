@@ -1,0 +1,226 @@
+[
+  {
+    "provider": "claude",
+    "expected": "startup",
+    "path": "fixtures/claude-startup.txt",
+    "how": "screen",
+    "complete": true
+  },
+  {
+    "provider": "claude",
+    "expected": "trust",
+    "path": "fixtures/claude-initial.txt",
+    "how": "screen",
+    "complete": true
+  },
+  {
+    "provider": "claude",
+    "expected": "trust",
+    "path": "fixtures/claude-trust-aimed.txt",
+    "how": "screen",
+    "complete": true
+  },
+  {
+    "provider": "claude",
+    "expected": "idle",
+    "path": "fixtures/claude-idle.txt",
+    "how": "screen",
+    "complete": true
+  },
+  {
+    "provider": "claude",
+    "expected": "draft",
+    "path": "fixtures/claude-draft.txt",
+    "how": "screen",
+    "complete": true
+  },
+  {
+    "provider": "claude",
+    "expected": "busy",
+    "path": "fixtures/claude-busy-early.txt",
+    "how": "screen",
+    "complete": true
+  },
+  {
+    "provider": "claude",
+    "expected": "permission",
+    "path": "fixtures/claude-permission-good.txt",
+    "how": "screen",
+    "complete": true
+  },
+  {
+    "provider": "claude",
+    "expected": "compacting",
+    "path": "fixtures/claude-compact-1.txt",
+    "how": "screen",
+    "complete": true
+  },
+  {
+    "provider": "claude",
+    "expected": "idle",
+    "path": "fixtures/claude-compact-5.txt",
+    "how": "screen",
+    "complete": true
+  },
+  {
+    "provider": "claude",
+    "expected": "interrupted",
+    "path": "fixtures/claude-interrupted-good.txt",
+    "how": "screen",
+    "complete": true
+  },
+  {
+    "provider": "claude",
+    "expected": "idle",
+    "path": "fixtures/claude-runtime-onboarding.txt",
+    "how": "screen",
+    "complete": true
+  },
+  {
+    "provider": "claude",
+    "expected": "draft",
+    "path": "fixtures/claude-runtime-single-draft.txt",
+    "how": "screen",
+    "complete": true
+  },
+  {
+    "provider": "codex",
+    "expected": "startup",
+    "path": "fixtures/codex-startup.txt",
+    "how": "screen",
+    "complete": true
+  },
+  {
+    "provider": "codex",
+    "expected": "trust",
+    "path": "fixtures/codex-trust.txt",
+    "how": "screen",
+    "complete": true
+  },
+  {
+    "provider": "codex",
+    "expected": "idle",
+    "path": "fixtures/codex-idle.txt",
+    "how": "screen",
+    "complete": true
+  },
+  {
+    "provider": "codex",
+    "expected": "draft",
+    "path": "fixtures/codex-draft.txt",
+    "how": "screen",
+    "complete": true
+  },
+  {
+    "provider": "codex",
+    "expected": "busy",
+    "path": "fixtures/codex-busy-local.txt",
+    "how": "screen",
+    "complete": true
+  },
+  {
+    "provider": "codex",
+    "expected": "interrupted",
+    "path": "fixtures/codex-interrupted-local.txt",
+    "how": "screen",
+    "complete": true
+  },
+  {
+    "provider": "codex",
+    "expected": "rate-limit",
+    "path": "fixtures/codex-rate-local.txt",
+    "how": "screen",
+    "complete": true
+  },
+  {
+    "provider": "codex",
+    "expected": "permission",
+    "path": "fixtures/codex-permission-menu.txt",
+    "how": "screen",
+    "complete": true
+  },
+  {
+    "provider": "codex",
+    "expected": "idle",
+    "path": "fixtures/codex-compact.txt",
+    "how": "screen",
+    "complete": true
+  },
+  {
+    "provider": "codex",
+    "expected": "error",
+    "path": "fixtures/codex-provider-error.txt",
+    "how": "screen",
+    "complete": true
+  },
+  {
+    "provider": "codex",
+    "expected": "error",
+    "path": "fixtures/codex-startup-error.txt",
+    "how": "screen",
+    "complete": true
+  },
+  {
+    "provider": "agy",
+    "expected": "trust",
+    "path": "fixtures/agy-clean-trust.txt",
+    "how": "screen",
+    "complete": true
+  },
+  {
+    "provider": "agy",
+    "expected": "error",
+    "path": "fixtures/agy-clean-ready.txt",
+    "how": "screen",
+    "complete": true
+  },
+  {
+    "provider": "agy",
+    "expected": "idle",
+    "path": "fixtures/agy-idle-good.txt",
+    "how": "screen",
+    "complete": true
+  },
+  {
+    "provider": "agy",
+    "expected": "draft",
+    "path": "fixtures/agy-clean-draft.txt",
+    "how": "screen",
+    "complete": true
+  },
+  {
+    "provider": "agy",
+    "expected": "busy",
+    "path": "fixtures/agy-clean-busy.txt",
+    "how": "screen",
+    "complete": true
+  },
+  {
+    "provider": "agy",
+    "expected": "interrupted",
+    "path": "fixtures/agy-clean-interrupted.txt",
+    "how": "screen",
+    "complete": true
+  },
+  {
+    "provider": "agy",
+    "expected": "picker",
+    "path": "fixtures/agy-picker-good.txt",
+    "how": "screen",
+    "complete": true
+  },
+  {
+    "provider": "agy",
+    "expected": "error",
+    "path": "fixtures/agy-compact-1.txt",
+    "how": "screen",
+    "complete": true
+  },
+  {
+    "provider": "agy",
+    "expected": "compacting",
+    "path": "fixtures/agy-compact-live-1.txt",
+    "how": "screen",
+    "complete": true
+  }
+]

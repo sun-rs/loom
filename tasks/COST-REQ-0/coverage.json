@@ -1,0 +1,33 @@
+{
+  "cutoff_utc": "2026-11-25T02:40:00+00:00",
+  "checks": {
+    "candidate_relay_agy": 18,
+    "candidate_relay_claude": 6,
+    "claude_api_request_without_usage": 4,
+    "candidate_relay_codex": 18,
+    "codex_native_and_legacy": 442,
+    "codex_usage_stream_count_difference": 26,
+    "claude_prompt_reordered": 20,
+    "candidate_scoped_codex": 427,
+    "codex_duplicate_cumulative_marker": 269,
+    "candidate_scoped_claude": 21,
+    "candidate_scoped_agy": 56
+  },
+  "missing": [
+    [
+      "agy",
+      "1285dab7-0b0e-4431-9927-2ed5837aa5f8",
+      "file_modified_at_or_after_cutoff"
+    ],
+    [
+      "agy",
+      "7f537736-55a0-4992-811a-1613070b1565",
+      "file_missing_or_outside_native_root"
+    ],
+    [
+      "agy",
+      "df522fcf-4763-42c0-bb1a-79234948adfd",
+      "file_missing_or_outside_native_root"
+    ]
+  ]
+}

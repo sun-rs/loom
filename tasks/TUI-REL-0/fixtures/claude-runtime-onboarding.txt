@@ -1,0 +1,12 @@
+ ▐▛███▛█   Claude Code v2.1.331
+▝▜██████▀  Haiku 5.5 with low effort · Claude Max
+ ▝▝   ▝▝   <TEST>/runtime
+  Fable 5.2 is here for your longest and toughest coding tasks. It draws down usage faster than Opus 5.5. Switch with /model.
+  ⎿  SessionStart:startup hook failed
+     Failed to run: EPERM: operation not permitted, mkdir '<LOCAL_PATH>'
+                                                                                                                                                                                       ○ low · /effort
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+❯ Try "how do I log an error?"
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  ⚠ Transcript saving is off — CLAUDE_CODE_SKIP_PROMPT_HISTORY is set · --resume will not find this session; if unintended, unset it and restart
+  ⏵⏵ bypass permissions on (shift+tab to cycle)

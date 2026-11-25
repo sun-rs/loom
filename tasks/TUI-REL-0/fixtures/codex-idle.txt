@@ -1,0 +1,5 @@
+  >_ OpenAI Codex (v0.171.0)
+     <TEST>/codex/repo
+› Ask Codex to do anything
+  inbox-test default · <TEST>/codex/repo
+  ← for agents · ? for shortcuts

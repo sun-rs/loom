@@ -1,0 +1,30 @@
+      ▄▀▀▄        Antigravity CLI 1.5.16
+     ▀▀▀▀▀▀       <ACCOUNT>
+    ▀▀▀▀▀▀▀▀      Gemini 3.8 Flash (Low)
+   ▄▀▀    ▀▀▄     <TEST>/agy/repo
+  ▄▀▀      ▀▀▄
+────────────────────────────────────────────────────────────
+> a
+  Print integers 1 through 260 inclusive as separate lines and finish with TUIREL-AGY-OK. Do not use tools.
+⚠ Sign-in update needed
+  ⎿  Your sign-in is missing permissions that are now required, so some requests may fail. Run /logout to sign in again.
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+>
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+Switch Model
+  Search:
+          ────────────────────
+  Gemini 4 Neon
+  Gemini 4 Carbon
+  Gemini 4 Argon
+  Gemini 4 Hydrogen
+  Orchestrator
+> Gemini 3.8 Flash      (current)
+  Claude Opus 5.5
+  Claude Sonnet 5.5
+  GPT-OSS 120B (Medium)
+  Effort  ◂        ◉──────────────○──────────────○        ▸
+                  low          medium          high
+            Faster responses, lighter reasoning — great for simpler tasks
+Keyboard: ↑/↓ Navigate  ←/→ Effort  enter Select  esc Go Back
+                                                                                                                                                                           auto · Gemini 3.8 Flash · low
