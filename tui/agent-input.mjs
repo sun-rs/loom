@@ -1,6 +1,7 @@
 import { performance } from 'node:perf_hooks';
 import { setTimeout as sleep } from 'node:timers/promises';
 import { matchesDraft } from './pty-grid.mjs';
+import { agyDraftExpectation, verifyAgyDraft } from './agy-draft.mjs';
 
 // Orca b7fd7caa3, shared/agent-launch/startup/agent-prompt-injection.ts.
 export const AGENT_PROMPT_BRACKETED_PASTE_START = '\x1b[200~';
@@ -12,15 +13,72 @@ const HELD_PROMPT_RECHECK_MS = 1000;
 const DRAFT_READBACK_MS = 2200;
 export const QUIET_OUTPUT_MS = 120;
 
-export async function submitComposer(text, { before, provider, read, write, valid, verify, observeEcho }) {
+const denied = outcome => ({ accepted: false, outcome });
+const sameInput = (before, frame) => frame.humanSequence === before.humanSequence &&
+  frame.resizeSequence === before.resizeSequence && frame.buffer === before.buffer &&
+  frame.bufferSequence === before.bufferSequence;
+const bracket = text => AGENT_PROMPT_BRACKETED_PASTE_START + text + AGENT_PROMPT_BRACKETED_PASTE_END;
+
+function agyPasteSegments(text, rows) {
+  // Agy 1.5.16 folds large multiline pastes into a chip. Keep each bracketed
+  // segment small enough that a shorter viewport can also show some overlap.
+  const limit = Math.min(10, Math.max(1, Math.floor((rows - 10) / 2)));
+  const parts = [];
+  let start = 0;
+  let breaks = 0;
+  for (const match of text.matchAll(/\r\n?|\n/g)) {
+    if (++breaks < limit) continue;
+    parts.push(text.slice(start, match.index));
+    start = match.index;
+    breaks = 0;
+  }
+  return [...parts, text.slice(start)];
+}
+
+async function submitAgyComposer(text, { before, read, write, valid, verify }) {
   const pastedAt = performance.now();
-  write(AGENT_PROMPT_BRACKETED_PASTE_START + text + AGENT_PROMPT_BRACKETED_PASTE_END);
-  const sameInput = frame => frame.humanSequence === before.humanSequence &&
-    frame.resizeSequence === before.resizeSequence && frame.buffer === before.buffer &&
-    frame.bufferSequence === before.bufferSequence;
+  const deadline = pastedAt + 15_000;
+  let frame = before;
+  let proof;
+  let prefix = '';
+  if (before.draft !== '') return denied('draft-unverified');
+  for (const segment of agyPasteSegments(text, before.size.rows)) {
+    if (performance.now() >= deadline) return denied('draft-unverified');
+    if (!valid(frame)) return denied('composer-changed-during-paste');
+    const priorOutput = frame.outputSequence;
+    const readbackDeadline = Math.min(deadline, performance.now() + DRAFT_READBACK_MS);
+    prefix += segment;
+    const expected = agyDraftExpectation(prefix);
+    write(bracket(segment));
+    let matched;
+    do {
+      frame = await read();
+      if (frame.exited || frame.humanSequence !== before.humanSequence) return denied('human-or-exit-during-paste');
+      if (!sameInput(before, frame)) return denied('composer-changed-during-paste');
+      if (frame.writable && frame.outputSequence > priorOutput && frame.quietForMs >= QUIET_OUTPUT_MS) {
+        const observed = verifyAgyDraft(frame, expected, proof);
+        if (observed) {
+          if (verify && !await verify(frame, { agyDraft: true })) return denied('composer-blocked-during-paste');
+          if (valid(frame)) { matched = observed; break; }
+        }
+      }
+      await sleep(35);
+    } while (performance.now() < readbackDeadline);
+    if (!matched) return denied('draft-unverified');
+    proof = matched;
+  }
+  write(AGENT_PROMPT_SUBMIT);
+  return { accepted: true, outcome: proof.hiddenRows ? 'verified-scrolled-draft' : 'verified-normalized-draft',
+    readbackMs: Math.round(performance.now() - pastedAt) };
+}
+
+export async function submitComposer(text, options) {
+  const { before, provider, read, write, valid, verify, observeEcho } = options;
+  if (provider === 'agy') return submitAgyComposer(text, options);
+  const pastedAt = performance.now();
+  write(bracket(text));
   const marker = text.split('\n', 1)[0];
   const held = frame => matchesDraft(frame.draft, text) && !frame.outsideComposer?.includes(marker);
-  const denied = (outcome) => ({ accepted: false, outcome });
   // Orca native-chat-paste-landed.ts checks a paste chip after an empty
   // composer and an unchanged reread. Claude's +N counts line breaks.
   const lineBreaks = (text.match(/\r\n?|\n/g) ?? []).length;
@@ -38,7 +96,7 @@ export async function submitComposer(text, { before, provider, read, write, vali
   do {
     const frame = await read();
     if (frame.exited || frame.humanSequence !== before.humanSequence) return denied('human-or-exit-during-paste');
-    if (!sameInput(frame)) return denied('composer-changed-during-paste');
+    if (!sameInput(before, frame)) return denied('composer-changed-during-paste');
     const paste = showsPaste(frame);
     collapsed = paste && previousPasteFrame === frame.generation && frame.quietForMs >= QUIET_OUTPUT_MS;
     previousPasteFrame = paste ? frame.generation : undefined;
@@ -63,7 +121,7 @@ export async function submitComposer(text, { before, provider, read, write, vali
   do {
     await sleep(100);
     const frame = await read();
-    if (frame.exited || !sameInput(frame) || !held(frame)) return receipt;
+    if (frame.exited || !sameInput(before, frame) || !held(frame)) return receipt;
     if (verify && !await verify(frame)) return receipt;
     if (performance.now() < retryAfter) continue;
     // A pre-Enter paint cannot prove a prompt was held. Require a new child paint

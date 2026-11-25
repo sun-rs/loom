@@ -5,6 +5,7 @@ import { performance } from 'node:perf_hooks';
 import { setTimeout as sleep } from 'node:timers/promises';
 import { deliveryId, messageIdPattern, wireText } from '../inbox/message.mjs';
 import { QUIET_OUTPUT_MS } from './agent-input.mjs';
+import { agyDraftExpectation, verifyAgyDraft } from './agy-draft.mjs';
 import { blocksInput, currentTitle, isDialog, isFailure } from './agent-status.mjs';
 import { hcBackend, hcWrappedBackend } from './backends.mjs';
 import { nativeState } from './native.mjs';
@@ -67,6 +68,8 @@ export function bindTuiSession(terminal, provider, {
   let startupKeyAt = -Infinity;
   const startupAttempts = new Map();
   const classify = text => provider.screen.classify(text);
+  const heldComposer = frame => frame.vacantText &&
+    (classify(frame.vacantText) === 'idle' || provider.screen.hasHeldComposer?.(frame.vacantText));
 
   function sameInterruptedTurn(evidence) {
     return evidence.phase === 'busy' && interruptionFallback !== undefined &&
@@ -144,15 +147,16 @@ export function bindTuiSession(terminal, provider, {
       action = { key: 'esc', token: 'overlay', limit: 1 };
     } else if (result.blocker === 'draft-held' && paste?.id === pending) {
       const entry = requests.get(pending);
-      const body = draft.slice(draft.indexOf('\n') + 1);
       if (entry.hostReceipt?.accepted === false && paste.humanSequence === frame.humanSequence &&
-          paste.resizeSequence === frame.resizeSequence && paste.bufferSequence === frame.bufferSequence &&
+          paste.resizeSequence === frame.resizeSequence && paste.buffer === frame.buffer && paste.bufferSequence === frame.bufferSequence &&
           paste.turnSequence === result.native.turnSequence &&
-          frame.outputSequence > paste.outputSequence && draft === wireText(pending, body) &&
-          digestOf(body) === entry.digest && !frame.outsideComposer?.includes(`[loom:${pending}]`) &&
-          frame.vacantText && (classify(frame.vacantText) === 'idle' || provider.screen.hasHeldComposer?.(frame.vacantText)) &&
+          frame.outputSequence > paste.outputSequence && heldComposer(frame) &&
+          !frame.outsideComposer?.includes(`[loom:${pending}]`) &&
           (result.native.phase === 'idle' || provider.screenStartup && !result.native.phase)) {
-        action = { key: 'enter', token: pending, limit: 1, entry };
+        const body = draft.slice(draft.indexOf('\n') + 1);
+        const matches = provider.id === 'agy' ? verifyAgyDraft(frame, paste.agy) :
+          draft === wireText(pending, body) && digestOf(body) === entry.digest;
+        if (matches) action = { key: 'enter', token: pending, limit: 1, entry };
       }
     }
     if (!action) { startupFrame = undefined; return false; }
@@ -235,13 +239,17 @@ export function bindTuiSession(terminal, provider, {
       const entry = { digest };
       put(id, entry);
       pending = id;
-      paste = { id, ...state.host, turnSequence: state.native.turnSequence };
+      const input = wireText(id, text);
+      paste = { id, ...state.host, turnSequence: state.native.turnSequence,
+        agy: provider.id === 'agy' ? agyDraftExpectation(input) : undefined };
       try {
-        entry.hostReceipt = await terminal.writeIf(wireText(id, text), state, async (frame, { collapsed } = {}) => {
+        entry.hostReceipt = await terminal.writeIf(input, state, async (frame, { collapsed, agyDraft } = {}) => {
           const latest = await native.read();
           if (native.confirmations(id).count || latest.sessionId !== state.native.sessionId ||
-              latest.activeSince !== state.native.activeSince || latest.phase !== state.native.phase) return false;
+              latest.turnSequence !== state.native.turnSequence || latest.activeSince !== state.native.activeSince ||
+              latest.phase !== state.native.phase) return false;
           return !blocksInput(provider.screen.classify(frame.composerText ?? frame.text)) &&
+            (!agyDraft || heldComposer(frame)) &&
             (!collapsed || frame.vacantText && classify(frame.vacantText) === 'idle') &&
             (sameInterruptedTurn(latest) || currentTitle(frame, latest, Date.now()) !== 'busy');
         });

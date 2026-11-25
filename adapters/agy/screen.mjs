@@ -9,6 +9,7 @@ const idleComposer = new RegExp(
   `^${RULE}\\n${COMPOSER}\\n${RULE}\\n(?:${TASKS}${RULE}\\n)?\\? for shortcuts[^\\n]*$`, 'im',
 );
 const busyComposer = new RegExp(`^${RULE}\\n${COMPOSER}\\n${RULE}\\nesc to cancel[^\\n]*$`, 'im');
+const heldComposer = new RegExp(`(?:^|\\n)${RULE}\\n>\\n${RULE}(?:\\n${TASKS}${RULE})?$`);
 const modelFooter = /^(?:accept-edits|auto|plan|yolo)\s+·\s+[^·]+\s+·\s+(?:low|medium|high|xhigh|max)$/i;
 const trustFooter = /^↑\/↓\s+Navigate\s+·\s+enter Confirm$/i;
 const pickerFooter = /^Keyboard:.*\besc Go Back$/i;
@@ -46,7 +47,7 @@ export function hasHeldComposer(text) {
   // status is still present directly below the two composer borders.
   const rows = stripAnsiAndControl(text).trimEnd().split('\n').map(line => line.trim());
   return /^(?:accept-edits|auto|plan|yolo) · [^·]+(?: · (?:low|medium|high|xhigh|max))?$/i.test(rows.at(-1) ?? '') &&
-    ruleRow.test(rows.at(-2) ?? '') && rows.at(-3) === '>' && ruleRow.test(rows.at(-4) ?? '');
+    heldComposer.test(rows.slice(-12, -1).join('\n'));
 }
 
 export function classify(text) {

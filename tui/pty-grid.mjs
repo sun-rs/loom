@@ -48,7 +48,7 @@ export function readGrid(terminal, provider, extractDraft) {
       bottom = raw.findLastIndex((row, index) => index < bottom && rule.test(row));
     }
     const top = raw.findLastIndex((row, index) => index < bottom && rule.test(row) &&
-      raw[index + 1]?.trimStart().startsWith(prompt));
+      (provider === 'agy' ? /^>(?:\s|$)/.test(raw[index + 1] ?? '') : raw[index + 1]?.trimStart().startsWith(prompt)));
     if (top < 0) return { text, cursor };
     first = top + 1;
     last = bottom - 1;
@@ -83,7 +83,9 @@ export function readGrid(terminal, provider, extractDraft) {
     ? raw.map((line, index) => index === first ? prompt : line).join('\n') : text;
   const outsideComposer = [...raw.slice(0, first), ...raw.slice(last + 1)].join('\n');
   const vacantText = [...raw.slice(0, first), prompt, ...raw.slice(last + 1)].join('\n');
-  return { text, composerText, cursor, draft, outsideComposer, vacantText };
+  const clip = provider === 'agy' && /^↑ ([1-9]\d*) more lines?\n/.exec(draft);
+  const agyScroll = clip && cursor.y === last && { hiddenRows: Number(clip[1]), tail: draft.slice(clip[0].length) };
+  return { text, composerText, cursor, draft, outsideComposer, vacantText, agyScroll };
 }
 
 // Orca's held-prompt guard proves the visible draft still belongs to the current request.
