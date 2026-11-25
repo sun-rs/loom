@@ -19,3 +19,9 @@
 5. 审查分级：≤20 行小修由 Auditor 直审；核心逻辑直审 + 一次 Reviewer；审查最多 2 轮，仍阻塞升级 Super 改设计；Auditor 也要自查验收要求是否过重。
 6. 派卡模板：目标、可写范围、预算上限、测试行数不超过产品行数、只跑受影响的测试、停工触发器、三行回报格式。
 7. 不新增常驻角色。不做缓存保活。
+
+
+## 补充纪律（2026-11-25，用户裁决）
+- **worker 一律由 OAR 管理。** 特殊形态的 worker，比如 Claude TUI worker，也要按 OAR 的 runtime 规范来写，不另开一条只属于 loom 的通路。
+- **原生 subagent 只用于只读调研。** 高级角色可以用 CLI 自带的 subagent（agy subagent、Claude Task、Codex sub-agent）做回合内的只读调研。凡是改代码、跑测试、长时间运行、需要证据或审查的工作，一律派 loom worker。原因：原生 subagent 的消耗算在父角色身上，loom 也看不到、审不了它做了什么。
+- **按门禁边界给 Auditor 换班。** 每完成一道门禁就换一次，避免单个长会话占满成本；Auditor 不与 Leader 同时换班。
