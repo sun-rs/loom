@@ -86,6 +86,25 @@ function canWrite(binding, entry) {
   return role === 'auditor' && ['ruling', 'preference'].includes(kind);
 }
 
+function canPropose(binding, candidate) {
+  return binding?.role === 'worker' && Boolean(binding.cardId) && Boolean(binding.project)
+    && candidate?.kind === 'candidate' && candidate.layer === 'candidate'
+    && candidate.project === binding.project && candidate.cardId === binding.cardId
+    && candidate.author === binding.principal;
+}
+
+function canReview(binding, candidate) {
+  return candidate?.kind === 'candidate' && candidate.layer === 'candidate'
+    && canWrite(binding, { project: candidate.project, kind: candidate.proposedKind, layer: 'shared' });
+}
+
+function canForget(binding, entry) {
+  if (canWrite(binding, entry)) return true;
+  // An Auditor can make a final decision on a stale project lesson.
+  return entry?.status === 'stale' && entry.kind === 'lesson'
+    && canWrite(binding, { ...entry, kind: 'ruling' });
+}
+
 export function createAccess({ readState, entries = [], changes = [], history, now = Date.now } = {}) {
   const grants = new Map();
   const deltaScopes = new WeakMap();
@@ -101,6 +120,15 @@ export function createAccess({ readState, entries = [], changes = [], history, n
     };
   }
 
+  function grantExpiry(binding, row) {
+    let expiry = -Infinity;
+    for (const grant of grants.values()) {
+      if (grant.recipient === binding.principal && grant.sourceProject === row.project
+        && grant.recipientProject === binding.project) expiry = Math.max(expiry, Date.parse(grant.expiresAt));
+    }
+    return expiry;
+  }
+
   function mayRead(binding, row, surface, time, project) {
     if (!binding || (project !== undefined && row.project !== project)) return false;
     if (surface !== 'history') {
@@ -112,11 +140,7 @@ export function createAccess({ readState, entries = [], changes = [], history, n
     }
     if (binding.role !== 'super' && row.project == null && binding.role !== 'reviewer') return false;
     if (binding.role !== 'super' && isCrossProject(binding, row)) {
-      if (row.layer !== 'shared') return false;
-      const granted = [...grants.values()].some(grant =>
-        grant.recipient === binding.principal && grant.sourceProject === row.project
-        && grant.recipientProject === binding.project && time < Date.parse(grant.expiresAt));
-      if (!granted) return false;
+      if (row.layer !== 'shared' || time >= grantExpiry(binding, row)) return false;
     }
     return canReadRole(binding, row, surface);
   }
@@ -141,7 +165,7 @@ export function createAccess({ readState, entries = [], changes = [], history, n
 
     // Check both the publication's original scope and the current scope.
     // A forgotten item can still publish its withdrawal.
-    if (current && !mayRead(binding, current, withdrawal ? 'withdraw' : 'published', time)) return null;
+    if (current && !mayRead(binding, current, surface, time)) return null;
     return entry;
   }
 
@@ -170,13 +194,22 @@ export function createAccess({ readState, entries = [], changes = [], history, n
       const time = now();
       const entry = state.entries.find(row => mayRead(binding, row, 'show', time, project) && row.id === id);
       if (!entry) return { item: null, seq: null };
+      // Use the visible publication watermark of the snapshot, including the rest of a maintenance batch.
+      const currentById = new Map(state.entries.map(row => [row.id, row]));
       let seq = null;
       for (const change of state.changes) {
-        if (change.id === id && (!change.entry || mayRead(binding, change.entry, 'show', time, project))) {
+        const publication = visibleChange(binding, change, currentById, time);
+        if ((publication && (project === undefined || publication.project === project))
+          || (change.id === id && (!change.entry || mayRead(binding, change.entry, 'show', time, project)))) {
           seq = Math.max(seq ?? 0, change.seq);
         }
       }
       return { item: { ...structuredClone(entry), ...provenance(binding, entry, cutoff(state, time)) }, seq };
+    },
+
+    cacheUntil(binding, item) {
+      if (!mayRead(binding, item, 'show', now())) return 0;
+      return binding.role !== 'super' && isCrossProject(binding, item) ? grantExpiry(binding, item) : null;
     },
 
     async attachments(binding, { keywords = [], project } = {}) {
@@ -260,5 +293,8 @@ export function createAccess({ readState, entries = [], changes = [], history, n
     },
 
     canWrite,
+    canPropose,
+    canReview,
+    canForget,
   };
 }
