@@ -21,6 +21,11 @@ test('projects an OpenCode v2 export using the user marker and native idle outco
   assert.equal(rows[1].last_assistant_message, 'answer');
   assert.equal(rows.at(-1).hook_event_name, 'StopFailure');
   assert.equal(opencode.transcript.parse(rows.map(row => JSON.stringify(row)).join('\n')).lastReply, 'answer');
-  assert.equal(opencode.screen.classify('┃ Ask anything, / for commands, @ for context…\n\nloom · DeepSeek · OpenCode · ctrl+p menu'), 'idle');
+  assert.equal(opencode.screen.classify('┃ Ask anything, / for commands, @ for context…\n\nloom · DeepSeek V4.1 Flash 1017 · DeepSeek · ctrl+p menu'), 'idle');
+  assert.equal(opencode.screen.classify('┃\n\n🯧 esc interrupt · loom · DeepSeek V4.1 Flash 1017 · DeepSeek · ctrl+p menu'), 'busy');
+  assert.equal(opencode.screen.classify('┃\n\n🯧 Press esc again to interrupt'), 'busy');
+  assert.equal(miniDraft('┃ Ask anything, / for commands, @ for context…\n\nloom · DeepSeek V4.1 Flash 1017 · DeepSeek · ctrl+p menu'), '');
   assert.equal(miniDraft(`\n┃ [loom:${id}]\n┃ question\n\nloom · DeepSeek · OpenCode · ctrl+p menu`), `[loom:${id}]\nquestion`);
+  assert.deepEqual(opencode.launch({ model: 'deepseek/deepseek-flash', sessionId }).argv.slice(-2), ['--model', 'deepseek/deepseek-flash']);
+  assert.equal(opencode.hooks.normalize({ hook_event_name: 'StopFailure', is_interrupt: true, session_id: sessionId }).type, 'turn-end');
 });

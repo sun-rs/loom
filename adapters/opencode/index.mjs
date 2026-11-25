@@ -53,7 +53,7 @@ function parse(text) {
 }
 
 function launch({ model, effort, sessionId }) {
-  const variant = `${model}#${effort}`;
+  const variant = effort ? `${model}#${effort}` : model;
   return {
     argv: ['opencode', 'mini', '--standalone', '--session', sessionId, '--agent', 'loom', '--model', variant],
     env: { OPENCODE_CONFIG_CONTENT: JSON.stringify({ default_agent: 'loom', agents: { loom: { mode: 'primary', model: variant } } }) },
@@ -66,7 +66,8 @@ function classify(text) {
   const prompt = lines.at(-2) ?? '';
   if (/^(?:[!✗]\s*)?(?:HTTP 429|rate limit(?:ed)?|quota exceeded)\b/i.test(prompt)) return 'rate-limit';
   if (/^(?:[!✗]\s*)?(?:no credentials|not authenticated|unauthorized)\b/i.test(prompt)) return 'auth-fail';
-  if (/ · OpenCode · ctrl\+p menu$/i.test(footer)) {
+  if (/\besc interrupt · |Press esc again to interrupt$/i.test(footer)) return 'busy';
+  if (/ · ctrl\+p menu$/i.test(footer)) {
     const current = lines.slice(Math.max(0, lines.findLastIndex(line => /^›\s/.test(line))));
     if (current.some(line => /^Free usage limit reached\b/i.test(line))) return 'rate-limit';
     if (/^┃(?:\s+Ask anything, \/ for commands, @ for context…)?$/.test(prompt)) return 'idle';
@@ -76,10 +77,12 @@ function classify(text) {
 
 export function miniDraft(text) {
   const lines = text.trimEnd().split('\n').map(line => line.trimEnd());
-  if (!/ · OpenCode · ctrl\+p menu$/i.test(lines.pop() ?? '')) return;
+  if (!/(?: · ctrl\+p menu|Press esc again to interrupt)$/i.test(lines.pop() ?? '')) return;
   while (lines.at(-1) === '') lines.pop();
   const first = lines.findLastIndex(line => !/^┃(?: |$)/.test(line));
-  if (lines.length > first + 1) return lines.slice(first + 1).map(line => line.replace(/^┃ ?/, '')).join('\n');
+  if (lines.length <= first + 1) return;
+  const draft = lines.slice(first + 1).map(line => line.replace(/^┃ ?/, '')).join('\n');
+  return draft === 'Ask anything, / for commands, @ for context…' ? '' : draft;
 }
 
 export default {
@@ -87,10 +90,11 @@ export default {
   capabilities: { steer: 'none', interrupt: true, resumeSamePane: true },
   screen: { classify, dialogKeys: () => [] },
   hooks: { normalize: row => ({
-    type: { UserPromptSubmit: 'turn-start', Stop: 'turn-end', StopFailure: 'stop-failure' }[row.hook_event_name],
+    type: row.is_interrupt ? 'turn-end' :
+      { UserPromptSubmit: 'turn-start', Stop: 'turn-end', StopFailure: 'stop-failure' }[row.hook_event_name],
     sessionId: row.session_id,
   }) },
   transcript: { parse, turnSummary: ({ turns }, index) => `回复 ${turns[index - 1]?.reply ?? '无'}` },
   input: { plan: mode => ({ mode: mode === 'steer' ? 'queue' : mode,
-    steps: [...(mode === 'interrupt' ? [{ type: 'key', key: 'esc' }] : []), { type: 'text' }, { type: 'key', key: 'enter' }] }) },
+    steps: [...(mode === 'interrupt' ? [{ type: 'key', key: 'esc' }, { type: 'key', key: 'esc' }] : []), { type: 'text' }, { type: 'key', key: 'enter' }] }) },
 };
