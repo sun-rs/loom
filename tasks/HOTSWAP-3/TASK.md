@@ -1,0 +1,18 @@
+# HOTSWAP-3 — TUI holder v3 (phase B, TUI half)
+
+Base: main @ 4fff8611. Design of record: tasks/HOTSWAP-2/RESULT.md (§1 inventory, §4 holder v3) and docs/research/2026-11-25-hot-upgrade.md. User approved TUI-first on 2026-11-25. Headless (session-host/OAR) is OUT of scope for this card.
+
+## Build
+1. **Native holder (C)** under `holder/`: forkpty + poll loop; raw byte journal from session birth (segmented files, absolute 64-bit offsets) + fast ring; `mirroredOffset` to the hc outer fd; input counter + CLOCK_MONOTONIC last-human-input; conditional write `{epoch, eventSeq, outputOffset, humanInputOffset, minHumanQuietNs, bytes, id}` evaluated with no async step before the first non-blocking write, results applied/stale/busy-human/would-block/partial/exited; resize (TIOCSWINSZ, ordered event), whitelisted signals, waitpid once, exit facts; v3 Unix socket (0700 dir, 0600 socket, peer-UID check, length-prefixed bounded frames); `hello/claim/snapshot/read/write/resize/signal/handoff` exactly as designed; `handoff` = same-PID `execve` of a verified candidate (manifest + digest), FD_CLOEXEC cleared only on whitelisted fds, READY after re-establishing poll; self-check mode. Build macOS arm64 natively; cross-build linux arm64/x86_64 static musl via Zig (verified toolchain) and ship per-OS/arch binaries in the release with digests (`releaseDigest` must cover them).
+2. **loomd TUI controller**: move every (D) item from the inventory into loomd: xterm grid rebuilt from the journal (replay from offset 0; explicit `gap` if missing), screen/adapter recognition, composer draft verifier, overlays/trust dialogs, startup recovery, submit/confirmation logic, human-input quiet policy (loomd chooses 800ms; holder enforces via the conditional write). On loomd restart/upgrade, the new loomd claims a higher epoch, replays to the watermark, validates hc identity + native session, then reopens writes.
+3. **Coexistence**: new TUI sessions use v3; existing v0/v1/v2 loom-pty sessions keep their old release root until they exit. Release manifest advertises v0–v3. Rollback only to releases that can drive v3 (existing blockers otherwise).
+4. Keep loom-pty Node wrapper code only as the legacy path; do not delete it in this card.
+
+## Acceptance
+- npm test green (297+), new unit tests for frame codec, conditional-write races (human input between check and write, short write, EAGAIN), journal gap, epoch fencing, manifest verification.
+- Holder fault tests: execve failure → old image resumes; candidate fails before READY → reported, session alive or explicitly failed (document which); SIGKILL of holder is NOT claimed lossless.
+- **TUI half of the matrix** (macOS arm64, hc outer terminal): Claude, Codex, agy, OpenCode × idle/busy × (loomd upgrade, holder handoff, rollback) = 24 cells. Each cell: native session id, CLI PID, hc address/PID unchanged; N before + M after uniquely-marked deliveries each confirmed natively exactly once; zero manual input. Busy = during a 9s local-mock turn. Plus: typing-in-progress 800ms guard across a handoff; resize + UTF-8 + alt-screen across handoff. Isolated HOME, absolute binaries, local mocks.
+- Linux: run the holder's native fd/signal/exit tests in a Linux container if available locally (docker/podman); if none is available say so plainly — no claims.
+- RESULT.md (Chinese, `STATUS: done`) with the matrix table, raw log paths, line counts moved/added, and open risks. Commit nothing; Super reviews.
+
+Red lines: as all prior cards (no credentials; never PATH CLIs — CCP wrapper; no Solars/CCP/loom-next; only hc terminals you create; no global config changes). Do not touch the running Super pane or t3b9 itself.
