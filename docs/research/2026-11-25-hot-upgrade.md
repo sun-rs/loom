@@ -25,3 +25,13 @@
 1. **loom-pty 瘦身成 holder**：只保留 PTY fd、原始字节环形缓冲、写入、调整尺寸，以及一个稳定的最小协议。xterm 网格、画面识别、草稿核验、弹窗和信任框处理全部移到 loomd：由 loomd 从字节流重建画面，并通过最小协议发出按键。这样以后的修复都只需热升级 loomd。
 2. **持有者原地交接**，用于极少数确实要改 holder 的情况：旧 holder 启动新版本，经 stdio 继承把 PTY master fd（无头场景是 CLI 子进程的管道）交给新进程，然后自己退出。CLI 子进程不受影响。node-pty 需要能拿到 fd，否则就要一个很小的原生辅助程序。这一项需要先做可行性验证。
 3. **测试矩阵**：Claude、Codex、agy、OpenCode 在忙态和空闲态下，分别做 loomd 升级、holder 交接、回滚。断言三点：原生会话 ID 不变；已确认的输入计数连续；零人工干预。
+
+## 4. HOTSWAP-2 Phase A 实测结论（2026-11-25，macOS 26.6.2 arm64，SIP 开启，普通用户）
+
+- **画面重建可行。** Claude、Codex、agy、OpenCode 四个 TUI 都测了：先杀掉读取进程，在间隙中改变终端尺寸，再由一个全新进程从原始字节流重建 `@xterm/headless@5.5.0` 网格。逐格比较的差异为 0，CLI 的 PID 和 hc 窗格都保持不变。前提是从会话出生起保留完整的原始日志：只丢 4 个字节的 CSI 前缀，颜色就会错。xterm 没有完整的解析器状态 checkpoint 契约，网格截图也不能替代日志。
+- **holder 交接：同一 PID 上 `execve` 换成新版本可行，另起新 PID 不可行。**
+  - 同 PID `exec`：hc 外层 PTY 和 headless 管道都能延续，0 丢、0 重复、无 HUP，切换间隔约 3–4 ms（有一个 364 ms 的离群样本，原因未查明）。在真实 Codex app-server 正在执行的一轮中途切换，该轮仍正常完成。
+  - 另起新 PID 再退出旧进程：hc 会把原窗格标成 finished，新进程 `waitpid` 拿到 ECHILD，因此不能采用。
+- **node-pty 1.1.0** 能读出 master fd，但没有接管已有 master 的接口，因此 holder 改用原生 C 实现。探针 166 行，各平台产物约 30–36 KB：macOS arm64 本机编译；Linux arm64/x86_64 用 Zig 交叉编译为静态 musl，Linux 上尚未实际运行。
+- **依赖**：OAR 0.130.1 没有注入已打开 transport、或重新附着的公开接口。headless 要完整热换，需要 OAR 增加这类接口，或由 loom 维护一个 transport 适配层。
+- Phase B 估计 8–14 个工程日；验收矩阵 48 格：4 个 CLI × 空闲/忙碌 × loomd 升级、holder 换版、回滚 × TUI/headless。详见 `tasks/HOTSWAP-2/RESULT.md`。
