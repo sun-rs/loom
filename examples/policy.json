@@ -1,5 +1,5 @@
 {
-  "note": "Single-account operation only. Use one authorized account per provider for this project. Claude is paused in this example.",
+  "note": "Single-account operation only. Use one authorized account per provider for this project.",
   "delivery": { "coalesceMs": 45000 },
   "drift": {
     "netLines": null,
@@ -13,8 +13,7 @@
   },
   "deny": [
     { "model": "luna" },
-    { "model": "gpt-6-luna" },
-    { "cli": "claude" }
+    { "model": "gpt-6-luna" }
   ],
   "roles": {
     "super": {
