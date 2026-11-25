@@ -23,7 +23,7 @@ function fixture(t) {
   const path = join(cwd, 'index.sqlite');
   const index = openIndex(path);
   const env = { ...process.env, HC_TERMINAL_ID: '', LOOM_PROJECT: '', LOOM_ADDR: '', LOOM_INDEX_PATH: path, PATH: `${cwd}${delimiter}${process.env.PATH}` };
-  const cli = (...args) => spawnSync(process.execPath, [executable, ...args], { cwd, env, encoding: 'utf8' });
+  const cli = (...args) => spawnSync(executable, args, { cwd, env, encoding: 'utf8' });
   const run = (code, ...args) => {
     const result = cli(...args);
     assert.equal(result.status, code, result.stderr || result.stdout);

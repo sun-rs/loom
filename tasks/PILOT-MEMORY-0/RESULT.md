@@ -30,3 +30,7 @@
 两个既有 CLI 用例在绑定 Unix socket 时收到 `listen EPERM`，分别覆盖 worker admission 和显式 switch profile。使用 `TMPDIR=/private/tmp` 缩短路径仍出现同一限制。
 
 FIX-1 补充 Loom skill 的格式、维护职责和查询入口。首轮注入复用同步索引生成的行，并新增断言校验索引剔除了来源失效的旧条目。`node --test memory/memory.test.mjs daemon/supervisor.test.mjs` 通过 28 项，失败和跳过均为 0。FIX-1 的 CLI 用例留给 Leader 在沙箱外验收。
+
+FIX-2 将 `memory/` 纳入 release digest，并用临时发布目录验证修改 `memory/project.mjs` 会改变摘要。Loom skill 补齐字段、正文和写后搜索约束。CLI 测试恢复 `spawnSync(executable, args, ...)`，以覆盖现有可执行入口。
+
+`node --test memory/memory.test.mjs daemon/supervisor.test.mjs` 通过 29 项，失败和跳过均为 0。相对 `1f529eca` 累计净增 256 行（不含 `tasks/`，产品 134 行，测试 122 行）。CLI 测试及全量 `npm test` 由 Leader 在沙箱外验收。

@@ -1,9 +1,10 @@
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { mkdtempSync, readFileSync, rmSync, unlinkSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, unlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
+import { releaseDigest, releaseRoot } from '../daemon/release.mjs';
 import { estimateTokens } from '../lib/token-budget.mjs';
 import { projectMemoryPrompt, searchMemory, syncMemoryIndex, writeMemory } from './project.mjs';
 
@@ -17,6 +18,20 @@ function fixture(t) {
   });
   return { project, put, index: join(project, '.project/memory/INDEX.md') };
 }
+
+test('release digest changes when a memory source file changes', t => {
+  const root = mkdtempSync(join(tmpdir(), 'loom-release-'));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  for (const entry of readdirSync(releaseRoot, { withFileTypes: true })) {
+    if (entry.isDirectory()) mkdirSync(join(root, entry.name));
+  }
+  for (const name of ['package.json', 'package-lock.json']) writeFileSync(join(root, name), '{}');
+  const path = join(root, 'memory', 'project.mjs');
+  writeFileSync(path, '// before\n');
+  const before = releaseDigest(root);
+  writeFileSync(path, '// after\n');
+  assert.notEqual(releaseDigest(root), before);
+});
 
 test('writes bounded Markdown items and rebuilds a one-line-per-item index', t => {
   const { project, put, index } = fixture(t);
