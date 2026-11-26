@@ -14,7 +14,7 @@ import { projectSessions } from '../cli/project.mjs';
 import { projectStatus } from '../cli/status.mjs';
 import { deliveryId } from '../inbox/message.mjs';
 import { estimateTokens } from '../lib/token-budget.mjs';
-import { searchMemory, writeMemory } from '../memory/project.mjs';
+import { activeItems, searchMemory, writeMemory } from '../memory/project.mjs';
 import { createSupervisor } from './supervisor.mjs';
 import { readExtractorState } from './memory-extractor-state.mjs';
 
@@ -1063,6 +1063,55 @@ test('6b stage warns and skips a single turn over maxInputBytes while processing
   }, { warned: true, replies: [normalReply], stageAt: enrolledAt + 1000 });
   assertStageBatches(requests, [normalReply], maxInputBytes);
 });
+
+for (const { name, itemCount, libraryExceedsLimit } of [
+  { name: 'library alone exceeds maxInputBytes', itemCount: 9, libraryExceedsLimit: true },
+  { name: 'library and one normal turn together exceed maxInputBytes', itemCount: 7, libraryExceedsLimit: false },
+]) {
+  test(`6b stage preserves a normal turn when the ${name}`, async t => {
+    const maxInputBytes = 4200;
+    const f = fixture(t, { config: { limits: { maxInputBytes } } });
+    fakeOpenCode(t, f.root);
+    for (let index = 1; index <= itemCount; index++) {
+      writeMemory(f.project, { id: `budget-item-${index}`, scope: 'project', owner: 'leader', source: 'fixture.txt',
+        verified: '2026-11-26', title: `Fixture procedure ${index}`,
+        body: 'Review fixture records before closing the gate. '.repeat(10).trimEnd() });
+    }
+    const project = activeItems(f.project).map(({ meta, title, body }) => ({ id: meta.id, title, body }));
+    assert.equal(project.length, itemCount, 'every seeded item is active');
+    const existing = { project, reference: [] };
+    const libraryBytes = Buffer.byteLength(JSON.stringify(existing));
+    const reply = 'Normal stage turn. ' + 'Keep fixture history available. '.repeat(25).trimEnd();
+    if (libraryExceedsLimit) {
+      assert.ok(libraryBytes > maxInputBytes, 'the serialized library alone exceeds the request limit');
+    } else {
+      assert.ok(libraryBytes < maxInputBytes, 'the serialized library alone fits the request limit');
+      assert.ok(libraryBytes + Buffer.byteLength(reply) > maxInputBytes,
+        'the serialized library and the reply exceed the limit before request framing');
+    }
+
+    const leader = await f.spawn('leader', 'Prepare a normal turn with a populated project library.');
+    f.advance(1000);
+    await f.finish(leader, reply);
+    assert.equal(f.requests.length, 1, 'the normal turn reaches the per-turn provider');
+    assert.equal(extractorRequestInput(f.requests[0]).reply, reply);
+    assert.ok(Buffer.byteLength(f.requests[0].raw) <= maxInputBytes, 'the normal per-turn request fits');
+
+    const requestOffset = f.requests.length;
+    const logOffset = f.logs.length;
+    const boundary = await completeStageGate(f, leader, 'G6B-STAGE-LIBRARY-BYTES');
+    const requests = stageRequestsSince(f, requestOffset);
+    const { boundaries, turns, stageTurns } = readExtractorState(f.project);
+    const [turnKey] = Object.keys(turns);
+    assert.deepEqual({
+      sentTurn: requests.some(({ replies }) => replies.includes(reply)),
+      skipped: f.logs.slice(logOffset).some(message => /skipped oversized stage/i.test(message)),
+      processedTurn: stageTurns?.[turnKey],
+      processedBoundary: boundaries[boundary],
+    }, { sentTurn: true, skipped: false, processedTurn: true, processedBoundary: true });
+    assertStageBatches(requests, [reply], maxInputBytes);
+  });
+}
 
 for (const failure of ['upstream HTTP error', 'unavailable credential']) {
   test(`6b stage recovers a failed history window at the next boundary after ${failure}`, async t => {
