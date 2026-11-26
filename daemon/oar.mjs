@@ -1,3 +1,4 @@
+import { accountTime, parseClaudeRateLimitEvent } from '../adapters/accounts/passive.mjs';
 import { approval, choice, codexPrompt, promptDetails } from '../adapters/prompt-state.mjs';
 import { appendFileSync, constants, lstatSync, realpathSync, rmSync } from 'node:fs';
 import { randomUUID } from 'node:crypto';
@@ -29,6 +30,7 @@ const adapters = { codex, agy, claude };
 const rateFailure = new Set(['rate_limited', 'quota']);
 const acpProviders = new Set(['agy', 'opencode']);
 const activeEvents = new Set(['turn_active', 'user_message', 'text_delta', 'reasoning', 'tool_call_started', 'turn_ended']);
+const installationVersions = new WeakMap();
 const safeId = /^[0-9a-f-]{36}$/;
 
 export function checkedTranscript(path, row) {
@@ -115,6 +117,7 @@ export async function openOar(row, project, resume) {
     const session = await runtime.session(installation, { cwd, model, effort, env, launchArgs,
       ...(row.cli === 'claude' && !questions && { disallowedTools: ['AskUserQuestion'] }),
       ...(row.cli === 'codex' && { endTurnProcessesOnAbort: true }), ...(resume ? { resume } : {}) });
+    installationVersions.set(session, installation.version);
     if (agyWorkspace || integration) {
       const dispose = session.dispose.bind(session);
       session.dispose = async () => {
@@ -139,7 +142,7 @@ export async function bindOarTranscript(session, row) {
   return checkedTranscript(await adapters[row.cli]?.transcript.locate({ cwd: row.cwd, sessionId: session.id }), row);
 }
 
-export function trackOar(project, row, session, onError, incarnation, onExit) {
+export function trackOar(project, row, session, onError, incarnation, onExit, accounts = {}) {
   const path = eventPath(project, row.addr);
   const rows = jsonRows(prepareJournal(path));
   let number = rows.reduce((max, event) => Math.max(max, event.turn ?? 0), 0);
@@ -153,6 +156,32 @@ export function trackOar(project, row, session, onError, incarnation, onExit) {
   failure = failure?.type === 'stuck' ? failure.reason : undefined;
   let suspending = false;
   const prompts = new Map();
+  const cliVersion = installationVersions.get(session) ?? session.cliVersion;
+  const accountBinding = { ...accounts.binding, cliVersion, sessionId: session.id, generation: incarnation ?? streamId };
+  let accountIncident;
+  let unsubscribeRaw;
+  let readingRaw = true;
+
+  function stopRaw() {
+    readingRaw = false;
+    unsubscribeRaw?.();
+    unsubscribeRaw = undefined;
+  }
+
+  function onRaw(frame) {
+    if (!readingRaw || frame.kind !== 'frame' || frame.sessionId !== session.id ||
+        !Array.isArray(frame.agentPath) || frame.agentPath.length) return;
+    const diagnostics = [];
+    const native = frame.body?.native;
+    const observations = parseClaudeRateLimitEvent(native, { ...accountBinding, sequence: frame.seq,
+      observedAt: frame.receivedAt, isReplay: true, observeAccountDiagnostics: batch => diagnostics.push(...batch) });
+    if (incarnation && (observations.length || diagnostics.length)) {
+      append(frame, 'account-evidence', { observations, diagnostics });
+    } else {
+      if (observations.length) accounts.observeAccounts?.(observations);
+      if (diagnostics.length) accounts.observeAccountDiagnostics?.(diagnostics);
+    }
+  }
 
   const append = (event, type, fields = {}) => {
     if (seq !== event.seq) { seq = event.seq; ordinal = 0; }
@@ -186,7 +215,7 @@ export function trackOar(project, row, session, onError, incarnation, onExit) {
     if (event.kind === 'exited' || event.kind === 'released' || event.kind.startsWith('compaction_')) {
       append(event, event.kind, event.kind.startsWith('compaction_') ? { outcome: event.outcome } :
         { suspending, ...(event.kind === 'exited' && { exitCode: event.exitCode ?? event.code }) });
-      if (event.kind === 'exited' || event.kind === 'released') onExit?.();
+      if (event.kind === 'exited' || event.kind === 'released') { stopRaw(); onExit?.(); }
     }
     if (event.kind === 'input_dropped' && event.inputId) {
       append(event, 'input-dropped', { inputId: event.inputId });
@@ -240,6 +269,29 @@ export function trackOar(project, row, session, onError, incarnation, onExit) {
     if (event.kind !== 'turn_ended') return;
     const outcome = event.outcome;
     const reason = rateFailure.has(outcome.failure) ? 'rate-limit' : outcome.failure === 'auth' ? 'auth' : undefined;
+    if (reason || accountIncident && outcome.kind === 'completed') {
+      const observed_at = accountTime(event.receivedAt);
+      const bucket = /^seven_day(?:_(?:opus|sonnet|haiku|fable))?$|^five_hour$/.test(outcome.rateLimitType) ?
+        outcome.rateLimitType : undefined;
+      const next = reason && { status: reason === 'auth' ? 'auth-expired' : 'quota-wait',
+        observed_at, resets_at: accountTime(outcome.resetsAt), ...(row.cli === 'claude' && bucket && { limit_id: 'claude', bucket }) };
+      const incidents = [
+        ...(accountIncident && (!next || accountIncident.status !== next.status || accountIncident.bucket !== next.bucket) ?
+          [{ ...accountIncident, cleared_at: observed_at }] : []),
+        ...(next ? [next] : []),
+      ];
+      accountIncident = next;
+      if (incarnation) {
+        try { for (const incident of incidents) append(event, 'account-incident', { incident }); }
+        catch { onError(new Error('Could not collect OAR account incident')); }
+      } else if (accountBinding.accountRef && incidents.length) {
+        try {
+          accounts.observeAccountIncidents?.(incidents.map(incident => ({
+            cli: row.cli, account_ref: accountBinding.accountRef, session_id: row.addr, ...incident,
+          })));
+        } catch { onError(new Error('Could not collect OAR account incident')); }
+      }
+    }
     if (reason && failure !== reason) append(event, 'stuck', { reason, turn });
     if (!reason && failure) append(event, 'recovered', { reason: failure, turn });
     failure = reason;
@@ -256,19 +308,27 @@ export function trackOar(project, row, session, onError, incarnation, onExit) {
   }
 
   let error;
-  append({ seq: -1, receivedAt: Date.now() }, 'stream-opened');
+  append({ seq: -1, receivedAt: Date.now() }, 'stream-opened',
+    typeof cliVersion === 'string' && /^v?\d+\.\d+\.\d+(?:[-+][a-z0-9.-]+)?$/i.test(cliVersion) ? { cliVersion } : {});
   const unsubscribe = session.events(event => {
     if (error) return;
     try { onEvent(event); }
     catch (failure) { error ??= failure; onError(failure); }
   }, { cursor: { sessionId: session.id, afterSeq: session.records().at(-1)?.seq ?? -1 } });
+  if (row.cli === 'claude' && (incarnation || accounts.observeAccounts || accounts.observeAccountDiagnostics) && session.rawEvents) {
+    unsubscribeRaw = session.rawEvents(frame => {
+      try { onRaw(frame); }
+      catch { onError(new Error('Could not collect Claude account evidence')); }
+    }, { sessionId: session.id, afterSeq: -1 });
+    if (!readingRaw) stopRaw();
+  }
   function clearInactive() {
     if (!active) return;
     const { turn, turnId, sinceSeq } = active;
     append({ seq, receivedAt: Date.now() }, 'turn-unconfirmed', { turn, turnId, sinceSeq });
     active = pending = undefined;
   }
-  return { session, provider: row.cli, streamId, rows, active: () => active, userPrompt: () => prompts.values().next().value, clearInactive, unsubscribe,
+  return { session, provider: row.cli, streamId, rows, active: () => active, userPrompt: () => prompts.values().next().value, clearInactive, unsubscribe: () => { stopRaw(); unsubscribe(); },
     sampleInputHead: () => { nextHead = headAt(row.cwd); },
     noteAbort: () => {
       const turn = active;

@@ -3,6 +3,7 @@ import { createHash, randomUUID } from 'node:crypto';
 import { appendFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { CommandError } from '../cli/sessions.mjs';
+import { accountService } from './account-service.mjs';
 import { projectIndex } from '../cli/project.mjs';
 import { reportedContext } from '../cli/state.mjs';
 import { defaultStallMs, inbox, pendingWork, receipt, stalledDeliveries, stallText, suppressedReplies, suppressedReplyText } from '../inbox/engine.mjs';
@@ -61,7 +62,7 @@ function codexHandoff(row) {
 export function createSupervisor(project, {
   report = console.log, window = 900_000, sealWindow = window, partialWindow = Math.min(window, 120_000),
   uncertainWindow, blockedWindow = 60_000, sessionOptions, now = Date.now, watchOptions,
-  externalNotification = notifyExternal,
+  externalNotification = notifyExternal, accountOptions = {},
 } = {}) {
   if (![window, sealWindow, partialWindow, uncertainWindow ?? defaultStallMs, blockedWindow].every(value => Number.isSafeInteger(value) && value >= 0)) {
     throw new RangeError('Invalid loomd timeout in milliseconds');
@@ -69,7 +70,9 @@ export function createSupervisor(project, {
   const index = projectIndex(project);
   index.initialize();
   const grants = hostGrants(project, { now, notify: (...events) => notifications.add(...events) });
-  const sessions = ownedSessions(project, index, report, { ...sessionOptions, hostGrants: grants });
+  const accounts = accountService(project, { now, report, notifications: { add: (...items) => notifications.add(...items) },
+    rows: () => sessions.rows(), options: accountOptions, accountBinding: accountOptions.bindSession ?? sessionOptions?.accountBinding });
+  const sessions = ownedSessions(project, index, report, { ...sessionOptions, hostGrants: grants, ...accounts.collectors });
   const policyForTick = () => {
     try { return readPolicy(project, { optional: true }); }
     catch { return {}; }
@@ -474,6 +477,7 @@ ${details}`, {
       const job = sessions.jobs.get(row.addr);
       if (row.endedAt !== null || isReleased(job)) {
         progress.delete(row.addr);
+        accounts.clearHealth(row.addr);
         observations.delete(row.addr);
         liveness.remove(row.addr);
         if (row.endedAt !== null && job.exit && !sessions.successorOf(row.addr)) {
@@ -517,6 +521,7 @@ ${details}`, {
           summary: reason, text: `${row.role} ${row.addr} · ${status} · ${reason}${retry}`, externalOnly: true });
       }
       if (result) {
+        accounts.observeHealth(row, job, snapshot, incident);
         progress.set(row.addr, result);
         sessions.rememberLiveness(row.addr, { ...result, observedAt: now() });
       }
@@ -1159,6 +1164,7 @@ ${details}`, {
     await observeSessions(policy.delivery?.stallMs ?? uncertainWindow ?? defaultStallMs);
     health = new Map((await watcher.poll()).map(row => [row.addr, row]));
     publishNotifications();
+    accounts.publishWarnings();
     await pushNotifications();
     await reapSessions();
   }
@@ -1211,7 +1217,10 @@ ${details}`, {
       }
       return attached;
     },
-    shutdown: sessions.shutdown,
+    async shutdown() {
+      await accounts.close();
+      await sessions.shutdown();
+    },
     liveCaller: sessions.liveCaller,
     legacySessions: sessions.legacySessions,
     legacyPeerCaller: sessions.legacyPeerCaller,
@@ -1228,6 +1237,13 @@ ${details}`, {
       if (rpcActor && v2.enabled() && command === 'switch') v2.ruleChange(rpcActor, 'budget');
       if (rpcActor && v2.enabled() && command === 'senior-override') v2.ruleChange(rpcActor, 'merge');
       if (command === 'spawn') return spawnSession(args, caller);
+      if (command === 'accounts-refresh') {
+        const job = rpcActor?.role === 'worker' && sessions.jobs.get(rpcActor.addr);
+        if (!external && rpcActor?.role !== 'super' && !(job?.hostGrant && grants.active(rpcActor, job.hostGrant.id))) {
+          throw new CommandError('forbidden', 'Account refresh requires authenticated Super or a Worker with an active host grant');
+        }
+        return accounts.refresh();
+      }
       if (command === 'grant') {
         const spec = hostGrantSpec(args);
         const { request: requestOnly, ...desired } = spec;
@@ -1308,6 +1324,7 @@ ${details}`, {
         const delivery = deliveryBoard(mail.messages, observations, now());
         return {
           layout: readLayout(project),
+          accounts: accounts.read(),
           roles, workers, delivery, gates,
           attention: attentionBoard(delivery, roles, workers, gates, events, roleFor),
           notifications: notificationBoard(events, roleFor),

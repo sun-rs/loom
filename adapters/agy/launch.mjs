@@ -39,7 +39,7 @@ function stageHooks(directory, sink, captureScript, sessionId, allowNativeQuesti
   }
 }
 
-export function launch({ model, effort, cwd, prompt, hookSink, captureScript = capture, expectedSessionId, allowNativeQuestions, extraArgs = [] }) {
+export function launch({ model, effort, cwd, prompt, hookSink, statusLine, captureScript = capture, expectedSessionId, allowNativeQuestions, extraArgs = [] }) {
   const directory = realpathSync(cwd);
   const reserved = /^(?:--?(?:p|print|prompt|i|prompt-interactive|settings|model|effort|mode|add-dir|dangerously-skip-permissions|remote-agent|remote-control|help|version))(?:=|$)/;
   if (!Array.isArray(extraArgs) || extraArgs.some(arg => typeof arg !== 'string' || arg === '--' || reserved.test(arg)) ||
@@ -64,7 +64,7 @@ export function launch({ model, effort, cwd, prompt, hookSink, captureScript = c
     argv.push('--add-dir', workspace);
     trustedWorkspaces.push(workspace);
   }
-  argv.push('--settings', JSON.stringify({ trustedWorkspaces, queuedMessages: 'queue' }));
+  argv.push('--settings', JSON.stringify({ trustedWorkspaces, queuedMessages: 'queue', ...(statusLine && { statusLine }) }));
   if (prompt) argv.push('--prompt-interactive', prompt);
 
   return {

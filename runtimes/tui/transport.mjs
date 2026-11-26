@@ -56,7 +56,13 @@ export async function openNativeTui({
   hookSink ??= join(sessionDir, 'hooks.jsonl');
   await mkdir(dirname(hookSink), { recursive: true, mode: 0o700 });
   prepareJournal(hookSink);
-  const { argv, env: launchEnv, sessionId, promptSink } = await provider.start({ ...options, cwd, hookSink, boundTranscript });
+  const accountStatusline = options.accountStatusline;
+  const versionedClaude = cli === 'claude' && /\/claude\/versions\/(\d+\.\d+\.\d+)$/.exec(executable)?.[1];
+  const { argv, env: launchEnv, sessionId, promptSink } = await provider.start({
+    ...options, cwd, hookSink, boundTranscript,
+    ...(accountStatusline && { accountStatusline: { ...accountStatusline,
+      cliVersion: accountStatusline.cliVersion ?? (versionedClaude || undefined) } }),
+  });
   argv[0] = executable;
   // hc retains its command arguments. Read the capability inside the native
   // process wrapper so the bearer value appears only in the session env.
@@ -193,7 +199,8 @@ export async function openNativeTui({
               }
               const requestedEnv = { ...env };
               delete requestedEnv.LOOM_AGY_HOOK_WORKSPACE;
-              return openNativeTui({ ...options, cli, cwd, stateDir, hcCommand, env: requestedEnv, unset, authMode,
+              const { accountStatusline, ...restartOptions } = options;
+              return openNativeTui({ ...restartOptions, cli, cwd, stateDir, hcCommand, env: requestedEnv, unset, authMode,
                 command: executable, name, resume, recordBinding, recordTemporary, recordExecutable, boundTranscript, capabilityPath });
             })().catch(error => { restarting = undefined; throw error; });
             return restarting;

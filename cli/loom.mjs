@@ -36,6 +36,7 @@ const help = {
   state: ['loom state <target> [--project DIR]'],
   memory: ['loom memory search <query> [--project DIR] [--json]'],
   status: ['loom status --project DIR [--json]'],
+  accounts: ['loom accounts [--project DIR] [--json] [--refresh]'],
   up: ['loom up [--project DIR]'],
   tui: ['loom tui [--project DIR | --all] [--once]'],
   layout: [
@@ -87,6 +88,7 @@ const commands = {
   'worker-check': projectArgs,
   'worker-handoff': { ...projectArgs, ...strings('wip', 'passed', 'pending', 'reason', 'evidence') },
   status: { ...projectArgs, ...flags('json') },
+  accounts: { ...projectArgs, ...flags('json', 'refresh') },
   up: projectArgs,
   tui: { ...projectArgs, ...flags('all', 'once') },
   layout: { ...projectArgs, ...strings('leader', 'auditor'), ...flags('json') },
@@ -423,7 +425,14 @@ export async function main(args) {
       }
     } else {
       if (positionals.length) invalid(help[command][0]);
-      if (command === 'status') {
+      if (command === 'accounts') {
+        const { formatAccountsText, runAccounts } = await import('./accounts.mjs');
+        result = await runAccounts({ ...values, project: directory });
+        if (!values.json) {
+          console.log(formatAccountsText(result, { color: process.stdout.isTTY && !Object.hasOwn(process.env, 'NO_COLOR') }));
+          return 0;
+        }
+      } else if (command === 'status') {
         const { projectStatus, printStatus } = await import('./status.mjs');
         result = await projectStatus(directory);
         if (!values.json) { printStatus({ ...result, ...projectReceipt(directory) }); return 0; }
@@ -484,3 +493,5 @@ export async function main(args) {
     return errorExit(code);
   }
 }
+
+if (import.meta.main) process.exitCode = await main(process.argv.slice(2));

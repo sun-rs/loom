@@ -1,0 +1,20 @@
+{
+  "jsonrpc": "2.0",
+  "method": "account/rateLimits/updated",
+  "params": {
+    "rateLimits": {
+      "limitId": "codex",
+      "planType": "pro",
+      "primary": {
+        "usedPercent": 64,
+        "windowDurationMins": 10080,
+        "resetsAt": 1796281200
+      },
+      "secondary": {
+        "usedPercent": 30,
+        "windowDurationMins": 300,
+        "resetsAt": 1795704000
+      }
+    }
+  }
+}

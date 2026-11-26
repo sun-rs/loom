@@ -6,6 +6,7 @@ import { PassThrough } from 'node:stream';
 import { promisify } from 'node:util';
 import { herdrProjects } from '../daemon/herdr-layout.mjs';
 import { managedCliPath, releaseRoot } from '../daemon/release.mjs';
+import { readAccounts } from '../daemon/accounts.mjs';
 import { request } from '../daemon/rpc.mjs';
 import { roles } from '../index/index.mjs';
 import { managedProject } from './project.mjs';
@@ -133,10 +134,10 @@ export async function statusTui({ project, once }, { input = process.stdin, outp
     await Promise.all(projects.map(async directory => {
       try {
         const board = await rpc(directory, 'board', {}, { timeout: 3_000 });
-        snapshots.set(directory, { board });
+        snapshots.set(directory, { board, ...(!board.accounts && { offlineAccounts: readAccounts(directory, { now }) }) });
       } catch (error) {
         const previous = snapshots.get(directory);
-        snapshots.set(directory, { ...previous, error: ['ENOENT', 'ECONNREFUSED', 'ECONNRESET', 'not-ready'].includes(error.code) ?
+        snapshots.set(directory, { ...previous, offlineAccounts: readAccounts(directory, { now }), error: ['ENOENT', 'ECONNREFUSED', 'ECONNRESET', 'not-ready'].includes(error.code) ?
           'Waiting for loomd to reconnect.' : error.message });
       }
     }));

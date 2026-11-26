@@ -8,7 +8,7 @@ export const daemonAbsent = error => ['ENOENT', 'ECONNREFUSED'].includes(error.c
 
 export async function request(project, command, args = {}, { capability = clientCapability(project),
   timeout = ['spawn', 'switch', 'assign', 'send'].includes(command) ? 180_000 :
-  ['upgrade-plan', 'upgrade-apply'].includes(command) ? 60_000 : 30_000 } = {}) {
+  ['upgrade-plan', 'upgrade-apply', 'accounts-refresh'].includes(command) ? 60_000 : 30_000 } = {}) {
   return new Promise((resolve, reject) => {
     const socket = connectUnix(socketPath(project));
     let body = '';

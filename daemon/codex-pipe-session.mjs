@@ -1,3 +1,4 @@
+import { accountTime, parseCodexPushNotification } from '../adapters/accounts/passive.mjs';
 import { codexPrompt } from '../adapters/prompt-state.mjs';
 import { createHash, randomUUID } from 'node:crypto';
 import { appendFileSync, constants } from 'node:fs';
@@ -45,6 +46,7 @@ export function codexPipeSession(project, row, dir, incarnation, client, verify,
       row.sessionId && state.threadId && row.sessionId !== state.threadId) throw holderError('HOLDER_IDENTITY');
 
   let broken;
+  let replaying = state.stage !== 'new';
   let lastSnapshot;
   let inSerial = Promise.resolve();
   const serialize = action => {
@@ -111,6 +113,16 @@ export function codexPipeSession(project, row, dir, incarnation, client, verify,
     if (!active) return;
     const reason = outcome.failure === 'rate_limited' || outcome.failure === 'quota' ? 'rate-limit' :
       outcome.failure === 'auth' ? 'auth' : undefined;
+    if (reason || state.accountIncident && outcome.kind === 'completed') {
+      const observed_at = accountTime(now());
+      const next = reason && { status: reason === 'auth' ? 'auth-expired' : 'quota-wait',
+        observed_at, resets_at: accountTime(outcome.resetsAt) };
+      if (state.accountIncident && (!next || state.accountIncident.status !== next.status)) {
+        add('account-incident', { incident: { ...state.accountIncident, cleared_at: observed_at } });
+      }
+      if (next) add('account-incident', { incident: next });
+      state.accountIncident = next || undefined;
+    }
     if (reason && reason !== state.failure) add('stuck', { reason, turn: active.turn });
     if (!reason && state.failure) add('recovered', { reason: state.failure, turn: active.turn });
     state.failure = reason;
@@ -184,7 +196,7 @@ export function codexPipeSession(project, row, dir, incarnation, client, verify,
     }
   }
 
-  function receive(frame) {
+  function receive(frame, position) {
     if (typeof frame.method === 'string') {
       if (Object.hasOwn(frame, 'id')) {
         // This adapter opens threads with approvalPolicy=never. Unsupported
@@ -195,6 +207,16 @@ export function codexPipeSession(project, row, dir, incarnation, client, verify,
         const prompt = codexPrompt(frame.method, frame.params);
         if (prompt && (!frame.params?.threadId || frame.params.threadId === state.threadId)) {
           state.rpc.outgoing.at(-1).userPrompt = { ...prompt, since: now(), cli: 'codex', source: 'native' };
+        }
+      } else if (frame.method === 'account/rateLimits/updated' && state.initializeDone &&
+          (!frame.params?.threadId || frame.params.threadId === state.threadId)) {
+        const diagnostics = [];
+        const observations = parseCodexPushNotification(frame, {
+          cliVersion: state.cliVersion, sessionId: state.threadId ?? row.sessionId, generation: incarnation,
+          ...position, observeAccountDiagnostics: batch => diagnostics.push(...batch),
+        });
+        if (observations.length || diagnostics.length) {
+          add('account-evidence', { observations, diagnostics, at: Date.parse(observations[0]?.observed_at ?? diagnostics[0].observedAt) });
         }
       } else notification(frame.method, frame.params ?? {});
       return;
@@ -221,6 +243,8 @@ export function codexPipeSession(project, row, dir, incarnation, client, verify,
       if (!result || frame.error) state.fault = { reason: 'Codex refused initialization', kind };
       else {
         state.initializeDone = true;
+        const agent = typeof result.userAgent === 'string' ? result.userAgent : '';
+        state.cliVersion = /^(?:loom|codex(?:-cli|_cli_rs)?)\/(\d+\.\d+\.\d+(?:[-+][a-z0-9.-]+)?)(?:\s|$)/i.exec(agent)?.[1];
         state.stage = 'initialized';
       }
     } else if (method === 'thread/start' || method === 'thread/resume') {
@@ -277,10 +301,19 @@ export function codexPipeSession(project, row, dir, incarnation, client, verify,
       ...(missing && !state.retired && { reason: 'holder lost' }) });
   }
 
-  function consume(batch) {
+  function consume(batch, isReplay = replaying) {
     if (!batch.length) return;
     try {
-      replayPipe(state.rpc, batch, receive, ended);
+      for (const event of batch) {
+        // Holder output frames have sequence/offset, but no wall clock. This
+        // timestamp becomes durable with the projected RPC watermark.
+        const observedAt = accountTime(event.receivedAt ?? (isReplay ? null : now()));
+        let ordinal = 0n;
+        replayPipe(state.rpc, [event], frame => {
+          const index = event.seq * 8192n + ordinal++;
+          receive(frame, { observedAt, isReplay, sequence: index <= BigInt(Number.MAX_SAFE_INTEGER) ? Number(index) : index.toString() });
+        }, ended);
+      }
       save();
       publish();
     } catch (error) { broken = error; throw error; }
@@ -294,7 +327,7 @@ export function codexPipeSession(project, row, dir, incarnation, client, verify,
     try { snapshot = await client.snapshot(); }
     catch (error) {
       if (!await dead(error)) throw error;
-      for (const batch of offlinePipeJournal(dir, state.rpc.seq)) consume(batch);
+      for (const batch of offlinePipeJournal(dir, state.rpc.seq)) consume(batch, true);
       if (!state.endedAt) { ended(null, null, true); save(); publish(); }
       return;
     }
@@ -307,6 +340,7 @@ export function codexPipeSession(project, row, dir, incarnation, client, verify,
     }
     verifyPipeWatermark(state.rpc, snapshot);
     lastSnapshot = snapshot;
+    replaying = false;
   }
 
   function prepareHandshake() {
@@ -485,7 +519,7 @@ export function codexPipeSession(project, row, dir, incarnation, client, verify,
       }
     }),
     pull: () => serialize(step),
-    get session() { return { id: state.threadId,
+    get session() { return { id: state.threadId, cliVersion: state.cliVersion,
       status: () => ({ value: { kind: state.active || state.pendingPrompt ? 'running' : 'idle',
         sinceSeq: state.active?.sinceSeq, lastEventAt: state.lastEventAt, released: Boolean(state.endedAt) } }),
       model: () => ({ value: state.model }), effort: () => ({ value: state.effort }), steer: true }; },
