@@ -6,6 +6,7 @@ import { dirname, isAbsolute, join, relative, resolve } from 'node:path';
 import { parseArgs, promisify } from 'node:util';
 import { fileURLToPath } from 'node:url';
 import { estimateTokens } from '../../lib/token-budget.mjs';
+import { assembleRoleCore } from '../../lib/role-skill.mjs';
 import { roles, scenarios } from './scenarios.mjs';
 import { fixturePrompt, score } from './simulator.mjs';
 
@@ -278,6 +279,10 @@ async function loadArm(plan) {
   const [skills, files, modules] = await Promise.all([load(config.skills), load(config.references), load(config.modules)]);
   if (typeof config.id !== 'string' || config.id === 'baseline' || !roles.every(role => skills[role]?.trim())) {
     throw new Error('An alternate arm needs a unique ID and all four role cores');
+  }
+  if (config.common) {
+    const common = await readFile(resolve(dirname(plan), config.common), 'utf8');
+    for (const role of roles) skills[role] = assembleRoleCore(common, skills[role]);
   }
   return { id: config.id, skills, files, modules };
 }

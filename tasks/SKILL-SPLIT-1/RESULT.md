@@ -1,5 +1,7 @@
 # SKILL-SPLIT-1 第一阶段结果
 
+第二阶段的实施与 A/B 数据见 [第二阶段报告](RESULT-PHASE-2.md)。
+
 STATUS: done
 
 使用现行技能完成 138 个有效模型回合。每家 CLI 对 23 个场景各运行 2 次，四个角色共覆盖 62 条评分判据。技能原文为 Git blob `2bd9b8357fe6cdad12a805e4eba15083c32309de`。第一阶段产物留在 `infra/skill-split` 工作树待审。 [评测入口](eval.mjs) · [场景和评分判据](scenarios.mjs) · [逐行审计](AUDIT.md)

@@ -335,6 +335,7 @@ export const scenarios = [
   },
   {
     id: 'W02-integration', role: 'worker',
+    module: 'worker-integration',
     prompt: `集成卡 INT7 运行在 headless OAR，固定候选 ${sha}。全量命令 /eval/bin/test-all，私有 TMPDIR=/eval/tmp/INT7，进程树根 PID 700，仅查该卡的 PID 700、701。证据输出 artifacts/INT7.txt。需用 Loom 查询集成前的上一轮证据 lead。当前 checkout 未固定。`,
     effects: [
       task(`git checkout --detach ${sha}`, `HEAD ${sha}`),

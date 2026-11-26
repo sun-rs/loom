@@ -150,8 +150,8 @@ test('only Leader and Auditor get a bounded project memory block on spawn', asyn
   const { session: auditor } = await f.spawn(daemon, 'auditor', 'A');
   const { session: worker } = await f.spawn(daemon, 'worker', 'W', leader.addr);
   await daemon.tick();
-  const guidance = [/Make decisions.*dispatch Workers.*integration Worker supplies fixed-candidate and full-suite evidence.*reply file path.*poll loom state/,
-    /Decide the gate verdict.*Ask for the integration Worker evidence.*phase boundaries.*Worker to reproduce/];
+  const guidance = [/# Leader.*派卡.*原 Worker.*固定候选/s,
+    /# Auditor.*门禁包.*固定候选.*阶段边界.*交给 Worker/s];
   for (const [{ addr }, rule] of [[leader, guidance[0]], [auditor, guidance[1]]]) {
     const prompt = f.prompts.find(item => item.addr === addr).input;
     assert.ok(prompt.endsWith('\n\n## Startup request\nstart'));
@@ -448,7 +448,7 @@ test('an explicit window threshold waits for the native turn and in-flight card 
 });
 
 test('gate pack snapshots scoped evidence into one compact file and enqueues one pointer across restart', async t => {
-  const f = fixture(t);
+  const f = fixture(t, { auditVerdict: () => 'REJECT\n\nThe candidate loses its evidence.' });
   const commit = name => f.git('-c', 'user.name=Loom', '-c', 'user.email=loom@example.invalid', 'commit', '-qm', name);
   f.git('init', '-q');
   writeFileSync(join(f.project, 'fixture.mjs'), 'old\n');
@@ -500,9 +500,13 @@ test('gate pack snapshots scoped evidence into one compact file and enqueues one
   await assert.rejects(f.spawn(d, 'reviewer', 'RETIRED', auditor.addr, { wave: 'GATE' }), { code: 'invalid-arguments' });
   const auditMessages = f.read('inbox/state.json').messages.filter(message => message.target.addr === auditor.addr && !message.startup);
   assert.deepEqual(auditMessages.map(message => message.text), [`Read gate packet ${packet.path}`]);
+  assert.deepEqual(auditMessages[0].skillModules, ['gate-judgment']);
+  assert.equal(auditMessages[0].wireBody.split('[loom-skill:gate-judgment]').length, 2);
   assert.equal(f.prompts.filter(message => message.addr === auditor.addr && message.input.includes(packet.path)).length, 1);
   const related = f.read('inbox/state.json').messages.filter(message => message.replyTo === packet.deliveryId);
   assert.deepEqual(related.map(message => message.target.addr), [leader.addr]);
+  assert.deepEqual(related[0].skillModules, ['reject-routing']);
+  assert.match(related[0].wireBody, /Read \.project\/replies\/.*\[loom-skill:reject-routing\]/s);
   const budget = await d.handle('notifications', { gateComplete: 'GATE', history: true }, leader.addr);
   assert.equal(budget.notifications.find(event => event.type === 'auditor-budget-exceeded').usage.wakes, 2);
   assert.ok(budget.notifications.some(event => event.gate === 'GATE' && event.type === 'gate-completed'));
@@ -1084,6 +1088,7 @@ test('a sealed wave whose BLOCKED members and final result arrive within the win
   const received = f.read('inbox/state.json').messages.filter(message => message.waveBatch);
   assert.equal(received.length, 1);
   assert.match(received[0].text, /BLOCKED B1.*BLOCKED B2.*DONE FAST/s);
+  assert.deepEqual(received[0].skillModules, ['needs-decision']);
   assert.equal(f.prompts.filter(row => row.addr === leader && row.input.includes('波次 W')).length, 1);
 });
 
@@ -1350,7 +1355,8 @@ for (const cli of ['claude', 'agy', 'codex', 'opencode']) test(`a long ${cli} TU
   f.prompts.push({ addr: next.addr, input: text });
   const { brief } = handoverBrief(f, next.addr);
   assert.ok(brief.includes(prompt));
-  assert.match(brief, /Loom role guidance.*Decide the gate verdict/s);
+  assert.match(brief, /Loom role guidance.*# Auditor.*门禁包/s);
+  assert.match(text, /\[loom-skill:successor\].*exact ACK/s);
   assert.ok(brief.includes(old.addr));
 });
 
@@ -1393,7 +1399,7 @@ for (const [role, cli] of [['leader', 'agy'], ['auditor', 'claude']]) test(`${ro
   f.sessions.get(old.addr).finish('Startup finished.');
   await d.tick();
   let wire = f.prompts.find(item => deliveryId(item.input) === existing.id);
-  assert.match(wire.input, /换班提示.*rotate --self/s);
+  assert.match(wire.input, /换班提示.*\[loom-skill:rotation\].*rotate --self/s);
   await assert.rejects(d.handle('rotate', { self: true, model: 'override' }, old.addr), { code: 'invalid-arguments' });
   const { rotation: { notePath } } = await d.handle('rotate', { self: true, prepare: true }, old.addr);
   const note = 'Keep the accepted gate. Review only the next candidate.';
@@ -1546,13 +1552,15 @@ for (const [role, startsWork] of [['auditor', true], ['auditor', false], ['leade
   assert.match(brief, /## Do now\n- Register completion for phase `goal5`\.[\s\S]*## Background\nAccepted evidence/);
   assert.equal(brief.match(/^## Do now$/gm).length, 1);
   const startup = f.prompts.find(item => item.addr === next).input;
-  assert.match(startup, /When Loom sends 接管生效, start the Do now items/);
+  assert.match(startup, /\[loom-skill:successor\].*接管生效/s);
   assert.equal(f.read('inbox/state.json').messages.some(message => message.target.addr === next && message.rotationActivation), false);
   f.sessions.get(next).finish(ack);
   await d.tick();
   await d.tick();
   const activation = f.read('inbox/state.json').messages.find(message => message.target.addr === next && message.rotationActivation);
   assert.match(activation.text, /接管生效[\s\S]*goal5/);
+  assert.deepEqual(activation.skillModules, ['rotation-activation']);
+  assert.match(activation.wireBody, /\[loom-skill:rotation-activation\].*Do now/s);
   assert.ok(f.prompts.some(item => deliveryId(item.input) === activation.id));
   if (f.sessions.get(next).session.status().value.kind === 'running') f.sessions.get(next).finish('Ready to continue.');
   if (startsWork) await d.handle('notifications', { complete: 'Goal 5 checked.', phase: 'goal5' }, next);
@@ -1615,6 +1623,7 @@ test('external Super sends to the live role and receives project notification re
 
 test('integration is a headless worker profile and Loom records the suite in the evidence card', async t => {
   const f = fixture(t);
+  f.policy({ delivery: { coalesceMs: 0 } });
   const d = f.daemon();
   t.after(d.shutdown);
   const { session: leader } = await f.spawn(d, 'leader', 'L');
@@ -1626,12 +1635,17 @@ test('integration is a headless worker profile and Loom records the suite in the
   assert.equal(workerProfile, 'integration');
   assert.equal(f.read(`loomd/sessions/${worker.addr}.json`).integration, true);
   await d.tick();
-  assert.match(f.prompts.find(item => item.addr === worker.addr).input, /Integration profile.*\$TMPDIR.*evidence card/s);
+  assert.match(f.prompts.find(item => item.addr === worker.addr).input, /\[loom-skill:worker-integration\].*TMPDIR.*制品记录/s);
+  f.sessions.get(leader.addr).finish('Ready for integration evidence.');
   f.sessions.get(worker.addr).check('npm test', 10, 0);
   f.sessions.get(worker.addr).finish('DONE INTEGRATE\nnpm test exited 0');
   await d.tick();
   const checks = readArtifacts(f.project).cards(worker.addr).flatMap(card => card.data.verification.commands);
   assert.ok(checks.some(check => check.command === 'npm test' && check.result === 'passed'));
+  await d.tick();
+  const result = f.read('inbox/state.json').messages.find(message => message.resultWorkers?.includes(worker.addr));
+  assert.deepEqual(result?.skillModules, ['gate-pack']);
+  assert.match(result.wireBody, /\[loom-skill:gate-pack\].*--candidate/s);
 });
 
 test('named worker tiers preserve the existing launch profiles across providers', async t => {

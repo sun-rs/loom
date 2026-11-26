@@ -4,6 +4,13 @@ import { estimateTokens } from '../../lib/token-budget.mjs';
 import { scenarios } from './scenarios.mjs';
 
 const operations = ['read', 'write', 'loom', 'work', 'ask', 'poll', 'wait'];
+const referenceAliases = {
+  'references/policy.md': '../../examples/policy.json',
+  'references/charter.md': '../../examples/charter.md',
+  'references/rulings.md': '../../examples/rulings.md',
+  'references/card.md': '../../examples/card.md',
+  'references/runtime.md': 'docs/HEADLESS.md',
+};
 export const tool = {
   name: 'operate',
   description: 'Act in the Loom fixture. Input is a virtual path, command, or question. Use content for writes. The tool does not access a real shell, filesystem, daemon, or user.',
@@ -18,13 +25,16 @@ export const tool = {
 
 function normalize(input) {
   return input.replace(/["']/g, '').replace(/\s+/g, ' ').trim()
+    .replace(/^LOOM_EXTERNAL_SUPER=1 (?=loom\b|\/eval\/bin\/loom\b|\$)/, '')
     .replace(/^\$(?:LOOM_BIN\b|\{LOOM_BIN\})/, '/eval/bin/loom')
     .replace(/\$(?:PROJECT\b|\{PROJECT\})/g, '/eval/project');
 }
 
 function normalizePath(input) {
-  return input.replace(/^\/eval\/project\//, '').replace(/^\.\//, '')
+  const path = input.replace(/^\$\{?LOOM_SKILL_ROOT\}?\//, '').replace(/^\/eval\/project\//, '').replace(/^\.\//, '')
+    .replace(/^skills\/loom\//, '')
     .replace(/^(?:\.\.\/){0,2}examples\//, '../../examples/');
+  return referenceAliases[path] ?? path;
 }
 
 export function matches(value, expected) {
@@ -107,6 +117,9 @@ export function createFixture(scenario, extraFiles = {}) {
     trace.push(action);
     if (op === 'read' && state.has(value)) return state.get(value);
     if (op === 'read' && Object.hasOwn(extraFiles, value)) return extraFiles[value];
+    if (op === 'loom' && scenario.role === 'worker' && value === '/eval/bin/loom worker-check') {
+      return 'Checkpoint verified. Branch: fixture. Base SHA: 1234567890abcdef1234567890abcdef12345678. WIP: +0/-0, 0 untracked. Rulings: follow this card.';
+    }
     if (op === 'write') {
       if (!content) return 'No file content provided';
       if (/^(?:\/|protected\/)/.test(value) || value.split('/').includes('..')) return 'SANDBOX: operation not permitted';

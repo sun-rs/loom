@@ -2,6 +2,7 @@ import { spawnSync } from 'node:child_process';
 import { realpathSync, statSync } from 'node:fs';
 import { basename, extname, isAbsolute, relative, resolve, sep } from 'node:path';
 import { exclusions, isCredentialPath } from './git.mjs';
+import { skillRoot } from '../lib/role-skill.mjs';
 
 const sha = /(?<![\w-])(?:[0-9a-f]{40}|[0-9a-f]{64}|[0-9a-f]{7,39})(?![\w-])/gi;
 const opaqueReference = /\[loom:[^\]\r\n]+\]|\b[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}\b/gi;
@@ -55,6 +56,9 @@ function pathFacts(roots, gitRoot, snapshot, boundary) {
     return Boolean(prefix && (roots.some(root => pathStat(resolve(root, prefix), boundary)?.isDirectory()) || atEnd(prefix)));
   }
   function found(token) {
+    // Bare reference paths in Loom's role cores are rooted in the serving skill.
+    if (!boundary && /^references\/[a-z][a-z-]*\.md$/.test(token) &&
+        pathStat(resolve(skillRoot, token), skillRoot)?.isFile()) return true;
     const paths = isAbsolute(token) ? [resolve(token)] : roots.map(root => resolve(root, token))
       .filter(path => roots.some(root => inside(root, path)));
     if (paths.some(path => pathStat(path, boundary))) return true;

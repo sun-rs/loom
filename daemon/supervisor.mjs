@@ -7,7 +7,7 @@ import { accountService } from './account-service.mjs';
 import { projectIndex } from '../cli/project.mjs';
 import { reportedContext } from '../cli/state.mjs';
 import { defaultStallMs, inbox, pendingWork, receipt, stalledDeliveries, stallText, suppressedReplies, suppressedReplyText } from '../inbox/engine.mjs';
-import { conclusoryReply, deliveryFailed, isBlockedReply, messageIdPattern } from '../inbox/message.mjs';
+import { conclusoryReply, deliveryFailed, isBlockedReply, messageIdPattern, replyConclusion } from '../inbox/message.mjs';
 import { relay } from '../relay/project.mjs';
 import { withClaudeTranscriptStops } from '../relay/sources.mjs';
 import { createWatcher } from '../watch/index.mjs';
@@ -40,6 +40,7 @@ import { approvedWaves, handoffReason, idleForRelease, isReleased, releaseCondit
   reuseStatus, workerCardId, workerContext, workerDetails, workerIdleSince, workerMetrics, workerStalledSince } from './worker-retention.mjs';
 import { hostGrantSpec, storedWorkerTier } from '../lib/worker-tiers.mjs';
 import { hostGrants, hostTrustWarning, hostWritePaths } from './host-grants.mjs';
+import { skillModules } from '../lib/role-skill.mjs';
 
 function batchDeliveryId(batch, dest) {
   const bytes = createHash('sha256').update(`${batch}\0${dest}`).digest('hex').slice(0, 32);
@@ -273,10 +274,10 @@ ${details}`, {
       if (other) {
         const proof = replyForDelivery(project, done.body, 0);
         saved(sessions.targetBinding(other), [
-          `请核对 ${row.role} ${row.addr} 的首报，核对 HEAD、分支、基线、WIP 和裁决编号。`,
+          `请核对 ${row.role} ${row.addr} 的首报。`,
           proof,
-          `用 "$LOOM_BIN" rotation-policy verify --target ${row.addr} --verdict pass|fail --detail TEXT --evidence FILE[:LINE] 登记原件和结论。`,
-        ].join('\n'), { id: batchDeliveryId(message.id, 'v2-verification'), rotationVerification: true });
+        ].join('\n'), { id: batchDeliveryId(message.id, 'v2-verification'), rotationVerification: true,
+          rotationVerifier: true });
       }
       return;
     }
@@ -1166,7 +1167,34 @@ ${details}`, {
         const replySuppressionNotices = senderSuppressions.filter(notice => visibleIds.has(notice.id)).map(notice => notice.id);
         const shownRotationNotices = rotationNotices.filter(notice => visibleIds.has(notice.id))
           .flatMap(notice => [notice.id, ...notice.aliases ?? []]);
+        const moduleNames = rotationNotices.filter(notice => visibleIds.has(notice.id)).map(notice => notice.skillModule);
+        let gateRejection;
+        if (message.rotationActivation) moduleNames.push('rotation-activation');
+        if (message.rotationVerifier) moduleNames.push('rotation-verify');
+        if (row?.role === 'auditor' && message.gatePacket) moduleNames.push('gate-judgment');
+        if (row?.role === 'leader') {
+          const related = [message, ...peers];
+          const outcomes = related.map(item => byId.get(item.replyTo)).filter(item => item?.gatePacket);
+          const verdicts = outcomes.map(item => replyConclusion(item.completion?.body).tag);
+          const rejected = tag => tag === 'REJECT' || tag === 'REJECTED';
+          gateRejection = rejected(replyConclusion(byId.get(message.replyTo)?.completion?.body).tag) &&
+            Boolean(byId.get(message.replyTo)?.gatePacket);
+          if (verdicts.some(rejected)) moduleNames.push('reject-routing');
+          const resultAddrs = related.flatMap(item => [
+            ...item.resultWorkers ?? [], ...(item.continuationMembers ?? []).map(id => byId.get(id)?.target.addr),
+          ]);
+          if (related.some(item => item.waveKind === 'blocked') || resultAddrs.some(addr =>
+            isBlockedReply(deliveries(addr).findLast(item => item.completion?.body)?.completion.body))) {
+            moduleNames.push('needs-decision');
+          }
+          if (verdicts.some(tag => ['PASS', 'PASSED', 'APPROVE', 'APPROVED'].includes(tag)) ||
+              resultAddrs.some(addr => sessions.jobs.get(addr)?.integration)) moduleNames.push('gate-pack');
+        }
+        const modules = skillModules(moduleNames);
+        if (modules.text) deliveryAppendix = [deliveryAppendix, modules.text].filter(Boolean).join('\n\n');
         return { ...(deliveryAppendix && { deliveryAppendix }), ...(workerDigest && { resultContext: workerDigest }),
+          ...(modules.names.length && { skillModules: modules.names }),
+          ...(gateRejection && { gateRejection }),
           ...(replySuppressionNotices.length && { replySuppressionNotices }),
           ...(shownRotationNotices.length && { rotationNotices: shownRotationNotices }),
           ...(deferred.length && { auditorDigestIds: deferred.map(item => item.id) }),

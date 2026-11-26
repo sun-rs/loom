@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
-import { execFile } from 'node:child_process';
-import { mkdtemp, readFile, rm } from 'node:fs/promises';
+import { execFile, mkdtemp } from '../../fixtures/test-process.mjs';
+import { readFile, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createInterface } from 'node:readline';
 import { test } from 'node:test';
@@ -164,7 +165,7 @@ test('provider parsers identify real completion and separate cached input', () =
 });
 
 test('stdio MCP session records real fixture actions and returns ordered RED and GREEN receipts', async () => {
-  const root = await mkdtemp('/private/tmp/loom-fixture-test-');
+  const root = await mkdtemp(join(tmpdir(), 'loom-fixture-test-'));
   const log = join(root, 'trace.jsonl');
   const script = fileURLToPath(new URL('./simulator.mjs', import.meta.url));
   const child = execFile(process.execPath, [script, '--serve', 'W01-fix', log]);
