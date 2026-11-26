@@ -1,5 +1,5 @@
 import { parseArgs } from 'node:util';
-import { roles, rotatingRoles } from '../index/index.mjs';
+import { roles } from '../index/index.mjs';
 import { daemonAbsent, request } from '../daemon/rpc.mjs';
 import { control, daemonUsage, spawnHelp, spawnUsage, startDaemon } from './control.mjs';
 import { upgrade, upgradePendingExit, upgradeUsage } from './upgrade.mjs';
@@ -209,7 +209,8 @@ const errorExit = code => code === 'invalid-arguments' ? 2 : ['not-found', 'ambi
 export async function main(args) {
   const [command, ...rest] = args;
   if (!command || args.length === 1 && ['--help', '-h'].includes(command)) {
-    console.log([...Object.values(help).flat(), projectOption].join('\n'));
+    console.log([...Object.values(help).flat(), projectOption,
+      'External Super uses LOOM_EXTERNAL_SUPER=1 from a local operator shell.'].join('\n'));
     return 0;
   }
   try {
@@ -367,15 +368,13 @@ export async function main(args) {
         projectSessions(directory, values.project !== undefined || Boolean(process.env.LOOM_PROJECT)), target, callerAddress());
       let session;
       if (managedProject(directory)) {
-        const liveRole = rotatingRoles.includes(target);
-        if (!liveRole) session = resolveSession();
         try {
-          result = await request(directory, command, { target: session?.addr ?? target });
-          if (liveRole && command === 'state') session = projectIndex(directory).query({ addr: result.addr })[0];
+          result = await request(directory, command, { target });
+          if (command === 'state') session = projectIndex(directory).query({ addr: result.addr })[0];
         } catch (error) {
           if (!daemonAbsent(error)) throw error;
           if (command === 'stop') throw new CommandError('not-ready', 'loomd is not running for this project');
-          session ??= resolveSession();
+          session = resolveSession();
           result = { ok: true, addr: session.addr, state: session.endedAt === null ? 'offline' : 'exited',
             deliveries: [], ...readPendingWork(directory, session.addr) };
         }

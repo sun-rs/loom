@@ -10,7 +10,7 @@ import { daemonAbsent, request } from '../daemon/rpc.mjs';
 import { managedProject, projectDirectory, projectReceipt } from './project.mjs';
 
 export const sendUsage = 'loom send <target> [--mode queue|interrupt] [--from ADDR] [--project DIR] [--expect-reply|--wait] "<message>"';
-export const sendHelp = '--from defaults to LOOM_ADDR. External Super can use --from super with project notifications for receipts and requested replies. --wait is for callers outside managed sessions.';
+export const sendHelp = 'Managed sends use the authenticated session as sender. External Super sets LOOM_EXTERNAL_SUPER=1 and may use --from super for project notification receipts. --wait is for callers outside managed sessions.';
 export const sendAdvancedHelp = 'Advanced options: --next-card (Leader reuses the same Worker’s worktree for an adjacent small card), --reason TEXT (worker dispatch), --mode steer, --id UUID (idempotent request), --batch UUID --batch-size N (explicit Leader-to-worker continuation group).';
 const legacy = fileURLToPath(new URL('../inbox/cli.mjs', import.meta.url));
 
@@ -46,7 +46,7 @@ export async function send(args) {
   }
   const { values, positionals: [target, text] } = parsed;
   const { mode, id, batch, reason, 'batch-size': size, 'expect-reply': expectReply, wait } = values;
-  const from = values.from ?? (process.env.LOOM_ADDR || undefined);
+  const from = values.from;
   const invalid = message => { throw Object.assign(new Error(message), { code: 'invalid-arguments' }); };
   if (wait && process.env.LOOM_ADDR) {
     invalid('--wait is unavailable in a managed session. Use --expect-reply to request an inbox reply.');

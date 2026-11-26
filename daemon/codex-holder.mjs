@@ -24,7 +24,7 @@ const sameBirth = (identity, live) => live && live.pid === identity?.pid &&
 const unknown = () => Object.assign(new Error('Codex holder liveness is unknown; preserving the existing holder binding'),
   { code: 'liveness-unknown' });
 
-async function launch(project, row, job, dir, socket) {
+async function launch(project, row, job, dir, socket, capabilities) {
   const { incarnation, holderRelease } = job.host;
   const asset = holderAsset(holderRelease.root);
   if (asset.digest !== holderRelease.digest) throw holderError('HOLDER_BUILD');
@@ -32,6 +32,7 @@ async function launch(project, row, job, dir, socket) {
   const isolated = workerEnvironment(row);
   const env = { ...process.env, ...managed, ...isolated, ...workerProviderEnvironment(row), ...seniorToolEnvironment(project, row) };
   delete env.HC_TERMINAL_ID;
+  if (capabilities) env.LOOM_CAPABILITY = capabilities.ensureSession(row.addr).token;
   const command = await absoluteCommand(process.env.LOOM_CODEX_BIN ?? process.env.OAR_CODEX_BIN ?? 'codex', 'codex');
   const args = ['app-server', ...codexConfiguration(project, { ...row, fast: job.fast }, managed, isolated), '--listen', 'stdio://'];
   const fd = openSync(join(dir, 'holder.log'),
@@ -45,7 +46,7 @@ async function launch(project, row, job, dir, socket) {
   } finally { closeSync(fd); }
 }
 
-export async function attachCodexHolder(project, row, job, saveJob, controller, { stop = false } = {}) {
+export async function attachCodexHolder(project, row, job, saveJob, controller, { stop = false, capabilities } = {}) {
   const save = () => saveJob(job);
   if (!job.host) {
     if (stop) return { endedAt: Date.now() };
@@ -66,7 +67,7 @@ export async function attachCodexHolder(project, row, job, saveJob, controller, 
   let snapshot = await hello();
   if (!snapshot && !binding.identity && !lstatSync(socket, { throwIfNoEntry: false })) {
     if (stop) return { endedAt: Date.now() };
-    const candidate = await launch(project, row, job, dir, socket);
+    const candidate = await launch(project, row, job, dir, socket, capabilities);
     const limit = performance.now() + 8000;
     do {
       if (candidate.exitCode != null || candidate.signalCode) throw holderError('HOLDER_START', 'Codex holder exited during launch');

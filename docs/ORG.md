@@ -43,7 +43,7 @@
 
 ## 高级角色换班 v2
 
-在项目策略设置 `rotation.mode: "v2"`。建议先有在位的 Leader、Auditor 和 Super。独立发布版通过 Unix socket 对端进程识别已托管角色，外部 Super 用 `loom super --terminal ADDR` 登记其终端。项目必须支持 Loom 的同用户对端验证助手。托管角色继续使用 `"$LOOM_BIN"`。
+在项目策略设置 `rotation.mode: "v2"`。建议先有在位的 Leader、Auditor 和 Super。Unix socket 使用 SOCK-AUTH-1 的角色凭证，既有会话用内核对端验证。外部 Super 使用 `LOOM_EXTERNAL_SUPER=1`。托管角色继续使用 `"$LOOM_BIN"`。
 
 - loomd 在卡片已结算且角色空闲时评估路径或 Git 根变更、显式阶段或目标、Super 登记的授权变化、工作切换密度和已核实的重复事实错误。普通门禁只更新门禁边界。轮数、运行时间、等待时长与剩余百分比保留用于观测。Super 本身不进入自动换班流程。
 - 默认比较过去 24 小时的去重卡片数 >10、子系统数 >4、原生压缩次数 ≥5，任一达到阈值即产生密度候选。单主线且只有一个子系统时，卡片阈值放宽为 >20。可用 `rotation.densityRequiresCompaction: true` 要求切换和压缩都达到阈值。路径优先匹配最长 `rotation.subsystemPrefixes`，再按顶层目录分组。文档、卡片说明、运行元数据和账本目录不计子系统。统计使用派卡记录、交付的提交差异和原生压缩事件，缺少原生用量时保留缺测。

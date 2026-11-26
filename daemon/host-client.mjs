@@ -19,7 +19,7 @@ async function connect(path, incarnation) {
   catch (error) { if (!hostAbsent(error)) throw error; }
 }
 
-export async function attachHost(project, row, job, save, controller, { stop = false } = {}) {
+export async function attachHost(project, row, job, save, controller, { stop = false, capabilities } = {}) {
   const addr = row.addr;
   const journal = eventPath(project, addr);
   let resume = row.sessionId;
@@ -98,6 +98,7 @@ export async function attachHost(project, row, job, save, controller, { stop = f
         save(job);
       }
     }
+    if (capabilities) env = { ...(env ?? process.env), LOOM_CAPABILITY: capabilities.ensureSession(addr).token };
     const log = openSync(join(dir, 'host.log'), constants.O_WRONLY | constants.O_CREAT | constants.O_APPEND | constants.O_NOFOLLOW, 0o600);
     try {
       const child = spawn(process.execPath, [join(root, 'daemon', 'session-host.mjs'), project, addr, incarnation, release], {
