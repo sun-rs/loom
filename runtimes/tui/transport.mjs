@@ -14,6 +14,7 @@ import { requestControl } from '../../tui/pty-control.mjs';
 import { providers } from '../../tui/providers.mjs';
 import { startPane } from './hc.mjs';
 import { claudeApiEnvKeys } from '../../adapters/claude/launch.mjs';
+import { codexDeveloperArgs, memoryLaunch } from '../../memory/launch-config.mjs';
 
 export async function absoluteCommand(command, provider = basename(command)) {
   const variable = `LOOM_${provider.toUpperCase()}_BIN`;
@@ -48,7 +49,7 @@ export function wrapperFailedStart(binding) {
 export async function openNativeTui({
   cli, cwd, command, hcCommand = 'hc', env = {}, unset = [], name, authMode,
   stateDir, hookSink, recordBinding = () => {}, previous, recordTemporary = () => {}, boundTranscript = true,
-  controllerPath, placementLabels, ...options
+  controllerPath, placementLabels, memory, ...options
 }) {
   const provider = Object.hasOwn(providers, cli) && providers[cli];
   if (!provider) throw new RangeError(`Unsupported TUI: ${cli}`);
@@ -61,6 +62,16 @@ export async function openNativeTui({
   await mkdir(dirname(hookSink), { recursive: true, mode: 0o700 });
   prepareJournal(hookSink);
   const { argv, env: launchEnv, sessionId, promptSink } = await provider.start({ ...options, cwd, hookSink, boundTranscript });
+  if (memory) {
+    const settings = cli === 'claude' ? argv.indexOf('--settings') : -1;
+    const config = memoryLaunch(cli, { ...memory, openCodeNative: true, openCodeConfig: launchEnv.OPENCODE_CONFIG_CONTENT,
+      claudeSettings: settings < 0 ? undefined : JSON.parse(argv[settings + 1]) });
+    if (settings >= 0) argv[settings + 1] = JSON.stringify(config.claudeSettings);
+    const separator = argv.indexOf('--');
+    argv.splice(cli === 'codex' ? 1 : separator < 0 ? argv.length : separator, 0, ...config.argv,
+      ...(cli === 'codex' ? codexDeveloperArgs(memory.indexText) : []));
+    Object.assign(launchEnv, config.env);
+  }
   argv[0] = executable;
   if (cli === 'claude') {
     if (authMode !== 'api-key') unset = [...new Set([...unset, ...claudeApiEnvKeys])];

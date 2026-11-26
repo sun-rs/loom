@@ -25,8 +25,9 @@ if (process.argv[1] && resolve(process.argv[1]) === script) {
   const [sink] = process.argv.slice(2);
   const payload = JSON.parse(readFileSync(0, 'utf8'));
   if (payload.hook_event_name === 'SessionStart' && !payload.agent_id && !payload.isSidechain &&
-      payload.source !== 'compact' && typeof payload.session_id === 'string' && payload.session_id) {
+      typeof payload.session_id === 'string' && payload.session_id) {
     const row = { receivedAt: Date.now(), cwd: payload.cwd, hook_event_name: 'SessionStart', session_id: payload.session_id,
+      ...(typeof payload.source === 'string' && { source: payload.source }),
       ...(typeof payload.transcript_path === 'string' && { transcript_path: payload.transcript_path }) };
     appendFileSync(sink, JSON.stringify(row) + '\n', { flush: true, mode: 0o600,
       flag: constants.O_WRONLY | constants.O_APPEND | constants.O_CREAT | constants.O_NOFOLLOW | constants.O_NONBLOCK });

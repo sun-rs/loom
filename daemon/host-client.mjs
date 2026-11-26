@@ -12,7 +12,7 @@ import { claudeAuthMode } from '../cli/policy.mjs';
 
 const lastExit = path => jsonRows(readText(path)).findLast(event => ['stream-opened', 'exited', 'released'].includes(event.type));
 
-export async function attachHost(project, row, job, save, controller, { stop = false } = {}) {
+export async function attachHost(project, row, job, save, controller, { stop = false, memory } = {}) {
   const addr = row.addr;
   const journal = eventPath(project, addr);
   let resume = row.sessionId;
@@ -57,6 +57,7 @@ export async function attachHost(project, row, job, save, controller, { stop = f
     const dir = hostDirectory(project, addr, job.host.incarnation);
     mkdirSync(dir, { recursive: true, mode: 0o700 });
     writeState(join(dir, 'launch.json'), JSON.stringify({ row: { ...row, sessionId: resume,
+      ...(memory && { memory }),
       ...(job.integration && { integration: true }),
       ...(job.fast !== undefined && { fast: job.fast }),
       ...(job.authMode && { authMode: job.authMode }) } }));

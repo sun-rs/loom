@@ -42,7 +42,7 @@ export function hookRunner(project, cli) {
   return path;
 }
 
-export async function openTui(job, row, project, recordTemporary, recordBinding, controller) {
+export async function openTui(job, row, project, recordTemporary, recordBinding, controller, memory = {}) {
   const hookSink = eventPath(project, row.addr);
   const runner = row.cli !== 'opencode' && hookRunner(project, row.cli);
   const env = { ...managedEnvironment(project, row.addr),
@@ -52,15 +52,15 @@ export async function openTui(job, row, project, recordTemporary, recordBinding,
   const name = job.herdr?.hcName ?? paneName(row.addr);
   const guardUnset = env.LOOM_SENIOR_TOOL_LOG ? [] : ['LOOM_SENIOR_TOOL_LOG', 'LOOM_SENIOR_TOOL_PROJECT'];
   const host = await openNativeTui({
-    ...row, fast: job.fast, hookSink, ...(runner && { hookRunner: runner }), name, env,
+    ...row, fast: job.fast, memory, hookSink, ...(runner && { hookRunner: runner }), name, env,
     ...(job.herdr && { hcCommand: job.herdr.hcCommand, placementLabels: job.herdr.labels }),
     sessionId: job.plannedNativeId, recordTemporary, recordBinding, previous: job.tui, unset: guardUnset,
     allowNativeQuestions: allowNativeQuestions(project, row.role), toolGuard: Boolean(env.LOOM_SENIOR_TOOL_LOG),
     autoTrustWorkspace: job.autoTrustWorkspace, ...(controller && { controllerPath: controllerFile(project) }),
     stateDir: join(project, '.project', 'pty'),
     ...(row.cli === 'claude' && { command: nativeClaude(), env: { ...env, DISABLE_AUTOUPDATER: '1' },
-      authMode: job.authMode, idleCompaction: claudeIdleCompaction(project, row.role), unset: [...guardUnset, 'CLAUDE_CODE_ENTRYPOINT', 'CLAUDECODE'] }),
-    ...(row.cli === 'codex' && { extraArgs: ['--disable', 'memories', ...codexEnvironmentArgs(env), ...codexFastArgs(job.fast)] }),
+      authMode: job.authMode, idleCompaction: claudeIdleCompaction(project, row.role), unset: [...guardUnset, 'CLAUDECODE'] }),
+    ...(row.cli === 'codex' && { extraArgs: [...codexEnvironmentArgs(env), ...codexFastArgs(job.fast)] }),
   });
   try { return { terminal: await host.status(), nativeId: host.sessionId }; }
   catch (error) { await host.close(); throw error; }

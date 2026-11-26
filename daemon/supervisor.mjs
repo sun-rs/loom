@@ -28,6 +28,8 @@ import { deliveryBoard, gateBoard } from './status-board.mjs';
 import { activeRelease, managedCliPath, releaseId, releaseRoot } from './release.mjs';
 import { rotatingRoles } from '../index/index.mjs';
 import { createProjectMemory } from './memory.mjs';
+import { createMemoryInjection, sessionMemoryBinding } from './memory-injection.mjs';
+import { codexMemoryArgs, memoryIsolationCoverage } from '../memory/launch-config.mjs';
 
 function batchDeliveryId(batch, dest) {
   const bytes = createHash('sha256').update(`${batch}\0${dest}`).digest('hex').slice(0, 32);
@@ -44,7 +46,7 @@ const terminalText = text => text.replace(/[\x00-\x08\x0b-\x1f\x7f-\x9f]/g, '');
 
 function codexHandoff(row) {
   if (row.cli !== 'codex' || !row.sessionId) return;
-  return { cwd: row.cwd, argv: ['codex', '--no-daemon', '--disable', 'memories', '-c',
+  return { cwd: row.cwd, argv: ['codex', '--no-daemon', ...codexMemoryArgs(), '-c',
     'check_for_update_on_startup=false', '-c', `projects.${JSON.stringify(row.cwd)}.trust_level="trusted"`, 'resume', row.sessionId] };
 }
 
@@ -58,8 +60,10 @@ export function createSupervisor(project, {
   }
   const index = projectIndex(project);
   index.initialize();
-  const sessions = ownedSessions(project, index, report, sessionOptions);
+  let injection;
+  const sessions = ownedSessions(project, index, report, { ...sessionOptions, memoryInjection: () => injection });
   const memory = createProjectMemory(project, { sessions, now, options: memoryOptions, report });
+  injection = createMemoryInjection(project, sessionOptions?.memoryStore?.access ?? memory.access);
   const policyForTick = () => {
     try { return readPolicy(project, { optional: true }); }
     catch { return {}; }
@@ -713,7 +717,7 @@ ${details}`, {
       canDispatchMessage: message => !sessions.holdsForHandover(message),
       stallMs: policy.delivery?.stallMs ?? uncertainWindow ?? defaultStallMs,
       coalesceMs: policy.delivery?.coalesceMs ?? defaultCoalesceMs,
-      decorate(message) {
+      async decorate(message) {
         const row = sessions.rowFor(message.target.addr);
         const byId = new Map(mail.messages.map(item => [item.id, item]));
         const senderStalls = stalledDeliveries(mail.messages, now()).filter(delivery => {
@@ -754,7 +758,14 @@ ${details}`, {
         const digest = deferred.length && replyForDelivery(project, deferred.map(item =>
           `[${item.id}] ${item.from.addr}\n${item.text}`).join('\n\n'), policy.delivery?.replyBytes);
         if (digest) deliveryAppendix = [deliveryAppendix, `Loom Auditor next-wake digest\n${digest}`].filter(Boolean).join('\n\n');
+        const job = sessions.jobs.get(row?.addr);
+        const { text: memoryText, ...memoryReceipt } = job ?
+          await injection.decorate(job, sessionMemoryBinding(row, job), message, mail.messages,
+            row.cli === 'claude' ? [] : sessions.events(row.addr)) : {};
+        if (memoryText) deliveryAppendix = [deliveryAppendix, memoryText].filter(Boolean).join('\n\n');
         return { ...(deliveryAppendix && { deliveryAppendix }), ...(replySuppressionNotices.length && { replySuppressionNotices }),
+          ...memoryReceipt,
+          ...(memoryText && { memoryRecipient: row.addr }),
           ...(deferred.length && { auditorDigestIds: deferred.map(item => item.id) }),
           ...(batch.length && {
             orgEvents: batch.map(notice => notice.id), orgAppendix: 'Loom drift and fact checks\n' + summary,
@@ -769,6 +780,12 @@ ${details}`, {
       },
     });
     await memory.tick(mail.messages);
+    for (const row of sessions.rows()) {
+      const job = sessions.jobs.get(row.addr);
+      if (job && row.endedAt === null && row.cli === 'claude') {
+        await injection.refreshCompactIndex(job, sessionMemoryBinding(row, job));
+      }
+    }
     await closeReviews();
     const current = sessions.rows();
     for (const [name, rows] of Map.groupBy(current, row => row.project)) {
@@ -1004,6 +1021,7 @@ ${details}`, {
           const liveness = observed?.health;
           const pathWarnings = sessions.pathWarnings(row);
           return { addr: row.addr, state: userPrompt?.kind ?? liveness?.status ?? reportedState(snapshot, incident),
+            ...(sessions.jobs.has(row.addr) && { memoryIsolation: memoryIsolationCoverage(row.cli) }),
             lastProgressAt: observed?.lastProgressAt ?? row.startedAt, ...(liveness && { liveness }),
             ...(pathWarnings.length && { pathWarnings }),
             ...(userPrompt && { userPrompt }), ...(snapshot?.hookGap && { hookGap: snapshot.hookGap }) };

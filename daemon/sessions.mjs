@@ -23,6 +23,7 @@ import { attachHost } from './host-client.mjs';
 import { attachCodexHolder, pipeTransport, useCodexHolder } from './codex-holder.mjs';
 import { managedCliPath, releaseId, releaseRoot, upgradeState } from './release.mjs';
 import { projectMemoryPrompt } from '../memory/project.mjs';
+import { sessionMemoryBinding } from './memory-injection.mjs';
 import { disposeSession } from './session-close.mjs';
 import { workerEnvironment } from './worker-environment.mjs';
 import { withClaudeTranscriptStops } from '../relay/sources.mjs';
@@ -92,7 +93,7 @@ function defaultTrustWorkspace(project, cwd) {
 }
 
 export function ownedSessions(project, index, report, {
-  open, openPane = openTui, getPane = ownedPane, callHc = hc, controller, layout,
+  open, openPane = openTui, getPane = ownedPane, callHc = hc, controller, layout, memoryInjection,
 } = {}) {
   const path = join(runtimeDirectory(project), 'sessions');
   mkdirSync(path, { recursive: true, mode: 0o700 });
@@ -106,6 +107,8 @@ export function ownedSessions(project, index, report, {
   const openCodeProofs = new Map();
   const rows = addr => index.query(addr ? { addr } : {});
   const rowFor = addr => addr ? rows(addr)[0] : undefined;
+  const validateMemory = message => memoryInjection?.()?.requireVisible(
+    sessionMemoryBinding(rowFor(message.target.addr), jobs.get(message.target.addr)), message);
   const file = addr => join(path, `${addr}.json`);
   for (const entry of readdirSync(path, { withFileTypes: true })) {
     if (!entry.isFile() || !/^(?:loom|oar)-[0-9a-f-]{36}\.json$/.test(entry.name)) continue;
@@ -249,6 +252,7 @@ export function ownedSessions(project, index, report, {
     },
     plan: (provider, mode) => local.plan(provider, mode),
     async send(message, observation) {
+      if (message.memoryAccess) await validateMemory(message);
       if (message.target.backend !== 'headless') {
         try { saveTuiInputHead(project, rowFor(message.target.addr), message); }
         catch (error) { report(error.message); }
@@ -260,6 +264,7 @@ export function ownedSessions(project, index, report, {
       return { streamId: runtime.streamId, requestId: result.requestId, seq: result.seq, deadlineAt: result.deadlineAt };
     },
     async retryMissingTurn(message, observation) {
+      if (message.memoryAccess) await validateMemory(message);
       return local.retryMissingTurn(message, observation);
     },
     async interrupt(message, _keys, observation) {
@@ -556,6 +561,7 @@ export function ownedSessions(project, index, report, {
       ...(deliver && { deliver, ...(input.barrier && { barrier: input.barrier }) }),
       ...(row.role === 'reviewer' && { reviewDeadline: row.startedAt + maxDurationMs }),
       ...(cli === 'opencode' && mode === 'tui' && { plannedNativeId: `ses_${randomUUID().replaceAll('-', '')}` }) };
+    await memoryInjection?.()?.prepare(job, input.prompt, sessionMemoryBinding(actor, jobs.get(actor?.addr)));
     save(job);
     jobs.set(addr, job);
     return job;
@@ -599,7 +605,8 @@ export function ownedSessions(project, index, report, {
       throw new ErrorCode('not-ready', 'Codex attachment retry budget exhausted');
     }
     try {
-      return await (pipe ? attachCodexHolder : attachHost)(project, row, job, save, controller, options);
+      const launch = options?.stop ? undefined : await memoryInjection?.()?.launch(job, sessionMemoryBinding(row, job));
+      return await (pipe ? attachCodexHolder : attachHost)(project, row, job, save, controller, { ...options, memory: launch });
     } catch (error) {
       if (pipe && !options?.stop) recordPipeRecovery(job);
       throw error;
@@ -607,7 +614,8 @@ export function ownedSessions(project, index, report, {
   }
 
   async function openFixture(row, job) {
-    const session = await open(job.fast === undefined ? row : { ...row, fast: job.fast }, project, row.sessionId);
+    const memory = await memoryInjection?.()?.launch(job, sessionMemoryBinding(row, job));
+    const session = await open({ ...row, fast: job.fast, memory }, project, row.sessionId);
     try {
       if (row.sessionId && session.id !== row.sessionId) throw new Error('OAR resumed a different native session');
       return trackOar(project, row, session, error => report(error.message));
@@ -659,13 +667,14 @@ export function ownedSessions(project, index, report, {
           job.authMode = claudeAuthMode(project, row.role);
           save(job);
         }
+        const launch = await memoryInjection?.()?.launch(job, sessionMemoryBinding(row, job));
         const opened = await openPane(job, row, project, temporary => {
           job.temporary = temporary;
           save(job);
         }, binding => {
           job.tui = binding;
           save(job);
-        }, controller);
+        }, controller, launch);
         terminal = opened.terminal;
         nativeId = opened.nativeId;
       }

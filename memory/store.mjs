@@ -31,7 +31,8 @@ function requestFingerprint({ requestId, ...content }) {
 }
 
 function draftFields(entry, externalSource) {
-  const fields = select(entry, ['kind', 'layer', 'project', 'proposedKind', 'title', 'body', 'keywords', 'importance', 'checkedAt']);
+  const fields = select(entry, ['kind', 'layer', 'project', 'proposedKind', 'title', 'body',
+    'keywords', 'paths', 'topics', 'importance', 'checkedAt']);
   const { source } = entry;
   return { ...fields, source: source && typeof source === 'object' && !Array.isArray(source)
     ? select(source, ['path', 'sha']) : source, externalSource };
@@ -39,9 +40,9 @@ function draftFields(entry, externalSource) {
 
 function sameFact(a, b) {
   const key = ({ kind, layer, project, owner, author, cardId, proposedKind, title, body,
-    keywords = [], importance = 0, source, externalSource = [] }) => JSON.stringify([
+    keywords = [], paths = [], topics = [], importance = 0, source, externalSource = [] }) => JSON.stringify([
     kind, layer, project, owner, kind === 'candidate' ? [author, cardId, proposedKind] : null,
-    title, body, keywords, importance, source?.path, source?.sha, externalSource,
+    title, body, keywords, paths, topics, importance, source?.path, source?.sha, externalSource,
   ]);
   return key(a) === key(b);
 }

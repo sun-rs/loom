@@ -14,6 +14,7 @@ import { nativeClaude } from './executables.mjs';
 import { captureOarTurnEnd, headAt } from './turn-heads.mjs';
 import { codexConfiguration } from './codex-launch.mjs';
 import { codexRefusal } from './codex-pipe-errors.mjs';
+import { claudeMemoryArgs, memoryLaunch } from '../memory/launch-config.mjs';
 import { claudeApiEnvKeys } from '../adapters/claude/launch.mjs';
 import { allowNativeQuestions, claudeAuthMode, claudeIdleCompaction } from '../cli/policy.mjs';
 import { managedEnvironment } from './release.mjs';
@@ -82,12 +83,14 @@ export async function openOar(row, project, resume) {
       for (const key of claudeApiEnvKeys) env[key] = null;
     }
     if (login) env.CLAUDE_CODE_TMPDIR = isolated.TMPDIR;
-    launchArgs = ['--setting-sources', '', '--strict-mcp-config', '--settings', JSON.stringify({
+    const { env: memoryEnv, claudeSettings } = memoryLaunch(row.cli, { ...row.memory, claudeSettings: {
       idleCompaction: claudeIdleCompaction(project, row.role), fastMode: row.fast,
       ...(guard.LOOM_SENIOR_TOOL_LOG && { hooks: { PreToolUse: [{ matcher: '*', hooks: [{
         type: 'command', command: process.execPath, args: [fileURLToPath(new URL('../runtimes/tui/capture-hook.mjs', import.meta.url))], timeout: 5,
       }] }] } }),
-    })];
+    } });
+    Object.assign(env, memoryEnv);
+    launchArgs = [...claudeMemoryArgs(), '--setting-sources', '', '--strict-mcp-config', '--settings', JSON.stringify(claudeSettings)];
   }
   const probe = login ? { ...env, ...isolated, CLAUDE_CONFIG_DIR: null, GEMINI_HOME: null, ANTIGRAVITY_APP_DATA_DIR: null } : env;
   if (login && row.cli === 'agy' && !process.env.OAR_ANTIGRAVITY_BIN) {
@@ -97,6 +100,10 @@ export async function openOar(row, project, resume) {
   try {
     let installation = await runtime.installation({ env: probe });
     if (installation.kind !== 'available') throw new Error(`${row.cli} unavailable: ${installation.reason ?? installation.kind}`);
+    if (row.cli === 'opencode') Object.assign(env, memoryLaunch(row.cli, {
+      ...row.memory, openCodeConfig: env.OPENCODE_CONFIG_CONTENT ?? process.env.OPENCODE_CONFIG_CONTENT,
+      openCodeNative: !/^(?:opencode\s+)?v?1\./u.test(installation.version ?? ''),
+    }).env);
     if (login) installation = { ...installation, command: sandboxNativeWorker(project, row, login, isolated, installation.command) };
     integration = await integrationPs(row, isolated, managed.PATH);
     if (integration) {
@@ -105,6 +112,7 @@ export async function openOar(row, project, resume) {
     }
     const { cwd, model, effort } = row;
     const session = await runtime.session(installation, { cwd, model, effort, env, launchArgs,
+      ...(['claude', 'codex'].includes(row.cli) && row.memory?.indexText && { appendSystemPrompt: row.memory.indexText }),
       ...(row.cli === 'claude' && !questions && { disallowedTools: ['AskUserQuestion'] }),
       ...(row.cli === 'codex' && { endTurnProcessesOnAbort: true }), ...(resume ? { resume } : {}) });
     if (agyWorkspace || integration) {

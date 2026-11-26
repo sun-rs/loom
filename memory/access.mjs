@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { matchesGlob } from 'node:path';
 import { sanitizeEntry } from './sanitize.mjs';
 
 const kindRank = { ruling: 0, preference: 1, lesson: 2 };
@@ -251,10 +252,14 @@ export function createAccess({ readState, commitState, serialize, entries = [], 
       return binding.role !== 'super' && isCrossProject(binding, item) ? grantExpiry(binding, item, grants) : null;
     },
 
-    async attachments(binding, { keywords = [], project } = {}) {
+    async attachments(binding, { keywords = [], topics = [], paths = [], project, attached = false } = {}) {
       const { visible, asOf } = await readIndex(binding, 'attachments', project);
-      const needles = new Set(keywords.map(keyword => keyword.trim().toLowerCase()).filter(Boolean));
-      return { rows: visible.filter(entry => entry.keywords?.some(keyword => needles.has(keyword.toLowerCase())))
+      const terms = new Set([...keywords, ...topics].map(term => term.trim().toLowerCase()).filter(Boolean));
+      const matches = entry => [...(entry.keywords ?? []), ...(entry.topics ?? [])]
+        .some(term => terms.has(term.toLowerCase())) || entry.paths?.some(pattern =>
+        paths.some(path => path === pattern || path.startsWith(pattern.replace(/\/$/u, '') + '/') ||
+          matchesGlob(path, pattern) || matchesGlob(path.replace(/\/$/u, '') + '/', pattern)));
+      return { rows: visible.filter(attached ? entry => binding.attachments?.includes(entry.id) : matches)
         .sort(compareEntries).map(entry => indexRow(binding, entry, asOf)) };
     },
 
@@ -272,7 +277,12 @@ export function createAccess({ readState, commitState, serialize, entries = [], 
         }) };
     },
 
-    async delta(binding, { cursor = 0 } = {}) {
+    async publicationCursor() {
+      const { changes } = await snapshot();
+      return changes.reduce((cursor, change) => Math.max(cursor, change.seq), 0);
+    },
+
+    async delta(binding, { cursor = 0, fits } = {}) {
       const state = await snapshot();
       const time = now();
       const currentById = new Map(state.entries.map(entry => [entry.id, entry]));
@@ -284,16 +294,25 @@ export function createAccess({ readState, commitState, serialize, entries = [], 
         if (entry) visible.push({ change, entry });
       }
       visible.sort((a, b) => a.change.seq - b.change.seq);
-      const batch = visible.slice(0, deltaLimit);
-      const rows = batch.map(({ change, entry }) => {
+      const batch = [];
+      const rows = [];
+      for (const publication of visible.slice(0, deltaLimit)) {
+        const { change, entry } = publication;
         const source = provenance(binding, entry, cutoff(state, time));
-        return {
+        const row = {
           seq: change.seq, id: change.id, revision: change.revision ?? entry.revision,
           operation: change.operation, line: indexLine(entry, source), ...source,
         };
-      });
+        const truncated = rows.length + 1 < visible.length;
+        if (fits && !fits({ rows: [...rows, row], truncated })) {
+          if (rows.length || !fits({ rows: [...rows, { ...row, line: '- ' + row.id }], truncated })) break;
+          row.line = '- ' + row.id;
+        }
+        rows.push(row);
+        batch.push(publication);
+      }
       const result = {
-        rows, baseCursor, endCursor: rows.at(-1)?.seq ?? baseCursor, truncated: visible.length > deltaLimit,
+        rows, baseCursor, endCursor: rows.at(-1)?.seq ?? baseCursor, truncated: visible.length > rows.length,
       };
       deltaScopes.set(result, batch.map(({ change, entry }) => {
         const { id, project, layer, status, kind, owner, author } = entry;
@@ -314,6 +333,19 @@ export function createAccess({ readState, commitState, serialize, entries = [], 
         const latest = changesBySeq.get(change.seq);
         return latest?.id === change.id && visibleChange(binding, change, currentById, time, state.grants, true)
           && visibleChange(binding, latest, currentById, time, state.grants, true);
+      });
+    },
+
+    async canRetryPublications(binding, rows) {
+      const state = await snapshot();
+      const time = now();
+      const currentById = new Map(state.entries.map(entry => [entry.id, entry]));
+      const changesBySeq = new Map(state.changes.map(change => [change.seq, change]));
+      return rows.every(({ seq, id, revision, operation }) => {
+        const change = changesBySeq.get(seq);
+        return change?.id === id && change.operation === operation &&
+          (change.revision ?? change.entry?.revision) === revision &&
+          Boolean(visibleChange(binding, change, currentById, time, state.grants, true));
       });
     },
 

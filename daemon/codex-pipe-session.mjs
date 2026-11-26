@@ -141,6 +141,9 @@ export function codexPipeSession(project, row, dir, incarnation, client, verify,
 
   function notification(method, p) {
     if (!state.threadId || p.threadId !== state.threadId) return;
+    if (method === 'item/completed' && p.item?.type === 'contextCompaction') {
+      add('compaction_ended', { outcome: { kind: 'completed' } });
+    }
     const turn = p.turn;
     if (method === 'turn/started') startTurn(turn?.id);
     if (method === 'turn/completed' && statuses.has(turn?.status) && turn.id === state.active?.turnId) {

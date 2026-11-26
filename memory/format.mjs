@@ -42,13 +42,16 @@ async function verifySource(source, evidence) {
 export function validateEntryFormat(entry, { estimateTokens = defaultEstimate, maxMetadataBytes = 4096 } = {}) {
   if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return failure('Invalid memory entry');
   const { title, body, ...metadata } = entry;
-  const { kind, layer, project, proposedKind, checkedAt, keywords, importance, externalSource,
+  const { kind, layer, project, proposedKind, checkedAt, keywords, paths, topics, importance, externalSource,
     original, supersedes, supersededBy } = metadata;
   if (!layers.includes(layer) || ![...factKinds, 'candidate'].includes(kind)
     || (kind === 'candidate') !== (layer === 'candidate')
     || (kind === 'candidate' ? !factKinds.includes(proposedKind) : proposedKind !== undefined)
     || (['user', 'cross_project'].includes(layer) ? project !== null : !oneLine(project))
     || !dateTime(checkedAt) || (keywords !== undefined && !listOf(keywords, oneLine))
+    || (topics !== undefined && !listOf(topics, oneLine))
+    || (paths !== undefined && !listOf(paths, path => oneLine(path) && !isAbsolute(path)
+      && !/[\\:]/u.test(path) && !path.split('/').includes('..')))
     || (importance !== undefined && (!Number.isFinite(importance) || importance < 0))
     || (original !== undefined && !oneLine(original))
     || (supersedes !== undefined && !listOf(supersedes, oneLine))

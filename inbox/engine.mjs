@@ -316,7 +316,7 @@ export function inbox(project, transport, report = console.error, { replyLimit, 
 
   async function send(message, observation, waves, urgent, decorate) {
     const pendingPhase = message.phase;
-    const { deliveryAppendix, ...extras } = message.payloadFrozen ? {} : decorate?.(message) ?? {};
+    const { deliveryAppendix, ...extras } = message.payloadFrozen ? {} : await decorate?.(message) ?? {};
     const waveSeparator = waves.length && message.target.provider === 'agy' && !message.combinedWaves ?
       '\n--- Loom result ---\n' : message.waveSeparator;
     const decorated = { ...message, ...extras, waveSeparator };
@@ -660,6 +660,10 @@ export function inbox(project, transport, report = console.error, { replyLimit, 
       message.originalTarget ??= message.target.addr;
       message.target = target;
       message.phase = 'queued';
+      if (message.memoryRecipient && message.memoryRecipient !== target.addr) {
+        for (const key of ['wireBody', 'payloadFrozen', 'payloadDigest', 'memoryRecipient',
+          'memoryAccess', 'memoryCursor', 'memoryCompaction']) delete message[key];
+      }
       for (const key of ['active', 'barrier', 'issue', 'refusedAt', 'waitingForWritable']) delete message[key];
       changed = true;
     }

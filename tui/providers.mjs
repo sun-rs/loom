@@ -112,7 +112,8 @@ export const providers = {
       return spec;
     },
     hook(row) {
-      if (row.hook_event_name === 'SessionStart') return activity('idle');
+      if (row.hook_event_name === 'SessionStart') return row.source === 'compact' ?
+        { compactionFinished: true } : activity('idle');
       if (row.hook_event_name === 'Interrupt') return activity('idle', { interrupted: true });
     },
     transcriptRow({ type, payload }) {

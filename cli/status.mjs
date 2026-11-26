@@ -127,6 +127,7 @@ export async function projectStatus(project) {
         ...(states.get(row.addr)?.userPrompt && { userPrompt: states.get(row.addr).userPrompt }),
         ...(states.get(row.addr)?.lastProgressAt != null && { lastProgressAt: states.get(row.addr).lastProgressAt }),
         ...(states.get(row.addr)?.pathWarnings && { pathWarnings: states.get(row.addr).pathWarnings }),
+        ...(states.get(row.addr)?.memoryIsolation && { memoryIsolation: states.get(row.addr).memoryIsolation }),
         ...(states.get(row.addr)?.hookGap && { hookGap: states.get(row.addr).hookGap }),
         ...(rotating.has(row.addr) && { awaitingVerifiedReport: true }),
         ...(awaitingAck.has(row.addr) && { awaitingHandoverAck: true }) };
@@ -173,6 +174,8 @@ export function printStatus(result) {
       row.awaitingVerifiedReport ? 'awaiting report' : row.task ?? row.addr].join(' '), 6);
   section('Hook gaps', result.sessions.filter(row => row.hookGap),
     row => [row.role, row.addr, 'hook-gap', row.hookGap.source].join(' '), Infinity);
+  section('Native memory isolation', result.sessions.filter(row => row.memoryIsolation && row.memoryIsolation !== 'covered'),
+    row => [row.role, row.cli, row.addr, row.memoryIsolation].join(' · '), Infinity);
   section('Waves and cards', [...result.waves, ...result.pendingContinuations, ...result.cards], row => row.members ?
     [row.wave, row.state, row.members.length + ' cards'].join(' ') : row.batch ?
       ['continuation', row.batch, row.pending.length + ' pending'].join(' ') : [row.task, row.wave, row.state].join(' '), 6);

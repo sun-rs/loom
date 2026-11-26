@@ -8,6 +8,7 @@ import { runtimeDirectory } from '../cli/project.mjs';
 import { CommandError } from '../cli/sessions.mjs';
 import { createMemoryStore } from '../memory/store.mjs';
 import { collectMemoryEvents } from './memory-events.mjs';
+import { sessionMemoryBinding } from './memory-injection.mjs';
 import { readText, writeState } from './io.mjs';
 
 const exec = promisify(execFile);
@@ -24,17 +25,6 @@ function classifySensitive(text) {
   return { reliable: true, spans: patterns.flatMap(pattern => [...text.matchAll(pattern)].map(match => ({
     start: match.index, end: match.index + match[0].length,
   }))) };
-}
-
-function sessionBinding(row, job) {
-  if (!row || !job) return;
-  const onCard = ['worker', 'reviewer'].includes(row.role);
-  return {
-    sessionId: row.addr, principal: job.memoryBinding?.principal ?? (onCard ? row.addr : row.role),
-    role: row.role, project: row.project, cardId: onCard ? row.task ?? row.addr : null,
-    dependencies: job.memoryBinding?.dependencies ?? [], attachments: job.memoryBinding?.attachments ?? [],
-    authorizedIds: job.memoryBinding?.authorizedIds ?? { memory: [], history: [] },
-  };
 }
 
 export function createProjectMemory(project, { sessions, now, options, report }) {
@@ -55,7 +45,7 @@ export function createProjectMemory(project, { sessions, now, options, report })
       hasHist: events.hasHist,
     },
   });
-  const bindingFor = row => sessionBinding(row, sessions.jobs.get(row?.addr));
+  const bindingFor = row => sessionMemoryBinding(row, sessions.jobs.get(row?.addr));
 
   async function handle(args, caller) {
     const row = caller && sessions.rows().find(session => session.addr === caller || session.pane === caller);
@@ -75,6 +65,7 @@ export function createProjectMemory(project, { sessions, now, options, report })
   }
 
   return {
+    access: store.access,
     async handle(args, caller) {
       try { return await handle(args, caller); }
       catch (error) {
