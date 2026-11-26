@@ -1,4 +1,4 @@
-import { isClaudeTranscriptEnd } from '../adapters/claude/parse.mjs';
+import { isClaudeStopSummary, isClaudeTranscriptEnd } from '../adapters/claude/parse.mjs';
 import { completedClaudeTurns, provesClaudeTurnEnd } from '../relay/sources.mjs';
 import { realpath } from 'node:fs/promises';
 import { basename, dirname, extname, isAbsolute, join, relative, sep } from 'node:path';
@@ -33,8 +33,14 @@ export function nativeState(provider, { hookSink, evidenceRoot, cwd, sessionId, 
   async function hooks() {
     const observations = [];
     for (const row of await readHook(hookSink)) {
+      if (resumedAt !== undefined && !(row.receivedAt >= resumedAt)) continue;
+      if (provider.id === 'claude' && row.hook_event_name === 'SessionBindingChanged' &&
+          row.session_id === sessionId && row.observed_session_id !== sessionId) {
+        sessionChanged = true;
+        continue;
+      }
       const event = hookObservation(provider, row, expectedPayload);
-      if (!event?.sessionId || row.cwd !== cwd || resumedAt !== undefined && !(row.receivedAt >= resumedAt)) continue;
+      if (!event?.sessionId) continue;
       if (sessionId && event.sessionId !== sessionId) {
         sessionChanged = true;
         continue;
@@ -119,11 +125,12 @@ export function nativeState(provider, { hookSink, evidenceRoot, cwd, sessionId, 
         if (row.isSidechain || row.parent_tool_use_id || row.parentToolUseId ||
             row.sessionId && row.sessionId !== sessionId ||
             resumedAt !== undefined && !(Date.parse(row.timestamp ?? row.created_at) >= resumedAt)) continue;
-        if (provider.id === 'claude' && isClaudeTranscriptEnd(row)) {
+        const closure = provider.id === 'claude' && (isClaudeTranscriptEnd(row) || isClaudeStopSummary(row));
+        if (closure) {
           verifiedEnds ??= new Set(completedClaudeTurns(transcript, sessionId).filter(provesClaudeTurnEnd).map(turn => turn.endedAt));
           if (!verifiedEnds.has(row.timestamp)) continue;
         }
-        const event = provider.transcriptRow(row, expectedPayload);
+        const event = closure ? { phase: 'idle' } : provider.transcriptRow(row, expectedPayload);
         if (!event) continue;
         const { userText, ...fields } = event;
         const observedAt = at(row);

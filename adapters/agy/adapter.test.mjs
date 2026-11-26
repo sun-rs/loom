@@ -162,8 +162,12 @@ test('capture uses the scoped transcript and the exact current turn, with POSIX 
   run('Stop', { fullyIdle: true });
   assert.ok(!('finalReply' in read().at(-1)), 'a stale answer with the same request must not be reused');
   const visible = read().length;
-  run('Stop', { workspacePaths: [root], fullyIdle: true });
-  assert.equal(read().length, visible);
+  run('Stop', { cwd: root, workspacePaths: [root], fullyIdle: true });
+  assert.equal(read().length, visible + 1);
+  assert.equal(read().at(-1).cwd, root);
+  run('Stop', { conversationId: 'foreign-session', fullyIdle: true });
+  run('Stop', { agent_id: 'subagent', fullyIdle: true });
+  assert.equal(read().length, visible + 1);
 });
 
 test('locates only exact session paths and prefers full to compact', t => {

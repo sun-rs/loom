@@ -2,7 +2,6 @@ import { fileURLToPath } from 'node:url';
 import { randomUUID } from 'node:crypto';
 import claude from '../adapters/claude/index.mjs';
 import { matchesPastePlaceholder } from '../adapters/claude/screen.mjs';
-import { isClaudeTranscriptEnd } from '../adapters/claude/parse.mjs';
 import codex from '../adapters/codex/index.mjs';
 import agy from '../adapters/agy/index.mjs';
 import { hasHeldComposer } from '../adapters/agy/screen.mjs';
@@ -46,7 +45,7 @@ export const providers = {
       const index = argv.indexOf('--settings') + 1;
       const settings = JSON.parse(argv[index]);
       if (options.fast !== undefined) settings.fastMode = options.fast;
-      const observer = { ...settings.hooks.Stop[0].hooks[0], args: [capture, options.hookSink, sessionId, options.cwd] };
+      const observer = { ...settings.hooks.Stop[0].hooks[0], args: [options.hookRunner ?? capture, options.hookSink, sessionId, options.cwd] };
       for (const entries of Object.values(settings.hooks)) for (const entry of entries) entry.hooks = [observer];
       for (const event of ['SessionStart', 'SessionEnd', 'PreCompact', 'PostCompact']) {
         settings.hooks[event] = [{ hooks: [observer] }];
@@ -84,7 +83,6 @@ export const providers = {
         return activity(failure === 'rate_limited' || failure === 'quota' ? 'rate-limit' : 'error');
       }
       if (row.type === 'system' && row.subtype === 'turn_aborted') return activity('idle', { interrupted: true });
-      if (isClaudeTranscriptEnd(row)) return activity('idle');
     },
   },
   codex: {
@@ -142,7 +140,7 @@ export const providers = {
     start(options) {
       const spec = agy.launch({ ...options,
         captureScript: options.boundTranscript === false ? agyActivityCapture : undefined,
-        ...(options.resume && { extraArgs: [...agentResumeArgs('agy', options.resume), ...(options.extraArgs ?? [])] }),
+        ...(options.resume && { expectedSessionId: options.resume, extraArgs: [...agentResumeArgs('agy', options.resume), ...(options.extraArgs ?? [])] }),
       });
       if (options.resume) spec.sessionId = options.resume;
       if (options.trustWorkspace === false) {

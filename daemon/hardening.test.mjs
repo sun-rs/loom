@@ -58,7 +58,7 @@ after(async () => {
   assert.deepEqual(leftovers, [], 'A process from this run’s lh-* projects survived fixture cleanup');
 });
 
-test('the launch-only Codex SessionStart hook records the owned root and ignores compact or foreign input', t => {
+test('the launch-only Codex SessionStart hook records the reported cwd and ignores compact or subagent events', t => {
   const f = fixtureProject(t);
   const sink = join(f.project, "it's the root events.jsonl");
   const { argv } = codex.launch({ cwd: f.project, hookSink: sink });
@@ -74,11 +74,13 @@ test('the launch-only Codex SessionStart hook records the owned root and ignores
   };
   const input = { hook_event_name: 'SessionStart', source: 'startup', cwd: f.project, session_id: randomUUID() };
   run({ ...input, source: 'compact' });
-  run({ ...input, cwd: '/foreign' });
   run({ ...input, agent_id: 'child' });
   assert.equal(existsSync(sink), false);
-  run(input);
-  assert.equal(f.lines("it's the root events.jsonl")[0].session_id, input.session_id);
+  const cwd = join(f.project, '.project');
+  run({ ...input, cwd });
+  const [recorded] = f.lines("it's the root events.jsonl");
+  assert.equal(recorded.session_id, input.session_id);
+  assert.equal(recorded.cwd, cwd);
 });
 
 async function until(read, message, wait = 18_000) {

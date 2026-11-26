@@ -2,7 +2,7 @@ import { lstatSync, readFileSync, realpathSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { basename, dirname, join } from 'node:path';
 import { parseAgyTranscriptLine } from '../adapters/agy/transcript.mjs';
-import { isClaudeTranscriptEnd, parseClaude, parseTranscriptRow } from '../adapters/claude/parse.mjs';
+import { isClaudeStopSummary, isClaudeTranscriptEnd, parseClaude, parseTranscriptRow } from '../adapters/claude/parse.mjs';
 import { parseCodexTranscriptLine } from '../adapters/codex/transcript.mjs';
 import { deliveryId } from '../inbox/message.mjs';
 
@@ -50,14 +50,15 @@ function transcriptPath(provider, cwd, terminal, stop) {
   }
 }
 
-export function terminalEvents(project, addr, terminal) {
+export function terminalEvents(project, addr, terminal, sessionId) {
   const cwd = existingPath(terminal.cwd);
   if (!within(project, cwd)) return [];
   const path = join(project, '.project/relay/events', `${addr}.jsonl`);
   if (existingPath(path) !== path) return [];
   return jsonl(path).map(row => ({
     ...row.payload, ...row, receivedAt: typeof row.receivedAt === 'number' ? row.receivedAt : Date.parse(row.receivedAt),
-  })).filter(row => (row.cwd === cwd || row.workspacePaths?.includes(cwd)) &&
+  })).filter(row => (sessionId ? (row.session_id ?? row.conversationId) === sessionId :
+    row.cwd === cwd || row.workspacePaths?.includes(cwd)) && !row.agent_id && !row.isSidechain &&
     Number.isFinite(row.receivedAt) && row.receivedAt >= terminal.created_ms);
 }
 
@@ -74,9 +75,17 @@ export function completedClaudeTurns(path, id) {
   const cached = claudeTurnCache.get(path);
   if (cached?.revision === revision && cached.id === id) return cached.turns;
   const rows = jsonl(path).filter(row => row.sessionId === id && !row.agent_id && !row.isSidechain && !row.parent_tool_use_id && !row.parentToolUseId);
-  const boundaries = new Set(rows.filter(isClaudeTranscriptEnd).map(row => row.timestamp));
+  const last = rows.findLastIndex(row => row.type === 'user' || row.type === 'assistant' || row.type === 'system');
+  // A non-continuing Stop summary at the end can be the only
+  // boundary available while the process is between native writes.
+  const stopSummary = last >= 0 && isClaudeStopSummary(rows[last]);
+  const boundaries = new Map(rows.filter(isClaudeTranscriptEnd).map(row => [row.timestamp, row.subtype]));
+  if (stopSummary) {
+    boundaries.set(rows[last].timestamp, rows[last].subtype);
+    rows[last] = { ...rows[last], subtype: 'turn_duration' };
+  }
   const turns = parseClaude(rows.map(row => JSON.stringify(row)).join('\n')).turns
-    .map(turn => ({ ...turn, boundary: boundaries.has(turn.endedAt) }));
+    .map(turn => ({ ...turn, boundary: boundaries.get(turn.endedAt) }));
   claudeTurnCache.delete(path);
   if (claudeTurnCache.size >= 16) claudeTurnCache.delete(claudeTurnCache.keys().next().value);
   claudeTurnCache.set(path, { revision, id, turns });
@@ -126,6 +135,11 @@ export function withClaudeTranscriptStops(terminal, events, sessionId) {
     if (pendingHook && !turn) return { ...row, paused: true };
     return turn ? decorate(row, turn) : row;
   });
+  const fallbackStop = (turn, fields) => ({
+    cwd: terminal.cwd, session_id: id, receivedAt: Date.parse(turn.endedAt), hook_event_name: 'Stop',
+    last_assistant_message: turn.reply, source: 'claude transcript ' + (turn.boundary ?? 'turn_duration'),
+    ...(provesClaudeTurnEnd(turn) && { hookGap: true }), ...fields,
+  });
   const stops = starts.flatMap(({ row, key, ended }, index) => {
     if (ended) return [];
     const next = starts[index + 1]?.row.receivedAt ?? Infinity;
@@ -135,14 +149,27 @@ export function withClaudeTranscriptStops(terminal, events, sessionId) {
       Date.parse(endedAt) >= row.receivedAt && Date.parse(endedAt) < next && prompts.some(prompt =>
         marker ? deliveryId(prompt) === marker : prompt === row.prompt?.trim()));
     if (!turn) return [];
-    return [decorate({ cwd: terminal.cwd, session_id: id, prompt_id: key, receivedAt: Date.parse(turn.endedAt),
-      hook_event_name: 'Stop', deliveryId: marker, last_assistant_message: turn.reply, source: 'claude transcript turn_duration',
-      ...(provesClaudeTurnEnd(turn) && { hookGap: true }) }, turn)];
+    return [decorate(fallbackStop(turn, { prompt_id: key, deliveryId: marker }), turn)];
   });
-  for (const turn of turns) {
-    if (!provesClaudeTurnEnd(turn) || !turn.backgroundPrompts ||
-        [...decorated, ...stops].some(stop => stop.nativeTurnId === turn.id && stop.backgroundDeliveryIds)) continue;
-    stops.push(decorate({ cwd: terminal.cwd, session_id: id, receivedAt: Date.parse(turn.endedAt), hook_event_name: 'Stop' }, turn));
+  const knownInputs = new Set(starts.map(({ row }) => row.deliveryId ?? deliveryId(row.prompt)).filter(Boolean));
+  const nativeEnds = session.filter(row => ['Stop', 'StopFailure', 'Interrupt'].includes(row.hook_event_name));
+  for (const [index, turn] of turns.entries()) {
+    if (!provesClaudeTurnEnd(turn)) continue;
+    if (turn.backgroundPrompts && ![...decorated, ...stops].some(stop => stop.nativeTurnId === turn.id && stop.backgroundDeliveryIds)) {
+      stops.push(decorate(fallbackStop(turn), turn));
+    }
+    // A pinned hook may also drop UserPromptSubmit after cd. Only a marker
+    // in this bound transcript's user turn can identify that delivery.
+    const markers = new Set(turn.prompts.map(deliveryId).filter(marker => marker && !knownInputs.has(marker)));
+    if (!markers.size) continue;
+    const began = Date.parse(turn.startedAt);
+    const ended = Date.parse(turn.endedAt);
+    const next = turns[index + 1] ? Date.parse(turns[index + 1].startedAt) : Infinity;
+    if (!(began >= (terminal.created_ms ?? terminal.startedAt ?? 0)) ||
+        nativeEnds.some(row => row.receivedAt >= began && row.receivedAt <= ended + grace && row.receivedAt < next)) continue;
+    for (const marker of markers) {
+      stops.push(fallbackStop(turn, { deliveryId: marker }));
+    }
   }
   return stops.length ? [...decorated, ...stops].sort((a, b) => a.receivedAt - b.receivedAt) : decorated;
 }

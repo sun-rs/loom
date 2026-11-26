@@ -254,7 +254,8 @@ export function nativeDelivery(message, observation) {
   });
   const resumed = stop?.backgroundDeliveryIds?.includes(message.id);
   const receipt = anchor ?? (resumed ? undefined : stop);
-  const result = receipt ? receiptFor(receipt) : confirmed ?? (resumed ? message.received : agyReceipt);
+  const result = !anchor && stop?.hookGap && (confirmed ?? message.received) ||
+    (receipt ? receiptFor(receipt) : confirmed ?? (resumed ? message.received : agyReceipt));
   if (!result) return;
   if (integrity) {
     const expected = message.payloadDigest ?? entry?.digest ?? payloadDigest(message.text);
@@ -287,7 +288,7 @@ export function nativeDelivery(message, observation) {
     return { ...result, completion: { ...completion, nativeTurnId: stop.nativeTurnId, source: 'claude task-notification',
       ...(stop.backgroundReply ? { body: stop.backgroundReply } : { noReply: true }) } };
   }
-  if (provider === 'claude' && stop.source === 'claude transcript turn_duration') {
+  if (provider === 'claude' && stop.hookGap) {
     return { ...result, completion: { ...completion, source: stop.source,
       ...(stop.last_assistant_message ? { body: stop.last_assistant_message } : { noReply: true }) } };
   }
@@ -319,7 +320,7 @@ export function nativeDelivery(message, observation) {
 
 export function tui(project, call = hc, fixtureSend, control = controlTui) {
   async function observe(terminal, provider, sessionId, binding) {
-    let events = terminalEvents(project, terminal.address, terminal)
+    let events = terminalEvents(project, terminal.address, terminal, sessionId ?? binding?.evidence?.sessionId)
       .filter(row => !row.agent_id && session(row) && (!sessionId || session(row) === sessionId));
     if (provider === 'claude') events = withClaudeTranscriptStops(terminal, events, sessionId);
     const lastStop = provider === 'claude' && events.findLast(event => !event.paused &&

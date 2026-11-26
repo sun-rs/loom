@@ -9,11 +9,14 @@ function stringOrNull(value) {
   return typeof value === 'string' ? value : null;
 }
 
-export function isClaudeTranscriptEnd(row) {
-  return row.type === 'system' && row.subtype === 'turn_duration' &&
-    !row.isSidechain && !row.agent_id && !row.parent_tool_use_id && !row.parentToolUseId &&
-    !row.isMeta && !row.isCompactSummary && !row.isVisibleInTranscriptOnly && Number.isFinite(Date.parse(row.timestamp));
+function isRootSystemRow(row) {
+  return row.type === 'system' && !row.isSidechain && !row.agent_id && !row.parent_tool_use_id &&
+    !row.parentToolUseId && !row.isMeta && !row.isCompactSummary && !row.isVisibleInTranscriptOnly &&
+    Number.isFinite(Date.parse(row.timestamp));
 }
+
+export const isClaudeTranscriptEnd = row => row.subtype === 'turn_duration' && isRootSystemRow(row);
+export const isClaudeStopSummary = row => row.subtype === 'stop_hook_summary' && row.preventedContinuation === false && isRootSystemRow(row);
 
 function emptyUsage() {
   return {

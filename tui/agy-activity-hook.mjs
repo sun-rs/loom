@@ -1,17 +1,18 @@
+import { acceptsAgyHook } from '../adapters/agy/hook-binding.mjs';
 import { appendFileSync, constants, readFileSync } from 'node:fs';
 import { getAntigravityNoOpStdout, normalize } from '../adapters/agy/hooks.mjs';
 import { deliveryId } from '../inbox/message.mjs';
 
 // A scoped PTY host can use native activity without resolving a transcript path.
-const [sink, cwd, hookEventName] = process.argv.slice(2);
+const [sink, cwd, hookEventName, binding = sink + '.agy-session', sessionId] = process.argv.slice(2);
 try {
   const receivedAt = Date.now();
   const { transcriptPath, transcript_path, transcriptText, ...payload } = JSON.parse(readFileSync(0, 'utf8'));
-  const event = Array.isArray(payload.workspacePaths) && payload.workspacePaths.includes(cwd) &&
-    normalize({ ...payload, hookEventName });
-  if (event?.sessionId) {
+  const event = normalize({ ...payload, hookEventName });
+  if (event?.sessionId && acceptsAgyHook(payload, event, cwd, binding, sessionId, hookEventName)) {
     const row = {
-      hookEventName, hook_event_name: hookEventName, receivedAt, cwd, conversationId: event.sessionId,
+      hookEventName, hook_event_name: hookEventName, receivedAt, cwd: typeof payload.cwd === 'string' ? payload.cwd : cwd, conversationId: event.sessionId,
+      ...(Array.isArray(payload.workspacePaths) && payload.workspacePaths.includes(cwd) && { workspacePaths: [cwd] }),
       deliveryId: deliveryId(payload.lastUserInput ?? payload.last_user_input),
       finalReply: event.finalReply,
     };

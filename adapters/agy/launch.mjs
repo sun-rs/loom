@@ -20,7 +20,7 @@ function inside(parent, child) {
   return path === '' || (!isAbsolute(path) && path !== '..' && !path.startsWith(`..${sep}`));
 }
 
-function stageHooks(directory, sink, captureScript) {
+function stageHooks(directory, sink, captureScript, sessionId) {
   mkdirSync(dirname(sink), { recursive: true, mode: 0o700 });
   const parent = realpathSync(dirname(sink));
   const stagingRoot = inside(directory, parent) ? realpathSync(tmpdir()) : parent;
@@ -28,7 +28,7 @@ function stageHooks(directory, sink, captureScript) {
   const workspace = mkdtempSync(join(stagingRoot, 'loom-agy-hooks-'));
   const sinkPath = join(parent, basename(sink));
   try {
-    const config = hookConfig(event => [process.execPath, captureScript, sinkPath, directory, event]
+    const config = hookConfig(event => [process.execPath, captureScript, sinkPath, directory, event, join(workspace, 'session'), sessionId ?? '']
       .map(quotePosixShell).join(' '));
     mkdirSync(join(workspace, '.agents'), { mode: 0o700 });
     writeFileSync(join(workspace, '.agents', 'hooks.json'), `${JSON.stringify(config, null, 2)}\n`, { mode: 0o600, flag: 'wx' });
@@ -39,7 +39,7 @@ function stageHooks(directory, sink, captureScript) {
   }
 }
 
-export function launch({ model, effort, cwd, prompt, hookSink, captureScript = capture, extraArgs = [] }) {
+export function launch({ model, effort, cwd, prompt, hookSink, captureScript = capture, expectedSessionId, extraArgs = [] }) {
   const directory = realpathSync(cwd);
   const reserved = /^(?:--?(?:p|print|prompt|i|prompt-interactive|settings|model|effort|mode|add-dir|dangerously-skip-permissions|remote-agent|remote-control|help|version))(?:=|$)/;
   if (!Array.isArray(extraArgs) || extraArgs.some(arg => typeof arg !== 'string' || arg === '--' || reserved.test(arg)) ||
@@ -59,7 +59,7 @@ export function launch({ model, effort, cwd, prompt, hookSink, captureScript = c
 
   // Orca b7fd7caa3: src/main/agent-launch/trust/agent-trust-presets.ts:94-101, trustedWorkspaces.
   const trustedWorkspaces = [directory];
-  const workspace = hookSink ? stageHooks(directory, resolve(directory, hookSink), captureScript) : undefined;
+  const workspace = hookSink ? stageHooks(directory, resolve(directory, hookSink), captureScript, expectedSessionId) : undefined;
   if (workspace) {
     argv.push('--add-dir', workspace);
     trustedWorkspaces.push(workspace);

@@ -57,6 +57,10 @@ Super 在项目根写入 `.project/policy.json` 后方可 spawn。参见 [角色
 
 TUI 发键前须同时看到两项证据。完整可见屏幕由适配器明确分类为 `idle`，且同一原生会话的启动 hook、匹配轮末 hook 或结构化 transcript 投影也证明空闲。hc 的忙或阻塞状态可否决发键，hc 的 `idle` 不单独建立可写性。未知、不完整、草稿、压缩或信号冲突期间，保留队列，在 `loom state` 显示 `writeEvidence`，在排队回执保存 `waitingForWritable`，只保存分类和轮次元数据。Codex 通过当次命令的 `SessionStart` hook 建立启动证据，Claude 由 Claude TUI runtime 捕获，OpenCode 可用已绑定的空会话导出。缺少启动证据的 TUI 会话会等待已有原生轮留下可核实的结束记录。OpenCode 首次提交遗留的草稿也等待原生证据。
 
+新建的托管 Claude TUI 通过 `.project/loomd/hook.mjs` 运行原生 hook。shim 保留事件文件、原生会话 ID 和启动目录三个参数，读取同目录已生效的 `release.json`，并调用该版本的采集脚本。项目首次启动尚无发布指针时使用启动版本。热切换后现有 shim 会在下一次事件读取新指针。旧窗格仍执行原来固定的 hook 路径，loomd 可在接管后直接用原生 transcript 恢复缺失的 Stop。
+
+Claude hook 以原生会话 ID 归属事件，记录实际 cwd，并排除子代理。一个绑定轮次缺 Stop 时，loomd 仅在根 transcript 中同时看到助手最终回复、轮末 `turn_duration` 或未要求继续的末尾 `stop_hook_summary`、全部工具结果且没有运行中的后台任务，才以 transcript 结算。正常屏幕和人工输入守卫仍适用。最近一次轮末由 transcript 补齐时，`loom status` 标记 `hook-gap`，`loom state --json` 返回证据时间和来源。
+
 loomd 在常规定时轮询中扫描所有未确认投递，包括没有屏幕或 hook 变化的目标。账本保留创建时间、阻塞原因和首次超时点，接管新版本后从同一份账本继续。超时从创建开始计算，`delivery.stallMs` 默认 120000 毫秒，观测到忙轮或压缩时使用三倍期限。排队回执提供 `ageMs` 和 `reason`，例如 `waiting-writable`、`draft-held`、`uncertain` 或 `no-native-turn`。`LOOM_UNCERTAIN_MS` 兼容为未配置策略时的期限覆盖。
 
 holder 记录每段外部输入的分类和偏移，覆盖终端协议回报与编辑键，输入内容不落盘。无法分类的历史记录按编辑输入保护。Loom 依次核对完整写入、可安全清除并一次重发的 Loom 草稿子集，以及重排后仅空白有差异、光标在末尾的完整读回。每次发键重新检查原生轮次和当前画面。首次 Enter 之后至少等待 1.5 秒，连续核对原生轮、可见的完整自有草稿和输入序号。审批、选项、覆盖层或编辑输入都会禁止再按 Enter。允许的一次再次按键记为 `re-enter`。若已看到提交动作而原生轮仍未出现，loomd 在超时后复查原生记录与可写性，在有完整守卫证据时最多用同一 ID 重试一次。

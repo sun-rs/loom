@@ -1,5 +1,5 @@
 import { execFile } from 'node:child_process';
-import { realpathSync } from 'node:fs';
+import { readFileSync, realpathSync } from 'node:fs';
 import { join } from 'node:path';
 import { promisify } from 'node:util';
 import { projectMessages } from '../adapters/opencode/index.mjs';
@@ -7,9 +7,9 @@ import { hc } from '../inbox/tui.mjs';
 import { absoluteCommand, openNativeTui } from '../runtimes/tui/transport.mjs';
 import { codexFastArgs, nativeClaude } from './executables.mjs';
 import { eventPath, readText, writeState } from './io.mjs';
-import { codexEnvironmentArgs } from '../cli/project.mjs';
+import { codexEnvironmentArgs, runtimeDirectory } from '../cli/project.mjs';
 import { claudeIdleCompaction } from '../cli/policy.mjs';
-import { controllerFile, managedEnvironment } from './release.mjs';
+import { controllerFile, managedEnvironment, releaseRoot } from './release.mjs';
 import { workerEnvironment, workerProviderEnvironment } from './worker-environment.mjs';
 
 const exec = promisify(execFile);
@@ -27,6 +27,14 @@ export async function ownedPane(job, row) {
   return terminal;
 }
 
+function claudeHookRunner(project) {
+  const path = join(runtimeDirectory(project), 'hook.mjs');
+  // Existing sessions run this file across upgrades. The committed release
+  // pointer selects the implementation, so the shim itself stays in place.
+  if (readText(path, null) === null) writeState(path, readFileSync(new URL('../runtimes/tui/hook-shim.mjs', import.meta.url), 'utf8'));
+  return path;
+}
+
 export async function openTui(job, row, project, recordTemporary, recordBinding, controller) {
   const hookSink = eventPath(project, row.addr);
   const env = { ...managedEnvironment(project, row.addr),
@@ -36,7 +44,8 @@ export async function openTui(job, row, project, recordTemporary, recordBinding,
     ...row, fast: job.fast, hookSink, name, env, sessionId: job.plannedNativeId, recordTemporary, recordBinding, previous: job.tui,
     autoTrustWorkspace: job.autoTrustWorkspace, ...(controller && { controllerPath: controllerFile(project) }),
     stateDir: join(project, '.project', 'pty'),
-    ...(row.cli === 'claude' && { command: nativeClaude(), env: { ...env, DISABLE_AUTOUPDATER: '1' },
+    ...(row.cli === 'claude' && { command: nativeClaude(), hookRunner: claudeHookRunner(project),
+      env: { ...env, DISABLE_AUTOUPDATER: '1', LOOM_HOOK_RELEASE: releaseRoot },
       authMode: job.authMode, idleCompaction: claudeIdleCompaction(project, row.role), unset: ['CLAUDE_CODE_ENTRYPOINT', 'CLAUDECODE'] }),
     ...(row.cli === 'codex' && { extraArgs: ['--disable', 'memories', ...codexEnvironmentArgs(env), ...codexFastArgs(job.fast)] }),
   });

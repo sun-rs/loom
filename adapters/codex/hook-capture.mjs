@@ -5,7 +5,7 @@ import { deliveryId } from '../../inbox/message.mjs';
 
 const [sink] = process.argv.slice(2);
 const payload = JSON.parse(readFileSync(0, 'utf8'));
-if (normalize(payload)) {
+if (!payload.isSidechain && normalize(payload)) {
   // Keep native identifiers for the caller to correlate events and deduplicate replays.
   // Follow relay/hooks.mjs and omit prompt text, tool arguments, and outputs.
   const fields = ['hook_event_name', 'session_id', 'turn_id', 'transcript_path', 'cwd',
