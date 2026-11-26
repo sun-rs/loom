@@ -1007,5 +1007,6 @@ export function ownedSessions(project, index, report, {
   return { rows, rowFor, events, targetBinding, transport, requestedMode, canInterrupt, resolve, requireLive, newJob,
     activate, failSpawn, runtimeSelection, refresh, stop, shutdown, upgradeSessions, upgradeHolder, jobs, managedHc, sealed, lastActivity,
     routeParent, bindSuccessor, retirePredecessor, successorOf, holdsForHandover, rememberUserPrompt, pathWarnings, rememberLiveness, adoptLayout,
+    runtimeContext: addr => running.get(addr)?.session.contextUsage?.()?.value,
     finishObserved(row, exit, at) { return finish(jobs.get(row.addr), row, at, exit); } };
 }

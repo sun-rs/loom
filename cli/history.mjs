@@ -159,7 +159,7 @@ export function historyReader(directory) {
       });
     }
     for (const [i, item] of items.entries()) item.index = i + 1;
-    const result = { path, items, missing, project, raw };
+    const result = { path, items, missing, project, parsed, raw };
     read.set(session.addr, result);
     return result;
   }

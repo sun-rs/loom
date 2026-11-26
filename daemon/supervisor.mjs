@@ -25,7 +25,7 @@ import { authorizeSeniorTool, seniorToolEvents } from './senior-tools.mjs';
 import { replyForDelivery } from '../inbox/reply-file.mjs';
 import { auditorWakeFiltered, auditorWakeSource, redReasons } from './routing.mjs';
 import { readLayout } from './herdr-layout.mjs';
-import { deliveryBoard, gateBoard } from './status-board.mjs';
+import { attentionBoard, contextBoard, deliveryBoard, gateBoard, notificationBoard, workerBoard } from './status-board.mjs';
 import { activeRelease, managedCliPath, releaseId, releaseRoot } from './release.mjs';
 import { rotatingRoles } from '../index/index.mjs';
 import { selfRotation } from './self-rotation.mjs';
@@ -380,11 +380,11 @@ ${details}`, {
         const events = sessions.events(row.addr);
         const root = events.filter(event => !event.agent_id && !event.isSidechain &&
           (!row.sessionId || (event.session_id ?? event.sessionId ?? event.conversationId) === row.sessionId));
-        roleStatus.contextPercent = reportedContext(snapshot ?? {}, root, []).percent;
+        roleStatus.context = reportedContext(snapshot ?? {}, root, []);
         roleStatus.activityAt = sessions.lastActivity(row, events.at(-1));
       }
       observations.set(row.addr, { state: userPrompt?.kind ?? result?.health?.status ?? reportedState(snapshot, health.get(row.addr)),
-        awaitingUser: Boolean(userPrompt), ...roleStatus });
+        awaitingUser: Boolean(userPrompt), awaitingUserAt: userPrompt?.since, ...roleStatus });
       if (!userPrompt || now() - userPrompt.since < stallMs ||
           !(senior(row) || row.role === 'super' || ['awaiting-user', 'overlay'].includes(userPrompt.kind))) return;
       const { kind, since, summary } = userPrompt;
@@ -867,26 +867,27 @@ ${details}`, {
       if (command === 'board') {
         const rows = sessions.rows();
         const events = notifications.list(undefined, false, true);
-        const pending = events.filter(event => !event.auditor && !event.logOnly && event.takenAt == null);
         const names = new Set(rows.map(row => row.project));
         if (!names.size) names.add(project);
+        const rolesByAddr = new Map(rows.map(row => [row.addr, row.role]));
+        const roleFor = addr => rolesByAddr.get(addr);
         const sessionFields = ({ addr, cli, model, sessionId, cwd, transcriptPath, startedAt }) =>
           ({ addr, cli, model, sessionId, cwd, transcriptPath, startedAt, state: observations.get(addr)?.state ?? 'starting' });
+        const roles = rows.filter(row => row.endedAt === null && ['super', 'leader', 'auditor'].includes(row.role)).map(row => ({
+          ...sessionFields(row), role: row.role, backend: row.backend,
+          ...contextBoard(budget.nativeContext(row.addr), observations.get(row.addr)?.context),
+          activityAt: observations.get(row.addr)?.activityAt ?? row.startedAt,
+          awaitingUser: observations.get(row.addr)?.awaitingUser,
+          awaitingHandover: Boolean(sessions.jobs.get(row.addr)?.handoverAck && !sessions.jobs.get(row.addr)?.handoverBound),
+        }));
+        const workers = workerBoard(rows, mail.messages, sessions.jobs, observations, sessionFields);
+        const gates = gateBoard(mail.messages, events, roleFor);
+        const delivery = deliveryBoard(mail.messages, observations, now());
         return {
           layout: readLayout(project),
-          roles: rows.filter(row => row.endedAt === null && ['super', 'leader', 'auditor'].includes(row.role)).map(row => ({
-            ...sessionFields(row), role: row.role, backend: row.backend,
-            contextPercent: observations.get(row.addr)?.contextPercent ?? budget.contextPercent(row.addr) ?? null,
-            activityAt: observations.get(row.addr)?.activityAt ?? row.startedAt,
-            awaitingHandover: Boolean(sessions.jobs.get(row.addr)?.handoverAck && !sessions.jobs.get(row.addr)?.handoverBound),
-          })),
-          workers: rows.filter(row => row.endedAt === null && row.role === 'worker' && row.backend === 'headless').map(row => ({
-            ...sessionFields(row), task: row.task, wave: row.wave,
-          })),
-          delivery: deliveryBoard(mail.messages, observations, now()),
-          gates: gateBoard(mail.messages, events),
-          notifications: { count: pending.length, last: pending.slice(-8).reverse().map(({ id, type, at, text }) =>
-            ({ id, type, at, text: text?.slice(0, 200) })) },
+          roles, workers, delivery, gates,
+          attention: attentionBoard(delivery, roles, workers, gates, events, roleFor),
+          notifications: notificationBoard(events, roleFor),
           pyramids: [...names].flatMap(name => {
             const sample = budget.pyramid(name);
             return sample ? [{ project: name, ...sample }] : [];

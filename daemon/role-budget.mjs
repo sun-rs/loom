@@ -1,7 +1,7 @@
 import { projectCost, pyramidSampleReady, pyramidWindowMs } from '../cli/cost.mjs';
 import { historyReader } from '../cli/history.mjs';
 import { rotationLimits } from '../cli/policy.mjs';
-import { reportedContext } from '../cli/state.mjs';
+import { nativeCallContext, reportedContext } from '../cli/state.mjs';
 import { timestamp } from '../cli/turns.mjs';
 import { turnTools } from '../lib/turn-tools.mjs';
 import { agyToolOutput, seniorOutputCategory, sumOutputTokens } from '../lib/senior-tool-output.mjs';
@@ -24,14 +24,12 @@ export function roleBudget(project, { now, sessions, notifications, batchDeliver
   const nativeContexts = new Map();
 
   async function context(row, { items, raw }, useLastCall) {
-    const transcript = raw.map(({ row }) => row);
-    if (row.cli === 'codex') nativeContexts.set(row.addr, reportedContext({}, [], transcript).percent);
     const nativeInput = items.findLast(item => item.turn.calls?.length)?.turn.calls.at(-1)?.inputTokens;
     if (useLastCall && Number.isFinite(nativeInput)) return nativeInput;
     const snapshot = await sessions.transport.inspect(sessions.targetBinding(row)).catch(() => undefined);
     const events = sessions.events(row.addr).filter(event => !event.agent_id && !event.isSidechain &&
       (!row.sessionId || (event.session_id ?? event.sessionId ?? event.conversationId) === row.sessionId));
-    return reportedContext(snapshot ?? {}, events, transcript).tokens ?? nativeInput ?? null;
+    return reportedContext(snapshot ?? {}, events, raw.map(({ row }) => row)).tokens ?? nativeInput ?? null;
   }
 
   async function assessAuditor(rows, reader, boundary, policy) {
@@ -107,15 +105,21 @@ export function roleBudget(project, { now, sessions, notifications, batchDeliver
 
   return {
     pyramid: name => pyramids.get(name),
-    contextPercent: addr => nativeContexts.get(addr),
+    nativeContext: addr => nativeContexts.get(addr),
     async check(name, rows, policy, { completeGate = false, safeLeader, leader, auditor, gateRecorded = false } = {}) {
       const at = now();
       if (!completeGate && !gateRecorded && at - (sampled.get(name) ?? -Infinity) < sampleIntervalMs) return;
-      for (const row of rows) if (row.endedAt != null) nativeContexts.delete(row.addr);
       const events = notifications.list(name, false, true);
       const gate = events.findLast(gateBoundary);
       const id = 'auditor-budget:' + batchDeliveryId(name, gate?.id ?? '');
       const reader = historyReader(project);
+      for (const row of rows) {
+        if (!['leader', 'auditor'].includes(row.role)) continue;
+        if (row.endedAt != null || !sessions.jobs.has(row.addr)) nativeContexts.delete(row.addr);
+        else try {
+          nativeContexts.set(row.addr, nativeCallContext(row, reader.sessionHistory(row), sessions.runtimeContext(row.addr)));
+        } catch (error) { report(`Board context ${row.addr}: ${error.message}`); }
+      }
       if (safeLeader) await proposeLeader(name, safeLeader, reader, events, policy, at);
       else if (leader) {
         const contextTokens = await context(leader, reader.sessionHistory(leader), true);
