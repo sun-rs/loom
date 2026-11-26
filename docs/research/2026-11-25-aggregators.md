@@ -57,3 +57,12 @@
 - **对 loom 的取舍**：
   - 借鉴三点：不盲按第二次 Enter、弹窗时推迟按键、核对进程化身。
   - **不采用指针模式**（用户裁决 2026-11-25）：每条消息都会让 agent 多一次带全量上下文的请求，丢掉 loom 少请求的优势。正文照旧内联，以原生记录回执为准。
+
+## 补充：T3 Code 编排层（2026-11-26，读 /Users/sun/Code/research/t3code @ 6b02cbff，2026-11-09，server v0.1.7，未运行）
+起因：用户转来一张"T3 Code vs Orca"对比图，逐条核对。
+- **属实**：Orchestrator MCP Server（`127.0.0.1:<port>/mcp`，docs/orchestration-v2/orchestrator-mcp-server.md）、`delegate_task`（apps/server/src/mcp/toolkits/orchestrator/tools.ts:86，另有 task_status/task_cancel/t3_thread_send/wait/read）、AppThread / ExecutionNode / ProviderThread（packages/contracts/src/orchestrationV2.ts）、父子线程、事件回放。已上线，非设计稿。
+- **部分不实**：MCP 不直连 Provider Adapter，经 V2 命令 `delegated_task.request` 走常规 provider 效果；"增量上下文交接"不属于委派——子线程只拿任务提示、不带父历史。交接用于切换 provider：回到某 provider 时续用旧线程，只补它错过的轮次摘要；摘要是确定性文本拼接（用户/助手文本、命令、改动文件、检查点），不调模型（ContextHandoffService.ts）。
+- **委派成本**：父模型一次 MCP 调用；async 模式结果以 wake 推回（≤16KB 内联，超出让父调 task_status），约 2 次父请求，与 loom（spawn 一次 + 结果推送一轮）同级。wake 至少一次投递、按消息 ID 去重。子线程权限只能收窄。
+- **没有的**：监督角色（只有 role 提示枚举）、门禁、按角色计费、原生 TUI（全走 SDK/app-server，node-pty 只给用户终端）、存活进程跨重启/热升级（重启后按原生引用重建会话）。
+- **对 loom 可借**：①换班/记忆的"只补错过部分"的确定性摘要（不花模型 token），可用于 `--handover-from` 交接文件与 I/L 层记忆注入；②子会话权限只能收窄的规则，用于 Auditor 临时派的检查 worker；③超长结果内联上限 + 原文路径（GATE-NOTIFY-1 已同理）。不借：MCP 委派入口（loom 用 CLI + skill，避免给每个 CLI 挂 MCP）。
+- **Orca 部分**：本地 skill 只是桩，Task/Dispatch、DAG 有据；`worker-start`、mailbox 字样需运行 Orca 才能核对，mailbox 指针投递见上节（已于 2026-11-25 拆包确认）。
