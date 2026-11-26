@@ -19,16 +19,17 @@
 - `store.mjs` 导出 `createMemoryStore({ now, readState, commitState, evidence, ...options })`。`store.write(binding, request)` 是 home 的写入口。请求有 `op, requestId`，以及适用的 `id, expectedRevision, entry`。创建声明 `expectedRevision: null`。
 - `op` 支持 `put, propose, forget, promote, merge, return, reject, import_rulings`。修改待审候选使用 `propose` 并带原 ID 和预期修订。审结用候选 `id, cardId, expectedRevision`，merge 另带 `targetId, targetExpectedRevision, body`。导入用 `entries`。
 - `put` 可通过 `entry.supersedes` 增加替代关系，修订时保留已有关系。每个新增目标须为调用者有权维护的生效或陈旧条目，且不能指向自身。替代双方须同层。私有条目不能替代共享裁决。调用者无权访问的跨项目目标与未知 ID 返回完全相同的 `{ ok, code, error }`。
-- 写请求顶层用 `supersedeExpectedRevisions: { [id]: revision }` 声明每个新增替代目标的预期修订。先核对目标权限，再核对修订。缺少目标修订或修订不匹配时返回 `conflict`。任一目标无效、未获授权或冲突时不提交。成功时推进目标修订、标记为 `superseded`、在 `supersededBy` 记录新条目 ID，并使目标退出索引。
+- 写请求顶层用 `supersedeExpectedRevisions: { [id]: revision }` 声明每个新增替代目标的预期修订。先核对目标权限，再核对修订。缺少目标修订或修订不匹配时返回 `conflict`，包括用被替代前的旧修订号再次指定有权维护的 `superseded` 目标。任一目标无效、未获授权或冲突时不提交，持久状态不变。成功时推进目标修订、标记为 `superseded`、在 `supersededBy` 记录新条目 ID，并使目标退出索引。
 - Auditor 可用带原 ID 和预期修订的 `put` 恢复或修订本项目有权读取的 `stale` 经验，成功后恢复为 `active`。生效经验仍由原有写权限约束。Leader 只能维护本项目共享经验。
 - 写核心串联绑定授权、格式及证据校验、脱敏、同层去重、CAS 与幂等检查。修订、变更序号、Markdown、索引和重放记录经一次 `commitState` 原子提交。
 - 持久快照含 `entries, changes, seq, files` 及重放元数据。`files` 以路径为键，值为 Markdown 文本。允许空快照启动。`rebuildIndex()` 用生效条目重建持久索引。遗忘只保留最小标记，持久快照与旧回执重放均须去除旧正文。
 - 有审结权的角色可遗忘对应候选，包括 `pending, returned, rejected, merged`。遗忘并入目标时一并遗忘源候选，删除 Markdown 正文、清理旧回执，并使源候选和目标的 `show` 均返回空。
-- `evidence` 提供 `root, realpath(path), hasCommit(sha)`。可信观察与脱敏用 `getObservations(sessionId), classifySensitive(text), replacement`。未向 `createMemoryStore` 注入 `classifySensitive` 时，落正文的写操作（`put`、`propose`、`promote`、`merge`、`import_rulings`）返回 `ok: false`，不提交且持久状态不变。符合权限与修订要求的 `forget` 仍可删除内容。`readRaw(sessionId)` 提供待派生的历史。
+- `evidence` 提供 `root, realpath(path), hasCommit(sha)`。可信观察与脱敏用 `getObservations(sessionId), classifySensitive(text), replacement`。未向 `createMemoryStore` 注入 `classifySensitive` 时，落正文的写操作（`put`、`propose`、`promote`、`merge`、`import_rulings`）返回 `{ ok: false, code: 'classifier-missing' }`，不提交且持久状态不变。授权失败使用独立的 `forbidden` 错误码。符合权限与修订要求的 `forget` 仍可删除内容。`readRaw(sessionId)` 提供待派生的历史。
 - `merge` 将目标和候选已有的外部来源与审查者会话的 web/MCP 观察合并，经脱敏后存入结果的 `externalSource`。并入正文经脱敏后写入条目、Markdown 和回执，持久快照各处均须去除敏感原文。对已并入候选更换 `targetId` 或 `body` 的请求返回 `conflict`，不提交且持久状态不变。原样重放复用回执，仅更换 `requestId` 的重试也幂等成功且不新增提交。
 - 来源候选为 `forgotten` 时，任何 `merge`（包括重放和改用其他目标）均返回 `ok: false`，不提交且持久状态不变，回应不含候选或目标的旧正文。无审结权的调用者仍返回 `forbidden`。
 - 成功回执为 `{ ok: true, item, receipt, ... }`。`receipt` 含 `requestId, status`，状态为 `accepted | duplicate | candidate`。导入用 `items`，审结另带 `candidate`，遗忘的 `item` 为墓碑。
-- 失败回执为 `{ ok: false, code, error, currentRevision? }`。`error` 为脱敏字符串，授权失败用 `forbidden`，CAS 失败用 `conflict`。同请求重放复用回执，审结幂等也按卡片与候选识别。
+- 失败回执为 `{ ok: false, code, error, currentRevision? }`。`error` 为脱敏字符串，授权失败用 `forbidden`，CAS 失败用 `conflict`。审结幂等也按卡片与候选识别。
+- 同一绑定范围的 `requestId` 命中回执时，须核对 `op`、候选或目标 `id`、`targetId` 及适用的条目或正文摘要。完全相同的请求复用原回执且不新增提交，遗忘后的回执仍遵循正文清除规则。内容有变则返回 `{ ok: false, code: 'conflict' }`，不返回旧回执，不提交且持久状态不变。遗忘或并入后改用同一 `requestId` 重放不同请求，冲突回应不得包含旧正文。
 - `format.mjs` 的 `validateEntry` 和 `sanitize.mjs` 的 `sanitizeEntry` 为可独立测试的纯函数。
 - `cas-cache.mjs` 导出 `createCellMemory`。其 `show` 使用统一读取形状并可附 `cachedAt`。离线也通过 `getBinding()` 核对当前绑定，绑定失效或当前范围无授权缓存时返回 `{ item: null, seq: null }`。`write` 离线时只记录本地发件箱并返回候选回执，重连通过 home 的同一 `write` 校验。
 
@@ -43,8 +44,8 @@
 - `delta(binding, { cursor })` 返回 `{ rows, baseCursor, endCursor, truncated }`，每行有 `seq, id, revision, operation`。变更可用 `entry` 供内部授权，公开行提供安全元数据和使用已脱敏标题生成的索引行 `line`。投递的 `suffix` 使用同形结果，另附 `text`。
 - 重试可复用已投递的批次，包括条目后来变成 `stale` 的情况。当前授权撤销、过期或条目被遗忘时，不再复用含该条目原索引行的批次。
 - `attachments(binding, { keywords, project? })` 与 `hist(binding, { id?, project?, sessionId? })` 均返回 `{ rows }`。自动附件只选关键词匹配的生效共享条目。Worker 跨项目共享条目的读取要求接收卡片的 `dependencies` 声明来源项目、`attachments` 包含条目 ID，并具有有效共享授权。
-- Super 用 `grant(binding, { sourceProject, targetProject?, recipient, reason, expiresAt })` 授予只读访问。省略 `targetProject` 时使用会话项目。接收项目为空或与来源相同时拒绝。`revoke` 撤销授权，跨项目结果带 `sourceProject, asOf`。`canWrite` 检查常规维护权限，`canRevise` 同时检查陈旧经验修订权限。
-- `store.recordTurn(event), store.maintain()` 更新引用使用与陈旧状态。派生历史经 `hist` 统一授权并用同一脱敏规则展示。
+- Super 用 `grant(binding, { sourceProject, targetProject?, recipient, reason, expiresAt })` 授予只读访问。省略 `targetProject` 时使用会话项目。接收项目为空或与来源相同时拒绝。`revoke` 撤销授权，跨项目结果带 `sourceProject, asOf`。授权与撤销随项目状态持久化。从同一快照重启后，有效授权继续适用于 `index`、`search`、`show`、`attachments`、`delta`，已撤销或到期的授权立即失效。`canWrite` 检查常规维护权限，`canRevise` 同时检查陈旧经验修订权限。
+- `store.recordTurn(event), store.maintain()` 更新引用使用与陈旧状态。派生历史经 `hist` 统一授权并用同一脱敏规则展示。`store.access.hist` 和 `createAccess({ history }).hist` 缺少 `classifySensitive` 时均返回 `{ ok: false, code: 'classifier-missing', rows: [] }`。该规则适用于按 `id`、`project`、`sessionId` 过滤和不带过滤参数的读取。
 
 ## 其他模块导出
 

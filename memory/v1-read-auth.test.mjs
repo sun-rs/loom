@@ -13,6 +13,7 @@ const session = (role, extra = {}) => ({
 });
 const auditor = session('auditor');
 const leader = session('leader');
+const classifySensitive = () => ({ reliable: true, spans: [] });
 const item = (id, extra = {}) => ({
   id, project: 'A', revision: 1, kind: 'lesson', layer: 'shared', status: 'active',
   importance: 1, title: `Topic ${id}`, keywords: ['probe'], body: `BODY(${id})`,
@@ -228,7 +229,7 @@ test('U10 各读取入口使用同一角色授权，猜测未授权 ID 与未知
   ].map(row => ({ project: 'A', group: row.id === 'other-card' ? 'other' : 'team',
     body: `HISTORY(${row.id})`, ...row }));
   const access = createAccess({ entries, history, changes: entries.filter(entry => entry.status !== 'stale').map((entry, i) => change(i + 1, entry)),
-    now: () => start });
+    now: () => start, classifySensitive });
   const shared = ['shared', 'attached', 'unmatched'];
   const matching = ['shared', 'attached'];
   const auditorIndex = [...shared, 'auditor-note'];
@@ -270,6 +271,24 @@ test('U10 各读取入口使用同一角色授权，猜测未授权 ID 与未知
       if (histories.includes(row.id)) expectRows(result, [row.id], label);
       else assert.deepEqual(result, unknownHist, `${label} hist ${row.id}`);
     }
+  }
+});
+
+test('Goal 4b/d direct access requires a history classifier for every filter', async t => {
+  const { createAccess } = await import('./access.mjs');
+  const row = { id: 'history-id', project: leader.project, sessionId: 'history-session', layer: 'shared',
+    body: 'Original direct history body.' };
+  const history = [row];
+  const access = createAccess({ history });
+  const control = createAccess({ history, classifySensitive });
+  const filters = { id: { id: row.id }, project: { project: row.project }, sessionId: { sessionId: row.sessionId }, all: undefined };
+  for (const [filter, args] of Object.entries(filters)) {
+    await t.test(filter, async () => {
+      assert.deepEqual(ids((await control.hist(leader, args)).rows), [row.id]);
+      const result = await access.hist(leader, args);
+      assert.deepEqual([result.ok, result.code, result.rows, JSON.stringify(result).includes(row.body)],
+        [false, 'classifier-missing', [], false]);
+    });
   }
 });
 
@@ -348,7 +367,7 @@ test('U11 跨项目共享只读授权受角色、期限、撤销和卡片权限�
   const history = [{ id: 'b-hist', project: 'B', cardId: 'dep', layer: 'shared', asOf: stamp(start) },
     { id: 'b-private-hist', project: 'B', cardId: 'dep', layer: 'private', owner: 'auditor' }];
   let now = start;
-  const access = createAccess({ entries, history, now: () => now });
+  const access = createAccess({ entries, history, now: () => now, classifySensitive });
   const request = { sourceProject: 'B', recipient: worker.principal, reason: 'Declared dependency',
     expiresAt: stamp(start + day) };
   const check = async (binding, enabled, phase) => {
@@ -399,6 +418,47 @@ test('U11 跨项目共享只读授权受角色、期限、撤销和卡片权限�
   await check(worker, true, '新授权生效');
   assert.equal((await access.revoke(superBinding, renewed.grant.id)).ok, true);
   await check(worker, false, '已撤销');
+});
+
+test('Goal 4e cross-project grants survive restart and revocation and expiry disable all reads', async t => {
+  const { createMemoryStore } = await import('./store.mjs');
+  const sourceProject = 'B';
+  const entry = item('b-note', { project: sourceProject });
+  const superBinding = session('super');
+  let state = { entries: [entry], changes: [change(1, entry)], seq: 1 };
+  const open = (time = start) => createMemoryStore({
+    now: () => time, classifySensitive,
+    readState: () => structuredClone(state),
+    commitState: next => { state = structuredClone(next); },
+  }).access;
+  const check = async (access, expected) => {
+    assert.deepEqual({
+      index: ids((await access.index(leader, { project: sourceProject })).rows),
+      search: ids((await access.search(leader, { project: sourceProject, query: 'probe' })).rows),
+      show: (await access.show(leader, entry.id, { project: sourceProject })).item?.body ?? null,
+      attachments: ids((await access.attachments(leader, { project: sourceProject, keywords: ['probe'] })).rows),
+      delta: ids((await access.delta(leader, { cursor: 0 })).rows),
+    }, {
+      index: expected, search: expected, show: expected.length ? entry.body : null, attachments: expected, delta: expected,
+    });
+  };
+  const access = open();
+  await check(access, []);
+  const result = await access.grant(superBinding, { sourceProject, recipient: leader.principal,
+    reason: 'Read the dependency notes', expiresAt: stamp(start + day) });
+  assert.equal(result.ok, true, JSON.stringify(result));
+  await check(access, [entry.id]);
+  await t.test('active grant after restart', async () => {
+    await check(open(start + day - 1), [entry.id]);
+  });
+  await t.test('expired grant after restart', async () => {
+    await check(open(start + day), []);
+  });
+  await t.test('revoked grant after restart', async () => {
+    assert.equal((await access.revoke(superBinding, result.grant.id)).ok, true);
+    await check(access, []);
+    await check(open(), []);
+  });
 });
 
 for (const [name, superProject, targetProject] of [

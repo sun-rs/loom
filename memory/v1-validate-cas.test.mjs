@@ -90,11 +90,17 @@ test('Goal 3c store.write refuses every body-writing operation without a sensiti
     return { store, commits, readState };
   };
   for (const [actor, request] of requests) {
+    await t.test(`${request.op} authorization failure with a classifier`, async () => {
+      const reviewer = binding('review-session', 'reviewer');
+      const result = await seedStore.write(reviewer, request);
+      assert.deepEqual([result.ok, result.code], [false, 'forbidden']);
+      assert.deepEqual(readState(), before);
+    });
     await t.test(request.op, async () => {
       const { store, commits, readState } = reopenWithoutClassifier();
       const result = await store.write(actor, request);
-      assert.deepEqual([result.ok, commits.length], [false, 0]);
       assert.deepEqual(readState(), before);
+      assert.deepEqual([result.ok, result.code, commits.length], [false, 'classifier-missing', 0]);
     });
   }
 
@@ -113,6 +119,27 @@ test('Goal 3c store.write refuses every body-writing operation without a sensiti
     assert.ok(!Object.hasOwn(state.files, itemPath(id)));
     assert.ok(!JSON.stringify(state).includes(draft.body));
   });
+});
+
+test('Goal 4b/d store history requires a classifier for raw and persisted records', async t => {
+  const row = { id: 'history-id', project, sessionId: worker.sessionId, layer: 'shared', body: 'Original history body.' };
+  const sources = {
+    readRaw: { readRaw: async () => [row] },
+    snapshot: { readState: async () => ({ history: [row] }) },
+  };
+  const filters = { id: { id: row.id }, project: { project }, sessionId: { sessionId: row.sessionId }, all: undefined };
+  for (const [source, options] of Object.entries(sources)) {
+    const { store } = await fixture({ ...options, classifySensitive: undefined });
+    const { store: control } = await fixture(options);
+    for (const [filter, args] of Object.entries(filters)) {
+      await t.test(`${source} by ${filter}`, async () => {
+        assert.deepEqual((await control.access.hist(auditor, args)).rows.map(record => record.id), [row.id]);
+        const result = await store.access.hist(auditor, args);
+        assert.deepEqual([result.ok, result.code, result.rows, JSON.stringify(result).includes(row.body)],
+          [false, 'classifier-missing', [], false]);
+      });
+    }
+  }
 });
 
 test('U05 validates Markdown, deduplicates by layer and rebuilds the index', async () => {
