@@ -112,8 +112,7 @@ export function authorizeSocketCommand(command, args, actor) {
   else if (['assign', 'keep', 'release'].includes(command)) allowed = role === 'leader' || role === 'super';
   else if (command === 'audit-findings') {
     allowed = [args.id, args.category, args.evidence, args.regression].every(value => value === undefined) || role === 'auditor';
-  }
-  else if (command === 'worker-check') allowed = role === 'worker';
+  } else if (command === 'worker-check') allowed = role === 'worker';
   else if (command === 'worker-handoff') {
     allowed = args.target === undefined ? role === 'worker' : ['leader', 'auditor', 'super'].includes(role);
   }

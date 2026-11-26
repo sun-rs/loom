@@ -33,8 +33,8 @@ export function workerTemporary(row) {
 export function workerEnvironment(row) {
   if (row.role !== 'worker') return {};
   const { root, tmp, parent } = workerTemporary(row);
-  const home = privateDirectory(join(root, 'h'));
-  const gitConfig = join(home, '.gitconfig');
+  const workerHome = privateDirectory(join(root, 'h'));
+  const gitConfig = join(workerHome, '.gitconfig');
   // Retain only the commit identity normally found through the launcher HOME.
   // A worktree's own config still takes precedence.
   if (!lstatSync(gitConfig, { throwIfNoEntry: false })) {
@@ -47,12 +47,12 @@ export function workerEnvironment(row) {
     } catch (error) { if (error.code !== 'EEXIST') throw error; }
   }
   // Zsh uses TMPPREFIX for heredocs, independently of TMPDIR.
-  return { HOME: home, TMPDIR: tmp, TMP: tmp, TEMP: tmp, LOOM_WORKER_TMP: parent ?? tmp,
-    TMPPREFIX: join(tmp, 'zsh'), ZDOTDIR: home,
+  return { HOME: workerHome, TMPDIR: tmp, TMP: tmp, TEMP: tmp, LOOM_WORKER_TMP: parent ?? tmp,
+    TMPPREFIX: join(tmp, 'zsh'), ZDOTDIR: workerHome,
     GIT_CONFIG_GLOBAL: gitConfig, GIT_CONFIG_COUNT: '1',
     GIT_CONFIG_KEY_0: 'maintenance.auto', GIT_CONFIG_VALUE_0: 'false',
-    XDG_CONFIG_HOME: privateDirectory(join(home, 'config')), XDG_CACHE_HOME: privateDirectory(join(home, 'cache')),
-    XDG_DATA_HOME: privateDirectory(join(home, 'data')), XDG_STATE_HOME: privateDirectory(join(home, 'state')),
+    XDG_CONFIG_HOME: privateDirectory(join(workerHome, 'config')), XDG_CACHE_HOME: privateDirectory(join(workerHome, 'cache')),
+    XDG_DATA_HOME: privateDirectory(join(workerHome, 'data')), XDG_STATE_HOME: privateDirectory(join(workerHome, 'state')),
     XDG_RUNTIME_DIR: tmp };
 }
 

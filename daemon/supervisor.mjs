@@ -1082,12 +1082,12 @@ ${details}`, {
       },
       now,
       messageIssue,
-      canDispatchMessage: message => !sessions.holdsForHandover(message) && !rotation.holds(message.target.addr) &&
-        v2.deliverable(message) && (() => {
-          const job = sessions.jobs.get(message.target.addr);
-          if (!job?.handoverItems?.length || !job.handoverBound || message.rotationActivation) return true;
-          return mail.messages.some(item => item.id === activationId(job) && item.received && !deliveryFailed(item));
-        })(),
+      canDispatchMessage(message) {
+        if (sessions.holdsForHandover(message) || rotation.holds(message.target.addr) || !v2.deliverable(message)) return false;
+        const job = sessions.jobs.get(message.target.addr);
+        if (!job?.handoverItems?.length || !job.handoverBound || message.rotationActivation) return true;
+        return mail.messages.some(item => item.id === activationId(job) && item.received && !deliveryFailed(item));
+      },
       stallMs: policy.delivery?.stallMs ?? uncertainWindow ?? defaultStallMs,
       coalesceMs: policy.delivery?.coalesceMs ?? defaultCoalesceMs,
       async decorate(message, peers) {

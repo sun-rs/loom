@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict';
-import { execFile, fork, spawn } from 'node:child_process';
+import { execFile, mkdtempSync, spawn } from '../fixtures/test-process.mjs';
 import { createHash, randomUUID } from 'node:crypto';
 import { once } from 'node:events';
-import { existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
-import { createConnection, createServer } from 'node:net';
+import { existsSync, lstatSync, mkdirSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
+import { createServer } from 'node:net';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
@@ -11,6 +11,7 @@ import { fileURLToPath } from 'node:url';
 import { test } from 'node:test';
 import { promisify } from 'node:util';
 import { socketPath } from '../cli/project.mjs';
+import { connectUnix } from '../lib/unix-socket.mjs';
 import { clientCapability, socketCapabilities } from './socket-auth.mjs';
 import { preparePeerAuth } from './peer-auth.mjs';
 import { createSupervisor } from './supervisor.mjs';
@@ -21,7 +22,7 @@ const daemon = fileURLToPath(new URL('../bin/loomd', import.meta.url));
 
 function wire(project, command, args, identity = {}) {
   return new Promise((resolve, reject) => {
-    const socket = createConnection(socketPath(project));
+    const socket = connectUnix(socketPath(project));
     let text = '';
     socket.setEncoding('utf8');
     socket.once('connect', () => socket.write(JSON.stringify({ command, args, ...identity }) + '\n'));
@@ -199,7 +200,7 @@ test('kernel ancestry binds a legacy TUI descendant to its recorded pane birth',
       (error, stdout) => process.send(error ? null : JSON.parse(stdout))));
   `);
   const created = Date.now();
-  const pane = fork(rootSource, { stdio: ['ignore', 'ignore', 'ignore', 'ipc'] });
+  const pane = spawn(process.execPath, [rootSource], { stdio: ['ignore', 'ignore', 'ignore', 'ipc'] });
   const exited = once(pane, 'exit');
   let terminal;
   let server;

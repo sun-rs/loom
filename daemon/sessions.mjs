@@ -643,7 +643,7 @@ export function ownedSessions(project, index, report, {
     if (compactHandover) {
       // Keep a fresh TUI's startup wire within a single holder chunk.
       const pointer = replyForDelivery(project, prompt, 0);
-      prompt = `${pointer} relative to $LOOM_PROJECT. Read the entire briefing and copy its final HANDOVER-ACK line verbatim onto the first line of your final reply. Include the SHAs and paths you verified. Follow the briefing's report format. For v2, write MISMATCH on line two if a fact differs and finish the turn. When Loom sends 接管生效, start the Do now items and follow Next action.`;
+      prompt = `${pointer} relative to $LOOM_PROJECT. Read the briefing. Start your reply with its exact HANDOVER-ACK, then verify the SHAs and paths in its format. For v2, report differences on line two with MISMATCH and stop. When Loom sends 接管生效, follow Do now and Next action.`;
     }
     let checkpoint;
     if (row.role === 'worker') {

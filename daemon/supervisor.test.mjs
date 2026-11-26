@@ -2194,6 +2194,7 @@ test('an opt-in resident compaction limit proposes rotation at the idle card bou
   runtime.finish('Card boundary');
   await d.tick();
   assert.equal(f.read('loomd/self-rotation.json')[leader.addr].signal.reason, 'compaction');
+});
 
 test('invariant [persistence] audit-only findings are counted once, survive restart, and need a regression before phase completion', async t => {
   const f = fixture(t);
@@ -2214,6 +2215,7 @@ test('invariant [persistence] audit-only findings are counted once, survive rest
   await assert.rejects(d.handle('notifications', { phase: record.phase, complete: 'Complete' }, leader.addr), { code: 'audit-findings-open' });
   await d.shutdown();
   d = f.daemon();
+  await d.reattach([]);
   const close = { phase: record.phase, id: record.id, regression: 'fingerprint.test.mjs' };
   await assert.rejects(d.handle('audit-findings', close, auditor.addr), { code: 'invalid-arguments' });
   writeFileSync(join(f.project, close.regression), "import test from 'node:test';\ntest('retry retains fingerprint', () => {});\n");
@@ -2611,10 +2613,10 @@ async function v2Fixture(t, options) {
   await d.tick();
   f.sessions.get(leader.addr).finish('Ready.');
   await d.tick();
-  const note = async row => {
+  const note = async (row, outstanding = '') => {
     const { rotation } = await d.handle('rotate', { self: true, prepare: true }, row.addr);
     writeFileSync(rotation.notePath, rotation.requiredFields.map(field => `## ${field}\nChecked proof.txt.` +
-      (field === 'Status' ? '\n' + Object.entries(rotation.repository).map(([name, value]) => `${name}: ${value}`).join('\n') : '')).join('\n\n'));
+      (field === 'Status' ? '\n' + Object.entries(rotation.repository).map(([name, value]) => `${name}: ${value}`).join('\n') : '')).join('\n\n') + outstanding);
     return rotation;
   };
   const command = (action, args = {}, actor = superRole) => d.handle('rotation-policy', { action, ...args }, actor.addr);
@@ -2632,7 +2634,7 @@ test('v2 holds the predecessor read-only until the other senior verifies, then r
   const { notePath } = await note(leader);
   writeFileSync(notePath, 'Missing required headings.');
   await assert.rejects(d.handle('rotate', { self: true }, leader.addr), { code: 'rotation-note-required' });
-  await note(leader);
+  await note(leader, '\n\n## Do now\n- Continue card `CARD-NEXT`.');
   await d.handle('rotate', { self: true }, leader.addr);
   const queued = await d.handle('send', { target: leader.addr, mode: 'queue', text: 'HOLD resume card' }, superRole.addr);
   await d.tick();
@@ -2647,9 +2649,11 @@ test('v2 holds the predecessor read-only until the other senior verifies, then r
   const { brief } = handoverBrief(f, next);
   assert.match(brief, /当前事实卡[\s\S]*HEAD: [a-f0-9]{40}/);
   assert.match(brief, new RegExp(queued.id + ' reroute'));
+  assert.match(brief, /^## Do now\n- Continue card `CARD-NEXT`\./);
   f.sessions.get(next).finish(answer(next));
   await d.tick();
   assert.equal((await d.handle('state', { target: 'leader' })).addr, leader.addr);
+  assert.equal(f.read('inbox/state.json').messages.some(item => item.target.addr === next && item.rotationActivation), false);
   await assert.rejects(command('verify', { target: next, verdict: 'pass', ...evidence }), { code: 'permission-denied' });
   await command('verify', { target: next, verdict: 'pass', ...evidence }, auditor);
   await d.tick();
@@ -2658,6 +2662,7 @@ test('v2 holds the predecessor read-only until the other senior verifies, then r
   assert.equal((await d.handle('state', { target: leader.addr })).state, 'exited');
   assert.equal(f.read('inbox/state.json').messages.find(item => item.id === queued.id).target.addr, next);
   const activation = f.read('inbox/state.json').messages.find(item => item.target.addr === next && item.rotationVerification);
+  assert.match(activation.text, /### Do now[\s\S]*CARD-NEXT/);
   assert.ok(f.prompts.some(item => item.addr === next && item.input.includes('立即执行交接单中触发条件已满足的首个动作')),
     JSON.stringify({ activation: activation && [activation.phase, activation.issue, activation.pendingReason, activation.typedAt],
       sent: f.prompts.filter(item => item.addr === next).map(item => item.input.slice(0, 370)) }));
