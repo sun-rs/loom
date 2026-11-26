@@ -15,7 +15,7 @@ const turnLimit = 3;
 const maxNoteBytes = 12_000;
 const validText = text => typeof text === 'string' && text.trim() && !/[\x00-\x08\x0b\x0c\x0e-\x1f\x7f-\x9f]/.test(text);
 
-export function selfRotation(project, { sessions, index, mail, notifications, now, spawn, inFlight, report, v2, cleanBoundary }) {
+export function selfRotation(project, { sessions, index, mail, notifications, now, spawn, failHandover, inFlight, report, v2, cleanBoundary }) {
   const directory = join(runtimeDirectory(project), 'rotation-notes');
   const stateFile = join(runtimeDirectory(project), 'self-rotation.json');
   const state = JSON.parse(readText(stateFile, '{}'));
@@ -28,7 +28,7 @@ export function selfRotation(project, { sessions, index, mail, notifications, no
   }
   const notePath = row => join(directory, row.addr + '.md');
   const active = row => row?.endedAt === null && rotatingRoles.includes(row.role) &&
-    sessions.jobs.has(row.addr) && !sessions.jobs.get(row.addr).stopping &&
+    sessions.jobs.has(row.addr) && !sessions.jobs.get(row.addr).stopping && !sessions.jobs.get(row.addr).handoverFailure &&
     (!sessions.jobs.get(row.addr).handoverAck || sessions.jobs.get(row.addr).handoverBound) &&
     sessions.routeParent(row.addr)?.addr === row.addr;
   const progress = addr => state[addr] ??= {};
@@ -176,7 +176,7 @@ export function selfRotation(project, { sessions, index, mail, notifications, no
         save();
       } else if (!pending.v2 && now() - pending.at >= timeLimit) {
         if (job) {
-          await sessions.failSpawn(job, new Error('self-rotation-overdue'));
+          failHandover(job, 'self-rotation-overdue');
           fail(row, entry, 'self-rotation-overdue');
         } else {
           delete entry.request;

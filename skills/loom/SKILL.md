@@ -43,13 +43,21 @@ description: 在 Loom 中启动、指挥、复核或接手由 Super、Auditor、
 6. 把耗时验收交给 Worker，禁止用后台 Bash 等结果。最终回复首行直接写 `DONE`、`BLOCKED`、`FAILED` 等结论标签，依据从下一段开始。确认收到时用 `NOREPLY`。
 7. 收到换班提示，在当前卡结算后按[交班模板](#换班与收尾)写下执行判断和在途卡片，运行 `"$LOOM_BIN" rotate --self` 并结束本轮。v2 失败后由前任继续执行并停止本阶段换班。loomd 通知 Super。
 
+- 一卡一 Worker 做到底。卡住后恢复、R1/R2 不改接口的局部返工交回原 Worker。
+- 跨卡仅复用同领域、同工作树的紧邻小卡，默认已用 ≤60%、累计压缩 ≤1，且上一卡无已核实事实错误或越权。用 `loom send --next-card`，回执用 `--reason` 记选择。
+- 已压缩且剩余上下文再次低于 15% 时，在步骤边界收齐交接单后换人。交接单列任务、分支/SHA、WIP、生效裁决及已过和未过的验收。项目可配置阈值。
+- 连续 10 分钟无进展，或确认造假、越权时，可中途换人。用 `loom worker-handoff <目标>` 取交接草稿，确认造假或越权时附 `--reason fabrication|overreach --evidence TEXT`。
+- 换领域、方向被否、R3、造假或越权时新建 Worker，修复卡附精确的 RED 复现。
+- 新 Worker 开局收到卡面约定、适用裁决和相关记忆。首报确认分支、基线 SHA、WIP 行数和裁决。核不上即停止并报 BLOCKED。
+
 Leader 和 Auditor 起草卡片时可定点读取最多 200 行。测试、构建、合入、广域读取和循环查状态优先交给 Worker。确有必要时，在工具被拒后用 `"$LOOM_BIN" senior-tool --reason "理由" -- "命令"` 重试，输出只保留最后 40 行。loomd 认定执行或投递故障时可省略理由，回执记录 `worker-unavailable`。查看 `loom status` 或 `loom hist` 可追溯拒绝和重试。
 
 ## Worker · 按卡施工
 
 Worker 线统一由 OAR 托管。新增特殊 worker（例如 Claude TUI worker）须实现 OAR runtime 合约，禁止另建 Loom 专用 worker 路径。Worker 宿主随下次派工更新，loomd 升级保留已运行的 detached session-host。见 `docs/HEADLESS.md`。
 
-- 首轮按卡给出的 cwd、可写范围和验收开始。跳过为找 Loom 约定而做的环境探查。修缺陷先稳定复现并保留 RED → GREEN 原件。改既有测试时保留新旧断言的对应关系。
+- 首轮按卡给出的 cwd、可写范围和验收开始。跳过为找 Loom 约定而做的环境探查。修改前运行 `"$LOOM_BIN" worker-check`，首报确认分支、基线 SHA、WIP 行数和裁决。核不上即停止并报 BLOCKED。修缺陷先稳定复现并保留 RED → GREEN 原件。改既有测试时保留新旧断言的对应关系。
+- 在规定的步骤边界换人时，用 `"$LOOM_BIN" worker-handoff --wip TEXT --passed TEXT --pending TEXT` 提交交接单，报告 BLOCKED 并附路径。
 - `--integration` 集成卡在 headless OAR 会话内跑卡面固定候选的项目全量命令。测试临时目录用该卡私有的 `$TMPDIR`，进程查询用 `PATH` 上的 `ps` 或 `$LOOM_TEST_PS`，查询范围为本卡的进程树。保持现有网络和凭据权限。结果写候选 SHA、命令、退出码和计数，完整日志可留在卡片工作树。loomd 从原生轮次采集证据卡，项目 `.project/` 摘要由 Leader 根据证据整理。
 - 测试行数 ≤ 产品行数，只跑受影响的测试。预算已超或下一步将超、事实与卡面不符、发现设计缺口，立即停工并报 `BLOCKED`。编译、测试或权限等执行失败按卡处理，结束时用相应状态。阻塞后等待 Leader 的事件推送，在原会话续作。
 - 结束时只回三行。证据和详细遗留写到卡面指定的制品，回复可附路径。Worker 禁止另发消息。
@@ -72,6 +80,7 @@ Worker 线统一由 OAR 托管。新增特殊 worker（例如 Claude TUI worker�
 - `loom status --project "$PROJECT"` 看项目总览，`loom ls` 查稳定地址，`loom state "$ADDR"` 查在途事项和换班状态。用 `loom hist "$ADDR" --evidence` 查证据卡，`loom hist --wave "$WAVE"` 查波次，`loom hist "$ADDR" --turn "$N" --level L2 --diff` 查单轮提交差异。未提交的改动查证据卡，正文未确认时按历史给出的路径和行号核查原件。
 - Leader、Auditor 和 Super 用 `loom send "$ADDR" --project "$PROJECT" "$TEXT"` 排队发信，也可用 `leader` 或 `auditor` 发送给当前已接任的唯一角色。托管会话默认以 `LOOM_ADDR` 为来源。外部 Super 可用 `--from super` 收取通知回执，并用 `--expect-reply` 请求答复。授权叫停用 `--mode interrupt` 并说明理由。loomd 按投递 SLA 对账并升级停滞投递。
 - Leader 和 Auditor 等待结果超过预期时，运行 `"$LOOM_BIN" status` 检查滞留投递和未回送的回复。
+- 有计划续作时派工加 `--keep-warm`。loomd 在缓存窗口后释放空闲 Worker，合入门禁 `APPROVE` 后关闭该波。需要提前释放时可用 `"$LOOM_BIN" release "$TASK"`。
 
 ## 换班与收尾
 

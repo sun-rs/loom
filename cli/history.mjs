@@ -8,6 +8,7 @@ import { nativeRanges, timestamp, transcriptRows, turnTools } from './turns.mjs'
 import { managedWaveKey } from '../relay/project.mjs';
 import { oarTurnEndHead } from '../daemon/turn-heads.mjs';
 import { seniorToolEvents } from '../daemon/senior-tools.mjs';
+import { workerCardId } from '../daemon/worker-retention.mjs';
 
 const at = value => Number.isFinite(timestamp(value)) ? timestamp(value) : null;
 const iso = time => at(time) === null ? null : new Date(at(time)).toISOString();
@@ -48,6 +49,7 @@ function matchingCards(session, turns, artifacts) {
   const observations = [...journalTurns(journal).values()];
   const hooks = artifacts?.turnHeads(session.addr) ?? [];
   const messages = artifacts?.messages().filter(message => message.target?.addr === session.addr) ?? [];
+  const firstId = session.role === 'worker' ? artifacts?.job(session.addr)?.firstId : undefined;
   const completions = messages.flatMap(message => message.completion ? [message.completion] : []);
   const interrupts = messages.filter(message => message.requestedMode === 'interrupt' && message.stoppedAt != null);
   const used = new Set();
@@ -97,10 +99,11 @@ function matchingCards(session, turns, artifacts) {
   return entries.map(entry => {
     const { turn, observation, completion, hook } = entry;
     const cards = artifacts ? cardsFor(artifacts.cards(session.addr), turn, observation, completion) : [];
+    const nextCard = observation?.end && firstId && workerCardId(messages, firstId, observation.end) !== firstId;
     return { ...entry, turn: !turn.reply && completion?.body ? { ...turn, reply: completion.body } : turn,
       cards, journalPath: journal?.path, heads: {
       start: observation?.start.observedAt ? { head: observation.start.head, observedAt: observation.start.observedAt } : hook?.start ?? null,
-      end: oarTurnEndHead(artifacts?.project, session, observation?.start, observation?.end) ?? hook?.end ?? null,
+      end: oarTurnEndHead(artifacts?.project, session, observation?.start, observation?.end, { nextCard }) ?? hook?.end ?? null,
     } };
   });
 }

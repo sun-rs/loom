@@ -272,6 +272,7 @@ export function trackOar(project, row, session, onError, incarnation, onExit) {
 
 export function oarSnapshot(runtime, events, ended) {
   const status = runtime?.session.status().value;
+  const contextUsage = runtime?.session.contextUsage?.()?.value;
   const userPrompt = !ended && !status?.released && runtime?.userPrompt?.();
   const state = ended || status?.released ? 'finished' : userPrompt?.kind ?? (!status ? 'unknown' :
     status.kind === 'running' ? 'busy' : 'idle');
@@ -282,7 +283,8 @@ export function oarSnapshot(runtime, events, ended) {
     since: current?.since ?? status.lastEventAt,
   } : undefined;
   return { state, terminal: { turn: current?.turn ?? events.findLast(event => event.type === 'turn-end')?.turn ?? 0 },
-    active, events, ...(userPrompt && { userPrompt }), strictEnd: true, runtimeStatus: status, streamId: runtime?.streamId };
+    active, events, ...(userPrompt && { userPrompt }), strictEnd: true,
+    runtimeStatus: status && (contextUsage ? { ...status, contextUsage } : status), streamId: runtime?.streamId };
 }
 
 export function oarEnd(frame, observation) {

@@ -2,6 +2,7 @@ import { basename } from 'node:path';
 import { attentionBoard, newestNoticeFirst, routineSuperReceipt } from '../daemon/status-board.mjs';
 import { pyramidSampleReady } from './cost.mjs';
 import { accountRows, duration } from './status-accounts.mjs';
+import { memoryLabel, workerMetricsLabel } from './status.mjs';
 import { box, columns, inside, meter, pad, row, safe, table, theme, truncate, widthOf, wrap } from './status-layout.mjs';
 
 export const pages = ['Board', 'Workers', 'Gates', 'Notices', 'Cost'];
@@ -17,7 +18,7 @@ const tokenCount = new Intl.NumberFormat('en-US');
 const itemFor = (id, title, fields) => ({ id, title, fields });
 const age = (at, now) => duration(at == null ? NaN : now - at);
 const tones = new Map([
-  ...['idle', 'ready', 'running', 'busy', 'completed', 'PASS', 'DONE'].map(state => [state, 'good']),
+  ...['idle', 'idle-warm', 'working', 'ready', 'running', 'busy', 'completed', 'PASS', 'DONE'].map(state => [state, 'good']),
   ...['starting', 'stalled', 'awaiting-user', 'quota-wait', 'BLOCKED'].map(state => [state, 'warn']),
   ...['stuck', 'refused', 'auth-expired', 'silent-hang', 'REJECT', 'FAILED'].map(state => [state, 'bad']),
 ]);
@@ -86,7 +87,7 @@ export function boardView(project, { board, error } = {}, { width = 80, now = Da
   const frame = body => ({ header, body: [...tail, ...body], footer: truncate(footer, width) });
   if (!board) return frame([]);
 
-  const { roles = [], workers = [], delivery, gates = [], notifications, pyramids = [], layout } = board;
+  const { roles = [], workers = [], delivery, gates = [], notifications, pyramids = [], layout, memory, workerMetrics = [] } = board;
   const samplesReady = pyramids.some(pyramidSampleReady);
   const warmingTypes = new Set(['consumption-pyramid', 'senior-tool-output-share']);
   const notices = (notifications?.last ?? [])
@@ -102,6 +103,7 @@ export function boardView(project, { board, error } = {}, { width = 80, now = Da
       const item = itemFor('role:' + role.addr, title + ' · ' + show(role.addr), [
         ['Role', role.role], ['CLI / model', [role.cli, role.model].filter(Boolean).join(' · ')],
         ['State', role.state], ['Herdr space ID', layout?.space?.id], ['Herdr tab ID', tab?.id],
+        ['Compactions', role.compactions], ['Rotation', role.rotationDue ? 'Rotate at card boundary' : undefined],
         ['Terminal ID', tab?.terminal], ['Session UUID', role.sessionId], ['Working directory', role.cwd],
         ['Transcript path', role.transcriptPath], ['Context input tokens', role.contextTokens],
         ['Model window', role.contextWindow != null && role.contextWindow > 0 ?
@@ -113,6 +115,7 @@ export function boardView(project, { board, error } = {}, { width = 80, now = Da
       const context = clickLine(`Context ${ctx} · activity ${age(role.activityAt, now)} · ${shortAddress(role.addr)}`, item);
       return [row(marker(item, [show(role.cli), role.model && show(role.model)].filter(Boolean).join('·')) +
         '  ' + badge(role.state, paint), item), context,
+      ...(role.rotationDue ? [row(paint('warn', 'Rotate at card boundary'))] : []),
       ...(role.awaitingHandover ? [row(paint('warn', 'Awaiting handover'))] : [])];
     });
     if (!cards.length) cards.push(row(paint('muted', 'Vacant')));
@@ -126,7 +129,7 @@ export function boardView(project, { board, error } = {}, { width = 80, now = Da
         ['Oldest pending', group?.oldestAgeMs == null ? undefined : duration(group.oldestAgeMs)]]),
   ];
   const deliveryItem = itemFor('delivery', 'Delivery counts', deliveryDetails);
-  const liveWorkers = workers.filter(worker => worker.endedAt == null && !['ended', 'released'].includes(worker.state));
+  const liveWorkers = workers.filter(worker => worker.endedAt == null && !['ended', 'released', 'offline', 'closed'].includes(worker.state));
   const openGates = gates.filter(gate => !gate.superseded && gate.completedAt == null && gate.waitingOn !== null)
     .map(gate => gate.waitingOn ? gate : { ...gate, waitingOn: 'auditor' });
   const attention = board.attention ?? attentionBoard({ counts: delivery?.counts ?? {}, allTime: deliveryTotals ?? { counts: {} } },
@@ -149,7 +152,7 @@ export function boardView(project, { board, error } = {}, { width = 80, now = Da
     const labels = Object.entries(delivery?.counts ?? {}).map(([state, count]) =>
       paint(count && ['refused', 'stalled'].includes(state) ? 'warn' : 'muted', state + ' ' + count));
     const idle = liveWorkers.filter(worker => worker.state === 'idle').length;
-    const released = workers.filter(worker => worker.state === 'released' || worker.releasedAt != null).length;
+    const released = workers.filter(worker => ['released', 'offline'].includes(worker.state) || worker.releasedAt != null).length;
     const ended = workers.length - liveWorkers.length - released;
     const links = [
       [1, 'Workers', `${liveWorkers.length - idle} active · ${idle} idle · ${released} released${ended ? ' · ' + ended + ' ended' : ''}`],
@@ -167,16 +170,32 @@ export function boardView(project, { board, error } = {}, { width = 80, now = Da
   }
 
   function workerTable(w) {
+    const showRetention = workers.some(worker => worker.retention);
     const columns = [
       { title: 'Task', min: 8, priority: 0 }, { title: 'Wave', min: 8, priority: 3 }, { title: 'State', min: 5, priority: 2 },
-      { title: 'CLI·model', priority: 1 }, { title: 'Addr', min: 8, priority: 3 }, { title: 'Age' }, { title: 'Result', priority: 3 },
+      { title: 'CLI·model', priority: 1 }, { title: 'Addr', min: 8, priority: 3 }, { title: showRetention ? 'Warm' : 'Age' }, { title: 'Result', priority: 3 },
+      ...(showRetention ? [{ title: 'Ctx', priority: 4 }, { title: 'Cmp', priority: 5 }, { title: 'Reuse', priority: 6 }] : []),
     ];
     const records = showEnded ? workers : liveWorkers;
     const entries = records.map(worker => {
+      const retention = worker.retention;
+      const countdown = retention?.keep || retention?.keepWarm ? 'keep' : retention?.remainingMs != null ?
+        Math.ceil(retention.remainingMs / 1000) + 's' : '—';
+      const context = worker.contextPercent == null ? '—' : `${Math.round(worker.contextPercent)}%`;
+      const reuse = worker.reuse === 'same-card-only' ? 'same card' : worker.reuse;
       const item = itemFor('worker:' + worker.addr, 'Worker · ' + show(worker.task), [
         ['Address', worker.addr], ['CLI / model', [worker.cli, worker.model].filter(Boolean).join(' · ')],
         ['Wave', worker.wave], ['State', worker.state], ['Result', worker.lastResult], ['Session UUID', worker.sessionId],
         ['Working directory', worker.cwd], ['Transcript path', worker.transcriptPath],
+        ['Warm countdown', countdown], ['Context', context], ['Last result', worker.lastResultTag],
+        ['Compactions', worker.compactions], ['Reuse', reuse === 'same card' ? 'Same card only' : reuse],
+        ['Reuse limit', worker.retirementReason],
+        ['Context after compaction', worker.contextAfterCompactionPercent == null ? undefined :
+          `${Math.round(worker.contextAfterCompactionPercent)}%`],
+        ['First report check', worker.firstReportCheck?.status],
+        ['Check mismatch', worker.firstReportCheck?.mismatches?.join(', ')],
+        ['Handoff reason', worker.handoff?.reason], ['Handoff sheet', worker.handoff?.path],
+        ['Closure', retention?.closeReason], ['Release', retention?.releasedBy],
       ]);
       let state = show(worker.state);
       if (state === 'idle' && Number.isFinite(worker.releaseAt)) {
@@ -184,13 +203,18 @@ export function boardView(project, { board, error } = {}, { width = 80, now = Da
       }
       return { item, cells: [tableLabel(item, show(worker.task)), show(worker.wave),
         paint(tones.get(worker.state) ?? 'muted', state), [show(worker.cli), worker.model && show(worker.model)].filter(Boolean).join('·'),
-        shortAddress(worker.addr), age(worker.startedAt, now), worker.lastResult ? badge(worker.lastResult, paint) : '—'] };
+        shortAddress(worker.addr), showRetention ? countdown : age(worker.startedAt, now),
+        (worker.lastResultTag ?? worker.lastResult) ? badge(worker.lastResultTag ?? worker.lastResult, paint) : '—',
+        ...(showRetention ? [context, show(worker.compactions), show(reuse)] : [])] };
     });
     const toggle = { id: 'workers:filter', toggle: true };
     const label = showEnded ? 'All workers · a Show live only' : `Live workers · a Show all (${workers.length - liveWorkers.length} inactive)`;
     return panel(w, `Workers · ${records.length}`, [row(marker(toggle, paint('accent', label)), toggle),
       ...entries.length ? table(inside(w), columns, entries, paint) : [row(paint('muted', 'No workers in this view'))]]);
   }
+
+  const metrics = () => workerMetrics.length ? panel(width, 'Worker metrics by gate', workerMetrics.flatMap(entry =>
+    wrap(workerMetricsLabel(entry), inside(width)).map(line => row(line)))) : [];
 
   function gateList(w) {
     const columns = [{ title: 'Gate', min: 12, priority: 2 }, { title: 'Round' }, { title: 'Verdict', min: 9 },
@@ -255,6 +279,9 @@ export function boardView(project, { board, error } = {}, { width = 80, now = Da
       ...totals.map(({ role, rawTokens, caption }) => row(pad(role, 7) + ' ' +
         meter(100 * (rawTokens ?? 0) / peak, size, paint) + '  ' + caption))];
     });
+    for (const entry of memory ?? []) {
+      lines.push(row([(memory.length > 1 ? safe(basename(entry.project)) : 'Session memory'), memoryLabel(entry)].join(' · ')));
+    }
     return panel(w, 'Cost pyramid · 1h', lines.length ? lines : [row(paint('muted', 'warming up'))]);
   }
 
@@ -272,7 +299,7 @@ export function boardView(project, { board, error } = {}, { width = 80, now = Da
 
   const accounts = () => panel(width, 'Accounts', accountRows(board.accounts, width, now, paint));
   switch (pages[page]) {
-    case 'Workers': return frame(workerTable(width));
+    case 'Workers': return frame([...workerTable(width), ...metrics()]);
     case 'Gates': return frame(gateList(width));
     case 'Notices': return frame(noticeList(width));
     case 'Cost': return frame([...costPyramid(width), ...accounts()]);

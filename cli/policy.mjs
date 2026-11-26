@@ -16,6 +16,23 @@ const defaultMaxActiveWorkers = 3;
 const hardMaxActiveWorkers = 4;
 export const defaultCoalesceMs = 45_000;
 export const defaultReplyBytes = 600;
+export const workerWarmMs = (policy, cli) => policy.workers?.warmMs?.[cli] ?? policy.workers?.idleRetainMs ?? 10 * 60_000;
+export const workerReuseLimits = policy => ({
+  contextPercent: 100 * (policy.workers?.reuseMaxContext ?? 0.6),
+  compactions: policy.workers?.reuseMaxCompactions ?? 1,
+});
+export const workerHandoffLimits = policy => ({
+  remainingPercent: 100 * (policy.workers?.handoffMinRemaining ?? 0.15),
+  compactions: policy.workers?.handoffMinCompactions ?? 1,
+});
+const nonnegativeMs = value => Number.isSafeInteger(value) && value >= 0;
+function validWorkerPolicy(key, value) {
+  if (key === 'idleRetainMs' || key === 'reuseMaxCompactions') return nonnegativeMs(value);
+  if (key === 'reuseMaxContext' || key === 'handoffMinRemaining') return Number.isFinite(value) && value >= 0 && value <= 1;
+  if (key === 'handoffMinCompactions') return Number.isSafeInteger(value) && value >= 1;
+  return key === 'warmMs' && value && typeof value === 'object' && !Array.isArray(value) &&
+    Object.entries(value).every(([cli, ms]) => providers.includes(cli) && nonnegativeMs(ms));
+}
 export const costPriceFields = ['freshInput', 'cacheWrite', 'cacheRead', 'output'];
 export const driftDefaults = Object.freeze({
   netLines: null, budgetRaises: 2, slowCommandFactor: 2, slowCommandSamples: 1,
@@ -83,6 +100,10 @@ export function readPolicy(project, { optional = false } = {}) {
           !Number.isSafeInteger(value) || (['coalesceMs', 'stallMs'].includes(key) ? value < 0 : key !== 'replyBytes' || value < 160)))) {
       throw new Error('Expected nonnegative integer delivery.coalesceMs or delivery.stallMs, or delivery.replyBytes (≥ 160)');
     }
+    if (policy.workers !== undefined && (!policy.workers || typeof policy.workers !== 'object' ||
+        Array.isArray(policy.workers) || Object.entries(policy.workers).some(([key, value]) => !validWorkerPolicy(key, value)))) {
+      throw new Error('Invalid worker cache, reuse or handoff settings');
+    }
     if (policy.drift !== undefined) {
       if (!policy.drift || typeof policy.drift !== 'object' || Array.isArray(policy.drift)) throw new Error('Expected a drift object');
       for (const [key, value] of Object.entries(policy.drift)) {
@@ -103,6 +124,10 @@ export function readPolicy(project, { optional = false } = {}) {
         validateProfiles(entry);
         validateGuidance(role, entry.guidance);
         const rotates = ['leader', 'auditor'].includes(role);
+        if (entry.rotateAtCompactions !== undefined && (!['super', 'leader', 'auditor'].includes(role) ||
+            !Number.isSafeInteger(entry.rotateAtCompactions) || entry.rotateAtCompactions < 1)) {
+          throw new Error(`Expected a positive resident compaction limit for roles.${role}.rotateAtCompactions`);
+        }
         if (entry.toolGuard !== undefined && (!rotates || typeof entry.toolGuard !== 'boolean')) {
           throw new Error('Expected roles.leader.toolGuard or roles.auditor.toolGuard to be a boolean');
         }

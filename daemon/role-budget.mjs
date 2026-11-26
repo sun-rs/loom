@@ -22,6 +22,7 @@ export function rotationReason(policy, role, { gate, inputTokens, contextWindow,
     return 'context-window';
   }
   if (inputTokens > config.maxContextTokens) return 'context-limit';
+  if (compactions >= config.rotateAtCompactions) return 'compaction';
   if (gate && config.rotateAt === 'gate') return 'gate';
 }
 
@@ -114,7 +115,7 @@ export function roleBudget(project, { now, sessions, notifications, batchDeliver
       const at = now();
       const periodic = at - (sampled.get(name) ?? -Infinity) >= sampleIntervalMs;
       const configured = policyV2?.() || [leader, auditor].some(row => row &&
-        ['rotateAt', 'maxContextTokens', 'maxContextFraction', 'minRemainingAfterCompaction']
+        ['rotateAt', 'maxContextTokens', 'maxContextFraction', 'minRemainingAfterCompaction', 'rotateAtCompactions']
           .some(key => policy.roles?.[row.role]?.[key] !== undefined));
       if (!safe) boundaries.delete(name);
       const newBoundary = configured && safe && boundaryKey !== undefined && boundaries.get(name) !== boundaryKey;

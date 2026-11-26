@@ -9,6 +9,7 @@ import { jsonRows, prepareJournal, syncDirectory, writeState } from './io.mjs';
 import { oarControl, oarSnapshot, openOar, trackOar } from './oar.mjs';
 import { processTable } from './processes.mjs';
 import { closeHostChildren, disposeSession, ownedHostChildren, withDeadline } from './session-close.mjs';
+import { idleForRelease } from './worker-retention.mjs';
 
 const oarVersion = () => JSON.parse(readFileSync(new URL('../package.json', import.meta.resolve('@botiverse/oar')))).version;
 const refused = (message, kind = 'input-refused') => Object.assign(new Error(message), { kind });
@@ -143,7 +144,13 @@ export async function main(project, addr, incarnation, release, { ownerGraceMs =
     }
     lastOwnerAt = performance.now();
     if (method === 'claim') return state();
-    if (method === 'close') return close();
+    if (method === 'close') {
+      if (params?.idleStream !== undefined && (params.idleStream !== runtime.streamId || stalled || runtime.error() ||
+          !idleForRelease(oarSnapshot(runtime, runtime.rows, endedAt != null)))) {
+        throw refused('Session is no longer idle', 'status_mismatch');
+      }
+      return close();
+    }
     const { action, id, text: input, active } = params ?? {};
     if (!['prompt', 'steer', 'abort'].includes(action) || !hostUUID.test(id)) throw refused('Invalid session host request');
     const key = `${action}:${id}`;
