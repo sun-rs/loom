@@ -131,6 +131,15 @@ test('loomd trusts launch capabilities over caller, sender, and role hints', { t
   for (const command of ['daemon-stop', 'upgrade-plan', 'upgrade-apply', 'upgrade-holder', 'layout-up', 'layout-adopt', 'switch']) {
     await denied(command, {}, { caller: 'super' });
   }
+  const hostGrant = { target: 'HOST-CARD', tier: 'host', reason: 'Read-only fixture' };
+  await denied('grant', hostGrant, { caller: 'super' });
+  await denied('grant', hostGrant, { caller: 'super', capability: leader.token });
+  await denied('grant', { ...hostGrant, request: true }, { caller: leader.addr, capability: worker.token });
+  const requested = await wire(project, 'grant', { ...hostGrant, request: true }, { capability: leader.token });
+  assert.equal(requested.requested.uses, 1);
+  const issued = await wire(project, 'grant', hostGrant, { capability: external });
+  assert.equal(issued.grant.remaining, 1);
+  assert.match(issued.warning, /not fail-closed for Codex tool paths/);
   await denied('notifications', { take: true }, { caller: 'super' });
   await denied('send', { from: 'super', target: auditor.addr, mode: 'queue', text: 'spoof' }, { caller: 'super' });
   const anon = await wire(project, 'send', { target: auditor.addr, mode: 'queue', id: randomUUID(), text: 'unattributed' });

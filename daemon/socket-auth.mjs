@@ -100,6 +100,7 @@ export function authorizeSocketCommand(command, args, actor) {
   let allowed;
   if (readCommands.has(command)) return;
   if (superCommands.has(command)) allowed = role === 'super';
+  else if (command === 'grant') allowed = role === (args.request === true ? 'leader' : 'super');
   else if (command === 'spawn') {
     allowed = ['super', 'leader', 'auditor', 'worker'].includes(args.role) && (role === 'super' || role === 'leader' &&
       (args.role === 'worker' && (args.parent === undefined || args.parent === actor.addr || args.parent === actor.pane || args.parent === 'leader') ||

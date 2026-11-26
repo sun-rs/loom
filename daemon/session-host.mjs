@@ -166,6 +166,7 @@ export async function main(project, addr, incarnation, release, { ownerGraceMs =
       // Guard failures prove the provider received nothing. The same
       // delivery can be scheduled again after the daemon rechecks state.
     }
+    if (row.hostGrant && Date.now() >= row.hostGrant.expiresAt) throw refused('Host grant expired', 'status_mismatch');
     if (closing || stalled) throw refused('Session host is not ready for another request', 'status_mismatch');
     const entry = { key, id, action, digest, streamId: runtime.streamId, generation: sender.generation,
       sinceSeq: active?.sinceSeq, turnId: active?.turnId, at: Date.now() };
@@ -192,6 +193,7 @@ export async function main(project, addr, incarnation, release, { ownerGraceMs =
 
   try {
     for (const receipt of jsonRows(prepareJournal(journal))) receipts.set(receipt.key, receipt);
+    if (row.hostGrant && Date.now() >= row.hostGrant.expiresAt) throw new Error('Host grant expired before native launch');
     session = await withDeadline(openOar(row, project, row.sessionId), 35_000, 'OAR host startup timed out', 'startup-timeout');
     if (row.sessionId && session.id !== row.sessionId) throw new Error('OAR resumed a different native session');
     let nativeExited = false;
@@ -224,7 +226,8 @@ export async function main(project, addr, incarnation, release, { ownerGraceMs =
     lastOwnerAt = performance.now();
     ownerTimer = setInterval(() => {
       try {
-        if (!stateDirectoryPresent() || performance.now() - lastOwnerAt >= ownerGraceMs) retire();
+        if (!stateDirectoryPresent() || performance.now() - lastOwnerAt >= ownerGraceMs ||
+            row.hostGrant && Date.now() >= row.hostGrant.expiresAt) retire();
       } catch (error) {
         console.error(error.message);
         retire();

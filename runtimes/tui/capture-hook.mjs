@@ -2,6 +2,7 @@ import { appendFileSync, constants, readFileSync } from 'node:fs';
 import { claudePrompt } from '../../adapters/claude/hooks.mjs';
 import claude from '../../adapters/claude/index.mjs';
 import { deliveryId } from '../../inbox/message.mjs';
+import { hostToolDenial } from '../../lib/host-tool-guard.mjs';
 import { recordSeniorToolDenial } from '../../lib/senior-tool-guard.mjs';
 
 // Keep the adapter's hook vocabulary and also capture the fields needed for
@@ -18,7 +19,8 @@ try {
   const event = payload.hook_event_name;
   const { LOOM_SENIOR_TOOL_LOG: guardLog, LOOM_SENIOR_TOOL_PROJECT: project } = process.env;
   if (event === 'PreToolUse' && (!sessionId || payload.session_id === sessionId)) {
-    const denial = recordSeniorToolDenial(guardLog, project, payload.cwd ?? cwd, payload.tool_name, payload.tool_input);
+    const denial = hostToolDenial(payload.tool_name, payload.tool_input) ??
+      recordSeniorToolDenial(guardLog, project, payload.cwd ?? cwd, payload.tool_name, payload.tool_input);
     if (denial) process.stdout.write(JSON.stringify({ hookSpecificOutput: {
       hookEventName: event, permissionDecision: 'deny', permissionDecisionReason: denial,
     } }));

@@ -1,7 +1,7 @@
 import { parseArgs } from 'node:util';
 import { roles } from '../index/index.mjs';
 import { daemonAbsent, request } from '../daemon/rpc.mjs';
-import { control, daemonUsage, spawnHelp, spawnUsage, startDaemon } from './control.mjs';
+import { control, daemonUsage, grantUsage, spawnHelp, spawnUsage, startDaemon, workerGrant } from './control.mjs';
 import { upgrade, upgradePendingExit, upgradeUsage } from './upgrade.mjs';
 import { history, historyReader, waveHistory } from './history.mjs';
 import { callerAddress, managedProject, projectDirectory, projectIndex, projectOption, projectReceipt, projectSessions } from './project.mjs';
@@ -57,6 +57,7 @@ const help = {
   'worker-check': ['loom worker-check [--project DIR]'],
   'worker-handoff': ['loom worker-handoff --wip TEXT --passed TEXT --pending TEXT [--project DIR]',
     'loom worker-handoff <task|addr> [--reason no-progress | --reason fabrication|overreach --evidence TEXT] [--project DIR]'],
+  grant: [grantUsage, 'A Leader can use --request to ask Super for a host grant.'],
   rotate: ['loom rotate --self [--prepare | --reason R] [--project DIR]',
     'loom rotate --target <leader|auditor|ADDR> [--prepare | --reason R] [--cli CLI] [--model MODEL] [--effort EFFORT] [--passive] [--project DIR] (Super)'],
   'rotation-policy': ['loom rotation-policy <scope|ruling|correction|profile|error|incident|spot-check|audit|verify|abort|rule-change> [--project DIR]',
@@ -237,6 +238,10 @@ export async function main(args) {
     if (command === 'spawn' || command === 'daemon') {
       const result = await control(command, rest);
       if (result) emit(result);
+      return 0;
+    }
+    if (command === 'grant') {
+      emit(await workerGrant(rest));
       return 0;
     }
     if (command === 'upgrade') {

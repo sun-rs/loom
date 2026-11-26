@@ -19,7 +19,7 @@ function privateDirectory(path) {
   return path;
 }
 
-export function workerEnvironment(row) {
+export function workerTemporary(row) {
   if (row.role !== 'worker') return {};
   const id = workerAddress.exec(row.addr)?.[1];
   if (!id) throw new Error('Invalid worker address');
@@ -27,8 +27,13 @@ export function workerEnvironment(row) {
   const parent = process.env.LOOM_WORKER_TMP;
   const root = privateDirectory(parent && inDirectory(parent, row.cwd) ?
     join(parent, `w-${id.replaceAll('-', '').slice(0, 24)}`) : join(realpathSync('/tmp'), `lw-${id}`));
+  return { root, tmp: privateDirectory(join(root, 't')), parent };
+}
+
+export function workerEnvironment(row) {
+  if (row.role !== 'worker') return {};
+  const { root, tmp, parent } = workerTemporary(row);
   const home = privateDirectory(join(root, 'h'));
-  const tmp = privateDirectory(join(root, 't'));
   const gitConfig = join(home, '.gitconfig');
   // Retain only the commit identity normally found through the launcher HOME.
   // A worktree's own config still takes precedence.
@@ -188,6 +193,19 @@ export function workerCodexArgs(project, row, env) {
   const filesystem = { ':root': 'read', ...Object.fromEntries(writes.map(path => [path, 'write'])) };
   for (const entry of ['.git', '.agents', '.codex', '.aws']) filesystem[join(row.cwd, entry)] = 'read';
   if (row.integration) for (const root of new Set([row.cwd, project])) filesystem[join(root, '.project')] = 'read';
+  // These rules apply to Codex tools. The native client keeps its normal
+  // provider home for authentication, separate from the shell environment.
+  const home = homedir();
+  const protectedPaths = [
+    join(home, '.codex', 'auth.json'), join(home, '.codex', 'memories'),
+    join(workerProviderEnvironment({ ...row, cli: 'codex' }).CODEX_HOME, 'auth.json'),
+    join(home, '.claude', '.credentials.json'), join(home, '.claude.json'),
+    join(home, '.gemini', 'oauth_creds.json'), join(home, '.gemini', 'antigravity-cli', 'antigravity-oauth-token'),
+    join(home, '.local', 'share', 'opencode', 'auth.json'), join(home, 'Library', 'Keychains'),
+    join(home, '.ssh'), join(home, '.aws', 'credentials'), join(home, '.loom-next', 'provider-homes'),
+    join(row.cwd, '.env'), join(row.cwd, '.codex', 'auth.json'), join(row.cwd, '.aws', 'credentials'),
+  ];
+  for (const path of protectedPaths) if (isAbsolute(path)) filesystem[path] = 'deny';
   const entries = Object.entries(filesystem).map(([key, value]) => `${quote(key)}=${quote(value)}`).join(',');
   const network = 'enabled=true,allow_local_binding=false,enable_socks5=false,allow_upstream_proxy=false,' +
     `proxy_url="http://127.0.0.1:0",unix_sockets={${quote(env.TMPDIR)}="allow"}`;

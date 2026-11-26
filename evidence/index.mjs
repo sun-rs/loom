@@ -130,6 +130,7 @@ export async function forTurn(options) {
         return check ? [check] : [];
       }) });
     }
+    if (options.hostAudit) verification.host = options.hostAudit;
     const reply = finalReply === undefined ? nativeReply : finalReply;
     verification.expectRed = (options.expectRed ?? settings.expectRed) === true;
     const claims = compareClaims(reply, git, verification, failed);
@@ -140,7 +141,10 @@ export async function forTurn(options) {
     await writeOnce(path, JSON.stringify(data, null, 2) + '\n');
   }
   const data = JSON.parse(previous ?? await readFile(path, { encoding: 'utf8', flag: constants.O_RDONLY | constants.O_NOFOLLOW }));
-  await writeOnce(textPath, data.card + '\n');
+  const host = data.verification.host;
+  const hostLog = host ? ['', 'Host command log', host.coverage,
+    ...host.executables.map(entry => JSON.stringify(entry)), ...host.commands.map(entry => JSON.stringify(entry))].join('\n') : '';
+  await writeOnce(textPath, data.card + '\n' + (hostLog && hostLog + '\n'));
   return { path, textPath, card: data.card, data };
 }
 

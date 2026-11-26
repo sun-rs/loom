@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { execFile, execFileSync, spawn as spawnProcess, spawnSync, mkdtempSync } from '../fixtures/test-process.mjs';
 import { createHash, randomUUID } from 'node:crypto';
 import { once } from 'node:events';
-import { existsSync, mkdirSync, readdirSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync, readFileSync, realpathSync, renameSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
@@ -288,6 +288,24 @@ test(`real OAR and hc-shaped TUI prompts share durable idempotency for two concu
   await assert.rejects(f.send(leader.session.addr, 'different', { id: ids[0][0] }), { code: 'id-conflict' });
   assert.equal(f.deliveries(repeated.id).length, 1);
   f.write('verified-concurrency.json', { accepted: 2 * perSender, delivered: 2 * perSender, answered: 2 * perSender, duplicates: 0, fifo: true });
+});
+
+test('Worker native provider probes and launches record a canonical CLI path', { timeout: 25_000 }, async t => {
+  const f = fixtureProject(t);
+  const executable = join(f.project, 'codex');
+  const binary = join(f.project, 'codex-native');
+  renameSync(executable, binary);
+  symlinkSync(binary, executable);
+  await f.start();
+  const leader = await f.spawn('leader', 'LEADER');
+  const worker = await f.spawn('worker', 'CLI-PATH', { parent: leader.session.addr });
+  await f.waitMail(worker.deliveryId);
+  const journal = f.lines(`.project/loomd/sessions/${worker.session.addr}.executables.jsonl`);
+  assert.deepEqual(journal.map(({ at, ...entry }) => entry), [
+    { cli: 'codex', path: binary, operation: 'probe' },
+    { cli: 'codex', path: binary, operation: 'launch' },
+  ]);
+  assert.ok(journal.every(entry => Number.isSafeInteger(entry.at)));
 });
 
 test('real ACP text chunks without a final boundary produce an UNCONFIRMED wave wakeup',

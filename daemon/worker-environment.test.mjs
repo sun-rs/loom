@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { execFile, execFileSync, spawn, spawnSync, mkdtempSync } from '../fixtures/test-process.mjs';
 import { randomUUID } from 'node:crypto';
 import { lstatSync, mkdirSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { homedir, tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { test } from 'node:test';
 import { promisify } from 'node:util';
@@ -90,6 +90,10 @@ test('integration permits limited worktree process listings and keeps the worker
   const baseline = workerCodexArgs(cwd, row, env)[3];
   const integration = workerCodexArgs(cwd, profile, env)[3];
   assert.equal(baseline.split('network=')[1], integration.split('network=')[1]);
+  for (const profileArgs of [baseline, integration]) {
+    assert.ok(profileArgs.includes(`"${join(homedir(), '.codex', 'auth.json')}"="deny"`));
+    assert.ok(profileArgs.includes(`"${join(cwd, '.env')}"="deny"`));
+  }
   assert.ok(integration.includes(`"${join(cwd, '.project')}"="read"`));
   assert.deepEqual(integrationProcessRows(new Map([[2, { pid: 2, ppid: 1, uid: 501 }],
     [3, { pid: 3, ppid: 2, uid: 501 }], [4, { pid: 4, ppid: 2, uid: 502 }]]), 1, 501).map(row => row.pid), [2, 3]);
