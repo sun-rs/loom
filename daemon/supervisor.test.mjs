@@ -1168,6 +1168,10 @@ test('holds queued input and worker results until the Leader’s native briefing
     'handover-from': leader.addr, prompt: 'start replacement\n' + tail,
   });
   assert.equal(retired, undefined);
+  const during = { target: 'leader', text: 'queued by role during handover', mode: 'queue', id: randomUUID() };
+  assert.equal((await d.handle('send', during)).addr, leader.addr);
+  const urgent = await d.handle('send', { target: 'leader', text: 'held interrupt during handover', mode: 'interrupt' });
+  assert.deepEqual([urgent.mode, urgent.downgraded], ['queue', true]);
   await d.tick();
   assert.equal(f.prompts.find(message => message.addr === successor.addr).input.startsWith('[loom:' + deliveryId + ']'), true);
   const { brief, ack } = handoverBrief(f, successor.addr);
@@ -1183,6 +1187,11 @@ test('holds queued input and worker results until the Leader’s native briefing
   await d.tick();
   assert.notEqual((await d.handle('state', { target: leader.addr })).state, 'exited');
   assert.equal(f.prompts.filter(item => item.addr === leader.addr || item.addr === successor.addr).length, 2);
+  const waiting = f.read('inbox/state.json').messages.find(message => message.id === during.id);
+  assert.equal(waiting.target.addr, leader.addr);
+  assert.equal(waiting.phase, 'queued');
+  assert.equal(waiting.typedAt, undefined);
+  assert.equal(f.read('inbox/state.json').messages.find(message => message.id === urgent.id).typedAt, undefined);
   assert.equal((await d.handle('ls', {})).pendingContinuations[0]?.parent ?? leader.addr, leader.addr);
   f.sessions.get(successor.addr).finish(ack);
   await d.tick();
@@ -1190,11 +1199,32 @@ test('holds queued input and worker results until the Leader’s native briefing
   await d.tick();
   const messages = f.read('inbox/state.json').messages;
   assert.equal(messages.find(message => message.id === input.id).target.addr, successor.addr);
+  assert.equal(messages.find(message => message.id === during.id).target.addr, successor.addr);
+  assert.equal(messages.find(message => message.id === urgent.id).target.addr, successor.addr);
+  assert.equal((await d.handle('send', during)).id, during.id);
   assert.equal(messages.find(message => message.id === workerFirst).waveParent, leader.addr);
   assert.equal(messages.find(message => message.waveBatch).target.addr, successor.addr);
   assert.equal(messages.find(message => message.continuationMembers?.includes(continuation.id)).target.addr, successor.addr);
   assert.equal((await d.handle('send', input)).id, input.id);
   await d.shutdown();
+});
+
+test('a role delivery waits for the acknowledgement even if the predecessor has exited', async t => {
+  const f = fixture(t);
+  const d = f.daemon();
+  t.after(d.shutdown);
+  const { session: old } = await f.spawn(d, 'leader', 'L');
+  await d.tick();
+  const { session: next } = await f.spawn(d, 'leader', 'NEXT', undefined, { 'handover-from': old.addr });
+  await d.handle('stop', { target: old.addr });
+  const delivery = await d.handle('send', { target: 'leader', mode: 'queue', text: 'During the vacant slot' });
+  const saved = () => f.read('inbox/state.json').messages.find(message => message.id === delivery.id);
+  await d.tick();
+  assert.deepEqual([saved().target.addr, saved().phase, saved().typedAt], [old.addr, 'queued', undefined]);
+  f.sessions.get(next.addr).finish(handoverBrief(f, next.addr).ack);
+  await d.tick();
+  await d.tick();
+  assert.equal(saved().target.addr, next.addr);
 });
 
 test('integration is a headless worker profile and Loom records the suite in the evidence card', async t => {
@@ -1458,11 +1488,17 @@ test('switches Claude Leader to agy and agy Auditor to Codex under one durable s
   assert.equal(nextAuditor.session.cli, 'codex');
   assert.equal(nextAuditor.selected.fast, true);
   await assert.rejects(d.handle('switch', { role: 'leader', to: '1' }), { code: 'rotation-in-progress' });
+  const duringAuditor = await d.handle('send', { target: 'auditor', mode: 'queue', text: 'A user request during Auditor handover' });
+  assert.equal(duringAuditor.addr, auditor.addr);
   await d.tick();
-  f.sessions.get(nextAuditor.session.addr).finish('Auditor verified `actual.mjs`.');
+  assert.equal(f.read('inbox/state.json').messages.find(message => message.id === duringAuditor.id).phase, 'queued');
+  const auditorAck = handoverBrief(f, nextAuditor.session.addr).ack;
+  f.sessions.get(nextAuditor.session.addr).finish(auditorAck + '\nAuditor verified `actual.mjs`.');
   await d.tick();
   const state = await d.handle('state', { target: nextAuditor.session.addr });
   assert.deepEqual(state.rotations.map(item => [item.role, Boolean(item.verifiedAt)]), [['leader', true], ['auditor', true]]);
+  await d.tick();
+  assert.equal(f.read('inbox/state.json').messages.find(message => message.id === duringAuditor.id).target.addr, nextAuditor.session.addr);
   assert.ok((await d.handle('notifications', { history: true })).notifications.some(item => item.type === 'preferred-fallback'));
 });
 

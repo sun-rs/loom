@@ -3,7 +3,7 @@ import { readFileSync, realpathSync } from 'node:fs';
 import { join } from 'node:path';
 import { promisify } from 'node:util';
 import { projectMessages } from '../adapters/opencode/index.mjs';
-import { hc } from '../inbox/tui.mjs';
+import { hc, hcAt } from '../inbox/tui.mjs';
 import { absoluteCommand, openNativeTui } from '../runtimes/tui/transport.mjs';
 import { codexFastArgs, nativeClaude } from './executables.mjs';
 import { eventPath, readText, writeState } from './io.mjs';
@@ -17,10 +17,14 @@ const exec = promisify(execFile);
 export const paneName = addr => `loom-${addr.replace(/^loom-/, '').replaceAll('-', '').slice(0, 22)}`;
 
 export async function ownedPane(job, row) {
-  const terminal = await hc('get', row.pane ?? paneName(row.addr)).catch(error => {
+  const name = job.herdr?.hcName ?? paneName(row.addr);
+  const call = job.herdr ? hcAt.bind(null, job.herdr.hcCommand) : hc;
+  const terminal = await call('get', row.pane ?? name).catch(error => {
     if (error.kind !== 'not_found') throw error;
   });
-  if (terminal && (terminal.name !== paneName(row.addr) || realpathSync(terminal.cwd) !== row.cwd ||
+  if (job.herdr && !row.pane && terminal?.state === 'finished' && terminal.labels?.['loom.session'] !== row.addr) return;
+  if (terminal && (terminal.name !== name || realpathSync(terminal.cwd) !== row.cwd ||
+      (job.herdr && terminal.labels?.['loom.session'] !== row.addr) ||
       (row.pane && row.pane !== terminal.address) || (job.paneBinding && (
         terminal.created_ms !== job.paneBinding.createdAt || terminal.pid !== job.paneBinding.pid)))) {
     throw new Error(`hc pane identity changed for ${row.addr}`);
@@ -45,10 +49,11 @@ export async function openTui(job, row, project, recordTemporary, recordBinding,
     ...(runner && { LOOM_HOOK_RELEASE: releaseRoot }),
     ...seniorToolEnvironment(project, row),
     ...(job.isolatedWorkerHome && { ...workerEnvironment(row), ...workerProviderEnvironment(row) }) };
-  const name = paneName(row.addr);
+  const name = job.herdr?.hcName ?? paneName(row.addr);
   const guardUnset = env.LOOM_SENIOR_TOOL_LOG ? [] : ['LOOM_SENIOR_TOOL_LOG', 'LOOM_SENIOR_TOOL_PROJECT'];
   const host = await openNativeTui({
     ...row, fast: job.fast, hookSink, ...(runner && { hookRunner: runner }), name, env,
+    ...(job.herdr && { hcCommand: job.herdr.hcCommand, placementLabels: job.herdr.labels }),
     sessionId: job.plannedNativeId, recordTemporary, recordBinding, previous: job.tui, unset: guardUnset,
     allowNativeQuestions: allowNativeQuestions(project, row.role), toolGuard: Boolean(env.LOOM_SENIOR_TOOL_LOG),
     autoTrustWorkspace: job.autoTrustWorkspace, ...(controller && { controllerPath: controllerFile(project) }),

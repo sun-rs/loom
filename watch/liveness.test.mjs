@@ -7,6 +7,28 @@ import { createLiveness, returnedToShell } from './liveness.mjs';
 import { providers } from '../tui/providers.mjs';
 import { promptFrames } from '../adapters/prompt-fixtures.mjs';
 import { screenPrompt } from '../adapters/prompt-state.mjs';
+import { corroboratePrompt, hcStatus } from '../adapters/hc-status.mjs';
+
+test('OSC 7501 corroborates only matching prompt and liveness evidence', async () => {
+  const terminal = { status_ms: 105, created_ms: 100, status: { app: 'antigravity', state: 'blocked', kind: 'question' } };
+  const question = hcStatus(terminal, 'agy');
+  assert.equal(hcStatus(terminal, 'codex'), undefined);
+  assert.equal(hcStatus({ ...terminal, status_ms: 99 }, 'agy'), undefined);
+  assert.equal(corroboratePrompt(undefined, question), undefined);
+  const native = { kind: 'awaiting-choice', since: 101 };
+  assert.equal(corroboratePrompt(native, question, 106), native);
+  assert.equal(corroboratePrompt({ kind: 'awaiting-approval' }, question).corroboratedBy, undefined);
+  assert.equal(corroboratePrompt(native, question).corroboratedBy, 'hc-osc7501');
+
+  const row = { addr: 'agy', startedAt: 100 };
+  const watch = createLiveness({ now: () => 110 });
+  const auth = { ...question, kind: 'auth' };
+  assert.equal((await watch.observe(row, { hcStatus: auth })).health, undefined);
+  const observed = await watch.observe(row, { hcStatus: auth, livenessScreen: { kind: 'auth-fail', text: 'Fixture login expired' } });
+  assert.equal(observed.health.status, 'auth-expired');
+  assert.equal(observed.health.corroboratedBy, 'hc-osc7501');
+  assert.equal(observed.lastProgressAt, 100);
+});
 
 test('liveness distinguishes spinner repaint from native records, output, hooks and real screen changes', async t => {
   const dir = await mkdtemp(join(tmpdir(), 'll-'));

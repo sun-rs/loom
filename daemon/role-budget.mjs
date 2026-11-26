@@ -20,6 +20,8 @@ export function rotationReason(policy, role, { gate, contextTokens, wakes }) {
 
 export function roleBudget(project, { now, sessions, notifications, batchDeliveryId, report }) {
   const sampled = new Map();
+  const pyramids = new Map();
+  const viewed = new Map();
 
   async function context(row, { items, raw }, useLastCall) {
     const nativeInput = items.findLast(item => item.turn.calls?.length)?.turn.calls.at(-1)?.inputTokens;
@@ -100,6 +102,10 @@ export function roleBudget(project, { now, sessions, notifications, batchDeliver
   }
 
   return {
+    pyramid(name) {
+      viewed.set(name, now());
+      return pyramids.get(name);
+    },
     async check(name, rows, policy, { completeGate = false, safeLeader, gateRecorded = false } = {}) {
       const at = now();
       if (!completeGate && !gateRecorded && at - (sampled.get(name) ?? -Infinity) < sampleIntervalMs) return;
@@ -125,10 +131,14 @@ export function roleBudget(project, { now, sessions, notifications, batchDeliver
       try { assessToolOutput(name, rows, reader, events, at); }
       catch (error) { report(`Senior tool output ${name}: ${error.message}`); }
       const lastDrift = events.findLast(event => event.type === driftType);
-      if (at - (lastDrift?.at ?? -Infinity) >= pyramidWindowMs) {
+      const mayNotify = at - (lastDrift?.at ?? -Infinity) >= pyramidWindowMs;
+      const viewNeedsSample = at - (viewed.get(name) ?? -Infinity) <= 60_000 &&
+        at - (pyramids.get(name)?.sampledAt ?? -Infinity) >= 60_000;
+      if (mayNotify || viewNeedsSample) {
         const recent = rows.filter(row => row.endedAt == null || row.endedAt >= at - pyramidWindowMs);
         const { pyramid } = projectCost(project, recent, { now: at, includeAcceptance: false, reader, policy });
-        if (pyramid.inversions.length) {
+        pyramids.set(name, { ...pyramid, sampledAt: at });
+        if (mayNotify && pyramid.inversions.length) {
           const details = pyramid.inversions.map(({ metric, higher, lower, actual, comparedTo }) =>
             `${higher} > ${lower}（${metric} ${actual} > ${comparedTo}）`).join('；');
           notifications.add({ id: 'pyramid:' + batchDeliveryId(name, at), type: driftType, project: name, at,

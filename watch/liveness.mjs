@@ -173,6 +173,12 @@ export function createLiveness({ now = Date.now, hangMs = 45_000 } = {}) {
           at - entry.animationAt <= hangMs)) {
         health = { status: 'silent-hang', since: entry.progressAt, reason: reasonFor['silent-hang'] };
       }
+      // Screen sampling can follow an OSC report by one observation interval.
+      // Record agreement without letting OSC establish an incident or reset liveness.
+      const osc = snapshot.hcStatus;
+      if (osc && health && osc.at <= at && osc.at >= Math.max(row.startedAt, health.since - 2_000) &&
+          (health.status === 'auth-expired' && osc.kind === 'auth' ||
+           health.status === 'silent-hang' && osc.state === 'working')) health.corroboratedBy = 'hc-osc7501';
       entry.health = health;
       return { lastProgressAt: entry.progressAt, health, screenFailure: entry.screenFailure };
     },

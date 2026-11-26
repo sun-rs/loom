@@ -1,7 +1,7 @@
 import { parseArgs } from 'node:util';
 import { roles } from '../index/index.mjs';
 import { daemonAbsent, request } from '../daemon/rpc.mjs';
-import { control, daemonUsage, spawnHelp, spawnUsage } from './control.mjs';
+import { control, daemonUsage, spawnHelp, spawnUsage, startDaemon } from './control.mjs';
 import { upgrade, upgradePendingExit, upgradeUsage } from './upgrade.mjs';
 import { history, historyReader, waveHistory } from './history.mjs';
 import { callerAddress, managedProject, projectDirectory, projectIndex, projectOption, projectReceipt, projectSessions } from './project.mjs';
@@ -32,6 +32,13 @@ const help = {
   state: ['loom state <target> [--project DIR]'],
   memory: ['loom memory search <query> [--project DIR] [--json]'],
   status: ['loom status --project DIR [--json]'],
+  up: ['loom up [--project DIR]'],
+  tui: ['loom tui [--project DIR | --all] [--once]'],
+  layout: [
+    'loom layout get <leader|auditor|status> [--project DIR] [--json]',
+    'loom layout adopt --project DIR --leader HC_ADDRESS --auditor HC_ADDRESS',
+  ],
+  super: ['loom super --terminal HC_ADDRESS [--project DIR]'],
   cost: ['loom cost [--project DIR]', 'Reports role usage, the rolling consumption pyramid, estimated USD costs and per-turn acceptance timing.'],
   gate: ['loom gate pack <gate-id> [--round N] [--reuse] [--project DIR] [--base REF] [--candidate REF] [--question TEXT]'],
   escalate: ['loom escalate <gate-id> --reason REASON --evidence TEXT [--round N] [--project DIR] [--base REF] [--candidate REF]',
@@ -58,6 +65,10 @@ const commands = {
     ...flags('json', 'diff', 'evidence', 'only-failed', 'with-calls') },
   state: projectArgs, stop: projectArgs, ls: projectArgs, cost: projectArgs,
   status: { ...projectArgs, ...flags('json') },
+  up: projectArgs,
+  tui: { ...projectArgs, ...flags('all', 'once') },
+  layout: { ...projectArgs, ...strings('leader', 'auditor'), ...flags('json') },
+  super: { ...projectArgs, ...strings('terminal') },
   gate: { ...projectArgs, ...strings('base', 'candidate', 'question', 'round'), ...flags('reuse') },
   escalate: { ...projectArgs, ...strings('base', 'candidate', 'reason', 'evidence', 'round') },
   memory: { ...projectArgs, ...flags('json') },
@@ -233,6 +244,38 @@ export async function main(args) {
           else emit(result);
         },
       });
+    }
+    if (['up', 'tui', 'layout', 'super'].includes(command)) {
+      const { values, positionals } = parse(command, rest);
+      if (command === 'tui') {
+        if (positionals.length || values.all && values.project !== undefined) invalid(help.tui[0]);
+        const { statusTui } = await import('./status-tui.mjs');
+        return await statusTui({ project: values.all ? undefined : projectDirectory(values.project), once: values.once });
+      }
+      const project = projectDirectory(values.project);
+      const { readLayout, superLayout, visibleRoles } = await import('../daemon/herdr-layout.mjs');
+      if (command === 'up') {
+        if (positionals.length) invalid(help.up[0]);
+        await startDaemon(project);
+        emit(await request(project, 'layout-up'));
+      } else if (command === 'super') {
+        if (positionals.length || !/^t[0-9a-z]+$/.test(values.terminal ?? '')) invalid(help.super[0]);
+        emit({ ok: true, layout: await superLayout(project, values.terminal) });
+      } else if (positionals[0] === 'get') {
+        const role = positionals[1];
+        if (positionals.length !== 2 || ![...visibleRoles, 'status'].includes(role) || values.leader || values.auditor) invalid(help.layout[0]);
+        const tab = readLayout(project)?.tabs[role];
+        if (!tab?.terminal || tab.addr && !projectIndex(project).query({ addr: tab.addr }).some(row => row.endedAt === null)) {
+          throw new CommandError('not-found', `No live ${role} terminal recorded in ${project}`);
+        }
+        if (values.json) emit(tab);
+        else console.log(tab.terminal);
+      } else {
+        if (positionals.length !== 1 || positionals[0] !== 'adopt' || values.json ||
+            !visibleRoles.every(role => /^t[0-9a-z]+$/.test(values[role] ?? ''))) invalid(help.layout[1]);
+        emit(await request(project, 'layout-adopt', { leader: values.leader, auditor: values.auditor }));
+      }
+      return 0;
     }
     if (command === 'senior-tool') return await runSeniorTool(rest);
     const { values, positionals } = parse(command, rest);

@@ -10,6 +10,7 @@ import { pendingWork, stalledDeliveries, stallText, suppressedReplies, suppresse
 import { isStartupBlocker } from '../tui/agent-status.mjs';
 import { auditorWakeFiltered } from '../daemon/routing.mjs';
 import { seniorToolSummary } from '../daemon/senior-tools.mjs';
+import { readLayout } from '../daemon/herdr-layout.mjs';
 
 export async function projectStatus(project) {
   const rows = projectSessions(project);
@@ -96,7 +97,7 @@ export async function projectStatus(project) {
   const activeAddresses = new Set(rows.filter(row => row.endedAt === null).map(row => row.addr));
   const rotationNotices = notifications.filter(event => event.type === 'leader-handover-failed' ||
     event.type === 'leader-rotation-proposed' && activeAddresses.has(event.addr)).slice(-6).reverse();
-  const awaitingAck = new Set(rotations.filter(item => item.role === 'leader' && item.boundAt == null && item.failedAt == null)
+  const awaitingAck = new Set(rotations.filter(item => item.boundAt == null && item.failedAt == null)
     .map(item => item.successor));
   const rotating = new Set(rotations.filter(item => item.boundAt != null && item.verifiedAt == null && item.failedAt == null)
     .map(item => item.successor));
@@ -117,7 +118,7 @@ export async function projectStatus(project) {
   const byAddress = new Map(rows.map(row => [row.addr, row]));
   const deliveryAlerts = stalledDeliveries(messages).map(item =>
     ({ ...item, role: byAddress.get(item.target)?.role, since: item.stalledAt }));
-  return { ok: true, running: Boolean(live), stalledDeliveries: deliveryAlerts, awaitingUser, sessionHealth, exits: crashed,
+  return { ok: true, running: Boolean(live), layout: readLayout(project), stalledDeliveries: deliveryAlerts, awaitingUser, sessionHealth, exits: crashed,
     suppressedReplies: suppressedReplies(messages).sort((a, b) => b.at - a.at),
     sessions: rows.filter(row => row.endedAt == null).map(row => {
       const authMode = row.cli === 'claude' ? artifacts.job(row.addr)?.authMode : undefined;
@@ -148,6 +149,12 @@ export function printStatus(result) {
   const incident = row => [row.role ?? 'unassigned', row.addr, row.status ?? row.kind, stamp(row.since),
     row.reason ?? row.summary, ...(row.retryAt != null ? [`retry ${stamp(row.retryAt)}`] : [])].join(' · ');
   console.log('Loom · ' + safe(result.project) + (result.running ? ' · online' : ' · offline'));
+  if (result.layout) {
+    const { space, tabs } = result.layout;
+    console.log('Herdr space · ' + safe(space.name) + ' · ' + safe(space.id));
+    for (const tab of Object.values(tabs)) console.log('  ' + [tab.name, tab.id, tab.terminal ?? 'vacant', tab.hcName, tab.addr]
+      .filter(Boolean).map(safe).join(' · '));
+  }
   section('Stalled deliveries', result.stalledDeliveries, row =>
     [row.role ?? 'unassigned', stamp(row.since), stallText(row)].join(' · '), Infinity);
   section('Awaiting user', result.awaitingUser, incident, Infinity);

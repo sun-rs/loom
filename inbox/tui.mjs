@@ -12,6 +12,7 @@ import { boundTranscript, finalFromStop, terminalEvents, withClaudeTranscriptSto
 import { agyDeliveryParts, checksDeliveryIntegrity, claudeDigestVersion, claudeNativeDigest, deliveryId, payloadDigest } from './message.mjs';
 import { controlTui } from '../runtimes/tui/transport.mjs';
 import { screenPrompt } from '../adapters/prompt-state.mjs';
+import { corroboratePrompt, hcStatus } from '../adapters/hc-status.mjs';
 import { readRequestBook } from '../tui/request-book.mjs';
 
 const exec = promisify(execFile);
@@ -19,9 +20,11 @@ const adapters = new Map([agy, claude, codex, opencode].map(adapter => [adapter.
 export const addressPattern = /^[A-Za-z0-9][A-Za-z0-9_.-]*$/;
 export const refusals = new Set(['blocked', 'status_mismatch', 'finished', 'not_found', 'human-active', 'frame-changed']);
 
-export async function hc(command, ...args) {
+export const hc = (command, ...args) => hcAt('hc', command, ...args);
+
+export async function hcAt(executable, command, ...args) {
   try {
-    const { stdout } = await exec('hc', [command, '--json', ...args], {
+    const { stdout } = await exec(executable, [command, '--json', ...args], {
       timeout: 5_000,
       maxBuffer: 2 * 1024 * 1024,
     });
@@ -327,7 +330,8 @@ export function tui(project, call = hc, fixtureSend, control = controlTui) {
     const lastStop = provider === 'claude' && events.findLast(event => !event.paused &&
       ['Stop', 'StopFailure', 'Interrupt'].includes(event.hook_event_name));
     const hookGap = lastStop?.hookGap && { at: lastStop.receivedAt, source: 'transcript' };
-    const snapshot = { terminal, events, provider, tui: binding, strictEnd: true, ...(hookGap && { hookGap }) };
+    const osc = hcStatus(terminal, provider);
+    const snapshot = { terminal, events, provider, tui: binding, strictEnd: true, ...(hookGap && { hookGap }), ...(osc && { hcStatus: osc }) };
     if (terminal.state === 'finished') return { ...snapshot, state: 'finished' };
     const native = nativeInputState(provider, events);
     if (['loom-pty', 'holder-v3'].includes(binding?.transport)) {
@@ -339,7 +343,7 @@ export function tui(project, call = hc, fixtureSend, control = controlTui) {
         const visible = terminal.screen !== 'inexact' && fallback?.complete === true &&
           fallback.how === 'screen' && typeof fallback.text === 'string';
         const kind = visible ? adapters.get(provider).screen.classify(fallback.text) : 'unknown';
-        const details = visible && screenPrompt(kind, fallback.text);
+        const details = visible && corroboratePrompt(screenPrompt(kind, fallback.text), osc, native.proof?.at);
         return { ...snapshot, state: details?.kind ?? 'unknown',
           ...(visible && { livenessScreen: { kind, text: fallback.text } }),
           ...(details && { userPrompt: { ...details, cli: provider, source: 'screen' } }), writeEvidence: {
@@ -348,7 +352,8 @@ export function tui(project, call = hc, fixtureSend, control = controlTui) {
       }
       const { screen, host, native: holderNative } = frame;
       const fallback = screenPrompt(screen.kind, screen.text ?? '');
-      const userPrompt = frame.userPrompt ?? (fallback && { ...fallback, cli: provider, source: 'screen' });
+      const userPrompt = corroboratePrompt(frame.userPrompt ?? (fallback && { ...fallback, cli: provider, source: 'screen' }),
+        osc, native.proof?.at);
       const active = frame.phase === 'busy' && holderNative.activeSince !== undefined && {
         pty: true, hcTurn: terminal.turn, since: holderNative.activeSince, sessionId: holderNative.sessionId, turnId: holderNative.activeTurn,
       };
@@ -375,7 +380,7 @@ export function tui(project, call = hc, fixtureSend, control = controlTui) {
       frame.how === 'screen' && typeof frame.text === 'string';
     const screen = visible ? adapters.get(provider).screen.classify(frame.text) : 'unknown';
     const status = terminal.status?.state;
-    const details = screenPrompt(screen, frame?.text ?? '');
+    const details = corroboratePrompt(screenPrompt(screen, frame?.text ?? ''), osc, native.proof?.at);
     const userPrompt = details && { ...details, cli: provider, source: 'screen' };
     const livenessScreen = visible ? { kind: screen, text: frame.text } : undefined;
     if (readOnly) return { ...snapshot, state: userPrompt?.kind ?? 'blocked', livenessScreen, ...(userPrompt && { userPrompt }),

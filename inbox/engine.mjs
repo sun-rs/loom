@@ -37,7 +37,7 @@ const pendingReply = message => !deliveryFailed(message) && !message.completion?
 const mayReroute = message => (['queued', 'target-ended'].includes(message.phase) ||
   message.phase === 'refused' && message.issue === 'target-exited') &&
   message.attemptAt == null && message.stopAttemptAt == null && message.mode === 'queue' &&
-  message.requestedMode === 'queue' && !message.startup && !message.watchResume;
+  (message.requestedMode === 'queue' || message.queuedForHandover === true) && !message.startup && !message.watchResume;
 const providerFailures = new Set(['request-timeout', 'runtime-exited', 'retry-exhausted', 'provider-overloaded']);
 
 export function receipt(message, at = Date.now()) {
@@ -545,13 +545,14 @@ export function inbox(project, transport, report = console.error, { replyLimit, 
     catch (error) { report(error.message); }
   }
 
-  async function observeTarget(all, at, stallMs) {
+  async function observeTarget(all, at, stallMs, canDispatchMessage) {
     const observation = await inspect(all[0].target);
     const group = all.filter(message => !message.combinedInto);
     if (observation) {
       for (const message of group) reconcile(message, observation);
       if (observation.state === 'finished') {
-        const pending = group.filter(pendingReply);
+        const pending = group.filter(message => pendingReply(message) &&
+          !(mayReroute(message) && canDispatchMessage?.(message) === false));
         for (const message of pending) {
           message.phase = 'target-ended';
           message.issue = 'target-ended';
@@ -681,16 +682,17 @@ export function inbox(project, transport, report = console.error, { replyLimit, 
     const active = [...groups()].filter(([, group]) => group.some(message => needsIntegrity(message) || pendingReply(message)));
     if (beforeDispatch) {
       const known = new Set(messages.map(message => message.id));
-      const observed = new Map(await Promise.all(active.map(async ([key, group]) => [key, await observeTarget(group, now(), stallMs)])));
+      const observed = new Map(await Promise.all(active.map(async ([key, group]) =>
+        [key, await observeTarget(group, now(), stallMs, canDispatchMessage)])));
       await beforeDispatch();
       if (messageIssue) filterMessages();
       const at = now();
       await Promise.all([...groups()].filter(([key, group]) => observed.has(key) ||
         group.some(message => !known.has(message.id) && message.streamAt != null)).map(async ([key, group]) =>
-        processTarget(group, observed.has(key) ? observed.get(key) : await observeTarget(group, at, stallMs),
+        processTarget(group, observed.has(key) ? observed.get(key) : await observeTarget(group, at, stallMs, canDispatchMessage),
           { canDispatch, canDispatchMessage, known, at, coalesceMs, decorate })));
     } else {
-      await Promise.all(active.map(async ([, group]) => processTarget(group, await observeTarget(group, now(), stallMs),
+      await Promise.all(active.map(async ([, group]) => processTarget(group, await observeTarget(group, now(), stallMs, canDispatchMessage),
         { canDispatch, canDispatchMessage, at: now(), coalesceMs, decorate })));
     }
   }

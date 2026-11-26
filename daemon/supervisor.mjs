@@ -23,6 +23,10 @@ import { leaderHandoverState } from '../handover/brief.mjs';
 import { authorizeSeniorTool, seniorToolEvents } from './senior-tools.mjs';
 import { replyForDelivery } from '../inbox/reply-file.mjs';
 import { auditorWakeFiltered, auditorWakeSource, redReasons } from './routing.mjs';
+import { readLayout } from './herdr-layout.mjs';
+import { deliveryBoard, gateBoard } from './status-board.mjs';
+import { activeRelease, managedCliPath, releaseId, releaseRoot } from './release.mjs';
+import { rotatingRoles } from '../index/index.mjs';
 
 function batchDeliveryId(batch, dest) {
   const bytes = createHash('sha256').update(`${batch}\0${dest}`).digest('hex').slice(0, 32);
@@ -75,11 +79,15 @@ export function createSupervisor(project, {
   const parentFor = addr => sessions.routeParent(addr)?.addr ?? addr;
   const targetEnded = addr => sessions.rowFor(addr)?.endedAt != null;
   const senior = row => row.role === 'leader' || row.role === 'auditor';
-  const liveRole = (name, role) => sessions.rows().findLast(row =>
-    row.project === name && row.role === role && row.endedAt === null && sessions.jobs.has(row.addr));
+  const liveRole = (name, role) => sessions.rows().findLast(row => {
+    const job = sessions.jobs.get(row.addr);
+    return row.project === name && row.role === role && row.endedAt === null && job && !job.stopping &&
+      (!job.handoverAck || job.handoverBound);
+  });
   let health = new Map();
   const liveness = createLiveness({ now, hangMs: watchOptions?.busyMs });
   const progress = new Map();
+  const observations = new Map();
   const startupBlockers = new Map();
   const failedWorkerLaunches = new Map();
   const desktop = externalNotification !== notifyExternal || desktopEnabled() ? async (name, batch) => {
@@ -180,10 +188,17 @@ ${details}`, {
     return leaderHandoverState(project, { cards, pending, packets, gates });
   }
 
-  async function settleLeaderHandovers() {
-    for (const rotation of index.rotations().filter(item => item.role === 'leader' && item.boundAt == null && item.failedAt == null)) {
+  async function settleHandovers() {
+    for (const rotation of index.rotations().filter(item => item.failedAt == null)) {
       const job = sessions.jobs.get(rotation.successor);
-      if (!job?.handoverAck || job.handoverBound) continue;
+      if (!job?.handoverAck) continue;
+      if (job.handoverBound) {
+        if (job.herdr && sessions.rowFor(rotation.successor)?.endedAt === null &&
+            (!job.herdrPublished || sessions.rowFor(rotation.predecessor)?.endedAt === null)) {
+          await sessions.retirePredecessor(job).catch(error => report(`handover retirement: ${error.message}`));
+        }
+        continue;
+      }
       const row = sessions.rowFor(rotation.successor);
       if (!row) continue;
       const message = mail.messages.find(item => item.id === job.firstId);
@@ -197,8 +212,10 @@ ${details}`, {
       const reason = job.error ?? (row.endedAt !== null ? 'successor-exited' : deliveryFailed(message) ? message.issue :
         done && !done.unconfirmed && (done.body || done.noReply) ? 'first-turn-missing-acknowledgement' : undefined);
       if (!reason) continue;
-      notifications.add({ id: `leader-handover-failed:${job.firstId}`, project: row.project, type: 'leader-handover-failed',
-        addr: row.addr, deliveryId: job.firstId, reason, at: now(), text: `Leader ${row.addr} 交接失败（${reason}）。` });
+      const type = `${row.role}-handover-failed`;
+      const title = row.role === 'leader' ? 'Leader' : 'Auditor';
+      notifications.add({ id: `${type}:${job.firstId}`, project: row.project, type,
+        addr: row.addr, deliveryId: job.firstId, reason, at: now(), text: `${title} ${row.addr} 交接失败（${reason}）。` });
       await sessions.failSpawn(job, new Error(reason));
     }
   }
@@ -297,6 +314,7 @@ ${details}`, {
       const job = sessions.jobs.get(row.addr);
       if (row.endedAt !== null) {
         progress.delete(row.addr);
+        observations.delete(row.addr);
         liveness.remove(row.addr);
         if (job.exit && !sessions.successorOf(row.addr)) {
           const hint = ['super', 'leader', 'auditor'].includes(row.role) ? ` Relaunch with loom spawn ${row.role} --cwd ${JSON.stringify(row.cwd)} --handover-from ${row.addr} and a startup prompt.` : '';
@@ -337,6 +355,8 @@ ${details}`, {
         progress.set(row.addr, result);
         sessions.rememberLiveness(row.addr, { ...result, observedAt: now() });
       }
+      observations.set(row.addr, { state: userPrompt?.kind ?? result?.health?.status ?? reportedState(snapshot, health.get(row.addr)),
+        awaitingUser: Boolean(userPrompt) });
       if (!userPrompt || now() - userPrompt.since < stallMs ||
           !(senior(row) || row.role === 'super' || ['awaiting-user', 'overlay'].includes(userPrompt.kind))) return;
       const { kind, since, summary } = userPrompt;
@@ -635,6 +655,10 @@ ${details}`, {
     const job = await sessions.newJob(args, caller, checkBarrier, occupied, handoverState);
     let session;
     try {
+      if (!job.herdr) await sessionOptions?.layout?.ensure(false).catch(error => {
+        if (error.code !== 'herdr-unavailable') throw error;
+        report(`Herdr layout unavailable for ${job.row.addr}: ${error.message}`);
+      });
       session = await sessions.activate(job, mail);
       sessions.requireLive(session);
     } catch (error) {
@@ -676,7 +700,7 @@ ${details}`, {
       return routed.get(addr);
     }, {
       async beforeDispatch() {
-        await settleLeaderHandovers();
+        await settleHandovers();
         await org.collect(sessions.rows());
         await stepRelay(now());
         continuations();
@@ -774,6 +798,40 @@ ${details}`, {
     shutdown: sessions.shutdown,
     async handle(command, args, caller) {
       if (command === 'spawn') return spawnSession(args, caller);
+      if (command === 'layout-up') {
+        if (!sessionOptions?.layout) throw new CommandError('not-ready', 'Herdr layout is unavailable');
+        return { layout: await sessionOptions.layout.ensure(true) };
+      }
+      if (command === 'layout-adopt') return { layout: await sessions.adoptLayout(args) };
+      if (command === 'board') {
+        const rows = sessions.rows();
+        const events = notifications.list(undefined, false, true);
+        const pending = events.filter(event => !event.auditor && !event.logOnly && event.takenAt == null);
+        const names = new Set(rows.map(row => row.project));
+        if (!names.size) names.add(project);
+        return {
+          layout: readLayout(project),
+          roles: rows.filter(row => row.endedAt === null && ['super', 'leader', 'auditor'].includes(row.role)).map(row => ({
+            role: row.role, addr: row.addr, backend: row.backend, cli: row.cli,
+            state: observations.get(row.addr)?.state ?? 'starting',
+            awaitingHandover: Boolean(sessions.jobs.get(row.addr)?.handoverAck && !sessions.jobs.get(row.addr)?.handoverBound),
+          })),
+          workers: rows.filter(row => row.endedAt === null && row.role === 'worker' && row.backend === 'headless').map(row => ({
+            addr: row.addr, task: row.task, wave: row.wave, state: observations.get(row.addr)?.state ?? 'starting',
+          })),
+          delivery: deliveryBoard(mail.messages, observations, now()),
+          gates: gateBoard(mail.messages, events),
+          notifications: { count: pending.length, last: pending.slice(-8).reverse().map(({ type, at, text }) =>
+            ({ type, at, text: text?.slice(0, 200) })) },
+          pyramids: [...names].flatMap(name => {
+            const sample = budget.pyramid(name);
+            return sample ? [{ project: name, ...sample }] : [];
+          }),
+          release: { id: releaseId(), root: releaseRoot, active: activeRelease(project)?.current?.root, cli: managedCliPath(project),
+            warnings: rows.filter(row => row.endedAt === null).flatMap(row =>
+              sessions.pathWarnings(row).map(warning => ({ role: row.role, ...warning }))) },
+        };
+      }
       if (command === 'senior-override') {
         const rows = sessions.rows();
         const actor = caller && rows.find(row => row.addr === caller || row.pane === caller);
@@ -953,7 +1011,7 @@ ${details}`, {
         return { ...pendingWork(mail.messages, undefined, parentFor, targetEnded),
           awaitingUser: live.flatMap(row => row.userPrompt ? [{ addr: row.addr, ...row.userPrompt }] : []) };
       }
-      const row = sessions.resolve(args.target, caller);
+      const row = command === 'send' ? sessions.resolveDelivery(args.target, caller) : sessions.resolve(args.target, caller);
       if (command === 'handover') {
         const old = sessions.rowFor(args.from);
         if (!validInput(args.text)) throw new CommandError('invalid-arguments', 'Handover brief is required');
@@ -981,6 +1039,7 @@ ${details}`, {
           ...(tui && { transport: tui.transport, ...(tui.reason && { transportReason: tui.reason }) }),
           ...((snapshot?.reason ?? incident?.reason) && { reason: snapshot?.reason ?? incident.reason }),
           ...(snapshot?.writeEvidence && { writeEvidence: snapshot.writeEvidence }),
+          ...(snapshot?.hcStatus && { hcStatus: snapshot.hcStatus }),
           ...(snapshot?.hookGap && { hookGap: snapshot.hookGap }),
           ...(userPrompt && { userPrompt }),
           ...(snapshot?.runtimeStatus && { runtimeStatus: snapshot.runtimeStatus }),
@@ -1006,16 +1065,22 @@ ${details}`, {
         sessions.rows().find(row => row.addr === caller || row.pane === caller);
       const actor = caller && sessions.rows().find(row => row.addr === caller || row.pane === caller);
       const existing = args.id && mail.messages.find(message => message.id === args.id);
+      const requestedRole = rotatingRoles.includes(args.target) ? args.target : undefined;
       if (existing) {
-        if ((existing.originalTarget ?? existing.target.addr) !== row.addr || existing.from?.addr !== from?.addr || existing.text !== args.text ||
+        const initial = existing.originalTarget ?? existing.target.addr;
+        const sameTarget = existing.requestedRole ? existing.requestedRole === requestedRole &&
+          sessions.rowFor(initial)?.project === row.project : initial === row.addr;
+        if (!sameTarget || existing.from?.addr !== from?.addr || existing.text !== args.text ||
             existing.requestedMode !== args.mode || existing.batchId !== args.batch || existing.batchSize !== args.batchSize ||
             Boolean(existing.expectReply) !== Boolean(args.expectReply)) {
           throw new CommandError('id-conflict', 'Delivery ID is already bound to a different request');
         }
         return { addr: row.addr, ...receiptFor(existing) };
       }
-      const successor = args.mode === 'queue' ? sessions.routeParent(row.addr) : row;
-      sessions.requireLive(successor);
+      const holdForRole = requestedRole && sessions.holdsForHandover({ target: { addr: row.addr }, mode: 'queue' });
+      const effectiveMode = holdForRole ? 'queue' : args.mode;
+      const successor = effectiveMode === 'queue' ? sessions.routeParent(row.addr) : row;
+      if (!holdForRole) sessions.requireLive(successor);
       if (from) sessions.requireLive(from);
       if (args.batch) {
         if (from?.role !== 'leader' || row.role !== 'worker' || from.project !== row.project) {
@@ -1034,6 +1099,8 @@ ${details}`, {
       const fields = { ...(from && { from: sessions.targetBinding(from) }), ...(args.expectReply && { expectReply: true }),
         ...(userWake && { superPriority: true, ...(successor.role === 'auditor' && { userWake: true }) }),
         ...(row.addr !== successor.addr && { originalTarget: row.addr }),
+        ...(requestedRole && { requestedRole }),
+        ...(holdForRole && args.mode !== 'queue' && { queuedForHandover: true }),
         ...(args.id && { id: args.id }), ...(args.batch && { batchId: args.batch, batchSize: args.batchSize }),
         requestedMode: args.mode,
       };
@@ -1042,14 +1109,14 @@ ${details}`, {
           issue: auditorWakeFiltered, refusedAt: now() });
         return { addr: row.addr, ...receiptFor(message) };
       }
-      if (args.mode === 'interrupt' && !sessions.canInterrupt(target)) {
+      if (effectiveMode === 'interrupt' && !sessions.canInterrupt(target)) {
         throw new CommandError('unsupported', 'Runtime cannot guard the requested turn at interrupt submission');
       }
-      const observation = args.mode !== 'queue' && await sessions.transport.inspect(target).catch(() => undefined);
+      const observation = effectiveMode !== 'queue' && await sessions.transport.inspect(target).catch(() => undefined);
       if (observation?.state === 'finished') throw new CommandError('not-ready', 'Target has exited');
       const active = observation?.active;
-      if (args.mode === 'interrupt' && !active) throw new CommandError('not-ready', 'interrupt requires an active turn');
-      const mode = sessions.requestedMode(target, args.mode, active);
+      if (effectiveMode === 'interrupt' && !active) throw new CommandError('not-ready', 'interrupt requires an active turn');
+      const mode = sessions.requestedMode(target, effectiveMode, active);
       const continuation = mode === 'queue' && from?.role === 'leader' && row.role === 'worker' && from.project === row.project;
       const message = saved(target, args.text, { ...fields,
         ...(continuation && !args.batch && { implicitBatch: 'auto:' + randomUUID(), coalesceWindow: 0, streamContinuation: true }),

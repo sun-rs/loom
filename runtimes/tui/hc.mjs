@@ -10,7 +10,7 @@ export const exec = promisify(execFile);
 
 export async function startPane(command, cwd, argv, {
   name = `loom-tui-${randomUUID().replaceAll('-', '').slice(0, 20)}`, env = {}, unset = [], provider = argv[0],
-  nativeCommand = argv[0],
+  nativeCommand = argv[0], placementLabels = {},
 } = {}) {
   // A task's inherited HC_TERMINAL_ID would wrap submitted text in a sender tag.
   const call = async (args, timeout = 5_000) => {
@@ -35,24 +35,25 @@ export async function startPane(command, cwd, argv, {
   const omitted = new Set(provider === 'claude' ? [...unset, ...claudeApiEnvKeys] : unset);
   const probeEnv = Object.fromEntries([process.env, launchEnv].flatMap(source => Object.keys(source)
     .filter(key => !omitted.has(key)).map(key => [key, source[key]])));
-  const labels = await tuiVersionLabels(provider, nativeCommand, { cwd, env: probeEnv });
+  const labels = { ...await tuiVersionLabels(provider, nativeCommand, { cwd, env: probeEnv }), ...placementLabels };
+  const launchId = randomUUID();
   let started;
   try {
     started = await call([
       'run', '--bg', '--json', '--no-parent', '--no-notify', '--name', name, '--cwd', cwd,
-      ...Object.entries(labels).flatMap(([key, value]) => ['--label', `${key}=${value}`]), '--',
+      ...Object.entries({ ...labels, 'loom.launch': launchId }).flatMap(([key, value]) => ['--label', `${key}=${value}`]), '--',
       '/usr/bin/env', ...processArgs, ...argv,
     ]);
     if (started.name !== name || !/^t[0-9a-z]+$/.test(started.address)) {
       throw new Error('hc did not report the newly created local pane');
     }
   } catch (error) {
-    // A spawn can reach hc even if the CLI misses its reply. Recover by our
-    // random name and verify ownership before addressing the pane.
+    // A spawn can reach hc even if the CLI misses its reply. A colliding name
+    // alone does not prove that the running terminal belongs to this launch.
     try {
       const found = await call(['get', '--json', name]);
-      if (found.name === name && found.state === 'live') {
-        await call(['kill', '--json', name]);
+      if (found.name === name && found.state === 'live' && found.labels?.['loom.launch'] === launchId) {
+        await call(['kill', '--json', found.address]);
       }
     } catch (cleanup) {
       error.cause = cleanup;
@@ -81,7 +82,7 @@ export async function startPane(command, cwd, argv, {
     },
     async kill() {
       let state = await status();
-      if (state.state !== 'finished') state = checkOwner(await call(['kill', '--json', name]));
+      if (state.state !== 'finished') state = checkOwner(await call(['kill', '--json', address]));
       const deadline = performance.now() + 5_000;
       while (state.state !== 'finished' && performance.now() < deadline) {
         await sleep(100);

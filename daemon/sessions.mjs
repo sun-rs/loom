@@ -5,7 +5,7 @@ import { isAbsolute, join, relative, sep } from 'node:path';
 import { CommandError as ErrorCode, resolveTarget } from '../cli/sessions.mjs';
 import { runtimeDirectory } from '../cli/project.mjs';
 import { roles, rotatingRoles } from '../index/index.mjs';
-import { hc, tui, addressPattern } from '../inbox/tui.mjs';
+import { hc, hcAt, tui, addressPattern } from '../inbox/tui.mjs';
 import { wireText } from '../inbox/message.mjs';
 import { recordLifecycle } from '../handover/index.mjs';
 import { generateBrief } from '../handover/brief.mjs';
@@ -26,6 +26,7 @@ import { projectMemoryPrompt } from '../memory/project.mjs';
 import { disposeSession } from './session-close.mjs';
 import { workerEnvironment } from './worker-environment.mjs';
 import { withClaudeTranscriptStops } from '../relay/sources.mjs';
+import { visibleRoles } from './herdr-layout.mjs';
 
 const runtimeIds = { codex: 'codex', agy: 'antigravity', claude: 'claude', opencode: 'opencode' };
 const modes = new Set(['tui', 'headless']);
@@ -91,7 +92,7 @@ function defaultTrustWorkspace(project, cwd) {
 }
 
 export function ownedSessions(project, index, report, {
-  open, openPane = openTui, getPane = ownedPane, callHc = hc, controller,
+  open, openPane = openTui, getPane = ownedPane, callHc = hc, controller, layout,
 } = {}) {
   const path = join(runtimeDirectory(project), 'sessions');
   mkdirSync(path, { recursive: true, mode: 0o700 });
@@ -143,16 +144,17 @@ export function ownedSessions(project, index, report, {
   const transportReceipt = metadata => metadata && { transport: metadata.transport, reason: metadata.reason };
   const bound = (row, extra = {}) => ({ addr: row.addr, cwd: row.cwd, provider: row.cli,
     createdAt: row.startedAt, backend: row.backend, ...extra });
+  const terminalCall = (job, ...args) => job.herdr && callHc === hc ? hcAt(job.herdr.hcCommand, ...args) : callHc(...args);
 
   async function managedHc(command, addr, ...args) {
     const job = jobs.get(addr);
     const row = job && rowFor(addr);
     if (!row || !row.pane) throw Object.assign(new Error(`No owned pane for ${addr}`), { kind: 'not_found' });
-    const terminal = await callHc('get', row.pane);
+    const terminal = await terminalCall(job, 'get', row.pane);
     if (terminal.address !== row.pane || terminal.created_ms !== job.paneBinding?.createdAt ||
         terminal.pid !== job.paneBinding?.pid || realpathSync(terminal.cwd) !== row.cwd) throw new Error('hc pane identity changed');
     if (command === 'get') return { ...terminal, address: addr, labels: { ...terminal.labels, 'loom-cli': row.cli } };
-    return callHc(command, row.pane, ...args);
+    return terminalCall(job, command, row.pane, ...args);
   }
 
   // Injected protocol fixtures emulate the preexisting hc-shaped native peer.
@@ -339,6 +341,8 @@ export function ownedSessions(project, index, report, {
     openCodeProofs.delete(row.addr);
     holders.detach(job.tui);
     const final = row.endedAt === null ? index.update(row.addr, { endedAt: Math.max(row.startedAt, at) }) : row;
+    try { layout?.clear(final); }
+    catch (error) { report(`Herdr layout ${row.addr}: ${error.message}`); }
     if (!temporaryRole(row.role) && final.transcriptPath && !job.endRecorded) {
       const result = await recordLifecycle(project, final, { kind: 'exited', at: final.endedAt, eventId: `${row.addr}:exit` },
         { locate: false }).catch(error => report(error.message));
@@ -418,6 +422,14 @@ export function ownedSessions(project, index, report, {
   async function retirePredecessor(job) {
     if (!job.handoverBound) return;
     const old = rowFor(job.handoverFrom);
+    if (job.herdr && !job.herdrPublished) {
+      const row = rowFor(job.row.addr);
+      const terminal = await getPane(job, row);
+      if (!terminal || completedPane(terminal)) throw new ErrorCode('not-ready', 'Herdr successor is no longer live');
+      await layout?.publish(row, terminal);
+      job.herdrPublished = true;
+      save(job);
+    }
     if (old?.endedAt !== null || !jobs.has(old.addr)) return;
     const successor = routeParent(old.addr);
     if (successor.addr === old.addr || successor.endedAt !== null) return;
@@ -428,6 +440,19 @@ export function ownedSessions(project, index, report, {
     const sessions = rows();
     const callerAddr = sessions.find(row => row.pane === caller || row.addr === caller)?.addr;
     return sessions.find(row => row.pane === target) ?? resolveTarget(sessions, target, callerAddr);
+  }
+
+  function resolveDelivery(target, caller) {
+    if (rotatingRoles.includes(target)) {
+      const actor = rows().find(row => row.addr === caller || row.pane === caller);
+      const pending = [...jobs.values()].filter(job => job.row.role === target && awaitingBrief(job) &&
+        (!actor || job.row.project === actor.project));
+      if (pending.length === 1) {
+        const predecessor = rowFor(pending[0].handoverFrom);
+        if (predecessor) return predecessor;
+      }
+    }
+    return resolve(target, caller);
   }
 
   async function newJob(input, caller, checkBarrier, occupies, handoverState) {
@@ -483,16 +508,21 @@ export function ownedSessions(project, index, report, {
     const row = { addr, role: input.role, project: name, task: input.task, wave: input.wave,
       backend: mode, runtimeId, cli, model, effort, cwd, baseCommit: gitHead(cwd), parent: parent?.addr ?? null,
       startedAt: [...jobs.values()].reduce((at, job) => Math.max(at, job.row.startedAt + 1), Date.now()) };
+    const herdr = mode === 'tui' && visibleRoles.includes(row.role) ? await layout?.placement(row) : undefined;
+    if (herdr && !predecessor && rows().some(old => old.role === row.role && old.endedAt === null)) {
+      throw new ErrorCode('invalid-arguments', `A live ${row.role} already occupies its slot. Supply --handover-from.`);
+    }
     let prompt = input.prompt;
     let handoverAck;
     if (predecessor) {
       const { brief } = await generateBrief({ role: input.role, project: name, projectDir: project, from: predecessor.addr,
         index, locate: false });
-      if (input.role === 'leader') {
+      if (rotatingRoles.includes(input.role)) {
         handoverAck = `HANDOVER-ACK ${randomUUID()}`;
-        const complete = `${brief.trimEnd()}\n\n${handoverState(predecessor)}\n\n## 启动指令\n${prompt}\n\n## 交接确认\n${handoverAck}\n`;
+        const state = input.role === 'leader' ? `\n\n${handoverState(predecessor)}` : '';
+        const complete = `${brief.trimEnd()}${state}\n\n## 启动指令\n${prompt}\n\n## 交接确认\n${handoverAck}\n`;
         const pointer = replyForDelivery(project, complete, 0);
-        prompt = `Complete the Leader handover in this first native turn. ${pointer}. Resolve the path from ${project}. Read the full file through its final acknowledgement line, then copy that line exactly onto the first line of your final reply. Include the current SHA and relevant paths you verified. Wait for Loom to deliver queued work.`;
+        prompt = `Complete the ${input.role === 'leader' ? 'Leader' : 'Auditor'} handover in this first native turn. ${pointer}. Resolve the path from ${project}. Read the full file through its final acknowledgement line, then copy that line exactly onto the first line of your final reply. Include the current SHA and relevant paths you verified. Wait for Loom to deliver queued work.`;
       } else {
         prompt = `先读前任简报及任务指定的交接记录，再开始接管。\n\n${brief.trimEnd()}\n\n## 启动指令\n${prompt}`;
       }
@@ -519,6 +549,7 @@ export function ownedSessions(project, index, report, {
       ...(fastRequested !== undefined && { fastRequested }),
       ...(selected.fast !== undefined && { fast: selected.fast }),
       ...(predecessor && { handoverFrom: predecessor.addr }),
+      ...(herdr && { herdr }),
       ...(handoverAck && { handoverAck }),
       ...(row.role === 'worker' && { cardStart: headAt(cwd) }),
       ...(input['expect-red'] !== undefined && { expectRed: input['expect-red'] }),
@@ -649,6 +680,13 @@ export function ownedSessions(project, index, report, {
       }
       if (job.tui?.transport === 'holder-v3') await holders.attach(job, row, terminal);
       bindings.set(row.addr, bound(row, { ...job.paneBinding, tui: transportReceipt(job.tui) }));
+      if (job.herdr && !job.herdrPlaced && layout) {
+        const pending = Boolean(job.handoverFrom && !job.handoverBound);
+        await layout.place(row, terminal, pending);
+        job.herdrPlaced = true;
+        if (!pending) job.herdrPublished = true;
+        save(job);
+      }
     }
     enforceDeny(runtimeSelection(row).effective, job.deny ?? []);
     if (!mail.messages.some(message => message.id === job.firstId)) {
@@ -674,7 +712,7 @@ export function ownedSessions(project, index, report, {
   function holdsForHandover(message) {
     const { addr } = message.target;
     const job = jobs.get(addr);
-    if (job?.row.role !== 'leader') return false;
+    if (!rotatingRoles.includes(job?.row.role)) return false;
     if (awaitingBrief(job)) return message.id !== job.firstId;
     return message.mode === 'queue' && !message.startup && [...jobs.values()].some(candidate =>
       candidate.handoverAck && candidate.handoverFrom === addr &&
@@ -832,7 +870,7 @@ export function ownedSessions(project, index, report, {
       running.delete(row.addr);
     } else if (row.backend === 'tui') {
       const terminal = await getPane(job, row);
-      if (terminal && !completedPane(terminal)) await callHc('kill', terminal.address);
+      if (terminal && !completedPane(terminal)) await terminalCall(job, 'kill', terminal.address);
       const closed = terminal && await getPane(job, row);
       if (closed && !completedPane(closed)) throw new ErrorCode('not-ready', 'hc has not confirmed pane exit');
       endedAt = closed?.finished_ms;
@@ -936,8 +974,24 @@ export function ownedSessions(project, index, report, {
       row.backend === 'headless' ? running.get(row.addr)?.session.status().value.lastEventAt ?? 0 : 0);
   }
 
-  return { rows, rowFor, events, targetBinding, transport, requestedMode, canInterrupt, resolve, requireLive, newJob,
+  async function adoptLayout(addresses) {
+    if (!layout) throw new ErrorCode('not-ready', 'Herdr layout is unavailable');
+    const all = rows();
+    const entries = await Promise.all(visibleRoles.map(async role => {
+      const row = all.find(item => item.pane === addresses[role] && item.role === role && item.endedAt === null);
+      const job = row && jobs.get(row.addr);
+      if (!job || !job.paneBinding || routeParent(row.addr)?.addr !== row.addr || awaitingBrief(job)) {
+        throw new ErrorCode('invalid-arguments', `Expected this project's live, daemon-owned ${role} hc address`);
+      }
+      const terminal = await getPane(job, row);
+      if (!terminal || completedPane(terminal)) throw new ErrorCode('not-ready', `No live hc terminal for ${role}`);
+      return { row, terminal };
+    }));
+    return layout.adopt(entries);
+  }
+
+  return { rows, rowFor, events, targetBinding, transport, requestedMode, canInterrupt, resolve, resolveDelivery, requireLive, newJob,
     activate, failSpawn, runtimeSelection, refresh, stop, shutdown, upgradeSessions, upgradeHolder, jobs, managedHc, sealed, lastActivity,
-    routeParent, bindSuccessor, retirePredecessor, successorOf, holdsForHandover, rememberUserPrompt, pathWarnings, rememberLiveness,
+    routeParent, bindSuccessor, retirePredecessor, successorOf, holdsForHandover, rememberUserPrompt, pathWarnings, rememberLiveness, adoptLayout,
     finishObserved(row, exit, at) { return finish(jobs.get(row.addr), row, at, exit); } };
 }

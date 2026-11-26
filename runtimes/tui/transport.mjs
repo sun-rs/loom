@@ -48,7 +48,7 @@ export function wrapperFailedStart(binding) {
 export async function openNativeTui({
   cli, cwd, command, hcCommand = 'hc', env = {}, unset = [], name, authMode,
   stateDir, hookSink, recordBinding = () => {}, previous, recordTemporary = () => {}, boundTranscript = true,
-  controllerPath, ...options
+  controllerPath, placementLabels, ...options
 }) {
   const provider = Object.hasOwn(providers, cli) && providers[cli];
   if (!provider) throw new RangeError(`Unsupported TUI: ${cli}`);
@@ -102,7 +102,7 @@ export async function openNativeTui({
   }
   const plain = async () => {
     recordBinding({ transport: 'plain-hc', reason: 'loom-pty-start-failed' });
-    const pane = await startPane(hcCommand, cwd, argv, { name, env, unset, provider: cli });
+    const pane = await startPane(hcCommand, cwd, argv, { name, env, unset, provider: cli, placementLabels });
     return {
       id: pane.address, sessionId, hookSink, status: pane.status, warnings: pane.warnings,
       async close() {
@@ -127,7 +127,7 @@ export async function openNativeTui({
       recordBinding(binding);
       const pane = await startPane(hcCommand, cwd, [asset.path, '--launch', binding.socket, sessionDir,
         controllerPath, binding.incarnation.replaceAll('-', ''), asset.digest, ...argv], {
-        env, unset, name, provider: cli, nativeCommand: executable,
+        env, unset, name, provider: cli, nativeCommand: executable, placementLabels,
       });
       wrapped = { close: pane.kill };
       const deadline = performance.now() + 5_000;
@@ -158,7 +158,7 @@ export async function openNativeTui({
     }
     recordBinding(binding);
     wrapped = await hcWrappedBackend({ command: hcCommand }).launch({
-      cwd, argv, env, unset: ['LOOM_PTY_MODULES', ...unset], name, provider: cli, evidence, sessionDir, socket: binding.socket,
+      cwd, argv, env, unset: ['LOOM_PTY_MODULES', ...unset], name, provider: cli, evidence, sessionDir, socket: binding.socket, placementLabels,
     });
     const deadline = performance.now() + 5_000;
     do {

@@ -7,6 +7,7 @@ import { projectDirectory, projectOption, runtimeDirectory, socketPath } from '.
 import { claimProject } from '../relay/lock.mjs';
 import { createSupervisor } from './supervisor.mjs';
 import { maxLine } from './rpc.mjs';
+import { projectLayout } from './herdr-layout.mjs';
 import { readText, syncDirectory } from './io.mjs';
 import { activeRelease, installManagedCli, nextController, releaseDigest, releaseId, releaseRoot, upgradeState } from './release.mjs';
 import { beginUpgrade, checkUpgradeAttachments, daemonProtocol, liveHandoff, planUpgrade, selfCheck, validateHandoff, validateReattachment } from './upgrade.mjs';
@@ -81,7 +82,7 @@ export async function main(args, { pollInterval = 350, ...options } = {}) {
     partialWindow: optionalTimeout('LOOM_WAVE_PARTIAL_MS'), uncertainWindow: optionalTimeout('LOOM_UNCERTAIN_MS'),
     blockedWindow: optionalTimeout('LOOM_BLOCKED_COALESCE_MS'),
     ...options,
-    sessionOptions: { ...options.sessionOptions, controller },
+    sessionOptions: { layout: projectLayout(project), ...options.sessionOptions, controller },
   });
   const recovering = Boolean(handoff && values['handoff-recovery']);
   let ready = !handoff || recovering;
