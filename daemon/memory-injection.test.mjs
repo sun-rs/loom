@@ -501,6 +501,80 @@ for (const count of [1, 5, 30]) {
   });
 }
 
+test('7b delta summarizes 105 withdrawals and delivers additions and revisions in the same send', async t => {
+  const f = fixture(t);
+  const entries = Array.from({ length: 105 }, (_, i) => item(
+    'memory-event-' + createHash('sha256').update(`retired-window-${i}`).digest('hex'),
+    f.project, { title: `Retired release window ${i + 1}` },
+  ));
+  const original = item('MEM-RELEASE-CHECK', f.project, { title: 'Original release checklist' });
+  for (const entry of [...entries, original]) f.publish(entry);
+  const { session } = await f.spawn('leader', 'codex', 'Review release procedures.');
+  await f.tick();
+  assert.equal(f.inputs(session).length, 1, 'startup took the cursor before the mixed batch');
+
+  const added = item('MEM-RELEASE-REPORT', f.project, { title: 'New release report procedure' });
+  for (const [i, entry] of entries.entries()) {
+    f.publish({ ...entry, revision: 2, status: 'superseded', supersededBy: [added.id] }, 'withdraw');
+    if (i === 49) f.publish(added);
+  }
+  const revisedTitle = 'Revised release checklist';
+  f.publish({ ...original, revision: 2, title: revisedTitle }, 'update');
+
+  const first = await f.deliver(session, 'Check the latest release changes.');
+  const next = await f.deliver(session, 'Continue the release review.');
+  const withdrawals = first.split('\n').filter(line => /withdraw|撤回/iu.test(line));
+  assert.deepEqual({
+    withdrawalLines: withdrawals.length,
+    reportsFullCount: withdrawals.some(line => /\b105\b/u.test(line)),
+    deliversAddition: first.includes(added.title),
+    deliversRevision: first.includes(revisedTitle),
+    replaysWithdrawals: /withdraw|撤回/iu.test(next),
+  }, {
+    withdrawalLines: 1,
+    reportsFullCount: true,
+    deliversAddition: true,
+    deliversRevision: true,
+    replaysWithdrawals: false,
+  });
+});
+
+test('7b delta keeps forgotten and unreadable titles out of individual and grouped withdrawals', async t => {
+  const f = fixture(t);
+  const makeEntry = (key, title, fields = {}) => item(
+    'memory-event-' + createHash('sha256').update(key).digest('hex'), f.project, { title, ...fields },
+  );
+  const privateFields = { layer: 'private', owner: 'another-principal' };
+  const forgotten = makeEntry('forgotten', 'FORGOTTEN-SINGLE-TITLE');
+  const unreadable = makeEntry('unreadable', 'UNREADABLE-SINGLE-TITLE', privateFields);
+  const groupedForgotten = makeEntry('grouped-forgotten', 'FORGOTTEN-GROUPED-TITLE');
+  const groupedUnreadable = makeEntry('grouped-unreadable', 'UNREADABLE-GROUPED-TITLE', privateFields);
+  const visible = makeEntry('visible-retired', 'Retired staging checklist');
+  const replacement = makeEntry('visible-replacement', 'Current staging checklist');
+  for (const entry of [forgotten, unreadable, groupedForgotten, groupedUnreadable, visible, replacement]) f.publish(entry);
+  const { session } = await f.spawn('leader', 'codex', 'Review the staging procedures.');
+  await f.tick();
+
+  const withdraw = (entry, status) => f.publish({
+    ...entry, revision: 2, status, ...(status === 'superseded' && { supersededBy: [replacement.id] }),
+  }, 'withdraw');
+  withdraw(forgotten, 'forgotten');
+  const single = await f.deliver(session, 'Check the latest staging change.');
+  withdraw(unreadable, 'superseded');
+  const privateOnly = await f.deliver(session, 'Continue the staging review.');
+  withdraw(groupedForgotten, 'forgotten');
+  withdraw(groupedUnreadable, 'superseded');
+  withdraw(visible, 'superseded');
+  const grouped = await f.deliver(session, 'Check the remaining staging changes.');
+
+  for (const delta of [single, privateOnly, grouped]) {
+    assert.doesNotMatch(delta, /(?:FORGOTTEN|UNREADABLE)-(?:SINGLE|GROUPED)-TITLE/u);
+  }
+  const withdrawalLines = delta => delta.split('\n').filter(line => /withdraw|撤回/iu.test(line));
+  assert.equal(withdrawalLines(single).length, 1, 'the individual forgotten withdrawal is delivered');
+  assert.equal(withdrawalLines(grouped).length, 1, 'the grouped notice covers the visible withdrawals');
+});
+
 test('5c Claude registers a SessionStart hook scoped to compact', async () => {
   const launch = await buildTuiLaunch({ provider: 'claude', binding: binding('leader', 'A'), indexText });
   const settings = JSON.parse(launch.argv.includes('--settings') ? flag(launch.argv, '--settings') : '{}');

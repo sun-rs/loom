@@ -295,6 +295,37 @@ test('7a CLI approval materializes memory and rejection updates proposal metrics
   assert.deepEqual(metrics(), [2, 1, 2 / 3]);
 });
 
+test('7a memory review rejects any second decision on an approved or rejected proposal without altering metrics', async t => {
+  const approved = pendingProposal('approved-manifest', 'project', 'Retain signed manifests');
+  const rejected = pendingProposal('rejected-checklist', 'project', 'Keep the legacy checklist');
+  const f = await fixture(t, { proposals: [approved, rejected] });
+  const auditor = await f.spawn('auditor');
+  const decide = (decision, proposal) => f.handle('memory-review', { id: proposal.id, decision }, auditor);
+  await decide('approve', approved);
+  await decide('reject', rejected);
+
+  const metrics = () => {
+    const { approvedProposals, rejectedProposals, proposalPassRate } = projectCost(f.project, projectSessions(f.project)).memoryPilot;
+    return [approvedProposals, rejectedProposals, proposalPassRate];
+  };
+  const before = metrics();
+  assert.deepEqual(before, [1, 1, 0.5]);
+  const accepted = [];
+  for (const proposal of [approved, rejected]) {
+    for (const action of ['approve', 'reject']) {
+      const attempt = `${action} ${proposal.id}`;
+      try {
+        await decide(action, proposal);
+        accepted.push(attempt);
+      } catch ({ code, message }) {
+        assert.ok(code && message, `${attempt} returns an explicit review error`);
+      }
+      assert.deepEqual(metrics(), before, `${attempt} leaves the proposal metrics unchanged`);
+    }
+  }
+  assert.deepEqual(accepted, [], 'all four attempts must fail');
+});
+
 for (const action of ['show', 'update', 'invalidate']) {
   const shortId = 'abc123ab';
   const firstId = 'memory-abc123ab-1234-4123-8123-123456789abc';
@@ -778,6 +809,34 @@ test('7c ledger removes every wholly superseded ruling and its continuations fro
     for (const fields of supersededParents) assert.ok(!active.includes(fields.join(' ')), `retired ${fields[0]} for ${role}`);
     assert.deepEqual(active, expected, `${role} sees current rulings and no superseded continuations`);
   }
+});
+
+test('7c index clips a long single-line ledger ruling and does not restart its title in the hook', async t => {
+  const f = await fixture(t, { capture: true });
+  const opening = '每次发布前由值班审计员复核签名清单';
+  const decision = opening + '，逐项核对构建产物的摘要、签署人的角色和发布窗口，' +
+    '并将复核时间与签收记录写入项目账本；缺少签名时应暂停发布并通知负责人，' +
+    '待补齐签名及产物证据后再恢复发布。';
+  f.write('.project/rulings.md', `# 裁决账本\nR42. ${decision}\n`);
+  await f.tick();
+
+  const access = createAccess({ readState: f.snapshot });
+  const { rows: index } = await access.index({ role: 'leader', principal: 'leader', project: f.project });
+  assert.equal(index.length, 1, 'the synced ruling appears in the index');
+  const [{ line }] = index;
+  const row = /^- \[([^\]\n]+)\]\([a-f0-9]{8}\) — (\S[^\n]*)$/u.exec(line);
+  assert.ok(row, `expected a title, short ID and hook: ${line}`);
+  const [, title, hook] = row;
+  const bodyPrefix = opening.slice(0, 12);
+  assert.deepEqual({
+    titleFits: [...title].length <= 60,
+    hookRestartsTitle: hook.replace(/^R42\s+/u, '').startsWith(bodyPrefix),
+    lineFits: [...line].length <= 150,
+  }, {
+    titleFits: true,
+    hookRestartsTitle: false,
+    lineFits: true,
+  }, line);
 });
 
 test('7c index puts rulings first, then higher importance and newer rulings', async () => {
