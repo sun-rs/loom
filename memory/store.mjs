@@ -4,7 +4,6 @@ import { itemPath, renderEntry, validateEntry, validateEntryFormat } from './for
 import { sanitizeEntry } from './sanitize.mjs';
 
 const day = 86_400_000;
-const ephemeralReceiptLimit = 1024;
 const decisions = new Map([
   ['promote', 'promoted'], ['merge', 'merged'], ['return', 'returned'], ['reject', 'rejected'],
 ]);
@@ -102,8 +101,6 @@ export function createMemoryStore({ now = Date.now, readState, commitState, evid
   estimateTokens, maxMetadataBytes, staleDays, getObservations, classifySensitive, replacement, readRaw } = {}) {
   const format = { evidence, estimateTokens, maxMetadataBytes };
   const redaction = { classifySensitive, replacement };
-  // Keep only fingerprints. Merge replays still check the current snapshot and its forget markers.
-  const ephemeralReceipts = new Map();
   let pending = Promise.resolve();
 
   function serialize(action) {
@@ -371,10 +368,8 @@ export function createMemoryStore({ now = Date.now, readState, commitState, evid
     const state = await snapshot();
     const scope = JSON.stringify([binding.sessionId, binding.principal, binding.role, binding.project, binding.cardId]);
     const prior = state.receipts.find(row => row.scope === scope && row.requestId === requestId);
-    const replayKey = JSON.stringify([scope, requestId]);
-    const priorFingerprint = prior ? prior.fingerprint : ephemeralReceipts.get(replayKey);
     const fingerprint = requestFingerprint(request);
-    if ((prior || priorFingerprint !== undefined) && (fingerprint === undefined || fingerprint !== priorFingerprint)) {
+    if (prior && (fingerprint === undefined || fingerprint !== prior.fingerprint)) {
       return { ok: false, code: 'conflict', error: 'Memory request ID was already used' };
     }
     if (bodyWrites.has(op) && typeof classifySensitive !== 'function') {
@@ -383,20 +378,13 @@ export function createMemoryStore({ now = Date.now, readState, commitState, evid
     if (fingerprint === undefined) return invalid('Invalid memory request content');
     const success = (fields, status = 'accepted') => ({ ok: true, ...fields, receipt: { requestId, status } });
     const current = state.entries.find(entry => entry.id === id);
-    if (op === 'merge' && (current?.status === 'forgotten' || (!prior && current?.status === 'merged'))) {
-      const result = replayMerge(state, binding, request, current, success);
-      if (result.ok && priorFingerprint === undefined) {
-        if (ephemeralReceipts.size === ephemeralReceiptLimit) {
-          ephemeralReceipts.delete(ephemeralReceipts.keys().next().value);
-        }
-        ephemeralReceipts.set(replayKey, fingerprint);
-      }
-      return result;
-    }
-    if (prior) return prior.response;
+    const forgottenMerge = op === 'merge' && current?.status === 'forgotten';
+    if (prior && !forgottenMerge) return prior.response;
     const before = state.seq;
     let result;
-    if (op === 'put' || op === 'propose') result = await put(state, binding, request, current, success);
+    if (forgottenMerge || (op === 'merge' && current?.status === 'merged')) {
+      result = replayMerge(state, binding, request, current, success);
+    } else if (op === 'put' || op === 'propose') result = await put(state, binding, request, current, success);
     else if (decisions.has(op)) result = await review(state, binding, request, current, success);
     else if (op === 'import_rulings') result = await importRulings(state, binding, request, success);
     else if (op === 'forget') {
