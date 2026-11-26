@@ -6,6 +6,7 @@
 |---|---|---|
 | 2026-11-25 | AML 记忆排行榜、MemoraX 与开源冠军 | [2026-11-25-aml-memorax.md](2026-11-25-aml-memorax.md) |
 | 2026-11-25 | 记忆系统：单机、跨机，以及各 CLI 原生记忆的关闭方式 | [2026-11-25-memory-systems.md](2026-11-25-memory-systems.md) |
+| 2026-11-26 | 账号状态与额度来源 | [2026-11-26-account-status.md](2026-11-26-account-status.md) |
 | 2026-11-26 | Claude Code Code Mode | [2026-11-26-code-mode.md](2026-11-26-code-mode.md) |
 | 2026-11-25 | 热升级：hc/Herdr、Orca 的做法，loom 现状与计划 | [2026-11-25-hot-upgrade.md](2026-11-25-hot-upgrade.md) |
 | 2026-11-25 | Paseo 如何驱动多个 CLI provider | [2026-11-25-paseo.md](2026-11-25-paseo.md) |
