@@ -9,3 +9,5 @@ User ruling 2026-11-26: "换班应该是一个 skill，里面记录了怎么拉�
 5. **Skill text**: update the loom skill (Leader and Auditor sections) with: when to rotate, the one command, the note template, what to do on failure, and that unattended roles must not wait for Super to do it. Update role launch prompts accordingly.
 6. Tests: self-rotate for agy Leader and Claude Auditor in isolated fixtures (real TUI where feasible, as ROT-PASTE-1 did) incl. failure → predecessor retry once → escalate; identical runtime inherited; note embedded; signal delivered on an existing delivery only.
 RESULT.md Chinese, STATUS: done, uncommitted. Red lines as before.
+
+**Addendum (Super):** `loom send leader --project /Users/sun/Code/loom-pilot2 …` fails with `ambiguous-target` listing retired/old leader sessions (bdfd71e0, 919d7ab2, 8d74a63c …). A role name must resolve to the single live, acknowledged session for that role (the same record rotation switches); retired/ended ones never match. Also `--from super` → `not-found` when Super is not a managed session: accept `super` as a sender identity from outside managed sessions (recorded as such) so receipts/replies route to Super's notifications.
