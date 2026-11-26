@@ -23,3 +23,15 @@ Base: main @ 36b40f46 (deployed to pilot-2). Do not commit. Today the screen rec
    - Show the state in `loom status` (top section, like stalled deliveries) and `loom ls`.
 3. **Delivery and escalation.** Never write a paste or Enter while a prompt is up (keep blocksInput; prove from item 1 that this is required). A delivery waiting on a prompt gets reason `target-awaiting-user` under DELIVERY-SLA-1. A senior role stuck on a prompt past the bound escalates one level (Leader → Auditor, Auditor → Super/user desktop notice), once. Headless workers: confirm approvals cannot block OAR workers (bypass) and report.
 npm test green; RESULT.md Chinese, `STATUS: done`. Red lines as before; never type into pilot-2 panes.
+
+## Item 4 (user, 2026-11-25): choice prompts block senior roles just like approvals
+The user once came back after hours to find the Auditor sitting on a set of three AskUserQuestion prompts. The Leader and workers kept working, but the Auditor neither worked nor supervised. Auto/bypass mode removes most approvals but not question tools.
+- **Prevent at launch, per CLI, using launch-scoped flags only (never user config).** Disable the native question tool for loom-managed roles:
+  - Claude: `--disallowedTools AskUserQuestion` (verify the exact flag on 2.1.331).
+  - Codex: no plan mode / disable request_user_input.
+  - agy: ask_question, if a launch setting exists.
+  - OpenCode: permission `question: deny` via the launch config path loom already controls.
+  - Verify each live: the role cannot open a question prompt, and the tool's absence does not break the turn.
+  - Policy override `roles.<r>.allowNativeQuestions` (default false).
+- **Non-blocking replacement.** Role prompts and the skill say: to ask the user or Super, use `"$LOOM_BIN" notifications --needs-decision TEXT --kind decision` (PYRAMID-2), write the options in a file, and keep working on whatever else is possible. Super/user answers arrive as a normal delivery.
+- **Detect anyway.** Items 2–3 still apply, because a prompt can appear by other paths (slash pickers, approvals outside bypass, future tools). A senior role in `awaiting-choice`/`awaiting-approval` past the bound gets a desktop notice to the user that names the role and the question summary.
