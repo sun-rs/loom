@@ -36,3 +36,5 @@ Rationale: (a) an idle headless worker costs memory (~300 MB) but zero tokens; (
 **Addendum 5 — final lifespan rule (supersedes Addenda 3–4 thresholds), from veterans' answers + pilot data: see docs/research/2026-11-26-worker-lifespan.md "结论" items 1–7.** Implement items 1–6 as loomd data + Leader skill text (≤10 lines) + new-worker first-report check (branch, base SHA, WIP lines, active rulings verified against loomd; mismatch → stop and report). Defaults: cross-card reuse ≤50% used and 0 compactions; mid-card handoff at 2nd compaction or <15% remaining via a handoff sheet; all configurable.
 
 **Addendum 6:** wording fix — mid-card handoff condition is "already compacted once AND remaining < 15% again" (not "2nd compaction or <15%", which is a paradox). See the corrected research doc.
+
+**Addendum 7 (after t4c's answer):** cross-card reuse condition = same area/worktree AND used ≤ 60% AND compactions ≤ 1 AND the previous card had zero verified fact errors / overreach. Mid-card switch also allowed after 10 minutes of no progress or on fabrication/overreach. See updated research doc.
