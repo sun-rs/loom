@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 import { chmodSync, lstatSync, mkdirSync } from 'node:fs';
-import { createConnection } from 'node:net';
+import { connectUnix } from '../lib/unix-socket.mjs';
 import { join } from 'node:path';
 import { inDirectory, runtimeDirectory } from '../cli/project.mjs';
 import { readText } from './io.mjs';
@@ -44,7 +44,7 @@ export function receiveHostLine(socket, callback) {
 
 export function hostRequest(path, owner, method, params, protocol, controller) {
   return new Promise((resolve, reject) => {
-    const socket = createConnection(path);
+    const socket = connectUnix(path);
     const fail = error => { socket.destroy(); reject(error); };
     const request = JSON.stringify({ owner, method, params, protocol, controller }) + '\n';
     if (Buffer.byteLength(request) > hostLineLimit) return fail(new Error('Session host request is too large'));

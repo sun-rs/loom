@@ -72,9 +72,9 @@ function validateProfiles({ preferred = [], deny = [] }) {
   }
 }
 
-const warnedLegacyReviewer = new Set();
+const warnedReviewerPolicies = new Set();
 
-export function readPolicy(project, { optional = false } = {}) {
+export function readPolicy(project, { optional = false, warn = console.error } = {}) {
   const path = join(project, '.project', 'policy.json');
   try {
     const source = readText(path, null);
@@ -121,9 +121,9 @@ export function readPolicy(project, { optional = false } = {}) {
     if (policy.roles !== undefined) {
       if (!policy.roles || typeof policy.roles !== 'object' || Array.isArray(policy.roles)) throw new Error('Expected a roles object');
       if (Object.hasOwn(policy.roles, 'reviewer')) {
-        if (!warnedLegacyReviewer.has(path)) {
-          warnedLegacyReviewer.add(path);
-          process.emitWarning(`${path}: roles.reviewer is retired. Use Auditor and Worker evidence at phase boundaries.`);
+        if (!warnedReviewerPolicies.has(path)) {
+          warn(`${path}: Remove roles.reviewer. The Auditor now checks evidence at phase boundaries.`);
+          warnedReviewerPolicies.add(path);
         }
         delete policy.roles.reviewer;
       }
@@ -268,8 +268,7 @@ export function spawnProfile(project, input, owner, occupies) {
   if (input.role === 'worker' && Object.hasOwn(input, 'workerCaller')) {
     checkWorkerCapacity(project, input, workerLimit(policy), owner, occupies);
   }
-  return { requested, selected, deny, fastRequested, warnings, trustWorkspace: role?.trustWorkspace ?? true,
-  };
+  return { requested, selected, deny, fastRequested, warnings, trustWorkspace: role?.trustWorkspace ?? true };
 }
 
 export const workerLimit = policy => policy.roles?.leader?.maxActiveWorkers ?? defaultMaxActiveWorkers;

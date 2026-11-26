@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
-import { execFileSync } from 'node:child_process';
+import { execFileSync, mkdtemp } from '../fixtures/test-process.mjs';
 import { createHash } from 'node:crypto';
-import { appendFile, mkdir, mkdtemp, readFile, readdir, realpath, rm, stat, symlink, writeFile } from 'node:fs/promises';
+import { appendFile, mkdir, readFile, readdir, realpath, rm, stat, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { test } from 'node:test';
@@ -104,7 +104,7 @@ test('excerpts numbered R entries from a ledger and explains a ledger with no nu
 
 test('projects the parent chain, latest adapter turns, inbox, relay, watch, claims and git', async t => {
   const projectDir = await workspace(t);
-  execFileSync('git', ['init', '-q', '--template=', projectDir]);
+  execFileSync('/usr/bin/git', ['init', '-q', '--template=', projectDir]);
   await put(projectDir, 'ship.txt', 'pending');
   const old = session('t1', { parent: 't0', startedAt: 1000, transcriptPath: await put(projectDir, 'old.jsonl', turn('old')) });
   const parent = session('t0', { role: 'super', transcriptPath: await put(projectDir, 'super.jsonl', turn('super-other')) });

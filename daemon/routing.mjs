@@ -21,7 +21,7 @@ export function workerRedFacts(git) {
     ...(git?.protectedHits ?? []).map(hit => ({ reason: 'protected-file', file: hit.path })),
     ...(git?.scopeHits ?? []).map(file => ({ reason: 'protected-file', file })),
     ...(git?.tests ?? []).flatMap(test => [
-      assertionCounts(test).removedAssertions > 0 &&
+      (assertionCounts(test).removedAssertions > 0 || test.assertions?.some(edit => edit.weakened) || test.deletedTests?.length || test.status === 'D') &&
         { reason: 'assertion', file: test.path },
       (test.changes?.addedSkip > 0 || test.changes?.addedOnly > 0) && { reason: 'skip-only', file: test.path },
     ].filter(Boolean)),

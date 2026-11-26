@@ -20,6 +20,7 @@ import { plannedCardPaths } from '../evidence/facts.mjs';
 import { defaultCoalesceMs, readPolicy, setWorkerProfile, workerHandoffLimits,
   workerLimit, workerReuseLimits, workerWarmMs } from '../cli/policy.mjs';
 import { isStartupBlocker } from '../tui/agent-status.mjs';
+import { recordAuditFinding, requireAuditRegressions } from './audit-findings.mjs';
 import { gateId, saveGatePacket } from './gate-packet.mjs';
 import { gateBoundary, roleBudget } from './role-budget.mjs';
 import { leaderHandoverState } from '../handover/brief.mjs';
@@ -1195,6 +1196,7 @@ ${details}`, {
       if (v2.enabled() && (rpcActor || external)) v2.checkProtectedRefs();
       if (command === 'rotation-policy') return v2.admin(args, rpcActor, external);
       const read = ['ls', 'status', 'state', 'board'].includes(command) ||
+        command === 'audit-findings' && [args.id, args.category, args.evidence, args.regression].every(value => value === undefined) ||
         command === 'notifications' && ![args.take, args.complete, args.gateComplete, args.decision].some(value => value != null && value !== false);
       if (caller && v2.restricted(caller) && !read && !(command === 'rotate' && v2.canRequest(caller))) {
         throw new CommandError('permission-denied', 'The role is in read-only verification');
@@ -1314,12 +1316,18 @@ ${details}`, {
         return spawnSession({ role, cwd: old.cwd, 'handover-from': old.addr, profileChoice: to, defaultMode: old.backend,
           prompt: 'Take over the resident role. In your first report, ground the current state in repository SHAs, paths and any test or metric names you rely on.' }, caller);
       }
-      if (['notifications', 'gate-pack', 'escalate'].includes(command)) {
+      if (['notifications', 'gate-pack', 'escalate', 'audit-findings'].includes(command)) {
         const rows = sessions.rows();
         const names = new Set(rows.map(row => row.project));
         const actor = caller && rows.find(row => row.addr === caller || row.pane === caller);
         const name = args.project ?? actor?.project ?? (names.size <= 1 ? (names.values().next().value ?? project) : undefined);
         if (actor && name !== actor.project) throw new CommandError('forbidden', 'Choose your own project');
+        if (command === 'audit-findings') {
+          if (!name || !names.has(name) && name !== project) {
+            throw new CommandError('invalid-arguments', 'Select one Loom project for audit findings');
+          }
+          return recordAuditFinding(project, name, actor, args, notifications, now);
+        }
         const gateWriter = name && (names.has(name) || name === project) && (external ||
           ['leader', 'super'].includes(actor?.role) && actor.endedAt === null && actor.project === name);
         if (command !== 'notifications') {
@@ -1359,7 +1367,10 @@ ${details}`, {
           const decisions = notifications.list(name).filter(event => event.type === 'needs-decision' &&
             (event.gate === gate || members.some(row => row.addr === event.addr)));
           const workerAddrs = new Set(members.filter(row => row.role === 'worker').map(row => row.addr));
-          const signals = leaderSignals(name).filter(notice => workerAddrs.has(notice.addr));
+          const boundary = notifications.list(name, false, true)
+            .findLast(gateBoundary)?.at ?? 0;
+          const signals = leaderSignals(name).filter(notice => workerAddrs.has(notice.addr) ||
+            notice.type === 'auditor-budget-exceeded' && notice.at >= boundary);
           const { path, fullPath, candidate, base } = saveGatePacket(project, { ...args, id, round }, { members,
             decisions, signalSummary: noticeLines(signals), signalCount: signals.length, red });
           const delivery = saved(sessions.targetBinding(auditor), red ?
@@ -1384,6 +1395,9 @@ ${details}`, {
           }
           const { phase } = args;
           const history = notifications.list(name, false, true);
+          const completing = phase === undefined ? new Set(history.filter(event => event.type === 'audit-finding')
+            .map(event => event.phase)) : [phase];
+          for (const phase of completing) requireAuditRegressions(history, phase);
           const id = phase === undefined ? history.find(event => event.type === 'project-completed' &&
             event.phase === undefined && event.text === args.complete)?.id ?? 'completed:' + batchDeliveryId(name, args.complete) :
             'completed-phase:' + batchDeliveryId(name, phase);
@@ -1407,6 +1421,7 @@ ${details}`, {
             throw new CommandError('invalid-arguments', 'A Leader or Super must supply a completed gate ID in this project');
           }
           const gate = args.gateComplete;
+          requireAuditRegressions(notifications.list(name, false, true), gate);
           if (args.candidate !== undefined && !v2.enabled()) throw new CommandError('invalid-arguments', '--candidate requires rotation v2');
           if (v2.enabled() && args.candidate !== undefined) {
             const approval = mail.messages.findLast(message => matchesGate(message, name, gate) && message.gateCandidate === args.candidate);

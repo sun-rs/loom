@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
-import { spawnSync } from 'node:child_process';
+import { spawnSync, mkdtemp } from '../../fixtures/test-process.mjs';
 import { randomUUID } from 'node:crypto';
-import { appendFile, mkdtemp, readFile, realpath, rm, writeFile } from 'node:fs/promises';
+import { appendFile, readFile, realpath, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';

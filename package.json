@@ -10,12 +10,15 @@
     "loomd": "bin/loomd"
   },
   "scripts": {
+    "lint": "node bin/loom lint --project \"$PWD\"",
+    "pretest": "npm run lint",
     "test": "node test-support/run.mjs",
     "postinstall": "node tui/install-pty.mjs"
   },
   "dependencies": {
     "@botiverse/oar": "0.130.1",
     "@xterm/headless": "5.5.0",
+    "acorn": "8.15.0",
     "node-pty": "1.1.0",
     "string-width": "8.2.2"
   }

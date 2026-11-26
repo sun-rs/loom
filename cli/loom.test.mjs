@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
-import { execFile, spawnSync } from 'node:child_process';
+import { execFile, spawnSync, mkdtempSync } from '../fixtures/test-process.mjs';
 import { once } from 'node:events';
-import { mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { createServer } from 'node:net';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -10,7 +10,7 @@ import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
 import { randomUUID } from 'node:crypto';
 import { openIndex } from '../index/index.mjs';
-import { spawnProfile } from './policy.mjs';
+import { readPolicy, spawnProfile } from './policy.mjs';
 import { projectIndex, socketPath } from './project.mjs';
 import { estimateTokens } from '../lib/token-budget.mjs';
 import { writeMemory } from '../memory/project.mjs';
@@ -66,7 +66,7 @@ function fixture(t) {
   const path = join(cwd, 'index.sqlite');
   const index = openIndex(path);
   const env = { ...process.env, HC_TERMINAL_ID: '', LOOM_PROJECT: '', LOOM_ADDR: '', LOOM_INDEX_PATH: path };
-  const cli = (...args) => spawnSync(executable, args, { cwd, env, encoding: 'utf8' });
+  const cli = (...args) => spawnSync(process.execPath, [executable, ...args], { cwd, env, encoding: 'utf8' });
   const run = (code, ...args) => {
     const result = cli(...args);
     assert.equal(result.status, code, result.stderr || result.stdout);
@@ -320,6 +320,23 @@ test('validates the policy example and rejects malformed capacity, drift, fast a
     writeFileSync(path, JSON.stringify({ ...example, ...invalid }));
     assert.throws(() => select('worker'), { code: 'invalid-policy' });
   }
+});
+
+test('legacy roles.reviewer is ignored with a migration warning', t => {
+  const f = fixture(t);
+  const metadata = join(f.cwd, '.project');
+  mkdirSync(metadata);
+  const path = join(metadata, 'policy.json');
+  const original = { roles: { reviewer: { maxDurationMs: 0, preferred: 'obsolete' }, leader: { maxActiveWorkers: 2 } } };
+  writeFileSync(path, JSON.stringify(original));
+  const warnings = [];
+  const load = () => readPolicy(f.cwd, { warn: warning => warnings.push(warning) });
+  assert.deepEqual(load().roles, { leader: { maxActiveWorkers: 2 } });
+  load();
+  assert.equal(warnings.length, 1);
+  assert.match(warnings[0], /Remove roles\.reviewer/);
+  assert.deepEqual(JSON.parse(readFileSync(path, 'utf8')), original);
+  assert.equal(f.run(2, 'spawn', 'reviewer', '--cwd', f.cwd, '--wave', 'W', 'Check evidence').error.code, 'invalid-arguments');
 });
 
 test('worker admission counts live sessions by parent and project across waves', async t => {

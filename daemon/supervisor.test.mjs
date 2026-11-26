@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
-import { appendFileSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
-import { execFile, execFileSync } from 'node:child_process';
+import { appendFileSync, mkdirSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
+import { execFile, execFileSync, mkdtempSync } from '../fixtures/test-process.mjs';
 import { once } from 'node:events';
 import { createServer } from 'node:net';
 import { promisify } from 'node:util';
@@ -151,7 +151,7 @@ test('only Leader and Auditor get a bounded project memory block on spawn', asyn
   const { session: worker } = await f.spawn(daemon, 'worker', 'W', leader.addr);
   await daemon.tick();
   const guidance = [/Make decisions.*dispatch Workers.*integration Worker supplies fixed-candidate and full-suite evidence.*reply file path.*poll loom state/,
-    /Decide the gate verdict.*Ask for the integration Worker evidence.*phase boundary.*Worker evidence card/];
+    /Decide the gate verdict.*Ask for the integration Worker evidence.*phase boundaries.*Worker to reproduce/];
   for (const [{ addr }, rule] of [[leader, guidance[0]], [auditor, guidance[1]]]) {
     const prompt = f.prompts.find(item => item.addr === addr).input;
     assert.ok(prompt.endsWith('\n\n## Startup request\nstart'));
@@ -467,9 +467,10 @@ test('gate pack snapshots scoped evidence into one compact file and enqueues one
   const next = await d.handle('gate-pack', { gate: 'GATE', candidate, question: 'Latest question' }, leader.addr);
   assert.equal(next.round, 2);
   assert.notEqual(next.deliveryId, packet.deliveryId);
-  assert.match(readFileSync(next.path, 'utf8'), /Latest question/);
-  const full = next.fullPath ? readFileSync(next.fullPath, 'utf8') : '';
-  assert.match(readFileSync(next.path, 'utf8') + full, /next-round\.json/);
+  const nextText = readFileSync(next.path, 'utf8');
+  assert.match(nextText, /Latest question/);
+  assert.doesNotMatch(nextText, /Reviewer verdicts/);
+  assert.match(nextText + (next.fullPath ? readFileSync(next.fullPath, 'utf8') : ''), /next-round\.json/);
   assert.equal(readFileSync(packet.path, 'utf8'), contents);
 
   const missing = await d.handle('gate-pack', { gate: 'MISSING', candidate }, leader.addr);
@@ -2102,6 +2103,36 @@ test('an opt-in resident compaction limit proposes rotation at the idle card bou
   runtime.finish('Card boundary');
   await d.tick();
   assert.equal(f.read('loomd/self-rotation.json')[leader.addr].signal.reason, 'compaction');
+
+test('invariant [persistence] audit-only findings are counted once, survive restart, and need a regression before phase completion', async t => {
+  const f = fixture(t);
+  let d = f.daemon();
+  t.after(() => d.shutdown());
+  const { session: leader } = await f.spawn(d, 'leader', 'L');
+  const { session: auditor } = await f.spawn(d, 'auditor', 'A');
+  const record = { phase: 'INTEGRATE', id: 'fingerprint', category: 'retry',
+    evidence: 'The retry branch lost its last write fingerprint.' };
+  await assert.rejects(d.handle('audit-findings', record, leader.addr), { code: 'invalid-arguments' });
+  const cli = await cliFor(t, f, () => d, auditor.addr);
+  const filed = JSON.parse((await cli('audit-findings', record.phase, '--id', record.id, '--category', record.category,
+    '--evidence', record.evidence)).stdout);
+  assert.deepEqual(filed.byCategory, { retry: { reviewOnly: 1, open: 1 } });
+  await d.handle('audit-findings', record, auditor.addr);
+  await assert.rejects(d.handle('audit-findings', { ...record, evidence: 'Different claim' }, auditor.addr), { code: 'id-conflict' });
+  await assert.rejects(d.handle('notifications', { gateComplete: record.phase }, leader.addr), { code: 'audit-findings-open' });
+  await assert.rejects(d.handle('notifications', { phase: record.phase, complete: 'Complete' }, leader.addr), { code: 'audit-findings-open' });
+  await d.shutdown();
+  d = f.daemon();
+  const close = { phase: record.phase, id: record.id, regression: 'fingerprint.test.mjs' };
+  await assert.rejects(d.handle('audit-findings', close, auditor.addr), { code: 'invalid-arguments' });
+  writeFileSync(join(f.project, close.regression), "import test from 'node:test';\ntest('retry retains fingerprint', () => {});\n");
+  const closed = JSON.parse((await cli('audit-findings', record.phase, '--id', record.id, '--regression', close.regression)).stdout);
+  assert.equal(closed.findings[0].regression, close.regression);
+  await d.handle('audit-findings', close, auditor.addr);
+  assert.deepEqual((await d.handle('audit-findings', { phase: record.phase })).byCategory, { retry: { reviewOnly: 1, open: 0 } });
+  assert.deepEqual((await d.handle('audit-findings', { phase: 'OTHER' })).byCategory, {});
+  await d.handle('notifications', { gateComplete: record.phase }, leader.addr);
+  await assert.rejects(d.handle('audit-findings', { ...record, id: 'post-close' }, auditor.addr), { code: 'not-ready' });
 });
 
 test('switches Claude Leader to agy and agy Auditor to Codex under one durable succession guard', async t => {

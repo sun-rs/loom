@@ -4,6 +4,7 @@ import { readArtifacts } from './artifacts.mjs';
 import { projectCost } from './cost.mjs';
 import { request, daemonAbsent } from '../daemon/rpc.mjs';
 import { activeOrgNotices, readOrg, workerCardFindings } from '../daemon/org.mjs';
+import { summarizeAuditFindings } from '../daemon/audit-findings.mjs';
 import { readNotifications } from '../daemon/notifications.mjs';
 import { deliveryFailed, isBlockedReply } from '../inbox/message.mjs';
 import { managedProject, projectIndex, projectSessions } from './project.mjs';
@@ -95,6 +96,9 @@ export async function projectStatus(project) {
       ...(job?.firstReportCheck && { firstReportCheck: job.firstReportCheck }) };
   };
   const notifications = readNotifications(project);
+  const auditFindings = [...Map.groupBy(notifications, event => event.project)].flatMap(([name, events]) =>
+    [...new Set(events.filter(event => event.type === 'audit-finding').map(event => event.phase))]
+      .map(phase => ({ project: name, ...summarizeAuditFindings(events, phase) })));
   const relay = artifacts.relay();
   const pendingWaves = new Set(messages.filter(message => message.waveKey &&
     ['queued', 'sending', 'stopped', 'stopping'].includes(message.phase)).map(message => message.waveKey));
@@ -234,7 +238,7 @@ export async function projectStatus(project) {
         ...(awaitingAck.has(row.addr) && { awaitingHandoverAck: true }) };
     }),
     waves, pendingContinuations, cards: cards.filter(card => card.active || ['blocked', 'result-undelivered'].includes(card.state)),
-    blocked, notices, merges, ...(rotationPolicy && { rotationPolicy }), rotations: rotationDetails, rotationsToday, seniorSessions, rotationNotices, seniorTools, routing: { filtered },
+    blocked, notices, auditFindings, merges, ...(rotationPolicy && { rotationPolicy }), rotations: rotationDetails, rotationsToday, seniorSessions, rotationNotices, seniorTools, routing: { filtered },
     memory: memory ?? null, workerMetrics: metrics ?? workerMetrics(rows, addr => jobs.get(addr), artifacts.journal, messages),
     cost: { rawTokens, byRole: Object.fromEntries(Object.entries(byRole).map(([role, value]) => [role, value.rawTokens])),
       usageByRole: byRole, pyramid, missingSessions: missing.length },
@@ -305,6 +309,9 @@ export function printStatus(result) {
   section('Drift and fact checks', result.notices, row =>
     [row.type, row.task ?? row.addr, row.misses?.map(miss => miss.value).join(', ') ??
       row.command ?? row.file ?? row.failureClass ?? row.reason ?? row.text].join(' '), 3);
+  if (result.auditFindings?.length) section('Audit-only findings', result.auditFindings, row =>
+    row.phase + ' · ' + Object.entries(row.byCategory).map(([category, counts]) =>
+      `${category} ${counts.reviewOnly} (${counts.open} open)`).join(' · '), 6);
   if (result.routing.filtered.length) console.log(`Auditor routing · ${result.routing.filtered.length} filtered deliveries in --json`);
   section('Last merges', result.merges, row => [row.sha.slice(0, 12), row.subject].join(' '), 3);
   console.log('Cost · ' + result.cost.rawTokens.toLocaleString() + ' recorded tokens' +

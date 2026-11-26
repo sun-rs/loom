@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
-import { execFileSync } from 'node:child_process';
-import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, symlinkSync, unlinkSync, writeFileSync } from 'node:fs';
+import { execFileSync, mkdtempSync } from '../fixtures/test-process.mjs';
+import { mkdirSync, readdirSync, readFileSync, rmSync, symlinkSync, unlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
@@ -53,7 +53,7 @@ test('writes bounded Markdown items and rebuilds a one-line-per-item index', t =
 
 test('checks paths and SHAs at write and filters failed, expired and replaced items', async t => {
   const { project, put, index } = fixture(t);
-  const git = (...args) => execFileSync('git', args, { cwd: project, encoding: 'utf8' }).trim();
+  const git = (...args) => execFileSync('/usr/bin/git', args, { cwd: project, encoding: 'utf8' }).trim();
   git('init', '-q');
   const sha = git('hash-object', '-w', 'evidence.txt');
   assert.throws(() => put('missing', { source: 'missing' }), /could not be verified/);

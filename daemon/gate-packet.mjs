@@ -60,7 +60,14 @@ export function saveGatePacket(project, { id, gate, round, base: baseRef, candid
   const redFacts = cards.flatMap(card => workerRedFacts(card.data.git));
   const redLines = [...new Set(redFacts.map(fact => `- ${fact.reason} · ${oneLine(fact.file)}`))];
   if (red) redLines.unshift(`- Leader confirmed ${red.reason} · ${oneLine(red.text)}`);
-  const checks = cards.flatMap(({ data }) => data.verification?.commands ?? []);
+  const checks = cards.flatMap(({ data }) => (data.verification?.commands ?? []).filter(command => command.runner !== 'loom-lint'));
+  const latestByWorker = new Map(cards.toReversed().map(card => [card.data.addr, card]));
+  const verificationGaps = [...latestByWorker.values()].flatMap(({ path, data }) => (data.checks?.invariants?.gaps ?? [])
+    .map(category => `- ${relative(project, path)} · ${category}`));
+  const sample = cards.filter(({ data }) => data.git?.head === candidate && data.git.uncommitted === false)
+    .flatMap(({ data, path }) => (data.verification?.commands ?? []).flatMap((check, index) =>
+      check.runner !== 'loom-lint' && check.result === 'passed' && check.exitCode === 0 ?
+        [`- ${oneLine(check.command)} · ${relative(project, path)}#/verification/commands/${index}`] : []))[0];
   const passed = checks.filter(check => check.result === 'passed').length;
   const failed = checks.filter(check => check.result === 'failed').length;
   const sandboxed = checks.filter(check => check.sandboxed === true).length;
@@ -74,6 +81,8 @@ export function saveGatePacket(project, { id, gate, round, base: baseRef, candid
     preview('Evidence cards', `${cards.length} cards · .project/evidence/\n${bullet(evidence, 'No recorded cards.')}`, 250),
     preview('Diff --stat', stat || 'No changes.', 240, diff),
     `## Test summary\n${checks.length ? `${passed} passed, ${failed} failed, ${checks.length - passed - failed} inconclusive commands; ${sandboxed} ran in a sandbox.` : 'No verified test commands.'}`,
+    ...(verificationGaps.length ? [preview('Invariant evidence gaps', [...new Set(verificationGaps)].join('\n'), 150)] : []),
+    ...(sample ? [preview('Auditor reproduction sample', sample, 140)] : []),
     preview('Open questions', bullet(questions, 'None recorded.'), 110),
     preview('Red facts', bullet(redEvidence, 'None recorded.'), 170, bullet(redLines, 'None recorded.')),
     preview('Drift and fact checks', `${signalCount} signals\n${signalSummary || 'None recorded.'}`, 165),

@@ -40,7 +40,7 @@ export const opencodeExportFailureLimit = 3;
 const pipeRecoveryLimit = 4;
 const pipeRecoveryWindow = 120_000;
 const hasText = value => typeof value === 'string' && value.trim().length > 0;
-const temporaryRole = role => ['worker', 'reviewer'].includes(role);
+const temporaryRole = role => role === 'worker' || role === 'reviewer'; // Old ledgers may still contain retired sessions.
 export const validInput = text => hasText(text) && !/[\x00-\x08\x0b\x0c\x0e-\x1f\x7f-\x9f]/.test(text);
 export const validDispatchReason = value => value === undefined ||
   validInput(value) && !/[\r\n]/.test(value) && Buffer.byteLength(value) <= 512;
@@ -622,7 +622,7 @@ export function ownedSessions(project, index, report, {
     }
     if (row.role === 'leader' || row.role === 'auditor') {
       const guidance = row.role === 'leader' ? leaderGuidance + ' ' + leaderWorkerGuidance :
-        'Decide the gate verdict from the packet, fixed SHA, and integration Worker evidence. Ask for the integration Worker evidence if it is missing. Delegate investigation, tests, builds, merges and integration. At a phase boundary, verify primary evidence and use a Worker evidence card for checks requiring execution. Other wake sources are user or Super messages, a gate packet or red escalation from Leader, succession supervision, and replies you explicitly requested.';
+        'Decide the gate verdict from the packet, fixed SHA, and integration Worker evidence. Ask for the integration Worker evidence if it is missing. Delegate investigation, tests, builds, merges and integration. At phase boundaries, inspect the deterministic checks and Worker evidence. Select one evidence command for a Worker to reproduce and record review-only findings with loom audit-findings. Wake sources are user or Super messages, a gate packet or red escalation from Leader, succession supervision, and replies you explicitly requested.';
       prompt = `## Loom role guidance\n${guidance} ${seniorGuidance} Do not wait on background Bash or poll loom state. ${unattended} If a result is overdue, run "$LOOM_BIN" status and check stalled deliveries and suppressed replies. At a rotation signal, write your judgment and in-flight card IDs to the indicated note, run "$LOOM_BIN" rotate --self, and finish the current turn. Loom starts the same profile at idle. For v2, one failed handover stops rotation for this phase and Loom informs Super. Put DONE, BLOCKED, FAILED, PASS, REJECT or APPROVE on the first line of the final conclusion, before any preamble. The handover turn starts with its exact HANDOVER-ACK. Use NOREPLY for acknowledgements.\n\n## Startup request\n${prompt}`;
       try { prompt = await projectMemoryPrompt(project) + prompt; }
       catch (error) { report(`Project memory unavailable: ${error.message}`); }
@@ -946,6 +946,10 @@ export function ownedSessions(project, index, report, {
       const addr = job.row.addr;
       try {
         let row = rowFor(addr);
+        if (row?.role === 'reviewer' && row.endedAt === null) {
+          await stop(row);
+          continue;
+        }
         if (!row || row.endedAt === null) {
           if (row && isReleased(job) && (job.closed || row.role !== 'worker')) row = await stop(row);
           if (isReleased(job) && !job.retention.resuming && !job.stopping) continue;

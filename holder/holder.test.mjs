@@ -1,12 +1,11 @@
 import assert from 'node:assert/strict';
-import { execFileSync, spawn } from 'node:child_process';
+import { execFileSync, spawn, mkdtempSync, spawnPty } from '../fixtures/test-process.mjs';
 import { randomUUID } from 'node:crypto';
-import { copyFileSync, chmodSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
+import { copyFileSync, chmodSync, mkdirSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 import { setTimeout as delay } from 'node:timers/promises';
 import { test } from 'node:test';
-import pty from 'node-pty';
 import { releaseDigest } from '../daemon/release.mjs';
 import { checkHolder, holderAsset, holderName, holderAssets, manifestHeader, pipeManifestHeader, platforms, sha256 } from './assets.mjs';
 import { decodeEvents, frame, frameDecoder, u32, holderClient, events } from './protocol.mjs';
@@ -35,6 +34,12 @@ async function until(read, predicate = Boolean, ms = 5000) {
   assert.fail(`Fixture deadline: ${String(last)}`);
 }
 
+function stagedHolder(dir, asset) {
+  const path = join(dir, 'holder');
+  copyFileSync(asset.path, path);
+  return path;
+}
+
 function spawnHolder(t) {
   const dir = fixture(t);
   const socket = join(dir, 's');
@@ -45,7 +50,7 @@ function spawnHolder(t) {
   const peer = holderClient(binding, controller);
   const register = value => writeFileSync(controllerFile, JSON.stringify(value));
   register(controller);
-  const outer = pty.spawn(asset.path, ['--launch', socket, dir, controllerFile, binding.incarnation.replaceAll('-', ''),
+  const outer = spawnPty(stagedHolder(dir, asset), ['--launch', socket, dir, controllerFile, binding.incarnation.replaceAll('-', ''),
     asset.digest, '/bin/sh', '-c', 'stty raw -echo; printf READY; exec /bin/cat'],
   { cols: 86, rows: 28, cwd: dir, env: { PATH: '/usr/bin:/bin', TERM: 'xterm-256color', HOME: dir } });
   let output = '';
@@ -191,7 +196,7 @@ test('pipe holder isolates stderr and inherits both output fds and stdin across 
   writeFileSync(path, JSON.stringify(controller));
   const asset = await checkHolder(root, { pipes: true });
   const peer = holderClient(binding, controller);
-  const child = spawn(asset.path, ['--pipes', binding.socket, dir, path, binding.incarnation.replaceAll('-', ''), asset.digest,
+  const child = spawn(stagedHolder(dir, asset), ['--pipes', binding.socket, dir, path, binding.incarnation.replaceAll('-', ''), asset.digest,
     '/bin/sh', '-c', 'printf out; printf err >&2; read -r line; printf "%s" "$line"; printf done >&2; exit 42'],
   { cwd: dir, stdio: 'ignore' });
   const gone = new Promise(resolve => child.once('exit', resolve));
@@ -223,7 +228,7 @@ test('only an owning pipe controller can escalate to SIGKILL for the native grou
   const controllerPath = join(dir, 'controller');
   writeFileSync(controllerPath, JSON.stringify(controller));
   const asset = await checkHolder(root, { pipes: true });
-  const holder = spawn(asset.path, ['--pipes', binding.socket, dir, controllerPath, binding.incarnation.replaceAll('-', ''), asset.digest,
+  const holder = spawn(stagedHolder(dir, asset), ['--pipes', binding.socket, dir, controllerPath, binding.incarnation.replaceAll('-', ''), asset.digest,
     '/bin/sh', '-c', 'trap "" TERM; sleep 30 & printf READY; wait'], { cwd: dir, stdio: 'ignore' });
   const gone = new Promise(resolve => holder.once('exit', resolve));
   const peer = holderClient(binding, controller);
