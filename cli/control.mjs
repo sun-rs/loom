@@ -16,7 +16,7 @@ const executable = fileURLToPath(new URL('../bin/loomd', import.meta.url));
 const invalid = message => new CommandError('invalid-arguments', message);
 const named = entries => Object.fromEntries(entries.map(key => [key, { type: 'string' }]));
 export const spawnUsage = 'loom spawn <role> --cwd DIR [--project DIR] [--task T --wave W] [--expect-red] [--deliver stream | --deliver barrier --barrier SET] [--cli CLI] [--mode tui|headless] [--model MODEL] [--effort EFFORT] [--parent ADDR] [--handover-from OLD_ADDR] [--trust-workspace] "<prompt>"';
-export const spawnHelp = 'Roles: super, leader, auditor, worker, reviewer. Workers require --task and --wave. Worker results stream by default with delivery.coalesceMs (45 seconds). Use --deliver barrier --barrier SET for a set that must arrive together. --parent defaults to LOOM_ADDR in managed sessions. The required .project/policy.json supplies per-role runtime defaults, roles.leader.maxActiveWorkers (default 3, maximum 4) and roles.reviewer.maxDurationMs (default 30 minutes). A reviewer takes one read-only question. --handover-from includes the brief on startup and retires the predecessor after binding.';
+export const spawnHelp = 'Roles: super, leader, auditor, worker, reviewer. Workers require --task and --wave. Worker results stream by default with delivery.coalesceMs (45 seconds). Use --deliver barrier --barrier SET for a set that must arrive together. --parent defaults to LOOM_ADDR in managed sessions. The required .project/policy.json supplies per-role runtime defaults, roles.leader.maxActiveWorkers (default 3, maximum 4) and roles.reviewer.maxDurationMs (default 30 minutes). Only the live Auditor can start one temporary read-only reviewer per gate, with --wave set to the gate ID. --handover-from includes the brief on startup. A Leader successor must acknowledge the brief in its first native turn before the predecessor retires.';
 export const daemonUsage = 'loom daemon start|stop|status [--project DIR] [--foreground]';
 
 async function status(project) {
@@ -80,6 +80,7 @@ export async function control(command, args) {
     if (positionals.length !== 2 || !roles.includes(role) || !prompt.trim() || !isAbsolute(values.cwd ?? '') ||
         ['cli', 'mode', 'model', 'effort', 'task', 'wave', 'parent', 'handover-from'].some(key => values[key] !== undefined && !values[key].trim()) ||
         (role === 'worker' ? !values.task || !values.wave : values['expect-red'] !== undefined) ||
+        role === 'reviewer' && !values.wave ||
         (values.deliver !== undefined || values.barrier !== undefined) && (role !== 'worker' ||
           !['stream', 'barrier'].includes(values.deliver) || (values.deliver === 'barrier') !== Boolean(values.barrier?.trim())) ||
         values.cli && !providers.includes(values.cli) || values.mode && !['tui', 'headless'].includes(values.mode)) {

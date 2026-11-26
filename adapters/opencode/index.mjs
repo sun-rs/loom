@@ -53,16 +53,16 @@ function parse(text) {
   return { provider: 'opencode', turns, lastReply: turns.findLast(turn => turn.reply)?.reply ?? null, usage: {} };
 }
 
-const promptObserver = fileURLToPath(new URL('./prompt-events', import.meta.url));
+export const promptObserver = fileURLToPath(new URL('./prompt-events', import.meta.url));
 export const openCodeQuestionDeny = { action: 'question', resource: '*', effect: 'deny' };
 
-function launch({ model, effort, sessionId, hookSink, allowNativeQuestions }) {
+function launch({ model, effort, sessionId, hookSink, allowNativeQuestions, toolGuard }) {
   const variant = effort ? `${model}#${effort}` : model;
   const promptSink = hookSink && sessionId ? hookSink + '.prompts' : undefined;
   const permissions = allowNativeQuestions === false ? [openCodeQuestionDeny] : undefined;
   const env = { OPENCODE_CONFIG_CONTENT: JSON.stringify({
     default_agent: 'loom', agents: { loom: { mode: 'primary', model: variant, permissions } },
-    ...(promptSink && { plugins: [promptObserver] }),
+    ...((promptSink || toolGuard) && { plugins: [promptObserver] }),
   }) };
   if (promptSink) Object.assign(env, { LOOM_OPENCODE_PROMPT_SINK: promptSink, LOOM_OPENCODE_PROMPT_SESSION: sessionId });
   return { argv: ['opencode', 'mini', '--standalone', '--session', sessionId, '--agent', 'loom', '--model', variant], env, promptSink };

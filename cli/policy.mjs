@@ -100,12 +100,17 @@ export function readPolicy(project, { optional = false } = {}) {
         if (!roles.includes(role) || !entry || typeof entry !== 'object' || Array.isArray(entry)) throw new Error(`Invalid role policy: ${role}`);
         validateProfiles(entry);
         validateGuidance(role, entry.guidance);
-        if (entry.rotateAt !== undefined && (role !== 'auditor' || entry.rotateAt !== 'gate')) {
-          throw new Error('Expected roles.auditor.rotateAt to be gate');
+        const rotates = ['leader', 'auditor'].includes(role);
+        if (entry.toolGuard !== undefined && (!rotates || typeof entry.toolGuard !== 'boolean')) {
+          throw new Error('Expected roles.leader.toolGuard or roles.auditor.toolGuard to be a boolean');
+        }
+        if (entry.rotateAt !== undefined && (!rotates || entry.rotateAt !== 'gate')) {
+          throw new Error('Expected roles.leader.rotateAt or roles.auditor.rotateAt to be gate');
         }
         for (const [key, min] of [['maxWakesPerGate', 0], ['maxContextTokens', 1]]) {
-          if (Object.hasOwn(entry, key) && (role !== 'auditor' || !Number.isSafeInteger(entry[key]) || entry[key] < min)) {
-            throw new Error(`Expected roles.auditor.${key} to be an integer >= ${min}`);
+          const allowed = key === 'maxWakesPerGate' ? role === 'auditor' : rotates;
+          if (Object.hasOwn(entry, key) && (!allowed || !Number.isSafeInteger(entry[key]) || entry[key] < min)) {
+            throw new Error(`Invalid roles.${role}.${key}: expected an integer >= ${min} for a role with that budget`);
           }
         }
         if (entry.trustWorkspace !== undefined && typeof entry.trustWorkspace !== 'boolean') {
@@ -234,7 +239,10 @@ export function spawnProfile(project, input, owner, occupies) {
 
 export const workerLimit = policy => policy.roles?.leader?.maxActiveWorkers ?? defaultMaxActiveWorkers;
 
-export const auditorLimits = policy => ({
-  maxWakesPerGate: policy.roles?.auditor?.maxWakesPerGate ?? 3,
-  maxContextTokens: policy.roles?.auditor?.maxContextTokens ?? 150_000,
+export const rotationLimits = (policy, role) => ({
+  ...(role === 'auditor' && { maxWakesPerGate: policy.roles?.auditor?.maxWakesPerGate ?? 3 }),
+  maxContextTokens: policy.roles?.[role]?.maxContextTokens ?? 150_000,
 });
+
+export const toolGuardEnabled = (project, role) => ['leader', 'auditor'].includes(role) &&
+  readPolicy(project, { optional: true }).roles?.[role]?.toolGuard !== false;

@@ -3,6 +3,7 @@ import { closeSync, constants, fstatSync, openSync, readFileSync, writeSync } fr
 import { agyPrompt, agyQuestionDenial, getAntigravityNoOpStdout, normalize } from './hooks.mjs';
 import { locateHookTranscript, replyForStop } from './transcript.mjs';
 import { deliveryId } from '../../inbox/message.mjs';
+import { recordSeniorToolDenial } from '../../lib/senior-tool-guard.mjs';
 
 const [sink, cwd, hookEventName, binding = sink + '.agy-session', sessionId, questionPolicy] = process.argv.slice(2);
 const openFlags = constants.O_NOFOLLOW | constants.O_NONBLOCK;
@@ -41,13 +42,21 @@ function captureReply(event, payload) {
 }
 
 let questionDenial;
+let guardDenial;
 
 function capture() {
   const receivedAt = Date.now();
   const payload = JSON.parse(readFileSync(0, 'utf8'));
   if (!payload || typeof payload !== 'object') return;
   const event = normalize({ ...payload, hookEventName });
-  if (!event?.sessionId || !acceptsAgyHook(payload, event, cwd, binding, sessionId, hookEventName)) return;
+  if (!event?.sessionId) return;
+  const call = payload.toolCall ?? payload.tool_call;
+  const { LOOM_SENIOR_TOOL_LOG: guardLog, LOOM_SENIOR_TOOL_PROJECT: project } = process.env;
+  if (hookEventName === 'PreToolUse' && call && (!sessionId || event.sessionId === sessionId)) {
+    const reason = recordSeniorToolDenial(guardLog, project, payload.cwd ?? cwd, call.name, call.args ?? call.arguments ?? call.input);
+    if (reason) guardDenial = JSON.stringify({ decision: 'deny', reason });
+  }
+  if (!acceptsAgyHook(payload, event, cwd, binding, sessionId, hookEventName)) return;
 
   questionDenial = agyQuestionDenial(payload, hookEventName, questionPolicy);
 
@@ -94,6 +103,6 @@ try {
 } catch {
   // Observing a hook does not change the CLI's decisions.
 } finally {
-  const reply = questionDenial ?? getAntigravityNoOpStdout(hookEventName);
+  const reply = guardDenial ?? questionDenial ?? getAntigravityNoOpStdout(hookEventName);
   if (reply !== undefined) process.stdout.write(reply);
 }

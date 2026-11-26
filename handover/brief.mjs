@@ -5,8 +5,26 @@ import { clip, evidenceLines, gitLines, inboxLines, oneLine, time, unavailable, 
 import { adapterFor, openNative, roles } from './transcript.mjs';
 import { clipTokens, estimateTokens as size } from '../lib/token-budget.mjs';
 import { charterLines, projectDocument, rulingLines } from './organization.mjs';
+import { isBlockedReply, replyConclusion } from '../inbox/message.mjs';
+import { replyForDelivery } from '../inbox/reply-file.mjs';
 
 export const maxBriefTokens = 1500;
+
+export function leaderHandoverState(project, { cards, pending, packets, gates }) {
+  const section = (title, lines) => `## ${title}\n${lines.length ? lines.map(line => `- ${line}`).join('\n') : '无'}`;
+  return [
+    '## 项目文件\n- .project/policy.json\n- .project/rulings.md',
+    section('开放卡片和波次', cards.map(({ row, work, result }) =>
+      `${row.task ?? row.role} · 波次 ${row.wave ?? '—'} · ${row.addr} · ${work ? '进行中' : isBlockedReply(result) ? '阻塞' : '待收结果'}`)),
+    section('待处理续作', pending.pendingContinuations.map(batch =>
+      `${batch.batch} · 已提交 ${batch.submitted}/${batch.expected} · ${batch.pending.map(item => item.deliveryId).join(', ')}`)),
+    section('待处理投递', pending.pendingDeliveries.map(item =>
+      `${item.id} · ${item.phase} · ${item.from ?? '—'} → ${item.target}`)),
+    section('最近门禁裁决', packets.map(({ gatePacket, completion }) =>
+      `${gatePacket} · ${replyConclusion(completion.body).tag ?? '未带结论标签'}\n  ${replyForDelivery(project, completion.body, 0)}`)),
+    section('最近已完成门禁', gates.map(({ gate, at }) => `${gate} · ${new Date(at).toISOString()}`)),
+  ].join('\n\n');
+}
 
 function sourceSession(sessions, role, to) {
   const items = sessions.filter(row => row.role === role && row.addr !== to);

@@ -9,8 +9,6 @@ import { workerRedFacts } from './routing.mjs';
 import { conclusoryReply } from '../inbox/message.mjs';
 
 export const gateId = /^[A-Za-z0-9][A-Za-z0-9_.-]{0,127}$/;
-const missingReview = 'Gate has no reviewer conclusion.';
-const reviewWarning = { code: 'missing-reviewer-conclusion', message: missingReview };
 const oneLine = text => String(text ?? '').replace(/\s+/g, ' ').replace(/[\x00-\x1f\x7f-\x9f]/g, '').trim();
 const bullet = (lines, empty) => lines.length ? lines.join('\n') : empty;
 
@@ -35,7 +33,7 @@ export function saveGatePacket(project, { id, gate, base: baseRef, candidate: ca
   if (realpathSync(directory) !== directory) throw new Error('Gate directory must be project-local');
   const path = join(directory, `${gate}.${id}.md`);
   const stored = readText(path, null);
-  if (stored !== null) return { path, warnings: stored.includes(`\n${missingReview}\n`) ? [reviewWarning] : [] };
+  if (stored !== null) return { path };
 
   const candidate = commit(project, candidateRef);
   const base = candidate && commit(project, baseRef ?? `${candidate}^`);
@@ -61,19 +59,14 @@ export function saveGatePacket(project, { id, gate, base: baseRef, candidate: ca
   const passed = checks.filter(check => check.result === 'passed').length;
   const failed = checks.filter(check => check.result === 'failed').length;
   const sandboxed = checks.filter(check => check.sandboxed === true).length;
-  const reviews = members.filter(row => row.role === 'reviewer').map(row => {
+  const reviews = members.filter(row => row.role === 'reviewer').flatMap(row => {
     const job = jobs.get(row.addr);
     const result = messages.find(message => message.id === job?.firstId)?.completion;
     const verdict = result && result.at <= (job?.reviewDeadline ?? Infinity) && (result.body ?? result.unconfirmedBody);
     const conclusion = Boolean(verdict && conclusoryReply(verdict));
-    const detail = conclusion ? `${result.body ? '' : 'UNCONFIRMED '}${verdict.trimStart().split('\n', 1)[0]}` : 'verdict unavailable';
-    return { conclusion, line: `- ${row.addr} · ${clip(oneLine(detail), 125)}` };
+    const detail = conclusion && `${result.body ? '' : 'UNCONFIRMED '}${verdict.trimStart().split('\n', 1)[0]}`;
+    return detail ? [`- ${row.addr} · ${clip(oneLine(detail), 125)}`] : [];
   });
-  const hasConclusion = reviews.some(review => review.conclusion);
-  const warnings = hasConclusion ? [] : [reviewWarning];
-  reviews.sort((a, b) => Number(b.conclusion) - Number(a.conclusion));
-  const reviewSection = `## Reviewer verdicts\n${reviews.length} reviewers\n` +
-    (hasConclusion ? '' : `${missingReview}\n`) + clip(bullet(reviews.map(review => review.line), 'No recorded reviewer.'), 175);
   const questions = [question, ...decisions.map(event => event.text)]
     .map(oneLine).filter(Boolean).map(value => '- ' + value);
   const sections = [
@@ -81,12 +74,12 @@ export function saveGatePacket(project, { id, gate, base: baseRef, candidate: ca
     `## Evidence cards\n${cards.length} cards · .project/evidence/\n` + clip(bullet(evidence, 'No recorded cards.'), 250),
     '## Diff --stat\n' + diff,
     `## Test summary\n${checks.length ? `${passed} passed, ${failed} failed, ${checks.length - passed - failed} inconclusive commands; ${sandboxed} ran in a sandbox.` : 'No verified test commands.'}`,
-    reviewSection,
+    ...(reviews.length ? ['## Reviewer verdicts\n' + clip(reviews.join('\n'), 175)] : []),
     '## Open questions\n' + clip(bullet(questions, 'None recorded.'), 110),
     '## Red facts\n' + clip(bullet(redLines, 'None recorded.'), 170),
     `## Drift and fact checks\n${signalCount} signals · \`loom status --json\`\n` + clip(signalSummary || 'None recorded.', 165),
-    `## Pointers\n- \`${statCommand}\`\n- Reviewer transcripts: \`loom hist <reviewer-addr> --turns 1\`\n- Pending decisions: \`loom notifications\``,
+    `## Pointers\n- \`${statCommand}\`\n- Pending decisions: \`loom notifications\``,
   ];
   writeState(path, sections.join('\n\n') + '\n');
-  return { path, warnings };
+  return { path };
 }

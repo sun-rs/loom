@@ -97,9 +97,9 @@ SQLite 中的受管 worker 索引由持久的 spawn 意图补齐。`workers.md` 
 
 Auditor 用 `--needs-decision TEXT --kind decision` 登记普通裁决请求，用 `--audit-escalation REASON` 登记审计升级。`--complete TEXT --phase ID` 按项目和阶段 ID 登记完成。省略 `--phase` 时沿用项目级完成记录。Leader 异常退出、BLOCKED 合并、波次或续作超时和投递不明也会自动登记。Worker 的卡死事件保留在日志中，由在途批次统一唤醒。单个结算批次的多个项目事件合为一个提示。其他同一扫描到达的事件按项目合并。管理内 Super 的唤醒通过稳定 ID 入箱去重。macOS 桌面提示涵盖裁决、项目完成、审计升级、Leader 异常退出和消耗金字塔倒置，每个项目每五分钟至多一条，正文可从通知账本查看。先在账本预留提示，再调用系统；关闭提示可设置 `LOOM_DESKTOP_NOTIFY=0`，测试自动关闭。
 
-Leader 先派独立 Reviewer，收到结论后用 `loom gate pack <gate-id>` 打包结论和证据，再向 Auditor 投递一条指针。命令在缺少结论时发出告警。Auditor 可让临时 Reviewer 深入核查，带结论的回执计入门禁唤醒预算。每次介入只发一条汇总结论，只有可复现的阻断缺陷才能中断。每个交付最多两轮审计。第二轮仍有阻断时用 `--needs-decision TEXT --audit-escalation blocking-disagreement` 请 Super 裁决重设计。重大风险和越权可分别用 `major-risk` 与 `overreach` 升级。
+Leader 用 `loom gate pack <gate-id>` 打包固定候选的 Worker 证据，再向 Auditor 投递一条指针。Auditor 可按门禁启动一次临时 Reviewer 深入核查，带结论的回执计入门禁唤醒预算。每次介入只发一条汇总结论，只有可复现的阻断缺陷才能中断。每个交付最多两轮审计。第二轮仍有阻断时用 `--needs-decision TEXT --audit-escalation blocking-disagreement` 请 Super 裁决重设计。重大风险和越权可分别用 `major-risk` 与 `overreach` 升级。
 
-`loom spawn ROLE --handover-from OLD_ADDR` 将前任简报放进首轮提示。新原生会话及首轮输入绑定后，loomd 持久化同项目同角色的继任，再停止旧会话。 `loom handover ROLE --to ADDR` 可将已绑定的同角色更新会话登记为继任，简报进入其现有队列。波次归属仍可按原地址查询，在途波次、续作结果和未尝试的排队请求切到继任地址。旧请求保留投递 ID。已尝试发送或中断的请求留在原生会话对账。前任意外退出时，同项目同角色的更新活动会话可接收其在途队列。
+`loom spawn ROLE --handover-from OLD_ADDR` 在首轮交付前任简报。Leader 首轮通过投递 SLA 收到完整简报的 SHA-256 回执文件指针，回报文件末尾的确认码后，loomd 持久化继任并停止前任。其他角色在新原生会话及首轮输入绑定后完成路由切换。`loom handover ROLE --to ADDR` 可将已绑定的同角色更新会话登记为继任，简报进入其现有队列。波次归属仍可按原地址查询，在途波次、续作结果和未尝试的排队请求切到继任地址。旧请求保留投递 ID。已尝试发送或中断的请求留在原生会话对账。前任意外退出时，同项目同角色的更新活动会话可接收其在途队列。
 
 ### 命令映射
 

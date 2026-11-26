@@ -14,6 +14,7 @@ import { holderAbsent, switchHolder, verifyHolderBuild } from './native-holder.m
 import { processTable } from './processes.mjs';
 import { controllerFile, managedEnvironment, releaseRoot } from './release.mjs';
 import { workerEnvironment, workerProviderEnvironment } from './worker-environment.mjs';
+import { seniorToolEnvironment } from './senior-tools.mjs';
 
 export const pipeTransport = 'holder-pipes';
 export const useCodexHolder = (row, job) => row.cli === 'codex' &&
@@ -27,7 +28,7 @@ async function launch(project, row, job, dir, socket) {
   if (asset.digest !== holderRelease.digest) throw holderError('HOLDER_BUILD');
   const managed = managedEnvironment(project, row.addr);
   const isolated = workerEnvironment(row);
-  const env = { ...process.env, ...managed, ...isolated, ...workerProviderEnvironment(row) };
+  const env = { ...process.env, ...managed, ...isolated, ...workerProviderEnvironment(row), ...seniorToolEnvironment(project, row) };
   delete env.HC_TERMINAL_ID;
   const command = await absoluteCommand(process.env.LOOM_CODEX_BIN ?? process.env.OAR_CODEX_BIN ?? 'codex', 'codex');
   const args = ['app-server', ...codexConfiguration(project, { ...row, fast: job.fast }, managed, isolated), '--listen', 'stdio://'];

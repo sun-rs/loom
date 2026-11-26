@@ -14,11 +14,13 @@ import { readText } from '../daemon/io.mjs';
 import { readNotifications } from '../daemon/notifications.mjs';
 import { indexLine, searchMemory } from '../memory/project.mjs';
 import { join } from 'node:path';
+import { runSeniorTool, seniorToolUsage } from './senior-tool.mjs';
 
 const strings = (...keys) => Object.fromEntries(keys.map(key => [key, { type: 'string' }]));
 const flags = (...keys) => Object.fromEntries(keys.map(key => [key, { type: 'boolean' }]));
 const projectArgs = strings('project');
 const help = {
+  'senior-tool': [seniorToolUsage],
   hist: [
     'loom hist <role|task|addr> [--project DIR] [--turn N | --turns N] [--level L1|L2] [--json]',
     'loom hist --role ROLE [--project DIR] [--since ISO-TIME|N|turn:ADDR#N] [--turn N | --turns N] [--level L1|L2] [--json]',
@@ -105,6 +107,7 @@ function printHistory(result) {
     else {
       const label = turn.addr ? `第 ${turn.timelineIndex} 轮 · ${turn.addr}#${turn.index}\n` : '';
       console.log(`\n${label}${turn.summary}`);
+      for (const event of turn.seniorTools ?? []) console.log([event.type, event.category, event.reason].filter(Boolean).join(' · '));
       if (turn.diff) console.log(JSON.stringify(turn.diff, null, 2));
       for (const card of turn.evidence ?? []) console.log(`${card.path}\n${card.summary ?? ''}`);
     }
@@ -231,6 +234,7 @@ export async function main(args) {
         },
       });
     }
+    if (command === 'senior-tool') return await runSeniorTool(rest);
     const { values, positionals } = parse(command, rest);
     if (command === 'doctor' && ((!values.prompts && values.project === undefined) || values.prompts && values.fix)) invalid(help.doctor[0]);
     const directory = projectDirectory(values.project);
@@ -255,7 +259,6 @@ export async function main(args) {
         if (!daemonAbsent(error)) throw error;
         throw new CommandError('not-ready', 'loomd is not running for this project');
       }
-      if (!escalate) for (const warning of result.warnings ?? []) console.error(`Warning: ${warning.message}`);
     } else if (command === 'switch') {
       const [role] = positionals;
       if (positionals.length !== 1 || !['leader', 'auditor', 'worker'].includes(role) || !values.to?.trim()) invalid(help.switch[0]);

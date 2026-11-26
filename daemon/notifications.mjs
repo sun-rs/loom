@@ -11,7 +11,7 @@ const logPath = project => resolve(runtimeDirectory(project), 'notifications.jso
 export const readNotifications = project => JSON.parse(readText(logPath(project), '[]'));
 const exec = promisify(execFile);
 const desktopTypes = new Set(['needs-decision', 'project-completed', 'audit-escalation', 'leader-exited', 'session-exited',
-  'session-liveness', 'consumption-pyramid', 'delivery-stalled', 'target-awaiting-user']);
+  'session-liveness', 'consumption-pyramid', 'delivery-stalled', 'target-awaiting-user', 'senior-override-budget', 'senior-tool-output-share']);
 export const desktopIntervalMs = 5 * 60_000;
 export const desktopEnabled = () => process.platform === 'darwin' &&
   process.env.LOOM_DESKTOP_NOTIFY !== '0' && process.env.NODE_TEST_CONTEXT === undefined;

@@ -1,11 +1,24 @@
 import { appendFileSync, constants } from 'node:fs';
 import { approval, choice, promptDetails } from '../../prompt-state.mjs';
+import { recordSeniorToolDenial, seniorToolCategory } from '../../../lib/senior-tool-guard.mjs';
 
 export default {
   id: 'loom-prompt-events',
-  setup(ctx) {
+  async setup(ctx) {
     const sink = process.env.LOOM_OPENCODE_PROMPT_SINK;
     const sessionId = process.env.LOOM_OPENCODE_PROMPT_SESSION;
+    const { LOOM_SENIOR_TOOL_LOG: guardLog, LOOM_SENIOR_TOOL_PROJECT: project } = process.env;
+    if (guardLog && project) {
+      const cwd = ctx.location.directory;
+      await ctx.permission.hook('evaluate', event => {
+        if (sessionId && event.sessionID !== sessionId) return;
+        const input = event.metadata?.input;
+        if (event.action === 'read' && input && !seniorToolCategory('read', input, cwd, project)) return;
+        const inputs = event.action === 'shell' ? event.resources.map(command => ({ command })) : [{ paths: event.resources }];
+        const reason = inputs.find(input => seniorToolCategory(event.action, input, cwd, project));
+        if (reason) Object.assign(event, { effect: 'deny', message: recordSeniorToolDenial(guardLog, project, cwd, event.action, reason) });
+      });
+    }
     if (!sink || !sessionId) return;
     const controller = new AbortController();
     void (async () => {

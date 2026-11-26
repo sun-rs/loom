@@ -1,12 +1,13 @@
 import { approval, choice, codexPrompt, promptDetails } from '../adapters/prompt-state.mjs';
-import { appendFileSync, constants, lstatSync, realpathSync, statSync } from 'node:fs';
+import { appendFileSync, constants, lstatSync, realpathSync, rmSync, statSync } from 'node:fs';
 import { randomUUID } from 'node:crypto';
 import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { appRequestKind, antigravityRuntime, claudeRuntime, codexRuntime, createRuntimeRegistry, opencodeRuntime } from '@botiverse/oar';
 import agy from '../adapters/agy/index.mjs';
 import claude from '../adapters/claude/index.mjs';
 import codex from '../adapters/codex/index.mjs';
-import { openCodeQuestionDeny } from '../adapters/opencode/index.mjs';
+import { openCodeQuestionDeny, promptObserver } from '../adapters/opencode/index.mjs';
 import { deliveryId, wireText } from '../inbox/message.mjs';
 import { eventPath, jsonRows, prepareJournal } from './io.mjs';
 import { nativeClaude } from './executables.mjs';
@@ -16,6 +17,7 @@ import { codexRefusal } from './codex-pipe-errors.mjs';
 import { claudeApiEnvKeys } from '../adapters/claude/launch.mjs';
 import { allowNativeQuestions, claudeAuthMode, claudeIdleCompaction } from '../cli/policy.mjs';
 import { managedEnvironment } from './release.mjs';
+import { seniorToolEnvironment } from './senior-tools.mjs';
 import { sandboxNativeWorker, workerEnvironment, workerNativeLogin,
   workerProviderEnvironment } from './worker-environment.mjs';
 
@@ -45,13 +47,19 @@ export async function openOar(row, project, resume) {
   const managed = managedEnvironment(project, row.addr);
   const isolated = workerEnvironment(row);
   const login = workerNativeLogin(row);
-  const env = { HC_TERMINAL_ID: null, ...managed, ...isolated, ...workerProviderEnvironment(row), ...login };
+  const guard = seniorToolEnvironment(project, row);
+  const env = { HC_TERMINAL_ID: null, LOOM_SENIOR_TOOL_LOG: null, LOOM_SENIOR_TOOL_PROJECT: null,
+    ...managed, ...isolated, ...workerProviderEnvironment(row), ...login, ...guard };
   let launchArgs;
+  let agyWorkspace;
   const questions = allowNativeQuestions(project, row.role);
-  if (row.cli === 'opencode' && !questions) {
+  if (row.cli === 'opencode' && (!questions || guard.LOOM_SENIOR_TOOL_LOG)) {
     const existing = JSON.parse(env.OPENCODE_CONFIG_CONTENT ?? process.env.OPENCODE_CONFIG_CONTENT ?? '{}');
     const permissions = Array.isArray(existing.permissions) ? existing.permissions : [];
-    env.OPENCODE_CONFIG_CONTENT = JSON.stringify({ ...existing, permissions: [...permissions, openCodeQuestionDeny] });
+    env.OPENCODE_CONFIG_CONTENT = JSON.stringify({ ...existing,
+      ...(!questions && { permissions: [...permissions, openCodeQuestionDeny] }),
+      ...(guard.LOOM_SENIOR_TOOL_LOG && { plugins: [...new Set([...(existing.plugins ?? []), promptObserver])] }),
+    });
   }
   if (row.cli === 'codex') {
     launchArgs = codexConfiguration(project, row, managed, isolated);
@@ -61,6 +69,11 @@ export async function openOar(row, project, resume) {
     // to generate profiles in the real login home before running a command.
     launchArgs = [login ? '--sandbox=false' : '--sandbox', '--log-file', login ? join(isolated.TMPDIR, 'agy.log') :
       eventPath(project, row.addr).replace(/\.jsonl$/, '.agy.log')];
+    if (guard.LOOM_SENIOR_TOOL_LOG) {
+      const spec = agy.launch({ cwd: row.cwd, hookSink: eventPath(project, row.addr), allowNativeQuestions: questions });
+      agyWorkspace = spec.env.LOOM_AGY_HOOK_WORKSPACE;
+      launchArgs.push(...spec.argv.slice(spec.argv.indexOf('--add-dir')));
+    }
   } else if (row.cli === 'claude') {
     Object.assign(env, { OAR_CLAUDE_BIN: nativeClaude(), CLAUDE_CODE_ENTRYPOINT: 'loom', DISABLE_AUTOUPDATER: '1' });
     if (row.authMode === 'subscription' || claudeAuthMode(project, row.role) !== 'api-key') {
@@ -69,6 +82,9 @@ export async function openOar(row, project, resume) {
     if (login) env.CLAUDE_CODE_TMPDIR = isolated.TMPDIR;
     launchArgs = ['--setting-sources', '', '--strict-mcp-config', '--settings', JSON.stringify({
       idleCompaction: claudeIdleCompaction(project, row.role), fastMode: row.fast,
+      ...(guard.LOOM_SENIOR_TOOL_LOG && { hooks: { PreToolUse: [{ matcher: '*', hooks: [{
+        type: 'command', command: process.execPath, args: [fileURLToPath(new URL('../runtimes/tui/capture-hook.mjs', import.meta.url))], timeout: 5,
+      }] }] } }),
     })];
   }
   const probe = login ? { ...env, ...isolated, CLAUDE_CONFIG_DIR: null, GEMINI_HOME: null, ANTIGRAVITY_APP_DATA_DIR: null } : env;
@@ -76,13 +92,26 @@ export async function openOar(row, project, resume) {
     const installed = join(login.HOME, '.local', 'bin', 'agy');
     if (statSync(installed, { throwIfNoEntry: false })?.isFile()) probe.OAR_ANTIGRAVITY_BIN = installed;
   }
-  let installation = await runtime.installation({ env: probe });
-  if (installation.kind !== 'available') throw new Error(`${row.cli} unavailable: ${installation.reason ?? installation.kind}`);
-  if (login) installation = { ...installation, command: sandboxNativeWorker(project, row, login, isolated, installation.command) };
-  const { cwd, model, effort } = row;
-  return runtime.session(installation, { cwd, model, effort, env, launchArgs,
-    ...(row.cli === 'claude' && !questions && { disallowedTools: ['AskUserQuestion'] }),
-    ...(row.cli === 'codex' && { endTurnProcessesOnAbort: true }), ...(resume ? { resume } : {}) });
+  try {
+    let installation = await runtime.installation({ env: probe });
+    if (installation.kind !== 'available') throw new Error(`${row.cli} unavailable: ${installation.reason ?? installation.kind}`);
+    if (login) installation = { ...installation, command: sandboxNativeWorker(project, row, login, isolated, installation.command) };
+    const { cwd, model, effort } = row;
+    const session = await runtime.session(installation, { cwd, model, effort, env, launchArgs,
+      ...(row.cli === 'claude' && !questions && { disallowedTools: ['AskUserQuestion'] }),
+      ...(row.cli === 'codex' && { endTurnProcessesOnAbort: true }), ...(resume ? { resume } : {}) });
+    if (agyWorkspace) {
+      const dispose = session.dispose.bind(session);
+      session.dispose = async () => {
+        try { return await dispose(); }
+        finally { rmSync(agyWorkspace, { recursive: true, force: true }); }
+      };
+    }
+    return session;
+  } catch (error) {
+    if (agyWorkspace) rmSync(agyWorkspace, { recursive: true, force: true });
+    throw error;
+  }
 }
 
 export async function bindOarTranscript(session, row) {

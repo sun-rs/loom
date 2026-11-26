@@ -27,6 +27,9 @@
     "leader": {
       "trustWorkspace": true,
       "maxActiveWorkers": 3,
+      "rotateAt": "gate",
+      "maxContextTokens": 150000,
+      "toolGuard": true,
       "guidance": { "modelTier": "strong", "effort": ["medium", "high"], "preferLongPromptCacheTtl": true },
       "preferred": [
         { "cli": "codex", "model": "gpt-6.2-sol", "effort": "high", "mode": "tui" },
@@ -38,18 +41,11 @@
       "rotateAt": "gate",
       "maxWakesPerGate": 3,
       "maxContextTokens": 150000,
+      "toolGuard": true,
       "guidance": { "modelTier": "strong", "vendorFamily": "different-from-workers", "preferLongPromptCacheTtl": true },
       "preferred": [
         { "cli": "agy", "model": "gemini-4-neon", "effort": "high", "mode": "tui" },
         { "cli": "codex", "model": "gpt-6.2-sol", "effort": "high", "mode": "tui" }
-      ]
-    },
-    "reviewer": {
-      "trustWorkspace": true,
-      "maxDurationMs": 1800000,
-      "preferred": [
-        { "cli": "codex", "model": "gpt-6.2-sol", "effort": "high", "mode": "headless" },
-        { "cli": "agy", "model": "gemini-4-neon", "effort": "high", "mode": "headless" }
       ]
     },
     "worker": {

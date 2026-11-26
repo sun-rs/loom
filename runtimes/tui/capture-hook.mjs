@@ -2,6 +2,7 @@ import { appendFileSync, constants, readFileSync } from 'node:fs';
 import { claudePrompt } from '../../adapters/claude/hooks.mjs';
 import claude from '../../adapters/claude/index.mjs';
 import { deliveryId } from '../../inbox/message.mjs';
+import { recordSeniorToolDenial } from '../../lib/senior-tool-guard.mjs';
 
 // Keep the adapter's hook vocabulary and also capture the fields needed for
 // the native session handshake, input correlation and StopFailure details.
@@ -13,8 +14,15 @@ const fields = [
 
 try {
   const payload = JSON.parse(readFileSync(0, 'utf8'));
-  const [sink, sessionId] = process.argv.slice(2);
+  const [sink, sessionId, cwd] = process.argv.slice(2);
   const event = payload.hook_event_name;
+  const { LOOM_SENIOR_TOOL_LOG: guardLog, LOOM_SENIOR_TOOL_PROJECT: project } = process.env;
+  if (event === 'PreToolUse' && (!sessionId || payload.session_id === sessionId)) {
+    const denial = recordSeniorToolDenial(guardLog, project, payload.cwd ?? cwd, payload.tool_name, payload.tool_input);
+    if (denial) process.stdout.write(JSON.stringify({ hookSpecificOutput: {
+      hookEventName: event, permissionDecision: 'deny', permissionDecisionReason: denial,
+    } }));
+  }
   const changed = event === 'SessionStart' && payload.source !== 'compact' &&
     typeof payload.session_id === 'string' && payload.session_id && payload.session_id !== sessionId;
   if (sessionId && !payload.agent_id && !payload.isSidechain && !payload.parent_tool_use_id && !payload.parentToolUseId &&

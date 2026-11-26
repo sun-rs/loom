@@ -1,52 +1,115 @@
 import { projectCost, pyramidWindowMs } from '../cli/cost.mjs';
 import { historyReader } from '../cli/history.mjs';
-import { auditorLimits } from '../cli/policy.mjs';
+import { rotationLimits } from '../cli/policy.mjs';
 import { reportedContext } from '../cli/state.mjs';
 import { timestamp } from '../cli/turns.mjs';
+import { turnTools } from '../lib/turn-tools.mjs';
+import { agyToolOutput, seniorOutputCategory, sumOutputTokens } from '../lib/senior-tool-output.mjs';
 
 const sampleIntervalMs = 30_000;
 const driftType = 'consumption-pyramid';
 const budgetType = 'auditor-budget-exceeded';
+const outputType = 'senior-tool-output-share';
+export const gateBoundary = event => ['gate-completed', 'auditor-rotation-proposed'].includes(event.type);
+
+export function rotationReason(policy, role, { gate, contextTokens, wakes }) {
+  const limits = rotationLimits(policy, role);
+  if (contextTokens > limits.maxContextTokens || wakes > limits.maxWakesPerGate) return 'budget';
+  if (gate && policy.roles?.[role]?.rotateAt === 'gate') return 'gate';
+}
 
 export function roleBudget(project, { now, sessions, notifications, batchDeliveryId, report }) {
   const sampled = new Map();
 
+  async function context(row, { items, raw }, useLastCall) {
+    const nativeInput = items.findLast(item => item.turn.calls?.length)?.turn.calls.at(-1)?.inputTokens;
+    if (useLastCall && Number.isFinite(nativeInput)) return nativeInput;
+    const snapshot = await sessions.transport.inspect(sessions.targetBinding(row)).catch(() => undefined);
+    const events = sessions.events(row.addr).filter(event => !event.agent_id && !event.isSidechain &&
+      (!row.sessionId || (event.session_id ?? event.sessionId ?? event.conversationId) === row.sessionId));
+    return reportedContext(snapshot ?? {}, events, raw.map(({ row }) => row)).tokens ?? nativeInput ?? null;
+  }
+
   async function assessAuditor(rows, reader, boundary, policy) {
-    const limits = auditorLimits(policy);
     const wakes = new Set();
     const active = rows.findLast(row => row.endedAt === null && sessions.jobs.has(row.addr));
     let tokens = null;
     for (const row of rows) {
       if (row.endedAt != null && row.endedAt <= boundary) continue;
       try {
-        const { items, raw, path } = reader.sessionHistory(row);
+        const history = reader.sessionHistory(row);
+        const { items, path } = history;
         for (const { turn, journalOnly } of items) {
           const startedAt = timestamp(turn.startedAt);
           if (startedAt >= row.startedAt && startedAt > boundary) {
             wakes.add(JSON.stringify([!journalOnly && path ? path : row.addr, turn.id ?? startedAt, startedAt]));
           }
         }
-        if (row === active) {
-          const snapshot = await sessions.transport.inspect(sessions.targetBinding(row)).catch(() => undefined);
-          const events = sessions.events(row.addr).filter(event => !event.agent_id && !event.isSidechain &&
-            (!row.sessionId || (event.session_id ?? event.sessionId ?? event.conversationId) === row.sessionId));
-          const nativeInput = items.findLast(item => item.turn.calls?.length)?.turn.calls.at(-1)?.inputTokens;
-          tokens = reportedContext(snapshot ?? {}, events, raw.map(({ row }) => row)).tokens ?? nativeInput ?? null;
-        }
+        if (row === active) tokens = await context(row, history, false);
       } catch (error) { report(`Auditor budget ${row.addr}: ${error.message}`); }
     }
-    if (wakes.size <= limits.maxWakesPerGate && !(tokens > limits.maxContextTokens)) return;
-    return { wakes: wakes.size, contextTokens: tokens, ...limits };
+    const usage = { wakes: wakes.size, contextTokens: tokens, ...rotationLimits(policy, 'auditor') };
+    if (rotationReason(policy, 'auditor', usage)) return usage;
+  }
+
+  async function proposeLeader(name, leader, reader, events, policy, at) {
+    const id = 'leader-rotation:' + batchDeliveryId(name, leader.addr);
+    if (events.some(event => event.id === id)) return;
+    const gate = events.findLast(event => gateBoundary(event) && event.at >= leader.startedAt)?.gate;
+    const contextTokens = await context(leader, reader.sessionHistory(leader), true);
+    const usage = { contextTokens, ...rotationLimits(policy, 'leader') };
+    const reason = rotationReason(policy, 'leader', { gate, ...usage });
+    if (!reason) return;
+    const why = reason === 'gate' ? `门禁 ${gate} 已完成，卡片已到安全边界。` :
+      `Leader 最近调用的输入为 ${contextTokens} token，超过 ${usage.maxContextTokens}。`;
+    notifications.add({ id, project: name, at, addr: leader.addr, type: 'leader-rotation-proposed',
+      gate, usage, reason, logOnly: true, text: `${why} 建议由 Super 安排 Leader 换班。` });
+  }
+
+  function assessToolOutput(name, rows, reader, events, at) {
+    const boundary = at - pyramidWindowMs;
+    for (const role of ['leader', 'auditor']) {
+      if (events.some(event => event.type === outputType && event.role === role && event.at > boundary)) continue;
+      const output = [];
+      let growth = 0;
+      for (const row of rows.filter(row => row.role === role && (row.endedAt ?? at) > boundary)) {
+        const { items, raw } = reader.sessionHistory(row);
+        let prior;
+        for (const { turn, rows: turnRows } of items) {
+          if (timestamp(turn.endedAt) < boundary) {
+            prior = turn.calls?.at(-1)?.inputTokens ?? prior;
+            continue;
+          }
+          for (const call of turn.calls ?? []) {
+            if (Number.isFinite(prior) && Number.isFinite(call.inputTokens)) growth += Math.max(0, call.inputTokens - prior);
+            prior = call.inputTokens ?? prior;
+          }
+          if (row.cli !== 'agy') for (const tool of turnTools(row.cli, turn, turnRows)) {
+            if (tool.output) output.push({ category: seniorOutputCategory(tool.name, tool.command ?? ''), text: tool.output });
+          }
+        }
+        if (row.cli === 'agy') output.push(...agyToolOutput(raw.map(item => item.row), row.cwd, project, { classifyGuard: false }).output
+          .filter(item => item.source === 'tool' && item.at > boundary && item.at <= at));
+      }
+      const categories = sumOutputTokens(output);
+      const toolTokens = Object.values(categories).reduce((sum, current) => sum + current, 0);
+      const share = Math.min(1, toolTokens / growth);
+      if (growth >= 5000 && share > 0.35) notifications.add({ id: `${outputType}:${batchDeliveryId(name, role + at)}`,
+        type: outputType, project: name, role, at, categories, toolTokens, contextGrowthTokens: growth, share,
+        text: `${role} 最近一小时工具输出约占新增上下文的 ${Math.round(share * 100)}%，请检查分工或卡片设计。` });
+    }
   }
 
   return {
-    async check(name, rows, policy, { completeGate = false } = {}) {
+    async check(name, rows, policy, { completeGate = false, safeLeader, gateRecorded = false } = {}) {
       const at = now();
-      if (!completeGate && at - (sampled.get(name) ?? -Infinity) < sampleIntervalMs) return;
+      if (!completeGate && !gateRecorded && at - (sampled.get(name) ?? -Infinity) < sampleIntervalMs) return;
       const events = notifications.list(name, false, true);
-      const gate = events.findLast(event => event.type === 'gate-completed' || event.type === 'auditor-rotation-proposed');
+      const gate = events.findLast(gateBoundary);
       const id = 'auditor-budget:' + batchDeliveryId(name, gate?.id ?? '');
       const reader = historyReader(project);
+      if (safeLeader) await proposeLeader(name, safeLeader, reader, events, policy, at);
+      if (gateRecorded) return;
       let over = events.find(event => event.id === id);
       if (!over) {
         const usage = await assessAuditor(rows.filter(row => row.role === 'auditor'), reader, gate?.at ?? -Infinity, policy);
@@ -58,6 +121,8 @@ export function roleBudget(project, { now, sessions, notifications, batchDeliver
         }
       }
       if (completeGate) return over?.usage;
+      try { assessToolOutput(name, rows, reader, events, at); }
+      catch (error) { report(`Senior tool output ${name}: ${error.message}`); }
       const lastDrift = events.findLast(event => event.type === driftType);
       if (at - (lastDrift?.at ?? -Infinity) >= pyramidWindowMs) {
         const recent = rows.filter(row => row.endedAt == null || row.endedAt >= at - pyramidWindowMs);

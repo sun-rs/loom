@@ -9,6 +9,7 @@ import { managedProject, projectIndex, projectSessions } from './project.mjs';
 import { pendingWork, stalledDeliveries, stallText, suppressedReplies, suppressedReplyText } from '../inbox/engine.mjs';
 import { isStartupBlocker } from '../tui/agent-status.mjs';
 import { auditorWakeFiltered } from '../daemon/routing.mjs';
+import { seniorToolSummary } from '../daemon/senior-tools.mjs';
 
 export async function projectStatus(project) {
   const rows = projectSessions(project);
@@ -66,10 +67,11 @@ export async function projectStatus(project) {
       .map(event => ({ addr: event.addr, reason: event.text })),
   ];
   const workers = new Set(rows.filter(row => row.role === 'worker').map(row => row.addr));
+  const seniorTools = seniorToolSummary(project, rows);
   const notices = [...activeOrgNotices(readOrg(project)).map(notice => ({ ...notice, audience: 'leader' })),
     ...notifications.flatMap(event =>
       event.type === 'auditor-budget-exceeded' || event.type === 'stuck' && workers.has(event.addr) ?
-        [{ ...event, audience: 'leader' }] : event.type === 'red-escalation' ? [event] : []),
+        [{ ...event, audience: 'leader' }] : ['red-escalation', 'senior-override-budget', 'senior-tool-output-share'].includes(event.type) ? [event] : []),
   ].sort((a, b) => b.at - a.at);
   const filtered = messages.filter(message => message.issue === auditorWakeFiltered).map(message => ({
     id: message.id, target: message.target.addr, from: message.from?.addr, at: message.refusedAt ?? message.createdAt,
@@ -88,6 +90,11 @@ export async function projectStatus(project) {
     .sort((a, b) => b.at - a.at).slice(0, 5);
   const { byRole, rawTokens, missing, pyramid } = projectCost(project, rows, { includeAcceptance: false });
   const rotations = projectIndex(project).rotations();
+  const activeAddresses = new Set(rows.filter(row => row.endedAt === null).map(row => row.addr));
+  const rotationNotices = notifications.filter(event => event.type === 'leader-handover-failed' ||
+    event.type === 'leader-rotation-proposed' && activeAddresses.has(event.addr)).slice(-6).reverse();
+  const awaitingAck = new Set(rotations.filter(item => item.role === 'leader' && item.boundAt == null && item.failedAt == null)
+    .map(item => item.successor));
   const rotating = new Set(rotations.filter(item => item.boundAt != null && item.verifiedAt == null && item.failedAt == null)
     .map(item => item.successor));
   const awaitingUser = rows.flatMap(row => {
@@ -117,10 +124,11 @@ export async function projectStatus(project) {
         ...(states.get(row.addr)?.lastProgressAt != null && { lastProgressAt: states.get(row.addr).lastProgressAt }),
         ...(states.get(row.addr)?.pathWarnings && { pathWarnings: states.get(row.addr).pathWarnings }),
         ...(states.get(row.addr)?.hookGap && { hookGap: states.get(row.addr).hookGap }),
-        ...(rotating.has(row.addr) && { awaitingVerifiedReport: true }) };
+        ...(rotating.has(row.addr) && { awaitingVerifiedReport: true }),
+        ...(awaitingAck.has(row.addr) && { awaitingHandoverAck: true }) };
     }),
     waves, pendingContinuations, cards: cards.filter(card => card.active || ['blocked', 'result-undelivered'].includes(card.state)),
-    blocked, notices, merges, rotations, routing: { filtered },
+    blocked, notices, merges, rotations, rotationNotices, seniorTools, routing: { filtered },
     cost: { rawTokens, byRole: Object.fromEntries(Object.entries(byRole).map(([role, value]) => [role, value.rawTokens])),
       usageByRole: byRole, pyramid, missingSessions: missing.length },
   };
@@ -148,8 +156,11 @@ export function printStatus(result) {
     `${incident(row)} · ${Math.floor(row.zeroProgressMs / 1000)}s zero progress`, Infinity);
   section('Release paths', result.sessions.flatMap(row => (row.pathWarnings ?? []).map(warning => ({ ...row, ...warning }))),
     row => [row.role, row.addr, row.reason, row.path].filter(Boolean).join(' · '), Infinity);
+  section('Leader rotation', result.rotationNotices, row => [row.addr, row.text].join(' · '), 6);
+  section('Senior tools', result.seniorTools, row => [row.type, row.role, row.count, row.reasons?.at(-1)?.reason].filter(Boolean).join(' · '), 8);
   section('Roles', result.sessions, row => [row.role ?? 'unassigned', row.cli, row.state,
-    row.awaitingVerifiedReport ? 'awaiting report' : row.task ?? row.addr].join(' '), 6);
+    row.awaitingHandoverAck ? 'awaiting handover acknowledgement' :
+      row.awaitingVerifiedReport ? 'awaiting report' : row.task ?? row.addr].join(' '), 6);
   section('Hook gaps', result.sessions.filter(row => row.hookGap),
     row => [row.role, row.addr, 'hook-gap', row.hookGap.source].join(' '), Infinity);
   section('Waves and cards', [...result.waves, ...result.pendingContinuations, ...result.cards], row => row.members ?

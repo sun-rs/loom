@@ -250,7 +250,8 @@ test('validates the policy example and rejects malformed capacity, drift, fast a
   const path = join(cwd, '.project', 'policy.json');
   const example = JSON.parse(readFileSync(file('../examples/policy.json'), 'utf8'));
   assert.ok(!example.deny.some(({ cli }) => cli === 'claude'));
-  for (const role of ['super', 'leader', 'auditor', 'reviewer', 'worker']) {
+  assert.equal(example.roles.reviewer, undefined);
+  for (const role of ['super', 'leader', 'auditor', 'worker']) {
     assert.ok(new Set(example.roles[role].preferred.map(({ cli }) => cli)).size >= 2, `${role} needs at least two CLI vendors`);
   }
   const select = role => spawnProfile(cwd, { role }).selected;
@@ -261,6 +262,8 @@ test('validates the policy example and rejects malformed capacity, drift, fast a
 
   for (const invalid of [
     { roles: { leader: { maxActiveWorkers: 5 } } },
+    { roles: { leader: { toolGuard: 'yes' } } },
+    { roles: { super: { toolGuard: false } } },
     { roles: { leader: { maxActiveWorkers: 2.5 } } },
     { roles: { worker: { maxActiveWorkers: 3 } } },
     { drift: { slowCommandFactor: 1 } },
@@ -346,8 +349,7 @@ test('prints the project board while offline and sends an explicit switch profil
   const server = createServer(socket => {
     socket.once('data', body => {
       const { command, args } = JSON.parse(body);
-      const warnings = command === 'gate-pack' ? [{ code: 'missing-reviewer-conclusion', message: 'Gate has no reviewer conclusion.' }] : undefined;
-      socket.end(JSON.stringify({ ok: true, command, ...args, warnings }));
+      socket.end(JSON.stringify({ ok: true, command, ...args }));
     });
   }).listen(socketPath(f.cwd));
   t.after(() => new Promise(resolve => server.close(resolve)));
@@ -360,8 +362,8 @@ test('prints the project board while offline and sends an explicit switch profil
   assert.equal(receipt.to, 'codex/fixture/high/fast');
   const call = (...args) => promisify(execFile)(process.execPath, [executable, ...args, '--project', f.cwd], { env: f.env });
   const pack = await call('gate', 'pack', 'G1');
-  assert.equal(JSON.parse(pack.stdout).warnings[0].code, 'missing-reviewer-conclusion');
-  assert.match(pack.stderr, /Warning: Gate has no reviewer conclusion\./);
+  assert.equal(JSON.parse(pack.stdout).gate, 'G1');
+  assert.equal(pack.stderr, '');
   assert.equal(JSON.parse((await call('notifications', '--complete', 'done', '--phase', 'goal-3')).stdout).phase, 'goal-3');
   assert.equal(JSON.parse((await call('notifications', '--needs-decision', 'choose', '--kind', 'decision')).stdout).kind, 'decision');
   for (const args of [['--phase', 'goal-3'], ['--needs-decision', 'choose', '--kind', 'decision', '--audit-escalation', 'major-risk']]) {

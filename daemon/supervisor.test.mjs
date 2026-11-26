@@ -1,6 +1,9 @@
 import assert from 'node:assert/strict';
 import { appendFileSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
-import { execFileSync } from 'node:child_process';
+import { execFile, execFileSync } from 'node:child_process';
+import { once } from 'node:events';
+import { createServer } from 'node:net';
+import { promisify } from 'node:util';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
@@ -10,6 +13,9 @@ import { publish } from '../inbox/store.mjs';
 import { estimateTokens } from '../lib/token-budget.mjs';
 import { writeMemory } from '../memory/project.mjs';
 import { createSupervisor } from './supervisor.mjs';
+import { socketPath } from '../cli/project.mjs';
+import { recordSeniorToolDenial } from '../lib/senior-tool-guard.mjs';
+import { seniorToolLog } from './senior-tools.mjs';
 
 function fixture(t, options) {
   const project = mkdtempSync(join(realpathSync(tmpdir()), 'loomd-test-'));
@@ -130,8 +136,8 @@ test('only Leader and Auditor get a bounded project memory block on spawn', asyn
   const { session: auditor } = await f.spawn(daemon, 'auditor', 'A');
   const { session: worker } = await f.spawn(daemon, 'worker', 'W', leader.addr);
   await daemon.tick();
-  const guidance = [/Coordinate work.*Workers reproduce issues and run full test suites in their own sandboxes/,
-    /read only the gate packet and reviewer conclusions.*one ephemeral read-only reviewer/];
+  const guidance = [/Make decisions.*dispatch Workers.*integration Worker supplies fixed-candidate and full-suite evidence.*reply file path.*poll loom state/,
+    /Decide the gate verdict.*Ask for the integration Worker evidence.*exceptional issue.*one temporary read-only reviewer/];
   for (const [{ addr }, rule] of [[leader, guidance[0]], [auditor, guidance[1]]]) {
     const prompt = f.prompts.find(item => item.addr === addr).input;
     assert.ok(prompt.endsWith('\n\n## Startup request\nstart'));
@@ -142,6 +148,80 @@ test('only Leader and Auditor get a bounded project memory block on spawn', asyn
     assert.doesNotMatch(memory, /fact-5\.md/);
   }
   assert.doesNotMatch(f.prompts.find(item => item.addr === worker.addr).input, /项目记忆|memory\/items/);
+});
+
+async function cliFor(t, f, daemon, caller) {
+  const server = createServer(socket => socket.once('data', async body => {
+    const request = JSON.parse(body);
+    try { socket.end(JSON.stringify({ ok: true, ...await daemon().handle(request.command, request.args, request.caller) })); }
+    catch (error) { socket.end(JSON.stringify({ ok: false, error: { code: error.code, message: error.message } })); }
+  })).listen(socketPath(f.project));
+  t.after(() => new Promise(resolve => server.close(resolve)));
+  await once(server, 'listening');
+  const loom = new URL('../bin/loom', import.meta.url);
+  return (...args) => promisify(execFile)(process.execPath, [loom.pathname, ...args], {
+    env: { ...process.env, LOOM_PROJECT: f.project, LOOM_ADDR: caller, HC_TERMINAL_ID: '' },
+  });
+}
+
+test('senior overrides cap output, keep reasons, and permit emergency retries past the gate budget', async t => {
+  let advance = 0;
+  const f = fixture(t, { now: () => Date.now() + advance });
+  const d = f.daemon();
+  t.after(d.shutdown);
+  const { session: leader } = await f.spawn(d, 'leader', 'L');
+  const cli = await cliFor(t, f, () => d, leader.addr);
+  await d.tick();
+  const command = 'seq 1 65';
+  const retry = () => cli('senior-tool', '--reason', 'inspect candidate during this exception', '--', command);
+  const requiresDenial = error => JSON.parse(error.stdout).error.code === 'senior-override-needs-denial';
+  await assert.rejects(retry(), requiresDenial);
+  const log = seniorToolLog(f.project, leader.addr);
+  assert.match(recordSeniorToolDenial(log, f.project, f.project, 'Bash', { command }), /带理由重试/);
+  const { stdout } = await retry();
+  assert.match(stdout, /final 40 lines.*\n26\n.*\n65\n$/s);
+  assert.doesNotMatch(stdout, /^25$/m);
+  await assert.rejects(retry(), requiresDenial);
+  f.policy({ delivery: { stallMs: 1 } });
+  await d.handle('send', { target: leader.addr, mode: 'queue', text: 'HOLD for an SLA test' });
+  advance = 100;
+  await d.tick();
+  for (let i = 0; i < 4; i++) await cli('senior-tool', '--', `seq ${i + 1} 2`);
+  const history = (await d.handle('notifications', { history: true })).notifications;
+  assert.equal(history.filter(event => event.type === 'senior-override-budget').length, 1);
+  const status = JSON.parse((await cli('status', '--json')).stdout);
+  assert.deepEqual(status.seniorTools.map(item => [item.type, item.count]), [['senior-tool-denied', 1], ['senior-override', 5]]);
+  assert.equal(status.seniorTools[1].reasons.at(-1).reason, 'worker-unavailable');
+  f.sessions.get(leader.addr).finish('DONE');
+  await d.tick();
+  const nativeHistory = JSON.parse((await cli('hist', '--role', 'leader', '--json')).stdout);
+  assert.ok(nativeHistory.turns[0].seniorTools.some(event => event.reason === 'inspect candidate during this exception'));
+});
+
+test('Leader gate rotation waits for a card and publishes no Auditor wake', async t => {
+  let advance = 0;
+  const f = fixture(t, { now: () => Date.now() + advance });
+  f.policy({ roles: { leader: { rotateAt: 'gate', maxContextTokens: 999_999 } } });
+  const d = f.daemon();
+  t.after(d.shutdown);
+  const { session: leader } = await f.spawn(d, 'leader', 'L');
+  const { session: auditor } = await f.spawn(d, 'auditor', 'A');
+  await d.tick();
+  const { session: worker } = await f.spawn(d, 'worker', 'W', leader.addr, { prompt: 'HOLD worker' });
+  await d.tick();
+  const notices = async () => (await d.handle('notifications', { history: true })).notifications
+    .filter(event => event.type === 'leader-rotation-proposed');
+  await d.handle('notifications', { gateComplete: 'SAFE' }, leader.addr);
+  assert.deepEqual(await notices(), []);
+  f.sessions.get(worker.addr).finish('DONE W');
+  f.sessions.get(leader.addr).finish('Waiting');
+  advance = 31_000;
+  await d.tick();
+  const [proposal] = await notices();
+  assert.deepEqual([proposal.gate, proposal.reason, proposal.logOnly], ['SAFE', 'gate', true]);
+  await d.handle('notifications', { gateComplete: 'SAFE' }, leader.addr);
+  assert.equal((await notices()).length, 1);
+  assert.equal(f.prompts.filter(item => item.addr === auditor.addr).length, 1);
 });
 
 async function nativeCost(f, row, at, inputTokens, contextTokens = inputTokens) {
@@ -252,10 +332,10 @@ test('gate pack snapshots scoped evidence into one compact file and enqueues one
   const { session: leader } = await f.spawn(d, 'leader', 'L');
   const { session: auditor } = await f.spawn(d, 'auditor', 'A');
   await d.tick();
-  f.sessions.get(leader.addr).finish('Ready for reviewer result');
+  f.sessions.get(leader.addr).finish('Ready for worker evidence');
   const { session: worker } = await f.spawn(d, 'worker', 'W', leader.addr, { wave: 'GATE', prompt: 'HOLD work' });
-  const { session: reviewer } = await f.spawn(d, 'reviewer', 'R', leader.addr, { wave: 'GATE', prompt: 'RETURN PASS fixed candidate' });
-  await f.spawn(d, 'reviewer', 'OUTSIDE', leader.addr, { wave: 'OTHER', prompt: 'RETURN unrelated verdict' });
+  await assert.rejects(f.spawn(d, 'reviewer', 'R', leader.addr, { wave: 'GATE' }), { code: 'invalid-arguments' });
+  await assert.rejects(f.spawn(d, 'reviewer', 'R', undefined, { parent: auditor.addr, wave: 'GATE' }), { code: 'invalid-arguments' });
   await d.tick();
   f.sessions.get(worker.addr).check('npm test', 5, 0);
   f.sessions.get(worker.addr).finish('DONE W');
@@ -270,15 +350,10 @@ test('gate pack snapshots scoped evidence into one compact file and enqueues one
   assert.equal(packet.path, join(f.project, '.project', 'gates', `GATE.${packet.deliveryId}.md`));
   const contents = readFileSync(packet.path, 'utf8');
   assert.ok(Buffer.byteLength(contents) <= 2048);
-  assert.match(contents, /Evidence cards.*\.project\/evidence\/.*Diff --stat.*fixture\.mjs.*Test summary.*1 passed.*Reviewer verdicts.*PASS fixed candidate.*Open questions.*答.*Pointers/s);
+  assert.match(contents, /Evidence cards.*\.project\/evidence\/.*Diff --stat.*fixture\.mjs.*Test summary.*1 passed.*Open questions.*答.*Pointers/s);
   assert.match(contents, /Red facts.*protected-file.*fence\.md.*assertion.*case\.test\.mjs.*skip-only/s);
-  assert.doesNotMatch(contents, /unrelated verdict/);
+  assert.doesNotMatch(contents, /Reviewer verdicts|Gate has no reviewer/);
   assert.equal(packet.warnings, undefined);
-  const leaderReply = f.read('inbox/state.json').messages.find(message => message.reviewerResult === reviewer.addr);
-  assert.equal(leaderReply.target.addr, leader.addr);
-  assert.match(leaderReply.text, /PASS fixed candidate/);
-  assert(f.prompts.some(message => message.addr === leader.addr && deliveryId(message.input) === leaderReply.id));
-  f.sessions.get(leader.addr).finish('Reviewer conclusion recorded');
   await d.shutdown();
   d = f.daemon();
   const retry = await d.handle('gate-pack', { gate: 'GATE', question: 'replacement' }, leader.addr);
@@ -288,8 +363,9 @@ test('gate pack snapshots scoped evidence into one compact file and enqueues one
   const detail = 'PASS investigated edge\n' + '证据'.repeat(500);
   const { session: deep } = await f.spawn(d, 'reviewer', 'DEEP', auditor.addr,
     { wave: 'GATE', prompt: 'RETURN ' + detail });
+  await assert.rejects(f.spawn(d, 'reviewer', 'DUPLICATE', auditor.addr, { wave: 'GATE' }), { code: 'reviewer-gate-limit' });
   const { session: ack } = await f.spawn(d, 'reviewer', 'ACK', auditor.addr,
-    { wave: 'GATE', prompt: 'RETURN NOREPLY received' });
+    { wave: 'OTHER', prompt: 'RETURN NOREPLY received' });
   for (let i = 0; i < 3; i++) await d.tick();
   const auditMessages = f.read('inbox/state.json').messages.filter(message => message.target.addr === auditor.addr && !message.startup);
   assert.equal(auditMessages.length, 2);
@@ -307,12 +383,13 @@ test('gate pack snapshots scoped evidence into one compact file and enqueues one
   const budget = await d.handle('notifications', { gateComplete: 'GATE', history: true }, leader.addr);
   assert.equal(budget.notifications.find(event => event.gate === 'GATE' && event.type === 'auditor-rotation-proposed').usage.wakes, 3);
 
-  await f.spawn(d, 'reviewer', 'NO-VERDICT', leader.addr, { wave: 'MISSING', prompt: 'RETURN received' });
-  for (let i = 0; i < 3; i++) await d.tick();
   const missing = await d.handle('gate-pack', { gate: 'MISSING', candidate }, leader.addr);
-  assert.equal(missing.warnings[0].code, 'missing-reviewer-conclusion');
-  assert.match(readFileSync(missing.path, 'utf8'), /Gate has no reviewer conclusion\./);
-  assert.deepEqual((await d.handle('gate-pack', { gate: 'MISSING' }, leader.addr)).warnings, missing.warnings);
+  assert.equal(missing.warnings, undefined);
+  assert.doesNotMatch(readFileSync(missing.path, 'utf8'), /Gate has no reviewer conclusion\./);
+  assert.equal((await d.handle('gate-pack', { gate: 'MISSING' }, leader.addr)).warnings, undefined);
+  await d.shutdown();
+  d = f.daemon();
+  await assert.rejects(f.spawn(d, 'reviewer', 'RESTART', auditor.addr, { wave: 'GATE' }), { code: 'reviewer-gate-limit' });
 });
 
 test('Super sees one completion per phase and a plain Auditor decision across daemon restart', async t => {
@@ -974,7 +1051,18 @@ test('pushes a coalesced BLOCKED wave and explicit project events once to the ma
   await recovered.shutdown();
 });
 
-test('switches queued input, a pending wave and a pending continuation after binding the successor', async t => {
+function handoverBrief(f, addr) {
+  const { input } = f.prompts.find(message => message.addr === addr);
+  const [, path, digest] = /Read (\.project\/replies\/([a-f0-9]{64})\.txt) \(SHA-256\)/.exec(input);
+  const brief = readFileSync(join(f.project, path), 'utf8');
+  const ack = brief.trimEnd().split('\n').at(-1);
+  assert.equal(payloadDigest(brief), digest);
+  assert.match(ack, /^HANDOVER-ACK [0-9a-f-]+$/);
+  assert.ok(!input.includes(ack));
+  return { brief, ack };
+}
+
+test('holds queued input and worker results until the Leader’s native briefing turn acknowledges the complete file', async t => {
   const f = fixture(t);
   writeFileSync(join(f.project, '.project/charter.md'), '## 目标\n- 验证交接\n');
   writeFileSync(join(f.project, '.project/rulings.md'), '## 3\n> 先看原件。\n');
@@ -986,24 +1074,30 @@ test('switches queued input, a pending wave and a pending continuation after bin
   const continuation = await d.handle('send', { target: worker.addr, text: 'RETURN DONE W1 continued', mode: 'queue' }, leader.addr);
   const input = { target: leader.addr, text: 'an unattempted request', mode: 'queue', id: randomUUID() };
   await d.handle('send', input);
+  const tail = '交接剩余内容'.repeat(4000);
   const { session: successor, retired, deliveryId } = await f.spawn(d, 'leader', 'NEXT', undefined, {
-    'handover-from': leader.addr, prompt: 'start replacement',
+    'handover-from': leader.addr, prompt: 'start replacement\n' + tail,
   });
-  assert.equal(retired, leader.addr);
-  assert.equal((await d.handle('state', { target: leader.addr })).state, 'exited');
-  const pending = await d.handle('ls', {});
-  assert.equal(pending.pendingContinuations[0].parent, successor.addr);
-  assert.ok(pending.pendingDeliveries.some(message => message.id === input.id && message.target === successor.addr));
+  assert.equal(retired, undefined);
   await d.tick();
   assert.equal(f.prompts.find(message => message.addr === successor.addr).input.startsWith('[loom:' + deliveryId + ']'), true);
-  const prompt = f.prompts.find(message => message.addr === successor.addr).input;
-  assert.match(prompt, new RegExp(leader.addr + '.*start replacement', 's'));
-  assert.match(prompt, /## 项目章程\n\.project\/charter\.md\n目标 · 验证交接/);
-  assert.match(prompt, /## 裁决账本\n\.project\/rulings\.md\n裁决 3\n> 先看原件。/);
+  const { brief, ack } = handoverBrief(f, successor.addr);
+  assert.match(brief, new RegExp(leader.addr + '.*start replacement', 's'));
+  assert.match(brief, /## 项目章程\n\.project\/charter\.md\n目标 · 验证交接/);
+  assert.match(brief, /## 裁决账本\n\.project\/rulings\.md\n裁决 3\n> 先看原件。/);
+  assert.ok(brief.includes(tail) && brief.includes(input.id) && brief.includes(continuation.id));
+  assert.match(brief, /## 项目文件\n- \.project\/policy\.json.*## 开放卡片和波次\n- W1 · 波次 W/s);
 
+  f.sessions.get(leader.addr).finish('Waiting for handover');
   f.sessions.get(worker.addr).finish('DONE W1 first wave');
   await d.tick();
   await d.tick();
+  assert.notEqual((await d.handle('state', { target: leader.addr })).state, 'exited');
+  assert.equal(f.prompts.filter(item => item.addr === leader.addr || item.addr === successor.addr).length, 2);
+  assert.equal((await d.handle('ls', {})).pendingContinuations[0]?.parent ?? leader.addr, leader.addr);
+  f.sessions.get(successor.addr).finish(ack);
+  await d.tick();
+  assert.equal((await d.handle('state', { target: leader.addr })).state, 'exited');
   await d.tick();
   const messages = f.read('inbox/state.json').messages;
   assert.equal(messages.find(message => message.id === input.id).target.addr, successor.addr);
@@ -1012,6 +1106,50 @@ test('switches queued input, a pending wave and a pending continuation after bin
   assert.equal(messages.find(message => message.continuationMembers?.includes(continuation.id)).target.addr, successor.addr);
   assert.equal((await d.handle('send', input)).id, input.id);
   await d.shutdown();
+});
+
+test('keeps the predecessor active and releases queued work when the first briefing turn lacks the acknowledgement', async t => {
+  const f = fixture(t);
+  const d = f.daemon();
+  t.after(d.shutdown);
+  const { session: old } = await f.spawn(d, 'leader', 'OLD');
+  await d.tick();
+  f.sessions.get(old.addr).finish('Ready');
+  const { session: next } = await f.spawn(d, 'leader', 'NEXT', undefined, { 'handover-from': old.addr });
+  const queued = await d.handle('send', { target: old.addr, mode: 'queue', text: 'HOLD next work' });
+  await d.tick();
+  f.sessions.get(next.addr).finish('I received part of the brief');
+  await d.tick();
+  assert.equal((await d.handle('state', { target: next.addr })).state, 'exited');
+  assert.equal(f.prompts.find(item => deliveryId(item.input) === queued.id).addr, old.addr);
+  assert.ok((await d.handle('notifications', { history: true })).notifications.some(event =>
+    event.type === 'leader-handover-failed' && event.reason === 'first-turn-missing-acknowledgement'));
+  await f.spawn(d, 'leader', 'RETRY', undefined, { 'handover-from': old.addr });
+});
+
+test('loom status clears the legacy release path when the acknowledged Leader successor takes over', async t => {
+  const f = fixture(t);
+  let d = f.daemon();
+  t.after(() => d.shutdown());
+  const { session: old } = await f.spawn(d, 'leader', 'OLD');
+  await d.shutdown();
+  const jobPath = `loomd/sessions/${old.addr}.json`;
+  const job = f.read(jobPath);
+  delete job.launchPaths;
+  writeFileSync(join(f.project, '.project', jobPath), JSON.stringify(job));
+  writeFileSync(join(f.project, '.project/loomd/upgrade.json'), JSON.stringify({ phase: 'committed', finishedAt: Date.now() + 1000 }));
+  d = f.daemon();
+  const cli = await cliFor(t, f, () => d, '');
+  const status = () => cli('status').then(result => result.stdout);
+  assert.match(await status(), /Release paths · leader .*legacy CLI path/);
+  await d.tick();
+  const { session: next } = await f.spawn(d, 'leader', 'NEW', undefined, { 'handover-from': old.addr });
+  await d.tick();
+  assert.match(await status(), /awaiting handover acknowledgement/);
+  f.sessions.get(next.addr).finish(handoverBrief(f, next.addr).ack);
+  await d.tick();
+  assert.match(await status(), /Release paths · none/);
+  assert.equal(f.read(`loomd/sessions/${next.addr}.json`).launchPaths.cli, join(f.project, '.project/loomd/bin/loom'));
 });
 
 test('times out a hanging single continuation, reports its last activity and supplements the answer once', async t => {
@@ -1108,10 +1246,12 @@ test('reviewers occupy no worker seat, relay one result, and stop at the deadlin
   const d = f.daemon();
   t.after(d.shutdown);
   const leader = (await f.spawn(d, 'leader', 'L')).session.addr;
+  const auditor = (await f.spawn(d, 'auditor', 'A', undefined, { prompt: 'HOLD audit' })).session.addr;
   await d.tick();
+  f.sessions.get(auditor).finish('Ready');
   for (const task of ['A', 'B', 'C']) await f.spawn(d, 'worker', task, leader, { prompt: 'HOLD worker' });
   await assert.rejects(f.spawn(d, 'worker', 'D', leader), { code: 'worker-capacity' });
-  const review = (await f.spawn(d, 'reviewer', 'REVIEW', leader, { prompt: 'RETURN PASS review conclusion' })).session;
+  const review = (await f.spawn(d, 'reviewer', 'REVIEW', auditor, { prompt: 'RETURN PASS review conclusion' })).session;
   const job = f.read('loomd/sessions/' + review.addr + '.json');
   assert.equal(job.reviewDeadline - review.startedAt, 1_800_000);
   await d.tick();
@@ -1121,15 +1261,15 @@ test('reviewers occupy no worker seat, relay one result, and stop at the deadlin
   assert.equal(f.prompts.filter(row => row.addr === review.addr).length, 1);
   assert.match(f.prompts.find(row => row.addr === review.addr).input, /read-only.*one question/s);
   f.policy({ roles: { reviewer: { maxDurationMs: 5_000 } } });
-  const late = (await f.spawn(d, 'reviewer', 'LATE', leader, { prompt: 'HOLD reviewer' })).session;
+  const late = (await f.spawn(d, 'reviewer', 'LATE', auditor, { wave: 'LATE-GATE', prompt: 'HOLD reviewer' })).session;
   await d.tick();
   advance = 10_000;
   await d.tick();
   await d.tick();
   const results = f.read('inbox/state.json').messages.filter(message => message.reviewerResult);
-  assert.deepEqual(results.map(message => message.target.addr), [leader, leader]);
+  assert.deepEqual(results.map(message => message.target.addr), [auditor]);
   assert.match(results[0].text, /review conclusion/);
-  assert.match(results[1].text, /TIMED OUT/);
+  assert.match(f.read('loomd/notifications.json').find(event => event.addr === late.addr && event.logOnly).text, /TIMED OUT/);
   assert.equal((await d.handle('state', { target: late.addr })).state, 'exited');
 });
 
@@ -1137,13 +1277,13 @@ test('8f1d01d6 oversized reviewer output is preserved through the digest pointer
   const f = fixture(t);
   const d = f.daemon();
   t.after(d.shutdown);
-  const { session: leader } = await f.spawn(d, 'leader', 'L');
+  const { session: auditor } = await f.spawn(d, 'auditor', 'A', undefined, { prompt: 'HOLD audit' });
   await d.tick();
-  f.sessions.get(leader.addr).finish('Dispatch complete');
+  f.sessions.get(auditor.addr).finish('Dispatch complete');
   const heading = '### 结论\n';
   const body = heading + '核'.repeat(25_702 - heading.length - 1) + '终';
   assert.equal(body.length, 25_702);
-  const { session: reviewer } = await f.spawn(d, 'reviewer', 'HIST-LONG', leader.addr, { cli: 'agy', prompt: 'HOLD reviewer' });
+  const { session: reviewer } = await f.spawn(d, 'reviewer', 'HIST-LONG', auditor.addr, { cli: 'agy', prompt: 'HOLD reviewer' });
   await d.tick();
   const runtime = f.sessions.get(reviewer.addr);
   runtime.finish(body);
@@ -1187,7 +1327,8 @@ test('switches Claude Leader to agy and agy Auditor to Codex under one durable s
     ['auditor-rotation-proposed']);
   await assert.rejects(d.handle('switch', { role: 'auditor', to: '2' }), { code: 'rotation-in-progress' });
   await d.tick();
-  f.sessions.get(switched.session.addr).finish('Current SHA deadbee. Missing file `./absent.mjs`.');
+  const { ack } = handoverBrief(f, switched.session.addr);
+  f.sessions.get(switched.session.addr).finish(ack + '\nCurrent SHA deadbee. Missing file `./absent.mjs`.');
   await d.tick();
   const rotation = () => d.handle('state', { target: switched.session.addr }).then(value => value.rotations[0]);
   assert.equal((await rotation()).firstReportMisses, 2);

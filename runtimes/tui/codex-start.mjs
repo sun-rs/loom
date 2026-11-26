@@ -7,8 +7,8 @@ const script = fileURLToPath(import.meta.url);
 const quote = value => "'" + value.replaceAll("'", "'\\''") + "'";
 const toml = value => JSON.stringify(value).replaceAll('\x7f', '\\u007f');
 
-export function addCodexStartHook(argv, sink, cwd) {
-  const command = [process.execPath, script, sink, cwd].map(quote).join(' ');
+export function addCodexStartHook(argv, sink, cwd, runner = script) {
+  const command = [process.execPath, runner, sink, cwd].map(quote).join(' ');
   const timeout = 3;
   // The adapter injects the other command hooks through this same per-launch trust table.
   const trust = 'sha256:' + createHash('sha256').update(JSON.stringify({

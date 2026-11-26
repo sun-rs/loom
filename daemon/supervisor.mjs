@@ -18,7 +18,9 @@ import { clip } from '../evidence/checks.mjs';
 import { defaultCoalesceMs, readPolicy, setWorkerProfile, workerLimit } from '../cli/policy.mjs';
 import { isStartupBlocker } from '../tui/agent-status.mjs';
 import { gateId, saveGatePacket } from './gate-packet.mjs';
-import { roleBudget } from './role-budget.mjs';
+import { gateBoundary, roleBudget } from './role-budget.mjs';
+import { leaderHandoverState } from '../handover/brief.mjs';
+import { authorizeSeniorTool, seniorToolEvents } from './senior-tools.mjs';
 import { auditorWakeFiltered, auditorWakeSource, redReasons } from './routing.mjs';
 
 function batchDeliveryId(batch, dest) {
@@ -75,6 +77,7 @@ export function createSupervisor(project, {
   const liveness = createLiveness({ now, hangMs: watchOptions?.busyMs });
   const progress = new Map();
   const startupBlockers = new Map();
+  const failedWorkerLaunches = new Map();
   const desktop = externalNotification !== notifyExternal || desktopEnabled() ? async (name, batch) => {
     try { await externalNotification(name, batch); }
     catch (error) { report(`macOS project notification: ${error.message}`); }
@@ -142,6 +145,58 @@ ${details}`, {
   function occupied(row) {
     const job = sessions.jobs.get(row.addr);
     return !job || workPending(mail.messages.find(message => message.id === job.firstId)) || messagesForWorker(row, job).length > 0;
+  }
+
+  function safeLeader(name, rows) {
+    const leader = liveRole(name, 'leader');
+    if (!leader || rows.some(row => row.endedAt === null && ['worker', 'reviewer'].includes(row.role) &&
+        sessions.jobs.has(row.addr) && occupied(row))) return;
+    if (index.rotations().some(item => item.project === name && item.verifiedAt === null && item.failedAt === null)) return;
+    return leader;
+  }
+
+  function handoverState(old) {
+    const active = workers().filter(row => row.project === old.project && parentFor(row.parent) === old.addr);
+    const latest = [...new Map(active.map(row => [row.task, row])).values()];
+    const pending = pendingWork(mail.messages, old.addr, parentFor, targetEnded);
+    const ids = new Set(pending.pendingDeliveries.map(item => item.id));
+    const resultWorkers = new Set(mail.messages.filter(message => ids.has(message.id)).flatMap(message => [
+      ...(message.resultWorkers ?? []), ...(message.continuationMembers ?? []).map(id =>
+        mail.messages.find(item => item.id === id)?.target.addr),
+    ]));
+    const cards = latest.flatMap(row => {
+      const result = deliveries(row.addr).findLast(message => message.completion?.body)?.completion.body;
+      const work = row.endedAt === null && occupied(row);
+      return work || isBlockedReply(result) || resultWorkers.has(row.addr) ? [{ row, work, result }] : [];
+    });
+    const packets = mail.messages.filter(message => message.gatePacket && message.completion?.body &&
+      sessions.rowFor(message.target.addr)?.project === old.project)
+      .sort((a, b) => b.completion.at - a.completion.at).slice(0, 4);
+    const gates = notifications.list(old.project, false, true).filter(gateBoundary).slice(-4);
+    return leaderHandoverState(project, { cards, pending, packets, gates });
+  }
+
+  async function settleLeaderHandovers() {
+    for (const rotation of index.rotations().filter(item => item.role === 'leader' && item.boundAt == null && item.failedAt == null)) {
+      const job = sessions.jobs.get(rotation.successor);
+      if (!job?.handoverAck || job.handoverBound) continue;
+      const row = sessions.rowFor(rotation.successor);
+      if (!row) continue;
+      const message = mail.messages.find(item => item.id === job.firstId);
+      const done = message?.completion;
+      if (row.endedAt === null && !job.stopping && message?.received && done?.body && !done.unconfirmed &&
+          (!done.outcome || done.outcome.kind === 'completed') && done.body.trimStart().split(/\r?\n/, 1)[0] === job.handoverAck) {
+        sessions.bindSuccessor(sessions.rowFor(job.handoverFrom), row);
+        await sessions.retirePredecessor(job).catch(error => report(`handover retirement: ${error.message}`));
+        continue;
+      }
+      const reason = job.error ?? (row.endedAt !== null ? 'successor-exited' : deliveryFailed(message) ? message.issue :
+        done && !done.unconfirmed && (done.body || done.noReply) ? 'first-turn-missing-acknowledgement' : undefined);
+      if (!reason) continue;
+      notifications.add({ id: `leader-handover-failed:${job.firstId}`, project: row.project, type: 'leader-handover-failed',
+        addr: row.addr, deliveryId: job.firstId, reason, at: now(), text: `Leader ${row.addr} 交接失败（${reason}）。` });
+      await sessions.failSpawn(job, new Error(reason));
+    }
   }
 
   function workerSeats(limit) {
@@ -340,7 +395,8 @@ ${details}`, {
       const message = byId.get(delivery.id);
       const row = sessions.rowFor(delivery.target);
       const promptEscalation = row && senior(row) && delivery.reason === 'target-awaiting-user';
-      const upstream = !promptEscalation && row?.role === 'leader' && !message.deliveryEscalations;
+      const briefing = message.startup && sessions.jobs.get(delivery.target)?.handoverAck || sessions.holdsForHandover(message);
+      const upstream = !promptEscalation && row?.role === 'leader' && !message.deliveryEscalations && !briefing;
       const external = !promptEscalation && (row?.role === 'auditor' || row?.role === 'super' || Boolean(message.deliveryEscalations));
       const origin = message.deliveryEscalations?.map(id => byId.get(id)).filter(Boolean);
       const text = [stallText(delivery), ...(origin ?? []).map(item => `Original delivery ${item.id} to ${item.target.addr}`)].join('\n');
@@ -349,7 +405,7 @@ ${details}`, {
         deliveryId: delivery.id, from: delivery.from, reason: delivery.reason, ageMs: delivery.ageMs, text,
         ...(upstream && { auditor: true, batch: 'delivery-stalled:auditor' }),
         ...(external && { externalOnly: true, batch: 'delivery-stalled:external' }),
-        ...(!upstream && !external && { logOnly: true }),
+        ...(!upstream && !external && !briefing && { logOnly: true }),
       });
     }
   }
@@ -559,15 +615,17 @@ ${details}`, {
           !(actor.role === 'leader' && sessions.rowFor(args['handover-from'])?.project === actor.project))) {
       throw new CommandError('invalid-arguments', 'Auditor startup requires Super or a Leader supervising succession');
     }
-    const job = await sessions.newJob(args, caller, checkBarrier, occupied);
+    const job = await sessions.newJob(args, caller, checkBarrier, occupied, handoverState);
     let session;
     try {
       session = await sessions.activate(job, mail);
       sessions.requireLive(session);
     } catch (error) {
+      if (job.row.role === 'worker') failedWorkerLaunches.set(job.row.project, now());
       await sessions.failSpawn(job, error);
       throw error;
     }
+    if (session.role === 'worker') failedWorkerLaunches.delete(session.project);
     let retirementIssue;
     const retired = await sessions.retirePredecessor(job).catch(error => { retirementIssue = error.message; });
     const handoff = codexHandoff(session);
@@ -600,6 +658,7 @@ ${details}`, {
       return routed.get(addr);
     }, {
       async beforeDispatch() {
+        await settleLeaderHandovers();
         await org.collect(sessions.rows());
         await stepRelay(now());
         continuations();
@@ -607,6 +666,7 @@ ${details}`, {
       },
       now,
       messageIssue,
+      canDispatchMessage: message => !sessions.holdsForHandover(message),
       stallMs: policy.delivery?.stallMs ?? uncertainWindow ?? defaultStallMs,
       coalesceMs: policy.delivery?.coalesceMs ?? defaultCoalesceMs,
       decorate(message) {
@@ -662,7 +722,8 @@ ${details}`, {
     await closeReviews();
     const current = sessions.rows();
     for (const [name, rows] of Map.groupBy(current, row => row.project)) {
-      await budget.check(name, rows, policy).catch(error => report(`Role budget ${name}: ${error.message}`));
+      await budget.check(name, rows, policy, { safeLeader: safeLeader(name, rows) })
+        .catch(error => report(`Role budget ${name}: ${error.message}`));
     }
     await checkStartupBlockers();
     await observeSessions(policy.delivery?.stallMs ?? uncertainWindow ?? defaultStallMs);
@@ -690,6 +751,31 @@ ${details}`, {
     shutdown: sessions.shutdown,
     async handle(command, args, caller) {
       if (command === 'spawn') return spawnSession(args, caller);
+      if (command === 'senior-override') {
+        const rows = sessions.rows();
+        const actor = caller && rows.find(row => row.addr === caller || row.pane === caller);
+        const reason = typeof args.reason === 'string' ? args.reason.trim() : '';
+        if (!actor || !senior(actor) || actor.endedAt !== null || !sessions.jobs.has(actor.addr) ||
+            !validInput(args.command) || args.command.length > 16_000 || reason && (!validInput(reason) || reason.length > 300)) {
+          throw new CommandError('invalid-arguments', 'A live Leader or Auditor, a command and a short reason are required');
+        }
+        const at = now();
+        const gate = notifications.list(actor.project, false, true).findLast(gateBoundary);
+        const since = gate?.at ?? -Infinity;
+        const workerUnavailable = at - (failedWorkerLaunches.get(actor.project) ?? -Infinity) < 600_000 ||
+          rows.some(row => row.role === 'worker' && row.project === actor.project && row.startedAt >= since &&
+            (sessions.jobs.get(row.addr)?.exit?.code > 0 || ['silent-hang', 'auth-expired', 'quota-wait'].includes(progress.get(row.addr)?.health?.status))) ||
+          stalledDeliveries(mail.messages, at).some(delivery => sessions.rowFor(delivery.target)?.project === actor.project);
+        const permit = authorizeSeniorTool(project, actor, { command: args.command, reason, workerUnavailable, since, at });
+        if (permit.category) {
+          const count = rows.filter(row => row.role === actor.role && row.project === actor.project).flatMap(row => seniorToolEvents(project, row.addr))
+            .filter(event => event.type === 'senior-override' && event.at >= since).length;
+          if (count > 3) notifications.add({ id: `senior-override-budget:${batchDeliveryId(actor.project, actor.role + (gate?.id ?? ''))}`,
+            type: 'senior-override-budget', project: actor.project, addr: actor.addr, role: actor.role, gate: gate?.gate, at,
+            text: `${actor.role} 在本门禁重试重型工具 ${count} 次。请检查分工或卡片设计。` });
+        }
+        return permit;
+      }
       if (command === 'switch') {
         const { role, to } = args;
         if (!['leader', 'auditor', 'worker'].includes(role) || !validInput(to)) {
@@ -730,30 +816,29 @@ ${details}`, {
             type: 'red-escalation', reason: args.reason, text: args.evidence, logOnly: true };
           if (existing) {
             if (red) notifications.add(red);
-            return { gate, path: existing.gatePacket, ...(!escalation && existing.gateWarnings && { warnings: existing.gateWarnings }),
+            return { gate, path: existing.gatePacket,
               ...(red && { wakeQueued: false }), ...receiptFor(existing) };
           }
           const auditor = liveRole(name, 'auditor');
           if (!auditor) throw new CommandError('not-ready', 'No live managed Auditor in this project');
           const members = rows.filter(row => row.project === name && ['worker', 'reviewer'].includes(row.role) &&
-            (row.role === 'worker' || sessions.rowFor(row.parent)?.role === 'leader') &&
             (row.wave === gate || sessions.jobs.get(row.addr)?.barrier === gate));
           const decisions = notifications.list(name).filter(event => event.type === 'needs-decision' &&
             (event.gate === gate || members.some(row => row.addr === event.addr)));
           const workerAddrs = new Set(members.filter(row => row.role === 'worker').map(row => row.addr));
           const boundary = notifications.list(name, false, true)
-            .findLast(event => ['gate-completed', 'auditor-rotation-proposed'].includes(event.type))?.at ?? 0;
+            .findLast(gateBoundary)?.at ?? 0;
           const signals = leaderSignals(name).filter(notice => workerAddrs.has(notice.addr) ||
             notice.type === 'auditor-budget-exceeded' && notice.at >= boundary);
-          const { path, warnings } = saveGatePacket(project, { ...args, id }, { members, jobs: sessions.jobs, messages: mail.messages,
+          const { path } = saveGatePacket(project, { ...args, id }, { members, jobs: sessions.jobs, messages: mail.messages,
             decisions, signalSummary: noticeLines(signals), signalCount: signals.length, red });
           const delivery = saved(sessions.targetBinding(auditor), red ?
             `Loom red escalation (${red.reason}). Read gate packet ${path}` : `Read gate packet ${path}`, {
-            id, gatePacket: path, ...(warnings.length && { gateWarnings: warnings }), ...(red && { redEscalation: red.reason }),
+            id, gatePacket: path, ...(red && { redEscalation: red.reason }),
             ...(actor && { from: sessions.targetBinding(actor), expectReply: true }),
           });
           if (red) notifications.add(red);
-          return { gate, path, ...(!escalation && warnings.length && { warnings }), ...(red && { wakeQueued: true }), ...receiptFor(delivery) };
+          return { gate, path, ...(red && { wakeQueued: true }), ...receiptFor(delivery) };
         }
         if (args.take && actor && actor.role !== 'super') {
           throw new CommandError('invalid-arguments', 'Only the Super takes project notifications');
@@ -782,6 +867,8 @@ ${details}`, {
               ...(actor && { addr: actor.addr }), ...(usage && { usage }), logOnly: !proposal,
               text: proposal ? `门禁 ${gate} 已完成。${usage ? 'Auditor 已超出预算。' : ''}建议由 Leader 监督 Auditor 换班；已有换班须先结算。` :
                 `门禁 ${gate} 已完成。` });
+            const scoped = rows.filter(row => row.project === name);
+            await budget.check(name, scoped, currentPolicy, { gateRecorded: true, safeLeader: safeLeader(name, scoped) });
           }
         }
         if (args.decision !== undefined || args.auditEscalation !== undefined || args.kind !== undefined) {

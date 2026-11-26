@@ -35,7 +35,22 @@ function computeCodexTrustedHash(eventLabel, command, timeout) {
   return `sha256:${createHash('sha256').update(serialized).digest('hex')}`;
 }
 
-export function launch({ model, effort, cwd, prompt, hookSink, allowNativeQuestions, extraArgs = [] }) {
+export function codexHookArgs(commandWords, labels = hookLabels) {
+  const command = commandWords.map(quotePosixShell).join(' ');
+  const timeout = 3;
+  const args = [];
+  const states = [];
+  for (const [event, label] of Object.entries(labels)) {
+    args.push('-c', `hooks.${event}=[{hooks=[{type="command",command=${tomlString(command)},timeout=${timeout}}]}]`);
+    // Codex gives command-line hooks this synthetic path for its trust check.
+    const key = `/<session-flags>/config.toml:${label}:0:0`;
+    const hash = computeCodexTrustedHash(label, command, timeout);
+    states.push(`${tomlString(key)}={enabled=true,trusted_hash=${tomlString(hash)}}`);
+  }
+  return [...args, '-c', `hooks.state={${states.join(',')}}`];
+}
+
+export function launch({ model, effort, cwd, prompt, hookSink, hookRunner = capture, allowNativeQuestions, extraArgs = [] }) {
   const directory = realpathSync(cwd);
   if (!Array.isArray(extraArgs) || extraArgs.some(arg => typeof arg !== 'string' || arg === '--')) {
     throw new TypeError('extraArgs must be an array of Codex options');
@@ -58,18 +73,7 @@ export function launch({ model, effort, cwd, prompt, hookSink, allowNativeQuesti
 
   if (hookSink !== undefined) {
     if (typeof hookSink !== 'string' || !hookSink.trim()) throw new TypeError('hookSink must be a JSONL file path');
-    const command = [process.execPath, capture, resolve(directory, hookSink)]
-      .map(quotePosixShell).join(' ');
-    const timeout = 3;
-    const states = [];
-    for (const [event, label] of Object.entries(hookLabels)) {
-      argv.push('-c', `hooks.${event}=[{hooks=[{type="command",command=${tomlString(command)},timeout=${timeout}}]}]`);
-      // Codex 0.171.0 discovery.rs gives command-line hooks this synthetic path.
-      const key = `/<session-flags>/config.toml:${label}:0:0`;
-      const hash = computeCodexTrustedHash(label, command, timeout);
-      states.push(`${tomlString(key)}={enabled=true,trusted_hash=${tomlString(hash)}}`);
-    }
-    argv.push('-c', `hooks.state={${states.join(',')}}`);
+    argv.push(...codexHookArgs([process.execPath, hookRunner, resolve(directory, hookSink)]));
   }
   if (prompt !== undefined && prompt !== '') argv.push('--', prompt);
   return { argv, env: {} };

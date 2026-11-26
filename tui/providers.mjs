@@ -99,7 +99,7 @@ export const providers = {
     screenStartup: true, // The native SessionStart hook runs inside the first turn.
     start(options) {
       const spec = codex.launch(options);
-      addCodexStartHook(spec.argv, options.hookSink, options.cwd);
+      addCodexStartHook(spec.argv, options.hookSink, options.cwd, options.hookRunner);
       if (options.trustWorkspace === false) {
         const config = spec.argv.findIndex(arg => arg.startsWith('projects='));
         if (config > 0) spec.argv.splice(config - 1, 2);
@@ -148,7 +148,7 @@ export const providers = {
     },
     start(options) {
       const spec = agy.launch({ ...options,
-        captureScript: options.boundTranscript === false ? agyActivityCapture : undefined,
+        captureScript: options.boundTranscript === false ? agyActivityCapture : options.hookRunner,
         ...(options.resume && { expectedSessionId: options.resume, extraArgs: [...agentResumeArgs('agy', options.resume), ...(options.extraArgs ?? [])] }),
       });
       if (options.resume) spec.sessionId = options.resume;

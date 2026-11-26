@@ -11,6 +11,7 @@ import { codexEnvironmentArgs, runtimeDirectory } from '../cli/project.mjs';
 import { allowNativeQuestions, claudeIdleCompaction } from '../cli/policy.mjs';
 import { controllerFile, managedEnvironment, releaseRoot } from './release.mjs';
 import { workerEnvironment, workerProviderEnvironment } from './worker-environment.mjs';
+import { seniorToolEnvironment } from './senior-tools.mjs';
 
 const exec = promisify(execFile);
 export const paneName = addr => `loom-${addr.replace(/^loom-/, '').replaceAll('-', '').slice(0, 22)}`;
@@ -27,8 +28,10 @@ export async function ownedPane(job, row) {
   return terminal;
 }
 
-function claudeHookRunner(project) {
-  const path = join(runtimeDirectory(project), 'hook.mjs');
+export const managedHookPath = (project, cli) => join(runtimeDirectory(project), cli === 'claude' ? 'hook.mjs' : `${cli}-hook.mjs`);
+
+export function hookRunner(project, cli) {
+  const path = managedHookPath(project, cli);
   // Existing sessions run this file across upgrades. The committed release
   // pointer selects the implementation, so the shim itself stays in place.
   if (readText(path, null) === null) writeState(path, readFileSync(new URL('../runtimes/tui/hook-shim.mjs', import.meta.url), 'utf8'));
@@ -37,16 +40,21 @@ function claudeHookRunner(project) {
 
 export async function openTui(job, row, project, recordTemporary, recordBinding, controller) {
   const hookSink = eventPath(project, row.addr);
+  const runner = row.cli !== 'opencode' && hookRunner(project, row.cli);
   const env = { ...managedEnvironment(project, row.addr),
+    ...(runner && { LOOM_HOOK_RELEASE: releaseRoot }),
+    ...seniorToolEnvironment(project, row),
     ...(job.isolatedWorkerHome && { ...workerEnvironment(row), ...workerProviderEnvironment(row) }) };
   const name = paneName(row.addr);
+  const guardUnset = env.LOOM_SENIOR_TOOL_LOG ? [] : ['LOOM_SENIOR_TOOL_LOG', 'LOOM_SENIOR_TOOL_PROJECT'];
   const host = await openNativeTui({
-    ...row, fast: job.fast, hookSink, name, env, sessionId: job.plannedNativeId, recordTemporary, recordBinding, previous: job.tui,
-    allowNativeQuestions: allowNativeQuestions(project, row.role), autoTrustWorkspace: job.autoTrustWorkspace, ...(controller && { controllerPath: controllerFile(project) }),
+    ...row, fast: job.fast, hookSink, ...(runner && { hookRunner: runner }), name, env,
+    sessionId: job.plannedNativeId, recordTemporary, recordBinding, previous: job.tui, unset: guardUnset,
+    allowNativeQuestions: allowNativeQuestions(project, row.role), toolGuard: Boolean(env.LOOM_SENIOR_TOOL_LOG),
+    autoTrustWorkspace: job.autoTrustWorkspace, ...(controller && { controllerPath: controllerFile(project) }),
     stateDir: join(project, '.project', 'pty'),
-    ...(row.cli === 'claude' && { command: nativeClaude(), hookRunner: claudeHookRunner(project),
-      env: { ...env, DISABLE_AUTOUPDATER: '1', LOOM_HOOK_RELEASE: releaseRoot },
-      authMode: job.authMode, idleCompaction: claudeIdleCompaction(project, row.role), unset: ['CLAUDE_CODE_ENTRYPOINT', 'CLAUDECODE'] }),
+    ...(row.cli === 'claude' && { command: nativeClaude(), env: { ...env, DISABLE_AUTOUPDATER: '1' },
+      authMode: job.authMode, idleCompaction: claudeIdleCompaction(project, row.role), unset: [...guardUnset, 'CLAUDE_CODE_ENTRYPOINT', 'CLAUDECODE'] }),
     ...(row.cli === 'codex' && { extraArgs: ['--disable', 'memories', ...codexEnvironmentArgs(env), ...codexFastArgs(job.fast)] }),
   });
   try { return { terminal: await host.status(), nativeId: host.sessionId }; }

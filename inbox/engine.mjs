@@ -34,7 +34,8 @@ const isDone = message => message.phase === 'received';
 const isUrgent = message => message.superPriority || message.mode === 'interrupt';
 const awaiting = message => ['sending', 'stopping'].includes(message.phase);
 const pendingReply = message => !deliveryFailed(message) && !message.completion?.body && !message.completion?.noReply;
-const mayReroute = message => (message.phase === 'queued' || message.phase === 'refused' && message.issue === 'target-exited') &&
+const mayReroute = message => (['queued', 'target-ended'].includes(message.phase) ||
+  message.phase === 'refused' && message.issue === 'target-exited') &&
   message.attemptAt == null && message.stopAttemptAt == null && message.mode === 'queue' &&
   message.requestedMode === 'queue' && !message.startup && !message.watchResume;
 const providerFailures = new Set(['request-timeout', 'runtime-exited', 'retry-exhausted', 'provider-overloaded']);
@@ -321,7 +322,9 @@ export function inbox(project, transport, report = console.error, { replyLimit, 
     const combined = combinedDeliveryText(decorated, waves);
     const automatic = message.replyKey || message.waveBatch || message.continuationBatch || message.reviewerResult || message.projectEvents;
     let text = combined;
-    if (automatic) text = replyForDelivery(project, combined, replyLimit?.());
+    if (automatic) text = replyForDelivery(project, combined, replyLimit?.(), {
+      attachFile: Boolean(message.reviewerResult),
+    });
     else if (waves.length && message.wireBody === undefined) {
       const batch = waves.map(wave => wave.text).join('\n\n');
       const brief = replyForDelivery(project, batch, replyLimit?.());
@@ -568,17 +571,18 @@ export function inbox(project, transport, report = console.error, { replyLimit, 
     return observation;
   }
 
-  async function processTarget(all, observation, { canDispatch, known, at, coalesceMs, decorate } = {}) {
+  async function processTarget(all, observation, { canDispatch, canDispatchMessage, known, at, coalesceMs, decorate } = {}) {
     const group = all.filter(message => !message.combinedInto);
-    if (!group.length || !observation || observation.state === 'finished' || observation.userPrompt || promptKind(observation.state)) return;
-    const { target } = group[0];
+    const target = group[0]?.target;
+    if (!target || !observation || observation.state === 'finished' || observation.userPrompt || promptKind(observation.state)) return;
+    const eligible = message => !canDispatchMessage || canDispatchMessage(message);
     const retry = group.find(message => stalledDelivery(message) &&
-      observation.writeEvidence?.retryableDeliveryId === message.id && message.retryAt == null);
+      observation.writeEvidence?.retryableDeliveryId === message.id && message.retryAt == null && eligible(message));
     if (retry && (!canDispatch || canDispatch(target))) {
       await retryMissingTurn(retry, observation);
       settleCombined(all);
     }
-    const queued = group.filter(message => message.phase === 'queued');
+    const queued = group.filter(message => message.phase === 'queued' && eligible(message));
     const streams = queued.filter(message => message.streamAt != null).sort((a, b) => a.streamAt - b.streamAt);
     const receiving = group.some(message => message.phase === 'sending' || isDone(message) && !message.completion);
     const completed = group.filter(message => message.received?.at != null && message.completion?.at != null);
@@ -605,7 +609,7 @@ export function inbox(project, transport, report = console.error, { replyLimit, 
       cohort.slice(1);
     const forcedStream = [stream, ...streamPeers].some(message => message?.allowIdleWithoutEnd) ? stream : undefined;
     const forced = group.findLastIndex(message => message.allowIdleWithoutEnd && message.received);
-    let next = group.find(message => message.phase === 'stopped' && (!urgentOnly || isUrgent(message))) ??
+    let next = group.find(message => message.phase === 'stopped' && (!urgentOnly || isUrgent(message)) && eligible(message)) ??
       pending.find(message => message.superPriority && message.mode !== 'queue') ??
       pending.find(message => message.mode !== 'queue') ?? pending.find(message => message.startup) ?? priority ??
       (overdue ? stream : undefined) ?? pending[0];
@@ -643,7 +647,8 @@ export function inbox(project, transport, report = console.error, { replyLimit, 
     settleCombined(all);
   }
 
-  async function step(routeTarget, { beforeDispatch, canDispatch, messageIssue, now = Date.now, coalesceMs = 0, stallMs = defaultStallMs, decorate } = {}) {
+  async function step(routeTarget, { beforeDispatch, canDispatch, canDispatchMessage, messageIssue,
+    now = Date.now, coalesceMs = 0, stallMs = defaultStallMs, decorate } = {}) {
     store.ingest();
     let changed = false;
     for (const message of messages) {
@@ -682,10 +687,10 @@ export function inbox(project, transport, report = console.error, { replyLimit, 
       await Promise.all([...groups()].filter(([key, group]) => observed.has(key) ||
         group.some(message => !known.has(message.id) && message.streamAt != null)).map(async ([key, group]) =>
         processTarget(group, observed.has(key) ? observed.get(key) : await observeTarget(group, at, stallMs),
-          { canDispatch, known, at, coalesceMs, decorate })));
+          { canDispatch, canDispatchMessage, known, at, coalesceMs, decorate })));
     } else {
       await Promise.all(active.map(async ([, group]) => processTarget(group, await observeTarget(group, now(), stallMs),
-        { canDispatch, at: now(), coalesceMs, decorate })));
+        { canDispatch, canDispatchMessage, at: now(), coalesceMs, decorate })));
     }
   }
 

@@ -7,6 +7,7 @@ import { activitySummary, adapterFor, CommandError, parentOrder, readTranscript,
 import { nativeRanges, timestamp, transcriptRows, turnTools } from './turns.mjs';
 import { managedWaveKey } from '../relay/project.mjs';
 import { oarTurnEndHead } from '../daemon/turn-heads.mjs';
+import { seniorToolEvents } from '../daemon/senior-tools.mjs';
 
 const at = value => Number.isFinite(timestamp(value)) ? timestamp(value) : null;
 const iso = time => at(time) === null ? null : new Date(at(time)).toISOString();
@@ -236,18 +237,26 @@ export async function history(sessions, reader, options) {
   }
   if (exact && !matched.length && !outcome && !grep) throw new CommandError('not-found', `No turn ${exact}`);
   const selected = since ? matched.slice(0, count) : matched.slice(-count);
+  const seniorLogs = new Map();
   const turns = await Promise.all(selected.map(async entry => {
     const { session, turn, rows, path, cards, tools, heads, claims, git, activity, tags } = entry;
     const origin = timeline ? { addr: session.addr, timelineIndex: entry.timelineIndex } : {};
     const source = { transcriptPath: path ?? null, lineOffset: rows.length ? rows[0].number - 1 : null,
       ...(rows.length && { startLine: rows[0].number, endLine: rows.at(-1).number }) };
     const diffs = showDiff ? await reader.diff(entry) : null;
+    if (['leader', 'auditor'].includes(session.role) && !seniorLogs.has(session.addr)) {
+      seniorLogs.set(session.addr, seniorToolEvents(entry.project, session.addr));
+    }
+    const started = entry.observation?.start?.at ?? at(turn.startedAt) ?? Infinity;
+    const ended = entry.observation?.end?.at ?? at(turn.endedAt) ?? Infinity;
+    const seniorTools = (seniorLogs.get(session.addr) ?? []).filter(event => event.at >= started && event.at <= ended)
+      .map(({ type, category, reason, at }) => ({ type, category, reason, at }));
     const facts = { exitCodes: exitCodes(tools), status: activity.lifecycle,
       ...(activity.openCalls && { openCalls: activity.openCalls }),
       changedFiles: git ? git.status === 'ok' ? git.files.length : null : await reader.changedFiles(entry), claims: verdict(claims) };
     const headInfo = value => value ? { head: value.head, observedAt: value.observedAt } : null;
     const extra = { ...source, facts, outcomes: tags, heads: { start: headInfo(heads.start), end: headInfo(heads.end) },
-      ...(diffs && { diff: diffs }), ...(evidence && { evidence: publicCards(cards) }) };
+      ...(diffs && { diff: diffs }), ...(evidence && { evidence: publicCards(cards) }), ...(seniorTools.length && { seniorTools }) };
     if (level === 'L2') {
       const selectedTools = tools.filter(item => (!tool || tool === item.tool) && (!command || command.test(item.command ?? '')) &&
         (!onlyFailed || item.status === 'failed'))

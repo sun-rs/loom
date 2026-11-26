@@ -2,10 +2,20 @@ import { closeSync, constants, fstatSync, mkdirSync, openSync, readFileSync, wri
 import { dirname } from 'node:path';
 import { normalize } from './hooks.mjs';
 import { deliveryId } from '../../inbox/message.mjs';
+import { recordSeniorToolDenial } from '../../lib/senior-tool-guard.mjs';
 
 const [sink] = process.argv.slice(2);
 const payload = JSON.parse(readFileSync(0, 'utf8'));
-if (!payload.isSidechain && normalize(payload)) {
+const { LOOM_SENIOR_TOOL_LOG: guardLog, LOOM_SENIOR_TOOL_PROJECT: project } = process.env;
+if (payload.hook_event_name === 'PreToolUse') {
+  const denial = recordSeniorToolDenial(guardLog, project, payload.cwd, payload.tool_name, payload.tool_input);
+  if (denial) process.stdout.write(JSON.stringify({ hookSpecificOutput: {
+    hookEventName: 'PreToolUse', permissionDecision: 'deny', permissionDecisionReason: denial,
+  } }));
+}
+const startup = payload.hook_event_name === 'SessionStart' && payload.source !== 'compact' &&
+  typeof payload.session_id === 'string' && payload.session_id;
+if (sink && !payload.isSidechain && !payload.agent_id && (startup || normalize(payload))) {
   // Keep native identifiers for the caller to correlate events and deduplicate replays.
   // Follow relay/hooks.mjs and omit prompt text, tool arguments, and outputs.
   const fields = ['hook_event_name', 'session_id', 'turn_id', 'transcript_path', 'cwd',
