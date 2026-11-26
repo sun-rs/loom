@@ -90,7 +90,7 @@ export async function observeRelayTurn(project, worker, reply, input = {}, index
   }
   return {
     project, cwd, task: worker.id, addr: worker.addr, provider: worker.provider,
-    baseCommit: session?.baseCommit, gitObservation, projected, transcript, endedAt: reply.at,
+    baseCommit: session?.baseCommit, gitObservation, projected, transcript, endedAt: reply.at, expectRed: input.expectRed,
     finalReply: hasNativeReply ? reply.body : null, failed: reply.failed,
     nativeTurnId: input.nativeTurnId, nativeTurnIndex: input.nativeTurnIndex,
     sandboxed: launchSandbox(worker.provider, input.argv),

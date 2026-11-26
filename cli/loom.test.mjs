@@ -297,7 +297,7 @@ test('worker admission counts live sessions by parent and project across waves',
       const { args, caller } = JSON.parse(body);
       try {
         assert.equal(args.workerCaller, caller);
-        if (args.task === 'second') assert.deepEqual([args.deliver, args.barrier], ['barrier', 'W']);
+        if (args.task === 'second') assert.deepEqual([args.deliver, args.barrier, args['expect-red']], ['barrier', 'W', true]);
         spawnProfile(cwd, args);
         const session = register(args.task, 'worker', { parent: 'lead', wave: args.wave });
         socket.end(JSON.stringify({ ok: true, session }));
@@ -320,7 +320,7 @@ test('worker admission counts live sessions by parent and project across waves',
       return JSON.parse(error.stdout);
     }
   }
-  assert.equal((await spawn('second', '--parent', 'lead', '--deliver', 'barrier', '--barrier', 'W')).ok, true);
+  assert.equal((await spawn('second', '--parent', 'lead', '--deliver', 'barrier', '--barrier', 'W', '--expect-red')).ok, true);
   const attempts = await Promise.all([spawn('third'), spawn('fourth', '--parent', 'lead-pane')]);
   assert.equal(attempts.filter(result => result.ok).length, 1);
   assert.match(attempts.find(result => !result.ok).error.message, /lead.*3 active workers \(limit 3\)/);

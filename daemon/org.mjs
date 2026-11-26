@@ -6,7 +6,7 @@ import { timestamp } from '../cli/turns.mjs';
 import { driftDefaults, readPolicy } from '../cli/policy.mjs';
 import { runtimeDirectory } from '../cli/project.mjs';
 import { checkFacts, plannedCardPaths } from '../evidence/facts.mjs';
-import { forTurn, readTranscript } from '../evidence/index.mjs';
+import { evidenceConfig, evidenceTaskSettings, forTurn, readTranscript } from '../evidence/index.mjs';
 import { observeRelayTurn, turnExecutions } from '../evidence/relay.mjs';
 import { isBlockedReply } from '../inbox/message.mjs';
 import { cardTexts, observeExecutions, sampleCard } from '../watch/drift.mjs';
@@ -89,6 +89,7 @@ export function organization(project, index, sessions, mail, now, report) {
     const owned = rows.filter(row => row.role !== 'reviewer' && sessions.jobs.has(row.addr));
     const latestCards = new Map(owned.filter(row => row.role === 'worker').map(row => [JSON.stringify([row.project, row.task]), row]));
     const activePlans = new Map();
+    let evidenceSettings;
     function plannedFor(name) {
       if (!activePlans.has(name)) {
         const paths = new Set();
@@ -117,6 +118,9 @@ export function organization(project, index, sessions, mail, now, report) {
       };
       const turns = await observations(row, byAddr.get(row.addr) ?? []);
       const fresh = turns.filter(turn => !next.seen[turn.key] && !turn.waiting);
+      if (row.role === 'worker' && fresh.length && job.expectRed === undefined) evidenceSettings ??= await evidenceConfig(project);
+      const expectRed = row.role === 'worker' &&
+        (job.expectRed ?? evidenceTaskSettings(evidenceSettings ?? {}, row.task).expectRed) === true;
       const rotation = pending.get(row.addr);
       const handoverTurn = rotation && turns.find(turn => turn.inputIds?.includes(job.handoverReportId ?? job.firstId));
       if (latestCards.get(taskKey) === row && (row.endedAt == null || fresh.length) &&
@@ -128,7 +132,7 @@ export function organization(project, index, sessions, mail, now, report) {
         const { key, body, inputIds, at: endedAt, outcome } = turn;
         const worker = { id: row.task ?? row.role, addr: row.addr, provider: row.cli };
         const observation = await observeRelayTurn(project, worker, { ...turn, body, failed: outcome?.kind === 'failed' }, {
-          cwd: row.cwd, sessionId: row.sessionId, nativeTurnIndex: turn.nativeTurnIndex,
+          cwd: row.cwd, sessionId: row.sessionId, expectRed: job.expectRed, nativeTurnIndex: turn.nativeTurnIndex,
           nativeTurnId: turn.nativeTurnId ?? turn.turnId, streamId: turn.streamId,
           transcriptPath: () => row.transcriptPath,
         }, index);
@@ -148,7 +152,7 @@ export function organization(project, index, sessions, mail, now, report) {
         }
         const timing = next.timings[JSON.stringify(row.project)] ??= {};
         const failure = outcome?.failure ?? (outcome?.kind === 'failed' || failedReply(body) ? 'turn-failed' : undefined);
-        executions.push({ card, timing, observations: turnExecutions(observation), failure, add, endedAt });
+        executions.push({ card, timing, observations: turnExecutions(observation), failure, add, endedAt, expectRed });
         if (row.role === 'worker' && body && row.task) {
           const first = inputIds?.includes(job.firstId) && !turn.corroborated;
           const hash = first ? digest(row.task + '/' + row.addr + '/' + job.firstId) : digest(key);
@@ -162,7 +166,7 @@ export function organization(project, index, sessions, mail, now, report) {
       }
     }
     for (const item of executions.sort((a, b) => a.endedAt - b.endedAt)) {
-      observeExecutions(item.card, item.timing, item.observations, item.failure, settings, item.add);
+      observeExecutions(item.card, item.timing, item.observations, item.failure, settings, item.add, { expectRed: item.expectRed });
     }
     // If verification is recorded before this checkpoint, replaying the turn is harmless.
     for (const [addr, record] of recordings) index.reportRotation(addr, record);

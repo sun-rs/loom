@@ -355,6 +355,7 @@ export function ownedSessions(project, index, report, {
     if (!roles.includes(input.role) || !hasText(input.cwd) || !validInput(input.prompt) ||
         (input.parent !== undefined && !hasText(input.parent)) ||
         (input['trust-workspace'] !== undefined && typeof input['trust-workspace'] !== 'boolean') ||
+        (input['expect-red'] !== undefined && (input.role !== 'worker' || typeof input['expect-red'] !== 'boolean')) ||
         (input.cli !== undefined && !Object.hasOwn(runtimeIds, input.cli)) ||
         (input.mode !== undefined && !modes.has(input.mode)) ||
         (input.defaultMode !== undefined && !modes.has(input.defaultMode)) ||
@@ -423,6 +424,7 @@ export function ownedSessions(project, index, report, {
       ...(selected.fast !== undefined && { fast: selected.fast }),
       ...(predecessor && { handoverFrom: predecessor.addr }),
       ...(row.role === 'worker' && { cardStart: headAt(cwd) }),
+      ...(input['expect-red'] !== undefined && { expectRed: input['expect-red'] }),
       ...(deliver && { deliver, ...(input.barrier && { barrier: input.barrier }) }),
       ...(row.role === 'reviewer' && { reviewDeadline: row.startedAt + maxDurationMs }),
       ...(cli === 'opencode' && mode === 'tui' && { plannedNativeId: `ses_${randomUUID().replaceAll('-', '')}` }) };

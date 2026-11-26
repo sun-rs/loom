@@ -7,6 +7,7 @@ import { draftExpectation, verifyDraft } from './composer-draft.mjs';
 import { readGrid } from './pty-grid.mjs';
 
 const captures = JSON.parse(readFileSync(new URL('../tasks/PILOT-FIX-3/agy-wrapped-drafts.json', import.meta.url)));
+const pilot = JSON.parse(readFileSync(new URL('../tasks/DRAFT-HOLD-2/agy-pilot-frame.json', import.meta.url)));
 
 async function rendered({ text, cols, rows, cursor }, provider = 'agy') {
   const grid = new xterm.Terminal({ cols, rows, allowProposedApi: true });
@@ -105,5 +106,30 @@ test('the agy transaction submits once and leaves a human-typed suffix in the co
     assert.equal(pasted.join(''), payload);
     assert.equal(writes.filter(bytes => bytes === '\r').length, human ? 0 : 1);
     assert.equal(outcome.outcome, human ? 'human-or-exit-during-paste' : 'verified-normalized-draft');
+  }
+});
+
+test('agy submits the 42-column pilot-2 draft even when its first paint already clips the marker', async () => {
+  const size = pilot.size;
+  const readbacks = await Promise.all(['first', 'final'].map(name => rendered({ ...size, ...pilot.frames[name] })));
+  assert.deepEqual(readbacks.map(frame => frame.scrolledDraft?.hiddenRows), [9, 13]);
+  for (const changed of [false, true]) {
+    const before = { draft: '', generation: 0, outputSequence: 0, humanSequence: 0, size,
+      resizeSequence: 0, buffer: 'normal', bufferSequence: 0, writable: true, quietForMs: 150 };
+    let current = before;
+    const writes = [];
+    const outcome = await submitComposer(pilot.wire, { before, provider: 'agy', read: async () => current,
+      valid: frame => frame === current, verify: async () => true,
+      write(bytes) {
+        writes.push(bytes);
+        if (bytes === '\r') return;
+        const painted = readbacks[writes.length - 1];
+        const scrolledDraft = changed && writes.length === 2 ?
+          { ...painted.scrolledDraft, tail: painted.scrolledDraft.tail.replace('count=2', 'count=3') } : painted.scrolledDraft;
+        current = { ...before, ...painted, scrolledDraft, generation: writes.length, outputSequence: writes.length };
+      },
+    });
+    assert.equal(outcome.accepted, !changed);
+    assert.deepEqual(writes.map(bytes => Buffer.byteLength(bytes)), changed ? [530, 109] : [530, 109, 1]);
   }
 });

@@ -21,6 +21,7 @@ const rule = /^\s*─{8,}\s*$/;
 const codexFooter = /^\s*(?:gpt-\S+|o\d\S*).* [·•] /i;
 const codexKeys = /^\s*← for agents · \? for shortcuts\b/i;
 const agyTask = /^\s*●\s+\[\d{1,2}:\d{2}:\d{2}\]\s+\S/;
+const agySuggestion = /^(?:accept-edits|plan|auto|yolo) mode: [^\n]+(?: \(shift\+tab to cycle\)|\.\.\.|…)$/i;
 const openCodeRow = /^\s*┃(?: |$)/;
 
 export function readGrid(terminal, provider, extractDraft) {
@@ -96,16 +97,19 @@ export function readGrid(terminal, provider, extractDraft) {
   // start of the live composer. Typed text does not carry this combination.
   if (provider === 'agy' && cursor.y === first && cursor.x === 2 &&
       firstCell?.isFgPalette() && firstCell.getFgColor() === 8 &&
-      /^(?:accept-edits|plan|auto|yolo) mode: [^\n]+ \(shift\+tab to cycle\)$/i.test(draft)) {
+      agySuggestion.test(draft)) {
     draft = '';
   }
   const stock = provider === 'claude' ? /^\s*❯\s+Try ["“].+["”]\s*$/ :
-    /^\s*>\s+(?:accept-edits|plan|auto|yolo) mode: [^\n]+ \(shift\+tab to cycle\)$/i;
-  const composerText = provider !== 'codex' && draft === '' && stock.test(raw[first])
+    /^\s*>\s+/;
+  const recognizedStock = stock.test(raw[first]) && (provider !== 'agy' || agySuggestion.test(raw[first].replace(stock, '')));
+  const composerText = ['agy', 'claude'].includes(provider) && draft === '' && recognizedStock
     ? raw.map((line, index) => index === first ? prompt : line).join('\n') : text;
   const outsideComposer = [...raw.slice(0, first), ...raw.slice(last + 1)].join('\n');
   const vacantText = [...raw.slice(0, first), prompt, ...raw.slice(last + 1)].join('\n');
   const clip = provider === 'agy' && /^↑ ([1-9]\d*) more lines?\n/.exec(draft);
   const scrolledDraft = clip && cursor.y === last && { hiddenRows: Number(clip[1]), tail: draft.slice(clip[0].length) };
-  return { text, composerText, cursor, draft, outsideComposer, vacantText, scrolledDraft };
+  const atDraftEnd = provider === 'agy' && cursor.y === last &&
+    !lines[last]?.translateToString(true, cursor.x, terminal.cols).trim();
+  return { text, composerText, cursor, draft, outsideComposer, vacantText, scrolledDraft, atDraftEnd };
 }

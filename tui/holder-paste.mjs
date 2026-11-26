@@ -28,7 +28,7 @@ export function provePaste(events, input, view, receipt, { provider, rows, overl
   const total = frames.reduce((sum, frame) => sum + frame.length, 0);
   const legacyChunk = (bytes, offset) => bytes.subarray(offset, offset + 4096);
   const writes = events.map(event => ({ ...event, receipt: receipt(event.id) }));
-  let written = 0, continuation, continuationBytes;
+  let written = 0, continuation, continuationBytes, ownedClosedBytes;
   for (let start = writes.length - 1; start >= 0; --start) {
     if (!writes[start].receipt) continue;
     let offset = 0, frameIndex = 0, cursor = 0;
@@ -52,22 +52,27 @@ export function provePaste(events, input, view, receipt, { provider, rows, overl
         latest.human === view.humanInputOffset && latest.seq <= view.eventSeq && view.outputOffset > latest.output;
       const uninterrupted = (write === latest || dismissal) &&
         boundary === view.boundary && write.human === view.humanInputOffset;
+      const ownsDraft = provider === 'agy' && writes[start].emptyComposer === true;
       if (offset === total) {
-        if (uninterrupted && view.outputOffset > write.output) return { status: 'complete', written: offset, total };
+        if (uninterrupted && view.outputOffset > write.output) {
+          return { status: 'complete', written: offset, total, ...(ownsDraft && { ownsDraft: true, closedBracket: true }) };
+        }
         break; // An intervening write might be Enter.
       }
       if (cursor === frame.length) { cursor = 0; ++frameIndex; }
+      if (ownsDraft && uninterrupted && cursor === 0 && view.outputOffset > write.output) ownedClosedBytes = offset;
       // Agy can buffer an unfinished bracketed paste without repainting.
       if (provider === 'agy' && uninterrupted && (frames[frameIndex][cursor] & 0xc0) !== 0x80 &&
           offset > (continuationBytes ?? 0)) {
-        continuation = { segment: frameIndex, offset: cursor };
+        continuation = { segment: frameIndex, offset: cursor, ...(ownsDraft && { ownsDraft: true }) };
         continuationBytes = offset;
       }
     }
     written = Math.max(written, offset);
   }
   return { status: written && written < total ? 'incomplete' : 'unproven',
-    written: written || null, total, ...(continuationBytes === written && written < total && { continuation }) };
+    written: written || null, total, ...(continuationBytes === written && written < total && { continuation }),
+    ...(written > 0 && ownedClosedBytes === written && { ownsDraft: true, closedBracket: true }) };
 }
 
 export function adoptionWriteId(incarnation, deliveryId, key) {

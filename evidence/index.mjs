@@ -79,10 +79,12 @@ function cardFor({ claims, git, verification, facts }) {
   return clipTokens([headline, factLine, denials, changes, verify, results].filter(Boolean).join('\n'), 299);
 }
 
-async function config(project) {
+export async function evidenceConfig(project) {
   const text = await localText(join(project, '.project/evidence.json'));
   return text === undefined ? {} : JSON.parse(text);
 }
+
+export const evidenceTaskSettings = (config, task) => ({ ...config, ...config.tasks?.[task] });
 
 function globs(value = []) {
   if (!Array.isArray(value) || value.some(glob => typeof glob !== 'string' || !glob.trim())) throw new TypeError('Expected a list of globs');
@@ -107,8 +109,7 @@ export async function forTurn(options) {
   const textPath = join(directory, `${task}-${turn}.txt`);
   const previous = await localText(path);
   if (previous === undefined) {
-    const shared = await config(project);
-    const settings = { ...shared, ...shared.tasks?.[task] };
+    const settings = evidenceTaskSettings(await evidenceConfig(project), task);
     const capturedAt = Date.now();
     const git = options.gitObservation ?? (cwd ? await collectGit(cwd, {
       baseCommit: options.baseCommit ?? settings.baseCommit,

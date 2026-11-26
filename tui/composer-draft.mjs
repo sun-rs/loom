@@ -9,6 +9,40 @@ export function draftExpectation(text) {
   return { id: deliveryId(text), normalized, digest: digest(normalized) };
 }
 
+// Agy sometimes paints wrapped rows explicitly, so xterm cannot tell a
+// visual row break from a newline. Match back from the caret and permit an
+// optional source whitespace only at each painted boundary.
+export function verifyAgyDraft(frame, expected, ownsDraft = false) {
+  if (!expected?.id || !frame.draft || frame.outsideComposer?.includes(`[loom:${expected.id}]`)) return false;
+  const clipped = frame.scrolledDraft;
+  if (clipped && !ownsDraft) return false;
+  const rows = (clipped?.tail ?? frame.draft).split('\n').map(normalize).filter(Boolean);
+  if (!rows.length) return false;
+  let end = expected.normalized.length;
+  for (const row of rows.toReversed()) {
+    if (!expected.normalized.endsWith(row, end)) return false;
+    end -= row.length;
+    if (expected.normalized[end - 1] === ' ') end--;
+  }
+  return clipped ? end > 0 && expected.normalized.length - end >= 32 : end === 0;
+}
+
+export function isAgyDraftSubset(frame, input) {
+  const id = deliveryId(input);
+  if (!id || !frame.draft || !frame.atDraftEnd || frame.scrolledDraft || frame.outsideComposer?.includes(`[loom:${id}]`)) return false;
+  const compact = value => value.replace(/\s+/gu, '');
+  const visible = compact(frame.draft);
+  const expected = compact(input);
+  if (!visible.startsWith(`[loom:${id}]`) || visible.length >= expected.length) return false;
+  let cursor = 0;
+  for (const char of visible) {
+    const match = expected.indexOf(char, cursor);
+    if (match === -1) return false;
+    cursor = match + char.length;
+  }
+  return true;
+}
+
 export function verifyDraft(frame, expected, previous) {
   if (!expected?.id || !frame.draft || frame.outsideComposer?.includes(`[loom:${expected.id}]`)) return;
   const { scrolledDraft } = frame;

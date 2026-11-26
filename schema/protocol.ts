@@ -82,6 +82,7 @@ export interface CommandInputs {
     readonly task: string;
     readonly wave: string;
     readonly parent?: string;
+    readonly 'expect-red'?: boolean;
     readonly prompt: string;
   };
   readonly send: { readonly target: string; readonly mode?: SendMode; readonly from?: string; readonly message: string };

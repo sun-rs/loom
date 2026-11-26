@@ -4,8 +4,9 @@ import { performance } from 'node:perf_hooks';
 import { setTimeout as delay } from 'node:timers/promises';
 import xterm from '@xterm/headless';
 import { events, holderClient, holderError } from '../holder/protocol.mjs';
-import { submitComposer } from './agent-input.mjs';
+import { QUIET_OUTPUT_MS, submitComposer } from './agent-input.mjs';
 import { titlePhase } from './agent-status.mjs';
+import { isAgyDraftSubset } from './composer-draft.mjs';
 import { readGrid } from './pty-grid.mjs';
 import { providers } from './providers.mjs';
 import { utf8PasteChunk, provePaste, readPasteReceipt } from './holder-paste.mjs';
@@ -80,8 +81,13 @@ export async function holderTerminal(binding, controller, provider, expectedPid,
           human = event.data.readBigUInt64BE();
           pasteBoundary++;
         } else if (event.type === events.write) {
+          let emptyComposer;
+          if (provider === 'agy') {
+            const before = readGrid(grid, provider);
+            emptyComposer = before.draft === '' && providers.agy.screen.hasEmptyComposer(before.composerText ?? before.text);
+          }
           recentWrites.push({ id: event.data.toString('hex', 0, 16), count: event.data.readUInt32BE(16), human,
-            seq: event.seq, output: event.offset, boundary: pasteBoundary });
+            seq: event.seq, output: event.offset, boundary: pasteBoundary, emptyComposer });
           if (recentWrites.length > 128) recentWrites.shift();
         }
         eventSeq = event.seq;
@@ -118,6 +124,8 @@ export async function holderTerminal(binding, controller, provider, expectedPid,
   }
 
   const writable = view => !view?.exited && view?.writable && !view.humanActive;
+  const sameInput = (before, after) => after.humanSequence === before.humanSequence &&
+    after.resizeSequence === before.resizeSequence && after.bufferSequence === before.bufferSequence && after.buffer === before.buffer;
   async function writeOnce(bytes, view, id) {
     if (!writable(view)) return 0;
     // Connection loss after the first byte is inherently ambiguous.
@@ -137,8 +145,7 @@ export async function holderTerminal(binding, controller, provider, expectedPid,
     let writeId = id ?? randomUUID();
     const deadline = performance.now() + 2200;
     do {
-      if (current.humanSequence !== view.humanSequence || current.resizeSequence !== view.resizeSequence ||
-          current.bufferSequence !== view.bufferSequence || current.buffer !== view.buffer || !writable(current) ||
+      if (!sameInput(view, current) || !writable(current) ||
           accepted && verify && !await verify(current)) break;
       const part = utf8PasteChunk(data, accepted);
       const n = await writeOnce(part, current, writeId);
@@ -198,6 +205,31 @@ export async function holderTerminal(binding, controller, provider, expectedPid,
           return write(bytes, view, { id: bytes === '\r' ? enterId : undefined, verify });
         },
       });
+    },
+    async resendAfterClear(input, expected, { clearId, enterId }, verify) {
+      if (provider !== 'agy' || frame !== expected || !writable(frame) || !isAgyDraftSubset(frame, input) ||
+          !await verify(frame, { held: true })) throw stale();
+      // Native agy handles DEL as Backspace across logical lines. At the
+      // end of this proven subset, a byte count bounds the number of keys.
+      const clear = '\x7f'.repeat(Buffer.byteLength(input));
+      if (!await write(clear, expected, { id: clearId, verify })) throw stale();
+      const deadline = performance.now() + 2200;
+      do {
+        const before = await read();
+        if (!sameInput(expected, before) || !writable(before)) break;
+        if (before.outputSequence > expected.outputSequence && before.quietForMs >= QUIET_OUTPUT_MS &&
+            before.draft === '' && providers.agy.screen.hasEmptyComposer(before.composerText ?? before.text) &&
+            await verify(before)) {
+          return submitComposer(input, { before, provider, read, valid: writable, verify,
+            async write(bytes, view) {
+              if (!await verify(view)) return false;
+              return write(bytes, view, { id: bytes === '\r' ? enterId : undefined, verify });
+            },
+          });
+        }
+        await delay(35);
+      } while (performance.now() < deadline);
+      return { accepted: false, outcome: 'clear-unverified' };
     },
     async close() {
       try { await client.signal('SIGTERM'); }

@@ -1,0 +1,84 @@
+{
+  "deliveryId": "57883071-cae2-a796-329c-d9354090c345",
+  "wire": "[loom:57883071-cae2-a796-329c-d9354090c345]\n续作批次 auto:7b8c0cd1-d240-45d5-b458-0515faa51ed1\n\nT17-GOAL4-TESTS oar-e181e3b1-0712-45fd-bb5c-e48ec3bbacab\nDONE T17-GOAL4-TESTS  \n提交 `df5c01c76ae12d9032467d6e6667c765cdd7071f` 已更新测试与契约。a–e 全部见红，186 通过、41 预期失败（34 个断言用例、7 个父测试），`memory/memory.test.mjs` 4/4 通过。完整摘要与旧测试改动清单见提交正文。  \nLeftovers & deviations: none。工作区干净，实现文件无改动。\n\nLoom drift and fact checks\nrepeated-failure T17-GOAL4-TESTS · failureClass=test-failed count=2",
+  "size": {
+    "cols": 42,
+    "rows": 24
+  },
+  "view": {
+    "eventSeq": "146390",
+    "outputOffset": "140552025",
+    "humanInputOffset": "140",
+    "boundary": 8
+  },
+  "writes": [
+    {
+      "id": "bfd928c370ae42dea4089ec089eccd53",
+      "seq": "146385",
+      "count": 512,
+      "output": "140549847",
+      "start": "27366",
+      "digest": "4ccc494a7d61d1505d133cde2eea57a9a7e70f8d2175f36282407dbac68cc01b",
+      "human": "140",
+      "boundary": 8,
+      "emptyComposer": true
+    },
+    {
+      "id": "d884692e97ca4466bffdde176f6da238",
+      "seq": "146386",
+      "count": 18,
+      "output": "140549847",
+      "start": "27878",
+      "digest": "636ac62f69ab6e972cda0a39e43fb4e913c2ccb13557d7f24096c6aa398ecf42",
+      "human": "140",
+      "boundary": 8,
+      "emptyComposer": false
+    },
+    {
+      "id": "cc0321fe421a482494220724e030bbd5",
+      "seq": "146389",
+      "count": 109,
+      "output": "140551031",
+      "start": "27896",
+      "digest": "267eb3a8e5a43022bcf8458c9e729d23ce3dbb0fbf388dd60ec891ca954ca205",
+      "human": "140",
+      "boundary": 8,
+      "emptyComposer": false
+    }
+  ],
+  "frames": {
+    "before": {
+      "text": "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n──────────────────────────────────────────\n>\n──────────────────────────────────────────\n? for shortcuts",
+      "cursor": {
+        "x": 2,
+        "y": 21
+      },
+      "draft": "",
+      "scrolledDraft": null
+    },
+    "first": {
+      "text": "\n\n\n\n\n\n\n\n──────────────────────────────────────────\n> ↑ 9 more lines\n  DONE T17-GOAL4-TESTS\n  提交\n  `df5c01c76ae12d9032467d6e6667c765cdd707\n  1f` 已更新测试与契约。a–e\n  全部见红，186 通过、41 预期失败（34\n  个断言用例、7\n  个父测试），`memory/memory.test.mjs`\n  4/4\n  通过。完整摘要与旧测试改动清单见提交正\n  文。\n  Leftovers & deviations:\n  none。工作区干净，实现文件无改动。\n──────────────────────────────────────────\n     accept-edits · Gemini 4 Neon · medium",
+      "cursor": {
+        "x": 36,
+        "y": 21
+      },
+      "draft": "↑ 9 more lines\nDONE T17-GOAL4-TESTS\n提交\n`df5c01c76ae12d9032467d6e6667c765cdd707\n1f` 已更新测试与契约。a–e\n全部见红，186 通过、41 预期失败（34\n个断言用例、7\n个父测试），`memory/memory.test.mjs`\n4/4\n通过。完整摘要与旧测试改动清单见提交正\n文。\nLeftovers & deviations:\nnone。工作区干净，实现文件无改动。",
+      "scrolledDraft": {
+        "hiddenRows": 9,
+        "tail": "DONE T17-GOAL4-TESTS\n提交\n`df5c01c76ae12d9032467d6e6667c765cdd707\n1f` 已更新测试与契约。a–e\n全部见红，186 通过、41 预期失败（34\n个断言用例、7\n个父测试），`memory/memory.test.mjs`\n4/4\n通过。完整摘要与旧测试改动清单见提交正\n文。\nLeftovers & deviations:\nnone。工作区干净，实现文件无改动。"
+      }
+    },
+    "final": {
+      "text": "\n\n\n\n\n\n\n\n──────────────────────────────────────────\n> ↑ 13 more lines\n  全部见红，186 通过、41 预期失败（34\n  个断言用例、7\n  个父测试），`memory/memory.test.mjs`\n  4/4\n  通过。完整摘要与旧测试改动清单见提交正\n  文。\n  Leftovers & deviations:\n  none。工作区干净，实现文件无改动。\n\n  Loom drift and fact checks\n  repeated-failure T17-GOAL4-TESTS ·\n  failureClass=test-failed count=2\n──────────────────────────────────────────\n     accept-edits · Gemini 4 Neon · medium",
+      "cursor": {
+        "x": 34,
+        "y": 21
+      },
+      "draft": "↑ 13 more lines\n全部见红，186 通过、41 预期失败（34\n个断言用例、7\n个父测试），`memory/memory.test.mjs`\n4/4\n通过。完整摘要与旧测试改动清单见提交正\n文。\nLeftovers & deviations:\nnone。工作区干净，实现文件无改动。\n\nLoom drift and fact checks\nrepeated-failure T17-GOAL4-TESTS ·\nfailureClass=test-failed count=2",
+      "scrolledDraft": {
+        "hiddenRows": 13,
+        "tail": "全部见红，186 通过、41 预期失败（34\n个断言用例、7\n个父测试），`memory/memory.test.mjs`\n4/4\n通过。完整摘要与旧测试改动清单见提交正\n文。\nLeftovers & deviations:\nnone。工作区干净，实现文件无改动。\n\nLoom drift and fact checks\nrepeated-failure T17-GOAL4-TESTS ·\nfailureClass=test-failed count=2"
+      }
+    }
+  }
+}

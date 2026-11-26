@@ -34,6 +34,7 @@ description: 在 Loom 中启动、指挥、复核或接手由 Super、Auditor、
 
 1. 把裁决拆成卡，分派 Worker，执行门禁、集成和获授权的合入。监督 Auditor 换班。用户直接问时只回一句状态。
 2. 按 [派卡模板](../../examples/card.md) 定目标、可写范围、净行数预算、受影响的测试和验收。为 Worker 建隔离 worktree，每批使用新 `--wave`。同时活跃的写代码 Worker 默认 2–3 名，硬上限 4 名。更多先拆成独立协调域。派发中断后查已接收成员，余项另开新波。
+   测试先行且验收要求先见红的卡，用 `loom spawn worker --expect-red` 标记。测试失败原件仍入证据卡，预期红灯跳过重复测试失败告警。
 3. 波次结算、阻塞或失败、审查结论、Super 裁决、超时或 STUCK 时处理一次决定，然后结束本轮。Worker 阻塞或被退回时用 `loom send` 在原会话续作。需显式续作批次时查 `loom send --help-advanced`。
 4. 由 Worker 在自己的隔离沙箱中对固定候选 SHA 复现问题、跑全量测试和记录验收证据。Leader 用 `"$LOOM_BIN" spawn reviewer --project "$PROJECT" --cwd "$REVIEW_TREE" --wave "$GATE" "$QUESTION"` 发起独立审查，提供候选 SHA 和必要证据，只问一个可证伪的问题。Reviewer 在新会话里只读复核，限时 15–30 分钟，给出结论和证据后回收。Leader 收到结论后用 `"$LOOM_BIN" gate pack "$GATE" --project "$PROJECT" --base "$BASE" --candidate "$CANDIDATE"` 打包结论和验收证据，向 Auditor 投递一条指针。缺少 Reviewer 结论时，`gate pack` 发出告警。确认审核结论与授权后合入，再用 `loom notifications --gate-complete "$GATE"` 登记安全边界。收到 Auditor 超预算通知时，把材料合并到下一份门禁包。
 5. 在真实派工或汇报中处理 loomd 附上的信号。核实保护或越界文件、删除或削弱断言、skip/only、事实错误或沙箱逃逸尝试后，可用 `loom escalate "$GATE" --reason REASON --evidence TEXT` 升级；与门禁包共用一次唤醒。需要其他角色回送最终答复时用 `loom send --expect-reply`。Worker 波次按批次回 Leader。

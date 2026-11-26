@@ -166,7 +166,7 @@ export function createSupervisor(project, {
             `FAILED ${row.task}\n${job.error ?? message?.issue ?? '无原生最终回复'}`),
           source: completion?.source ?? 'loom inbox', failed: !unconfirmed && !completion?.body,
           unconfirmed, sessionId: row.sessionId,
-          evidenceInput: { cwd: row.cwd, sessionId: row.sessionId, nativeTurnIndex: completion?.nativeTurnIndex ?? 1,
+          evidenceInput: { cwd: row.cwd, sessionId: row.sessionId, expectRed: job.expectRed, nativeTurnIndex: completion?.nativeTurnIndex ?? 1,
             nativeTurnId: completion?.nativeTurnId ?? (row.backend === 'tui' ? completion?.turnId : undefined),
             transcriptPath: () => row.transcriptPath },
         } : undefined;

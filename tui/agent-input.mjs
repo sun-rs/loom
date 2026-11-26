@@ -1,6 +1,6 @@
 import { performance } from 'node:perf_hooks';
 import { setTimeout as sleep } from 'node:timers/promises';
-import { draftExpectation, verifyDraft } from './composer-draft.mjs';
+import { draftExpectation, verifyAgyDraft, verifyDraft } from './composer-draft.mjs';
 
 // Orca b7fd7caa3, shared/agent-launch/startup/agent-prompt-injection.ts.
 export const AGENT_PROMPT_BRACKETED_PASTE_START = '\x1b[200~';
@@ -38,7 +38,6 @@ async function submitAgyComposer(text, { before, read, write, valid, verify, res
   const pastedAt = performance.now();
   const deadline = pastedAt + 15_000;
   let frame = before;
-  let proof;
   let prefix = '';
   if (before.draft !== '' && !resume) return denied('draft-unverified');
   for (const [index, segment] of agyPasteSegments(text, before.size.rows).entries()) {
@@ -57,19 +56,17 @@ async function submitAgyComposer(text, { before, read, write, valid, verify, res
       if (frame.exited || frame.humanSequence !== before.humanSequence) return denied('human-or-exit-during-paste');
       if (!sameInput(before, frame)) return denied('composer-changed-during-paste');
       if (frame.writable && frame.outputSequence > priorOutput && frame.quietForMs >= QUIET_OUTPUT_MS) {
-        const observed = verifyDraft(frame, expected, proof);
-        if (observed) {
+        if (verifyAgyDraft(frame, expected, !resume || resume.ownsDraft)) {
           if (verify && !await verify(frame, { held: true })) return denied('composer-blocked-during-paste');
-          if (valid(frame)) { matched = observed; break; }
+          if (valid(frame)) { matched = true; break; }
         }
       }
       await sleep(35);
     } while (performance.now() < readbackDeadline);
     if (!matched) return denied('draft-unverified');
-    proof = matched;
   }
   if (await write(AGENT_PROMPT_SUBMIT, frame) === false) return denied('composer-changed-during-paste');
-  return { accepted: true, outcome: proof.hiddenRows ? 'verified-scrolled-draft' : 'verified-normalized-draft',
+  return { accepted: true, outcome: frame.scrolledDraft ? 'verified-scrolled-draft' : 'verified-normalized-draft',
     readbackMs: Math.round(performance.now() - pastedAt) };
 }
 

@@ -11,6 +11,13 @@ const { deliveryId: id, written, total, eventSeq, stdoutOffset, stdinOffset } = 
 const body = '短\n'.repeat(14) + 'a'.repeat(915) + '🐙' + 'b'.repeat(190);
 const input = wireText(id, body);
 const raw = Buffer.from('\x1b[200~' + input + '\x1b[201~');
+const pilot = JSON.parse(readFileSync(new URL('../tasks/DRAFT-HOLD-2/agy-pilot-frame.json', import.meta.url)));
+const pilotWrites = pilot.writes.map(write => ({ ...write, seq: BigInt(write.seq), human: BigInt(write.human),
+  output: BigInt(write.output), start: BigInt(write.start) }));
+const pilotView = { ...pilot.view, eventSeq: BigInt(pilot.view.eventSeq), outputOffset: BigInt(pilot.view.outputOffset),
+  humanInputOffset: BigInt(pilot.view.humanInputOffset) };
+const pilotProof = (view = pilotView) => provePaste(pilotWrites, pilot.wire, view,
+  id => pilotWrites.find(write => write.id === id), { provider: 'agy', rows: pilot.size.rows });
 
 test('Claude paste writes cut at UTF-8 boundaries even for a payload over 1.2 KB', () => {
   const decoder = new TextDecoder('utf-8', { fatal: true });
@@ -129,6 +136,82 @@ test('agy urgent bypass refuses an invisible parked partial even if an old daemo
   assert.equal(state.heldDraftBytes.written, parked.written);
   assert.equal((await session.submit({ id: parked.urgentId, urgent: true, text: 'urgent' })).kind, 'refused');
 });
+
+test('pilot-2 proves all 639 bytes and adopts the clipped composer without clearing or repasting', async t => {
+  assert.deepEqual(pilotProof(), { status: 'complete', written: 639, total: 639, ownsDraft: true, closedBracket: true });
+  assert.equal(pilotProof({ ...pilotView, humanInputOffset: pilotView.humanInputOffset + 1n }).ownsDraft, undefined);
+  const { read, bookPath, frame, tdir } = await setupPilotHeld(t, pilot.frames.final, pilotProof);
+  await read();
+  const held = await read();
+  await read();
+  assert.equal(held.pending, pilot.deliveryId);
+  assert.deepEqual(tdir.keys, [['enter', frame.generation, adoptionWriteId('pilot', pilot.deliveryId, 'enter')]]);
+  assert.equal(tdir.resends.length, 0);
+  assert.equal(lastBookEntry(bookPath).hostReceipt.outcome, 'adopted-draft');
+});
+
+test('a proven agy subset clears once, persists the resend result, and leaves uncertain or human drafts untouched', async t => {
+  const rule = '─'.repeat(60);
+  const marker = pilot.wire.split('\n')[0];
+  for (const kind of ['owned', 'human-input', 'foreign-text', 'stale-clear']) {
+    const draft = `${marker}\n${kind === 'foreign-text' ? 'UNRELATED 🚨' : '续作 T17'}`;
+    const sample = { draft, atDraftEnd: true,
+      text: `${rule}\n> ${draft}\n${rule}\naccept-edits · Gemini 4 Neon · medium`,
+      vacantText: `${rule}\n>\n${rule}\naccept-edits · Gemini 4 Neon · medium` };
+    const proof = kind === 'human-input' ? () => pilotProof({ ...pilotView, humanInputOffset: pilotView.humanInputOffset + 1n }) : pilotProof;
+    const { read, restart, bookPath, tdir } = await setupPilotHeld(t, sample, proof, { stale: kind === 'stale-clear' });
+    await read();
+    await read();
+    const reread = restart();
+    await reread();
+    await reread();
+    assert.equal(tdir.resends.length, kind === 'owned' || kind === 'stale-clear' ? 1 : 0);
+    assert.equal(tdir.keys.length, 0);
+    assert.equal(lastBookEntry(bookPath).hostReceipt.outcome, kind === 'owned' ? 'resent-after-clear' : 'draft-unverified');
+  }
+});
+
+function lastBookEntry(path) {
+  return JSON.parse(readFileSync(path, 'utf8').trimEnd().split('\n').at(-1)).entry;
+}
+
+async function setupPilotHeld(t, sample, proof, { stale = false } = {}) {
+  const { mkdtemp, rm, writeFile } = await import('node:fs/promises');
+  const { join } = await import('node:path');
+  const { tmpdir } = await import('node:os');
+  const { bindTuiSession } = await import('./index.mjs');
+  const { providers } = await import('./providers.mjs');
+  const dir = await mkdtemp(join(tmpdir(), 'loom-held-pilot-'));
+  t.after(() => rm(dir, { recursive: true, force: true }));
+  const text = pilot.wire.slice(pilot.wire.indexOf('\n') + 1);
+  const bookPath = join(dir, 'book.jsonl');
+  await writeFile(bookPath, JSON.stringify({ id: pilot.deliveryId, entry: { digest: payloadDigest(text),
+    hostReceipt: { accepted: false, outcome: 'draft-unverified' } } }) + '\n');
+  const { text: painted, ...draft } = sample;
+  const frame = { ...draft, text: painted, outsideComposer: '', generation: '146390',
+    vacantText: sample.vacantText ?? `${'─'.repeat(42)}\n>\n${'─'.repeat(42)}\naccept-edits · Gemini 4 Neon · medium`,
+    humanActive: false, writable: true, quietForMs: 200, size: pilot.size };
+  const tdir = { keys: [], resends: [] };
+  const terminal = {
+    read: async () => frame,
+    writeIf: () => assert.fail('Do not use an unguarded paste'),
+    provePaste: () => proof(),
+    key: async (...args) => { tdir.keys.push(args); },
+    async resendAfterClear(input, before, ids, verify) {
+      assert.equal(input, pilot.wire);
+      assert.equal(before, frame);
+      assert.equal(await verify(frame, { held: true }), true);
+      assert.equal(ids.clearId, adoptionWriteId('pilot', pilot.deliveryId, 'clear-draft'));
+      assert.equal(lastBookEntry(bookPath).clearResend, true);
+      tdir.resends.push(ids);
+      if (stale) throw Object.assign(new Error('Frame changed'), { code: 'STALE_FRAME' });
+      return { accepted: true };
+    },
+  };
+  const restart = () => bindTuiSession(terminal, providers.agy, { bookPath, incarnation: 'pilot', evidenceRoot: dir,
+    cwd: dir, hookSink: join(dir, 'hooks.jsonl'), readPending: () => ({ text, attemptAt: 100 }) }).readState;
+  return { read: restart(), restart, bookPath, frame, tdir };
+}
 
 test('the captured Neon overlay permits one guarded Escape and requires a repaint before v3 resumes', async t => {
   const { mkdtempSync, rmSync, writeFileSync } = await import('node:fs');

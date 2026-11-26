@@ -1270,6 +1270,36 @@ test('attaches drift to the next real Leader wake and suppresses a reply quoting
   assert.match(readFileSync(packet.path, 'utf8'), /Drift and fact checks\n7 signals/);
 });
 
+test('test-first flags preserve red evidence while drift still counts unexpected failures', async t => {
+  const f = fixture(t);
+  const d = f.daemon();
+  t.after(d.shutdown);
+  writeFileSync(join(f.project, '.project', 'evidence.json'), JSON.stringify({ tasks: { 'RED-CONFIG': { expectRed: true } } }));
+  const { session: leader } = await f.spawn(d, 'leader', 'L');
+  await assert.rejects(f.spawn(d, 'reviewer', 'R', leader.addr, { 'expect-red': true }), { code: 'invalid-arguments' });
+  for (const [task, options] of [['RED-SPAWN', { 'expect-red': true }], ['RED-CONFIG', {}], ['REGULAR', {}]]) {
+    const { session: worker } = await f.spawn(d, 'worker', task, leader.addr, { ...options, prompt: 'HOLD test result' });
+    await d.tick();
+    const runtime = f.sessions.get(worker.addr);
+    for (let i = 0; i < 2; i++) {
+      runtime.check('npm test', 5, 1);
+      runtime.check('npm run build', 5, 1);
+    }
+    runtime.finish(`DONE ${task}`);
+    await d.tick();
+  }
+  const repeated = Object.values(f.read('loomd/org.json').notices).filter(notice => notice.type === 'repeated-failure');
+  assert.deepEqual(repeated.filter(notice => notice.failureClass === 'test-failed').map(notice => notice.task), ['REGULAR']);
+  assert.deepEqual(repeated.filter(notice => notice.failureClass === 'compile-failed').map(notice => notice.task).sort(),
+    ['RED-CONFIG', 'RED-SPAWN', 'REGULAR']);
+  const cards = (await import('node:fs')).readdirSync(join(f.project, '.project', 'evidence')).filter(path => path.endsWith('.json'));
+  for (const task of ['RED-CONFIG', 'RED-SPAWN']) {
+    const data = f.read('evidence/' + cards.find(path => path.startsWith(task + '-')));
+    assert.equal(data.verification.expectRed, true);
+    assert(data.verification.commands.some(command => command.result === 'failed' && command.command === 'npm test'));
+  }
+});
+
 test('delivers a short digest pointer for a large automatic reply across restart', async t => {
   const f = fixture(t);
   f.policy({ delivery: { replyBytes: 200, coalesceMs: 0 } });

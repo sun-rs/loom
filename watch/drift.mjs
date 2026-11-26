@@ -52,10 +52,10 @@ export function sampleCard(row, project, start, policy, card, emit) {
   }
 }
 
-export function observeExecutions(card, timings, executions, failure, policy, emit) {
-  const failures = failure ? [failure] : [];
+export function observeExecutions(card, timings, executions, failure, policy, emit, { expectRed = false } = {}) {
+  const failures = failure && !(expectRed && failure === 'test-failed') ? [failure] : [];
   for (const { command, kind, durationMs, exitCode } of executions) {
-    if (Number.isSafeInteger(exitCode) && exitCode !== 0) failures.push(kind + '-failed');
+    if (Number.isSafeInteger(exitCode) && exitCode !== 0 && !(expectRed && kind === 'test')) failures.push(kind + '-failed');
     if (policy.slowCommandFactor == null || !(durationMs > 0)) continue;
     const key = JSON.stringify(command);
     const samples = timings[key] ??= [];
