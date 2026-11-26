@@ -10,3 +10,5 @@ Draft design (Super, to be revised by the research):
 4. Every rule enforced by loomd/lint is removed from prose (point to the enforcement instead).
 5. Measure before/after: tokens of each role's launch context; run one pilot gate cycle with the split skills and compare senior-role per-turn input and any rule slips.
 Tests: skill lint (every pointer resolves, each module referenced by the loomd event that delivers it, size budgets). RESULT.md Chinese, STATUS: done, uncommitted.
+
+**Research done:** docs/research/2026-11-26-skill-split.md — implement its design conclusions 1–8 (they supersede the draft above where they differ), starting with the eval harness (item 7) before rewriting any text.
