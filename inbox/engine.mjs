@@ -4,6 +4,24 @@ import { refusals } from './tui.mjs';
 import { checksDeliveryIntegrity, combinedDeliveryText, conclusoryReply, deliveryFailed, payloadDigest } from './message.mjs';
 import { replyForDelivery } from './reply-file.mjs';
 
+export const defaultStallMs = 120_000;
+const awaitingDelivery = message => !message.received && !deliveryFailed(message);
+export const stalledDelivery = message => awaitingDelivery(message) && message.stalledAt != null;
+
+function deliveryAge(message, at) {
+  return Math.max(0, at - message.createdAt);
+}
+
+export function stalledDeliveries(messages, at = Date.now()) {
+  return messages.filter(stalledDelivery).map(message => ({
+    id: message.id, target: message.target.addr, from: message.from?.addr,
+    reason: message.pendingReason ?? 'uncertain', ageMs: deliveryAge(message, at), stalledAt: message.stalledAt,
+  })).sort((a, b) => b.ageMs - a.ageMs);
+}
+
+export const stallText = ({ id, target, reason, ageMs }) =>
+  `your message ${id} to ${target} is not received (${reason}, ${Math.floor(ageMs / 1000)}s)`;
+
 const isDone = message => message.phase === 'received';
 const isUrgent = message => message.superPriority || message.mode === 'interrupt';
 const awaiting = message => ['sending', 'stopping'].includes(message.phase);
@@ -13,15 +31,19 @@ const mayReroute = message => (message.phase === 'queued' || message.phase === '
   message.requestedMode === 'queue' && !message.startup && !message.watchResume;
 const providerFailures = new Set(['request-timeout', 'runtime-exited', 'retry-exhausted', 'provider-overloaded']);
 
-export function receipt(message) {
+export function receipt(message, at = Date.now()) {
   const { id, mode, requestedMode, createdAt, received, phase } = message;
   const issue = message.issue ?? (phase === 'sending' ? 'awaiting-native-confirmation' : undefined);
   const status = phase === 'corrupted' ? 'corrupted' : received ? { queue: 'delivered', steer: 'steered', interrupt: 'interrupted' }[mode] : 'queued';
-  const deliveryStatus = ['corrupted', 'target-ended'].includes(phase) ? phase : message.completion?.body ? 'answered' : received ? 'delivered' :
-    phase === 'refused' ? 'refused' : message.issue?.startsWith('uncertain') ? 'uncertain' : 'accepted';
+  const deliveryStatus = deliveryFailed(message) ? phase : stalledDelivery(message) ? 'stalled' :
+    message.completion?.body ? 'answered' : received ? 'delivered' :
+      message.issue?.startsWith('uncertain') ? 'uncertain' : 'accepted';
   return {
     id, status, deliveryStatus, at: received?.at ?? createdAt, requestedMode, mode,
     downgraded: requestedMode !== mode,
+    ...(awaitingDelivery(message) && { ageMs: deliveryAge(message, at), reason: message.pendingReason ??
+      (phase === 'sending' || phase === 'stopping' ? 'uncertain' : 'waiting-writable') }),
+    ...(stalledDelivery(message) && { stalledAt: message.stalledAt }),
     ...(message.target.tui?.transport && { transport: message.target.tui.transport }),
     ...(message.target.tui?.reason && { transportReason: message.target.tui.reason }),
     ...(message.waitingForWritable && { waitingForWritable: message.waitingForWritable }),
@@ -101,7 +123,7 @@ export function inbox(project, transport, report = console.error, { replyLimit, 
       completion.turnId ?? completion.at, from.addr, from.createdAt]);
     if (messages.some(item => item.replyKey === key)) return;
     messages.push({
-      id: randomUUID(), replyKey: key, replyTo: message.id, createdAt: Date.now(), target: from,
+      id: randomUUID(), replyKey: key, replyTo: message.id, createdAt: Date.now(), target: from, from: target,
       requestedMode: 'queue', mode: 'queue', phase: 'queued',
       text: `Loom reply from ${target.addr} (${message.id})\n\n${completion.body}`,
     });
@@ -161,6 +183,8 @@ export function inbox(project, transport, report = console.error, { replyLimit, 
       }
       message.received = { at: native.at, sessionId: native.sessionId, turnId: native.turnId, streamId: native.streamId };
       message.phase = 'received';
+      delete message.pendingReason;
+      delete message.waitingForWritable;
       save();
     }
     const completion = native.completion;
@@ -268,7 +292,7 @@ export function inbox(project, transport, report = console.error, { replyLimit, 
 
   async function send(message, observation, waves, urgent, decorate) {
     const pendingPhase = message.phase;
-    const extras = message.payloadFrozen ? {} : decorate?.(message);
+    const { deliveryAppendix, ...extras } = message.payloadFrozen ? {} : decorate?.(message) ?? {};
     const waveSeparator = waves.length && message.target.provider === 'agy' && !message.combinedWaves ?
       '\n--- Loom result ---\n' : message.waveSeparator;
     const decorated = { ...message, ...extras, waveSeparator };
@@ -281,7 +305,10 @@ export function inbox(project, transport, report = console.error, { replyLimit, 
       const brief = replyForDelivery(project, batch, replyLimit?.());
       if (brief !== batch) text = combinedDeliveryText(decorated, [{ text: brief }]);
     }
-    if (!message.payloadFrozen) text = replyForDelivery(project, text, 16_000);
+    if (!message.payloadFrozen) {
+      text = replyForDelivery(project, text, 16_000);
+      if (deliveryAppendix) text += '\n\n' + deliveryAppendix;
+    }
     Object.assign(message, extras);
     if (waveSeparator) message.waveSeparator = waveSeparator;
     if (text !== combined) message.wireBody = text;
@@ -319,7 +346,10 @@ export function inbox(project, transport, report = console.error, { replyLimit, 
         save();
         return;
       }
-      if (refusals.has(error.kind)) {
+      if (error.kind === 'no-native-turn') {
+        message.typedAt = Date.now();
+        message.issue = 'no-native-turn';
+      } else if (refusals.has(error.kind)) {
         message.phase = pendingPhase;
         delete message.attemptAt;
         delete message.nativeAttempt;
@@ -441,7 +471,53 @@ export function inbox(project, transport, report = console.error, { replyLimit, 
     save();
   }
 
-  async function observeTarget(all, at) {
+  function pendingReason(message, observation) {
+    const proof = observation?.writeEvidence;
+    if (proof?.heldDeliveryId === message.id || proof?.pendingDeliveryId === message.id && observation.state === 'draft-held') {
+      return 'draft-held';
+    }
+    if (message.phase === 'sending') {
+      return message.typedAt != null || proof?.submittedDeliveryId === message.id ? 'no-native-turn' : 'uncertain';
+    }
+    if (message.phase === 'stopping') return 'uncertain-stop';
+    return ['trust-dialog', 'overlay', 'picker', 'permission'].includes(observation?.state) ? observation.state : 'waiting-writable';
+  }
+
+  function sweep(group, observation, at, stallMs) {
+    let changed = false;
+    const byId = new Map(group.map(message => [message.id, message]));
+    const busy = ['busy', 'compacting'].includes(observation?.state) ||
+      ['busy', 'compacting', 'background-in-progress'].includes(observation?.writeEvidence?.native);
+    for (const message of group.filter(awaitingDelivery)) {
+      const carrier = byId.get(message.combinedInto) ?? message;
+      const reason = !observation && message.pendingReason || pendingReason(carrier, observation);
+      if (message.pendingReason !== reason) { message.pendingReason = reason; changed = true; }
+      if (message.stalledAt == null && deliveryAge(message, at) >= (busy ? 3 * stallMs : stallMs)) {
+        message.stalledAt = at;
+        changed = true;
+      }
+    }
+    if (changed) save();
+  }
+
+  async function retryMissingTurn(message, observation) {
+    if (!transport.retryMissingTurn || message.retryAt != null || message.mode !== 'queue' || message.received ||
+        message.phase !== 'sending' ||
+        observation?.writeEvidence?.retryableDeliveryId !== message.id) return;
+    const fresh = await inspect(message.target);
+    if (!fresh) return;
+    reconcile(message, fresh);
+    if (message.phase !== 'sending' || fresh.writeEvidence?.retryableDeliveryId !== message.id) return;
+    // Reserve the retry before the side effect. Keep the original attempt time for late receipts.
+    const waves = (message.combinedWaves ?? []).map(id => messages.find(item => item.id === id));
+    if (waves.some(wave => !wave)) return;
+    message.retryAt = Date.now();
+    save();
+    try { await transport.retryMissingTurn({ ...message, text: combinedDeliveryText(message, waves) }, fresh); }
+    catch (error) { report(error.message); }
+  }
+
+  async function observeTarget(all, at, stallMs) {
     const observation = await inspect(all[0].target);
     const group = all.filter(message => !message.combinedInto);
     if (observation) {
@@ -464,6 +540,7 @@ export function inbox(project, transport, report = console.error, { replyLimit, 
       if (awaiting(message) && message.providerPendingUntil <= Date.now()) failRequest(message, 'request-timeout');
     }
     settleCombined(all);
+    sweep(all, observation, at, stallMs);
     return observation;
   }
 
@@ -471,6 +548,12 @@ export function inbox(project, transport, report = console.error, { replyLimit, 
     const group = all.filter(message => !message.combinedInto);
     if (!group.length || !observation || observation.state === 'finished') return;
     const { target } = group[0];
+    const retry = group.find(message => stalledDelivery(message) &&
+      observation.writeEvidence?.retryableDeliveryId === message.id && message.retryAt == null);
+    if (retry && (!canDispatch || canDispatch(target))) {
+      await retryMissingTurn(retry, observation);
+      settleCombined(all);
+    }
     const queued = group.filter(message => message.phase === 'queued');
     const streams = queued.filter(message => message.streamAt != null).sort((a, b) => a.streamAt - b.streamAt);
     const receiving = group.some(message => message.phase === 'sending' || isDone(message) && !message.completion);
@@ -536,7 +619,7 @@ export function inbox(project, transport, report = console.error, { replyLimit, 
     settleCombined(all);
   }
 
-  async function step(routeTarget, { beforeDispatch, canDispatch, messageIssue, now = Date.now, coalesceMs = 0, decorate } = {}) {
+  async function step(routeTarget, { beforeDispatch, canDispatch, messageIssue, now = Date.now, coalesceMs = 0, stallMs = defaultStallMs, decorate } = {}) {
     store.ingest();
     let changed = false;
     for (const message of messages) {
@@ -568,16 +651,16 @@ export function inbox(project, transport, report = console.error, { replyLimit, 
     const active = [...groups()].filter(([, group]) => group.some(message => needsIntegrity(message) || pendingReply(message)));
     if (beforeDispatch) {
       const known = new Set(messages.map(message => message.id));
-      const observed = new Map(await Promise.all(active.map(async ([key, group]) => [key, await observeTarget(group, now())])));
+      const observed = new Map(await Promise.all(active.map(async ([key, group]) => [key, await observeTarget(group, now(), stallMs)])));
       await beforeDispatch();
       if (messageIssue) filterMessages();
       const at = now();
       await Promise.all([...groups()].filter(([key, group]) => observed.has(key) ||
         group.some(message => !known.has(message.id) && message.streamAt != null)).map(async ([key, group]) =>
-        processTarget(group, observed.has(key) ? observed.get(key) : await observeTarget(group, at),
+        processTarget(group, observed.has(key) ? observed.get(key) : await observeTarget(group, at, stallMs),
           { canDispatch, known, at, coalesceMs, decorate })));
     } else {
-      await Promise.all(active.map(async ([, group]) => processTarget(group, await observeTarget(group, now()),
+      await Promise.all(active.map(async ([, group]) => processTarget(group, await observeTarget(group, now(), stallMs),
         { canDispatch, at: now(), coalesceMs, decorate })));
     }
   }
@@ -608,15 +691,12 @@ export function inbox(project, transport, report = console.error, { replyLimit, 
   }
 
   function escalate(message, bypassAt) {
-    if (bypassAt != null && message.bypassedAt == null) {
+    if (message.bypassedAt == null) {
       message.bypassedAt = bypassAt;
       message.issue ??= message.phase === 'stopping' ? 'uncertain-stop' : 'uncertain';
       save();
     }
-    if (message.issue?.startsWith('uncertain')) return;
-    message.issue = message.phase === 'stopping' ? 'uncertain-stop-timeout' : 'uncertain-timeout';
-    save();
   }
 
-  return { step, routesForTurn, enqueue, refuseQueued, escalate, messages };
+  return { step, routesForTurn, enqueue, refuseQueued, messages };
 }

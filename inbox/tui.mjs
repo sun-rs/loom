@@ -345,6 +345,8 @@ export function tui(project, call = hc, fixtureSend, control = controlTui) {
       return { ...snapshot, state, active, generation: host.generation, urgentReady: frame.urgentReady && !veto, writeEvidence: {
         transport: binding.transport, screen: screen.kind, native: native.background ? 'background-in-progress' : holderNative.phase ?? 'unknown', hc: status ?? null,
         complete: screen.text !== undefined, humanActive: host.humanActive, composerEmpty: screen.empty,
+        pendingDeliveryId: frame.pending, submittedDeliveryId: frame.submittedDeliveryId,
+        retryableDeliveryId: frame.retryableDeliveryId,
         ...(frame.heldDraftProof && { heldDraftProof: frame.heldDraftProof, heldDeliveryId: frame.pending,
           heldDraftBytes: frame.heldDraftBytes }),
       } };
@@ -392,20 +394,22 @@ export function tui(project, call = hc, fixtureSend, control = controlTui) {
     return observe(terminal, binding.provider, binding.sessionId, binding.tui ?? (fixtureSend ? undefined : {}));
   }
 
-  async function send(message, snapshot) {
+  async function send(message, snapshot, retry = false) {
     if (message.mode === 'steer') throw Object.assign(new Error('TUI steer requires queueing'), { kind: 'steer-unavailable' });
     if (fixtureSend && !snapshot.tui) return fixtureSend(message, snapshot);
-    if (!snapshot.tui || snapshot.state !== 'idle' && !(message.urgent && snapshot.urgentReady)) {
+    if (!snapshot.tui || snapshot.state !== 'idle' && !(message.urgent && snapshot.urgentReady) &&
+        !(retry && snapshot.writeEvidence?.retryableDeliveryId === message.id)) {
       throw Object.assign(new Error('TUI control is unavailable or blocked'), { kind: 'blocked' });
     }
     const result = await control(snapshot.tui, 'submit', {
-      id: message.id, text: message.text, generation: snapshot.generation, timeoutMs: 900, urgent: message.urgent,
+      id: message.id, text: message.text, generation: snapshot.generation, timeoutMs: 900, urgent: message.urgent, retry,
     }, snapshot.terminal.address).catch(error => {
       if (error.code === 'INPUT_SIZE') error.kind = 'input-refused';
       throw error;
     });
     if (result.kind !== 'confirmed') {
-      const kind = result.kind !== 'refused' || result.code === 'previous-input-unconfirmed' ? 'unconfirmed' :
+      const kind = result.kind === 'unconfirmed' && result.hostReceipt?.accepted === true ? 'no-native-turn' :
+        result.kind !== 'refused' || result.code === 'previous-input-unconfirmed' ? 'unconfirmed' :
         ['invalid-input', 'id-conflict'].includes(result.code) ? 'input-refused' :
           result.code === 'human-active' || result.code === 'frame-changed' ? result.code : 'blocked';
       throw Object.assign(new Error(`TUI submit ${result.code ?? result.kind}`), { kind });
@@ -415,6 +419,7 @@ export function tui(project, call = hc, fixtureSend, control = controlTui) {
 
   return {
     resolve, inspect, send, sameTurn, turnEnd, nativeDelivery, plan: inputPlan,
+    retryMissingTurn: (message, snapshot) => send(message, snapshot, true),
     async interrupt(message, snapshot) {
       if (!snapshot?.tui?.socket) {
         throw Object.assign(new Error('TUI does not support guarded interruption'), { kind: 'input-refused' });

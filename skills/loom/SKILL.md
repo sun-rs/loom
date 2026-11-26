@@ -64,7 +64,8 @@ Worker 线统一由 OAR 托管。新增特殊 worker（例如 Claude TUI worker�
   ```
 
 - `loom status --project "$PROJECT"` 看项目总览，`loom ls` 查稳定地址，`loom state "$ADDR"` 查在途事项和换班状态。用 `loom hist "$ADDR" --evidence` 查证据卡，`loom hist --wave "$WAVE"` 查波次，`loom hist "$ADDR" --turn "$N" --level L2 --diff` 查单轮提交差异。未提交的改动查证据卡，正文未确认时按历史给出的路径和行号核查原件。
-- Leader、Auditor 和 Super 用 `loom send "$ADDR" --project "$PROJECT" "$TEXT"` 排队发信，托管会话默认以 `LOOM_ADDR` 为来源。授权叫停用 `--mode interrupt` 并说明理由。投递不明由 loomd 对账，超过 `LOOM_UNCERTAIN_MS`（默认 60 秒）仍不明时按投递 ID 升级一次。
+- Leader、Auditor 和 Super 用 `loom send "$ADDR" --project "$PROJECT" "$TEXT"` 排队发信，托管会话默认以 `LOOM_ADDR` 为来源。授权叫停用 `--mode interrupt` 并说明理由。loomd 按投递 SLA 对账并升级停滞投递。
+- Leader 和 Auditor 等待结果超过预期时，运行 `"$LOOM_BIN" status` 检查置顶的停滞投递。
 
 ## 换班与收尾
 

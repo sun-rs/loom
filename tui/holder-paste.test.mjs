@@ -187,10 +187,10 @@ async function setupPilotHeld(t, sample, proof, { stale = false } = {}) {
   const bookPath = join(dir, 'book.jsonl');
   await writeFile(bookPath, JSON.stringify({ id: pilot.deliveryId, entry: { digest: payloadDigest(text),
     hostReceipt: { accepted: false, outcome: 'draft-unverified' } } }) + '\n');
-  const { text: painted, ...draft } = sample;
+  const { text: painted, size = pilot.size, ...draft } = sample;
   const frame = { ...draft, text: painted, outsideComposer: '', generation: '146390',
     vacantText: sample.vacantText ?? `${'─'.repeat(42)}\n>\n${'─'.repeat(42)}\naccept-edits · Gemini 4 Neon · medium`,
-    humanActive: false, writable: true, quietForMs: 200, size: pilot.size };
+    humanActive: false, writable: true, quietForMs: 200, size };
   const tdir = { keys: [], resends: [] };
   const terminal = {
     read: async () => frame,
@@ -284,5 +284,27 @@ test('the captured Neon overlay permits one guarded Escape and requires a repain
     await after.readState();
     assert.equal(esc, 1);
     assert.equal(resumes, repaints ? 1 : 0);
+  }
+});
+
+test('pilot-2 post-resize 611/615-byte readback enters only with a classified report or no intervening input', async t => {
+  const capture = JSON.parse(readFileSync(new URL('../tasks/DELIVERY-SLA-1/pilot-reflow.json', import.meta.url)));
+  assert.equal(capture.deliveryId, pilot.deliveryId);
+  assert.equal(Buffer.byteLength(capture.frame.draft), 611);
+  assert.equal(Buffer.from(capture.modelledTerminalReportHex, 'hex').length, capture.inputOffsetAfter - capture.inputOffsetBefore);
+  const writes = pilotWrites.map(write => ({ ...write, rows: pilot.size.rows, bufferSequence: 0 }));
+  for (const inputClass of ['terminal-report', 'editing', 'unknown']) {
+    const prove = () => provePaste(writes, pilot.wire, {
+      eventSeq: BigInt(capture.inputEvent), outputOffset: BigInt(capture.outputOffset), boundary: pilotView.boundary + 1,
+      humanInputOffset: BigInt(inputClass === 'terminal-report' ? capture.inputOffsetBefore : capture.inputOffsetAfter),
+      bufferSequence: 0,
+    }, id => writes.find(write => write.id === id), { provider: 'agy', rows: capture.frame.size.rows });
+    assert.equal(prove().status, inputClass === 'terminal-report' ? 'reflowed' : 'unproven');
+    const { read, restart, tdir } = await setupPilotHeld(t, capture.frame, prove);
+    await read();
+    await read();
+    await restart()();
+    assert.equal(tdir.keys.length, inputClass === 'terminal-report' ? 1 : 0);
+    assert.equal(tdir.resends.length, 0);
   }
 });

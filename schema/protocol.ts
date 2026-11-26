@@ -51,7 +51,12 @@ export interface DeliveryReceipt {
   readonly requestedMode: SendMode;
   readonly mode: SendMode;
   readonly downgraded: boolean;
-  readonly status: 'queued' | 'delivered' | 'steered' | 'interrupted';
+  readonly status: 'queued' | 'delivered' | 'steered' | 'interrupted' | 'corrupted';
+  readonly deliveryStatus?: 'accepted' | 'uncertain' | 'stalled' | 'delivered' |
+    'answered' | 'refused' | 'corrupted' | 'target-ended';
+  readonly ageMs?: number;
+  readonly reason?: string;
+  readonly stalledAt?: number;
   readonly at: number;
   readonly phase?: DeliveryRecord['phase'];
   readonly issue?: string;

@@ -78,8 +78,8 @@ export function readPolicy(project, { optional = false } = {}) {
     }
     if (policy.delivery !== undefined && (!policy.delivery || typeof policy.delivery !== 'object' ||
         Array.isArray(policy.delivery) || Object.entries(policy.delivery).some(([key, value]) =>
-          !Number.isSafeInteger(value) || (key === 'coalesceMs' ? value < 0 : key !== 'replyBytes' || value < 160)))) {
-      throw new Error('Expected delivery.coalesceMs in milliseconds (≥ 0) or delivery.replyBytes (≥ 160)');
+          !Number.isSafeInteger(value) || (['coalesceMs', 'stallMs'].includes(key) ? value < 0 : key !== 'replyBytes' || value < 160)))) {
+      throw new Error('Expected nonnegative integer delivery.coalesceMs or delivery.stallMs, or delivery.replyBytes (≥ 160)');
     }
     if (policy.drift !== undefined) {
       if (!policy.drift || typeof policy.drift !== 'object' || Array.isArray(policy.drift)) throw new Error('Expected a drift object');

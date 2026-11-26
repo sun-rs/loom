@@ -30,7 +30,7 @@
 目标结构：**worker 消耗最多，Leader 次之，Auditor 最少**。按 token 和调用次数衡量，不按价格。
 - **Auditor 只看证据，不重新做一遍工作。**
   - 门禁复核时，只读证据卡、diff 统计和 reviewer 的结论，不通读代码，也不自己跑探针。需要深入核查时，派一个短期 reviewer，这部分消耗记在 reviewer 名下。
-  - loomd 只允许用户或 Super 消息、Leader 的门禁包或红色升级、Auditor 主动发起的追加审查结论，以及换班监督唤醒 Auditor。
+  - loomd 只允许用户或 Super 消息、Leader 的门禁包或红色升级、Auditor 主动发起的追加审查结论，以及换班监督唤醒 Auditor。Leader 的投递停滞可由 loomd 发出一次基础设施告警。
 - **Leader 只协调，不施工。**
   - 不自己跑全量测试，也不自己复现问题，这些交给 worker 或 reviewer。
   - 只读三行回执和证据卡。
@@ -47,3 +47,8 @@
 - Leader 核实红色事项后可运行 `loom escalate <gate-id> --reason REASON --evidence TEXT`。原因限 `protected-file`（保护或越界文件）、`assertion`（删除或削弱断言）、`skip-only`、`confirmed-fact-miss`、`sandbox-escape`。升级附证据，和门禁包共用每门禁一次的投递额度。额度已用时，结论记入通知账本，供查询。
 - Worker 的卡死、事实核验和其他常规信号随 Leader 的实际消息送达。`loom status --json` 可查看完整信号及被白名单过滤的投递。旧项目中的 `drift.deferAuditorNotices` 字段可继续读取，路由由本规则统一执行。
 - Auditor 用 `loom notifications --needs-decision TEXT --kind decision` 请求 Super 作普通裁决。阶段或目标完成用 `loom notifications --complete TEXT --phase ID` 登记，同一项目内每个阶段 ID 记录一次。Super 可在 `loom notifications` 查看两类通知。
+
+### 投递没到就必须有人知道
+
+- Leader 和 Auditor 等待结果超过预期时，运行 `loom status` 查看置顶的停滞投递。Worker 已出结果、Leader 尚未收到时，卡片显示 `result-undelivered`。
+- loomd 在发送方的下一次唤醒附上尚未送达的 ID、目标、原因和时长。Leader 的收件阻塞升给 Auditor。Auditor 的收件阻塞经桌面提示和 `loom notifications` 升给 Super／用户。告警按投递 ID 去重，按项目节流。

@@ -8,7 +8,7 @@ export const AGENT_PROMPT_BRACKETED_PASTE_END = '\x1b[201~';
 export const AGENT_PROMPT_SUBMIT = '\r';
 export const AGENT_PROMPT_POST_PASTE_SUBMIT_DELAY_MS = 50;
 
-const HELD_PROMPT_RECHECK_MS = 1000;
+const HELD_PROMPT_RECHECK_MS = 1500;
 const DRAFT_READBACK_MS = 2200;
 export const QUIET_OUTPUT_MS = 120;
 
@@ -34,7 +34,7 @@ export function agyPasteSegments(text, rows) {
   return [...parts, text.slice(start)];
 }
 
-async function submitAgyComposer(text, { before, read, write, valid, verify, resume }) {
+async function submitAgyComposer(text, { before, read, write, valid, verify, resume, visibleOnly }) {
   const pastedAt = performance.now();
   const deadline = pastedAt + 15_000;
   let frame = before;
@@ -56,7 +56,7 @@ async function submitAgyComposer(text, { before, read, write, valid, verify, res
       if (frame.exited || frame.humanSequence !== before.humanSequence) return denied('human-or-exit-during-paste');
       if (!sameInput(before, frame)) return denied('composer-changed-during-paste');
       if (frame.writable && frame.outputSequence > priorOutput && frame.quietForMs >= QUIET_OUTPUT_MS) {
-        if (verifyAgyDraft(frame, expected, !resume || resume.ownsDraft)) {
+        if (verifyAgyDraft(frame, expected, !visibleOnly && (!resume || resume.ownsDraft)) && (!visibleOnly || frame.atDraftEnd)) {
           if (verify && !await verify(frame, { held: true })) return denied('composer-blocked-during-paste');
           if (valid(frame)) { matched = true; break; }
         }
@@ -66,22 +66,23 @@ async function submitAgyComposer(text, { before, read, write, valid, verify, res
     if (!matched) return denied('draft-unverified');
   }
   if (await write(AGENT_PROMPT_SUBMIT, frame) === false) return denied('composer-changed-during-paste');
-  return { accepted: true, outcome: frame.scrolledDraft ? 'verified-scrolled-draft' : 'verified-normalized-draft',
+  return { accepted: true, submittedAt: Date.now(), outcome: frame.scrolledDraft ? 'verified-scrolled-draft' : 'verified-normalized-draft',
     readbackMs: Math.round(performance.now() - pastedAt) };
 }
 
 export async function submitComposer(text, options) {
-  const { before, provider, pastePlaceholder, read, write, valid, verify, observeEcho } = options;
+  const { before, provider, pastePlaceholder, read, write, valid, verify, observeEcho,
+    visibleOnly, reserveReenter } = options;
   if (provider === 'agy') return submitAgyComposer(text, options);
   if (before.draft !== '') return denied('draft-unverified');
   const pastedAt = performance.now();
   if (await write(bracket(text), before) === false) return denied('composer-changed-during-paste');
-  const marker = text.split('\n', 1)[0];
   const expected = draftExpectation(text);
+  const marker = `[loom:${expected.id}]`;
   const held = frame => verifyDraft(frame, expected);
   // Orca native-chat-paste-landed.ts checks a paste chip after an empty
   // composer and an unchanged reread. Claude's +N counts line breaks.
-  const showsPaste = frame => !frame.outsideComposer?.includes(marker) && pastePlaceholder?.(frame.draft, text);
+  const showsPaste = frame => !visibleOnly && !frame.outsideComposer?.includes(marker) && pastePlaceholder?.(frame.draft, text);
 
   // Adapted from Orca terminal-agent-prompt-submit.ts and terminal-agent-prompt-resubmit.ts.
   // Every Enter needs a current view of this draft and a check of native turn activity.
@@ -97,7 +98,7 @@ export async function submitComposer(text, options) {
     collapsed = paste && previousPasteFrame === frame.generation && frame.quietForMs >= QUIET_OUTPUT_MS;
     previousPasteFrame = paste ? frame.generation : undefined;
     normalized = frame.draft !== text;
-    if (frame.writable && (collapsed || held(frame) && (!normalized || frame.quietForMs >= QUIET_OUTPUT_MS)) &&
+    if (frame.writable && (collapsed || (!visibleOnly || frame.atDraftEnd) && held(frame) && (!normalized || frame.quietForMs >= QUIET_OUTPUT_MS)) &&
         frame.outputSequence > before.outputSequence &&
         performance.now() - pastedAt >= AGENT_PROMPT_POST_PASTE_SUBMIT_DELAY_MS) {
       if (verify && !await verify(frame, { collapsed: Boolean(collapsed), held: normalized && !collapsed })) {
@@ -112,23 +113,25 @@ export async function submitComposer(text, options) {
   const readbackMs = Math.round(performance.now() - pastedAt);
   if (collapsed || normalized) {
     if (await write(AGENT_PROMPT_SUBMIT, first) === false) return denied('composer-changed-during-paste');
-    return { accepted: true, outcome: collapsed ? 'verified-collapsed-paste' : 'verified-normalized-draft', readbackMs };
+    return { accepted: true, submittedAt: Date.now(), outcome: collapsed ? 'verified-collapsed-paste' : 'verified-normalized-draft', readbackMs };
   }
-  const echoed = observeEcho(marker);
+  const echoed = observeEcho?.(marker);
   if (await write(AGENT_PROMPT_SUBMIT, first) === false) return denied('composer-changed-during-paste');
-  const receipt = { accepted: true, outcome: 'verified-draft', readbackMs };
+  const receipt = { accepted: true, submittedAt: Date.now(), outcome: 'verified-draft', readbackMs };
+  if (visibleOnly || !echoed || !reserveReenter) return receipt;
   const retryAfter = performance.now() + HELD_PROMPT_RECHECK_MS;
   do {
     await sleep(100);
     const frame = await read();
     if (frame.exited || !sameInput(before, frame) || frame.draft !== text || !held(frame)) return receipt;
-    if (verify && !await verify(frame)) return receipt;
+    if (verify && !await verify(frame, { held: true, reenter: true })) return receipt;
     if (performance.now() < retryAfter) continue;
     // A pre-Enter paint cannot prove a prompt was held. Require a new child paint
     // of the whole draft after the write, and stop permanently on any intervening change.
     if (frame.writable && valid(frame) && echoed() && frame.outputSequence > first.outputSequence &&
         frame.quietForMs >= QUIET_OUTPUT_MS) {
-      if (await write(AGENT_PROMPT_SUBMIT, frame) !== false) receipt.resubmitted = true;
+      reserveReenter();
+      if (await write(AGENT_PROMPT_SUBMIT, frame) !== false) receipt.outcome = 're-enter';
     }
     return receipt;
   } while (true);

@@ -2,7 +2,7 @@ import { createHash, randomUUID } from 'node:crypto';
 import { join } from 'node:path';
 import { CommandError } from '../cli/sessions.mjs';
 import { projectIndex } from '../cli/project.mjs';
-import { inbox, pendingWork, receipt } from '../inbox/engine.mjs';
+import { defaultStallMs, inbox, pendingWork, receipt, stalledDeliveries, stallText } from '../inbox/engine.mjs';
 import { conclusoryReply, deliveryFailed, isBlockedReply, messageIdPattern } from '../inbox/message.mjs';
 import { relay } from '../relay/project.mjs';
 import { withClaudeTranscriptStops } from '../relay/sources.mjs';
@@ -37,10 +37,10 @@ function codexHandoff(row) {
 
 export function createSupervisor(project, {
   report = console.log, window = 900_000, sealWindow = window, partialWindow = Math.min(window, 120_000),
-  uncertainWindow = 60_000, blockedWindow = 60_000, sessionOptions, now = Date.now, watchOptions,
+  uncertainWindow, blockedWindow = 60_000, sessionOptions, now = Date.now, watchOptions,
   externalNotification = notifyExternal,
 } = {}) {
-  if (![window, sealWindow, partialWindow, uncertainWindow, blockedWindow].every(value => Number.isSafeInteger(value) && value >= 0)) {
+  if (![window, sealWindow, partialWindow, uncertainWindow ?? defaultStallMs, blockedWindow].every(value => Number.isSafeInteger(value) && value >= 0)) {
     throw new RangeError('Invalid loomd timeout in milliseconds');
   }
   const index = projectIndex(project);
@@ -58,7 +58,7 @@ export function createSupervisor(project, {
   prepareJournal(watchJournal);
   const notifications = projectNotifications(project, now);
   const deliveries = addr => mail.messages.filter(message => message.target.addr === addr);
-  const receiptFor = message => ({ ...receipt(message), deliveryId: message.id, phase: message.phase });
+  const receiptFor = message => ({ ...receipt(message, now()), deliveryId: message.id, phase: message.phase });
   const saved = (target, text, fields = {}) => mail.enqueue({
     id: randomUUID(), createdAt: now(), target, text, requestedMode: 'queue', mode: 'queue', phase: 'queued', ...fields,
   });
@@ -80,6 +80,19 @@ export function createSupervisor(project, {
       const id = batchDeliveryId(pushBatch, 'super');
       const existing = mail.messages.find(message => message.id === id);
       if (existing) return existing.target.addr;
+      if (batch[0].auditor) {
+        const auditor = liveRole(name, 'auditor');
+        if (auditor) {
+          const details = batch.map(event => event.text).join('\n');
+          saved(sessions.targetBinding(auditor), `Loom delivery infrastructure exception
+
+${details}`, {
+            id, deliveryEscalations: batch.map(event => event.deliveryId), projectEvents: batch.map(event => event.id),
+          });
+          return auditor.addr;
+        }
+        return;
+      }
       const rows = sessions.rows();
       const superSession = rows.findLast(row => row.role === 'super' &&
         row.project === name && row.endedAt === null && sessions.jobs.has(row.addr));
@@ -191,6 +204,7 @@ export function createSupervisor(project, {
       const late = batch.lateWorker && sessions.rowFor(batch.lateWorker);
       if (late && superseded(late, workers())) return;
       saved(sessions.targetBinding(row), batch.message, { id: batchDeliveryId(batch.id, addr), waveBatch: batch.id, waveKey: batch.waveKey, waveKind: batch.waveKind,
+        ...(batch.resultWorkers?.length && { resultWorkers: batch.resultWorkers }),
         ...(batch.streamAt != null && { streamAt: batch.streamAt }),
         ...(late && { lateWorker: late.addr }), ...(batch.forcedSeal && { allowIdleWithoutEnd: true }) });
     },
@@ -248,22 +262,22 @@ export function createSupervisor(project, {
           ...(row.role === 'super' && { externalOnly: true, batch: message.id }) });
         continue;
       }
-      if (message.combinedInto || !['sending', 'stopping'].includes(message.phase)) continue;
-      if (message.providerPendingUntil !== undefined) continue;
-      const at = message.attemptAt ?? message.stopAttemptAt;
-      if (!at || message.bypassedAt == null && now() - at < uncertainWindow) continue;
-      const row = sessions.rowFor(message.target.addr);
-      if (!row) continue;
-      mail.escalate(message);
-      const id = `${message.id}:uncertain`;
-      const text = `Loom 投递 UNCERTAIN ${message.id}\n目标 ${row.addr}，请核对原生记录。`;
-      const parent = sessions.routeParent(message.from?.addr ?? row.parent);
-      if (parent && parent.addr !== row.addr && parent.endedAt === null && !message.uncertainOf) {
-        saved(sessions.targetBinding(parent), text, { id: batchDeliveryId(id, parent.addr), uncertainOf: message.id });
-      }
-      notifications.add({ id, type: 'delivery-uncertain', project: row.project, addr: row.addr,
-        at: Math.min(at + uncertainWindow, message.bypassedAt ?? Infinity),
-        deliveryId: message.id, text, ...((message.projectEvents || message.uncertainOf) && { logOnly: true }) });
+    }
+    const byId = new Map(mail.messages.map(message => [message.id, message]));
+    for (const delivery of stalledDeliveries(mail.messages, now())) {
+      const message = byId.get(delivery.id);
+      const row = sessions.rowFor(delivery.target);
+      const upstream = row?.role === 'leader' && !message.deliveryEscalations;
+      const external = row?.role === 'auditor' || row?.role === 'super' || Boolean(message.deliveryEscalations);
+      const origin = message.deliveryEscalations?.map(id => byId.get(id)).filter(Boolean);
+      const text = [stallText(delivery), ...(origin ?? []).map(item => `Original delivery ${item.id} to ${item.target.addr}`)].join('\n');
+      notifications.add({ id: `${delivery.id}:stalled`, type: 'delivery-stalled',
+        project: row?.project ?? project, at: delivery.stalledAt, addr: delivery.target,
+        deliveryId: delivery.id, from: delivery.from, reason: delivery.reason, ageMs: delivery.ageMs, text,
+        ...(upstream && { auditor: true, batch: 'delivery-stalled:auditor' }),
+        ...(external && { externalOnly: true, batch: 'delivery-stalled:external' }),
+        ...(!upstream && !external && { logOnly: true }),
+      });
     }
   }
 
@@ -275,7 +289,8 @@ export function createSupervisor(project, {
     await Promise.all(pending.map(async message => {
       const snapshot = await sessions.transport.inspect(message.target).catch(() => undefined);
       const blocker = snapshot?.state;
-      if (!isStartupBlocker(blocker)) { startupBlockers.delete(message.id); return; }
+      if (!isStartupBlocker(blocker) || blocker === 'draft-held' ||
+          snapshot.writeEvidence?.heldDeliveryId === message.id) { startupBlockers.delete(message.id); return; }
       const at = now();
       const previous = startupBlockers.get(message.id);
       const since = previous?.blocker === blocker ? previous.since : at;
@@ -286,24 +301,6 @@ export function createSupervisor(project, {
         addr: row.addr, deliveryId: message.id, reason: blocker, at,
         ...(row.role === 'super' && { externalOnly: true, batch: message.id }),
         text: `Loom 启动受阻超过 60 秒，${row.role} ${row.addr} 当前状态为 ${blocker}。请检查会话并决定如何继续。` });
-    }));
-  }
-
-  async function checkHeldDrafts() {
-    const pending = mail.messages.filter(message => message.target.backend === 'tui' && message.phase === 'sending' &&
-      sessions.rowFor(message.target.addr)?.endedAt === null);
-    await Promise.all(pending.map(async message => {
-      const snapshot = await sessions.transport.inspect(message.target).catch(() => undefined);
-      const proof = snapshot?.writeEvidence;
-      if (!['draft-held', 'overlay'].includes(snapshot?.state) || proof?.heldDeliveryId !== message.id ||
-          !['unproven', 'incomplete', 'uncertain-enter'].includes(proof.heldDraftProof)) return;
-      const row = sessions.rowFor(message.target.addr);
-      const bytes = proof.heldDraftBytes;
-      const progress = bytes?.total == null ? '字节数未知' : `${bytes.written ?? '未知'}/${bytes.total} 字节`;
-      notifications.add({ id: `${message.id}:held-draft`, type: 'needs-decision', project: row.project, addr: row.addr,
-        deliveryId: message.id, reason: 'draft-held', at: now(),
-        ...(row.role === 'super' && { externalOnly: true, batch: message.id }),
-        text: `Loom 保留了 ${row.role} ${row.addr} 的草稿 ${message.id}（${progress}）。完整粘贴或 Enter 状态未获确认。` });
     }));
   }
 
@@ -423,6 +420,7 @@ export function createSupervisor(project, {
     const reviewer = message.reviewerResult && sessions.jobs.get(message.reviewerResult);
     const deepReview = message.reviewerConclusion === true && reviewer?.row.role === 'reviewer' && reviewerDeliveryId(reviewer) === message.id &&
       sessions.routeParent(reviewer.row.parent)?.addr === row.addr;
+    if (message.deliveryEscalations && message.projectEvents) return;
     if (!auditorWakeSource(message, { startupId: job?.firstId,
       handoverId: job?.handoverReportId, senderRole: sessions.rowFor(message.from?.addr)?.role, deepReview })) return auditorWakeFiltered;
   }
@@ -532,20 +530,41 @@ export function createSupervisor(project, {
       },
       now,
       messageIssue,
+      stallMs: policy.delivery?.stallMs ?? uncertainWindow ?? defaultStallMs,
       coalesceMs: policy.delivery?.coalesceMs ?? defaultCoalesceMs,
       decorate(message) {
         const row = sessions.rowFor(message.target.addr);
-        if (row?.role !== 'leader' || message.orgEvents || message.stuckOf) return;
+        const byId = new Map(mail.messages.map(item => [item.id, item]));
+        const senderStalls = stalledDeliveries(mail.messages, now()).filter(delivery => {
+          const pending = byId.get(delivery.id);
+          return [delivery.from, pending.startup && sessions.rowFor(delivery.target)?.parent, ...(pending.resultWorkers ?? []),
+          ...(pending.continuationMembers ?? []).map(id => byId.get(id)?.target.addr)]
+            .some(addr => addr && parentFor(addr) === row?.addr);
+        });
         const delivered = new Set(mail.messages.filter(item =>
           !deliveryFailed(item) && sessions.rowFor(item.target.addr)?.role === 'leader')
           .flatMap(item => item.orgEvents ?? []));
-        const batch = leaderSignals(row.project).filter(notice => !delivered.has(notice.id));
-        if (batch.length) {
-          const lines = noticeLines(batch);
-          const summary = Buffer.byteLength(lines) > 1200 ?
-            clip(lines, 1200) + '\n完整记录见 loom status --json。' : lines;
-          return { orgEvents: batch.map(notice => notice.id), orgAppendix: 'Loom drift and fact checks\n' + summary };
+        const batch = row?.role === 'leader' && !message.orgEvents && !message.stuckOf ?
+          leaderSignals(row.project).filter(notice => !delivered.has(notice.id)) : [];
+        const lines = noticeLines(batch);
+        const summary = Buffer.byteLength(lines) > 1200 ?
+          clip(lines, 1200) + '\n完整记录见 loom status --json。' : lines;
+        const deliveryLines = senderStalls.map(stallText);
+        let deliveryAppendix;
+        if (deliveryLines.length) {
+          const visible = [];
+          let bytes = 0;
+          for (const line of deliveryLines) {
+            bytes += Buffer.byteLength(line) + 1;
+            if (bytes > 1200) break;
+            visible.push(line);
+          }
+          if (visible.length < deliveryLines.length) visible.push('More stalled deliveries in loom status.');
+          deliveryAppendix = visible.join('\n');
         }
+        return { ...(deliveryAppendix && { deliveryAppendix }), ...(batch.length && {
+          orgEvents: batch.map(notice => notice.id), orgAppendix: 'Loom drift and fact checks\n' + summary,
+        }) };
       },
       canDispatch(target) {
         const job = sessions.jobs.get(target.addr);
@@ -562,7 +581,6 @@ export function createSupervisor(project, {
     }
     health = new Map((await watcher.poll()).map(row => [row.addr, row]));
     await checkStartupBlockers();
-    await checkHeldDrafts();
     publishNotifications();
     await pushNotifications();
   }

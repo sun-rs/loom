@@ -42,10 +42,11 @@ Super 在项目根写入 `.project/policy.json` 后方可 spawn。参见 [角色
 | `deliveryStatus` | 可观察语义 |
 | --- | --- |
 | `accepted` | loom 已提交持久输入意图，尚待原生接管。原有 `status` 字段继续表达 `queued`、`delivered`、`steered` 或 `interrupted`。 |
-| `delivered` | 找到归属此 ID 的原生输入证据。若原生轮已结束但无法确认最终正文，保留该状态并在适用时返回 `replyStatus: unconfirmed`。 |
+| `delivered` | 目标原生记录中出现带 `[loom:<id>]` 的输入轮。若原生轮已结束但无法确认最终正文，保留该状态并在适用时返回 `replyStatus: unconfirmed`。 |
 | `answered` | 已将可归属的原生最终正文与完成记录一并持久化。`--wait` 最长等待五分钟并在此状态返回正文。 |
 | `refused` | 明确未获接管，或请求的轮次、绑定已不可用。正文、ID 和原因仍在账本。 |
-| `uncertain` | 可能写入原生输入或提交过取消。保留原意图，等原生证据对账，达到阈值后按 ID 升级。 |
+| `uncertain` | 输入或取消可能已写入，等待原生证据。 |
+| `stalled` | 投递超出 SLA。原请求保持可对账，后续原生回执可以结束等待。 |
 | `target-ended` | 目标会话已结束，原生对账后仍缺少完成证明。保留已有输入证据，结束投递并从待处理列表移除。 |
 
 | 模式 | 编排动作 |
@@ -55,6 +56,12 @@ Super 在项目根写入 `.project/policy.json` 后方可 spawn。参见 [角色
 | `interrupt` | managed Codex headless 使用含原生 turn ID 的 RPC。managed agy／OpenCode headless 依赖独占 OAR ACP 轮槽和 OAR 的取消前检查。目标轮已更替则拒绝，出现匹配的取消轮末且目标可接收后才开续作轮。hc 的按键接口无法原子核对轮身份，managed TUI 和未核实相同保护的 headless 运行时返回 `unsupported`。 |
 
 TUI 发键前须同时看到两项证据。完整可见屏幕由适配器明确分类为 `idle`，且同一原生会话的启动 hook、匹配轮末 hook 或结构化 transcript 投影也证明空闲。hc 的忙或阻塞状态可否决发键，hc 的 `idle` 不单独建立可写性。未知、不完整、草稿、压缩或信号冲突期间，保留队列，在 `loom state` 显示 `writeEvidence`，在排队回执保存 `waitingForWritable`，只保存分类和轮次元数据。Codex 通过当次命令的 `SessionStart` hook 建立启动证据，Claude 由 Claude TUI runtime 捕获，OpenCode 可用已绑定的空会话导出。缺少启动证据的 TUI 会话会等待已有原生轮留下可核实的结束记录。OpenCode 首次提交遗留的草稿也等待原生证据。
+
+loomd 在常规定时轮询中扫描所有未确认投递，包括没有屏幕或 hook 变化的目标。账本保留创建时间、阻塞原因和首次超时点，接管新版本后从同一份账本继续。超时从创建开始计算，`delivery.stallMs` 默认 120000 毫秒，观测到忙轮或压缩时使用三倍期限。排队回执提供 `ageMs` 和 `reason`，例如 `waiting-writable`、`draft-held`、`uncertain` 或 `no-native-turn`。`LOOM_UNCERTAIN_MS` 兼容为未配置策略时的期限覆盖。
+
+holder 记录每段外部输入的分类和偏移，覆盖终端协议回报与编辑键，输入内容不落盘。无法分类的历史记录按编辑输入保护。Loom 依次核对完整写入、可安全清除并一次重发的 Loom 草稿子集，以及重排后仅空白有差异、光标在末尾的完整读回。每次发键重新检查原生轮次和当前画面。首次 Enter 之后至少等待 1.5 秒，连续核对原生轮、可见的完整自有草稿和输入序号。审批、选项、覆盖层或编辑输入都会禁止再按 Enter。允许的一次再次按键记为 `re-enter`。若已看到提交动作而原生轮仍未出现，loomd 在超时后复查原生记录与可写性，在有完整守卫证据时最多用同一 ID 重试一次。
+
+TUI 继续内联粘贴。原有超大回复文件阈值适用。
 
 
 ### 按波搬运
@@ -67,7 +74,6 @@ SQLite 中的受管 worker 索引由持久的 spawn 意图补齐。`workers.md` 
 | `LOOM_WAVE_WINDOW_MS` | 默认 900000。从波次封存或首个续作提交起最多等待此窗口。首个原生封存观察或兜底封存点会落盘。 |
 | `LOOM_WAVE_PARTIAL_MS` | 默认 120000，受整批上限约束。多成员波次或续作取得第一个结果后，截止时间收紧至 `min(原截止时间, max(首个结果时间, 封存或首个提交时间) + 部分窗口)`。 |
 | `LOOM_BLOCKED_COALESCE_MS` | 默认 60000。从首个确认的 BLOCKED 结果算起，适用于 spawn 波次与一组同会话续作。全员结算或整波截止先到时可直接结算。 |
-| `LOOM_UNCERTAIN_MS` | 默认 60000。从不明输入或取消尝试算起。一次性按 ID 入项目通知队列，父会话或原发起方仍可达时另入其收件箱。 |
 
 普通波次一次结算。到期带已到结果和未落定成员，逐项显示 `STUCK` 及最近观测到的活动时间，晚到的确认结果先归档再补投。首个 `BLOCKED` 启动短合并窗口。若全员在窗口内落定，Leader 只收到一次汇总。若窗后仍有未落定成员，Leader 收到一次包含已到 BLOCKED 与同批其他结果的提前通知，波次保持开放。最终结算省略提前发送过的成员正文。所有 Worker 波次结算（含 `FAILED` 和 `MISMATCH`）由 Leader 接收。`UNCONFIRMED` 表示 ACP 轮末有输入归属但缺最终消息边界，附带标明未经确认的文本；该文本仍可从历史查看。新波重派同项目、同 task 后，旧正文继续归档，账本与视图标记 `superseded`，已排队且还没开始发送的旧补投也按该状态结束。
 
@@ -77,7 +83,9 @@ SQLite 中的受管 worker 索引由持久的 spawn 意图补齐。`workers.md` 
 
 项目事件保存在 `.project/loomd/notifications.json`。使用 `loom notifications --project DIR` 或 `--peek` 预览待处理事件，Super 用 `--take` 标记领取。 `--history` 包含所有事件。预览和历史可以离线读取，领取及写入由 loomd 串行处理。多逻辑项目可通过 `node daemon/notifications.mjs --project DIR --name NAME --take` 过滤领取。
 
-Super 的通知包含 `blocked-escalation`（工作阻塞升级）和 `delivery-uncertain`（投递缺少原生确认），以及项目的其他事件类型。
+`loom status` 首屏列出全部停滞投递。发送者的下一次正常唤醒会附带仍停滞的消息 ID、目标、原因和年龄。Worker 的结果已经产生但未送达 Leader 时，卡片显示 `result-undelivered`。
+
+停滞按投递 ID 写入一次 `delivery-stalled`。目标为 Leader 时，loomd 将同批异常送给 Auditor。这是静默 Auditor 的基础设施例外。目标为 Auditor 或 Super 时，经项目通知账本和桌面提示通知 Super／用户。Auditor 不可达时也可走桌面提示。每个项目的 Auditor 投递及桌面提示各有五分钟节流，等待中的告警始终可在 `loom notifications` 查看。
 
 Auditor 用 `--needs-decision TEXT --kind decision` 登记普通裁决请求，用 `--audit-escalation REASON` 登记审计升级。`--complete TEXT --phase ID` 按项目和阶段 ID 登记完成。省略 `--phase` 时沿用项目级完成记录。Leader 异常退出、BLOCKED 合并、波次或续作超时和投递不明也会自动登记。Worker 的卡死事件保留在日志中，由在途批次统一唤醒。单个结算批次的多个项目事件合为一个提示。其他同一扫描到达的事件按项目合并。管理内 Super 的唤醒通过稳定 ID 入箱去重。macOS 桌面提示涵盖裁决、项目完成、审计升级、Leader 异常退出和消耗金字塔倒置，每个项目每五分钟至多一条，正文可从通知账本查看。先在账本预留提示，再调用系统；关闭提示可设置 `LOOM_DESKTOP_NOTIFY=0`，测试自动关闭。
 

@@ -6,7 +6,7 @@ import { activeOrgNotices, readOrg } from '../daemon/org.mjs';
 import { readNotifications } from '../daemon/notifications.mjs';
 import { isBlockedReply } from '../inbox/message.mjs';
 import { managedProject, projectIndex, projectSessions } from './project.mjs';
-import { pendingWork } from '../inbox/engine.mjs';
+import { pendingWork, stalledDeliveries, stallText } from '../inbox/engine.mjs';
 import { isStartupBlocker } from '../tui/agent-status.mjs';
 import { auditorWakeFiltered } from '../daemon/routing.mjs';
 
@@ -34,11 +34,23 @@ export async function projectStatus(project) {
   const latest = [...new Map(rows.filter(row => row.role === 'worker')
     .map(row => [JSON.stringify([row.project, row.task]), row])).values()];
   const selected = new Set(waves.flatMap(wave => wave.members ?? []));
+  const leaders = new Set(rows.filter(row => row.role === 'leader').map(row => row.addr));
+  const byId = new Map(messages.map(message => [message.id, message]));
+  const undelivered = new Set(messages.filter(message =>
+    !message.received &&
+    leaders.has(message.target.addr) && message.issue !== 'superseded').flatMap(message => [
+    ...(message.resultWorkers ?? []),
+    ...(message.continuationMembers ?? []).map(id => byId.get(id)?.target.addr),
+    ...(message.replyTo ? [message.from?.addr ?? byId.get(message.replyTo)?.target.addr] : []),
+    // Old relay records contain the worker address in the result heading.
+    ...(message.waveBatch && !message.resultWorkers ? [...message.text.matchAll(/^\S+ ((?:loom|oar)-[0-9a-f-]+) (?:DONE|FAILED|BLOCKED|UNCONFIRMED)\b/gm)]
+      .map(match => match[1]) : []),
+  ]));
   const cards = latest.map(row => {
     const turn = messages.findLast(message => message.target.addr === row.addr && message.completion?.body);
     const key = row.task + '/' + row.addr;
     const status = relay.progress?.[key]?.result?.outcome?.toLowerCase();
-    const state = turn ? isBlockedReply(turn.completion.body) ? 'blocked' :
+    const state = undelivered.has(row.addr) ? 'result-undelivered' : turn ? isBlockedReply(turn.completion.body) ? 'blocked' :
       /^\**FAILED\b/i.test(turn.completion.body.trimStart()) ? 'failed' : 'done' : status ?? lifecycle(row);
     return { task: row.task, addr: row.addr, wave: row.wave, state, lifecycle: lifecycle(row),
       active: row.endedAt == null || selected.has(key) };
@@ -77,14 +89,14 @@ export async function projectStatus(project) {
   const rotations = projectIndex(project).rotations();
   const rotating = new Set(rotations.filter(item => item.boundAt != null && item.verifiedAt == null && item.failedAt == null)
     .map(item => item.successor));
-  return { ok: true, running: Boolean(live),
+  return { ok: true, running: Boolean(live), stalledDeliveries: stalledDeliveries(messages),
     sessions: rows.filter(row => row.endedAt == null).map(row => {
       const authMode = row.cli === 'claude' ? artifacts.job(row.addr)?.authMode : undefined;
       return { role: row.role, addr: row.addr, cli: row.cli, task: row.task, state: lifecycle(row),
         ...(authMode && { authMode }),
         ...(rotating.has(row.addr) && { awaitingVerifiedReport: true }) };
     }),
-    waves, pendingContinuations, cards: cards.filter(card => card.active || card.state === 'blocked'),
+    waves, pendingContinuations, cards: cards.filter(card => card.active || ['blocked', 'result-undelivered'].includes(card.state)),
     blocked, notices, merges, rotations, routing: { filtered },
     cost: { rawTokens, byRole: Object.fromEntries(Object.entries(byRole).map(([role, value]) => [role, value.rawTokens])),
       usageByRole: byRole, pyramid, missingSessions: missing.length },
@@ -99,6 +111,7 @@ export function printStatus(result) {
     console.log(label + ' · ' + (shown.join('  |  ') || 'none'));
   }
   console.log('Loom · ' + safe(result.project) + (result.running ? ' · online' : ' · offline'));
+  section('Stalled deliveries', result.stalledDeliveries, stallText, Infinity);
   section('Roles', result.sessions, row => [row.role ?? 'unassigned', row.cli, row.state,
     row.awaitingVerifiedReport ? 'awaiting report' : row.task ?? row.addr].join(' '), 6);
   section('Waves and cards', [...result.waves, ...result.pendingContinuations, ...result.cards], row => row.members ?

@@ -243,3 +243,44 @@ test('only an owning pipe controller can escalate to SIGKILL for the native grou
   assert.equal(native.type, events.exit);
   assert.equal(native.data.readUInt32BE(), 9);
 });
+
+test('journals terminal input classes without bytes and reserves quiet time for edits', { skip: !supported }, async t => {
+  const f = spawnHolder(t);
+  let before = await f.ready();
+  for (const report of ['\x1b[I', '\x1b[O', '\x1b[?1c', '\x1b[10;20R', '\x1b[0n', '\x1b[200~', '\x1b[201~', '\x1b[<0;2;3M']) {
+    f.outer.write(report);
+    const after = await until(() => f.peer.snapshot(), value => value?.humanInputOffset > before.humanInputOffset);
+    assert.equal(after.lastHumanNs, before.lastHumanNs);
+    const [input] = (await f.peer.read(before.eventSeq)).filter(event => event.type === events.human);
+    assert.equal(input.inputClass, 'terminal-report');
+    assert.equal(input.data.length, 16);
+    before = after;
+  }
+  for (const editing of ['\x1b[Ia', '\x1b[A', '\x1b[1;2P', 'a']) {
+    f.outer.write(editing);
+    const after = await until(() => f.peer.snapshot(), value => value?.humanInputOffset > before.humanInputOffset);
+    assert(after.lastHumanNs > before.lastHumanNs);
+    const [input] = (await f.peer.read(before.eventSeq)).filter(event => event.type === events.human);
+    assert.equal(input.inputClass, 'editing');
+    before = after;
+  }
+  await f.peer.signal('SIGTERM');
+  await f.gone;
+});
+
+test('holder grid replay keeps a UTF-8 code point divided by snapshots', { skip: !supported }, async t => {
+  const f = spawnHolder(t);
+  const { holderTerminal } = await import('../tui/holder-terminal.mjs');
+  const initial = await f.ready();
+  const terminal = await holderTerminal(f.binding, undefined, 'agy');
+  t.after(() => terminal.dispose());
+  const cjk = Buffer.from('。');
+  assert.equal((await f.peer.write(guard(initial, 0n), cjk.subarray(0, 2), randomUUID())).status, 'applied');
+  const split = await until(() => f.peer.snapshot(), value => value?.outputOffset === initial.outputOffset + 2n);
+  assert(!((await terminal.read()).text.includes('\uFFFD')));
+  assert.equal((await f.peer.write(guard(split, 0n), cjk.subarray(2), randomUUID())).status, 'applied');
+  await until(() => f.peer.snapshot(), value => value?.outputOffset === initial.outputOffset + 3n);
+  assert.match((await terminal.read()).text, /READY。/);
+  await f.peer.signal('SIGTERM');
+  await f.gone;
+});

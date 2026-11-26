@@ -653,3 +653,73 @@ test('records missing or conflicting readiness and sends only after both signals
   assert.deepEqual(f.sends.map(([, text]) => deliveryId(text)), [id]);
   assert.equal(f.lookup(id).waitingForWritable, undefined);
 });
+
+test('delivery SLA rechecks native evidence before one guarded same-ID retry and survives reopen', async t => {
+  const { root } = fixture(t);
+  const target = { addr: 'leader', provider: 'claude', backend: 'tui' };
+  const id = randomUUID();
+  const at = Date.now();
+  let time = at;
+  let native;
+  let retryCount = 0;
+  let inspectCount = 0;
+  const transport = {
+    inspect: async () => ({ state: 'idle', terminal: { turn: 1 }, writeEvidence: {
+      submittedDeliveryId: id, retryableDeliveryId: id, inspectCount: ++inspectCount,
+    } }),
+    nativeDelivery: () => native,
+    send() { throw Object.assign(new Error('No native turn'), { kind: 'no-native-turn' }); },
+    retryMissingTurn(message, frame) {
+      assert.equal(message.id, id);
+      assert.equal(message.text, 'body');
+      assert.equal(frame.writeEvidence.inspectCount, inspectCount);
+      retryCount++;
+    },
+  };
+  const reopen = () => inbox(root, transport, () => {});
+  let mail = reopen();
+  mail.enqueue({ id, target, phase: 'queued', mode: 'queue', requestedMode: 'queue', createdAt: at, text: 'body' });
+  const tick = () => mail.step(undefined, { now: () => time, stallMs: 120_000 });
+  await tick();
+  assert.equal(receipt(lookup(root, id)).deliveryStatus, 'accepted');
+  time += 119_999;
+  await tick();
+  assert.equal(receipt(lookup(root, id), time).reason, 'no-native-turn');
+  assert.equal(retryCount, 0);
+  time++;
+  await tick();
+  assert.equal(receipt(lookup(root, id), time).deliveryStatus, 'stalled');
+  assert.equal(retryCount, 1);
+  mail = reopen();
+  time += 120_000;
+  await tick();
+  assert.equal(retryCount, 1);
+  native = { at: time, turnId: 'native' };
+  await tick();
+  assert.equal(receipt(lookup(root, id), time).deliveryStatus, 'delivered');
+});
+
+test('a busy target gets a longer fixed SLA and still stalls without hook changes', async t => {
+  const { root } = fixture(t);
+  const target = { addr: 'worker', provider: 'codex' };
+  const id = randomUUID();
+  const at = Date.now();
+  let time = at;
+  const transport = {
+    inspect: async () => ({ state: 'busy', active: { turnId: 'unchanged' }, terminal: { turn: 1 } }),
+    sameTurn: (left, right) => left.turnId === right.turnId,
+    send: () => assert.fail('Never write a queued input into this busy target'),
+  };
+  const mail = inbox(root, transport);
+  mail.enqueue({ id, target, phase: 'queued', mode: 'queue', requestedMode: 'queue', createdAt: at, text: 'body' });
+  const tick = () => mail.step(undefined, { now: () => time });
+  time += 359_999;
+  await tick();
+  assert.equal(receipt(lookup(root, id), time).deliveryStatus, 'accepted');
+  time++;
+  await tick();
+  const pending = receipt(lookup(root, id), time);
+  assert.equal(pending.deliveryStatus, 'stalled');
+  assert.equal(pending.ageMs, 360_000);
+  assert.equal(pending.reason, 'waiting-writable');
+});

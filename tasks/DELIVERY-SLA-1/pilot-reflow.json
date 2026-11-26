@@ -1,0 +1,26 @@
+{
+  "deliveryId": "57883071-cae2-a796-329c-d9354090c345",
+  "frame": {
+    "text": "────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\n> [loom:57883071-cae2-a796-329c-d9354090c345]\n  续作批次 auto:7b8c0cd1-d240-45d5-b458-0515faa51ed1\n\n  T17-GOAL4-TESTS oar-e181e3b1-0712-45fd-bb5c-e48ec3bbacab\n  DONE T17-GOAL4-TESTS\n  提交 `df5c01c76ae12d9032467d6e6667c765cdd7071f` 已更新测试与契约。a–e 全部见红，186 通过、41 预期失败（34 个断言用例、7 个父测试），`memory/memory.test.mjs` 4/4\n  通过。完整摘要与旧测试改动清单见提交正文。\n  Leftovers & deviations: none。工作区干净，实现文件无改动。\n\n  Loom drift and fact checks\n  repeated-failure T17-GOAL4-TESTS · failureClass=test-failed count=2\n────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\n                                                                                                                                                                   accept-edits · Gemini 4 Neon · medium",
+    "draft": "[loom:57883071-cae2-a796-329c-d9354090c345]\n续作批次 auto:7b8c0cd1-d240-45d5-b458-0515faa51ed1\n\nT17-GOAL4-TESTS oar-e181e3b1-0712-45fd-bb5c-e48ec3bbacab\nDONE T17-GOAL4-TESTS\n提交 `df5c01c76ae12d9032467d6e6667c765cdd7071f` 已更新测试与契约。a–e 全部见红，186 通过、41 预期失败（34 个断言用例、7 个父测试），`memory/memory.test.mjs` 4/4\n通过。完整摘要与旧测试改动清单见提交正文。\nLeftovers & deviations: none。工作区干净，实现文件无改动。\n\nLoom drift and fact checks\nrepeated-failure T17-GOAL4-TESTS · failureClass=test-failed count=2",
+    "cursor": {
+      "x": 69,
+      "y": 117
+    },
+    "atDraftEnd": true,
+    "size": {
+      "cols": 200,
+      "rows": 120
+    }
+  },
+  "resizeEvent": 146391,
+  "readbackEvent": 146497,
+  "inputEvent": 146498,
+  "inputOffsetBefore": 140,
+  "inputOffsetAfter": 145,
+  "originalClass": "unknown",
+  "outputOffset": "140657727",
+  "wireBytes": 615,
+  "readbackBytes": 611,
+  "modelledTerminalReportHex": "1b5b3f3163"
+}

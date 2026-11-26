@@ -5,7 +5,7 @@ import { performance } from 'node:perf_hooks';
 import { setTimeout as sleep } from 'node:timers/promises';
 import { deliveryId, messageIdPattern, wireText } from '../inbox/message.mjs';
 import { agyPasteSegments, QUIET_OUTPUT_MS } from './agent-input.mjs';
-import { draftExpectation, isAgyDraftSubset, verifyAgyDraft, verifyDraft } from './composer-draft.mjs';
+import { draftExpectation, isAgyDraftSubset, verifyAgyDraft, verifyDraft, verifyReflowedDraft } from './composer-draft.mjs';
 import { blocksInput, currentTitle, isDialog, isFailure } from './agent-status.mjs';
 import { hcBackend, hcWrappedBackend } from './backends.mjs';
 import { nativeState } from './native.mjs';
@@ -136,7 +136,17 @@ export function bindTuiSession(terminal, provider, {
         paste = undefined;
       }
     }
-    const unsafe = pending && terminal.provePaste && requests.get(pending).hostReceipt?.accepted !== true;
+    const outstanding = pending && requests.get(pending);
+    const submitted = outstanding?.hostReceipt?.accepted === true;
+    const unsafe = pending && terminal.provePaste && !submitted;
+    const heldRetry = submitted && quiet && writable && !humanActive && !liveBlocker && heldComposer(observation) &&
+      observation.atDraftEnd && deliveryId(draft) === pending && !observation.outsideComposer?.includes(`[loom:${pending}]`);
+    const retryable = submitted && (frameReady || heldRetry) && !evidence.identityChanged &&
+      observedAt - outstanding.hostReceipt.submittedAt >= 1500 && !outstanding.nativeRetry && !outstanding.reenterReserved &&
+      outstanding.beforeSubmit?.humanSequence === humanSequence &&
+      outstanding.beforeSubmit?.sessionId === evidence.sessionId &&
+      outstanding.beforeSubmit?.nativeSequence === evidence.turnSequence &&
+      outstanding.beforeSubmit?.phase === evidence.phase && outstanding.beforeSubmit?.observedAt === evidence.observedAt;
     const blocker = screen === 'trust-dialog' || screen === 'overlay' ? screen :
       pending && (draft || unsafe) && !blocksInput(screen) ? 'draft-held' : undefined;
     return { observation, result: {
@@ -144,6 +154,8 @@ export function bindTuiSession(terminal, provider, {
       host: { state, agent, lastOutputAt, quietForMs, generation, outputSequence, buffer, bufferSequence, resizeSequence,
         size, title, humanActive, humanInputAt, humanSequence },
       screen: { kind: screen, text, draft, cursor, empty }, pending,
+      ...(submitted && { submittedDeliveryId: pending }),
+      ...(retryable && { retryableDeliveryId: pending, ...(heldRetry && { retryHeld: true }) }),
       blocker, unsafeDraft: Boolean(unsafe), ready: frameReady && !pending, urgentReady: frameReady && Boolean(pending) && !unsafe,
       ...(exited ? { exit: { code, reason } } : {}),
     } };
@@ -190,6 +202,11 @@ export function bindTuiSession(terminal, provider, {
           result.heldDraftProof = 'clearing-own-draft';
           adoption = { token: pending, limit: 1, entry, input, attemptAt: message.attemptAt,
             clearId: adoptionWriteId(incarnation, pending, 'clear-draft'), writeId: adoptionWriteId(incarnation, pending, 'resend-enter') };
+        } else if (!overlay && beforePasteTurn && ['complete', 'reflowed'].includes(proof.status) && heldComposer(frame) &&
+            verifyReflowedDraft(frame, expected)) {
+          result.heldDraftProof = 'complete-after-reflow';
+          adoption = { key: 'enter', token: pending, limit: 1, entry,
+            writeId: adoptionWriteId(incarnation, pending, 'enter'), attemptAt: message.attemptAt };
         }
       }
     }
@@ -205,7 +222,7 @@ export function bindTuiSession(terminal, provider, {
       if (key === '0' || key === 'esc' && !result.native.turnSequence) {
         action = { key, token: `overlay:${key}`, limit: 1 };
       }
-    } else if (result.blocker === 'draft-held' && paste?.id === pending) {
+    } else if (result.blocker === 'draft-held' && paste?.id === pending && !requests.get(pending)?.reenterReserved) {
       const entry = requests.get(pending);
       if (entry.hostReceipt?.accepted === false && paste.humanSequence === frame.humanSequence &&
           paste.resizeSequence === frame.resizeSequence && paste.buffer === frame.buffer && paste.bufferSequence === frame.bufferSequence &&
@@ -230,7 +247,7 @@ export function bindTuiSession(terminal, provider, {
         (dismissFor ? agyOverlayKey(current) === 'esc' : !blocksInput(classifyFrame(current))) &&
         (!held || heldComposer(current));
     };
-    if (writeId && !await stillSafe()) {
+    if (writeId && !await stillSafe(frame, { held: key === 'enter' })) {
       result.heldDraftProof = 'unproven';
       return false;
     }
@@ -259,7 +276,7 @@ export function bindTuiSession(terminal, provider, {
     }
     if (entry) {
       const saved = requests.get(token);
-      put(token, { ...saved, hostReceipt: { ...hostReceipt, accepted: true,
+      put(token, { ...saved, hostReceipt: { submittedAt: Date.now(), ...hostReceipt, accepted: true,
         outcome: saved.clearResend ? 'resent-after-clear' : continuation ? 'resumed-paste' : writeId ? 'adopted-draft' : 'recovered-draft' } });
     } else startupAttempts.set(token, attempts + 1);
     startupKeyAt = performance.now();
@@ -309,17 +326,34 @@ export function bindTuiSession(terminal, provider, {
     warnings: terminal.warnings ?? [],
     readState: options => serialize(() => read(options)),
     confirmations: id => serialize(async () => { await read(); return confirmations(id); }),
-    submit: ({ id = randomUUID(), text, timeoutMs = 5_000, deferMs = 0, generation, urgent = false }) => serialize(async () => {
+    submit: ({ id = randomUUID(), text, timeoutMs = 5_000, deferMs = 0, generation, urgent = false, retry = false }) => serialize(async () => {
       if (closed) return refusal('closed');
       if (!messageIdPattern.test(id) || typeof text !== 'string' || !text.trim() ||
           /[\x00-\x08\x0b\x0c\x0e-\x1f\x7f-\x9f]/.test(text)) return refusal('invalid-input');
       if (!terminal.writeIf) return refusal('plain-hc-fallback');
-      await read();
+      const first = await read();
       const digest = digestOf(text);
-      if (requests.has(id)) return requests.get(id).digest === digest ? receipt(id) : refusal('id-conflict');
+      const previous = requests.get(id);
+      if (previous && previous.digest !== digest) return refusal('id-conflict');
+      if (retry && (first.retryableDeliveryId !== id || native.confirmations(id).count)) return receipt(id);
+      if (retry && first.retryHeld) {
+        const { observation: frame, result: fresh } = await observe();
+        if (fresh.retryableDeliveryId !== id || !fresh.retryHeld || !terminal.key ||
+            generation !== undefined && generation !== fresh.host.generation ||
+            !verifyReflowedDraft(frame, draftExpectation(wireText(id, text))) ||
+            blocksInput(classify(frame.outsideComposer ?? ''))) return receipt(id);
+        const entry = { ...previous, reenterReserved: true };
+        put(id, entry);
+        try { await terminal.key('enter', frame.generation, adoptionWriteId(incarnation, id, 're-enter')); }
+        catch (error) { if (error.code !== 'STALE_FRAME') throw error; return receipt(id); }
+        put(id, { ...entry, hostReceipt: { ...entry.hostReceipt, outcome: 're-enter' } });
+        await until(() => native.confirmations(id).count > 0, timeoutMs);
+        return receipt(id);
+      }
+      if (!retry && previous) return receipt(id);
       if (native.confirmations(id).count) return refusal('id-conflict');
-      if (pending && urgent !== true) return refusal('previous-input-unconfirmed');
-      const canWrite = value => value.ready || urgent === true && value.urgentReady;
+      if (pending && !retry && urgent !== true) return refusal('previous-input-unconfirmed');
+      const canWrite = value => retry ? value.retryableDeliveryId === id : value.ready || urgent === true && value.urgentReady;
       const state = await until(value => canWrite(value) || isDialog(value.screen.kind) || isFailure(value.screen.kind), deferMs);
       if (!canWrite(state)) {
         const blocked = [state.screen.kind, state.phase].find(kind => isDialog(kind) || isFailure(kind));
@@ -327,27 +361,37 @@ export function bindTuiSession(terminal, provider, {
         return refusal(state.exit ? 'exited' : state.host.humanActive ? 'human-active' : blocked ?? (busy ? 'busy' : 'composer-not-proven-empty'));
       }
       if (generation !== undefined && state.host.generation !== generation) return refusal('frame-changed');
-      if (pending) put(pending, { ...requests.get(pending), released: true });
-      const entry = { digest };
+      if (pending && !retry) put(pending, { ...requests.get(pending), released: true });
+      const entry = { digest, ...(retry && { nativeRetry: true }), beforeSubmit: {
+        humanSequence: state.host.humanSequence, sessionId: state.native.sessionId, observedAt: state.native.observedAt,
+        nativeSequence: state.native.turnSequence, phase: state.native.phase,
+      } };
       put(id, entry);
       pending = id;
       const input = wireText(id, text);
       paste = { id, ...state.host, turnSequence: state.native.turnSequence, expected: draftExpectation(input) };
       try {
-        entry.hostReceipt = await terminal.writeIf(input, state, async (frame, { collapsed, held } = {}) => {
+        entry.hostReceipt = await terminal.writeIf(input, state, async (frame, { collapsed, held, reenter } = {}) => {
           const latest = await native.read();
           if (native.confirmations(id).count || latest.sessionId !== state.native.sessionId ||
               latest.turnSequence !== state.native.turnSequence || latest.activeSince !== state.native.activeSince ||
-              latest.phase !== state.native.phase) return false;
+              latest.phase !== state.native.phase || reenter && latest.identityChanged) return false;
           return !blocksInput(classifyFrame(frame)) &&
             (!held || heldComposer(frame)) &&
             (!collapsed || frame.vacantText && classify(frame.vacantText) === 'idle') &&
+            (!(reenter || retry) || (!held || frame.atDraftEnd) && !blocksInput(classify(frame.outsideComposer ?? ''))) &&
             (sameInterruptedTurn(latest) || currentTitle(frame, latest, Date.now()) !== 'busy');
+        }, {
+          visibleOnly: retry,
+          reserveReenter() {
+            entry.reenterReserved = true;
+            put(id, entry);
+          },
         });
       } catch (error) {
         if (error.code === 'STALE_FRAME') {
-          put(id, null);
-          pending = undefined;
+          put(id, retry ? { ...previous, nativeRetry: true } : null);
+          pending = retry ? id : undefined;
           paste = undefined;
           return refusal('frame-changed');
         }

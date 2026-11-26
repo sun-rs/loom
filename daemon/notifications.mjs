@@ -10,7 +10,7 @@ import { request } from './rpc.mjs';
 const logPath = project => resolve(runtimeDirectory(project), 'notifications.json');
 export const readNotifications = project => JSON.parse(readText(logPath(project), '[]'));
 const exec = promisify(execFile);
-const desktopTypes = new Set(['needs-decision', 'project-completed', 'audit-escalation', 'leader-exited', 'consumption-pyramid']);
+const desktopTypes = new Set(['needs-decision', 'project-completed', 'audit-escalation', 'leader-exited', 'consumption-pyramid', 'delivery-stalled']);
 export const desktopIntervalMs = 5 * 60_000;
 export const desktopEnabled = () => process.platform === 'darwin' &&
   process.env.LOOM_DESKTOP_NOTIFY !== '0' && process.env.NODE_TEST_CONTEXT === undefined;
@@ -76,6 +76,9 @@ export function projectNotifications(project, now = Date.now) {
       }
       const unrouted = [];
       for (const batch of Map.groupBy(pending, event => event.pushBatch).values()) {
+        if (batch[0].auditor && events.some(event => event.project === batch[0].project && event.auditor &&
+            event.pushRoute !== 'external' && event.pushRoute !== 'log' &&
+            event.pushedAt != null && now() - event.pushedAt < desktopIntervalMs)) continue;
         const route = await deliver(batch);
         if (route) mark(batch, route);
         else unrouted.push(...batch);

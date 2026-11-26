@@ -1,6 +1,6 @@
 {
   "note": "Single-account operation only. Use one authorized account per provider for this project.",
-  "delivery": { "coalesceMs": 45000, "replyBytes": 600 },
+  "delivery": { "coalesceMs": 45000, "replyBytes": 600, "stallMs": 120000 },
   "drift": {
     "netLines": null,
     "budgetRaises": 2,

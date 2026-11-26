@@ -23,14 +23,16 @@ export function readPasteReceipt(dir, id) {
 }
 
 export function provePaste(events, input, view, receipt, { provider, rows, overlayDismissal } = {}) {
-  const frames = (provider === 'agy' ? agyPasteSegments(input, rows) : [input]).map(text =>
+  const segments = height => (provider === 'agy' ? agyPasteSegments(input, height) : [input]).map(text =>
     Buffer.from(AGENT_PROMPT_BRACKETED_PASTE_START + text + AGENT_PROMPT_BRACKETED_PASTE_END));
-  const total = frames.reduce((sum, frame) => sum + frame.length, 0);
+  let total = segments(rows).reduce((sum, frame) => sum + frame.length, 0);
   const legacyChunk = (bytes, offset) => bytes.subarray(offset, offset + 4096);
   const writes = events.map(event => ({ ...event, receipt: receipt(event.id) }));
   let written = 0, continuation, continuationBytes, ownedClosedBytes;
   for (let start = writes.length - 1; start >= 0; --start) {
     if (!writes[start].receipt) continue;
+    const frames = segments(writes[start].rows ?? rows);
+    const expectedTotal = frames.reduce((sum, frame) => sum + frame.length, 0);
     let offset = 0, frameIndex = 0, cursor = 0;
     let stdinOffset = writes[start].receipt.start;
     const boundary = writes[start].boundary;
@@ -50,12 +52,16 @@ export function provePaste(events, input, view, receipt, { provider, rows, overl
         latest.receipt?.digest === digest('\x1b') && !latest.receipt.partial && latest.count === 1 &&
         latest.receipt.count === 1 && latest.receipt.start === stdinOffset && latest.boundary === boundary &&
         latest.human === view.humanInputOffset && latest.seq <= view.eventSeq && view.outputOffset > latest.output;
-      const uninterrupted = (write === latest || dismissal) &&
-        boundary === view.boundary && write.human === view.humanInputOffset;
+      const unchangedInput = (write === latest || dismissal) && write.human === view.humanInputOffset;
+      const uninterrupted = unchangedInput && boundary === view.boundary;
+      const unchangedBuffer = write.bufferSequence != null && write.bufferSequence === view.bufferSequence;
       const ownsDraft = provider === 'agy' && writes[start].emptyComposer === true;
-      if (offset === total) {
+      if (offset === expectedTotal) {
         if (uninterrupted && view.outputOffset > write.output) {
-          return { status: 'complete', written: offset, total, ...(ownsDraft && { ownsDraft: true, closedBracket: true }) };
+          return { status: 'complete', written: offset, total: expectedTotal, ...(ownsDraft && { ownsDraft: true, closedBracket: true }) };
+        }
+        if (unchangedInput && unchangedBuffer && view.outputOffset > write.output) {
+          return { status: 'reflowed', written: offset, total: expectedTotal, ownsDraft };
         }
         break; // An intervening write might be Enter.
       }
@@ -68,7 +74,10 @@ export function provePaste(events, input, view, receipt, { provider, rows, overl
         continuationBytes = offset;
       }
     }
-    written = Math.max(written, offset);
+    if (offset > written) {
+      written = offset;
+      total = expectedTotal;
+    }
   }
   return { status: written && written < total ? 'incomplete' : 'unproven',
     written: written || null, total, ...(continuationBytes === written && written < total && { continuation }),

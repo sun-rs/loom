@@ -109,7 +109,7 @@ export function readGrid(terminal, provider, extractDraft) {
   const vacantText = [...raw.slice(0, first), prompt, ...raw.slice(last + 1)].join('\n');
   const clip = provider === 'agy' && /^↑ ([1-9]\d*) more lines?\n/.exec(draft);
   const scrolledDraft = clip && cursor.y === last && { hiddenRows: Number(clip[1]), tail: draft.slice(clip[0].length) };
-  const atDraftEnd = provider === 'agy' && cursor.y === last &&
+  const atDraftEnd = cursor.y === last &&
     !lines[last]?.translateToString(true, cursor.x, terminal.cols).trim();
   return { text, composerText, cursor, draft, outsideComposer, vacantText, scrolledDraft, atDraftEnd };
 }

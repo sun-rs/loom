@@ -2,7 +2,7 @@ import { spawnSync } from 'node:child_process';
 import { setTimeout as sleep } from 'node:timers/promises';
 import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
-import { receipt } from '../inbox/engine.mjs';
+import { receipt, stalledDelivery, stallText } from '../inbox/engine.mjs';
 import { deliveryFailed, messageIdPattern } from '../inbox/message.mjs';
 import { lookup } from '../inbox/store.mjs';
 import { addressPattern } from '../inbox/tui.mjs';
@@ -19,14 +19,16 @@ async function waitForReply(project, response) {
   let current;
   do {
     current = lookup(project, response.id);
-    if (current?.completion?.body || current?.completion?.noReply || deliveryFailed(current)) break;
+    if (current?.completion?.body || current?.completion?.noReply || deliveryFailed(current) || current && stalledDelivery(current)) break;
     await sleep(250);
   } while (Date.now() < deadline);
   const result = { ...response, ...(current && { ...receipt(current), phase: current.phase }) };
   if (current?.completion?.body) return { ...result, reply: current.completion.body };
   const code = current?.phase === 'corrupted' ? 'corrupted' :
     deliveryFailed(current) ? 'not-ready' : current?.completion ? 'unavailable' : 'uncertain';
-  return { ...result, ok: false, error: { code, message: current?.issue ??
+  const stalled = current && stalledDelivery(current) &&
+    stallText({ id: current.id, target: current.target.addr, reason: result.reason, ageMs: result.ageMs });
+  return { ...result, ok: false, error: { code, message: stalled || current?.issue ||
     (current?.completion?.unconfirmed ? 'Native final reply is unconfirmed' :
       current?.completion ? 'No native final reply' : 'Still waiting for a reply') } };
 }

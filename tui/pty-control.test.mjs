@@ -54,8 +54,12 @@ async function setup(t, { afterPaste, firstEnter, announce, hidePart, collapsedS
     const displayed = hidePart && draft ? draft.slice(0, -1) : draft;
     const footer = announce && draft ? 'accept-edits · Gemini 4 Neon (Low)' : '? for shortcuts';
     const card = overlay ? '┃ Introducing Gemini 4 Neon\r\n┃ esc to dismiss\r\n' : '';
+    const reenterFrame = ['held', 'question'].includes(firstEnter) && enterCount === 1;
+    const caret = reenterFrame && draft ? `\x1b[2A\x1b[${draft.split('\n').at(-1).length + 3}G` : '';
+    const question = firstEnter === 'question' && enterCount === 1 ?
+      '\r\nEnter to select · Esc to cancel' : caret;
     const survey = feedback && enterCount ? "How's the CLI experience so far? Help us improve:\r\n[1] Good [2] Fine [3] Bad [0] Skip\r\n" : '';
-    events.emit('data', Buffer.from(`\x1b[2J\x1b[H${card}${survey}──────────\r\n${prompt} ${displayed.replaceAll('\n', '\r\n  ')}\r\n──────────\r\n${footer}`));
+    events.emit('data', Buffer.from(`\x1b[2J\x1b[H${card}${survey}──────────\r\n${prompt} ${displayed.replaceAll('\n', '\r\n  ')}\r\n──────────\r\n${footer}${question}`));
   };
   const pty = {
     spawn: () => ({
@@ -69,7 +73,7 @@ async function setup(t, { afterPaste, firstEnter, announce, hidePart, collapsedS
           afterPaste?.(terminal, data);
         } else if (bytes === '\r') {
           enterCount++;
-          if (enterCount !== 1 || !['held', 'discarded'].includes(firstEnter)) {
+          if (enterCount !== 1 || !['held', 'discarded', 'question'].includes(firstEnter)) {
             void hook({ hook_event_name: provider.id === 'agy' ? 'PreInvocation' : 'UserPromptSubmit', prompt: draft })
               .then(() => feedback && hook({ hook_event_name: 'Stop', fullyIdle: true, executionNum: 1 }));
           }
@@ -248,7 +252,7 @@ test('a repainted, unaccepted draft can receive one more Enter with no second pa
   const result = await f.account('submit', { id, text: 'held input' });
   assert.equal(result.kind, 'confirmed');
   assert.equal(result.confirmation.count, 1);
-  assert.equal(result.hostReceipt.resubmitted, true);
+  assert.equal(result.hostReceipt.outcome, 're-enter');
   assert.equal(f.writes.filter(value => value === '\r').length, 2);
   assert.equal(f.writes.filter(value => value.startsWith('\x1b[200~')).length, 1);
 });
@@ -341,4 +345,12 @@ test('split OSC titles can veto a stale idle hook, and an idle title cannot auth
   assert.equal(idle.host.title, 'idle');
   assert.equal(idle.ready, false);
   assert.equal(idle.screen.draft, 'some draft');
+});
+
+test('a Claude question that appears after Enter vetoes re-enter while the draft is still visible', async t => {
+  const f = await setup(t, { firstEnter: 'question' });
+  const id = randomUUID();
+  assert.equal((await f.account('submit', { id, text: 'leave the selection alone', timeoutMs: 1700 })).kind, 'unconfirmed');
+  assert.equal((await f.account('state')).screen.kind, 'permission');
+  assert.equal(f.writes.filter(value => value === '\r').length, 1);
 });

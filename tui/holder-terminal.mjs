@@ -31,14 +31,17 @@ export async function holderTerminal(binding, controller, provider, expectedPid,
   const { Terminal } = xterm;
   const { cols, rows } = initial.initial;
   const grid = new Terminal({ cols, rows, scrollback: 500, allowProposedApi: true });
-  const parse = bytes => new Promise(resolve => grid.write(bytes, resolve));
+  // xterm's per-write byte decoding can lose a CJK code point at a journal
+  // boundary. Carry partial UTF-8 across batches and snapshots.
+  const decoder = new TextDecoder('utf-8', { ignoreBOM: true });
+  const parse = bytes => new Promise(resolve => grid.write(decoder.decode(bytes, { stream: true }), resolve));
   let eventSeq = 0n, offset = 0n;
   let bufferSequence = 0, resizeSequence = 0, outputSequence = 0;
   let lastOutputAt, title, echo, frame, cached, cachedSeq;
   let lastChange = -Infinity;
   let queue = Promise.resolve();
   let size = { cols, rows };
-  let human = 0n;
+  let human = 0n, editing = 0n;
   let pasteBoundary = 0;
   const recentWrites = [];
   grid.onTitleChange(value => { title = { phase: titlePhase(provider, value), observedAt: Date.now() }; });
@@ -79,14 +82,17 @@ export async function holderTerminal(binding, controller, provider, expectedPid,
           lastChange = performance.now();
         } else if (event.type === events.human) {
           human = event.data.readBigUInt64BE();
-          pasteBoundary++;
+          if (event.inputClass !== 'terminal-report') {
+            editing = human;
+            pasteBoundary++;
+          }
         } else if (event.type === events.write) {
           let emptyComposer;
           if (provider === 'agy') {
             const before = readGrid(grid, provider);
             emptyComposer = before.draft === '' && providers.agy.screen.hasEmptyComposer(before.composerText ?? before.text);
           }
-          recentWrites.push({ id: event.data.toString('hex', 0, 16), count: event.data.readUInt32BE(16), human,
+          recentWrites.push({ id: event.data.toString('hex', 0, 16), count: event.data.readUInt32BE(16), human: editing, rows: size.rows, bufferSequence,
             seq: event.seq, output: event.offset, boundary: pasteBoundary, emptyComposer });
           if (recentWrites.length > 128) recentWrites.shift();
         }
@@ -111,7 +117,7 @@ export async function holderTerminal(binding, controller, provider, expectedPid,
       buffer: grid.buffer.active.type, lastOutputAt, generation: eventSeq.toString(), cursorToken: snapshot,
       humanActive: snapshot.humanPending || Boolean(snapshot.lastHumanNs && age < humanPause),
       humanInputAt: snapshot.lastHumanNs ? Date.now() - Number(age / 1_000_000n) : undefined,
-      humanSequence: snapshot.humanInputOffset.toString(), quietForMs: elapsed(lastChange), writable: !snapshot.ended,
+      humanSequence: editing.toString(), quietForMs: elapsed(lastChange), writable: !snapshot.ended,
       ...(snapshot.ended && { exited: true, code: signal ? 128 + signal : snapshot.waitStatus >> 8,
         ...(signal && { signal, reason: `signal:${signal}` }) }) };
     return frame;
@@ -165,13 +171,13 @@ export async function holderTerminal(binding, controller, provider, expectedPid,
   if (!controller) return { initial, read, dispose: () => grid.dispose() };
   return {
     id: binding.incarnation, client, initial, read,
-    async writeIf(text, { host: expected }, verify) {
+    async writeIf(text, { host: expected }, verify, options) {
       const before = await read();
       if (before.generation !== expected.generation || !writable(before)) throw stale();
       let wrote = false;
       try {
         return await submitComposer(text, {
-          before, provider, read, verify, valid: writable, pastePlaceholder: providers[provider]?.screen.pastePlaceholder,
+          ...options, before, provider, read, verify, valid: writable, pastePlaceholder: providers[provider]?.screen.pastePlaceholder,
           async write(bytes, view) {
             const accepted = await write(bytes, view, { verify });
             if (!accepted && !wrote) throw stale();
@@ -193,7 +199,7 @@ export async function holderTerminal(binding, controller, provider, expectedPid,
     },
     provePaste(input, expected, overlayDismissal) {
       if (frame !== expected || !binding.bookPath) return { status: 'unproven', written: null };
-      return provePaste(recentWrites, input, { ...frame.cursorToken, boundary: pasteBoundary },
+      return provePaste(recentWrites, input, { ...frame.cursorToken, humanInputOffset: editing, boundary: pasteBoundary, bufferSequence },
         id => readPasteReceipt(dirname(binding.bookPath), id),
         { provider, rows: frame.size.rows, overlayDismissal: overlayDismissal?.replaceAll('-', '') });
     },

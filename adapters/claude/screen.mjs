@@ -442,6 +442,9 @@ export function classify(text) {
       rows.some(row => /^(?:Do you want to proceed\?|Do you want to (?:allow|make)|Bash command$)/i.test(row))) return 'permission';
   if (rows.slice(-12).some(row => /^[✻✳✶✢✽✺✹✸✷✴✵]\s+Compact(?:ing|ing conversation)(?:…|\.\.\.)/i.test(row))) return 'compacting';
   if (matchesPicker(rows)) return 'picker';
+  const footer = rows.at(-1) ?? '';
+  if (/\bEsc to (?:cancel|skip)\b/i.test(footer) &&
+      /\b(?:Enter to (?:select|submit|confirm)|Tab to (?:cycle|navigate))\b/i.test(footer)) return 'permission';
   if (matchesError(entries, AUTH_FAIL_PATTERNS)) return 'auth-fail';
   if (matchesError(entries, RATE_LIMIT_PATTERNS)) return 'rate-limit';
   if (matchesBusy(entries) || hasRunningBackgroundTask(text)) return 'busy';

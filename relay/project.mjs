@@ -122,7 +122,7 @@ export function relay(project, targets, window, call, report = console.log, inbo
   const save = () => atomic(file, JSON.stringify(state) + '\n');
   const recipients = batch => batch.recipients ?? (batch.failed === false ? targets.slice(0, 1) : targets);
   function addManaged(waveKey, wave, replies, label, waveKind, pending = [], metadata) {
-    const fields = { waveKey, waveKind, ...metadata, ...(wave.forcedSeal && { forcedSeal: true }) };
+    const fields = { waveKey, waveKind, resultWorkers: replies.map(reply => reply.addr), ...metadata, ...(wave.forcedSeal && { forcedSeal: true }) };
     const blocked = !wave.blockedNotified && replies.some(reply => reply.outcome === 'BLOCKED');
     if (wave.parent || pending.length || blocked) enqueue(state, replies, label, pending, wave.parent ? [wave.parent] : [], {
       ...fields,

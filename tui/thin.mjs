@@ -122,11 +122,12 @@ export function thinBackend({ pty, Terminal, cols = 180, rows = 50, mirror, huma
         signal(name) {
           if (!exit) child.kill(name);
         },
-        async writeIf(text, { host: expected }, verify) {
+        async writeIf(text, { host: expected }, verify, options) {
           const before = await read();
           if (before.generation !== expected.generation || !valid(before)) throw stale();
           try {
-            return await submitComposer(text, { before, provider, read, write, valid, verify,
+            return await submitComposer(text, { ...options, before, provider, read, valid, verify,
+              write: (bytes, frame) => valid(frame) ? write(bytes) : false,
               pastePlaceholder: providers[provider]?.screen.pastePlaceholder, observeEcho(marker) {
               echo = { marker, tail: '', found: false };
               return () => echo.found;

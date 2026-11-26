@@ -1,6 +1,7 @@
 #define _GNU_SOURCE
 #include "sha256.h"
 #include "write-guard.h"
+#include "input-class.h"
 #include <fcntl.h>
 #include <limits.h>
 #include <poll.h>
@@ -307,11 +308,14 @@ static void collect_tty(void) {
     while (s.input.size < QUEUE_SIZE) {
       n = read(STDIN_FILENO, s.input.bytes + s.input.size, QUEUE_SIZE - s.input.size);
       if (n <= 0) break;
+      const bool report = only_terminal_reports(s.input.bytes + s.input.size, (size_t)n);
+      const uint64_t at = now();
       s.input.size += (size_t)n;
       s.cursor.human += (uint64_t)n;
-      s.cursor.last_human = now();
+      if (!report) s.cursor.last_human = at;
       Byte input[16];
-      set64(input, s.cursor.human); set64(input + 8, s.cursor.last_human);
+      set64(input, s.cursor.human);
+      set64(input + 8, at | INPUT_CLASSIFIED | (report ? INPUT_REPORT : 0));
       append(INPUT, input, sizeof(input));
       drain_input();
     }

@@ -65,6 +65,11 @@ export function decodeSnapshot(p) {
     ...(pipes && { pipes, stderrOffset: get(152) }) };
 }
 
+const inputClass = data => {
+  const flags = data[8] & 0xc0;
+  return flags === 0xc0 ? 'terminal-report' : flags === 0x80 ? 'editing' : 'unknown';
+};
+
 export function decodeEvents(bytes) {
   const result = [];
   for (let i = 0; i < bytes.length;) {
@@ -75,8 +80,9 @@ export function decodeEvents(bytes) {
         type === events.resize && n !== 29 || type === events.human && n !== 37 ||
         type === events.write && n !== 41 || type === events.exit && n !== 29 ||
         (type === events.output || type === events.stderr) && n === 21 || !Object.values(events).includes(type)) throw holderError('HOLDER_FRAME');
+    const data = bytes.subarray(i + 21, i + n);
     result.push({ type, seq: bytes.readBigUInt64BE(i + 5), offset: bytes.readBigUInt64BE(i + 13),
-      data: bytes.subarray(i + 21, i + n) });
+      data, ...(type === events.human && { inputClass: inputClass(data) }) });
     i += n;
   }
   return result;

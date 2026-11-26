@@ -26,7 +26,21 @@ const fixtureProjects = new Set();
 
 function signal(pid, name) {
   try { process.kill(pid, name); return true; }
-  catch (error) { if (error.code !== 'ESRCH') throw error; return false; }
+  catch (error) {
+    if (error.code === 'ESRCH') return false;
+    if (error.code === 'EPERM' && pid < 0 && process.platform === 'darwin') {
+      // A process group consisting only of zombies can still have a PGID on
+      // macOS. Verify there is no signalable fixture process before accepting
+      // EPERM as cleanup, including when the child exits between ps and kill.
+      const rows = execFileSync('/bin/ps', ['-axo', 'pgid=,uid=,state='], { encoding: 'utf8', timeout: 2000 });
+      const live = rows.trim().split('\n').some(row => {
+        const [group, uid, state] = row.trim().split(/\s+/);
+        return Number(group) === -pid && Number(uid) === process.getuid() && !state.startsWith('Z');
+      });
+      if (!live) return false;
+    }
+    throw error;
+  }
 }
 
 after(async () => {
@@ -164,13 +178,17 @@ function fixtureProject(t, options = {}) {
         .filter(entry => entry.isFile() && entry.name === 'owner.json')
         .map(entry => JSON.parse(readFileSync(join(entry.parentPath, entry.name), 'utf8')))
         .filter(owner => owner.project === project && owner.identity?.pid > 1 && owner.identity.pid === owner.identity.pgid)
-        .map(owner => owner.identity).filter(identity => signal(-identity.pid, 0)) : [];
+        .map(owner => owner.identity) : [];
       const live = await processTable(owners.map(({ pid }) => pid));
-      const groups = owners.filter(owner => sameProcess(owner, live.get(owner.pid))).map(({ pid }) => pid);
-      for (const pid of groups) signal(pid, 'SIGTERM');
+      let remaining = owners.filter(owner => sameProcess(owner, live.get(owner.pid)));
+      for (const { pid } of remaining) signal(pid, 'SIGTERM');
       const deadline = Date.now() + 3500;
-      while (groups.some(pid => signal(-pid, 0)) && Date.now() < deadline) await delay(50);
-      for (const pid of groups) signal(-pid, 'SIGKILL');
+      while (remaining.length && Date.now() < deadline) {
+        await delay(50);
+        const current = await processTable(remaining.map(({ pid }) => pid));
+        remaining = remaining.filter(owner => sameProcess(owner, current.get(owner.pid)));
+      }
+      for (const { pid } of remaining) signal(-pid, 'SIGKILL');
       for (const { child, exit } of extraHosts) {
         if (child.exitCode === null && child.signalCode === null) signal(-child.pid, 'SIGKILL');
         await exit;
@@ -300,7 +318,7 @@ test('definitive Codex native refusals do not escalate as uncertain', { timeout:
     assert.equal(f.deliveries(id).length, 1);
   }
   const notices = (await f.rpc('state', { target: session.addr })).notifications;
-  assert(!notices.some(notice => notice.type === 'delivery-uncertain' && [...downgraded, refused.id].includes(notice.deliveryId)));
+  assert(!notices.some(notice => notice.type === 'delivery-stalled' && notice.deliveryId === refused.id));
 });
 
 test('an unanswered OAR control is bounded, reported stuck, and never resubmitted', { timeout: 28_000 }, async t => {
@@ -415,13 +433,15 @@ test('a real daemon running a fixture TUI never confirms Claude using bare match
   const worker = await f.spawn('worker', 'CLAUDE', { mode: 'tui', cli: 'claude', parent: leader.session.addr });
   await f.waitMail(worker.deliveryId, value => value?.received);
   const input = await f.send(worker.session.addr, 'NO MARKER');
-  const message = await f.waitMail(input.id, value => value?.issue === 'uncertain-timeout');
+  const message = await f.waitMail(input.id, value => value?.stalledAt != null);
   assert.equal(message.received, undefined);
-  assert.equal(f.deliveries(input.id).length, 1);
-  const notice = await until(() => f.mail().find(message => message.uncertainOf === input.id && message.completion?.body), 'uncertain escalation');
-  assert.equal(notice.target.addr, leader.session.addr);
-  assert.equal(f.deliveries(notice.id).length, 1);
-  assert.equal(f.mail().filter(value => value.uncertainOf === input.id).length, 1);
+  await until(() => f.deliveries(input.id).length === 1, 'one fixture input');
+  const notices = await until(async () => {
+    const matching = (await f.rpc('notifications', { history: true })).notifications.filter(notice =>
+      notice.type === 'delivery-stalled' && notice.deliveryId === input.id);
+    return matching.length && matching;
+  }, 'stalled notice published');
+  assert.equal(notices.length, 1);
   await assert.rejects(f.send(worker.session.addr, 'never type Escape', { mode: 'interrupt' }), { code: 'unsupported' });
 });
 

@@ -226,6 +226,9 @@ export function ownedSessions(project, index, report, {
       const result = runtime.hosted ? await runtime.control(action, message) : await oarControl(runtime, action, message, observation);
       return { streamId: runtime.streamId, requestId: result.requestId, seq: result.seq, deadlineAt: result.deadlineAt };
     },
+    async retryMissingTurn(message, observation) {
+      return local.retryMissingTurn(message, observation);
+    },
     async interrupt(message, _keys, observation) {
       if (!canInterrupt(message.target)) throw Object.assign(new Error('Target does not support guarded interruption'), { kind: 'input-refused' });
       if (message.target.backend === 'tui') return local.interrupt(message, observation);
@@ -406,7 +409,7 @@ export function ownedSessions(project, index, report, {
       const guidance = row.role === 'leader' ?
         'Coordinate work. Workers reproduce issues and run full test suites in their own sandboxes. Review their receipts and signals. Spawn an independent Reviewer on the fixed candidate with --wave set to the gate ID. Receive the conclusion before running loom gate pack. Use loom escalate for confirmed red facts, sharing one wake per gate with the packet.' :
         'For gate review, read only the gate packet and reviewer conclusions. The Leader commissions the independent review before packing. Delegate deep checks to one ephemeral read-only reviewer. Its conclusion may wake you once and counts against your gate wake budget. Other wake sources are user or Super messages, a gate packet or red escalation from Leader, and succession supervision. Use loom notifications --needs-decision TEXT --kind decision for ordinary Super decisions.';
-      prompt = `## Loom role guidance\n${guidance} Assign long-running work to a Worker or Reviewer. Do not wait on background Bash. Begin conclusions with DONE, BLOCKED, FAILED, PASS, REJECT or APPROVE. Use NOREPLY for acknowledgements.\n\n## Startup request\n${prompt}`;
+      prompt = `## Loom role guidance\n${guidance} Assign long-running work to a Worker or Reviewer. Do not wait on background Bash. If a result is overdue, run "$LOOM_BIN" status and check stalled deliveries. Begin conclusions with DONE, BLOCKED, FAILED, PASS, REJECT or APPROVE. Use NOREPLY for acknowledgements.\n\n## Startup request\n${prompt}`;
       try { prompt = await projectMemoryPrompt(project) + prompt; }
       catch (error) { report(`Project memory unavailable: ${error.message}`); }
     }
@@ -416,6 +419,7 @@ export function ownedSessions(project, index, report, {
       prompt,
     ].join('\n\n');
     const job = { row, firstId: randomUUID(), prompt, gate, requested, deny, release: releaseId(),
+      ...(actor && jobs.has(actor.addr) && { sender: targetBinding(actor) }),
       ...(row.role === 'worker' && { isolatedWorkerHome: true }),
       ...(cli === 'claude' && mode === 'tui' && { autoTrustWorkspace: input['trust-workspace'] ??
         (trustWorkspace && defaultTrustWorkspace(project, cwd)) }),
@@ -555,6 +559,7 @@ export function ownedSessions(project, index, report, {
     if (!mail.messages.some(message => message.id === job.firstId)) {
       mail.enqueue({ id: job.firstId, target: targetBinding(row), createdAt: row.startedAt,
         text: job.prompt, requestedMode: 'queue', mode: 'queue', phase: 'queued', startup: true,
+        ...(job.sender && { from: job.sender }),
         ...(row.role === 'worker' && { waveParent: row.parent }) });
     }
     restored.add(row.addr);

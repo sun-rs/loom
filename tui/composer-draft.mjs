@@ -27,6 +27,13 @@ export function verifyAgyDraft(frame, expected, ownsDraft = false) {
   return clipped ? end > 0 && expected.normalized.length - end >= 32 : end === 0;
 }
 
+export function verifyReflowedDraft(frame, expected) {
+  if (!frame.atDraftEnd || !expected.id || frame.outsideComposer?.includes(`[loom:${expected.id}]`)) return false;
+  if (frame.scrolledDraft || !frame.draft || deliveryId(frame.draft) !== expected.id) return false;
+  const compact = text => text.replace(/\s+/gu, '');
+  return compact(frame.draft) === compact(expected.normalized);
+}
+
 export function isAgyDraftSubset(frame, input) {
   const id = deliveryId(input);
   if (!id || !frame.draft || !frame.atDraftEnd || frame.scrolledDraft || frame.outsideComposer?.includes(`[loom:${id}]`)) return false;

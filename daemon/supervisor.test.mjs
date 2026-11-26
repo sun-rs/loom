@@ -951,18 +951,17 @@ test('pushes a coalesced BLOCKED wave and explicit project events once to the ma
   assert.equal(pushed().length, 2);
   assert.equal((await recovered.handle('notifications', { history: true })).notifications.length, 3);
   const id = randomUUID();
-  const attemptAt = Date.now() - 61_000;
+  const attemptAt = Date.now() - 361_000;
   publish(f.project, { id, text: 'unconfirmed test input', phase: 'sending', issue: 'uncertain', attemptAt,
     createdAt: attemptAt, requestedMode: 'queue', mode: 'queue',
     target: { addr: auditor.addr, backend: auditor.backend, provider: auditor.cli, createdAt: auditor.startedAt } });
   await recovered.tick();
   const uncertain = (await recovered.handle('notifications', { take: true }, superSession.addr)).notifications;
   assert.equal(uncertain.length, 1);
-  assert.equal(uncertain[0].type, 'delivery-uncertain');
+  assert.equal(uncertain[0].type, 'delivery-stalled');
   assert.equal(uncertain[0].deliveryId, id);
-  assert.equal(pushed().at(-1).target.addr, superSession.addr);
-  assert.match(pushed().at(-1).text, /delivery-uncertain/);
-  assert.deepEqual(external, []);
+  assert.equal(pushed().length, 2);
+  assert.deepEqual(external.flat().map(event => event.deliveryId), [id]);
   await recovered.shutdown();
 });
 
@@ -1375,4 +1374,55 @@ test('worker switch affects only new spawns and a quota failure keeps the select
   t.after(recovered.shutdown);
   const next = (await f.spawn(recovered, 'worker', 'NEW', undefined, { ...implicit, wave: 'FUTURE' })).session;
   assert.equal(next.model, 'after');
+});
+
+test('overdue pilot-shaped holds reach Auditor once, are shown on worker cards, and follow the sender on its next wake', async t => {
+  const pilotId = '57883071-cae2-a796-329c-d9354090c345';
+  const handoverId = '5b58581e-f9a6-4b2d-bfe8-508056c06c1f';
+  const at = Date.now();
+  let time = at;
+  const desktop = [];
+  const f = fixture(t, { now: () => time, externalNotification: async (_, events) => desktop.push(...events) });
+  let d = f.daemon();
+  const { session: leader } = await f.spawn(d, 'leader', 'L');
+  const { session: auditor } = await f.spawn(d, 'auditor', 'A');
+  const { session: worker } = await f.spawn(d, 'worker', 'W', leader.addr);
+  const binding = row => ({ addr: row.addr, backend: row.backend, provider: row.cli, createdAt: row.startedAt, cwd: row.cwd });
+  await d.tick();
+  f.sessions.get(leader.addr).finish('startup completed');
+  await d.tick();
+  for (const id of [pilotId, handoverId]) {
+    publish(f.project, { id, text: 'held pilot replay', phase: 'sending', issue: 'uncertain',
+      attemptAt: at, createdAt: at, mode: 'queue', requestedMode: 'queue', target: binding(leader),
+      ...(id === pilotId && { from: binding(worker), waveBatch: 'pilot', resultWorkers: [worker.addr] }) });
+  }
+  time = at + 119_999;
+  await d.tick();
+  const stalls = async () => (await d.handle('notifications', { history: true })).notifications.filter(event => event.type === 'delivery-stalled');
+  assert.equal((await stalls()).length, 0);
+  time++;
+  await d.tick();
+  assert.deepEqual(new Set((await stalls()).map(event => event.deliveryId)), new Set([pilotId, handoverId]));
+  await d.tick();
+  await d.tick();
+  const notices = f.read('inbox/state.json').messages.filter(message => message.deliveryEscalations);
+  assert.equal(notices.length, 1);
+  assert.equal(notices[0].target.addr, auditor.addr);
+  assert(notices[0].deliveryEscalations.includes(pilotId));
+  assert(notices[0].received);
+  assert.deepEqual(desktop, []);
+  const { projectStatus } = await import('../cli/status.mjs');
+  const status = await projectStatus(f.project);
+  assert.equal(status.cards.find(card => card.addr === worker.addr).state, 'result-undelivered');
+  assert(status.stalledDeliveries.some(delivery => delivery.id === pilotId && delivery.ageMs >= 0));
+  await d.handle('send', { target: worker.addr, mode: 'queue', text: 'next actual wake' });
+  await d.tick();
+  assert.match(f.prompts.find(prompt => prompt.input.includes('next actual wake')).input,
+    new RegExp(`your message ${pilotId} to ${leader.addr} is not received`));
+  await d.shutdown();
+  d = f.daemon();
+  await d.tick();
+  assert.equal((await stalls()).filter(event => event.deliveryId === pilotId).length, 1);
+  assert.equal(f.read('inbox/state.json').messages.filter(message => message.deliveryEscalations).length, 1);
+  await d.shutdown();
 });
