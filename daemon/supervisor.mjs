@@ -23,6 +23,7 @@ import { isStartupBlocker } from '../tui/agent-status.mjs';
 import { gateId, saveGatePacket } from './gate-packet.mjs';
 import { gateBoundary, roleBudget } from './role-budget.mjs';
 import { leaderHandoverState } from '../handover/brief.mjs';
+import { startedOutstanding } from '../handover/outstanding.mjs';
 import { authorizeSeniorTool, seniorToolEvents } from './senior-tools.mjs';
 import { replyForDelivery } from '../inbox/reply-file.mjs';
 import { auditorWakeFiltered, auditorWakeSource, redReasons } from './routing.mjs';
@@ -46,6 +47,7 @@ const matchesGate = (message, project, gate) => message.gatePacket &&
   (message.gateId === gate && message.gateProject === project || message.id === packetDeliveryId(project, gate));
 const auditEscalations = new Set(['blocking-disagreement', 'three-failed-rounds', 'major-risk', 'overreach']);
 const terminalText = text => text.replace(/[\x00-\x08\x0b-\x1f\x7f-\x9f]/g, '');
+const handoverWorkWait = 3 * 60_000;
 
 function codexHandoff(row) {
   if (row.cli !== 'codex' || !row.sessionId) return;
@@ -206,6 +208,15 @@ ${details}`, {
     return leaderHandoverState(project, { cards, pending, packets, gates });
   }
 
+  const activationId = job => batchDeliveryId(job.firstId, job.rotationV2 ? 'v2-confirmation' : 'handover-activation');
+  const outstandingLines = job => job.handoverItems?.length ?
+    ['### Do now', ...job.handoverItems.map(item => '- ' + item)] : [];
+  function activateOutstanding(job, row) {
+    if (!job.handoverItems?.length || !job.handoverBound || row?.endedAt !== null || job.stopping) return;
+    saved(sessions.targetBinding(row), ['接管生效。立即开始交接中的待办。', ...outstandingLines(job)].join('\n'),
+      { id: activationId(job), rotationVerification: true, superPriority: true, rotationActivation: true });
+  }
+
   async function settleV2Handover(job, row, message, rotation) {
     const record = v2.pending(row.addr) ?? v2.begin(sessions.rowFor(job.handoverFrom), job, job.rotationPhase);
     if (record.failed) {
@@ -261,8 +272,8 @@ ${details}`, {
     }
     saved(target, v2.facts(row, [
       `接管生效。另一方已核对首报（${verification.actor}，原件 ${verification.evidence}）。立即执行交接单中触发条件已满足的首个动作。`,
-      '### 旧地址的在途消息', ...plan.map(item => `- ${item.id} ${item.action}`),
-    ]), { id: batchDeliveryId(message.id, 'v2-confirmation'), rotationVerification: true, superPriority: true,
+      ...outstandingLines(job), '### 旧地址的在途消息', ...plan.map(item => `- ${item.id} ${item.action}`),
+    ]), { id: activationId(job), rotationVerification: true, superPriority: true,
       rotationActivation: true });
     sessions.finalizeV2(job);
     await sessions.retirePredecessor(job).catch(error => report(`handover retirement: ${error.message}`));
@@ -289,6 +300,7 @@ ${details}`, {
         continue;
       }
       if (job.handoverBound) {
+        activateOutstanding(job, sessions.rowFor(rotation.successor));
         if (job.herdr && sessions.rowFor(rotation.successor)?.endedAt === null &&
             (!job.herdrPublished || sessions.rowFor(rotation.predecessor)?.endedAt === null)) {
           await sessions.retirePredecessor(job).catch(error => report(`handover retirement: ${error.message}`));
@@ -307,6 +319,7 @@ ${details}`, {
           if (view?.state !== 'idle' || view.active || view.userPrompt) continue;
         }
         sessions.bindSuccessor(old, row);
+        activateOutstanding(job, row);
         await sessions.retirePredecessor(job).catch(error => report(`handover retirement: ${error.message}`));
         continue;
       }
@@ -314,6 +327,50 @@ ${details}`, {
         done && !done.unconfirmed && (done.body || done.noReply) ? 'first-turn-missing-acknowledgement' : undefined);
       if (!reason) continue;
       failHandover(job, reason);
+    }
+  }
+
+  async function followUpHandoverWork() {
+    for (const job of sessions.jobs.values()) {
+      if (!job.handoverItems?.length || job.handoverWorkStarted || !job.handoverBound || job.stopping) continue;
+      const activation = mail.messages.find(message => message.id === activationId(job));
+      const effectiveAt = activation?.received?.at;
+      if (effectiveAt == null || now() - effectiveAt < handoverWorkWait) continue;
+      const row = sessions.rowFor(job.row.addr);
+      if (row?.endedAt !== null || parentFor(row.addr) !== row.addr) continue;
+      const notices = notifications.list(row.project, false, true);
+      const escalationId = `handover-work:${job.firstId}`;
+      if (notices.some(event => event.id === escalationId)) continue;
+      const tools = sessions.events(row.addr).filter(event => (event.at ?? event.receivedAt) >= effectiveAt && !event.agent_id && !event.isSidechain &&
+        !event.parent_tool_use_id && !event.parentToolUseId &&
+        /^(?:PreToolUse|tool_call_started|tool_call_input|tool_use|function_call|custom_tool_call)$/
+          .test(event.hook_event_name ?? event.payload?.type ?? event.type));
+      const evidence = [
+        ...tools.map(event => JSON.stringify(event.tool_input ?? event.input ?? event.payload?.arguments ??
+          event.payload?.input ?? event.command ?? '')),
+        ...mail.messages.filter(message => message.from?.addr === row.addr && message.createdAt >= effectiveAt).map(message => message.text),
+        ...notices.filter(event => event.addr === row.addr && event.at >= effectiveAt && ['project-completed', 'gate-completed', 'needs-decision']
+          .includes(event.type)).map(event => [event.phase, event.gate, event.text].filter(Boolean).join(' ')),
+      ];
+      const remaining = job.handoverItems.filter(item => !startedOutstanding(item, evidence));
+      if (!remaining.length) {
+        sessions.markHandoverStarted(job);
+        continue;
+      }
+      const id = batchDeliveryId(job.firstId, 'handover-do-now');
+      const nudge = mail.messages.find(message => message.id === id);
+      if (nudge && now() - (nudge.received?.at ?? nudge.createdAt) < handoverWorkWait) continue;
+      const target = sessions.targetBinding(row);
+      const view = await sessions.transport.inspect(target).catch(() => undefined);
+      if (view?.state !== 'idle' || view.active || view.userPrompt) continue;
+      const text = `交接里有待办：${clip(remaining.join(' · '), 400)}`;
+      if (!nudge) {
+        saved(target, text, { id });
+      } else {
+        notifications.add({ id: escalationId, project: row.project, addr: row.addr, at: now(),
+          type: 'needs-decision', reason: 'handover-work-unstarted', text, deliveryId: nudge.id,
+          ...(row.role === 'leader' && { auditor: true, batch: 'leader-handover-work' }) });
+      }
     }
   }
 
@@ -740,7 +797,9 @@ ${details}`, {
     if (request?.expectReply && request.completion?.relay?.deliveryId === message.id &&
         request.target.addr === message.from?.addr && parentFor(request.from?.addr) === row.addr) return;
     if (!auditorWakeSource(message, { startupId: job?.firstId,
-      handoverId: job?.handoverReportId, senderRole: sessions.rowFor(message.from?.addr)?.role })) return auditorWakeFiltered;
+      handoverId: job?.handoverReportId,
+      handoverFollowupId: job?.handoverBound && job.handoverItems?.length && batchDeliveryId(job.firstId, 'handover-do-now'),
+      senderRole: sessions.rowFor(message.from?.addr)?.role })) return auditorWakeFiltered;
   }
 
   const retainMs = row => workerWarmMs(policy, row.cli);
@@ -971,6 +1030,7 @@ ${details}`, {
     }, {
       async beforeDispatch() {
         await settleHandovers();
+        await followUpHandoverWork();
         await org.collect(sessions.rows());
         await rotation.advance();
         await stepRelay(now());
@@ -999,7 +1059,11 @@ ${details}`, {
       now,
       messageIssue,
       canDispatchMessage: message => !sessions.holdsForHandover(message) && !rotation.holds(message.target.addr) &&
-        v2.deliverable(message),
+        v2.deliverable(message) && (() => {
+          const job = sessions.jobs.get(message.target.addr);
+          if (!job?.handoverItems?.length || !job.handoverBound || message.rotationActivation) return true;
+          return mail.messages.some(item => item.id === activationId(job) && item.received && !deliveryFailed(item));
+        })(),
       stallMs: policy.delivery?.stallMs ?? uncertainWindow ?? defaultStallMs,
       coalesceMs: policy.delivery?.coalesceMs ?? defaultCoalesceMs,
       async decorate(message, peers) {
@@ -1328,7 +1392,7 @@ ${details}`, {
             throw new CommandError('id-conflict', `Phase ${phase} already has a different completion (${id})`);
           }
           notifications.add({ id, project: name, at: now(), type: 'project-completed',
-            ...(phase !== undefined && { phase }), text: args.complete });
+            ...(phase !== undefined && { phase }), ...(actor && { addr: actor.addr }), text: args.complete });
           notifications.retryLoggedCompletion(id);
           if (!prior?.pushRoute || prior.pushRoute === 'log') await pushNotifications();
           const completion = notifications.list(name, false, true).find(event => event.id === id);

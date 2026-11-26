@@ -93,9 +93,10 @@ Worker 线统一由 OAR 托管。新增特殊 worker（例如 Claude TUI worker�
    - `## Unresolved items`　未决事项和当前责任人。
    - `## User preferences and trust`　用户原话、偏好、Worker 与模型的可信度判断及依据。
    - `## Next action`　接任后的首个动作、触发条件和解阻人。
+   - `## Do now`（可选）逐条列出接管后立即继续的动作，附卡片、门禁、阶段 ID 或路径。
    - `## Rerouted messages`　在途消息 ID 与改投或作废建议。loomd 在事实卡中列实际处置。
 
-3. 运行 `"$LOOM_BIN" rotate --self` 并结束当前回合。继任者首轮只核对原件。首轮是常规首行格式的例外，最终回复首行原样写 `HANDOVER-ACK` 完整确认行，逐行报告现查的 `HEAD:`、`Branch:`、`Base SHA:`、`WIP:` 和 `Rulings:`，附原件路径。有差异则第二行写 `MISMATCH`，列明差异后停。另一方用 `rotation-policy verify` 登记结论，loomd 送达确认。收到确认后立即执行触发条件已满足的首个动作。
+3. 运行 `"$LOOM_BIN" rotate --self` 并结束当前回合。继任者首轮只核对原件。首轮是常规首行格式的例外，最终回复首行原样写 `HANDOVER-ACK` 完整确认行，逐行报告现查的 `HEAD:`、`Branch:`、`Base SHA:`、`WIP:` 和 `Rulings:`，附原件路径。有差异则第二行写 `MISMATCH`，列明差异后停。另一方用 `rotation-policy verify` 登记结论，loomd 送达确认。收到「接管生效」后执行 `Do now` 与触发条件已满足的首个动作。普通换班在原生 ACK 后自动送达该信封。空闲三分钟仍未开始时 loomd 提醒一次，再空闲三分钟则升级。
 4. 前任在核对期间在线并保持只读。失败时恢复前任，本阶段停止换班并报告 Super。首报发出后 30 分钟仍无人核实，loomd 升级给 Super，交接保持待定。实质核对失败时才锁住同阶段。继任者当日要改合入时机、并发上限或预算，须由另一方或 Super 登记确认。Super 可用 `loom rotate --target leader|auditor` 选择角色和运行配置。
 5. 阶段或目标收尾时归档结果，用 `loom notifications --project "$PROJECT" --complete "$SUMMARY" --phase "$PHASE"` 登记完成。查看回执中的推送去向。若收到 `notification-pending`，记录已保存的完成 ID，路线恢复后以原参数重试。项目收尾时用 `loom stop` 关闭会话。清理 worktree 前先把暂存、未暂存及授权范围内未跟踪的草稿归档成可恢复的补丁，记录路径。最后用 `loom doctor --project "$PROJECT"` 核对残留。
 

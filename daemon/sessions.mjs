@@ -9,6 +9,7 @@ import { hc, hcAt, tui, addressPattern } from '../inbox/tui.mjs';
 import { wireText } from '../inbox/message.mjs';
 import { recordLifecycle } from '../handover/index.mjs';
 import { generateBrief } from '../handover/brief.mjs';
+import { extractOutstanding } from '../handover/outstanding.mjs';
 import { replyForDelivery } from '../inbox/reply-file.mjs';
 import { eventPath, jsonRows, readText, syncDirectory, writeState } from './io.mjs';
 import { bindOarTranscript, checkedTranscript, oarControl, oarDelivery, oarEnd, oarSnapshot, trackOar } from './oar.mjs';
@@ -595,20 +596,25 @@ export function ownedSessions(project, index, report, {
     let prompt = input.prompt;
     let handoverAck;
     let compactHandover;
+    let handoverItems;
     if (predecessor) {
       const { brief } = await generateBrief({ role: input.role, project: name, projectDir: project, from: predecessor.addr,
         index, locate: false });
       if (rotatingRoles.includes(input.role)) {
         handoverAck = `HANDOVER-ACK ${randomUUID()}`;
         const state = input.role === 'leader' || selfHandoff ? `\n\n${handoverState(predecessor)}` : '';
+        const note = extractOutstanding(selfHandoff?.note);
+        const startup = extractOutstanding(prompt);
+        handoverItems = [...new Set([...note.items, ...startup.items])];
         const judgment = selfHandoff ?
-          `\n\n## 交班判断\n${selfHandoff.notePath}\n原因：${rotationReasonText(selfHandoff.reason)}\n\n${selfHandoff.note.trimEnd()}` : '';
+          `\n\n## 交班判断\n${selfHandoff.notePath}\n原因：${rotationReasonText(selfHandoff.reason)}\n\n${note.background}` : '';
         const rotationInstructions = selfHandoff?.v2 ?
           '\n\n首轮只核对原件。首行写完整确认码。逐行照抄事实卡的 HEAD、Branch、Base SHA、WIP、Rulings 标签，并报告现查的值。若发现不一致，第二行写 MISMATCH，列明差异后结束。接管生效通知到达后执行 Next action。' : '';
-        const complete = `${brief.trimEnd()}${state}${judgment}${rotationInstructions}${selfHandoff?.facts ? '\n\n' + selfHandoff.facts : ''}\n\n## 启动指令\n${prompt}\n\n## 交接确认\n${handoverAck}\n`;
+        const outstanding = handoverItems.length ? handoverItems.map(item => '- ' + item).join('\n') : '无';
+        const complete = `## Do now\n${outstanding}\n\n${brief.trimEnd()}${state}${judgment}${rotationInstructions}${selfHandoff?.facts ? '\n\n' + selfHandoff.facts : ''}\n\n## 启动指令\n${startup.background}\n\n## 交接确认\n${handoverAck}\n`;
         compactHandover = mode === 'tui';
         prompt = compactHandover ? complete :
-          `Complete the ${input.role === 'leader' ? 'Leader' : 'Auditor'} handover in this first native turn. ${replyForDelivery(project, complete, 0)}. Resolve the path from ${project}. Read the full file through its final acknowledgement line, then copy that line exactly onto the first line of your final reply. Include the current SHA and relevant paths you verified. This first turn is for verification. Follow the report format in the briefing.` +
+          `Complete the ${input.role === 'leader' ? 'Leader' : 'Auditor'} handover in this first native turn. ${replyForDelivery(project, complete, 0)}. Resolve the path from ${project}. Read the full file through its final acknowledgement line, then copy that line exactly onto the first line of your final reply. Include the current SHA and relevant paths you verified. This first turn is for verification. Follow the report format in the briefing. When Loom sends 接管生效, start the Do now items.` +
           (row.role === 'leader' ? '\n\n' + leaderWorkerGuidance : '');
       } else {
         prompt = `先读前任简报及任务指定的交接记录，再开始接管。\n\n${brief.trimEnd()}\n\n## 启动指令\n${prompt}`;
@@ -624,7 +630,7 @@ export function ownedSessions(project, index, report, {
     if (compactHandover) {
       // Keep a fresh TUI's startup wire within a single holder chunk.
       const pointer = replyForDelivery(project, prompt, 0);
-      prompt = `${pointer} relative to $LOOM_PROJECT. Read the entire briefing and copy its final HANDOVER-ACK line verbatim onto the first line of your final reply. Include the SHAs and paths you verified. Follow the briefing's report format. For v2, write MISMATCH on line two if a fact differs and finish the turn. When Loom sends 接管生效, perform the Next action.`;
+      prompt = `${pointer} relative to $LOOM_PROJECT. Read the entire briefing and copy its final HANDOVER-ACK line verbatim onto the first line of your final reply. Include the SHAs and paths you verified. Follow the briefing's report format. For v2, write MISMATCH on line two if a fact differs and finish the turn. When Loom sends 接管生效, start the Do now items and follow Next action.`;
     }
     let checkpoint;
     if (row.role === 'worker') {
@@ -652,6 +658,7 @@ export function ownedSessions(project, index, report, {
         rotationReason: selfHandoff?.reason ?? (input.profileChoice !== undefined ? 'switch' : 'handover') }),
       ...(herdr && { herdr }),
       ...(handoverAck && { handoverAck }),
+      ...(handoverItems?.length && { handoverItems }),
       ...(selfHandoff && { selfRotationId: selfHandoff.id }),
       ...(selfHandoff?.v2 && { rotationV2: true, rotationPhase: selfHandoff.phase, rotationFacts: selfHandoff.expectedFacts }),
       ...(compactHandover && { compactHandover }),
@@ -1260,5 +1267,9 @@ export function ownedSessions(project, index, report, {
     shutdown, upgradeSessions, upgradeHolder, jobs, managedHc, sealed, lastActivity,
     routeParent, bindSuccessor, retirePredecessor, finalizeV2, legacyPeerCaller, legacySessions, liveCaller, successorOf, holdsForHandover, rememberUserPrompt, pathWarnings, rememberLiveness, adoptLayout,
     runtimeContext: addr => running.get(addr)?.session.contextUsage?.()?.value,
+    markHandoverStarted(job) {
+      save({ ...job, handoverWorkStarted: true });
+      job.handoverWorkStarted = true;
+    },
     finishObserved(row, exit, at) { return finish(jobs.get(row.addr), row, at, exit); } };
 }
