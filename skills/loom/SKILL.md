@@ -87,7 +87,7 @@ Worker 线统一由 OAR 托管。新增特殊 worker（例如 Claude TUI worker�
 
 ## 换班与收尾
 
-1. Leader 和 Auditor 在当前卡结算后交班。设置 `rotation.mode: "v2"` 才启用这套自动建议。启用后，loomd 根据结构化阶段、授权裁决、切换密度及有原件支持的事实错误给出建议。绝对上下文高水位进入只读核对。轮数、运行时长、长等唤醒和剩余百分比用于观测。P0 事件立即冻结写入并启动换班。loomd 处理错开、防抖和在途改投，有拒绝按回执处理。
+1. Leader 和 Auditor 在当前卡结算后交班。设置 `rotation.mode: "v2"` 才启用这套自动建议。启用后，loomd 根据主目标、授权裁决、经核实的漏派或事实错误给出换班建议。压缩、子阶段和长期运行时，按随投递收到的提醒用命令现查 SHA、路径和数值，并定期核对账本。绝对上下文高水位进入只读核对。轮数、运行时长、长等唤醒和剩余百分比用于观测。P0 事件立即冻结写入并启动换班。loomd 处理错开、防抖和在途改投，有拒绝按回执处理。
 2. 运行 `"$LOOM_BIN" rotate --self --prepare` 取得路径和在途卡片。交接单不超过 60 行，以下 Markdown 标题均须有正文，没有的项目写「无」。
 
    - `## Status`　状态单。按准备回执填写 `Branch:`、`Base SHA:`、`WIP:`，并列目标、证据与在途卡片 ID。
@@ -99,8 +99,8 @@ Worker 线统一由 OAR 托管。新增特殊 worker（例如 Claude TUI worker�
    - `## Do now`（可选）逐条列出接管后立即继续的动作，附卡片、门禁、阶段 ID 或路径。
    - `## Rerouted messages`　在途消息 ID 与改投或作废建议。loomd 在事实卡中列实际处置。
 
-3. 运行 `"$LOOM_BIN" rotate --self` 并结束当前回合。继任者首轮只核对原件。首轮是常规首行格式的例外，最终回复首行原样写 `HANDOVER-ACK` 完整确认行，逐行报告现查的 `HEAD:`、`Branch:`、`Base SHA:`、`WIP:` 和 `Rulings:`，附原件路径。有差异则第二行写 `MISMATCH`，列明差异后停。另一方用 `rotation-policy verify` 登记结论，loomd 送达确认。收到「接管生效」后执行 `Do now` 与触发条件已满足的首个动作。普通换班在原生 ACK 后自动送达该信封。空闲三分钟仍未开始时 loomd 提醒一次，再空闲三分钟则升级。
-4. 前任在核对期间在线并保持只读。失败时恢复前任，本阶段停止换班并报告 Super。首报发出后 30 分钟仍无人核实，loomd 升级给 Super，交接保持待定。实质核对失败时才锁住同阶段。继任者当日要改合入时机、并发上限或预算，须由另一方或 Super 登记确认。Super 可用 `loom rotate --target leader|auditor` 选择角色和运行配置。
+3. 运行 `"$LOOM_BIN" rotate --self` 并结束当前回合。v2 中另一方先用命令核对交接单的 SHA、路径和在途项，按投递回执运行 `rotation-policy verify-note`。继任者首轮只核对原件。首轮是常规首行格式的例外，最终回复首行原样写 `HANDOVER-ACK` 完整确认行，逐行报告现查的 `HEAD:`、`Branch:`、`Base SHA:`、`WIP:` 和 `Rulings:`，附原件路径。有差异则第二行写 `MISMATCH`，列明差异后停。另一方用 `rotation-policy verify` 登记结论，loomd 送达「接管生效」。普通换班在原生 ACK 后自动送达该信封。收到信封后执行 `Do now` 与触发条件已满足的首个动作。空闲三分钟仍未开始时 loomd 提醒一次，再空闲三分钟则升级。
+4. 前任在首报核对期间在线并保持只读。另一方以 `rotation-policy verify-decision` 核对首个完整阶段的决定，窗口内不再换另一方。失败时恢复前任，本阶段停止换班并报告 Super。首报发出后 30 分钟仍无人核实，loomd 升级给 Super，交接保持待定。实质核对失败时才锁住同阶段。继任者当日要改合入时机、并发上限或预算，须由另一方或 Super 登记确认。Super 可用 `loom rotate --target leader|auditor` 选择角色和运行配置。
 5. 阶段或目标收尾时归档结果，用 `loom notifications --project "$PROJECT" --complete "$SUMMARY" --phase "$PHASE"` 登记完成。查看回执中的推送去向。若收到 `notification-pending`，记录已保存的完成 ID，路线恢复后以原参数重试。项目收尾时用 `loom stop` 关闭会话。清理 worktree 前先把暂存、未暂存及授权范围内未跟踪的草稿归档成可恢复的补丁，记录路径。最后用 `loom doctor --project "$PROJECT"` 核对残留。
 
 Worker 调用 Loom 命令使用绝对可执行路径 `"$LOOM_BIN"`。其他托管角色可使用 `"$LOOM_BIN"` 或由 Loom 注入的 `PATH` 解析的 `loom`。

@@ -11,6 +11,7 @@ import { deliveryFailed } from '../inbox/message.mjs';
 import { rotatingRoles } from '../index/index.mjs';
 import { rotationSettings } from '../lib/rotation-settings.mjs';
 import { readText, writeState } from './io.mjs';
+import { consecutiveOmissions, referencedAnomalies } from './rotation-probes.mjs';
 
 const day = 86400_000;
 const idPattern = /^[A-Za-z0-9][A-Za-z0-9_.:/-]{0,119}$/;
@@ -24,14 +25,18 @@ const git = (cwd, args) => {
   } catch { return ''; }
 };
 const lines = (heading, items) => [heading, ...items.map(item => '- ' + item)].join('\n');
-const reasonOrder = ['verified-error', 'authority-ruling', 'project-change', 'phase-change', 'switch-density'];
+const reasonOrder = ['constraint-omissions', 'verified-error', 'authority-ruling', 'project-change', 'major-goal-change', 'ruling-churn'];
 const sha = /^(?:[0-9a-f]{40}|[0-9a-f]{64})$/;
 export const rotationReasonText = code => ({
   'verified-error': '加严核查期间再次发现经原件证实的事实错误',
   'authority-ruling': 'Super 登记了角色或授权口径变更',
   'project-change': '项目工作目录或 Git 根已变更',
-  'phase-change': '结构化事件登记了新的阶段或目标',
-  'switch-density': '近 24 小时的卡片、子系统切换或压缩达到阈值',
+  'major-goal-change': 'Super 登记了新的主要目标',
+  'ruling-churn': '自接任起两条新裁决取代了早期规则',
+  'constraint-omissions': '另一方核实连续两次派工遗漏硬约束',
+  'rotation-note-rejected': '另一方核对后退回交接单',
+  'rotation-note-stale': '交接期间核对方、仓库事实或在途工作有变动',
+  'rotation-note-timeout': '交接单等待核实时已达时限，前任继续工作',
   'high-water': '当前上下文达到该 CLI 的绝对高水位',
   'context-window': '最近调用达到已配置的窗口比例', 'context-limit': '达到手动配置的上下文上限',
   'post-compaction': '压缩后的剩余上下文再次低于已配置的比例', gate: '已登记配置中的门禁边界',
@@ -60,8 +65,8 @@ export function switchDensity(records, usage, config, cli, at) {
   const recent = records.filter(item => item.at > at - day && item.at <= at);
   const cards = new Set(recent.map(item => item.card));
   const mainlines = new Set(recent.map(item => item.mainline).filter(Boolean));
-  const paths = recent.flatMap(item => item.paths).filter(path =>
-    !/^(?:docs?|tasks|\.project|ledger)(?:\/|$)/i.test(path) && !/\.(?:md|mdx|rst|adoc)$/i.test(path));
+  const paths = recent.flatMap(item => item.paths instanceof Set ? [...item.paths] : item.paths ?? []).filter(path =>
+    typeof path === 'string' && !/^(?:docs?|tasks|\.project|ledger)(?:\/|$)/i.test(path) && !/\.(?:md|mdx|rst|adoc)$/i.test(path));
   const subsystems = new Set(paths.map(path => {
     const match = Object.keys(config.subsystemPrefixes).filter(prefix => path === prefix || path.startsWith(prefix + '/'))
       .sort((a, b) => b.length - a.length)[0];
@@ -95,7 +100,7 @@ function primaryEvidence(project, reference) {
   } catch { invalid('Primary evidence must be an existing, project-local source file'); }
 }
 
-export function rotationPolicy(project, { now, sessions, mail, notifications, policy, propose, emergency }) {
+export function rotationPolicy(project, { now, sessions, mail, notifications, policy, propose, emergency, reviewNote }) {
   const path = rotationStatePath(project);
   let data = JSON.parse(readText(path, '{"projects":{},"sessions":{},"handovers":{},"events":{}}'));
   const config = () => rotationSettings(policy());
@@ -113,6 +118,8 @@ export function rotationPolicy(project, { now, sessions, mail, notifications, po
   };
   const current = addr => data.sessions[addr] ?? {};
   const pending = successor => data.handovers[successor];
+  const noteReviews = () => data.noteReviews ??= {};
+  const counterpart = row => live(row.project, row.role === 'leader' ? 'auditor' : 'leader');
   const live = (name, nameRole) => sessions.rows().findLast(row => row.project === name && row.role === nameRole &&
     row.endedAt === null && sessions.jobs.has(row.addr) && !sessions.jobs.get(row.addr).stopping &&
     sessions.routeParent(row.addr)?.addr === row.addr && !pending(row.addr)?.waiting);
@@ -123,28 +130,41 @@ export function rotationPolicy(project, { now, sessions, mail, notifications, po
   });
   const mark = (row, reason, id) => role(row.addr).reasons[reason] ??= id;
   const seniors = name => rotatingRoles.map(nameRole => live(name, nameRole)).filter(Boolean);
+  const strict = (row, source, id) => {
+    const state = role(row.addr);
+    (state.strict ??= {})[source] = id;
+  };
   function marker(name, type, id, sourceAt = now()) {
     const entry = scope(name);
-    if (entry.markers[type] === id) return;
-    const baseline = entry.markers[type] === undefined;
+    const previous = entry.markers[type];
+    if (previous === id) return;
     entry.markers[type] = id;
     if (type === 'gate') return;
-    if (baseline && !entry.phase && type !== 'completion') {
-      entry.phase = 1;
-      return;
-    }
     entry.phase++;
-    for (const row of seniors(name)) if (row.startedAt <= sourceAt) mark(row, 'phase-change', id);
+    entry.phaseAt = sourceAt;
+    for (const row of seniors(name)) {
+      if (row.startedAt > sourceAt) continue;
+      if (type === 'goal' && previous !== undefined) mark(row, 'major-goal-change', id);
+      strict(row, 'phase', key(type, id, entry.phase));
+    }
   }
 
   function syncMarkers(name) {
-    scope(name).observedAt ??= now();
+    const state = scope(name);
+    state.observedAt ??= now();
     for (const item of notifications.list(name, false, true)) {
       if (!['gate-completed', 'project-completed'].includes(item.type) || data.events[item.id]) continue;
       event(item.id, item.type, { project: name });
       if (item.type === 'gate-completed') marker(name, 'gate', item.gate);
-      else if (item.phase) marker(name, 'phase', item.phase, item.at);
-      else if (item.at >= scope(name).observedAt) marker(name, 'completion', item.id, item.at);
+      else if (item.phase) {
+        if (state.markers.phase === item.phase) state.completedPhase = state.phase;
+        else if (item.at >= (state.phaseAt ?? 0)) {
+          marker(name, 'phase', item.phase, item.at);
+          // A completion without an observed start establishes a boundary, but
+          // cannot prove the incoming role served the completed phase in full.
+          state.completedPhase = state.phase - 1;
+        }
+      } else if (item.at >= state.observedAt) state.markers.completion = item.id;
     }
   }
 
@@ -170,7 +190,8 @@ export function rotationPolicy(project, { now, sessions, mail, notifications, po
       const job = sessions.jobs.get(worker.addr);
       if (!job) continue;
       const entry = state.work[worker.addr] ??= { at: worker.startedAt, card: worker.task, mainline: scope(row.project).markers.goal ?? worker.wave,
-        paths: plannedCardPaths(job.prompt), commits: [] };
+        paths: [...plannedCardPaths(job.prompt)], commits: [] };
+      if (!Array.isArray(entry.paths)) entry.paths = [...plannedCardPaths(job.prompt)];
       const done = mail.messages.find(item => item.id === job.firstId)?.completion;
       const end = done?.git?.head ?? done?.head;
       const start = job.cardStart?.head ?? worker.baseCommit;
@@ -185,19 +206,82 @@ export function rotationPolicy(project, { now, sessions, mail, notifications, po
     for (const id of Object.keys(state.work)) if (state.work[id].at <= at - day) delete state.work[id];
   }
 
+  function probe(row, source, subject, findings) {
+    for (const finding of findings) {
+      event('probe:' + key(row.addr, source, subject, finding), 'anomaly-probe',
+        { addr: row.addr, project: row.project, source, subject, finding, status: 'candidate' });
+    }
+  }
+
+  function recordDispatch(actor, worker, message, body, slot = worker.task) {
+    if (!enabled() || !rotatingRoles.includes(actor?.role) || actor.project !== worker.project) return;
+    checkpoint(() => {
+      const dispatches = role(actor.addr).dispatches ??= {};
+      if (dispatches[message.id]) return;
+      dispatches[message.id] = { id: message.id, worker: worker.addr, slot, at: now() };
+      const cwd = worker.cwd ?? actor.cwd ?? project;
+      probe(actor, 'dispatch', message.id, referencedAnomalies(project, cwd, body, git, { dispatch: true }));
+      reviewDecision(actor, 'dispatch', message.id, slot);
+    });
+  }
+
+  function observeWorkerFailures(row, state) {
+    if (!state.dispatches) return;
+    const streaks = state.workerFailures ??= {};
+    const dispatches = state.dispatches;
+    const finished = mail.messages.flatMap(message => {
+      const entry = dispatches[message.id];
+      if (!entry || entry.observed || !message.completion && !deliveryFailed(message)) return [];
+      return [{ entry, message, at: message.completion?.at ?? message.refusedAt ?? message.createdAt }];
+    }).sort((a, b) => a.at - b.at);
+    for (const { entry, message } of finished) {
+      entry.observed = true;
+      const { slot } = entry;
+      const done = message.completion;
+      const cause = done?.outcome?.kind === 'failed' ? done.outcome.failure ?? sessions.jobs.get(entry.worker)?.error :
+        deliveryFailed(message) ? message.issue : undefined;
+      if (!slot) continue;
+      if (typeof cause !== 'string' || !/^[a-z][a-z0-9_.-]{1,79}$/i.test(cause)) {
+        if (done && !done.unconfirmed && done.outcome?.kind === 'completed' && !/^(?:FAILED|BLOCKED)\b/i.test(done.body ?? '')) delete streaks[slot];
+        continue;
+      }
+      const count = streaks[slot]?.cause === cause ? streaks[slot].count + 1 : 1;
+      streaks[slot] = { cause, count };
+      if (count === config().repeatedWorkerFailures) probe(row, 'worker-slot', message.id,
+        [{ kind: 'repeated-worker-failure', value: slot, cause, count }]);
+    }
+  }
+
+  function sync(name) {
+    if (!enabled()) return;
+    checkpoint(() => {
+      syncMarkers(name);
+      syncRulings(name);
+      for (const row of seniors(name)) observeWorkerFailures(row, role(row.addr));
+    });
+  }
+
+  function captureStrict(row, usage) {
+    const settings = config();
+    const state = role(row.addr);
+    if (usage.compactions >= settings.strictCompactions) strict(row, 'compactions', row.addr);
+    if (now() - row.startedAt >= settings.strictRuntimeMs) strict(row, 'runtime', row.addr);
+    if (usage.turns != null) state.turns = Math.max(state.turns ?? 0, usage.turns);
+  }
+
   function observe(row, usage, snapshot, safe) {
     if (!enabled() || !rotatingRoles.includes(row.role)) return;
     const at = now();
     const settings = config();
     const { reason, id } = checkpoint(() => {
-      syncMarkers(row.project);
       const state = role(row.addr);
       const partition = scope(row.project);
       const nativeCwd = isAbsolute(usage.cwd ?? '') ? usage.cwd : row.cwd;
-      const root = inDirectory(project, nativeCwd) ? git(nativeCwd, ['rev-parse', '--show-toplevel']) : '';
-      const identity = [nativeCwd, root];
       const prior = partition[row.role];
-      if (prior && (prior.cwd !== identity[0] || prior.git !== identity[1])) {
+      const root = inDirectory(project, nativeCwd) ? git(nativeCwd, ['rev-parse', '--show-toplevel']) || prior?.git :
+        `outside:${nativeCwd}`;
+      const identity = [nativeCwd, root];
+      if (prior?.git && root && prior.git !== root) {
         if (partition.workspaceChangedAt !== at) partition.phase++;
         partition.workspaceChangedAt = at;
         mark(row, 'project-change', key(...identity, partition.phase));
@@ -222,14 +306,26 @@ export function rotationPolicy(project, { now, sessions, mail, notifications, po
         if (!message.gateId || message.target.addr !== row.addr || !message.received || !message.completion?.body ||
             message.completion.unconfirmed || message.completion.at <= at - day) continue;
         const verdict = /^(?:\*{0,2})(REJECT|APPROVE|PASS)\b/i.exec(message.completion.body.trimStart())?.[1].toUpperCase();
-        if (verdict) recordAudit(row.project, message.gateId, verdict === 'REJECT' ? 'return' : 'pass', message.id, row, message.completion.at);
+        if (verdict) {
+          recordAudit(row.project, message.gateId, verdict === 'REJECT' ? 'return' : 'pass', message.id, row, message.completion.at);
+          reviewDecision(row, 'gate-verdict', message.id, `${verdict} ${message.gateId}`, message.completion.at);
+        }
         state.work[message.id] ??= { at: message.completion.at, card: message.gateId,
           mainline: partition.markers.goal ?? message.gateProject,
           paths: [...new Set([...(message.gatePaths ?? []), ...commitPaths(project, message.gateBase, message.gateCandidate)])] };
       }
       const density = switchDensity(Object.values(state.work), usage, settings, row.cli, at);
       state.metrics = { ...density, cli: row.cli };
-      if (density.hit) mark(row, 'switch-density', key(partition.phase, row.addr));
+      delete state.reasons['switch-density'];
+      delete state.reasons['phase-change'];
+      captureStrict(row, usage);
+      if (density.hit || usage.compactions >= settings.strictCompactions) {
+        strict(row, 'density', row.addr);
+        if (!state.evaluation && safe && snapshot?.state === 'idle' && !snapshot.active && !snapshot.userPrompt) {
+          state.evaluation = key('rotation-evaluation', row.addr);
+          notice(row, 'rotation-evaluation', state.evaluation, '干净边界：评估是否需要换班，继续加严核对。', true);
+        }
+      }
       const threshold = settings.highWaterTokens[row.cli];
       if (threshold && (usage.tokens ?? usage.inputTokens) >= threshold && !state.highWater) {
         state.highWater = { at, tokens: usage.tokens ?? usage.inputTokens, threshold };
@@ -327,11 +423,76 @@ export function rotationPolicy(project, { now, sessions, mail, notifications, po
     });
   }
 
+  function supervised(record, partition) {
+    return partition.phase <= record.phase + 1 && !(partition.completedPhase > record.phase);
+  }
+
+  function reviewDecision(row, kind, subject, summary, at = now()) {
+    const partition = scope(row.project);
+    const record = partition.last;
+    const handover = pending(row.addr);
+    const reviewer = record?.reviewer ?? handover?.verification?.actor;
+    if (record?.successor !== row.addr || !reviewer || !supervised(record, partition) ||
+        at < (handover?.completedAt ?? Infinity)) return;
+    const id = key(row.addr, kind, subject);
+    const decisions = handover.decisions ??= {};
+    decisions[id] ??= { id, kind, subject, summary, at, reviewer };
+  }
+
+  function recordDecision(row, kind, subject, summary) {
+    if (enabled() && rotatingRoles.includes(row?.role)) checkpoint(() => reviewDecision(row, kind, subject, summary));
+  }
+
+  function unverifiedDecisions(reviewer) {
+    return Object.entries(data.handovers).flatMap(([successor, record]) =>
+      Object.values(record.decisions ?? {}).filter(item => item.reviewer === reviewer && !item.verification)
+        .map(item => ({ ...item, successor, role: record.role })));
+  }
+
   function blocked(row, urgent) {
     const state = scope(row.project);
     if (state.failures[state.phase]) return 'phase-failed';
     if (urgent) return;
-    if (state.last && state.last.phase >= state.phase) return state.last.role === row.role ? 'same-phase' : 'stagger';
+    if (Object.values(data.noteReviews ?? {}).some(note => note.project === row.project && note.addr !== row.addr &&
+        !note.closed && !note.launchedAt)) return 'stagger';
+    if (state.last?.role === row.role && state.last.phase >= state.phase) return 'same-phase';
+    if (state.last && state.last.role !== row.role && supervised(state.last, state) ||
+        unverifiedDecisions(row.addr).length) return 'stagger';
+  }
+
+  const noteProof = (row, note, work) => key(note, repositoryFacts(row), work.map(({ addr, task, wave }) =>
+    [addr, task, wave].join(' ')).sort());
+
+  function stageNote(row, request, work) {
+    const member = counterpart(row);
+    if (!member) return noteReviewExpired(row, request) ? { reason: 'rotation-note-timeout' } : { waiting: true };
+    const proof = noteProof(row, request.note, work);
+    const review = checkpoint(() => {
+      const existing = noteReviews()[request.id];
+      if (existing) return existing;
+      const record = noteReviews()[request.id] = { id: request.id, addr: row.addr, project: row.project,
+        reviewer: member.addr, proof, at: now() };
+      probe(row, 'handover-note', request.id, referencedAnomalies(project, row.cwd, request.note, git));
+      return record;
+    });
+    if (review.verification?.verdict === 'fail') return { reason: 'rotation-note-rejected' };
+    if (review.proof !== proof || review.reviewer !== member.addr) return { reason: 'rotation-note-stale' };
+    if (review.verification?.verdict === 'pass') return { id: review.id };
+    const deliveryId = reviewNote(member, row, request, work, review.id);
+    if (review.deliveryId !== deliveryId) checkpoint(() => { review.deliveryId = deliveryId; });
+    if (noteReviewExpired(row, request)) return { reason: 'rotation-note-timeout' };
+    return { waiting: true };
+  }
+
+  function noteReviewExpired(row, request) {
+    const review = data.noteReviews?.[request.id];
+    if (review?.verification || now() - (review?.at ?? request.at) < config().verifyTimeoutMs) return false;
+    notice(row, 'note-verification-timeout', request.id, `Loom: ${row.role} 的交接单等待另一方核对已达时限，前任继续工作。`);
+    return true;
+  }
+
+  function closeNote(id) {
+    if (data.noteReviews?.[id]) checkpoint(() => { data.noteReviews[id].closed = true; });
   }
 
   function checkStart(row, handoff) {
@@ -342,8 +503,13 @@ export function rotationPolicy(project, { now, sessions, mail, notifications, po
       throw new CommandError('rotation-phase-locked', rotationReasonText(lock));
     }
     if (!handoff?.v2) throw new CommandError('rotation-note-required', 'Use loom rotate with a structured v2 handover note.');
-    if (!handoff.urgent && !live(row.project, row.role === 'leader' ? 'auditor' : 'leader')) {
-      throw new CommandError('not-ready', 'Start the other senior role before rotating');
+    if (!handoff.urgent) {
+      const approved = data.noteReviews?.[handoff.noteReview];
+      if (!counterpart(row)) throw new CommandError('not-ready', 'Start the other senior role before rotating');
+      if (!approved || approved.id !== handoff.id || approved.addr !== row.addr || approved.closed ||
+          approved.verification?.verdict !== 'pass' || approved.reviewer !== counterpart(row)?.addr) {
+        throw new CommandError('rotation-note-required', 'The live counterpart must verify this handover note before launch');
+      }
     }
     return { phase: scope(row.project).phase };
   }
@@ -352,6 +518,10 @@ export function rotationPolicy(project, { now, sessions, mail, notifications, po
     return checkpoint(() => {
       const record = data.handovers[job.row.addr] ??= { project: row.project, predecessor: row.addr, role: row.role,
         phase, waiting: true, at: now(), newProfile: [job.row.cli, job.row.model], oldProfile: [row.cli, row.model] };
+      if (job.rotationNoteReview) {
+        record.noteReview = job.rotationNoteReview;
+        noteReviews()[record.noteReview].launchedAt = record.at;
+      }
       role(row.addr).holding = job.row.addr;
       role(job.row.addr).checking = true;
       return record;
@@ -401,7 +571,7 @@ export function rotationPolicy(project, { now, sessions, mail, notifications, po
       record.waiting = false;
       record.messages ??= messages;
       const state = scope(row.project);
-      state.last = { phase: record.phase, role: row.role, successor: row.addr };
+      state.last = { phase: state.phase, role: row.role, successor: row.addr, reviewer: record.verification.actor };
       delete role(row.addr).checking;
       delete role(record.predecessor).holding;
       role(record.predecessor).retired = row.addr;
@@ -466,6 +636,7 @@ export function rotationPolicy(project, { now, sessions, mail, notifications, po
 
   function decorate(message, row, usage) {
     if (!enabled() || !row || !rotatingRoles.includes(row.role) || message.startup) return [];
+    if (usage) checkpoint(() => captureStrict(row, usage));
     const prior = mail.messages.filter(item => item.target.addr === row.addr && item.received && !deliveryFailed(item));
     const last = prior.findLast(item => item.completion)?.completion.at ?? row.startedAt;
     const shown = new Set(prior.flatMap(item => item.rotationNotices ?? []));
@@ -476,11 +647,66 @@ export function rotationPolicy(project, { now, sessions, mail, notifications, po
     ].filter(id => !shown.has(id));
     const state = current(row.addr);
     const notes = triggers.map((id, i) => ({ id, text: i === 0 ? facts(row) : '' }));
-    if (state.errors >= 1) notes.push({ id: key(row.addr, 'strict', message.id),
-      text: '加严模式：每个结论现场核对原件，并注明原件路径与行号。' });
+    const triggersStrict = [...Object.entries(state.strict ?? {}), ...(state.errors >= 1 ? [['error', row.addr]] : [])];
+    const strictIds = triggersStrict.map(([source, id]) => key(row.addr, 'strict', source, id)).filter(id => !shown.has(id));
+    if (strictIds.length) notes.push({ id: key('strict-reminder', ...strictIds), aliases: strictIds,
+      text: `加严核对：报告每项 SHA、路径和数值之前先用命令现查原件，约每 ${config().ledgerTurns} 轮自查裁决账本漂移。` });
+    const ledger = Math.floor((state.turns ?? 0) / config().ledgerTurns);
+    if (ledger > 0 && triggersStrict.length) {
+      const id = key(row.addr, 'ledger-drift', ledger);
+      if (!shown.has(id)) notes.push({ id, text: '请用命令自查裁决账本是否出现漂移，核对当前规则和原件。' });
+    }
+    if (state.evaluation && !shown.has(state.evaluation)) notes.push({ id: state.evaluation,
+      text: '换班评估：到达干净边界，请核对语境和已证实错误，再决定是否需要发起换班。' });
+    const unseen = unverifiedDecisions(row.addr).filter(item => !shown.has(item.id)).slice(0, 5);
+    if (unseen.length) notes.push({ id: key('decisions', ...unseen.map(item => item.id)), aliases: unseen.map(item => item.id),
+      text: `请核对新任首阶段决定（${unseen.map(item => item.successor + ' ' + item.id + ' ' + item.kind + ' ' + item.summary).join('；')}）。用 rotation-policy verify-decision --target ADDR --id ID --verdict pass|fail --detail TEXT --evidence FILE 登记。` });
+    const peer = counterpart(row);
+    if (peer) {
+      const candidates = Object.values(data.events).filter(item => item.kind === 'anomaly-probe' && item.addr === peer.addr &&
+        item.status === 'candidate' && !shown.has(item.id)).slice(0, 4);
+      if (candidates.length) notes.push({ id: key('probes', ...candidates.map(item => item.id)), aliases: candidates.map(item => item.id),
+        text: `异常候选待核实：${candidates.map(item => item.id + ' ' + item.finding.kind + ' ' + item.finding.value).join('；')}。仅在查到原件证实后用 rotation-policy error --target ${peer.addr} --id ID 登记。` });
+    }
     if (state.highWater) notes.push({ id: key(row.addr, 'read-only', message.id),
       text: '只读核对：不作新决定。到干净边界后按换班提示处理。' });
     return notes;
+  }
+
+  function registerError(row, id, source, detail) {
+    const state = role(row.addr);
+    const evidence = state.errorEvidence ??= {};
+    const issue = key(source, detail.trim().toLowerCase());
+    if (evidence[issue]) return;
+    evidence[issue] = id;
+    state.errors = (state.errors ?? 0) + 1;
+    if (state.errors >= 2) mark(row, 'verified-error', id);
+  }
+
+  function overturn(row, id, replaces) {
+    const changes = role(row.addr).overturnedRulings ??= {};
+    changes[id] ??= replaces;
+    if (Object.keys(changes).length >= 2) mark(row, 'ruling-churn', id);
+  }
+
+  function syncRulings(name) {
+    const source = projectText(project, 'rulings.md');
+    if (!source) return;
+    const partition = scope(name);
+    const historical = partition.rulings === undefined;
+    const existing = new Set(partition.rulings ?? []);
+    const current = new Set();
+    let id;
+    for (const line of source.split(/\r?\n/)) {
+      const heading = /^#{1,3}\s+(R?\d+)(?=\s|[.、·:：]|$)/i.exec(line);
+      if (heading) { id = heading[1].replace(/^R/i, ''); current.add(id); continue; }
+      const old = /^\s*(?:[-*]\s*)?(?:取代|supersedes)\s*(?::|：)?\s*R?(\d+)(?!\d)/i.exec(line)?.[1];
+      if (!historical && id && old !== id && current.has(old) && !existing.has(id)) {
+        const item = event('ledger-overturn:' + key(name, id), 'ruling-overturn', { project: name, subject: id, replaces: old });
+        for (const row of seniors(name)) if (item.at >= row.startedAt) overturn(row, id, old);
+      }
+    }
+    partition.rulings = [...new Set([...existing, ...current])];
   }
 
   function admin(args, actor, external = false) {
@@ -488,13 +714,13 @@ export function rotationPolicy(project, { now, sessions, mail, notifications, po
     if (!enabled() || !actor || !['super', ...rotatingRoles].includes(actor.role)) {
       throw new CommandError('permission-denied', 'Rotation v2 registration requires an authenticated senior role and v2 policy');
     }
-    const { action, target, id, detail, evidence, verdict, phase, goal, version } = args;
+    const { action, target, id, detail, evidence, verdict, phase, goal, version, supersedes } = args;
     const superOnly = ['scope', 'ruling', 'profile', 'abort'];
     if (superOnly.includes(action) && actor.role !== 'super') throw new CommandError('permission-denied', 'Only Super can register this event');
     const row = target && sessions.resolve(target, actor.addr);
     if (row && (row.project !== actor.project || !rotatingRoles.includes(row.role))) invalid('Choose a senior role in this project');
-    const opposite = row && actor.role !== row.role && rotatingRoles.includes(actor.role);
-    if (restricted(actor.addr) && !['spot-check', 'verify'].includes(action)) throw new CommandError('permission-denied', 'The role is in read-only verification');
+    const opposite = row && actor.role !== row.role && counterpart(row)?.addr === actor.addr;
+    if (restricted(actor.addr) && !['spot-check', 'verify', 'verify-note', 'verify-decision'].includes(action)) throw new CommandError('permission-denied', 'The role is in read-only verification');
     const record = checkpoint(() => {
       if (action === 'scope') {
         if (Boolean(phase) === Boolean(goal) || !idPattern.test(phase ?? goal)) invalid('Use exactly one of --phase or --goal');
@@ -505,7 +731,9 @@ export function rotationPolicy(project, { now, sessions, mail, notifications, po
         if (!idPattern.test(id ?? '') || !['return', 'pass'].includes(verdict) || actor.role !== 'auditor') {
           invalid('Auditor must supply --id CARD --verdict return|pass');
         }
-        recordAudit(actor.project, id, verdict, 'audit:' + key(actor.addr, id, evidence, detail), actor);
+        const subject = 'audit:' + key(actor.addr, id, evidence, detail);
+        recordAudit(actor.project, id, verdict, subject, actor);
+        reviewDecision(actor, 'audit-verdict', subject, `${verdict} ${id}`);
         return scope(actor.project).audits[id];
       }
       if (!row || !text(detail)) invalid('Specify --target and --detail');
@@ -534,7 +762,7 @@ export function rotationPolicy(project, { now, sessions, mail, notifications, po
         return event('profile:' + key(row.addr, version), 'passive', { addr: row.addr, project: row.project, version, detail });
       }
       const source = primaryEvidence(project, evidence);
-      const entry = 'registration:' + key(action, row.addr, id, source, detail, verdict);
+      const entry = 'registration:' + key(action, row.addr, id, source, detail, verdict, supersedes);
       if (data.events[entry]) return data.events[entry];
       const registration = { actor: actor.addr, addr: row.addr, project: row.project, evidence: source, detail, verdict, ...(id && { subject: id }) };
       if (action === 'spot-check' && id && !mail.messages.some(message => message.id === id &&
@@ -542,13 +770,37 @@ export function rotationPolicy(project, { now, sessions, mail, notifications, po
         invalid('Spot check ID must identify a gate packet received by this Auditor');
       }
       if (action === 'ruling') {
-        mark(row, 'authority-ruling', entry);
+        if (supersedes !== undefined) {
+          if (typeof id !== 'string' || typeof supersedes !== 'string' || !idPattern.test(id) || !idPattern.test(supersedes) || id === supersedes) invalid('Specify distinct --id and --supersedes ruling IDs');
+          overturn(row, id.replace(/^R(?=\d)/i, ''), supersedes);
+          registration.supersedes = supersedes;
+        } else mark(row, 'authority-ruling', entry);
+      } else if (action === 'constraint') {
+        const dispatch = typeof id === 'string' && state.dispatches?.[id];
+        const message = dispatch && mail.messages.find(item => item.id === dispatch.id);
+        if (!opposite || !message?.received || deliveryFailed(message) || !['omitted', 'present'].includes(verdict)) {
+          throw new CommandError('permission-denied', 'The live counterpart must cite an actual dispatch ID, evidence, and --verdict omitted|present');
+        }
+        if (dispatch.constraint && dispatch.constraint.verdict !== verdict) invalid('This dispatch already has a constraint verdict');
+        dispatch.constraint ??= { ...registration, id: entry, at: now() };
+        const second = consecutiveOmissions(state.dispatches);
+        if (second) mark(row, 'constraint-omissions', second.id);
+      } else if (action === 'verify-note' || action === 'verify-decision') {
+        const item = action === 'verify-note' ? data.noteReviews?.[id] : pending(row.addr)?.decisions?.[id];
+        if (!opposite || !item || item.reviewer !== actor.addr || !['pass', 'fail'].includes(verdict) ||
+            action === 'verify-note' && (item.closed || item.launchedAt || item.addr !== row.addr ||
+              !mail.messages.some(message => message.id === item.deliveryId && message.target.addr === actor.addr && message.received))) {
+          throw new CommandError('permission-denied', 'Only the designated live counterpart can verify this received note or decision');
+        }
+        if (item.verification && item.verification.verdict !== verdict) invalid('This review already has a verdict');
+        item.verification ??= { ...registration, id: entry, at: now() };
+        if (action === 'verify-decision' && verdict === 'fail') registerError(row, entry, source, detail);
       } else if (action === 'verify') {
         if (!opposite || !['pass', 'fail'].includes(verdict) || !pending(row.addr)?.report || !pending(row.addr)?.waiting || pending(row.addr)?.cancelled) {
           throw new CommandError('permission-denied', 'Only the current other senior may verify a received first report');
         }
         if (pending(row.addr).verification && pending(row.addr).verification.verdict !== verdict) invalid('The first report already has a verdict');
-        pending(row.addr).verification = { ...registration, id: entry, at: now() };
+        pending(row.addr).verification ??= { ...registration, id: entry, at: now() };
       } else if (action === 'rule-change') {
         if (!opposite && actor.role !== 'super') invalid('The other senior or Super must approve a same-day rule change');
         if (!pending(row.addr)?.completedAt || !['merge', 'concurrency', 'budget'].includes(id)) invalid('Supply --id merge|concurrency|budget for the successor');
@@ -562,13 +814,16 @@ export function rotationPolicy(project, { now, sessions, mail, notifications, po
           if (!['overreach', 'fabrication'].includes(verdict)) invalid('Use --verdict overreach|fabrication for P0');
           state.frozen ??= { id: entry, at: now(), verdict, evidence: source, detail };
         } else if (action === 'error' || verdict === 'error') {
-          const issue = key(source, detail.trim().toLowerCase());
-          const evidence = state.errorEvidence ??= {};
-          if (!evidence[issue]) {
-            evidence[issue] = entry;
-            state.errors = (state.errors ?? 0) + 1;
-            if (state.errors >= 2) mark(row, 'verified-error', entry);
+          if (action === 'error' && typeof id === 'string' && id.startsWith('probe:')) {
+            const candidate = data.events[id];
+            if (!opposite || candidate?.kind !== 'anomaly-probe' || candidate.addr !== row.addr) {
+              throw new CommandError('permission-denied', 'Only the live counterpart can confirm this anomaly');
+            }
+            if (candidate.status === 'confirmed') return data.events[candidate.confirmation];
+            candidate.status = 'confirmed';
+            candidate.confirmation = entry;
           }
+          registerError(row, entry, source, detail);
         }
       } else invalid('Unknown rotation policy action');
       return event(entry, action, registration);
@@ -588,11 +843,11 @@ export function rotationPolicy(project, { now, sessions, mail, notifications, po
     }
   }
 
-  return { enabled, observe, admin, passiveEligible: addr => Boolean(current(addr).handledBlock || current(addr).versionChange), authorizeGate, checkProtectedRefs,
-    verificationTimeout, repositoryFacts, missingStatus, reportMatches,
+  return { enabled, observe, sync, admin, passiveEligible: addr => Boolean(current(addr).handledBlock || current(addr).versionChange), authorizeGate, checkProtectedRefs,
+    verificationTimeout, repositoryFacts, missingStatus, reportMatches, recordDispatch,
     firstReportExpired: record => !record.report && now() - record.at >= config().firstReportTimeoutMs,
     canRequest: addr => Boolean(current(addr).highWater && !current(addr).holding && !current(addr).frozen),
-    checkStart, begin, ready, pending, fail, finish, savePlan, restricted, facts, decorate, ruleChange,
+    checkStart, begin, ready, pending, fail, finish, savePlan, restricted, facts, decorate, ruleChange, stageNote, closeNote, noteReviewExpired, recordDecision,
     deliverable: message => {
       const state = current(message.target.addr);
       if (state.holding || state.frozen || state.retired) return false;
@@ -605,6 +860,8 @@ export function rotationPolicy(project, { now, sessions, mail, notifications, po
       spotChecks: Object.values(data.events).filter(item => item.project === name && item.kind === 'spot-check')
         .reduce((counts, item) => ({ ...counts, [item.verdict]: counts[item.verdict] + 1 }), { ok: 0, error: 0 }),
       handovers: Object.values(data.handovers).filter(item => item.project === name),
+      noteReviews: Object.values(data.noteReviews ?? {}).filter(item => item.project === name),
       passive: Object.values(data.events).filter(item => item.project === name && /^passive/.test(item.kind)),
+      probes: Object.values(data.events).filter(item => item.project === name && item.kind === 'anomaly-probe'),
       roles: seniors(name).map(row => ({ addr: row.addr, role: row.role, ...current(row.addr) })) }) };
 }

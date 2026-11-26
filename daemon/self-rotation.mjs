@@ -20,8 +20,8 @@ export function selfRotation(project, { sessions, index, mail, notifications, no
   const stateFile = join(runtimeDirectory(project), 'self-rotation.json');
   const state = JSON.parse(readText(stateFile, '{}'));
   const save = () => writeState(stateFile, JSON.stringify(state) + '\n');
-  const legacySignals = Object.values(state).filter(entry => entry.signal?.reason === 'budget' &&
-    !entry.request && !entry.completed);
+  const legacySignals = Object.values(state).filter(entry =>
+    ['budget', 'switch-density', 'phase-change'].includes(entry.signal?.reason) && !entry.request && !entry.completed);
   if (legacySignals.length) {
     for (const entry of legacySignals) delete entry.signal;
     save();
@@ -115,6 +115,7 @@ export function selfRotation(project, { sessions, index, mail, notifications, no
     const entry = progress(row.addr);
     if (entry.request?.urgent || entry.request && [...sessions.jobs.values()].some(job => job.selfRotationId === entry.request.id)) return;
     const profile = { cli: row.cli, model: row.model, effort: row.effort, mode: row.backend };
+    if (entry.request) v2().closeNote(entry.request.id);
     entry.request = { id: incident.id, at: now(), note, notePath: notePath(row), reason: incident.verdict,
       profile, inheritFast: true, v2: true, urgent: true };
     save();
@@ -133,6 +134,7 @@ export function selfRotation(project, { sessions, index, mail, notifications, no
     const { id } = entry.request;
     const detail = clip(oneLine(reason), 160) || 'handover-failed';
     const version2 = entry.request.v2;
+    if (version2) v2().closeNote(id);
     if (version2 && !handoverRecorded && reason !== 'verification-cancelled') v2().attemptFailed(row, reason, id);
     delete entry.request;
     (entry.failures ??= []).push({ id, at: now(), reason: detail });
@@ -158,7 +160,15 @@ export function selfRotation(project, { sessions, index, mail, notifications, no
       }
       const job = [...sessions.jobs.values()].find(candidate => candidate.selfRotationId === pending.id);
       const rotation = job && index.rotations().find(item => item.successor === job.row.addr);
+      if (pending.v2 && !pending.urgent && !job && (!active(row) || v2().noteReviewExpired(row, pending))) {
+        v2().closeNote(pending.id);
+        delete entry.request;
+        entry.noteChanged = { id: pending.id, at: now(), reason: 'rotation-note-timeout' };
+        save();
+        continue;
+      }
       if (pending.v2 && !job && v2().checkAttempt(row, pending.urgent)) {
+        v2().closeNote(pending.id);
         delete entry.request;
         save();
         continue;
@@ -192,15 +202,29 @@ export function selfRotation(project, { sessions, index, mail, notifications, no
           }
         }
         if (!pending.urgent && (missingWork(row, pending.note).length || pending.v2 && v2().missingStatus(row, pending.note).length)) {
+          if (pending.v2) v2().closeNote(pending.id);
           delete entry.request;
           entry.noteChanged = { id: pending.id, at: now(), reason: 'rotation-work-changed' };
           save();
           continue;
         }
+        let noteReview;
+        if (pending.v2 && !pending.urgent) {
+          const review = v2().stageNote(row, pending, inFlight(row));
+          if (review.waiting) continue;
+          if (review.reason) {
+            v2().closeNote(pending.id);
+            delete entry.request;
+            entry.noteChanged = { id: pending.id, at: now(), reason: review.reason };
+            save();
+            continue;
+          }
+          noteReview = review.id;
+        }
         try {
           await spawn({ ...pending.profile, role: row.role, cwd: row.cwd, 'handover-from': row.addr,
             'trust-workspace': sessions.jobs.get(row.addr)?.autoTrustWorkspace,
-            prompt: pending.v2 ? '首轮只核对原件。收到另一方确认后，执行交接单的首个动作。' : 'Complete the handover verification.' }, undefined, pending);
+            prompt: pending.v2 ? '首轮只核对原件。收到另一方确认后，执行交接单的首个动作。' : 'Complete the handover verification.' }, undefined, { ...pending, noteReview });
         } catch (error) {
           report(`Self rotation ${addr}: ${error.message}`);
           const recorded = [...sessions.jobs.values()].some(candidate => candidate.selfRotationId === pending.id);

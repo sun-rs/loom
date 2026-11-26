@@ -45,24 +45,30 @@
 
 在项目策略设置 `rotation.mode: "v2"`。建议先有在位的 Leader、Auditor 和 Super。Unix socket 使用 SOCK-AUTH-1 的角色凭证，既有会话用内核对端验证。外部 Super 使用 `LOOM_EXTERNAL_SUPER=1`。托管角色继续使用 `"$LOOM_BIN"`。
 
-- loomd 在卡片已结算且角色空闲时评估路径或 Git 根变更、显式阶段或目标、Super 登记的授权变化、工作切换密度和已核实的重复事实错误。普通门禁只更新门禁边界。轮数、运行时间、等待时长与剩余百分比保留用于观测。Super 本身不进入自动换班流程。
-- 默认比较过去 24 小时的去重卡片数 >10、子系统数 >4、原生压缩次数 ≥5，任一达到阈值即产生密度候选。单主线且只有一个子系统时，卡片阈值放宽为 >20。可用 `rotation.densityRequiresCompaction: true` 要求切换和压缩都达到阈值。路径优先匹配最长 `rotation.subsystemPrefixes`，再按顶层目录分组。文档、卡片说明、运行元数据和账本目录不计子系统。统计使用派卡记录、交付的提交差异和原生压缩事件，缺少原生用量时保留缺测。
+- 在卡片已结算且角色空闲时，跨项目或 Git 根、主目标重置、授权变化、连续两次经另一方核实的硬约束漏派、反复核实错误、或同会话两条裁决被取代可提出换班。普通门禁只更新边界。同项目的 integration、regression 等子阶段提供干净窗口和加严核对提醒。Super 本身不进入自动换班流程。
+- 默认比较过去 24 小时的去重卡片数 >10、子系统数 >4、原生压缩次数 ≥5，任一达到阈值后进入加严核对，并在下一个干净边界提示评估换班。计数本身只触发核对和评估。单主线且只有一个子系统时，卡片阈值放宽为 >20。可用 `rotation.densityRequiresCompaction: true` 要求切换和压缩都达到阈值。路径优先匹配最长 `rotation.subsystemPrefixes`，再按顶层目录分组。文档、卡片说明、运行元数据和账本目录不计子系统。统计使用派卡记录、交付的提交差异和原生压缩事件，缺少原生用量时保留缺测。
+- 第三次原生压缩、连续运行 48 小时及进入新阶段都会随下一次已有投递提示用命令现查每项 SHA、路径和数值。加严期间按原生轮次每 150 轮附账本检查。阈值可设置 `rotation.strictCompactions`、`rotation.strictRuntimeMs`、`rotation.ledgerTurns`。
+- loomd 在派工和待审交接单中探查缺失路径、Git SHA 及与当前引用不一致的 SHA，并按工作卡位统计重复故障原因。`rotation.repeatedWorkerFailures` 默认 3。命中是异常候选。另一方核对原件并登记确认后才计已核实错误。候选和审查回执见 `loom status --json` 的 `rotationPolicy`。
 - 默认绝对高水位为 Claude 675,000、Codex 210,000、agy 420,000。用 `rotation.highWaterTokens` 分 CLI 覆盖或设为 `null`。高水位进入只读核对并在边界建议换班。用户纠正、原生阻塞超过 30 分钟、模型或 CLI 版本变更各自登记。阻塞或版本变更只有实际发生接任时才计一笔被动换班。
 - `rotation.protectedRefs` 为项目指定的完整受保护分支名列表。启用后，先在隔离工作树定稿目标提交和审核证据。Leader 或 Super 用 `loom notifications --gate-complete GATE --candidate SHA` 登记已收到 Auditor 明确批准的精确 SHA。该授权只消费一次。受保护分支移到未授权目标、被删除或失去祖先关系时，loomd 记 P0 并冻结其执行责任角色。普通门禁结算仍用 `--gate-complete GATE`。
+- 正常换班由在位的另一方先核对拟交接单的 SHA、路径和在途事项。loomd 用交接单与当时仓库、在途状态绑定核对回执。事实变化则重新出单。P0 保留即时冻结和启动，首轮提供独立生成的事实卡。
 - 按 [交接模板](../skills/loom/SKILL.md#换班与收尾) 填全部标题。首轮只核对事实卡，首行写确认码，逐行写 `HEAD:`、`Branch:`、`Base SHA:`、`WIP:`、`Rulings:`，以及原件路径。WIP 包含 Git 已跟踪改动的增删行数和未跟踪文件数。有差异在第二行写 `MISMATCH` 并停止。
-- 另一方收到核实信封后登记通过或失败。通过后 loomd 绑定继任并退休前任。继任收到「接管生效」信封后才释放改投工作。失败回退前任并锁同阶段。首报发出后 30 分钟未获核实会通知 Super，交接继续待定。Super 可取消该次等待，或让另一方继续核实。同角色和两高级角色之间的换班均至少隔一个登记阶段。
+- 另一方收到核实信封后登记通过或失败。通过后 loomd 绑定继任并退休前任。继任收到「接管生效」信封后才释放改投工作。失败回退前任并锁同阶段。首报发出后 30 分钟未获核实会通知 Super，交接继续待定。Super 可取消该次等待，或让另一方继续核实。另一方继续核对接任后首个完整阶段的派工、门禁和审计决定。此窗口及未结决定核对期间禁止另一方常规换班。以阶段开始后登记完成或再进入新阶段作为完整阶段证据。
 - loomd 在压缩后首次托管投递、换班的首份简报和长等待后的首次托管投递附事实卡。等待阈值默认一小时，由 `rotation.longIdleMs` 配置。新任当日改变合入时机、并发上限和预算需要另一方或 Super 确认。Project socket 与支持该版本工具守卫的运行时均执行只读和规则限制。已经启动的旧版无头 CLI 若固定了旧钩子，其原生工具限制随下一次运行时启动更新。
 
 | 命令 `loom rotation-policy` | 角色及字段 |
 | --- | --- |
-| `scope --phase ID` 或 `scope --goal ID` | Super 登记阶段或目标。 |
-| `ruling --target ROLE --detail TEXT --evidence FILE[:LINE]` | Super 登记影响该角色的职责或授权裁决。 |
+| `scope --phase ID` 或 `scope --goal ID` | Super 登记子阶段或主目标。 |
+| `ruling --target ROLE --detail TEXT --evidence FILE[:LINE]` | Super 登记影响该角色的职责或授权裁决。普通取代可附 `--id NEW --supersedes OLD`。账本的编号标题与 `取代 OLD` 行也可自动识别。 |
 | `incident --target ROLE --verdict overreach\|fabrication --detail TEXT --evidence FILE[:LINE]` | Super 或另一方登记 P0 原件。loomd 冻结写入并立即启动接任。 |
 | `error --target ROLE --detail TEXT --evidence FILE[:LINE]` | Super、另一方或当事角色登记已核实的事实错误。首次进入加严核查，此后新增错误在干净边界换班。 |
 | `spot-check --target leader --id DELIVERY --verdict ok\|error --detail TEXT --evidence FILE[:LINE]` | Auditor 在收到门禁包后登记抽查，`ok` 也计入分母。 |
 | `audit --id CARD --verdict return\|pass --detail TEXT` | Auditor 登记独立审查往返。门禁回执也从原生裁决提取。连续三次退回通知 Super。 |
 | `correction --target ROLE --detail TEXT` | Super 登记用户纠正。当事角色需要同时给出已收到的用户或 Super 投递的 `--id`。 |
 | `profile --target ROLE --version TEXT --detail TEXT` | Super 登记版本变更。确认过的被动原因也可用 `loom rotate --target ROLE --passive`。 |
+| `constraint --target ROLE --id DELIVERY --verdict omitted\|present --detail TEXT --evidence FILE[:LINE]` | 受管的另一方对已送达的派工登记硬约束证据。 |
+| `verify-note --target ADDR --id REQUEST --verdict pass\|fail --detail TEXT --evidence FILE[:LINE]` | 在位另一方核对同一请求的交接单。通过后 loomd 才启动常规继任。 |
+| `verify-decision --target ADDR --id DECISION --verdict pass\|fail --detail TEXT --evidence FILE[:LINE]` | 原核对方登记新任首阶段决定的原件检查。 |
 | `verify --target ADDR --verdict pass\|fail --detail TEXT --evidence FILE[:LINE]` | 在位的另一方核实继任首报。 |
 | `abort --target ADDR --detail TEXT` | Super 可取消核实已超时的交接，恢复前任。 |
 | `rule-change --target ADDR --id merge\|concurrency\|budget --detail TEXT --evidence FILE[:LINE]` | Super 或另一方确认接任当日的一项规则变更。 |
