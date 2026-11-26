@@ -61,7 +61,9 @@ export async function openNativeTui({
   hookSink ??= join(sessionDir, 'hooks.jsonl');
   await mkdir(dirname(hookSink), { recursive: true, mode: 0o700 });
   prepareJournal(hookSink);
-  const { argv, env: launchEnv, sessionId, promptSink } = await provider.start({ ...options, cwd, hookSink, boundTranscript });
+  const { argv, env: launchEnv, sessionId, promptSink } = await provider.start({
+    ...options, cwd, hookSink, boundTranscript, captureCompaction: Boolean(memory),
+  });
   if (memory) {
     const settings = cli === 'claude' ? argv.indexOf('--settings') : -1;
     const config = memoryLaunch(cli, { ...memory, openCodeNative: true, openCodeConfig: launchEnv.OPENCODE_CONFIG_CONTENT,

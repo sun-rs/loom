@@ -24,7 +24,7 @@ function commit(project, ref) {
 }
 
 export function saveGatePacket(project, { id, gate, round, base: baseRef, candidate: candidateRef = 'HEAD', question },
-  { members, jobs, messages, decisions, signalSummary, signalCount, red }) {
+  { members, jobs, messages, decisions, signalSummary, signalCount, red, memoryProposals }) {
   const baseDirectory = join(project, '.project');
   const directory = join(baseDirectory, 'gates');
   if (realpathSync(baseDirectory) !== baseDirectory) throw new Error('Gate directory must be project-local');
@@ -88,6 +88,7 @@ export function saveGatePacket(project, { id, gate, round, base: baseRef, candid
     preview('Open questions', bullet(questions, 'None recorded.'), 110),
     preview('Red facts', bullet(redEvidence, 'None recorded.'), 170, bullet(redLines, 'None recorded.')),
     preview('Drift and fact checks', `${signalCount} signals\n${signalSummary || 'None recorded.'}`, 165),
+    ...(memoryProposals ? [preview('Memory proposals for Auditor review', memoryProposals, 8192)] : []),
     `## Pointers\n- \`${statCommand}\`\n- Pending decisions: \`loom notifications\``,
   ];
   if (full.length) writeState(fullPath, `# Gate ${gate} · Round ${round}\n\n${full.join('\n\n')}\n`);

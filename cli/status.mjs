@@ -92,7 +92,7 @@ export async function projectStatus(project) {
     }));
   const merges = [...new Map([...history, ...verified].filter(merge => merge.sha).map(merge => [merge.sha, merge])).values()]
     .sort((a, b) => b.at - a.at).slice(0, 5);
-  const { byRole, rawTokens, missing, pyramid } = projectCost(project, rows, { includeAcceptance: false });
+  const { byRole, rawTokens, missing, pyramid, memoryExtractor, memoryPilot } = projectCost(project, rows, { includeAcceptance: false });
   const rotations = projectIndex(project).rotations();
   const activeAddresses = new Set(rows.filter(row => row.endedAt === null).map(row => row.addr));
   const rotationNotices = notifications.filter(event => event.type === 'leader-handover-failed' ||
@@ -133,7 +133,7 @@ export async function projectStatus(project) {
         ...(awaitingAck.has(row.addr) && { awaitingHandoverAck: true }) };
     }),
     waves, pendingContinuations, cards: cards.filter(card => card.active || ['blocked', 'result-undelivered'].includes(card.state)),
-    blocked, notices, merges, rotations, rotationNotices, seniorTools, routing: { filtered },
+    blocked, notices, merges, rotations, rotationNotices, seniorTools, memoryExtractor, memoryPilot, routing: { filtered },
     cost: { rawTokens, byRole: Object.fromEntries(Object.entries(byRole).map(([role, value]) => [role, value.rawTokens])),
       usageByRole: byRole, pyramid, missingSessions: missing.length },
   };
@@ -185,6 +185,10 @@ export function printStatus(result) {
       row.command ?? row.file ?? row.failureClass ?? row.reason ?? row.text].join(' '), 3);
   if (result.routing.filtered.length) console.log(`Auditor routing · ${result.routing.filtered.length} filtered deliveries in --json`);
   section('Last merges', result.merges, row => [row.sha.slice(0, 12), row.subject].join(' '), 3);
+  const extractor = result.memoryExtractor;
+  if (extractor) console.log('Memory extractor · ' + extractor.calls + ' turn calls · ' + extractor.tokens + ' tokens · ' +
+    extractor.stageCalls + ' stage calls · ' + extractor.stageTokens + ' stage tokens' +
+    (extractor.stopReason ? ' · stopped at ' + extractor.stopReason : ''));
   console.log('Cost · ' + result.cost.rawTokens.toLocaleString() + ' recorded tokens' +
     (result.cost.missingSessions ? ' · ' + result.cost.missingSessions + ' sessions with transcript gaps' : ''));
   for (const [role, usage] of Object.entries(result.cost.usageByRole)) {

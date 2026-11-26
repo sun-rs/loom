@@ -1370,7 +1370,7 @@ test('puts Super first and includes a newly settled wave in the same turn despit
   await d.tick();
   await d.tick();
   assert.match(f.prompts.filter(row => row.addr === leader)[1].input, /external Super first\n\n--- Loom wave results ---\n\n波次 W.*DONE PRIORITY/s);
-  assert.match(f.prompts.filter(row => row.addr === leader)[2].input, /managed Super second$/);
+  assert.equal(f.prompts.filter(row => row.addr === leader)[2].input.split('\n')[1], 'managed Super second');
   f.sessions.get(leader).finish('second Super answer');
   await d.tick();
   assert.match(f.prompts.filter(row => row.addr === leader)[3].input, /ordinary worker mail$/);

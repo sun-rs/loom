@@ -7,8 +7,10 @@ const script = fileURLToPath(import.meta.url);
 const quote = value => "'" + value.replaceAll("'", "'\\''") + "'";
 const toml = value => JSON.stringify(value).replaceAll('\x7f', '\\u007f');
 
-export function addCodexStartHook(argv, sink, cwd, runner = script) {
-  const command = [process.execPath, runner, sink, cwd].map(quote).join(' ');
+export function addCodexStartHook(argv, sink, cwd, runner = script, captureCompaction = false) {
+  const args = [process.execPath, runner, sink, cwd];
+  if (captureCompaction) args.push('--capture-compaction');
+  const command = args.map(quote).join(' ');
   const timeout = 3;
   // The adapter injects the other command hooks through this same per-launch trust table.
   const trust = 'sha256:' + createHash('sha256').update(JSON.stringify({
@@ -22,9 +24,10 @@ export function addCodexStartHook(argv, sink, cwd, runner = script) {
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === script) {
-  const [sink] = process.argv.slice(2);
+  const [sink, , mode] = process.argv.slice(2);
   const payload = JSON.parse(readFileSync(0, 'utf8'));
   if (payload.hook_event_name === 'SessionStart' && !payload.agent_id && !payload.isSidechain &&
+      (payload.source !== 'compact' || mode === '--capture-compaction') &&
       typeof payload.session_id === 'string' && payload.session_id) {
     const row = { receivedAt: Date.now(), cwd: payload.cwd, hook_event_name: 'SessionStart', session_id: payload.session_id,
       ...(typeof payload.source === 'string' && { source: payload.source }),

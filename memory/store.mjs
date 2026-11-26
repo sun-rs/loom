@@ -492,10 +492,31 @@ export function createMemoryStore({ now = Date.now, readState, commitState, evid
     return { ok: true, item };
   }
 
+  async function withdrawReviewed(binding, revisions, requestId) {
+    const state = await snapshot();
+    const targets = Object.entries(revisions).map(([id, revision]) => ({
+      revision, entry: state.entries.find(item => item.id === id),
+    }));
+    if (binding.role !== 'super' || !targets.length ||
+        targets.some(({ entry }) => entry?.layer !== 'user' || !access.canWrite(binding, entry))) return forbidden();
+    if (targets.every(({ entry }) => entry.withdrawnBy === requestId)) return { ok: true };
+    for (const { entry, revision } of targets) {
+      if (entry.revision !== revision || entry.status !== 'active') return conflict(entry.revision);
+    }
+    for (const { entry } of targets) {
+      updateEntry(state, { ...entry, revision: entry.revision + 1, status: 'stale',
+        updatedAt: time(), withdrawnBy: requestId }, 'withdraw');
+    }
+    indexFiles(state);
+    await commitState(state);
+    return { ok: true };
+  }
+
   return {
     access,
     write: (binding, request) => serialize(() => write(binding, request)),
     recordEvent: (binding, key, entry) => serialize(() => recordEvent(binding, key, entry)),
+    withdrawReviewed: (binding, revisions, requestId) => serialize(() => withdrawReviewed(binding, revisions, requestId)),
     recordTurn: event => serialize(() => recordTurn(event)),
     maintain: () => serialize(maintain),
     rebuildIndex: () => serialize(async () => {
