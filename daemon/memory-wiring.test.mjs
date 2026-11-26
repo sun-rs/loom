@@ -271,7 +271,7 @@ test('5a · redaction stays on and multiline private blocks never appear in entr
   assert.doesNotMatch(JSON.stringify([first, bypass, replay, await show(f, auditor, first.item.id), f.snapshot()]),
     /SYNTHETIC_MEMORY_SECRET|PRIVATE_BLOCK_[AB]|<\/?private>/);
 });
-test('5a · v1 receipt maintenance expires old fingerprints while keeping recent replay and conflicts', async () => {
+test('6b L8 · store maintenance prunes full receipts and rejects changed expired replay', async () => {
   let state, now = initialTime;
   const binding = { sessionId: 'S', principal: 'A', role: 'auditor', project: 'P', cardId: null };
   const open = () => createMemoryStore({
@@ -296,9 +296,12 @@ test('5a · v1 receipt maintenance expires old fingerprints while keeping recent
   assert.equal((await store.write(binding, { ...fresh, entry: { ...fresh.entry, body: 'Changed.' } })).code, 'conflict');
   assert.deepEqual(state, retained);
   assert.equal((await store.access.show(binding, first.item.id)).item.revision, 1);
-  assert.equal((await store.write(binding, { ...request('new'), requestId: old.requestId })).ok, true);
+  const replay = await store.write(binding, { ...request('new'), requestId: old.requestId });
+  assert.equal(replay.code, 'conflict', 'changed replay of an expired request ID must conflict');
+  assert.equal(replay.ok, false);
+  assert.deepEqual(state, retained);
 });
-test('5a · idle daemon tick prunes expired persisted receipts after restart', async t => {
+test('6b L8 · expired receipt conflicts persist across daemon tick and restart', async t => {
   const statePath = join(mkdtempSync(join(isolatedHome, 'receipts-')), 'state.json');
   let now = initialTime;
   const receiptTtlMs = 1000;
@@ -336,17 +339,20 @@ test('5a · idle daemon tick prunes expired persisted receipts after restart', a
   now += 1;
   await f.tick();
   const cleaned = options.readState();
-  assert.deepEqual(cleaned.receipts.map(row => row.requestId), [fresh.requestId]);
-  assert.deepEqual(cleaned, { ...before, receipts: before.receipts.filter(row => row.requestId === fresh.requestId) });
+  assert.deepEqual(cleaned.receipts, before.receipts.filter(row => row.requestId === fresh.requestId));
+  for (const key of ['entries', 'changes', 'seq', 'files', 'grants', 'turns', 'nextId']) {
+    assert.deepEqual(cleaned[key], before[key], `receipt cleanup preserves ${key}`);
+  }
   await f.restart();
   assert.deepEqual(options.readState(), cleaned);
   const restarted = open();
   assert.deepEqual(await restarted.write(binding, fresh), second);
   assert.equal((await restarted.write(binding, request('fresh', 'Different content.'))).code, 'conflict');
   assert.deepEqual(options.readState(), cleaned);
-  const reused = await restarted.write(binding, request('old', 'New content after cleanup.'));
-  assert.ok(reused.ok);
-  assert.notEqual(reused.item.id, first.item.id);
+  const replay = await restarted.write(binding, request('old', 'New content after cleanup.'));
+  assert.equal(replay.code, 'conflict', 'changed replay of an expired request ID must conflict after restart');
+  assert.equal(replay.ok, false);
+  assert.deepEqual(options.readState(), cleaned);
 });
 function noModel(t, f) {
   const fetch = t.mock.method(globalThis, 'fetch', async () => { throw new Error('unexpected model request'); });
