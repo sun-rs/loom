@@ -10,7 +10,7 @@ import { daemonAbsent, request } from '../daemon/rpc.mjs';
 import { managedProject, projectDirectory, projectReceipt } from './project.mjs';
 
 export const sendUsage = 'loom send <target> [--mode queue|interrupt] [--from ADDR] [--project DIR] [--expect-reply|--wait] "<message>"';
-export const sendHelp = '--from defaults to LOOM_ADDR. Use --expect-reply to request an inbox reply. --wait is for callers outside managed sessions.';
+export const sendHelp = '--from defaults to LOOM_ADDR. External Super can use --from super with project notifications for receipts and requested replies. --wait is for callers outside managed sessions.';
 export const sendAdvancedHelp = 'Advanced options: --mode steer, --id UUID (idempotent request), --batch UUID --batch-size N (explicit Leader-to-worker continuation group).';
 const legacy = fileURLToPath(new URL('../inbox/cli.mjs', import.meta.url));
 

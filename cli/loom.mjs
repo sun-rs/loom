@@ -1,5 +1,5 @@
 import { parseArgs } from 'node:util';
-import { roles } from '../index/index.mjs';
+import { roles, rotatingRoles } from '../index/index.mjs';
 import { daemonAbsent, request } from '../daemon/rpc.mjs';
 import { control, daemonUsage, spawnHelp, spawnUsage, startDaemon } from './control.mjs';
 import { upgrade, upgradePendingExit, upgradeUsage } from './upgrade.mjs';
@@ -47,6 +47,8 @@ const help = {
   send: [sendUsage, sendHelp],
   handover: ['loom handover <leader|auditor|super> --project DIR [--to ADDR]'],
   spawn: [spawnUsage, spawnHelp],
+  rotate: ['loom rotate --self [--prepare | --reason R] [--project DIR]',
+    'loom rotate --target <leader|auditor|ADDR> [--prepare | --reason R] [--cli CLI] [--model MODEL] [--effort EFFORT] [--project DIR] (managed Super)'],
   switch: ['loom switch <leader|auditor|worker> --project DIR --to <1-based index|cli/model/effort[/fast]>'],
   daemon: [daemonUsage],
   upgrade: [upgradeUsage],
@@ -73,6 +75,7 @@ const commands = {
   escalate: { ...projectArgs, ...strings('base', 'candidate', 'reason', 'evidence', 'round') },
   memory: { ...projectArgs, ...flags('json') },
   switch: { ...projectArgs, ...strings('to') },
+  rotate: { ...projectArgs, ...flags('self', 'prepare'), ...strings('target', 'reason', 'cli', 'model', 'effort') },
   doctor: { ...projectArgs, ...flags('fix', 'prompts') },
   notifications: { ...projectArgs, ...flags('peek', 'take', 'history'),
     ...strings('needs-decision', 'kind', 'audit-escalation', 'complete', 'phase', 'gate-complete') },
@@ -282,7 +285,11 @@ export async function main(args) {
     if (command === 'doctor' && ((!values.prompts && values.project === undefined) || values.prompts && values.fix)) invalid(help.doctor[0]);
     const directory = projectDirectory(values.project);
     let result;
-    if (command === 'memory') {
+    if (command === 'rotate') {
+      if (positionals.length || values.prepare && values.reason !== undefined ||
+          Boolean(values.self) === Boolean(values.target)) invalid(help.rotate[0]);
+      result = await request(directory, 'rotate', values);
+    } else if (command === 'memory') {
       const [action, query] = positionals;
       if (positionals.length !== 2 || action !== 'search' || !query.trim()) invalid(help.memory[0]);
       const matches = searchMemory(directory, query);
@@ -319,23 +326,31 @@ export async function main(args) {
       if (!values.json) { printHistory(result); return 0; }
     } else if (command === 'state' || command === 'stop') {
       if (positionals.length !== 1 || !positionals[0].trim()) invalid(`Expected one ${command} target`);
-      const sessions = projectSessions(directory, values.project !== undefined || Boolean(process.env.LOOM_PROJECT));
-      const session = resolveTarget(sessions, positionals[0], callerAddress());
+      const [target] = positionals;
+      const resolveSession = () => resolveTarget(
+        projectSessions(directory, values.project !== undefined || Boolean(process.env.LOOM_PROJECT)), target, callerAddress());
+      let session;
       if (managedProject(directory)) {
+        const liveRole = rotatingRoles.includes(target);
+        if (!liveRole) session = resolveSession();
         try {
-          result = await request(directory, command, { target: session.addr });
+          result = await request(directory, command, { target: session?.addr ?? target });
+          if (liveRole && command === 'state') session = projectIndex(directory).query({ addr: result.addr })[0];
         } catch (error) {
           if (!daemonAbsent(error)) throw error;
           if (command === 'stop') throw new CommandError('not-ready', 'loomd is not running for this project');
+          session ??= resolveSession();
           result = { ok: true, addr: session.addr, state: session.endedAt === null ? 'offline' : 'exited',
             deliveries: [], ...readPendingWork(directory, session.addr) };
         }
       } else if (command === 'state') {
+        session = resolveSession();
         result = { ok: true, addr: session.addr, ...await readState(session), ...readPendingWork(directory, session.addr) };
       } else {
         throw new CommandError('unsupported', 'loom stop requires a daemon-managed session');
       }
       if (command === 'state') {
+        if (!session) throw new CommandError('not-ready', `No indexed session matches ${result.addr}`);
         result.rotations ??= projectIndex(directory).rotations().filter(item => item.project === session.project);
         result = await withTuiVersionWarnings(presentState(result, session, directory), session);
       }

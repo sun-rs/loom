@@ -27,6 +27,7 @@ import { readLayout } from './herdr-layout.mjs';
 import { deliveryBoard, gateBoard } from './status-board.mjs';
 import { activeRelease, managedCliPath, releaseId, releaseRoot } from './release.mjs';
 import { rotatingRoles } from '../index/index.mjs';
+import { selfRotation } from './self-rotation.mjs';
 
 function batchDeliveryId(batch, dest) {
   const bytes = createHash('sha256').update(`${batch}\0${dest}`).digest('hex').slice(0, 32);
@@ -75,7 +76,8 @@ export function createSupervisor(project, {
   const saved = (target, text, fields = {}) => mail.enqueue({
     id: randomUUID(), createdAt: now(), target, text, requestedMode: 'queue', mode: 'queue', phase: 'queued', ...fields,
   });
-  const budget = roleBudget(project, { now, sessions, notifications, batchDeliveryId, report });
+  const rotation = selfRotation(project, { sessions, index, mail, notifications, now, spawn: spawnSession, inFlight: rotationWork, report });
+  const budget = roleBudget(project, { now, sessions, notifications, batchDeliveryId, report, signalRotation: rotation.propose });
   const parentFor = addr => sessions.routeParent(addr)?.addr ?? addr;
   const targetEnded = addr => sessions.rowFor(addr)?.endedAt != null;
   const senior = row => row.role === 'leader' || row.role === 'auditor';
@@ -159,6 +161,11 @@ ${details}`, {
     return !job || workPending(mail.messages.find(message => message.id === job.firstId)) || messagesForWorker(row, job).length > 0;
   }
 
+  function rotationWork(row) {
+    return sessions.rows().filter(item => item.endedAt === null && ['worker', 'reviewer'].includes(item.role) &&
+      item.project === row.project && parentFor(item.parent) === row.addr && occupied(item));
+  }
+
   function safeLeader(name, rows) {
     const leader = liveRole(name, 'leader');
     if (!leader || rows.some(row => row.endedAt === null && ['worker', 'reviewer'].includes(row.role) &&
@@ -168,8 +175,9 @@ ${details}`, {
   }
 
   function handoverState(old) {
-    const active = workers().filter(row => row.project === old.project && parentFor(row.parent) === old.addr);
-    const latest = [...new Map(active.map(row => [row.task, row])).values()];
+    const active = sessions.rows().filter(row => ['worker', 'reviewer'].includes(row.role) &&
+      row.project === old.project && parentFor(row.parent) === old.addr);
+    const latest = [...new Map(active.map(row => [row.task ?? row.addr, row])).values()];
     const pending = pendingWork(mail.messages, old.addr, parentFor, targetEnded);
     const ids = new Set(pending.pendingDeliveries.map(item => item.id));
     const resultWorkers = new Set(mail.messages.filter(message => ids.has(message.id)).flatMap(message => [
@@ -205,7 +213,12 @@ ${details}`, {
       const done = message?.completion;
       if (row.endedAt === null && !job.stopping && message?.received && done?.body && !done.unconfirmed &&
           (!done.outcome || done.outcome.kind === 'completed') && done.body.trimStart().split(/\r?\n/, 1)[0] === job.handoverAck) {
-        sessions.bindSuccessor(sessions.rowFor(job.handoverFrom), row);
+        const old = sessions.rowFor(job.handoverFrom);
+        if (job.selfRotationId && old?.endedAt === null) {
+          const view = await sessions.transport.inspect(sessions.targetBinding(old)).catch(() => undefined);
+          if (view?.state !== 'idle' || view.active || view.userPrompt) continue;
+        }
+        sessions.bindSuccessor(old, row);
         await sessions.retirePredecessor(job).catch(error => report(`handover retirement: ${error.message}`));
         continue;
       }
@@ -215,7 +228,8 @@ ${details}`, {
       const type = `${row.role}-handover-failed`;
       const title = row.role === 'leader' ? 'Leader' : 'Auditor';
       notifications.add({ id: `${type}:${job.firstId}`, project: row.project, type,
-        addr: row.addr, deliveryId: job.firstId, reason, at: now(), text: `${title} ${row.addr} 交接失败（${reason}）。` });
+        addr: row.addr, deliveryId: job.firstId, reason, at: now(), ...(job.selfRotationId && { logOnly: true }),
+        text: `${title} ${row.addr} 交接失败（${reason}）。` });
       await sessions.failSpawn(job, new Error(reason));
     }
   }
@@ -399,6 +413,30 @@ ${details}`, {
         project: row.project, addr: row.addr, at: row.endedAt });
     }
     for (const message of mail.messages) {
+      if (message.from?.external && message.from.addr === 'super') {
+        const row = sessions.rowFor(message.target.addr);
+        const identity = { project: row?.project ?? project, addr: message.target.addr, deliveryId: message.id,
+          externalOnly: true, batch: `super-delivery:${message.id}` };
+        if (message.received || deliveryFailed(message)) {
+          const reason = deliveryFailed(message) ? message.issue ?? message.phase : 'received';
+          notifications.add({ ...identity, id: `external-super:${message.id}:receipt:${reason}`, type: 'super-delivery-receipt',
+            at: message.corruption?.at ?? message.refusedAt ?? message.received?.at ?? now(), reason,
+            text: `Loom 投递 ${message.id} · ${message.target.addr} · ${reason}` });
+        }
+        const done = message.completion;
+        if (message.expectReply && !done?.unconfirmed && done?.body) {
+          notifications.add({ ...identity, id: `external-super:${message.id}:reply`, type: 'super-delivery-reply', at: done.at,
+            text: replyForDelivery(project, done.body) });
+        }
+      }
+      if (message.phase === 'refused' && message.issue === 'holder-partial-write' && message.partialWrite) {
+        const row = sessions.rowFor(message.target.addr);
+        const { written, total, reason } = message.partialWrite;
+        notifications.add({ id: `${message.id}:partial-write`, type: 'needs-decision', reason: message.issue,
+          project: row?.project ?? project, addr: message.target.addr, deliveryId: message.id, at: message.refusedAt,
+          text: `Loom 投递 ${message.id} 未送达：holder 只写入 ${written}/${total} 字节（${reason}）。草稿仍受保护。` });
+        continue;
+      }
       if (message.phase === 'corrupted') {
         const row = sessions.rowFor(message.target.addr);
         if (!row) continue;
@@ -645,14 +683,14 @@ ${details}`, {
     }
   }
 
-  async function spawnSession(args, caller) {
+  async function spawnSession(args, caller, selfHandoff) {
     const actor = caller && sessions.rows().find(row => row.addr === caller || row.pane === caller);
     if (args.role === 'auditor' && actor &&
         (actor.endedAt !== null || actor.role !== 'super' &&
           !(actor.role === 'leader' && sessions.rowFor(args['handover-from'])?.project === actor.project))) {
       throw new CommandError('invalid-arguments', 'Auditor startup requires Super or a Leader supervising succession');
     }
-    const job = await sessions.newJob(args, caller, checkBarrier, occupied, handoverState);
+    const job = await sessions.newJob(args, caller, checkBarrier, occupied, handoverState, selfHandoff);
     let session;
     try {
       if (!job.herdr) await sessionOptions?.layout?.ensure(false).catch(error => {
@@ -702,17 +740,21 @@ ${details}`, {
       async beforeDispatch() {
         await settleHandovers();
         await org.collect(sessions.rows());
+        await rotation.advance();
         await stepRelay(now());
         continuations();
         seats = workerSeats(workerLimit(policy));
       },
       now,
       messageIssue,
-      canDispatchMessage: message => !sessions.holdsForHandover(message),
+      canDispatchMessage: message => !sessions.holdsForHandover(message) && !rotation.holds(message.target.addr),
       stallMs: policy.delivery?.stallMs ?? uncertainWindow ?? defaultStallMs,
       coalesceMs: policy.delivery?.coalesceMs ?? defaultCoalesceMs,
       decorate(message) {
+        // Defer delivery notices until after the compact TUI briefing.
+        if (message.startup && sessions.jobs.get(message.target.addr)?.compactHandover) return;
         const row = sessions.rowFor(message.target.addr);
+        const rotationNotices = rotation.decorate(message, row);
         const byId = new Map(mail.messages.map(item => [item.id, item]));
         const senderStalls = stalledDeliveries(mail.messages, now()).filter(delivery => {
           const pending = byId.get(delivery.id);
@@ -732,10 +774,10 @@ ${details}`, {
           row && parentFor(item.target.addr) === row.addr).flatMap(item => item.replySuppressionNotices ?? []));
         const senderSuppressions = suppressedReplies(mail.messages).filter(notice =>
           row && notice.from && parentFor(notice.from) === row.addr && !seenSuppressions.has(notice.id));
-        const deliveryLines = [...senderSuppressions.map(notice => ({ text: suppressedReplyText(notice), id: notice.id })),
+        const deliveryLines = [...rotationNotices, ...senderSuppressions.map(notice => ({ text: suppressedReplyText(notice), id: notice.id })),
           ...senderStalls.map(delivery => ({ text: stallText(delivery) }))];
         let deliveryAppendix;
-        const replySuppressionNotices = [];
+        const visibleIds = new Set();
         if (deliveryLines.length) {
           const visible = [];
           let bytes = 0;
@@ -743,7 +785,7 @@ ${details}`, {
             bytes += Buffer.byteLength(text) + 1;
             if (bytes > 1200) break;
             visible.push(text);
-            if (id) replySuppressionNotices.push(id);
+            if (id) visibleIds.add(id);
           }
           if (visible.length < deliveryLines.length) visible.push('More delivery notices in loom status.');
           deliveryAppendix = visible.join('\n');
@@ -752,7 +794,10 @@ ${details}`, {
         const digest = deferred.length && replyForDelivery(project, deferred.map(item =>
           `[${item.id}] ${item.from.addr}\n${item.text}`).join('\n\n'), policy.delivery?.replyBytes);
         if (digest) deliveryAppendix = [deliveryAppendix, `Loom Auditor next-wake digest\n${digest}`].filter(Boolean).join('\n\n');
+        const replySuppressionNotices = senderSuppressions.filter(notice => visibleIds.has(notice.id)).map(notice => notice.id);
+        const shownRotationNotices = rotationNotices.filter(notice => visibleIds.has(notice.id)).map(notice => notice.id);
         return { ...(deliveryAppendix && { deliveryAppendix }), ...(replySuppressionNotices.length && { replySuppressionNotices }),
+          ...(shownRotationNotices.length && { rotationNotices: shownRotationNotices }),
           ...(deferred.length && { auditorDigestIds: deferred.map(item => item.id) }),
           ...(batch.length && {
             orgEvents: batch.map(notice => notice.id), orgAppendix: 'Loom drift and fact checks\n' + summary,
@@ -769,7 +814,8 @@ ${details}`, {
     await closeReviews();
     const current = sessions.rows();
     for (const [name, rows] of Map.groupBy(current, row => row.project)) {
-      await budget.check(name, rows, policy, { safeLeader: safeLeader(name, rows) })
+      await budget.check(name, rows, policy, { safeLeader: safeLeader(name, rows), leader: liveRole(name, 'leader'),
+        auditor: liveRole(name, 'auditor') })
         .catch(error => report(`Role budget ${name}: ${error.message}`));
     }
     await checkStartupBlockers();
@@ -798,6 +844,7 @@ ${details}`, {
     shutdown: sessions.shutdown,
     async handle(command, args, caller) {
       if (command === 'spawn') return spawnSession(args, caller);
+      if (command === 'rotate') return rotation.request(args, caller);
       if (command === 'layout-up') {
         if (!sessionOptions?.layout) throw new CommandError('not-ready', 'Herdr layout is unavailable');
         return { layout: await sessionOptions.layout.ensure(true) };
@@ -969,11 +1016,14 @@ ${details}`, {
           const id = 'gate:' + batchDeliveryId(name, gate);
           if (!notifications.list(name, false, true).some(event => event.id === id)) {
             const currentPolicy = policyForTick();
-            const sample = await budget.check(name, rows.filter(row => row.project === name), currentPolicy, { completeGate: true });
+            const auditor = liveRole(name, 'auditor');
+            const sample = await budget.check(name, rows.filter(row => row.project === name), currentPolicy, { completeGate: true, auditor });
             const proposal = sample || currentPolicy.roles?.auditor?.rotateAt === 'gate';
+            if (proposal) rotation.propose(auditor, sample ? 'budget' : 'gate');
+            if (currentPolicy.roles?.leader?.rotateAt === 'gate') rotation.propose(liveRole(name, 'leader'), 'gate');
             notifications.add({ id, gate, project: name, at: now(), type: proposal ? 'auditor-rotation-proposed' : 'gate-completed',
-              ...(actor && { addr: actor.addr }), ...sample, logOnly: !proposal,
-              text: proposal ? `门禁 ${gate} 已完成。${sample ? `Auditor 已超出预算（采样 ${new Date(sample.sampledAt).toISOString()}）。` : ''}建议由 Leader 监督 Auditor 换班；已有换班须先结算。` :
+              ...(actor && { addr: actor.addr }), ...sample, logOnly: true,
+              text: proposal ? `门禁 ${gate} 已完成。${sample ? `Auditor 已超出预算（采样 ${new Date(sample.sampledAt).toISOString()}）。` : ''}Auditor 在下一次现有投递收到自助换班提示。` :
                 `门禁 ${gate} 已完成。` });
             const scoped = rows.filter(row => row.project === name);
             await budget.check(name, scoped, currentPolicy, { gateRecorded: true, safeLeader: safeLeader(name, scoped) });
@@ -1011,7 +1061,7 @@ ${details}`, {
         return { ...pendingWork(mail.messages, undefined, parentFor, targetEnded),
           awaitingUser: live.flatMap(row => row.userPrompt ? [{ addr: row.addr, ...row.userPrompt }] : []) };
       }
-      const row = command === 'send' ? sessions.resolveDelivery(args.target, caller) : sessions.resolve(args.target, caller);
+      const row = sessions.resolve(args.target, caller);
       if (command === 'handover') {
         const old = sessions.rowFor(args.from);
         if (!validInput(args.text)) throw new CommandError('invalid-arguments', 'Handover brief is required');
@@ -1061,16 +1111,20 @@ ${details}`, {
           (!messageIdPattern.test(args.batch) || !Number.isSafeInteger(args.batchSize) || args.batchSize < 1 || args.mode !== 'queue')) {
         throw new CommandError('invalid-arguments', 'Invalid delivery ID or continuation batch');
       }
-      const from = args.from ? sessions.resolve(args.from, caller) : caller &&
-        sessions.rows().find(row => row.addr === caller || row.pane === caller);
       const actor = caller && sessions.rows().find(row => row.addr === caller || row.pane === caller);
+      const externalSuper = args.from === 'super' && !actor;
+      if (args.from === 'super' && actor && actor.role !== 'super') {
+        throw new CommandError('invalid-arguments', 'Only Super can send as Super');
+      }
+      const from = externalSuper ? undefined : args.from ? sessions.resolve(args.from, caller) : actor;
+      const sender = externalSuper ? { addr: 'super', role: 'super', external: true } : from && sessions.targetBinding(from);
       const existing = args.id && mail.messages.find(message => message.id === args.id);
       const requestedRole = rotatingRoles.includes(args.target) ? args.target : undefined;
       if (existing) {
         const initial = existing.originalTarget ?? existing.target.addr;
         const sameTarget = existing.requestedRole ? existing.requestedRole === requestedRole &&
           sessions.rowFor(initial)?.project === row.project : initial === row.addr;
-        if (!sameTarget || existing.from?.addr !== from?.addr || existing.text !== args.text ||
+        if (!sameTarget || existing.from?.addr !== sender?.addr || existing.text !== args.text ||
             existing.requestedMode !== args.mode || existing.batchId !== args.batch || existing.batchSize !== args.batchSize ||
             Boolean(existing.expectReply) !== Boolean(args.expectReply)) {
           throw new CommandError('id-conflict', 'Delivery ID is already bound to a different request');
@@ -1096,7 +1150,7 @@ ${details}`, {
       }
       const target = sessions.targetBinding(successor);
       const userWake = actor ? actor.role === 'super' && actor.endedAt === null : !from || from.role === 'super';
-      const fields = { ...(from && { from: sessions.targetBinding(from) }), ...(args.expectReply && { expectReply: true }),
+      const fields = { ...(sender && { from: sender }), ...(args.expectReply && { expectReply: true }),
         ...(userWake && { superPriority: true, ...(successor.role === 'auditor' && { userWake: true }) }),
         ...(row.addr !== successor.addr && { originalTarget: row.addr }),
         ...(requestedRole && { requestedRole }),

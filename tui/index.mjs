@@ -17,6 +17,8 @@ import { adoptionWriteId } from './holder-paste.mjs';
 export { hcBackend, hcWrappedBackend };
 const refusal = code => ({ kind: 'refused', code });
 const digestOf = text => createHash('sha256').update(text).digest('hex');
+const partialReceipt = error => ({ accepted: false, error: error.code,
+  partialWrite: { written: error.written, total: error.total, reason: error.reason } });
 
 export function createTuiHost(backend) {
   return {
@@ -75,9 +77,11 @@ export function bindTuiSession(terminal, provider, {
   let startupKeyAt = -Infinity;
   const startupAttempts = new Map();
   const classify = text => provider.screen.classify(text);
+  const agyAnnouncement = frame => provider.id === 'agy' && frame.text != null &&
+    provider.screen.startupAnnouncement?.(frame.outsideComposer ?? frame.text);
   const agyOverlayKey = frame => provider.id === 'agy' && frame.text != null &&
     provider.screen.dialogKeys?.('overlay', frame.outsideComposer ?? frame.text)?.[0];
-  const classifyFrame = frame => agyOverlayKey(frame) ? 'overlay' : classify(frame.composerText ?? frame.text);
+  const classifyFrame = frame => agyAnnouncement(frame) || agyOverlayKey(frame) ? 'overlay' : classify(frame.composerText ?? frame.text);
   const heldComposer = frame => frame.vacantText &&
     (classify(frame.vacantText) === 'idle' || provider.screen.hasHeldComposer?.(frame.vacantText));
 
@@ -150,6 +154,7 @@ export function bindTuiSession(terminal, provider, {
       }
     }
     const outstanding = pending && requests.get(pending);
+    const failedPartialWrite = [...requests].findLast(([, entry]) => entry.hostReceipt?.partialWrite);
     const submitted = outstanding?.hostReceipt?.accepted === true;
     const unsafe = pending && terminal.provePaste && !submitted;
     const heldRetry = submitted && quiet && writable && !humanActive && !liveBlocker && heldComposer(observation) &&
@@ -170,6 +175,7 @@ export function bindTuiSession(terminal, provider, {
       ...(submitted && { submittedDeliveryId: pending }),
       ...(retryable && { retryableDeliveryId: pending, ...(heldRetry && { retryHeld: true }) }),
       blocker, unsafeDraft: Boolean(unsafe), ready: frameReady && !pending, urgentReady: frameReady && Boolean(pending) && !unsafe,
+      ...(failedPartialWrite && { failedPartialWrite: { id: failedPartialWrite[0], ...failedPartialWrite[1].hostReceipt.partialWrite } }),
       ...(exited ? { exit: { code, reason } } : {}),
     } };
   }
@@ -178,7 +184,9 @@ export function bindTuiSession(terminal, provider, {
     let adoption;
     if (result.userPrompt && result.userPrompt.kind !== 'overlay' &&
         !(result.screen.kind === 'trust-dialog' && autoTrustWorkspace)) return false;
-    const overlay = result.unsafeDraft && result.blocker === 'overlay' && agyOverlayKey(frame) === 'esc';
+    const announcement = agyAnnouncement(frame);
+    const overlay = result.unsafeDraft && !result.native.turnSequence &&
+      result.blocker === 'overlay' && announcement?.key === 'esc';
     if ((result.blocker === 'draft-held' || overlay) && readPending && terminal.provePaste) {
       const entry = requests.get(pending);
       const message = readPending(pending);
@@ -186,24 +194,27 @@ export function bindTuiSession(terminal, provider, {
       result.heldDraftBytes = { status: 'unknown', written: null, total: null };
       if (message && typeof message.text === 'string' && entry.digest === digestOf(message.text)) {
         const input = wireText(pending, message.text);
-        const dismissalId = provider.id === 'agy' ? adoptionWriteId(incarnation, pending, 'overlay-esc') : undefined;
-        const proof = terminal.provePaste(input, frame, overlay ? undefined : dismissalId);
+        const dismissals = provider.id === 'agy' ? ['overlay-esc', 'overlay-auto-mode']
+          .map(key => adoptionWriteId(incarnation, pending, key)) : [];
+        const proof = terminal.provePaste(input, frame, dismissals);
         result.heldDraftBytes = { status: proof.written == null ? 'unknown' : proof.written === proof.total ? 'complete' : 'partial',
           written: proof.written, total: proof.total };
         if (proof.status === 'incomplete') result.heldDraftProof = 'incomplete';
-        const beforePasteTurn = entry.hostReceipt?.accepted !== true && Number.isFinite(message.attemptAt) &&
+        const beforePasteTurn = !entry.hostReceipt?.partialWrite && entry.hostReceipt?.accepted !== true && Number.isFinite(message.attemptAt) &&
           idleBefore(result.native, message.attemptAt) && !frame.outsideComposer?.includes(`[loom:${pending}]`);
         const expected = draftExpectation(input);
         const agy = provider.id === 'agy';
         const continuation = proof.continuation;
         const boundaryMismatch = agy && proof.closedBracket && continuation?.offset === 0 &&
           !verifyAgyDraft(frame, draftExpectation(agyPasteSegments(input, frame.size.rows).slice(0, continuation.segment).join('')), proof.ownsDraft);
-        const completeDraft = agy ? verifyAgyDraft(frame, expected, proof.ownsDraft) :
+        const completeDraft = agy ? verifyAgyDraft(frame, expected, proof.ownsDraft) ||
+          proof.ownsDraft && proof.closedBracket && provider.screen.pastePlaceholder?.(frame.draft, input) :
           verifyDraft(frame, expected) || provider.screen.pastePlaceholder?.(frame.draft, input);
         if (overlay && beforePasteTurn && (proof.continuation || proof.status === 'complete')) {
           result.heldDraftProof = 'dismissing-overlay';
-          adoption = { key: 'esc', token: `overlay:${pending}`, limit: 1, writeId: dismissalId,
-            attemptAt: message.attemptAt, dismissFor: pending };
+          adoption = { key: 'esc', token: `overlay:${pending}:${announcement.id}`, limit: 1,
+            writeId: dismissals[announcement.id === 'auto-mode' ? 1 : 0],
+            attemptAt: message.attemptAt, dismissFor: pending, banner: announcement.id };
         } else if (!overlay && beforePasteTurn && continuation && !boundaryMismatch && terminal.resumePaste) {
           result.heldDraftProof = 'continuing';
           adoption = { token: pending, limit: 1, entry, input, continuation,
@@ -212,6 +223,11 @@ export function bindTuiSession(terminal, provider, {
           result.heldDraftProof = 'complete';
           adoption = { key: 'enter', token: pending, limit: 1, entry,
             writeId: adoptionWriteId(incarnation, pending, 'enter'), attemptAt: message.attemptAt };
+        } else if (!overlay && beforePasteTurn && proof.status === 'complete' && proof.ownsDraft && proof.dismissedOverlay &&
+            result.screen.kind === 'idle' && result.screen.empty && !entry.clearResend && terminal.resumePaste) {
+          result.heldDraftProof = 'repasting-after-overlay';
+          adoption = { token: pending, limit: 1, entry, input, attemptAt: message.attemptAt, repaste: true,
+            writeId: adoptionWriteId(incarnation, pending, 'overlay-resend-enter') };
         } else if (!overlay && beforePasteTurn && agy && terminal.resendAfterClear && proof.ownsDraft && proof.closedBracket &&
             !entry.clearResend && heldComposer(frame) && isAgyDraftSubset(frame, input)) {
           result.heldDraftProof = 'clearing-own-draft';
@@ -236,12 +252,17 @@ export function bindTuiSession(terminal, provider, {
       if (key) action = { key, token: `trust:${key}`, limit: 2 };
     } else if (kind === 'overlay' && !result.unsafeDraft && (!pending || paste?.humanSequence === frame.humanSequence)) {
       const [key] = provider.screen.dialogKeys(kind, frame.outsideComposer ?? text);
-      if (key === '0' || key === 'esc' && !result.native.turnSequence) {
-        action = { key, token: `overlay:${key}`, limit: 1 };
+      if (key === '0') action = { key, token: 'overlay:0', limit: 1 };
+      else if ((!pending || !terminal.provePaste && paste?.id === pending && paste.resizeSequence === frame.resizeSequence &&
+          paste.bufferSequence === frame.bufferSequence) && !result.native.userPrompt && !result.native.turnSequence &&
+          !result.native.identityChanged && announcement?.key === 'esc') {
+        const token = `overlay:${announcement.id}`;
+        action = { key: 'esc', token, limit: 1, writeId: adoptionWriteId(incarnation, 'startup', token),
+          attemptAt: Date.now(), dismissFor: token, banner: announcement.id };
       }
     } else if (result.blocker === 'draft-held' && paste?.id === pending && !requests.get(pending)?.reenterReserved) {
       const entry = requests.get(pending);
-      if (entry.hostReceipt?.accepted === false && paste.humanSequence === frame.humanSequence &&
+      if (!entry.hostReceipt?.partialWrite && entry.hostReceipt?.accepted === false && paste.humanSequence === frame.humanSequence &&
           paste.resizeSequence === frame.resizeSequence && paste.buffer === frame.buffer && paste.bufferSequence === frame.bufferSequence &&
           paste.turnSequence === result.native.turnSequence &&
           frame.outputSequence > paste.outputSequence && heldComposer(frame) &&
@@ -252,7 +273,7 @@ export function bindTuiSession(terminal, provider, {
     }
     action ??= adoption;
     if (!action) { startupFrame = undefined; return false; }
-    const { key, token, limit, entry, writeId, attemptAt, input, continuation, dismissFor, clearId } = action;
+    const { key, token, limit, entry, writeId, attemptAt, input, continuation, dismissFor, banner, clearId, repaste } = action;
     const attempts = startupAttempts.get(token) ?? 0;
     const stable = startupFrame?.generation === frame.generation && startupFrame.token === token;
     startupFrame = { generation: frame.generation, token };
@@ -261,7 +282,8 @@ export function bindTuiSession(terminal, provider, {
       const latest = await native.read();
       return !latest.userPrompt && idleBefore(latest, attemptAt) && latest.sessionId === result.native.sessionId &&
         !native.confirmations(dismissFor ?? token).count &&
-        (dismissFor ? agyOverlayKey(current) === 'esc' : !blocksInput(classifyFrame(current))) &&
+        (dismissFor ? agyAnnouncement(current)?.id === banner && agyOverlayKey(current) === 'esc' :
+          !blocksInput(classifyFrame(current))) &&
         (!held || heldComposer(current));
     };
     if (writeId && !await stillSafe(frame, { held: key === 'enter' })) {
@@ -270,12 +292,15 @@ export function bindTuiSession(terminal, provider, {
     }
     let hostReceipt;
     try {
-      if (clearId || continuation) {
+      if (clearId || continuation || repaste) {
         if (clearId) {
           // Reserve the destructive step before writing so that a restart cannot clear again.
           put(token, { ...entry, clearResend: true });
           hostReceipt = await terminal.resendAfterClear(input, frame, { clearId, enterId: writeId }, stillSafe);
-        } else hostReceipt = await terminal.resumePaste(input, frame, continuation, stillSafe, writeId);
+        } else {
+          if (repaste) put(token, { ...entry, clearResend: true });
+          hostReceipt = await terminal.resumePaste(input, frame, continuation, stillSafe, writeId);
+        }
         if (!hostReceipt.accepted) {
           put(token, { ...requests.get(token), hostReceipt });
           result.heldDraftProof = 'unproven';
@@ -285,6 +310,10 @@ export function bindTuiSession(terminal, provider, {
     }
     catch (error) {
       if (error.code === 'STALE_FRAME') return false;
+      if (entry && error.code === 'HOLDER_PARTIAL_WRITE') {
+        put(token, { ...requests.get(token), hostReceipt: partialReceipt(error) });
+        return false;
+      }
       if (writeId) {
         result.heldDraftProof = 'uncertain-enter';
         return false;
@@ -294,7 +323,8 @@ export function bindTuiSession(terminal, provider, {
     if (entry) {
       const saved = requests.get(token);
       put(token, { ...saved, hostReceipt: { submittedAt: Date.now(), ...hostReceipt, accepted: true,
-        outcome: saved.clearResend ? 'resent-after-clear' : continuation ? 'resumed-paste' : writeId ? 'adopted-draft' : 'recovered-draft' } });
+        outcome: repaste ? 'resent-after-overlay' : saved.clearResend ? 'resent-after-clear' :
+          continuation ? 'resumed-paste' : writeId ? 'adopted-draft' : 'recovered-draft' } });
     } else startupAttempts.set(token, attempts + 1);
     startupKeyAt = performance.now();
     return true;
@@ -395,7 +425,7 @@ export function bindTuiSession(terminal, provider, {
               latest.phase !== state.native.phase || reenter && latest.identityChanged) return false;
           return !blocksInput(classifyFrame(frame)) &&
             (!held || heldComposer(frame)) &&
-            (!collapsed || frame.vacantText && classify(frame.vacantText) === 'idle') &&
+            (!collapsed || heldComposer(frame)) &&
             (!(reenter || retry) || (!held || frame.atDraftEnd) && !blocksInput(classify(frame.outsideComposer ?? ''))) &&
             (sameInterruptedTurn(latest) || currentTitle(frame, latest, Date.now()) !== 'busy');
         }, {
@@ -412,7 +442,8 @@ export function bindTuiSession(terminal, provider, {
           paste = undefined;
           return refusal('frame-changed');
         }
-        entry.hostReceipt = { error: error.code ?? error.message };
+        entry.hostReceipt = error.code === 'HOLDER_PARTIAL_WRITE' ? partialReceipt(error) :
+          { error: error.code ?? error.message };
       }
       put(id, entry);
       await until(() => native.confirmations(id).count > 0, entry.hostReceipt.accepted === false ? 0 : timeoutMs);

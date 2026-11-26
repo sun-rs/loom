@@ -18,6 +18,8 @@ const trustFooter = /^↑\/↓\s+Navigate\s+·\s+enter Confirm$/i;
 const pickerFooter = /^Keyboard:.*\besc Go Back$/i;
 const announcementTitle = /^Introducing Gemini \d+(?:\.\d+)? (?:Neon|Carbon|Argon|Hydrogen)[!.]?(?:\s+[·•]\s+|\s{2,}|$)/i;
 const announcementDismiss = /^(?:\(\s*)?(?:press )?esc to dismiss\s*[.)]?$/i;
+const autoTitle = /^Auto is now the default agent mode[!.]?$/i;
+const autoBody = /^Press Shift\+Tab to switch agent modes, or change Agent Mode in \/config\.$/i;
 const survey = /^How['’]s the CLI experience so far\? Help us improve: \[1\] Good \[2\] Fine \[3\] Bad \[0\] Skip$/i;
 const ruleRow = new RegExp(`^${RULE}$`);
 const settingsError = /^failed to (?:load|read|save|write) settings\b/i;
@@ -54,22 +56,37 @@ export function hasHeldComposer(text) {
     heldComposer.test(rows.slice(-12, -1).join('\n'));
 }
 
-function overlayKey(rows) {
+function overlay(rows) {
   const lines = rows.slice(-18).map(row => row.replace(/^[│┃]\s+|\s+[│┃]$/g, '').trim());
   for (let start = 0; start < lines.length; start++) {
     if (!/^How['’]s the CLI experience so far\?/i.test(lines[start])) continue;
     for (let end = start + 1; end <= Math.min(lines.length, start + 5); end++) {
-      if (survey.test(lines.slice(start, end).join(' ').replace(/\s+/g, ' '))) return '0';
+      if (survey.test(lines.slice(start, end).join(' ').replace(/\s+/g, ' '))) return { key: '0' };
     }
   }
-  const announcement = rows.slice(-18).map(row => /^[│┃]\s+(.+?)(?:\s*[│┃])?$/.exec(row)?.[1].trim());
-  const title = announcement.findLastIndex(row => row && announcementTitle.test(row));
+  const tail = rows.slice(-18);
+  const announcement = tail.map(row => /^[│┃]\s+(.+?)(?:\s*[│┃])?$/.exec(row)?.[1].trim());
+  const title = lines.findLastIndex((line, i) => announcement[i] && announcementTitle.test(line) || autoTitle.test(line));
   if (title < 0) return;
-  if (announcementDismiss.test(announcement[title].replace(announcementTitle, ''))) return 'esc';
+  if (autoTitle.test(lines[title])) {
+    if (!autoBody.test(lines[title + 1] ?? '')) return;
+    return { id: 'auto-mode', ...(announcementDismiss.test(lines[title + 2] ?? '') && { key: 'esc' }) };
+  }
+  if (announcementDismiss.test(announcement[title].replace(announcementTitle, ''))) return { id: 'model-announcement', key: 'esc' };
   for (const row of announcement.slice(title + 1)) {
     if (!row) break;
-    if (announcementDismiss.test(row)) return 'esc';
+    if (announcementDismiss.test(row)) return { id: 'model-announcement', key: 'esc' };
   }
+}
+
+export function startupAnnouncement(text) {
+  const found = overlay(rowsOf(text));
+  return found?.id ? found : undefined;
+}
+
+export function matchesPastePlaceholder(draft, text) {
+  const chip = /^\[Pasted text #[1-9]\d* ([1-9]\d*) chars\]$/.exec(draft);
+  return Boolean(chip && Number(chip[1]) === Array.from(text).length);
 }
 
 export function classify(text) {
@@ -77,13 +94,14 @@ export function classify(text) {
   const tail = rows.join('\n');
   const footer = rows.at(-1) ?? '';
   const state = classifyScreen('agy', text);
-  if (overlayKey(rows)) return 'overlay';
+  if (overlay(rows)) return 'overlay';
   if (state === 'trust-dialog') return state;
   const dialog = rows.map(row => row.replace(/^[│┃]\s+|\s+[│┃]$/g, '').trim()).join('\n');
   if (/^How['’]s the CLI experience so far\?/im.test(dialog) && /\[1\][\s\S]*\[0\]/.test(dialog) ||
       /^(?:Welcome to (?:the )?Antigravity CLI|Antigravity CLI setup|Getting started with Antigravity)\s*[!.]?$/im.test(dialog) &&
       /(?:\benter\b.*\b(?:continue|confirm|select)\b|↑\/↓.*\b(?:navigate|select)\b)/i.test(dialog) ||
-      /^Introducing Gemini \d+\b/im.test(dialog) && /[│┃]/.test(tail)) return 'awaiting-user';
+      /[│┃]/.test(tail) && (/^Introducing Gemini \d+\b/im.test(dialog) ||
+        rows.some(row => /^[│┃]\s/.test(row) && announcementDismiss.test(row.replace(/^[│┃]\s+|\s+[│┃]$/g, ''))))) return 'awaiting-user';
   if (state === 'auth-fail' || state === 'rate-limit') return state;
   if (/^(?:Select login method:|Welcome to the Antigravity CLI\. You are currently not signed in\.)$/im.test(tail)) {
     return 'auth-fail';
@@ -111,7 +129,7 @@ export function hasRunningBackgroundTask(text) {
 export function dialogKeys(kind, text) {
   const rows = rowsOf(text);
   if (kind === 'overlay') {
-    const key = overlayKey(rows);
+    const key = overlay(rows)?.key;
     return key ? [key] : [];
   }
   if (kind === 'trust-dialog' && trustFooter.test(rows.at(-1) ?? '') &&

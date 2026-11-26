@@ -6,7 +6,8 @@ import claude from '../adapters/claude/index.mjs';
 import { matchesPastePlaceholder } from '../adapters/claude/screen.mjs';
 import codex from '../adapters/codex/index.mjs';
 import agy from '../adapters/agy/index.mjs';
-import { hasHeldComposer } from '../adapters/agy/screen.mjs';
+import { hasHeldComposer, matchesPastePlaceholder as matchesAgyPastePlaceholder, startupAnnouncement } from '../adapters/agy/screen.mjs';
+import { hasHeldComposer as codexHeldComposer, matchesPastePlaceholder as matchesCodexPastePlaceholder } from '../adapters/codex/screen.mjs';
 import opencode from '../adapters/opencode/index.mjs';
 import { parseAgyTranscriptLine } from '../adapters/agy/transcript.mjs';
 import { screenEvidence, stopFailure } from '../runtimes/tui/failure.mjs';
@@ -96,6 +97,7 @@ export const providers = {
   },
   codex: {
     ...codex,
+    screen: { ...codex.screen, hasHeldComposer: codexHeldComposer, pastePlaceholder: matchesCodexPastePlaceholder },
     screenStartup: true, // The native SessionStart hook runs inside the first turn.
     start(options) {
       const spec = codex.launch(options);
@@ -139,6 +141,8 @@ export const providers = {
       interruptions: text => (text.match(/^\s*(?:⎿\s*)?Interrupted · What should Antigravity CLI do instead\?\s*$/gm) ?? []).length,
       hasEmptyComposer: text => agy.screen.hasEmptyComposer(agyScreen(text)),
       hasHeldComposer,
+      pastePlaceholder: matchesAgyPastePlaceholder,
+      startupAnnouncement: text => startupAnnouncement(agyScreen(text)),
       dialogKeys(kind, text) {
         if (kind !== 'onboarding') return agy.screen.dialogKeys(kind, agyScreen(text));
         return /^\s*Welcome to Antigravity CLI!\s*$/m.test(text) && /^\s*Choose your color scheme:/m.test(text) &&

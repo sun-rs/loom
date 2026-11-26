@@ -34,7 +34,7 @@ export function agyPasteSegments(text, rows) {
   return [...parts, text.slice(start)];
 }
 
-async function submitAgyComposer(text, { before, read, write, valid, verify, resume, visibleOnly }) {
+async function submitAgyComposer(text, { before, read, write, valid, verify, resume, visibleOnly, provenWrites, pastePlaceholder }) {
   const pastedAt = performance.now();
   const deadline = pastedAt + 15_000;
   let frame = before;
@@ -50,14 +50,19 @@ async function submitAgyComposer(text, { before, read, write, valid, verify, res
     const expected = draftExpectation(prefix);
     const bytes = resume?.segment === index ? Buffer.from(bracket(segment)).subarray(resume.offset) : bracket(segment);
     if (await write(bytes, frame) === false) return denied('composer-changed-during-paste');
-    let matched;
+    let matched, previousChip;
     do {
       frame = await read();
       if (frame.exited || frame.humanSequence !== before.humanSequence) return denied('human-or-exit-during-paste');
       if (!sameInput(before, frame)) return denied('composer-changed-during-paste');
       if (frame.writable && frame.outputSequence > priorOutput && frame.quietForMs >= QUIET_OUTPUT_MS) {
-        if (verifyAgyDraft(frame, expected, !visibleOnly && (!resume || resume.ownsDraft)) && (!visibleOnly || frame.atDraftEnd)) {
-          if (verify && !await verify(frame, { held: true })) return denied('composer-blocked-during-paste');
+        const ownsDraft = !visibleOnly && (!resume || resume.ownsDraft);
+        const chip = provenWrites && ownsDraft && !frame.outsideComposer?.includes(`[loom:${expected.id}]`) &&
+          pastePlaceholder?.(frame.draft, prefix);
+        const collapsed = chip && previousChip === frame.generation;
+        previousChip = chip ? frame.generation : undefined;
+        if (collapsed || verifyAgyDraft(frame, expected, ownsDraft) && (!visibleOnly || frame.atDraftEnd)) {
+          if (verify && !await verify(frame, { held: true, collapsed })) return denied('composer-blocked-during-paste');
           if (valid(frame)) { matched = true; break; }
         }
       }
@@ -66,13 +71,14 @@ async function submitAgyComposer(text, { before, read, write, valid, verify, res
     if (!matched) return denied('draft-unverified');
   }
   if (await write(AGENT_PROMPT_SUBMIT, frame) === false) return denied('composer-changed-during-paste');
-  return { accepted: true, submittedAt: Date.now(), outcome: frame.scrolledDraft ? 'verified-scrolled-draft' : 'verified-normalized-draft',
+  return { accepted: true, submittedAt: Date.now(), outcome: pastePlaceholder?.(frame.draft, text) ?
+    'verified-collapsed-paste' : frame.scrolledDraft ? 'verified-scrolled-draft' : 'verified-normalized-draft',
     readbackMs: Math.round(performance.now() - pastedAt) };
 }
 
 export async function submitComposer(text, options) {
   const { before, provider, pastePlaceholder, read, write, valid, verify, observeEcho,
-    visibleOnly, reserveReenter } = options;
+    visibleOnly, reserveReenter, provenWrites } = options;
   if (provider === 'agy') return submitAgyComposer(text, options);
   if (before.draft !== '') return denied('draft-unverified');
   const pastedAt = performance.now();
@@ -82,7 +88,8 @@ export async function submitComposer(text, options) {
   const held = frame => verifyDraft(frame, expected);
   // Orca native-chat-paste-landed.ts checks a paste chip after an empty
   // composer and an unchanged reread. Claude's +N counts line breaks.
-  const showsPaste = frame => !visibleOnly && !frame.outsideComposer?.includes(marker) && pastePlaceholder?.(frame.draft, text);
+  const showsPaste = frame => !visibleOnly && (provider === 'claude' || provenWrites) &&
+    !frame.outsideComposer?.includes(marker) && pastePlaceholder?.(frame.draft, text);
 
   // Adapted from Orca terminal-agent-prompt-submit.ts and terminal-agent-prompt-resubmit.ts.
   // Every Enter needs a current view of this draft and a check of native turn activity.

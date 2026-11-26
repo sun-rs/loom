@@ -8,7 +8,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
 import { randomUUID } from 'node:crypto';
-import { deliveryId, payloadDigest } from '../inbox/message.mjs';
+import { deliveryId, payloadDigest, wireText } from '../inbox/message.mjs';
 import { publish } from '../inbox/store.mjs';
 import { estimateTokens } from '../lib/token-budget.mjs';
 import { writeMemory } from '../memory/project.mjs';
@@ -112,7 +112,7 @@ function fixture(t, options) {
   }
 
   const daemon = () => createSupervisor(project, { report: () => {}, externalNotification: async () => {},
-    sessionOptions: { open }, ...options });
+    ...options, sessionOptions: { open, ...options?.sessionOptions } });
   const spawn = (d, role, task, parent, fields = {}) => d.handle('spawn', {
     role, task, wave: role === 'worker' ? 'W' : 'ROOT', cli: 'codex', model: 'model', effort: 'high',
     cwd: project, project, mode: 'headless', prompt: 'start', ...fields,
@@ -1209,6 +1209,26 @@ test('holds queued input and worker results until the Leader’s native briefing
   await d.shutdown();
 });
 
+for (const cli of ['claude', 'agy', 'codex', 'opencode']) test(`a long ${cli} TUI handover fits one holder write and preserves the full briefing`, async t => {
+  const terminal = { address: 't1', pid: 101, created_ms: 1, status_ms: 1, state: 'live' };
+  const f = fixture(t, { sessionOptions: { getPane: async () => terminal, openPane: async () => ({ terminal }) } });
+  const d = f.daemon();
+  t.after(d.shutdown);
+  const { session: old } = await f.spawn(d, 'auditor', 'OLD');
+  const prompt = '交接内容。'.repeat(120);
+  const { pasteChunk } = await import('../tui/holder-paste.mjs');
+  const { session: next, deliveryId } = await f.spawn(d, 'auditor', 'NEXT', undefined, {
+    cli, mode: 'tui', 'handover-from': old.addr, prompt,
+  });
+  const { text } = f.read('inbox/state.json').messages.find(item => item.id === deliveryId);
+  assert.ok(Buffer.byteLength('\x1b[200~' + wireText(deliveryId, text) + '\x1b[201~') <= pasteChunk);
+  f.prompts.push({ addr: next.addr, input: text });
+  const { brief } = handoverBrief(f, next.addr);
+  assert.ok(brief.includes(prompt));
+  assert.match(brief, /Loom role guidance.*Decide the gate verdict/s);
+  assert.ok(brief.includes(old.addr));
+});
+
 test('a role delivery waits for the acknowledgement even if the predecessor has exited', async t => {
   const f = fixture(t);
   const d = f.daemon();
@@ -1216,8 +1236,9 @@ test('a role delivery waits for the acknowledgement even if the predecessor has 
   const { session: old } = await f.spawn(d, 'leader', 'L');
   await d.tick();
   const { session: next } = await f.spawn(d, 'leader', 'NEXT', undefined, { 'handover-from': old.addr });
+  const delivery = await d.handle('send', { target: 'leader', mode: 'queue', text: 'Queued before the slot becomes vacant' });
   await d.handle('stop', { target: old.addr });
-  const delivery = await d.handle('send', { target: 'leader', mode: 'queue', text: 'During the vacant slot' });
+  await assert.rejects(d.handle('send', { target: 'leader', mode: 'queue', text: 'During the vacant slot' }), { code: 'not-found' });
   const saved = () => f.read('inbox/state.json').messages.find(message => message.id === delivery.id);
   await d.tick();
   assert.deepEqual([saved().target.addr, saved().phase, saved().typedAt], [old.addr, 'queued', undefined]);
@@ -1225,6 +1246,172 @@ test('a role delivery waits for the acknowledgement even if the predecessor has 
   await d.tick();
   await d.tick();
   assert.equal(saved().target.addr, next.addr);
+});
+
+for (const [role, cli] of [['leader', 'agy'], ['auditor', 'claude']]) test(`${role} self-rotation uses a normal wake and waits for idle and acknowledgement`, async t => {
+  const f = fixture(t);
+  f.policy({ roles: { [role]: { rotateAt: 'gate' } } });
+  const d = f.daemon();
+  t.after(d.shutdown);
+  const { session: old } = await f.spawn(d, role, 'OLD', undefined, { cli, model: 'same-model', effort: 'low', prompt: 'HOLD startup' });
+  await d.tick();
+  const prior = f.read('inbox/state.json').messages.length;
+  await d.handle('notifications', { gateComplete: 'ROT-SELF' });
+  assert.equal(f.read('inbox/state.json').messages.length, prior);
+  const existing = await d.handle('send', { target: role, text: 'HOLD existing delivery', mode: 'queue' });
+  f.sessions.get(old.addr).finish('Startup finished.');
+  await d.tick();
+  let wire = f.prompts.find(item => deliveryId(item.input) === existing.id);
+  assert.match(wire.input, /换班提示.*rotate --self/s);
+  await assert.rejects(d.handle('rotate', { self: true, model: 'override' }, old.addr), { code: 'invalid-arguments' });
+  const { rotation: { notePath } } = await d.handle('rotate', { self: true, prepare: true }, old.addr);
+  const note = 'Keep the accepted gate. Review only the next candidate.';
+  writeFileSync(notePath, note);
+  const first = await d.handle('rotate', { self: true, reason: 'handoff readiness' }, old.addr);
+  assert.equal((await d.handle('rotate', { self: true }, old.addr)).rotation.requestId, first.rotation.requestId);
+  await d.tick();
+  assert.equal(f.sessions.size, 1);
+  f.sessions.get(old.addr).finish('Ready to hand over.');
+  await d.tick();
+  await d.tick();
+  const next = (await d.handle('state', { target: old.addr })).rotations[0].successor;
+  const { brief, ack } = handoverBrief(f, next);
+  assert.ok(brief.includes(note) && brief.includes(notePath) && brief.includes('handoff readiness'));
+  const job = f.read(`loomd/sessions/${next}.json`);
+  assert.deepEqual([job.row.cli, job.row.model, job.row.effort, job.row.backend, job.row.cwd],
+    [old.cli, old.model, old.effort, old.backend, old.cwd]);
+  assert.equal((await d.handle('state', { target: role })).addr, old.addr);
+  f.sessions.get(next).finish(ack);
+  await d.tick();
+  assert.equal((await d.handle('state', { target: role })).addr, next);
+  assert.equal((await d.handle('state', { target: old.addr })).state, 'exited');
+  const history = (await d.handle('notifications', { history: true })).notifications;
+  const success = history.find(event => event.type === `${role}-rotation-completed`);
+  assert.equal(success.addr, next);
+  assert.equal(Boolean(success.logOnly), role === 'leader');
+});
+
+test('Leader self-rotation lists active work and reports completion on the Auditor’s next ordinary delivery', async t => {
+  const f = fixture(t);
+  f.policy({ roles: { leader: { rotateAt: 'gate' } } });
+  const d = f.daemon();
+  t.after(d.shutdown);
+  const { session: auditor } = await f.spawn(d, 'auditor', 'AUD');
+  const { session: leader } = await f.spawn(d, 'leader', 'LEAD', undefined, { prompt: 'HOLD Leader startup' });
+  await d.tick();
+  f.sessions.get(leader.addr).finish('Ready.');
+  const { session: worker } = await f.spawn(d, 'worker', 'OPEN-CARD', leader.addr, { prompt: 'HOLD active work' });
+  await d.tick();
+  await d.handle('notifications', { gateComplete: 'GATE-WITH-ACTIVE-CARD' });
+  const original = await d.handle('send', { target: 'leader', mode: 'queue', text: 'HOLD ordinary Leader delivery' });
+  await d.tick();
+  assert.match(f.prompts.find(item => deliveryId(item.input) === original.id).input, /换班提示（gate）/);
+  f.sessions.get(leader.addr).finish('Ready to hand over.');
+  const { rotation: { notePath, inFlight } } = await d.handle('rotate', { self: true, prepare: true }, leader.addr);
+  assert.deepEqual(inFlight.map(item => item.addr), [worker.addr]);
+  writeFileSync(notePath, 'Wait for the integration result.');
+  await assert.rejects(d.handle('rotate', { self: true }, leader.addr), { code: 'rotation-work-unlisted' });
+  writeFileSync(notePath, 'Wait for the integration result from OPEN-CARD.');
+  await d.handle('rotate', { self: true }, leader.addr);
+  await d.tick();
+  await d.tick();
+  const next = (await d.handle('state', { target: leader.addr })).rotations[0].successor;
+  const { brief, ack } = handoverBrief(f, next);
+  assert.match(brief, /开放卡片和波次[\s\S]*OPEN-CARD/);
+  f.sessions.get(next).finish(ack);
+  await d.tick();
+  assert.equal(f.read('inbox/state.json').messages.filter(item => item.target.addr === auditor.addr).length, 1);
+  const sent = await d.handle('send', { target: 'auditor', mode: 'queue', text: 'HOLD next gate' });
+  await d.tick();
+  const input = f.prompts.find(item => deliveryId(item.input) === sent.id).input;
+  assert.ok(input.includes(`Loom leader 换班完成：${leader.addr} → ${next}`));
+});
+
+for (const bound of ['time', 'turns']) test(`an unanswered Leader rotation signal escalates to the Auditor at the ${bound} bound`, async t => {
+  let advance = 0;
+  const f = fixture(t, { now: () => Date.now() + advance });
+  f.policy({ roles: { leader: { rotateAt: 'gate' } } });
+  const d = f.daemon();
+  t.after(d.shutdown);
+  const { session: auditor } = await f.spawn(d, 'auditor', 'AUD');
+  const { session: leader } = await f.spawn(d, 'leader', 'LEAD');
+  await d.handle('notifications', { gateComplete: 'OVERDUE-GATE' });
+  await d.tick();
+  assert.equal(f.read('inbox/state.json').messages.filter(item => item.target.addr === auditor.addr).length, 1);
+  if (bound === 'time') {
+    advance = 15 * 60_000;
+  } else {
+    f.sessions.get(leader.addr).finish('Startup finished.');
+    await d.tick();
+    for (let i = 0; i < 3; i++) {
+      await d.handle('send', { target: 'leader', mode: 'queue', text: 'HOLD ordinary delivery ' + i });
+      await d.tick();
+      f.sessions.get(leader.addr).finish('Continuing.');
+      await d.tick();
+    }
+  }
+  await d.tick();
+  await d.tick();
+  const history = (await d.handle('notifications', { history: true })).notifications;
+  const overdue = history.filter(event => event.type === 'needs-decision' && event.reason === 'self-rotation-overdue');
+  assert.equal(overdue.length, 1);
+  assert.equal(overdue[0].addr, leader.addr);
+  assert.equal(overdue[0].pushRoute, auditor.addr);
+});
+
+test('failed self-rotation reports the first failure on a normal wake and escalates after the retry', async t => {
+  const f = fixture(t);
+  const d = f.daemon();
+  t.after(d.shutdown);
+  const { session: old } = await f.spawn(d, 'auditor', 'OLD');
+  await d.tick();
+  const { rotation: { notePath } } = await d.handle('rotate', { self: true, prepare: true }, old.addr);
+  writeFileSync(notePath, 'Keep the current gate and wait for the next candidate.');
+  const histories = async () => (await d.handle('notifications', { history: true })).notifications;
+  for (let attempt = 0; attempt < 2; attempt++) {
+    await d.handle('rotate', { self: true }, old.addr);
+    await d.tick();
+    await d.tick();
+    const next = (await d.handle('state', { target: old.addr })).rotations.at(-1).successor;
+    f.sessions.get(next).finish('The fixture omitted the acknowledgement.');
+    await d.tick();
+    assert.equal((await d.handle('state', { target: 'auditor' })).addr, old.addr);
+    const pushed = (await histories()).filter(event => event.id.startsWith('self-rotation:') && event.type === 'needs-decision');
+    assert.equal(pushed.length, attempt);
+    if (attempt) break;
+    const existing = await d.handle('send', { target: 'auditor', text: 'HOLD ordinary input', mode: 'queue' });
+    await d.tick();
+    assert.match(f.prompts.find(row => deliveryId(row.input) === existing.id).input,
+      /first-turn-missing-acknowledgement.*rotate --self/s);
+    f.sessions.get(old.addr).finish('Preparing the retry.');
+    await d.tick();
+  }
+  await assert.rejects(d.handle('rotate', { self: true }, old.addr), { code: 'rotation-retry-exhausted' });
+});
+
+test('external Super sends to the live role and receives project notification receipts and replies', async t => {
+  const f = fixture(t);
+  const d = f.daemon();
+  t.after(d.shutdown);
+  const { session: retired } = await f.spawn(d, 'leader', 'OLD');
+  await d.handle('stop', { target: retired.addr });
+  const { session: leader } = await f.spawn(d, 'leader', 'LIVE');
+  await d.tick();
+  f.sessions.get(leader.addr).finish('Startup finished.');
+  const cli = await cliFor(t, f, () => d);
+  assert.equal(JSON.parse((await cli('state', 'leader')).stdout).addr, leader.addr);
+  await assert.rejects(d.handle('send', { target: 'leader', from: 'super', mode: 'queue', text: 'spoof' }, leader.addr),
+    { code: 'invalid-arguments' });
+  const accepted = await d.handle('send', { target: 'leader', from: 'super', mode: 'queue', expectReply: true, text: 'HOLD request' });
+  assert.equal(accepted.addr, leader.addr);
+  await d.tick();
+  assert.deepEqual(f.read('inbox/state.json').messages.find(item => item.id === accepted.id).from,
+    { addr: 'super', role: 'super', external: true });
+  f.sessions.get(leader.addr).finish('The requested answer.');
+  await d.tick();
+  const history = (await d.handle('notifications', { history: true })).notifications.filter(event => event.deliveryId === accepted.id);
+  assert.deepEqual(history.map(event => event.type), ['super-delivery-receipt', 'super-delivery-reply']);
+  assert.equal(history[1].text, 'The requested answer.');
 });
 
 test('integration is a headless worker profile and Loom records the suite in the evidence card', async t => {
@@ -1264,6 +1451,10 @@ test('keeps the predecessor active and releases queued work when the first brief
   assert.equal(f.prompts.find(item => deliveryId(item.input) === queued.id).addr, old.addr);
   assert.ok((await d.handle('notifications', { history: true })).notifications.some(event =>
     event.type === 'leader-handover-failed' && event.reason === 'first-turn-missing-acknowledgement'));
+  const { projectStatus } = await import('../cli/status.mjs');
+  const { exits } = await projectStatus(f.project);
+  assert.equal(exits.find(item => item.addr === next.addr)?.reason, 'first-turn-missing-acknowledgement');
+  assert.ok(!exits.some(item => item.addr === old.addr));
   await f.spawn(d, 'leader', 'RETRY', undefined, { 'handover-from': old.addr });
 });
 

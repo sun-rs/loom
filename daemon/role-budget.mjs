@@ -18,7 +18,7 @@ export function rotationReason(policy, role, { gate, contextTokens, wakes }) {
   if (gate && policy.roles?.[role]?.rotateAt === 'gate') return 'gate';
 }
 
-export function roleBudget(project, { now, sessions, notifications, batchDeliveryId, report }) {
+export function roleBudget(project, { now, sessions, notifications, batchDeliveryId, report, signalRotation }) {
   const sampled = new Map();
   const pyramids = new Map();
   const viewed = new Map();
@@ -55,7 +55,8 @@ export function roleBudget(project, { now, sessions, notifications, batchDeliver
 
   async function proposeLeader(name, leader, reader, events, policy, at) {
     const id = 'leader-rotation:' + batchDeliveryId(name, leader.addr);
-    if (events.some(event => event.id === id)) return;
+    const prior = events.find(event => event.id === id);
+    if (prior) return signalRotation?.(leader, prior.reason);
     const gate = events.findLast(event => gateBoundary(event) && event.at >= leader.startedAt)?.gate;
     const contextTokens = await context(leader, reader.sessionHistory(leader), true);
     const usage = { contextTokens, ...rotationLimits(policy, 'leader') };
@@ -64,7 +65,8 @@ export function roleBudget(project, { now, sessions, notifications, batchDeliver
     const why = reason === 'gate' ? `门禁 ${gate} 已完成，卡片已到安全边界。` :
       `Leader 最近调用的输入为 ${contextTokens} token，超过 ${usage.maxContextTokens}。`;
     notifications.add({ id, project: name, at, addr: leader.addr, type: 'leader-rotation-proposed',
-      gate, usage, reason, logOnly: true, text: `${why} 建议由 Super 安排 Leader 换班。` });
+      gate, usage, reason, logOnly: true, text: `${why} Leader 在下一次现有投递收到自助换班提示。` });
+    signalRotation?.(leader, reason);
   }
 
   function assessToolOutput(name, rows, reader, events, at) {
@@ -106,7 +108,7 @@ export function roleBudget(project, { now, sessions, notifications, batchDeliver
       viewed.set(name, now());
       return pyramids.get(name);
     },
-    async check(name, rows, policy, { completeGate = false, safeLeader, gateRecorded = false } = {}) {
+    async check(name, rows, policy, { completeGate = false, safeLeader, leader, auditor, gateRecorded = false } = {}) {
       const at = now();
       if (!completeGate && !gateRecorded && at - (sampled.get(name) ?? -Infinity) < sampleIntervalMs) return;
       const events = notifications.list(name, false, true);
@@ -114,9 +116,14 @@ export function roleBudget(project, { now, sessions, notifications, batchDeliver
       const id = 'auditor-budget:' + batchDeliveryId(name, gate?.id ?? '');
       const reader = historyReader(project);
       if (safeLeader) await proposeLeader(name, safeLeader, reader, events, policy, at);
+      else if (leader) {
+        const contextTokens = await context(leader, reader.sessionHistory(leader), true);
+        if (contextTokens > rotationLimits(policy, 'leader').maxContextTokens) signalRotation?.(leader, 'budget');
+      }
       if (gateRecorded) return;
       const usage = await assessAuditor(rows.filter(row => row.role === 'auditor'), reader, gate?.at ?? -Infinity, policy);
       const overBudget = Boolean(rotationReason(policy, 'auditor', usage));
+      if (usage.contextTokens > usage.maxContextTokens) signalRotation?.(auditor, 'budget');
       const prior = events.find(event => event.id === id);
       if (overBudget || prior) {
         const context = usage.contextTokens == null ? '未知' : `${usage.contextTokens}/${usage.maxContextTokens}`;

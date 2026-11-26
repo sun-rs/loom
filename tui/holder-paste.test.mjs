@@ -1,10 +1,13 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
+import { setTimeout as delay } from 'node:timers/promises';
 import { matchesPastePlaceholder } from '../adapters/claude/screen.mjs';
 import { claudeNativeDigest, payloadDigest, wireText } from '../inbox/message.mjs';
 import { nativeDelivery } from '../inbox/tui.mjs';
-import { adoptionWriteId, provePaste, utf8PasteChunk } from './holder-paste.mjs';
+import { adoptionWriteId, provePaste, utf8PasteChunk, writeGuardedInput } from './holder-paste.mjs';
+import { bindTuiSession } from './index.mjs';
+import { providers } from './providers.mjs';
 
 const capture = JSON.parse(readFileSync(new URL('../tasks/PILOT2-FIX-2/partial-receipt.json', import.meta.url)));
 const { deliveryId: id, written, total, eventSeq, stdoutOffset, stdinOffset } = capture;
@@ -35,6 +38,104 @@ test('Claude paste writes cut at UTF-8 boundaries even for a payload over 1.2 KB
   const crossing = Buffer.from(' '.repeat(511) + '🐙x');
   assert.equal(utf8PasteChunk(crossing, 0).length, 511);
   assert.equal(decoder.decode(utf8PasteChunk(crossing, 511)), '🐙x');
+});
+
+test('holder continues short writes across the old deadline, including mid-codepoint and lost receipts', async () => {
+  await Promise.all([1, 511, 1022].map(async cut => {
+    const data = Buffer.from('a'.repeat(510) + '🐙' + 'a'.repeat(507) + '🐙' + 'z'.repeat(850));
+    let written = 0, stalled = false, receiptLost = false;
+    const calls = new Map();
+    const frame = { outputSequence: 0, editor: 3 };
+    await writeGuardedInput(data, frame, {
+      valid: (before, view) => view.editor === before.editor,
+      refresh: async (view, progressed) => progressed ? { ...view, outputSequence: view.outputSequence + 1 } : view,
+      verify: async () => true,
+      async write(part, _view, id) {
+        if (calls.has(id)) {
+          const previous = calls.get(id);
+          assert.deepEqual(part, previous.part);
+          return previous.result;
+        }
+        assert.deepEqual(part, data.subarray(written, written + part.length));
+        if (written === cut && !stalled) {
+          stalled = true;
+          await delay(2300);
+          return { status: 'would-block' };
+        }
+        const n = written < cut ? Math.min(part.length, cut - written) : part.length;
+        const result = { status: n < part.length ? 'partial' : 'applied', offset: BigInt(100 + written), written: n };
+        calls.set(id, { part, result });
+        written += n;
+        if (written === cut && !receiptLost) {
+          receiptLost = true;
+          throw Object.assign(new Error('test disconnect'), { code: 'HOLDER_EOF' });
+        }
+        return result;
+      },
+    });
+    assert.ok(stalled && receiptLost);
+    assert.equal(written, data.length);
+  }));
+  const frame = { editor: 1 };
+  await assert.rejects(writeGuardedInput('abcdef', frame, {
+    valid: (before, after) => before.editor === after.editor,
+    write: async () => ({ status: 'partial', offset: 100n, written: 2 }),
+    refresh: async () => ({ editor: 2 }),
+  }), { code: 'HOLDER_PARTIAL_WRITE', written: 2, total: 6, reason: 'INPUT_CHANGED' });
+});
+
+test('agy and Codex collapsed chips require complete guarded writes and a stable matching frame', async () => {
+  const { submitComposer } = await import('./agent-input.mjs');
+  const input = wireText(id, '交接\n🐙' + 'a'.repeat(2139));
+  const initial = { draft: '', humanSequence: 0, buffer: 'normal', generation: 1, outputSequence: 1,
+    size: { rows: 50 }, writable: true, quietForMs: 200 };
+  const characters = Array.from(input).length;
+  for (const provider of ['agy', 'codex']) {
+    for (const [provenWrites, count, confirmed] of [[true, characters, true], [false, characters, false], [true, characters - 1, false]]) {
+      let frame = initial;
+      let reads = 0, enters = 0;
+      const chip = provider === 'agy' ? 'Pasted text #1' : 'Pasted Content';
+      const result = await submitComposer(input, { before: initial, provider, provenWrites,
+        pastePlaceholder: providers[provider].screen.pastePlaceholder, valid: () => true, verify: () => true,
+        read: async () => ++reads >= 5 ? { ...frame, humanSequence: 1 } : frame,
+        async write(bytes) {
+          if (bytes === '\r') enters++;
+          else frame = { ...initial, draft: `[${chip} ${count} chars]`, generation: 2, outputSequence: 2 };
+        },
+      });
+      assert.equal(result.accepted, confirmed, provider);
+      assert.equal(enters, Number(confirmed));
+    }
+  }
+});
+
+test('Codex can verify the held composer when the shortcut footer becomes a warning counter', () => {
+  const held = providers.codex.screen.hasHeldComposer;
+  assert.ok(held('›\n  gpt-5.4 default · /isolated/project\n  ⚠ 1 warning · f2 to view'));
+  assert.equal(held('›\n  gpt-5.4 default · /isolated/project\n  Enter to confirm · Esc to cancel'), false);
+});
+
+test('agy dismisses distinct recognized startup announcements once, and waits on an unknown notice', async () => {
+  const composer = '\n────────────\n>\n────────────\n? for shortcuts';
+  const banners = ['┃ Introducing Gemini 4 Neon\n┃ esc to dismiss',
+    'Auto is now the default agent mode\nPress Shift+Tab to switch agent modes, or change Agent Mode in /config.\nesc to dismiss',
+    '┃ Change your security settings\n┃ esc to dismiss'];
+  const keys = [];
+  const terminal = {
+    read: async () => ({ text: banners[keys.length] + composer, outsideComposer: banners[keys.length],
+      draft: '', generation: keys.length, writable: true, quietForMs: 200 }),
+    key(key, _, id) { keys.push([key, id]); },
+  };
+  const session = bindTuiSession(terminal, providers.agy, { incarnation: 'startup-test' });
+  for (let i = 0; i < 2; i++) {
+    await session.readState();
+    await session.readState();
+    await delay(1010);
+  }
+  assert.equal((await session.readState()).ready, false);
+  await session.readState();
+  assert.deepEqual(keys.map(([key]) => key), ['esc', 'esc']);
+  assert.notEqual(keys[0][1], keys[1][1]);
 });
 
 test('the captured short receipt and matching Claude +15 chip are insufficient to adopt', () => {

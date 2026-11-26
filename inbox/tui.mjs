@@ -368,6 +368,7 @@ export function tui(project, call = hc, fixtureSend, control = controlTui) {
         complete: screen.text !== undefined, humanActive: host.humanActive, composerEmpty: screen.empty,
         pendingDeliveryId: frame.pending, submittedDeliveryId: frame.submittedDeliveryId,
         retryableDeliveryId: frame.retryableDeliveryId,
+        ...(frame.failedPartialWrite && { failedPartialWrite: frame.failedPartialWrite }),
         ...(frame.heldDraftProof && { heldDraftProof: frame.heldDraftProof, heldDeliveryId: frame.pending,
           heldDraftBytes: frame.heldDraftBytes }),
       } };
@@ -432,6 +433,11 @@ export function tui(project, call = hc, fixtureSend, control = controlTui) {
       if (error.code === 'INPUT_SIZE') error.kind = 'input-refused';
       throw error;
     });
+    if (result.hostReceipt?.partialWrite) {
+      const { written, total } = result.hostReceipt.partialWrite;
+      throw Object.assign(new Error(`Holder could not finish writing ${written}/${total} bytes`),
+        { kind: 'holder-partial-write', partialWrite: result.hostReceipt.partialWrite });
+    }
     if (result.kind !== 'confirmed') {
       const kind = result.kind === 'unconfirmed' && result.hostReceipt?.accepted === true ? 'no-native-turn' :
         result.kind !== 'refused' || result.code === 'previous-input-unconfirmed' ? 'unconfirmed' :

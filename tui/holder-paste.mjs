@@ -1,6 +1,9 @@
-import { createHash } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { constants, readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { performance } from 'node:perf_hooks';
+import { setTimeout as delay } from 'node:timers/promises';
+import { holderError } from '../holder/protocol.mjs';
 import { AGENT_PROMPT_BRACKETED_PASTE_END, AGENT_PROMPT_BRACKETED_PASTE_START, agyPasteSegments } from './agent-input.mjs';
 
 export const pasteChunk = 512;
@@ -10,6 +13,60 @@ export function utf8PasteChunk(bytes, offset) {
   let end = Math.min(bytes.length, offset + pasteChunk);
   while (end < bytes.length && (bytes[end] & 0xc0) === 0x80) --end;
   return bytes.subarray(offset, end);
+}
+
+const unwritten = new Set(['stale', 'busy-human', 'would-block', 'exited']);
+const ambiguousLink = new Set(['HOLDER_TIMEOUT', 'HOLDER_EOF', 'ECONNRESET', 'EPIPE']);
+
+export async function writeGuardedInput(bytes, before, { write, refresh, valid, verify, id = randomUUID() }) {
+  const data = Buffer.from(bytes);
+  let current = before;
+  let count = 0;
+  let nextOffset;
+  const deadline = performance.now() + 30_000;
+  let progressDeadline = performance.now() + 5_000;
+  try {
+    do {
+      if (!valid(before, current) || count && current.outputSequence !== before.outputSequence &&
+          verify && !await verify(current)) {
+        if (!count) return false;
+        throw holderError('INPUT_CHANGED');
+      }
+      const part = utf8PasteChunk(data, count);
+      const send = () => write(part, current, id);
+      const result = await send().catch(error => {
+        // The same UUID and bytes query the durable receipt without replaying the write.
+        if (ambiguousLink.has(error.code)) return send();
+        throw error;
+      });
+      if (unwritten.has(result.status)) {
+        if (!count) return false;
+        if (result.status === 'exited') throw holderError('HOLDER_EXITED');
+        await delay(15);
+        current = await refresh(current, false);
+        continue;
+      }
+      const n = result.written;
+      if (!(result.status === 'applied' && n === part.length || result.status === 'partial' && n > 0 && n < part.length) ||
+          typeof result.offset !== 'bigint') {
+        if (result.status === 'invalid') throw holderError('INPUT_SIZE');
+        if (result.status === 'gap') throw holderError('HOLDER_GAP');
+        throw holderError('HOLDER_UNCERTAIN', `Holder write ${result.status}`);
+      }
+      count += n;
+      if (nextOffset !== undefined && nextOffset !== result.offset) throw holderError('STDIN_CHANGED');
+      if (count === data.length) return true;
+      nextOffset = result.offset + BigInt(n);
+      progressDeadline = performance.now() + 5_000;
+      id = randomUUID();
+      current = await refresh(current, true);
+    } while (performance.now() < Math.min(deadline, progressDeadline));
+    throw holderError('WRITE_TIMEOUT');
+  } catch (error) {
+    if (!count) throw error;
+    throw Object.assign(holderError('HOLDER_PARTIAL_WRITE', `Holder wrote ${count}/${data.length} bytes: ${error.code}`),
+      { written: count, total: data.length, reason: error.code ?? 'write-failed' });
+  }
 }
 
 export function readPasteReceipt(dir, id) {
@@ -28,6 +85,7 @@ export function provePaste(events, input, view, receipt, { provider, rows, overl
   let total = segments(rows).reduce((sum, frame) => sum + frame.length, 0);
   const legacyChunk = (bytes, offset) => bytes.subarray(offset, offset + 4096);
   const writes = events.map(event => ({ ...event, receipt: receipt(event.id) }));
+  const dismissals = new Set([overlayDismissal].flat().filter(Boolean));
   let written = 0, continuation, continuationBytes, ownedClosedBytes;
   for (let start = writes.length - 1; start >= 0; --start) {
     if (!writes[start].receipt) continue;
@@ -48,17 +106,26 @@ export function provePaste(events, input, view, receipt, { provider, rows, overl
       cursor += proof.count;
       stdinOffset += BigInt(proof.count);
       const latest = writes.at(-1);
-      const dismissal = i === writes.length - 2 && latest.id === overlayDismissal &&
-        latest.receipt?.digest === digest('\x1b') && !latest.receipt.partial && latest.count === 1 &&
-        latest.receipt.count === 1 && latest.receipt.start === stdinOffset && latest.boundary === boundary &&
-        latest.human === view.humanInputOffset && latest.seq <= view.eventSeq && view.outputOffset > latest.output;
-      const unchangedInput = (write === latest || dismissal) && write.human === view.humanInputOffset;
+      let tail = write;
+      let end = stdinOffset;
+      const seen = new Set();
+      for (const key of writes.slice(i + 1)) {
+        if (!dismissals.has(key.id) || seen.has(key.id) || key.receipt?.digest !== digest('\x1b') ||
+            key.receipt.partial || key.count !== 1 || key.receipt.count !== 1 || key.receipt.start !== end ||
+            key.boundary !== boundary || key.human !== view.humanInputOffset || key.seq > view.eventSeq) break;
+        seen.add(key.id);
+        tail = key;
+        end++;
+      }
+      const dismissedOverlay = tail !== write && tail === latest && view.outputOffset > tail.output;
+      const unchangedInput = (write === latest || dismissedOverlay) && write.human === view.humanInputOffset;
       const uninterrupted = unchangedInput && boundary === view.boundary;
       const unchangedBuffer = write.bufferSequence != null && write.bufferSequence === view.bufferSequence;
       const ownsDraft = provider === 'agy' && writes[start].emptyComposer === true;
       if (offset === expectedTotal) {
         if (uninterrupted && view.outputOffset > write.output) {
-          return { status: 'complete', written: offset, total: expectedTotal, ...(ownsDraft && { ownsDraft: true, closedBracket: true }) };
+          return { status: 'complete', written: offset, total: expectedTotal, ...(ownsDraft && { ownsDraft: true, closedBracket: true }),
+            ...(dismissedOverlay && { dismissedOverlay: true }) };
         }
         if (unchangedInput && unchangedBuffer && view.outputOffset > write.output) {
           return { status: 'reflowed', written: offset, total: expectedTotal, ownsDraft };

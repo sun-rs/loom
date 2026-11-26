@@ -29,10 +29,11 @@ description: 在 Loom 中启动、指挥、复核或接手由 Super、Auditor、
 - 确需深入核查原件时，由 Auditor 用 `loom spawn reviewer --cwd "$REVIEW_TREE" --wave "$GATE" --cli "$CLI" --model "$MODEL" --effort "$EFFORT" "$QUESTION"` 按门禁启动一次临时只读核查。给出固定候选 SHA 和一个可证伪的问题。有效结论回送一次并计入 `maxWakesPerGate`，原文存入回执文件。`loom notifications --history` 可查询追加审查记录。
 - 把耗时工作交给 Worker 或 Reviewer，禁止用后台 Bash 等结果。门禁最终回复首行直接写 `PASS`、`APPROVE`、`REJECT` 或 `BLOCKED`，依据从下一段开始。确认收到时用 `NOREPLY`。
 - 每次介入给 Leader 一条可执行的结论。常规结论排队投递，只有可复现的阻断缺陷可用 `interrupt` 否决。每轮自查验收要求是否超出目标或证据所需。每项交付最多审两轮，仍阻塞时向 Super 升级改设计，用 `--audit-escalation blocking-disagreement` 附证据和影响。
+- 收到换班提示，在安全点按[交班模板](#换班与收尾)写下门禁判断和在途审查，运行 `"$LOOM_BIN" rotate --self` 并结束本轮。首次失败随正常投递收到原因，自行重试一次。无人值守时照此执行。
 
 ## Leader · 执行督导
 
-1. 把裁决拆成卡，分派 Worker，组织门禁并监督 Auditor 换班。用户直接问时只回一句状态。
+1. 把裁决拆成卡，分派 Worker，组织门禁。用户直接问时只回一句状态。
    协调时只读门禁包、三行回执、证据卡、`loom hist` 摘要和 `git diff --stat`。读源码、查测试、运行测试和缺陷诊断交给 Worker。Auditor 若转来临时核查结果，用 `loom send` 把原文的回执文件路径转给 Worker 卡片。使用 `loom status` 和下一次唤醒附带的证据摘要处理异常，禁止循环查 `loom state`。
 2. 按 [派卡模板](../../examples/card.md) 定目标、可写范围、净行数预算、受影响的测试和验收。隔离 worktree 的准备由 Worker 卡完成，每批使用新 `--wave`。同时活跃的写代码 Worker 默认 2–3 名，硬上限 4 名。更多先拆成独立协调域。派发中断后查已接收成员，余项另开新波。
    测试先行且验收要求先见红的卡，用 `loom spawn worker --expect-red` 标记。测试失败原件仍入证据卡，预期红灯跳过重复测试失败告警。
@@ -40,6 +41,7 @@ description: 在 Loom 中启动、指挥、复核或接手由 Super、Auditor、
 4. 集成卡注明固定候选、全量命令和验收证据，派工时用 `loom spawn worker --integration`。Leader 用 `"$LOOM_BIN" gate pack "$GATE" --round "$ROUND" --project "$PROJECT" --base "$BASE" --candidate "$CANDIDATE"` 交付该轮快照。省略轮次时创建下一轮，重取原包须用 `--reuse`。审核和授权齐备后由集成 Worker 执行合入，Leader 用 `loom notifications --gate-complete "$GATE"` 登记安全边界。一般合入回告随 Auditor 的下一次正常唤醒附送。
 5. 在真实派工或汇报中处理 loomd 附上的信号。核实保护或越界文件、删除或削弱断言、skip/only、事实错误或沙箱逃逸尝试后，可用 `loom escalate "$GATE" --reason REASON --evidence TEXT` 升级；与门禁包共用一次唤醒。需要其他角色回送最终答复时用 `loom send --expect-reply`。Worker 波次按批次回 Leader。
 6. 把耗时验收交给 Worker，禁止用后台 Bash 等结果。最终回复首行直接写 `DONE`、`BLOCKED`、`FAILED` 等结论标签，依据从下一段开始。确认收到时用 `NOREPLY`。
+7. 收到换班提示，在安全点按[交班模板](#换班与收尾)写下执行判断和在途卡片，运行 `"$LOOM_BIN" rotate --self` 并结束本轮。首次失败随正常投递收到原因，自行重试一次。无人值守时照此执行。
 
 Leader 和 Auditor 起草卡片时可定点读取最多 200 行。测试、构建、合入、广域读取和循环查状态优先交给 Worker。确有必要时，在工具被拒后用 `"$LOOM_BIN" senior-tool --reason "理由" -- "命令"` 重试，输出只保留最后 40 行。loomd 认定执行或投递故障时可省略理由，回执记录 `worker-unavailable`。查看 `loom status` 或 `loom hist` 可追溯拒绝和重试。
 
@@ -68,14 +70,22 @@ Worker 线统一由 OAR 托管。新增特殊 worker（例如 Claude TUI worker�
   ```
 
 - `loom status --project "$PROJECT"` 看项目总览，`loom ls` 查稳定地址，`loom state "$ADDR"` 查在途事项和换班状态。用 `loom hist "$ADDR" --evidence` 查证据卡，`loom hist --wave "$WAVE"` 查波次，`loom hist "$ADDR" --turn "$N" --level L2 --diff` 查单轮提交差异。未提交的改动查证据卡，正文未确认时按历史给出的路径和行号核查原件。
-- Leader、Auditor 和 Super 用 `loom send "$ADDR" --project "$PROJECT" "$TEXT"` 排队发信，托管会话默认以 `LOOM_ADDR` 为来源。授权叫停用 `--mode interrupt` 并说明理由。loomd 按投递 SLA 对账并升级停滞投递。
+- Leader、Auditor 和 Super 用 `loom send "$ADDR" --project "$PROJECT" "$TEXT"` 排队发信，也可用 `leader` 或 `auditor` 发送给当前已接任的唯一角色。托管会话默认以 `LOOM_ADDR` 为来源。外部 Super 可用 `--from super` 收取通知回执，并用 `--expect-reply` 请求答复。授权叫停用 `--mode interrupt` 并说明理由。loomd 按投递 SLA 对账并升级停滞投递。
 - Leader 和 Auditor 等待结果超过预期时，运行 `"$LOOM_BIN" status` 检查滞留投递和未回送的回复。
 
 ## 换班与收尾
 
-1. Leader 换班由在任 Auditor 监督，Auditor 换班由在任 Leader 监督。两者禁止同时换班，至少错开一个完整任务阶段，只在卡边界换。两个角色可配置 `rotateAt: "gate"` 和 `maxContextTokens`，默认上限 150000。Auditor 另有 `maxWakesPerGate`，默认 3。Leader 建议记录在 `loom status` 和通知历史，由 Super 或获授权者操作。
-2. 交班方写一页交接单，记当前任务、在途波次和续作、未决投递与裁决、基线 SHA 和路径、已过门禁、可做和禁做事项、未提交改动及下一步。Loom 交接简报须包含 `.project/charter.md` 和 `.project/rulings.md` 的路径和相关要点，以原件为准。
-3. 用 `loom spawn "$ROLE" --project "$PROJECT" --cwd "$PROJECT" --handover-from "$OLD_ADDR" "$PROMPT"` 换班。Leader 在首轮读完 loomd 生成的交接回执文件，把末尾的确认码原样放在最终回复首行。loomd 收到原生确认后移交在途工作并退休前任。新会话首轮报到的 SHA、路径须现查，由 loomd 机械核验，监督者核对在途事项和未决裁决。第 3 次上下文压缩后，引用的每个数字都须逐项现查。
-4. 阶段或目标收尾时归档结果，用 `loom notifications --project "$PROJECT" --complete "$SUMMARY" --phase "$PHASE"` 登记完成。查看回执中的推送去向。若收到 `notification-pending`，记录已保存的完成 ID，路线恢复后以原参数重试。项目收尾时用 `loom stop` 关闭会话。清理 worktree 前先把暂存、未暂存及授权范围内未跟踪的草稿归档成可恢复的补丁，记录路径。最后用 `loom doctor --project "$PROJECT"` 核对残留。
+1. Leader 和 Auditor 收到随正常投递附上的换班提示后自行交班。上下文阈值默认 150000，可用 `maxContextTokens` 和 `rotateAt: "gate"` 调整。选在卡片已结算或已在交接单列明的安全点发起，同项目已有换班时由 loomd 串行处理。
+2. 把判断写到提示给出的路径。手动发起时运行 `"$LOOM_BIN" rotate --self --prepare` 获取路径和在途卡片列表。交接单不超过 60 行，按需要填写以下各项。
+
+   - 当前目标和判断
+   - 待定决策及主要顾虑
+   - 在途卡片 ID、预计结果和待续事项
+   - 接任后的首个动作
+   - 已完成或已有证据、无需重做的工作
+
+3. 运行 `"$LOOM_BIN" rotate --self`，可附 `--reason`，然后结束当前回合。loomd 等当前回合空闲后沿用本会话的 CLI、模型、effort、模式、目录和角色标签页。简报由 loomd 汇总章程、裁决、门禁、记忆和在途投递，并嵌入前任判断。接任者读到文件末尾，把确认码原样放在第一轮最终回复的首行，附现查的 SHA 和路径，随后等待投递。
+4. 首次交接失败时前任继续工作，在下一次现有投递收到原因。修正判断单并自行重试一次。第二次失败或超过三轮／15 分钟时，loomd 将 Leader 的问题升级给 Auditor，将 Auditor 的问题升级给 Super。成功后 Leader 的接任情况随 Auditor 的现有投递附送，Auditor 的接任情况记录到 Super 通知。Super 可用 `loom rotate --target leader|auditor` 处理例外并显式改运行配置。
+5. 阶段或目标收尾时归档结果，用 `loom notifications --project "$PROJECT" --complete "$SUMMARY" --phase "$PHASE"` 登记完成。查看回执中的推送去向。若收到 `notification-pending`，记录已保存的完成 ID，路线恢复后以原参数重试。项目收尾时用 `loom stop` 关闭会话。清理 worktree 前先把暂存、未暂存及授权范围内未跟踪的草稿归档成可恢复的补丁，记录路径。最后用 `loom doctor --project "$PROJECT"` 核对残留。
 
 Worker 调用 Loom 命令使用绝对可执行路径 `"$LOOM_BIN"`。其他托管角色可使用 `"$LOOM_BIN"` 或由 Loom 注入的 `PATH` 解析的 `loom`。
