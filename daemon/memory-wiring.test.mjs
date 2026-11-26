@@ -238,6 +238,94 @@ for (const action of ['show', 'update', 'invalidate']) {
   });
 }
 
+const eventShortId = 'abc123ab';
+const firstEventId = `memory-event-${eventShortId}${'1'.repeat(56)}`;
+const secondEventId = `memory-event-${eventShortId}${'2'.repeat(56)}`;
+
+for (const action of ['show', 'update', 'invalidate']) {
+  const run = (f, caller, entry) => action === 'show'
+    ? show(f, caller, eventShortId)
+    : mutate(f, caller, action, eventShortId, 1, action === 'update' ? entry : undefined);
+
+  test(`6e.4 CLI mem ${action} accepts an eight-character event hash prefix`, async t => {
+    const f = await fixture(t, { allocateId: () => firstEventId });
+    const auditor = await f.spawn('auditor');
+    const entry = draft('Short event ID manifest fixture');
+    const { item } = await put(f, auditor, entry);
+    assert.equal(item.id, firstEventId);
+    const revision = { ...entry, body: 'Verify the event digest as well as the signature.' };
+    const { item: result } = await run(f, auditor, revision);
+    assert.equal(result?.id, firstEventId);
+    if (action === 'show') assert.deepEqual(result, item);
+    if (action === 'update') {
+      assert.equal(result.revision, 2);
+      assert.deepEqual((await show(f, auditor, firstEventId)).item, result);
+      assert.equal(result.body, revision.body);
+    }
+    if (action === 'invalidate') assert.equal((await show(f, auditor, firstEventId)).item, null);
+  });
+
+  test(`6e.4 CLI mem ${action} reports ambiguity for two visible event hashes sharing a prefix`, async t => {
+    const ids = [firstEventId, secondEventId].values();
+    const f = await fixture(t, { allocateId: () => ids.next().value });
+    const auditor = await f.spawn('auditor');
+    const entry = draft('Colliding event ID manifest fixture');
+    const { item: first } = await put(f, auditor, entry);
+    const { item: second } = await put(f, auditor, draft('Colliding event ID signature fixture'));
+    assert.deepEqual([first.id, second.id], [firstEventId, secondEventId]);
+    await assert.rejects(run(f, auditor, entry), error => {
+      const { message } = JSON.parse(error.stdout).error;
+      assert.match(message, /ambigu|multiple match|歧义|多个匹配/iu);
+      return true;
+    });
+    for (const item of [first, second]) assert.deepEqual((await show(f, auditor, item.id)).item, item);
+  });
+
+  test(`3a · CLI mem ${action} resolves a visible event hash despite a private collision`, async t => {
+    const ids = [firstEventId, secondEventId].values();
+    const f = await fixture(t, { allocateId: () => ids.next().value });
+    const auditor = await f.spawn('auditor'), leader = await f.spawn('leader');
+    const { item: hidden } = await put(f, auditor, draft('Private event fixture', { layer: 'private' }));
+    const entry = draft('Shared event fixture', { kind: 'lesson' });
+    const { item: visible } = await put(f, leader, entry);
+    assert.deepEqual([hidden.id, visible.id], [firstEventId, secondEventId]);
+    assert.deepEqual((await show(f, auditor, hidden.id)).item, hidden);
+    assert.equal((await show(f, leader, hidden.id)).item, null);
+    assert.deepEqual((await show(f, leader, visible.id)).item, visible);
+
+    const revision = { ...entry, body: 'Record the verified event digest.' };
+    const { item: result } = await run(f, leader, revision);
+    assert.equal(result?.id, visible.id);
+    if (action === 'show') assert.deepEqual(result, visible);
+    if (action === 'update') {
+      assert.equal(result.revision, 2);
+      assert.deepEqual((await show(f, leader, visible.id)).item, result);
+      assert.equal(result.body, revision.body);
+    }
+    if (action === 'invalidate') assert.equal((await show(f, leader, visible.id)).item, null);
+    assert.deepEqual((await show(f, auditor, hidden.id)).item, hidden);
+  });
+}
+
+test('3a · CLI mem show returns the same error for a private-only and an absent short ID', async t => {
+  const f = await fixture(t, { allocateId: () => firstEventId });
+  const auditor = await f.spawn('auditor'), leader = await f.spawn('leader');
+  const { item: hidden } = await put(f, auditor, draft('Private-only event fixture', { layer: 'private' }));
+  assert.equal(hidden.id, firstEventId);
+  assert.deepEqual((await show(f, auditor, hidden.id)).item, hidden);
+  assert.equal((await show(f, leader, hidden.id)).item, null);
+
+  const [privateMatch, absentMatch] = await Promise.allSettled([
+    show(f, leader, eventShortId), show(f, leader, 'def456cd'),
+  ]);
+  assert.equal(privateMatch.status, 'rejected', 'a private-only short ID must return an error');
+  assert.equal(absentMatch.status, 'rejected', 'an absent short ID must return an error');
+  const { code, message } = JSON.parse(absentMatch.reason.stdout).error;
+  const { code: privateCode, message: privateMessage } = JSON.parse(privateMatch.reason.stdout).error;
+  assert.ok(code && message, 'the absent short ID error must contain a code and message');
+  assert.deepEqual([privateCode, privateMessage], [code, message]);
+});
+
 test('5a · R18 user rulings are read-only for Auditor and Leader; R22 denies Worker search and writes', async t => {
   const f = await fixture(t);
   const superAddr = await f.spawn('super'), auditor = await f.spawn('auditor'), leader = await f.spawn('leader');
