@@ -29,7 +29,7 @@
 - 来源候选为 `forgotten` 时，任何 `merge`（包括重放和改用其他目标）均返回 `ok: false`，不提交且持久状态不变，回应不含候选或目标的旧正文。无审结权的调用者仍返回 `forbidden`。
 - 成功回执为 `{ ok: true, item, receipt, ... }`。`receipt` 含 `requestId, status`，状态为 `accepted | duplicate | candidate`。导入用 `items`，审结另带 `candidate`，遗忘的 `item` 为墓碑。
 - 失败回执为 `{ ok: false, code, error, currentRevision? }`。`error` 为脱敏字符串，授权失败用 `forbidden`，CAS 失败用 `conflict`。审结幂等也按卡片与候选识别。
-- 同一绑定范围的 `requestId` 命中回执时，须核对 `op`、候选或目标 `id`、`targetId` 及适用的条目或正文摘要。完全相同的请求复用原回执且不新增提交，遗忘后的回执仍遵循正文清除规则。内容有变则返回 `{ ok: false, code: 'conflict' }`，不返回旧回执，不提交且持久状态不变。遗忘或并入后改用同一 `requestId` 重放不同请求，冲突回应不得包含旧正文。
+- 同一绑定范围的 `requestId` 命中回执时，须核对 `op`、候选或目标 `id`、`targetId` 及适用的条目或正文摘要。完全相同的请求复用原回执且不新增提交，遗忘后的回执仍遵循正文清除规则。若并入源候选已遗忘（包括遗忘目标导致的连带遗忘），原样重放 `merge` 仍失败，适用前述遗忘规则。内容有变则返回 `{ ok: false, code: 'conflict' }`，不返回旧回执，不提交且持久状态不变。遗忘或并入后改用同一 `requestId` 重放不同请求，冲突回应不得包含旧正文。
 - `format.mjs` 的 `validateEntry` 和 `sanitize.mjs` 的 `sanitizeEntry` 为可独立测试的纯函数。
 - `cas-cache.mjs` 导出 `createCellMemory`。其 `show` 使用统一读取形状并可附 `cachedAt`。离线也通过 `getBinding()` 核对当前绑定，绑定失效或当前范围无授权缓存时返回 `{ item: null, seq: null }`。`write` 离线时只记录本地发件箱并返回候选回执，重连通过 home 的同一 `write` 校验。
 
@@ -44,8 +44,8 @@
 - `delta(binding, { cursor })` 返回 `{ rows, baseCursor, endCursor, truncated }`，每行有 `seq, id, revision, operation`。变更可用 `entry` 供内部授权，公开行提供安全元数据和使用已脱敏标题生成的索引行 `line`。投递的 `suffix` 使用同形结果，另附 `text`。
 - 重试可复用已投递的批次，包括条目后来变成 `stale` 的情况。当前授权撤销、过期或条目被遗忘时，不再复用含该条目原索引行的批次。
 - `attachments(binding, { keywords, project? })` 与 `hist(binding, { id?, project?, sessionId? })` 均返回 `{ rows }`。自动附件只选关键词匹配的生效共享条目。Worker 跨项目共享条目的读取要求接收卡片的 `dependencies` 声明来源项目、`attachments` 包含条目 ID，并具有有效共享授权。
-- Super 用 `grant(binding, { sourceProject, targetProject?, recipient, reason, expiresAt })` 授予只读访问。省略 `targetProject` 时使用会话项目。接收项目为空或与来源相同时拒绝。`revoke` 撤销授权，跨项目结果带 `sourceProject, asOf`。授权与撤销随项目状态持久化。从同一快照重启后，有效授权继续适用于 `index`、`search`、`show`、`attachments`、`delta`，已撤销或到期的授权立即失效。`canWrite` 检查常规维护权限，`canRevise` 同时检查陈旧经验修订权限。
-- `store.recordTurn(event), store.maintain()` 更新引用使用与陈旧状态。派生历史经 `hist` 统一授权并用同一脱敏规则展示。`store.access.hist` 和 `createAccess({ history }).hist` 缺少 `classifySensitive` 时均返回 `{ ok: false, code: 'classifier-missing', rows: [] }`。该规则适用于按 `id`、`project`、`sessionId` 过滤和不带过滤参数的读取。
+- Super 用 `grant(binding, { sourceProject, targetProject?, recipient, reason, expiresAt })` 授予只读访问。省略 `targetProject` 时使用会话项目。接收项目为空或与来源相同时拒绝。`revoke` 撤销授权，跨项目结果带 `sourceProject, asOf`。授权与撤销随项目状态持久化。从同一快照重启后，有效授权继续适用于 `index`、`search`、`show`、`attachments`、`delta`、`hist`，已撤销或到期的授权立即失效。`canWrite` 检查常规维护权限，`canRevise` 同时检查陈旧经验修订权限。
+- `store.recordTurn(event), store.maintain()` 更新引用使用与陈旧状态。派生历史经 `hist` 统一授权并用同一脱敏规则展示。`store.access.hist` 和 `createAccess({ history }).hist` 缺少 `classifySensitive` 时均返回 `{ ok: false, code: 'classifier-missing', rows: [] }`。该规则适用于按 `id`、`project`、`sessionId` 单独或组合过滤和不带过滤参数的读取。
 
 ## 其他模块导出
 

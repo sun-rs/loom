@@ -582,6 +582,15 @@ test('Goal 4a changing a put replay after forget conflicts without leaking the o
         [false, 'conflict', undefined, false]);
     });
   }
+  await t.test('changed put target conflicts after restart', async () => {
+    const snapshot = JSON.parse(JSON.stringify(before));
+    const reopened = await fixture({ initialState: snapshot });
+    const result = await reopened.store.write(leader, { ...request, ...variants.id });
+    assert.equal(reopened.commits.length, 0);
+    assert.deepEqual(reopened.readState(), snapshot);
+    assert.deepEqual([result.ok, result.code, result.receipt, hasOldBody(result)],
+      [false, 'conflict', undefined, false]);
+  });
 });
 
 test('Goal 3e merge redacts the body in the receipt and throughout persisted state', async () => {
@@ -768,6 +777,23 @@ test('Goal 4a changed proposal and merge replays conflict after forgetting merge
         assert.deepEqual([result.ok, result.code, result.receipt, exposedBodies], [false, 'conflict', undefined, []]);
       });
     }
+    await t.test(`forgotten ${forgottenEntry}: changed merge request conflicts after restart`, async () => {
+      const nextProposal = proposeForReview('lesson');
+      const pending = saved(await store.write(worker, {
+        ...nextProposal, requestId: 'propose-after-forget',
+        entry: { ...nextProposal.entry, body: 'Follow the new verification steps.' },
+      }));
+      const snapshot = JSON.parse(JSON.stringify(readState()));
+      const reopened = await fixture({ initialState: snapshot });
+      const result = await reopened.store.write(leader, {
+        ...merge, id: pending.id, expectedRevision: pending.revision,
+        targetId: other.id, targetExpectedRevision: other.revision, body: 'Apply the updated review guidance.',
+      });
+      assert.equal(reopened.commits.length, 0);
+      assert.deepEqual(reopened.readState(), snapshot);
+      const exposedBodies = oldBodies.filter(body => JSON.stringify(result).includes(body));
+      assert.deepEqual([result.ok, result.code, result.receipt, exposedBodies], [false, 'conflict', undefined, []]);
+    });
   }
 });
 
@@ -988,6 +1014,9 @@ test('Goal 4c a stale supersedes revision conflicts after replacement without ex
   const remote = saved(await store.write(foreign, put('remote-original', { ...ruling, project: foreign.project })));
   saved(await store.write(auditor, replacement(local.id, local.revision)));
   const activeRemote = saved(await store.write(foreign, replacement(remote.id, remote.revision, foreign.project)));
+  const editable = saved(await store.write(auditor, put('editable-ruling', {
+    ...ruling, title: 'Editable ruling', body: 'Review the alternate schedule.',
+  })));
   const before = readState();
   const count = commits.length;
   const retry = async (id, revision) => {
@@ -1003,6 +1032,14 @@ test('Goal 4c a stale supersedes revision conflicts after replacement without ex
   assert.equal(activeRemote.status, 'active');
   await t.test('local superseded target with its original revision', async () => {
     const result = await retry(local.id, local.revision);
+    assert.deepEqual([result.ok, result.code], [false, 'conflict']);
+  });
+  await t.test('revision adds a local superseded target with its original revision', async () => {
+    const result = await store.write(auditor, put('edit-with-stale-supersedes', {
+      ...ruling, title: editable.title, body: 'Review the revised schedule.', supersedes: [local.id],
+    }, { id: editable.id, expectedRevision: editable.revision, supersedeExpectedRevisions: { [local.id]: local.revision } }));
+    assert.equal(commits.length, count);
+    assert.deepEqual(readState(), before);
     assert.deepEqual([result.ok, result.code], [false, 'conflict']);
   });
   await t.test('foreign superseded and active targets match an unknown ID', async () => {

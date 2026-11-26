@@ -127,7 +127,12 @@ test('Goal 4b/d store history requires a classifier for raw and persisted record
     readRaw: { readRaw: async () => [row] },
     snapshot: { readState: async () => ({ history: [row] }) },
   };
-  const filters = { id: { id: row.id }, project: { project }, sessionId: { sessionId: row.sessionId }, all: undefined };
+  const { id, sessionId } = row;
+  const filters = {
+    id: { id }, project: { project }, sessionId: { sessionId }, all: undefined,
+    'id and sessionId': { id, sessionId }, 'id and project': { id, project },
+    'project and sessionId': { project, sessionId }, 'id, project and sessionId': { id, project, sessionId },
+  };
   for (const [source, options] of Object.entries(sources)) {
     const { store } = await fixture({ ...options, classifySensitive: undefined });
     const { store: control } = await fixture(options);

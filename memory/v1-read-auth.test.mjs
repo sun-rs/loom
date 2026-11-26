@@ -284,7 +284,12 @@ test('Goal 4b/d direct access requires a history classifier for every source and
     function: { history: () => history },
     readState: { readState: () => ({ entries: [], changes: [], history }) },
   };
-  const filters = { id: { id: row.id }, project: { project: row.project }, sessionId: { sessionId: row.sessionId }, all: undefined };
+  const { id, project, sessionId } = row;
+  const filters = {
+    id: { id }, project: { project }, sessionId: { sessionId }, all: undefined,
+    'id and sessionId': { id, sessionId }, 'id and project': { id, project },
+    'project and sessionId': { project, sessionId }, 'id, project and sessionId': { id, project, sessionId },
+  };
   for (const [source, options] of Object.entries(sources)) {
     const access = createAccess(options);
     const control = createAccess({ ...options, classifySensitive });
@@ -431,8 +436,9 @@ test('Goal 4e cross-project grants survive restart and revocation and expiry dis
   const { createMemoryStore } = await import('./store.mjs');
   const sourceProject = 'B';
   const entry = item('b-note', { project: sourceProject });
+  const history = { id: 'b-history', project: sourceProject, layer: 'shared', body: 'Cross-project history.' };
   const superBinding = session('super');
-  const initialSnapshot = JSON.stringify({ entries: [entry], changes: [change(1, entry)], seq: 1 });
+  const initialSnapshot = JSON.stringify({ entries: [entry], changes: [change(1, entry)], history: [history], seq: 1 });
   const commits = [];
   const open = (time = start, snapshots = commits) => createMemoryStore({
     now: () => time, classifySensitive,
@@ -454,8 +460,13 @@ test('Goal 4e cross-project grants survive restart and revocation and expiry dis
       index: expected, search: expected, show: expected.length ? entry.body : null, attachments: expected, delta: expected,
     });
   };
+  const checkHistory = async (access, visible) => {
+    const result = await access.hist(leader, { project: sourceProject });
+    assert.deepEqual(result.rows.map(({ id, body }) => [id, body]), visible ? [[history.id, history.body]] : []);
+  };
   const access = open();
   await check(access, []);
+  await checkHistory(access, false);
   const beforeGrant = commits.length;
   const expiresAt = stamp(start + day);
   const result = await access.grant(superBinding, { sourceProject, recipient: leader.principal,
@@ -463,6 +474,7 @@ test('Goal 4e cross-project grants survive restart and revocation and expiry dis
   const afterGrant = commits.length;
   assert.equal(result.ok, true, JSON.stringify(result));
   await check(access, [entry.id]);
+  await checkHistory(access, true);
   await t.test('grant commits project state', () => {
     assert.ok(afterGrant > beforeGrant, 'grant did not call commitState');
   });
@@ -478,18 +490,27 @@ test('Goal 4e cross-project grants survive restart and revocation and expiry dis
   await t.test('active grant after restart', async () => {
     await check(reopened, [entry.id]);
   });
+  await t.test('active grant exposes history after restart', async () => {
+    await checkHistory(reopened, true);
+  });
   await t.test('isolated snapshot with no grants cannot read the same entry', async () => {
-    await check(open(start, []), []);
+    const isolated = open(start, []);
+    await check(isolated, []);
+    await checkHistory(isolated, false);
   });
   await t.test('expired grant after restart', async () => {
-    await check(open(start + day), []);
+    const expired = open(start + day);
+    await check(expired, []);
+    await checkHistory(expired, false);
   });
   await t.test('revoked grant after restart', async () => {
     const beforeRevoke = commits.length;
     assert.equal((await reopened.revoke(superBinding, result.grant.id)).ok, true);
     const afterRevoke = commits.length;
     await check(reopened, []);
-    await check(reopenBeforeExpiry(), []);
+    const revoked = reopenBeforeExpiry();
+    await check(revoked, []);
+    await checkHistory(revoked, false);
     assert.ok(afterRevoke > beforeRevoke, 'revoke did not call commitState');
     const grant = persistedGrant(afterRevoke, result.grant.id);
     assert.ok(grant == null || grant.revoked === true || grant.status === 'revoked'
