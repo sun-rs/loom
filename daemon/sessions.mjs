@@ -103,6 +103,7 @@ export function ownedSessions(project, index, report, {
   const bindings = new Map();
   const activity = new Map();
   const retryAt = new Map();
+  const unknownLiveness = new Set();
   const openCodeProofs = new Map();
   const rows = addr => index.query(addr ? { addr } : {});
   const rowFor = addr => addr ? rows(addr)[0] : undefined;
@@ -182,6 +183,7 @@ export function ownedSessions(project, index, report, {
         return { ...snapshot, ...(row?.endedAt === null && runtime?.stuck &&
           { state: 'stuck', reason: runtime.stuck.reason }), ...(row?.endedAt === null && jobs.get(row.addr)?.pipeRecovery?.exhausted &&
           { state: 'stuck', reason: 'codex-resume-exhausted' }),
+          ...(row?.endedAt === null && unknownLiveness.has(row.addr) && { state: 'stuck', reason: 'liveness-unknown' }),
           hostIncarnation: runtime?.incarnation, row };
       }
       if (row?.endedAt != null) return { state: 'finished', provider: row.cli, tui: jobs.get(row.addr)?.tui,
@@ -606,9 +608,12 @@ export function ownedSessions(project, index, report, {
       throw new ErrorCode('not-ready', 'Codex attachment retry budget exhausted');
     }
     try {
-      return await (pipe ? attachCodexHolder : attachHost)(project, row, job, save, controller, options);
+      const runtime = await (pipe ? attachCodexHolder : attachHost)(project, row, job, save, controller, options);
+      unknownLiveness.delete(row.addr);
+      return runtime;
     } catch (error) {
-      if (pipe && !options?.stop) recordPipeRecovery(job);
+      if (error.code === 'liveness-unknown') unknownLiveness.add(row.addr);
+      else if (pipe && !options?.stop) recordPipeRecovery(job);
       throw error;
     }
   }
@@ -708,6 +713,7 @@ export function ownedSessions(project, index, report, {
   }
 
   async function failSpawn(job, error) {
+    if (error.code === 'liveness-unknown') return;
     job.error = error.message;
     job.stopping = true;
     save(job);
@@ -830,7 +836,8 @@ export function ownedSessions(project, index, report, {
             catch (error) {
               running.delete(addr);
               restored.delete(addr);
-              recordPipeRecovery(job);
+              if (error.code === 'liveness-unknown') unknownLiveness.add(addr);
+              else recordPipeRecovery(job);
               throw error;
             }
             if (job.pipeRecovery) {

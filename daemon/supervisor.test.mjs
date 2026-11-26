@@ -595,6 +595,40 @@ test('Auditor dispatch admits only user messages and one Leader gate or red esca
   assert.equal(status.routing.filtered[0].digest, 'received');
 });
 
+test('agy sign-in warnings notify Super once per account without stopping sessions', async t => {
+  const terminals = new Map();
+  const warning = readFileSync(new URL('../adapters/agy/fixtures/agy-sign-in-warning.txt', import.meta.url), 'utf8');
+  const f = fixture(t, { sessionOptions: {
+    async openPane(_job, row) {
+      const terminal = { address: 't' + (terminals.size + 1), cwd: row.cwd, pid: 101 + terminals.size,
+        created_ms: 1, status_ms: 1, state: 'live', status: { state: 'idle' }, email: 'same@example.test' };
+      terminals.set(row.addr, terminal);
+      return { terminal };
+    },
+    getPane: async (_job, row) => terminals.get(row.addr),
+    async callHc(command, pane) {
+      const terminal = [...terminals.values()].find(item => item.address === pane);
+      if (command === 'get') return terminal;
+      if (command === 'read') return { text: warning.replace('<ACCOUNT>', terminal.email), complete: true, how: 'screen' };
+      return {};
+    },
+  } });
+  const d = f.daemon();
+  t.after(d.shutdown);
+  const { session: leader } = await f.spawn(d, 'leader', 'WARN-LEADER', undefined, { cli: 'agy', mode: 'tui' });
+  const { session: auditor } = await f.spawn(d, 'auditor', 'WARN-AUDITOR', undefined, { cli: 'agy', mode: 'tui' });
+  const notices = async () => (await d.handle('notifications', { history: true })).notifications
+    .filter(event => event.reason === 'auth-warning');
+  await d.tick();
+  await d.tick();
+  assert.equal((await notices()).length, 1);
+  assert.match((await notices())[0].text, /^⚠ Sign-in update needed\n  ⎿  Your sign-in is missing permissions.*Run \/logout to sign in again\.$/);
+  for (const addr of [leader.addr, auditor.addr]) assert.notEqual((await d.handle('state', { target: addr })).state, 'auth-expired');
+  terminals.get(auditor.addr).email = 'different@example.test';
+  await d.tick();
+  assert.equal((await notices()).length, 2);
+});
+
 test('large OpenCode exports recover the consecutive-failure stuck state', async t => {
   let terminal;
   const logs = [];

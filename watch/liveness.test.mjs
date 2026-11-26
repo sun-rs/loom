@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { appendFile, mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { appendFile, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
@@ -8,6 +8,20 @@ import { providers } from '../tui/providers.mjs';
 import { promptFrames } from '../adapters/prompt-fixtures.mjs';
 import { screenPrompt } from '../adapters/prompt-state.mjs';
 import { corroboratePrompt, hcStatus } from '../adapters/hc-status.mjs';
+
+test('agy sign-in advisory leaves the composer available and preserves real auth failures', async () => {
+  const frame = await readFile(new URL('../adapters/agy/fixtures/agy-sign-in-warning.txt', import.meta.url), 'utf8');
+  const row = { addr: 'fixture-agy', cli: 'agy', startedAt: 100 };
+  const watch = createLiveness({ now: () => 110 });
+  const captured = text => watch.observe(row, { state: 'idle', livenessScreen: { text, kind: 'auth-fail' } });
+  const advisory = await captured(frame.replace('<ACCOUNT>', 'first@example.test'));
+  assert.equal(advisory.health, undefined);
+  assert.match(advisory.authWarning.text, /^⚠ Sign-in update needed\n  ⎿  Your sign-in is missing permissions.*Run \/logout to sign in again\.$/);
+  assert.equal(providers.agy.screen.classify(frame), 'idle');
+  const other = await captured(frame.replace('<ACCOUNT>', 'second@example.test'));
+  assert.notEqual(other.authWarning.account, advisory.authWarning.account);
+  assert.equal((await captured(frame + '\nSelect login method:\n')).health.status, 'auth-expired');
+});
 
 test('OSC 7501 corroborates only matching prompt and liveness evidence', async () => {
   const terminal = { status_ms: 105, created_ms: 100, status: { app: 'antigravity', state: 'blocked', kind: 'question' } };

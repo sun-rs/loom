@@ -13,7 +13,7 @@ import { activeRelease, activeReleaseFile, releaseDigest, releaseRoot, upgradeFi
 import { readText, writeState } from './io.mjs';
 import { daemonAbsent, request } from './rpc.mjs';
 import { hostUUID, readJSON } from './host-control.mjs';
-import { processTable, sameProcess } from './processes.mjs';
+import { inspectProcess, processTable } from './processes.mjs';
 import { checkHolder } from '../holder/assets.mjs';
 
 const exec = promisify(execFile);
@@ -72,7 +72,7 @@ const handoffOwner = (project, id) => {
 
 export async function liveHandoff(project, id) {
   const owner = readJSON(handoffOwner(project, id));
-  return Boolean(owner && sameProcess(owner, (await processTable([owner.pid])).get(owner.pid)));
+  return Boolean(owner && await inspectProcess(owner) !== 'dead');
 }
 
 async function projectStatus(project) {
@@ -277,11 +277,10 @@ async function handoff(project, id) {
     await waitFor(async () => {
       if (upgradeState(project)?.phase !== 'switching') throw new Error('Upgrade launcher no longer owns the handoff');
       if (state.predecessor) {
-        try { return !sameProcess(state.predecessor, (await processTable([state.predecessorPid])).get(state.predecessorPid)); }
-        catch (error) { if (error.code === 'process-enumeration-retry') return false; throw error; }
+        return await inspectProcess(state.predecessor) === 'dead';
       }
       try { process.kill(state.predecessorPid, 0); }
-      catch (error) { if (error.code === 'ESRCH') return true; throw error; }
+      catch (error) { if (error.code === 'ESRCH') return true; if (error.code !== 'EPERM') throw error; }
     }, 'Previous loomd did not release the project');
   } catch (error) {
     if (upgradeState(project)?.phase === 'switching') save('failed', { error: error.message });

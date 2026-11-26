@@ -20,7 +20,7 @@ const adapters = new Map([agy, claude, codex, opencode].map(adapter => [adapter.
 export const addressPattern = /^[A-Za-z0-9][A-Za-z0-9_.-]*$/;
 export const refusals = new Set(['blocked', 'status_mismatch', 'finished', 'not_found', 'human-active', 'frame-changed']);
 
-export const hc = (command, ...args) => hcAt('hc', command, ...args);
+export const hc = (command, ...args) => hcAt(process.env.LOOM_HC_BIN ?? 'hc', command, ...args);
 
 export async function hcAt(executable, command, ...args) {
   try {
