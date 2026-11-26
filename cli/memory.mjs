@@ -4,6 +4,12 @@ import { CommandError } from './sessions.mjs';
 const nonempty = value => typeof value === 'string' && value.trim() !== '';
 const invalid = () => new CommandError('invalid-arguments', 'Invalid loom mem arguments. See loom mem --help.');
 
+export function validateProposalCommand({ decision, id, reason }) {
+  if (decision === 'list' && id === undefined && reason === undefined) return;
+  if (!['approve', 'reject'].includes(decision) || typeof id !== 'string' || !/^[a-z0-9][a-z0-9_-]{0,127}$/u.test(id) ||
+      (reason !== undefined && (decision !== 'reject' || !nonempty(reason) || reason.includes('\0')))) throw invalid();
+}
+
 export function validateMemoryCommand(args) {
   if (!args || typeof args !== 'object' || Array.isArray(args)) throw invalid();
   const { action, target, entry, requestId, expectedRevision } = args;
@@ -20,18 +26,27 @@ export function validateMemoryCommand(args) {
 }
 
 export async function memoryCommand(directory, positionals, values) {
-  const [action, target] = positionals;
-  if (positionals.length > 2) throw invalid();
+  const [action, target, id] = positionals;
   const revision = values['expected-revision'];
-  let entry;
-  if (values.entry !== undefined) {
-    try { entry = JSON.parse(values.entry); }
-    catch { throw invalid(); }
+  let command = 'mem';
+  let args;
+  if (action === 'proposals') {
+    if (positionals.length > 3 || [values.entry, values['request-id'], revision].some(value => value !== undefined)) throw invalid();
+    command = 'memory-proposals';
+    args = { decision: target, id, reason: values.reason };
+    validateProposalCommand(args);
+  } else {
+    if (positionals.length > 2 || values.reason !== undefined) throw invalid();
+    let entry;
+    if (values.entry !== undefined) {
+      try { entry = JSON.parse(values.entry); }
+      catch { throw invalid(); }
+    }
+    args = { action, target, entry, requestId: values['request-id'], expectedRevision:
+      revision === undefined ? undefined : revision === 'null' ? null : /^[0-9]+$/.test(revision) ? Number(revision) : NaN };
+    validateMemoryCommand(args);
   }
-  const args = { action, target, entry, requestId: values['request-id'], expectedRevision:
-    revision === undefined ? undefined : revision === 'null' ? null : /^[0-9]+$/.test(revision) ? Number(revision) : NaN };
-  validateMemoryCommand(args);
-  try { return await request(directory, 'mem', args); }
+  try { return await request(directory, command, args); }
   catch (error) {
     if (daemonAbsent(error)) throw new CommandError('not-ready', 'loomd must be running to access memory');
     if (error instanceof CommandError) throw error;

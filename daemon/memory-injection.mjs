@@ -105,7 +105,8 @@ export function createMemoryInjection(project, access) {
       const delta = await access.delta(binding, { cursor, fits: batch => Array.from(renderMemoryDelta(batch)).length <= 3000 });
       if (delta.rows.length) {
         appendices.push(renderMemoryDelta(delta).trimStart());
-        memoryAccess.publications = delta.rows.map(({ seq, id, revision, operation }) => ({ seq, id, revision, operation }));
+        memoryAccess.publications = delta.rows.map(({ seq, id, revision, operation, withdrawalTitle }) =>
+          ({ seq, id, revision, operation, withdrawalTitle }));
       }
       return {
         text: appendices.filter(Boolean).join('\n\n'),

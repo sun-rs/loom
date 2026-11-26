@@ -1,4 +1,5 @@
 import { CommandError } from '../cli/sessions.mjs';
+import { validateProposalCommand } from '../cli/memory.mjs';
 import { lstatSync } from 'node:fs';
 import { join } from 'node:path';
 import { activeItems, commitProjectMemory, prepareProjectMemory } from '../memory/project.mjs';
@@ -206,22 +207,41 @@ export function createMemoryProposals(project, { memory, sessions, state, save, 
       const result = await store.access.show(binding, args.id);
       return result.item?.layer === 'user' ? result : { item: null, seq: null };
     }
-    if (!isId(args.id) || !['approve', 'reject'].includes(args.decision)) {
+    const proposalCommand = command === 'memory-proposals';
+    if (proposalCommand) validateProposalCommand(args);
+    else if (!isId(args.id) || !['approve', 'reject'].includes(args.decision)) {
       throw new CommandError('invalid-arguments', 'Expected a proposal ID and approve or reject');
     }
-    const item = Object.hasOwn(state.proposals, args.id) && state.proposals[args.id];
-    if (!item || scopedRole(item.scope) !== binding.role) {
-      throw new CommandError('forbidden', 'Memory proposal access is forbidden');
+    const forbidden = () => new CommandError('forbidden', 'Memory proposal access is forbidden');
+    if (!['super', 'auditor'].includes(binding.role)) throw forbidden();
+    const visible = item => scopedRole(item.scope) === binding.role ||
+      (proposalCommand && binding.role === 'super' && item.scope === 'project');
+    if (args.decision === 'list') {
+      return { proposals: Object.values(state.proposals).filter(item => visible(item) && item.status === 'pending')
+        .map(({ id, scope, status, action, title, body, target, targets }) =>
+          ({ id, shortId: id.slice(0, 8), scope, status, action, title, body, target, targets })) };
     }
+
+    let item = Object.hasOwn(state.proposals, args.id) ? state.proposals[args.id] : undefined;
+    if (item && !visible(item)) item = undefined;
+    if (!item && proposalCommand && args.id.length === 8) {
+      const matches = Object.values(state.proposals).filter(item => visible(item) && item.id.startsWith(args.id));
+      if (matches.length > 1) throw new CommandError('ambiguous', 'Ambiguous proposal ID. Use the full ID.');
+      [item] = matches;
+    }
+    if (!item) throw forbidden();
+    const ensurePending = () => {
+      if (item.status !== 'pending') throw new CommandError('conflict', `Memory proposal is already ${item.status}`);
+    };
+    ensurePending();
     await recover();
+    ensurePending();
     const status = args.decision === 'approve' ? 'approved' : 'rejected';
-    if (item.status !== 'pending' && item.status !== status) throw conflict();
-    if (item.status === 'pending') {
-      if (status === 'approved') await approve(item, binding);
-      else {
-        item.status = status;
-        save();
-      }
+    if (status === 'approved') await approve(item, binding);
+    else {
+      if (proposalCommand && args.reason !== undefined) item.reason = redactExtractor(args.reason.trim());
+      item.status = status;
+      save();
     }
     return { id: item.id, status };
   }

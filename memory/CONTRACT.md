@@ -36,9 +36,9 @@
 
 ## 裁决账本与历史迁移
 
-自动机械同步只读取 `.project/rulings.md`。编号裁决和带「修正」「更正」「补充」的续行分别写入用户层，类型为 `ruling`。保留经脱敏的原话与日期，正文可超过普通记忆的 200 token 限制。同一账本条目使用稳定 ID，原地改写推进原条目的修订，重复同步或重启幂等。续行通过 `continuationOf` 关联原裁决，原裁决继续生效。
+自动机械同步只读取 `.project/rulings.md`。编号裁决和带「修正」「更正」「补充」的续行分别写入用户层，类型为 `ruling`。保留经脱敏的原话与日期，正文可超过普通记忆的 200 token 限制。同一账本条目使用稳定 ID，原地改写推进原条目的修订，重复同步或重启幂等。续行通过 `continuationOf` 关联原裁决，原裁决被整条取代时，续行一并退役并退出索引。
 
-编号裁决中的「整条取代 Rn」才会建立 `supersedes` / `supersededBy` 链，使较早被取代的条目退出索引。「取代 R24③」「取代 R21 中的……」等部分替代关系保留在原文中，相关旧裁决仍有效。
+编号裁决中的每处「整条取代 Rn」都会建立 `supersedes` / `supersededBy` 链，使较早被取代的条目退出索引。一条裁决可以整条取代多个旧裁决。「取代 R24③」「取代 R21 中的……」等部分替代关系保留在原文中，相关旧裁决仍有效。
 
 卡片结果、门禁结论、升级结论及换班交接保留在各自的历史和证据中。维护按历史事件 ID、来源及生成类别识别旧机械记录，标记其为 `stale`，以 `withdrawnBy` 和 `withdraw` 变更留痕。迁移可重复执行，保留合法裁决、人工条目和已审提案。高级角色明确写出的 `REMEMBER:` 仍属于显式记录。
 
@@ -59,10 +59,15 @@
 | `loom mem write --entry <json> --request-id <id> --expected-revision null` | `{ ok: true, item, receipt }`，`item` 为写入结果。 |
 | `loom mem update <id> --entry <json> --request-id <id> --expected-revision <revision>` | `{ ok: true, item, receipt }`，`item` 为修订后的条目。 |
 | `loom mem invalidate <id> --request-id <id> --expected-revision <revision>` | `{ ok: true, item, receipt }`，`item` 为无旧正文的墓碑。 |
+| `loom mem proposals list` | `{ ok: true, proposals }`，列出当前角色可审核的待决提案，含完整 `id`、`shortId`、作用域和提案内容。 |
+| `loom mem proposals approve <id>` | `{ ok: true, id, status: 'approved' }`，将提案应用到记忆库。 |
+| `loom mem proposals reject <id> [--reason TEXT]` | `{ ok: true, id, status: 'rejected' }`，记录驳回及可选的脱敏原因。 |
 
 `receipt` 为 `{ requestId, status }`，其状态取值见写入约定。成功在 stdout 输出单个 JSON 对象并退出 0。失败也在 stdout 输出单个 JSON 对象 `{ ok: false, error: { code, message } }` 并以非零状态退出，`message` 经过脱敏。Worker 搜索或写入，以及 Auditor 修改已知 ID 的外项目条目，均返回 `forbidden`。
 
 `show`、`update`、`invalidate` 接受完整 ID，或 `memory-<uuid>` 与 `memory-event-<hash>` 中 UUID 或哈希开头的八位十六进制字符，大小写均可。短 ID 仅在调用者当前可见的条目中解析，之后执行相应的写权限与修订校验。多个可见命中返回 `ambiguous`，零命中返回 `not-found`，包括只有不可见条目命中的情况。完整 ID 的既有行为保持不变。
+
+提案命令允许 Auditor 查看和决定项目级提案，Super 查看和决定项目级及用户级提案。Leader 与 Worker 无提案审核访问权。提案决定接受完整 ID，或可审核作用域内唯一的八字符前缀。完整 ID 优先匹配，前缀冲突返回 `ambiguous`。提案一经批准或驳回，任何再次决定均返回 `conflict`，审批指标不变。
 
 ## 整理提案的 daemon 接口
 
@@ -72,11 +77,12 @@
 
 | `command` | `args` | 返回值与权限 |
 | --- | --- | --- |
+| `memory-proposals` | `{ decision: 'list' \| 'approve' \| 'reject', id?, reason? }` | 对应上述 `loom mem proposals` 规则。 |
 | `memory-review` | `{ id: string, decision: 'approve' \| 'reject' }` | `{ id, status: 'approved' \| 'rejected' }`。Auditor 审批项目提案，Super 审批用户提案。 |
 | `memory-index` | `{ scope: 'user' }` | `{ rows }`。Super 可读取生效的用户偏好和裁决索引。每行有 `id, revision, line, usage`。 |
 | `memory-show` | `{ id: string }` | `{ item, seq }`。Super 可按记忆 ID 读用户条目。未知或非用户条目返回 `{ item: null, seq: null }`。 |
 
-同一决定可幂等重试，反向决定或目标版本已变化返回 `conflict`。未知提案和无审批权限均返回 `forbidden`。参数错误返回 `invalid-arguments`。进程内抛出的异常含 `code`，RPC 失败返回 `{ ok: false, error: { code, message } }`。
+任何重复决定或目标版本已变化均返回 `conflict`。未知提案和无审批权限均返回 `forbidden`。参数错误返回 `invalid-arguments`。进程内抛出的异常含 `code`，RPC 失败返回 `{ ok: false, error: { code, message } }`。
 
 整理员输出 `{ proposals: [...] }`。每条提案含唯一小写 slug `id`、`action: 'add' | 'merge' | 'invalidate' | 'correct'`、`scope: 'project' | 'user'` 和 `source: { kind: 'delivery' | 'event', id }`。来源须对应本次整理输入里实际提供的投递或项目事件。新增提供 `title, body`。合并提供保留的 `target`、退出索引的 `targets` 及合并后的 `body`。作废只提供非空 `targets`。更正提供 `target, body`，用户更正可在有明确用户原话时省略 `target`，以生成待审的偏好条目。合并和更正可附新标题。阶段只接受合并、作废和更正，一批内退出索引的条目合计最多占所在范围生效条目的五分之一。
 
@@ -104,10 +110,11 @@
 - `store.access` 是接入持久快照的读取实例。授权在排名、计数、截断、摘录及报错前执行。
 - `createIndexQuery({ access, countTokens })`（`index-query.mjs`）复用该实例提供启动索引和搜索。`createDeltaDelivery({ access, binding, prefix, initialCursor, send, ... })`（`delta.mjs`）复用它过滤增量与重试，可用 `() => binding` 读取最新绑定。
 - `search(binding, { query, limit?, cursor? })` 返回 `{ rows, nextCursor }`。`index(binding)` 返回 `{ rows }`，启动索引另附 `indexText, text`。索引行含 `id, revision, line, usage`。搜索匹配标题和关键词，账本同步条目也匹配正文。
-- 启动索引采用 `MEMORY.md` 风格，每行 `- [标题](8位短ID) — 一句话钩子`，最多 150 个 Unicode 字符。裁决先于其他条目，完整索引含提示文字最多 200 行及 25,000 UTF-8 字节。无短 ID 的旧式条目使用完整 ID。
+- 启动索引采用 `MEMORY.md` 风格，每行 `- [标题](8位短ID) — 一句话钩子`，标题最多 60 个 Unicode 字符，整行最多 150 个 Unicode 字符。钩子接续标题之后的正文或给出不同的提示。裁决先于其他条目，重要性降序，同等重要性的裁决按日期从新到旧，日期相同时较高裁决编号优先。无日期的编号裁决沿用更早的账本日期。完整索引含提示文字最多 200 行及 25,000 UTF-8 字节。无短 ID 的旧式条目使用完整 ID。
 - `show(binding, id, options?)` 返回 `{ item, seq }`，完整 ID 未知或不可见时均为 `{ item: null, seq: null }`。短 ID 的解析错误与 CLI 一致。
 - Super 维护用户层的 `preference` 和 `ruling`。Auditor 与 Leader 可通过 `index`、`search` 和 `show` 读取这两类条目，并通过 `delta` 接收新增与撤回。用户层的 `lesson`、Super 的私人笔记和跨项目材料对二者不可见。Auditor 与 Leader 对用户层条目的创建、修改、遗忘和替代均返回 `forbidden`。Worker 不可读用户层。Reviewer 仅读复核卡显式授权条目。
 - `delta(binding, { cursor })` 返回 `{ rows, baseCursor, endCursor, truncated }`，每行有 `seq, id, revision, operation`。变更可用 `entry` 供内部授权，公开行提供安全元数据和使用已脱敏标题生成的索引行 `line`。投递的 `suffix` 使用同形结果，另附 `text`。
+- 单条撤回以可见标题、八位短 ID 和一句原因显示。已遗忘的条目省略标题，无权读取的撤回在计数及渲染前过滤。同批撤回合并为一行，列出总数和一个可见示例，在行数预算中只占一行。确认投递后一次推进该批全部撤回的游标，批次内的新增和修订仍按序投递。
 - 重试可复用已投递的批次，包括条目后来变成 `stale` 的情况。当前授权撤销、过期或条目被遗忘时，不再复用含该条目原索引行的批次。
 - `attachments(binding, { keywords, project? })` 与 `hist(binding, { id?, project?, sessionId? })` 均返回 `{ rows }`。自动附件只选关键词匹配的生效共享条目。Worker 跨项目共享条目的读取要求接收卡片的 `dependencies` 声明来源项目、`attachments` 包含条目 ID，并具有有效共享授权。
 - Super 用 `grant(binding, { sourceProject, targetProject?, recipient, reason, expiresAt })` 授予只读访问。省略 `targetProject` 时使用会话项目。接收项目为空或与来源相同时拒绝。`revoke` 撤销授权，跨项目结果带 `sourceProject, asOf`。授权与撤销随项目状态持久化。从同一快照重启后，有效授权继续适用于 `index`、`search`、`show`、`attachments`、`delta`、`hist`，已撤销或到期的授权立即失效。`canWrite` 检查常规维护权限，`canRevise` 同时检查陈旧经验修订权限。

@@ -512,6 +512,11 @@ export function createMemoryStore({ now = Date.now, readState, commitState, evid
     const validation = { ...format, estimateTokens: () => 0 };
     const before = state.seq;
     let changed = false;
+    const replacementsFor = id => [
+      ...(current.get(id)?.supersededBy ?? []).filter(replacement => !ledger.has(replacement) ||
+        current.get(replacement)?.status === 'forgotten'),
+      ...(incoming.get(id) ?? []),
+    ];
     for (const { id, supersedes } of parsed) {
       if (current.get(id)?.status === 'forgotten') continue;
       for (const target of supersedes) {
@@ -531,8 +536,7 @@ export function createMemoryStore({ now = Date.now, readState, commitState, evid
         source: prior?.source ?? { path: rulingPath } };
       const fields = await prepare(draft, prior?.source?.hist, validation);
       if (!fields.ok) return fields;
-      const replacedBy = [...new Set([...(prior?.supersededBy ?? []).filter(id => !ledger.has(id) ||
-        current.get(id)?.status === 'forgotten'), ...(incoming.get(id) ?? [])])];
+      const replacedBy = [...new Set([...replacementsFor(id), ...replacementsFor(continuationOf)])];
       const next = { ...(prior ?? version(state, { principal: 'super', role: 'super' }, fields.entry, { id, revision: 0 })),
         ...fields.entry, status: replacedBy.length ? 'superseded' : prior?.status === 'stale' ? 'stale' : 'active' };
       if (supersedes.length || prior?.supersedes) next.supersedes = supersedes;

@@ -893,7 +893,9 @@ ${details}`, {
     },
     async handle(command, args, caller) {
       if (command === 'mem') return memory.handle(args, caller);
-      if (['memory-review', 'memory-index', 'memory-show'].includes(command)) return extractor.handle(command, args, caller);
+      if (['memory-proposals', 'memory-review', 'memory-index', 'memory-show'].includes(command)) {
+        return extractor.handle(command, args, caller);
+      }
       if (command === 'spawn') return spawnSession(args, caller);
       if (command === 'rotate') return rotation.request(args, caller);
       if (command === 'layout-up') {
