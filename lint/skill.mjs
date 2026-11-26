@@ -4,7 +4,7 @@ import { estimateTokens } from '../lib/token-budget.mjs';
 import { maxCoreTokens, maxModuleTokens, roleCore, skillModuleNames, skillRoles } from '../lib/role-skill.mjs';
 
 const rootPath = 'skills/loom';
-const moduleSources = ['daemon/sessions.mjs', 'daemon/self-rotation.mjs', 'daemon/supervisor.mjs'];
+const moduleSources = ['daemon/sessions.mjs', 'daemon/self-rotation.mjs', 'daemon/supervisor.mjs', 'daemon/skill-events.mjs'];
 const component = /^(?:roles|references)\/[a-z][a-z-]*\.md$/;
 
 export function lintSkill(project) {
@@ -31,6 +31,8 @@ export function lintSkill(project) {
     const source = read(file);
     for (const [i, line] of source.split('\n').entries()) {
       for (const [, target] of line.matchAll(/\[[^\]]+\]\(([^)]+)\)/g)) {
+        if (file === 'roles/worker.md' && target === '../../../docs/HEADLESS.md' &&
+            existsSync(join(project, 'docs/HEADLESS.md'))) continue;
         const destination = posix.normalize(posix.join(posix.dirname(file), target));
         if (!component.test(destination) || /^(?:modules|references)\//.test(file) || !existsSync(join(root, destination))) {
           add(file, i + 1, 'Use a resolvable, one-level role or reference link. Deliver module steps inline.');

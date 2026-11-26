@@ -6,7 +6,7 @@
 
 ## Host 授权与账号
 
-核对卡面命令、可写路径和额度。用 `loom grant "$TASK" host --reason "$WHY" --uses "$N"`，获准外写逐条加 `--write PATH`，按需加 `--ttl`。具名波可在 `roles.worker.tiers` 预授权 host。用 `loom accounts` 看快照，获准实时核对才用 `--refresh`。
+核对卡面命令、可写路径和额度。用 `loom grant "$TASK" host --reason "$WHY" --uses "$N"`，获准外写逐条加 `--write PATH`，按需加 `--ttl`。具名波可在 `roles.worker.tiers` 预授权 host。`loom accounts --json` 读脱敏快照。只有已认证 Super 或持有效 host 授权的 Worker 可按授权用 `--refresh` 实时核对。外部 Super 需使用 `LOOM_EXTERNAL_SUPER=1`。
 
 ## 换班例外
 

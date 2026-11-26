@@ -65,7 +65,7 @@ export const scenarios = [
     ],
   },
   {
-    id: 'S03-exception', role: 'super',
+    id: 'S03-exception', role: 'super', module: 'escalation',
     prompt: '你是托管 Super。Auditor 的交班两次失败，已有证据和批准的替换 CLI codex、模型 gpt-6.2-sol。接手处理例外。',
     effects: [
       reply(/^loom rotate --target auditor\b/, 'SANDBOX: operation not permitted'),
@@ -77,7 +77,7 @@ export const scenarios = [
     ],
   },
   {
-    id: 'S04-close', role: 'super',
+    id: 'S04-close', role: 'super', module: 'close',
     prompt: '验证阶段 P3 已通过，项目结束。结果登记文件为 results/P3.md。归档 worktree 的暂存、未暂存、范围内未跟踪草稿（有草稿 W）。通知首发失败，记录完成 ID，路由恢复已随本轮投递。路线和状态需要复核。',
     effects: [
       [loom(/^(?!.*--retry).*notifications.*--complete.+--phase P3/),

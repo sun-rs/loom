@@ -6,7 +6,7 @@ import { dirname, isAbsolute, join, relative, resolve } from 'node:path';
 import { parseArgs, promisify } from 'node:util';
 import { fileURLToPath } from 'node:url';
 import { estimateTokens } from '../../lib/token-budget.mjs';
-import { assembleRoleCore } from '../../lib/role-skill.mjs';
+import { assembleRoleCore, stripSkillComments } from '../../lib/role-skill.mjs';
 import { roles, scenarios } from './scenarios.mjs';
 import { fixturePrompt, score } from './simulator.mjs';
 
@@ -263,7 +263,7 @@ async function modelRun(vendor, binary, model, scenario, skill, files, module, l
       return '';
     }));
     trace.push({ op: 'finish', input: native.final.trim() });
-    return { status: 'scored', wallMs, observedModel: native.observedModel ?? null,
+    return { status: 'scored', wallMs, observedModel: native.observedModel ?? null, finalReply: native.final,
       usage: native.usage, toolCalls: trace.length - 1, score: score(scenario, trace) };
   });
 }
@@ -277,6 +277,7 @@ async function loadArm(plan) {
   const load = async paths => Object.fromEntries(await Promise.all(Object.entries(paths ?? {}).map(async ([key, path]) =>
     [key, await readFile(resolve(dirname(plan), path), 'utf8')])));
   const [skills, files, modules] = await Promise.all([load(config.skills), load(config.references), load(config.modules)]);
+  for (const name of Object.keys(modules)) modules[name] = stripSkillComments(modules[name]);
   if (typeof config.id !== 'string' || config.id === 'baseline' || !roles.every(role => skills[role]?.trim())) {
     throw new Error('An alternate arm needs a unique ID and all four role cores');
   }

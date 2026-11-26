@@ -10,9 +10,12 @@ import { lintSkill } from './skill.mjs';
 test('the runtime uses one bounded core and at most two distinct modules per delivery', () => {
   assert.match(roleCore('worker'), /# Loom 共用规则.*# Worker.*worker-check/s);
   assert.doesNotMatch(roleCore('worker'), /# Leader|# Auditor/);
-  const { names, text } = skillModules(['rotation', 'rotation', 'gate-pack', 'gate-judgment']);
-  assert.deepEqual(names, ['rotation', 'gate-pack']);
+  const { names, text, deferred } = skillModules(['gate-pack', 'needs-decision', 'reject-routing', 'rotation', 'rotation']);
+  assert.deepEqual(names, ['rotation', 'reject-routing']);
+  assert.deepEqual(deferred, ['needs-decision', 'gate-pack']);
   assert.equal(text.match(/\[loom-skill:/g).length, 2);
+  assert.match(text, /另有模块 needs-decision、gate-pack 未附/);
+  assert.doesNotMatch(text, /ROT-TUNE-2|<!--/);
   assert.throws(() => skillModules(['../roles/leader']), RangeError);
 });
 
@@ -22,7 +25,9 @@ test('skill lint finds dangling links, repeated or conflicting rules, oversize a
   const root = join(project, 'skills/loom');
   cpSync(skillRoot, root, { recursive: true });
   mkdirSync(join(project, 'daemon'));
-  for (const name of ['sessions', 'supervisor', 'self-rotation']) {
+  mkdirSync(join(project, 'docs'));
+  cpSync(new URL('../docs/HEADLESS.md', import.meta.url), join(project, 'docs', 'HEADLESS.md'));
+  for (const name of ['sessions', 'supervisor', 'self-rotation', 'skill-events']) {
     cpSync(new URL('../daemon/' + name + '.mjs', import.meta.url), join(project, 'daemon', name + '.mjs'));
   }
   assert.deepEqual(lintSkill(project), []);

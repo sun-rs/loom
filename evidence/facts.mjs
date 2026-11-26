@@ -59,6 +59,10 @@ function pathFacts(roots, gitRoot, snapshot, boundary) {
     // Bare reference paths in Loom's role cores are rooted in the serving skill.
     if (!boundary && /^references\/[a-z][a-z-]*\.md$/.test(token) &&
         pathStat(resolve(skillRoot, token), skillRoot)?.isFile()) return true;
+    if (!boundary && /^(?:\.\.\/\.\.\/)?docs\/HEADLESS\.md$/.test(token)) {
+      const release = resolve(skillRoot, '../..');
+      if (pathStat(resolve(release, 'docs/HEADLESS.md'), release)?.isFile()) return true;
+    }
     const paths = isAbsolute(token) ? [resolve(token)] : roots.map(root => resolve(root, token))
       .filter(path => roots.some(root => inside(root, path)));
     if (paths.some(path => pathStat(path, boundary))) return true;

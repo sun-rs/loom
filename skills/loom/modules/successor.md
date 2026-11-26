@@ -1,5 +1,5 @@
-# Successor
+# 继任首轮
 
-110. Read the full brief. Run `git rev-parse HEAD` and `pwd`. Final line 1: exact ACK. Include observed values and paths.
-111. v2: report HEAD, Branch, Base SHA, WIP, Rulings. For a mismatch write MISMATCH on line 2, list differences and stop.
-112. Work resumes on 接管生效.
+110. 读完简报，实查 SHA 和目录。首行原样写 HANDOVER-ACK。
+111. v2 报 HEAD、Branch、Base SHA、WIP、Rulings 和原件。差异第二行写 MISMATCH，列差即停。
+112. 本轮只核对、不决定。收到「接管生效」即执行 Do now 和 Next action。

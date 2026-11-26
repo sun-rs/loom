@@ -10,6 +10,7 @@ const referenceAliases = {
   'references/rulings.md': '../../examples/rulings.md',
   'references/card.md': '../../examples/card.md',
   'references/runtime.md': 'docs/HEADLESS.md',
+  '../../docs/HEADLESS.md': 'docs/HEADLESS.md',
 };
 export const tool = {
   name: 'operate',

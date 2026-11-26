@@ -84,6 +84,7 @@ export function releaseDigest(root, { legacy = false } = {}) {
   if (!legacy && existsSync(join(skill, 'roles'))) {
     file(join(skill, 'SKILL.md'));
     for (const dir of ['roles', 'modules', 'references']) visit(join(skill, dir));
+    file(join(root, 'docs', 'HEADLESS.md'));
   }
   if (!legacy && existsSync(join(root, 'holder'))) visit(join(root, 'holder'));
   return digest.digest('hex');
