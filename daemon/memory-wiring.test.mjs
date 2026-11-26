@@ -17,6 +17,25 @@ import { createSupervisor } from './supervisor.mjs';
 // Pin the client to the same checkout as the supervisor under test.
 const LOOM_BIN = fileURLToPath(new URL('../bin/loom', import.meta.url));
 const exec = promisify(execFile);
+let isolatedHome;
+const isolatedVariables = ['HOME', 'GIT_CONFIG_GLOBAL'];
+const originalEnvironment = isolatedVariables.map(key => process.env[key]);
+
+// The in-process supervisor also spawns Git, so isolate its inherited environment.
+test.before(() => {
+  isolatedHome = mkdtempSync(join(realpathSync(tmpdir()), 'lmw-home-'));
+  process.env.HOME = isolatedHome;
+  process.env.GIT_CONFIG_GLOBAL = join(isolatedHome, '.gitconfig');
+});
+test.after(() => {
+  for (const [index, key] of isolatedVariables.entries()) {
+    const original = originalEnvironment[index];
+    if (original === undefined) delete process.env[key];
+    else process.env[key] = original;
+  }
+  if (isolatedHome) rmSync(isolatedHome, { recursive: true, force: true });
+});
+
 const initialTime = Date.parse('2026-11-26T12:00:00Z');
 const draft = (title, fields = {}) => ({
   kind: 'ruling', layer: 'shared', title, body: 'Verify the signed release manifest.',
@@ -114,7 +133,7 @@ async function fixture(t, { capture = false, ...memoryOptions } = {}) {
     async restart() { await daemon.shutdown(); daemon = start(); },
   };
 }
-// Proposed wire shape for the new CLI. Entry fields follow memory/CONTRACT.md.
+// The CLI and entry shapes follow memory/CONTRACT.md.
 const search = (f, addr, query) => f.cli(addr, 'mem', 'search', query);
 const show = (f, addr, id) => f.cli(addr, 'mem', 'show', id);
 const put = (f, addr, entry, requestId = randomUUID()) =>
@@ -126,6 +145,11 @@ const cliError = code => error => {
   assert.equal(actual, code, message);
   return true;
 };
+test('subprocesses inherit temporary HOME and Git global config', async () => {
+  const { stdout } = await exec(process.execPath, ['-p',
+    'JSON.stringify([process.env.HOME, process.env.GIT_CONFIG_GLOBAL])']);
+  assert.deepEqual(JSON.parse(stdout), [isolatedHome, join(isolatedHome, '.gitconfig')]);
+});
 test('5a · daemon restart preserves v1 item and receipt, with project-local reads and writes', async t => {
   const a = await fixture(t), b = await fixture(t);
   const alice = await a.spawn('auditor'), bob = await b.spawn('auditor');
@@ -187,6 +211,43 @@ test('5a · R18 user rulings are read-only for Auditor and Leader; R22 denies Wo
   assert.equal((await show(f, worker, item.id)).item, null);
   await assert.rejects(put(f, worker, draft('forged', { role: 'auditor', author: auditor })), cliError('forbidden'));
 });
+for (const action of ['update', 'invalidate']) {
+  test(`5a · CLI denies Worker ${action} of project memory`, async t => {
+    const f = await fixture(t);
+    const auditor = await f.spawn('auditor'), leader = await f.spawn('leader');
+    const worker = await f.spawn('worker', {}, leader);
+    const entry = draft('worker-mutation-target');
+    const { item } = await put(f, auditor, entry);
+
+    await assert.rejects(mutate(f, worker, action, item.id, item.revision,
+      action === 'update' ? { ...entry, body: 'Unauthorized change.' } : undefined), cliError('forbidden'));
+    assert.deepEqual((await show(f, auditor, item.id)).item, item);
+  });
+}
+test('5a · CLI hides unattached project memory from Worker show', async t => {
+  const f = await fixture(t);
+  const auditor = await f.spawn('auditor'), leader = await f.spawn('leader');
+  // Create the item after dispatch so it was never an attachment to this card.
+  const worker = await f.spawn('worker', {}, leader);
+  const { item } = await put(f, auditor, draft('unattached-manifest'));
+  assert.deepEqual((await show(f, auditor, item.id)).item, item);
+
+  const { item: hidden, seq } = await show(f, worker, item.id);
+  assert.deepEqual({ item: hidden, seq }, { item: null, seq: null });
+});
+test('5a · CLI denies Auditor update of a known foreign ID and preserves foreign state', async t => {
+  const local = await fixture(t), foreign = await fixture(t, { capture: true });
+  const auditor = await local.spawn('auditor'), owner = await foreign.spawn('auditor');
+  const entry = draft('foreign-mutation-target');
+  const { item } = await put(foreign, owner, entry);
+  const before = structuredClone(foreign.snapshot());
+  assert.ok(before.entries.some(row => row.id === item.id));
+
+  const proposed = { ...entry, project: item.project, body: 'Unauthorized cross-project change.' };
+  await assert.rejects(mutate(local, auditor, 'update', item.id, item.revision, proposed), cliError('forbidden'));
+  assert.deepEqual((await show(foreign, owner, item.id)).item, item);
+  assert.deepEqual(foreign.snapshot(), before);
+});
 test('5a · missing classifier fails closed through CLI', async t => {
   const f = await fixture(t, { classifySensitive: null });
   const auditor = await f.spawn('auditor');
@@ -236,6 +297,56 @@ test('5a · v1 receipt maintenance expires old fingerprints while keeping recent
   assert.deepEqual(state, retained);
   assert.equal((await store.access.show(binding, first.item.id)).item.revision, 1);
   assert.equal((await store.write(binding, { ...request('new'), requestId: old.requestId })).ok, true);
+});
+test('5a · idle daemon tick prunes expired persisted receipts after restart', async t => {
+  const statePath = join(mkdtempSync(join(isolatedHome, 'receipts-')), 'state.json');
+  let now = initialTime;
+  const receiptTtlMs = 1000;
+  const options = {
+    now: () => now, receiptTtlMs,
+    readState: () => JSON.parse(readFileSync(statePath, 'utf8')),
+    commitState: state => writeFileSync(statePath, JSON.stringify(state)),
+  };
+  options.commitState(null);
+  const open = () => createMemoryStore({ ...options, classifySensitive,
+    evidence: { root: '/fixture', realpath: path => path },
+  });
+  const binding = { sessionId: 'S', principal: 'A', role: 'auditor', project: 'P', cardId: null };
+  const request = (requestId, body) => ({ op: 'put', requestId, expectedRevision: null,
+    entry: draft(requestId, { project: 'P', body }),
+  });
+  const old = request('old', 'Check the manifest signature.');
+  const fresh = request('fresh', 'Check the artifact digest.');
+  const seed = open();
+  const first = await seed.write(binding, old);
+  now += 500;
+  const second = await seed.write(binding, fresh);
+  assert.ok(first.ok && second.ok);
+  const f = await fixture(t, options);
+  await f.restart();
+
+  now = initialTime + receiptTtlMs - 1;
+  const before = options.readState();
+  const retained = open();
+  assert.deepEqual(await retained.write(binding, old), first);
+  assert.equal((await retained.write(binding, request('old', 'Different content.'))).code, 'conflict');
+  await f.tick();
+  assert.deepEqual(options.readState(), before, 'both receipts survive before the cutoff');
+
+  now += 1;
+  await f.tick();
+  const cleaned = options.readState();
+  assert.deepEqual(cleaned.receipts.map(row => row.requestId), [fresh.requestId]);
+  assert.deepEqual(cleaned, { ...before, receipts: before.receipts.filter(row => row.requestId === fresh.requestId) });
+  await f.restart();
+  assert.deepEqual(options.readState(), cleaned);
+  const restarted = open();
+  assert.deepEqual(await restarted.write(binding, fresh), second);
+  assert.equal((await restarted.write(binding, request('fresh', 'Different content.'))).code, 'conflict');
+  assert.deepEqual(options.readState(), cleaned);
+  const reused = await restarted.write(binding, request('old', 'New content after cleanup.'));
+  assert.ok(reused.ok);
+  assert.notEqual(reused.item.id, first.item.id);
 });
 function noModel(t, f) {
   const fetch = t.mock.method(globalThis, 'fetch', async () => { throw new Error('unexpected model request'); });
