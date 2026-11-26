@@ -439,6 +439,10 @@ test('Goal 4e cross-project grants survive restart and revocation and expiry dis
     readState: () => JSON.parse(snapshots.at(-1) ?? initialSnapshot),
     commitState: next => { snapshots.push(JSON.stringify(next)); },
   }).access;
+  const persistedGrant = (commitCount, id) => {
+    const { grants } = JSON.parse(commits[commitCount - 1] ?? initialSnapshot);
+    return Array.isArray(grants) ? grants.find(grant => grant?.id === id) : grants?.[id];
+  };
   const check = async (access, expected) => {
     assert.deepEqual({
       index: ids((await access.index(leader, { project: sourceProject })).rows),
@@ -453,13 +457,21 @@ test('Goal 4e cross-project grants survive restart and revocation and expiry dis
   const access = open();
   await check(access, []);
   const beforeGrant = commits.length;
+  const expiresAt = stamp(start + day);
   const result = await access.grant(superBinding, { sourceProject, recipient: leader.principal,
-    reason: 'Read the dependency notes', expiresAt: stamp(start + day) });
+    reason: 'Read the dependency notes', expiresAt });
   const afterGrant = commits.length;
   assert.equal(result.ok, true, JSON.stringify(result));
   await check(access, [entry.id]);
   await t.test('grant commits project state', () => {
     assert.ok(afterGrant > beforeGrant, 'grant did not call commitState');
+  });
+  await t.test('grant snapshot contains the complete authorization scope and expiry', () => {
+    const grant = persistedGrant(afterGrant, result.grant.id);
+    assert.ok(grant, 'grant is missing from state.grants');
+    assert.deepEqual([
+      grant.sourceProject, grant.targetProject ?? grant.recipientProject ?? grant.project, grant.recipient, grant.expiresAt,
+    ], [sourceProject, leader.project, leader.principal, expiresAt]);
   });
   const reopenBeforeExpiry = () => open(start + day - 1);
   const reopened = reopenBeforeExpiry();
@@ -479,6 +491,9 @@ test('Goal 4e cross-project grants survive restart and revocation and expiry dis
     await check(reopened, []);
     await check(reopenBeforeExpiry(), []);
     assert.ok(afterRevoke > beforeRevoke, 'revoke did not call commitState');
+    const grant = persistedGrant(afterRevoke, result.grant.id);
+    assert.ok(grant == null || grant.revoked === true || grant.status === 'revoked'
+      || Number.isFinite(Date.parse(grant.revokedAt)), 'grant is still active in state.grants after revoke');
   });
 });
 

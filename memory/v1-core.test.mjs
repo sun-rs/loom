@@ -513,6 +513,44 @@ test('Goal 4a write receipts reject changed requests across all write operations
   }
 });
 
+test('Goal 4a request matching survives reopening from a JSON snapshot', async t => {
+  const { store, readState } = await fixture();
+  const { auditor } = bindings;
+  const ruling = { ...fact, kind: 'ruling' };
+  const alternate = saved(await store.write(auditor, put('alternate', { ...ruling, body: correctedBody })));
+  const request = put('persistent-receipt', ruling);
+  const accepted = await store.write(auditor, request);
+  saved(accepted);
+  const snapshot = JSON.stringify(readState());
+  const reopen = () => fixture({ initialState: JSON.parse(snapshot) });
+
+  await t.test('identical request returns the original receipt after restart', async () => {
+    const { store, commits, readState } = await reopen();
+    assert.deepEqual(await store.write(auditor, structuredClone(request)), accepted);
+    assert.equal(commits.length, 0);
+    assert.deepEqual(readState(), JSON.parse(snapshot));
+  });
+  const variants = {
+    body: put(request.requestId, { ...ruling, body: 'Verify the guidance after the third retry.' }),
+    target: put(request.requestId, ruling, { id: alternate.id, expectedRevision: alternate.revision }),
+    operation: { op: 'import_rulings', requestId: request.requestId, entries: oldRulings },
+  };
+  for (const [field, variant] of Object.entries(variants)) {
+    await t.test(`changed ${field} conflicts after restart`, async () => {
+      const control = await reopen();
+      const fresh = await control.store.write(auditor, { ...variant, requestId: `fresh-${field}` });
+      assert.equal(fresh.ok, true, JSON.stringify(fresh));
+      assert.equal(control.commits.length, 1);
+
+      const { store, commits, readState } = await reopen();
+      const result = await store.write(auditor, variant);
+      assert.equal(commits.length, 0);
+      assert.deepEqual(readState(), JSON.parse(snapshot));
+      assert.deepEqual([result.ok, result.code, result.receipt], [false, 'conflict', undefined]);
+    });
+  }
+});
+
 test('Goal 4a changing a put replay after forget conflicts without leaking the old body', async t => {
   const { store, commits, readState } = await fixture();
   const { leader } = bindings;
