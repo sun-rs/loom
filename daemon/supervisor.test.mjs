@@ -248,7 +248,7 @@ test('consumption drift warms up before reaching Super and a restart preserves t
   const { session: leader } = await f.spawn(d, 'leader', 'L');
   await d.tick();
   advance = 31_000;
-  await nativeCost(f, auditor, Date.now(), 80);
+  await nativeCost(f, auditor, Date.now(), 80, 120);
   await d.tick();
   const ledger = async () => (await d.handle('notifications', { history: true })).notifications
     .filter(event => event.type === 'consumption-pyramid');
@@ -281,6 +281,40 @@ test('consumption drift warms up before reaching Super and a restart preserves t
   assert.equal(afterThrottle.length, 2);
   assert.ok(afterThrottle[1].at - afterThrottle[0].at >= 3_600_000);
   assert.deepEqual(delivery(afterThrottle[1]).map(item => item.target.addr), [superSession.addr]);
+});
+
+test('the board uses the latest native input and the reported or estimated model window for senior roles', async t => {
+  const f = fixture(t);
+  const d = f.daemon();
+  t.after(d.shutdown);
+  const { session: leader } = await f.spawn(d, 'leader', 'L', undefined, { cli: 'agy', model: 'gemini-4-neon' });
+  const { session: auditor } = await f.spawn(d, 'auditor', 'A', undefined, { cli: 'claude', model: 'sonnet' });
+  const timestamp = new Date().toISOString();
+  async function record(session, rows) {
+    const path = await f.sessions.get(session.addr).session.nativeSessionFile();
+    appendFileSync(path, rows.map(row => JSON.stringify(row)).join('\n') + '\n');
+  }
+  await record(leader, [
+    { type: 'USER_INPUT', source: 'USER_EXPLICIT', content: 'Check the queue.' },
+    { type: 'PLANNER_RESPONSE', source: 'MODEL', model: 'gemini-4-neon-xhigh', input_tokens: 100_000, content: 'Checking' },
+    { type: 'PLANNER_RESPONSE', source: 'MODEL', model: 'gemini-4-neon-xhigh', input_tokens: 8192,
+      cache_read_tokens: 57_344, status: 'DONE', content: 'Checked.' },
+  ].map((row, step_index) => ({ ...row, step_index, created_at: timestamp })));
+  await record(auditor, [
+    { type: 'user', message: { role: 'user', content: 'Check the verdict.' } },
+    { type: 'assistant', message: { role: 'assistant', id: 'msg_fixture', model: 'claude-sonnet-5-5',
+      content: [{ type: 'text', text: 'Checked.' }], stop_reason: 'end_turn',
+      usage: { input_tokens: 5000, cache_read_input_tokens: 40_000, cache_creation_input_tokens: 5000 } } },
+    { type: 'result', modelUsage: { 'claude-sonnet-5-5': { contextWindow: 200_000 } } },
+  ].map(row => ({ ...row, timestamp })));
+  await d.tick();
+  const { roles } = await d.handle('board', {});
+  const context = role => {
+    const { contextTokens, contextWindow, contextPercent, contextEstimated } = roles.find(item => item.role === role);
+    return [contextTokens, contextWindow, contextPercent, contextEstimated];
+  };
+  assert.deepEqual(context('leader'), [65_536, 524_288, 12.5, true]);
+  assert.deepEqual(context('auditor'), [50_000, 200_000, 25, false]);
 });
 
 test('Auditor wakes and context have independent budgets and rotation waits for a completed gate', async t => {
@@ -1429,6 +1463,10 @@ test('external Super sends to the live role and receives project notification re
   const history = (await d.handle('notifications', { history: true })).notifications.filter(event => event.deliveryId === accepted.id);
   assert.deepEqual(history.map(event => event.type), ['super-delivery-receipt', 'super-delivery-reply']);
   assert.equal(history[1].text, 'The requested answer.');
+  const { notifications } = await d.handle('board', {});
+  assert.equal(notifications.routineReceipts, 1);
+  assert.ok(notifications.last.some(event => event.id === history[1].id));
+  assert.ok(notifications.last.every(event => event.id !== history[0].id));
 });
 
 test('integration is a headless worker profile and Loom records the suite in the evidence card', async t => {
