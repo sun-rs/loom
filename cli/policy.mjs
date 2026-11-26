@@ -25,7 +25,6 @@ const guidanceFields = {
   leader: { modelTier: 'strong', effort: ['medium', 'high'], preferLongPromptCacheTtl: 'boolean' },
   auditor: { modelTier: 'strong', vendorFamily: 'different-from-workers', preferLongPromptCacheTtl: 'boolean' },
   worker: { routineEffort: ['low', 'medium'], hardEffort: ['high', 'xhigh'] },
-  reviewer: {},
 };
 
 function validateGuidance(role, guidance) {
@@ -55,7 +54,9 @@ function validateProfiles({ preferred = [], deny = [] }) {
   }
 }
 
-export function readPolicy(project, { optional = false } = {}) {
+const warnedReviewerPolicies = new Set();
+
+export function readPolicy(project, { optional = false, warn = console.error } = {}) {
   const path = join(project, '.project', 'policy.json');
   try {
     const source = readText(path, null);
@@ -96,6 +97,13 @@ export function readPolicy(project, { optional = false } = {}) {
     }
     if (policy.roles !== undefined) {
       if (!policy.roles || typeof policy.roles !== 'object' || Array.isArray(policy.roles)) throw new Error('Expected a roles object');
+      if (Object.hasOwn(policy.roles, 'reviewer')) {
+        if (!warnedReviewerPolicies.has(path)) {
+          warn(`${path}: Remove roles.reviewer. The Auditor now checks evidence at phase boundaries.`);
+          warnedReviewerPolicies.add(path);
+        }
+        delete policy.roles.reviewer;
+      }
       for (const [role, entry] of Object.entries(policy.roles)) {
         if (!roles.includes(role) || !entry || typeof entry !== 'object' || Array.isArray(entry)) throw new Error(`Invalid role policy: ${role}`);
         validateProfiles(entry);
@@ -130,11 +138,6 @@ export function readPolicy(project, { optional = false } = {}) {
         if (Object.hasOwn(entry, 'maxActiveWorkers') && (role !== 'leader' ||
             !Number.isInteger(entry.maxActiveWorkers) || entry.maxActiveWorkers < 1 || entry.maxActiveWorkers > hardMaxActiveWorkers)) {
           throw new Error(`Expected roles.leader.maxActiveWorkers to be an integer from 1 to ${hardMaxActiveWorkers}`);
-        }
-        if (Object.hasOwn(entry, 'maxDurationMs') &&
-            (role !== 'reviewer' || !Number.isSafeInteger(entry.maxDurationMs) ||
-              entry.maxDurationMs < 1 || entry.maxDurationMs > Number.MAX_SAFE_INTEGER - Date.now())) {
-          throw new Error('Expected roles.reviewer.maxDurationMs to be a positive duration in milliseconds');
         }
       }
     }
@@ -218,7 +221,7 @@ export function spawnProfile(project, input, owner, occupies) {
   }
   enforceDeny(selected, deny);
   selected.mode = requested.mode ?? profile?.mode ?? input.defaultMode ??
-    (['worker', 'reviewer'].includes(input.role) ? 'headless' : 'tui');
+    (input.role === 'worker' ? 'headless' : 'tui');
   const fastRequested = profile?.fast;
   const number = choice?.number ?? preferred.findIndex(entry => matches(entry, selected) &&
     (entry.fast ?? false) === (fastRequested ?? false)) + 1;
@@ -233,8 +236,7 @@ export function spawnProfile(project, input, owner, occupies) {
   if (input.role === 'worker' && Object.hasOwn(input, 'workerCaller')) {
     checkWorkerCapacity(project, input, workerLimit(policy), owner, occupies);
   }
-  return { requested, selected, deny, fastRequested, warnings, trustWorkspace: role?.trustWorkspace ?? true,
-    ...(input.role === 'reviewer' && { maxDurationMs: role?.maxDurationMs ?? 1_800_000 }) };
+  return { requested, selected, deny, fastRequested, warnings, trustWorkspace: role?.trustWorkspace ?? true };
 }
 
 export const workerLimit = policy => policy.roles?.leader?.maxActiveWorkers ?? defaultMaxActiveWorkers;

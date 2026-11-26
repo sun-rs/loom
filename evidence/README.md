@@ -39,3 +39,13 @@ const { path, textPath, card, data } = await evidence.forTurn({
 `claims` 保存规则提取的声称、`MATCH`、`MISMATCH` 或 `UNVERIFIED`，以及原因。全绿比较该声称指向的命令的最后一次执行，并检查跳测信号。`loom hist` 按命令分别显示测试计数和退出码。测试先行卡可用 `.project/evidence.json` 中的 `tasks.<card-id>.expectRed`（布尔值），或在 `forTurn` 传入 `expectRed: true`。此时有明确基线范围的声称可使用通过的基线记录核验，显式指定的红测仍保留失败原件。通过数用单次可识别的测试摘要核对。合入检查配置的本地 `mergeRef` 是否含工作提交，以及工作树是否仍有待合入改动。
 
 断言删除和改写分别记为 `removedAssertions` 和 `rewrittenAssertions`。门禁的机械删除提示使用 `kind: deleted` 或按新规则计算的删除数。
+
+## Deterministic checks and phase findings
+
+`loom lint --project "$PROJECT"` checks tracked and unignored JavaScript source in the worktree. `npm test` runs it before tests. Configure outbound calls by adding exact module paths to the root `loom.lint.json`, for example `{"egress":["src/client.mjs"]}`. Keep Unix socket traffic on `connectUnix`. Tests run fixtures through `fixtures/test-process.mjs`, which pins the host tools used by the harness and resolves other executables inside registered temporary fixture directories.
+
+Native test output identifies checked invariants with names such as `invariant [retry] terminal retries preserve the fingerprint`. Available categories are `persistence`, `retry`, `idempotency` and `egress`. The card reports missing categories based on changed paths. Projects can add path globs per category through `invariantPaths` in their evidence settings.
+
+The card JSON contains the before-and-after assertions, added skip or only directives, and deleted tests in `checks.testDiff`. `checks.redProof` links observed failures and any later passing run of the same command when the task expects RED. `checks.lint` and `checks.invariants` point to recorded commands.
+
+The Auditor records a finding missed by the checks with `loom audit-findings PHASE --id ID --category CATEGORY --evidence TEXT`. After a Worker adds a regression test or lint rule, the Auditor records its project-relative path with `loom audit-findings PHASE --id ID --regression PATH`. Query the counts with `loom audit-findings PHASE` or `loom status --json`. Phase completion requires a regression path for every recorded finding.

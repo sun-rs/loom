@@ -1,4 +1,5 @@
-import net from 'node:net';
+import { createServer } from 'node:net';
+import { connectUnix } from '../lib/unix-socket.mjs';
 import { chmod, lstat, unlink } from 'node:fs/promises';
 import { dirname, isAbsolute } from 'node:path';
 
@@ -31,7 +32,7 @@ export async function listenControl(path, session, incarnation) {
     throw new Error('Control socket requires a private directory owned by the caller');
   }
   const clients = new Set();
-  const server = net.createServer(socket => {
+  const server = createServer(socket => {
     clients.add(socket);
     socket.on('close', () => clients.delete(socket));
     socket.on('error', () => {});
@@ -90,7 +91,7 @@ export async function controlHello(path, owner) {
 
 export function requestControl(path, method, params, owner, protocol) {
   return new Promise((resolve, reject) => {
-    const socket = net.createConnection(path);
+    const socket = connectUnix(path);
     const fail = error => { socket.destroy(); reject(error); };
     socket.setTimeout(45_000, () => fail(Object.assign(new Error('Control request timed out'), { code: 'ETIMEDOUT' })));
     socket.once('error', fail);

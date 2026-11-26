@@ -1,4 +1,4 @@
-import { createConnection } from 'node:net';
+import { connectUnix } from '../lib/unix-socket.mjs';
 import { callerAddress, socketPath } from '../cli/project.mjs';
 import { CommandError } from '../cli/sessions.mjs';
 
@@ -8,7 +8,7 @@ export const daemonAbsent = error => ['ENOENT', 'ECONNREFUSED'].includes(error.c
 export async function request(project, command, args = {}, { timeout = ['spawn', 'switch'].includes(command) ? 180_000 :
   ['upgrade-plan', 'upgrade-apply'].includes(command) ? 60_000 : 30_000 } = {}) {
   return new Promise((resolve, reject) => {
-    const socket = createConnection(socketPath(project));
+    const socket = connectUnix(socketPath(project));
     let body = '';
     socket.setEncoding('utf8');
     socket.setTimeout(timeout);

@@ -21,6 +21,10 @@ const flags = (...keys) => Object.fromEntries(keys.map(key => [key, { type: 'boo
 const projectArgs = strings('project');
 const help = {
   'senior-tool': [seniorToolUsage],
+  lint: ['loom lint [--project DIR] [--json]'],
+  'audit-findings': ['loom audit-findings <phase> [--project DIR]',
+    'loom audit-findings <phase> --id ID --category CATEGORY --evidence TEXT',
+    'loom audit-findings <phase> --id ID --regression PROJECT_RELATIVE_PATH'],
   hist: [
     'loom hist <role|task|addr> [--project DIR] [--turn N | --turns N] [--level L1|L2] [--json]',
     'loom hist --role ROLE [--project DIR] [--since ISO-TIME|N|turn:ADDR#N] [--turn N | --turns N] [--level L1|L2] [--json]',
@@ -65,6 +69,8 @@ const help = {
 const commands = {
   hist: { ...strings('turn', 'turns', 'level', 'role', 'project', 'since', 'outcome', 'wave', 'grep', 'tool', 'cmd', 'tail'),
     ...flags('json', 'diff', 'evidence', 'only-failed', 'with-calls') },
+  lint: { ...projectArgs, ...flags('json') },
+  'audit-findings': { ...projectArgs, ...strings('id', 'category', 'evidence', 'regression') },
   state: projectArgs, stop: projectArgs, ls: projectArgs, cost: projectArgs,
   status: { ...projectArgs, ...flags('json') },
   up: projectArgs,
@@ -285,7 +291,28 @@ export async function main(args) {
     if (command === 'doctor' && ((!values.prompts && values.project === undefined) || values.prompts && values.fix)) invalid(help.doctor[0]);
     const directory = projectDirectory(values.project);
     let result;
-    if (command === 'rotate') {
+    if (command === 'lint') {
+      if (positionals.length) invalid(help.lint[0]);
+      const { lintProject, lintDiagnostic } = await import('../lint/project.mjs');
+      const lint = lintProject(directory);
+      if (values.json) emit(lint);
+      else if (lint.ok) console.log(`Loom lint passed (${lint.files} files).`);
+      else console.error(lint.violations.map(lintDiagnostic).join('\n'));
+      return lint.ok ? 0 : 1;
+    } else if (command === 'audit-findings') {
+      const [phase] = positionals;
+      if (positionals.length !== 1) invalid(help[command][0]);
+      const { id, category, evidence, regression } = values;
+      try { result = await request(directory, command, { phase, id, category, evidence, regression }); }
+      catch (error) {
+        if (!daemonAbsent(error)) throw error;
+        if ([id, category, evidence, regression].some(value => value !== undefined)) {
+          throw new CommandError('not-ready', 'loomd must be running to record an audit finding');
+        }
+        const { summarizeAuditFindings } = await import('../daemon/audit-findings.mjs');
+        result = { ok: true, ...summarizeAuditFindings(readNotifications(directory), phase) };
+      }
+    } else if (command === 'rotate') {
       if (positionals.length || values.prepare && values.reason !== undefined ||
           Boolean(values.self) === Boolean(values.target)) invalid(help.rotate[0]);
       result = await request(directory, 'rotate', values);

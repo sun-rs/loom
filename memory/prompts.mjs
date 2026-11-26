@@ -13,7 +13,6 @@ const roleRules = {
   auditor: '维护本项目裁决与偏好，并审查相应候选。',
   leader: '维护本项目经验，并审查经验候选。',
   worker: '用 propose 提交待审候选。',
-  reviewer: '按复核卡给出的范围阅读记忆。',
 };
 const reminderEvents = new Set(['card_close', 'handover', 'pre_compact']);
 

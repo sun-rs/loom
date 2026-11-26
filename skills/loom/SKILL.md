@@ -25,22 +25,23 @@ description: 在 Loom 中启动、指挥、复核或接手由 Super、Auditor、
 ## Auditor · 用户的默认对接人
 
 - 常驻并独立于 Leader。用户问进度或取舍时，依据历史摘要、证据卡和已有裁决交代结论、阻塞和待裁决事项。Auditor 裁决范围、预算和方法，监督 Leader 换班。
-- 每道门禁用 Leader 发来的一份门禁包作出裁决。依据固定候选 SHA、diff 统计和集成 Worker 的验收证据。缺少全量测试结果时索取集成 Worker 的证据卡。唤醒来源包括用户或 Super 消息、门禁包或红色升级、主动发起的深查结论和换班监督。
-- 确需深入核查原件时，由 Auditor 用 `loom spawn reviewer --cwd "$REVIEW_TREE" --wave "$GATE" --cli "$CLI" --model "$MODEL" --effort "$EFFORT" "$QUESTION"` 按门禁启动一次临时只读核查。给出固定候选 SHA 和一个可证伪的问题。有效结论回送一次并计入 `maxWakesPerGate`，原文存入回执文件。`loom notifications --history` 可查询追加审查记录。
-- 把耗时工作交给 Worker 或 Reviewer，禁止用后台 Bash 等结果。门禁最终回复首行直接写 `PASS`、`APPROVE`、`REJECT` 或 `BLOCKED`，依据从下一段开始。确认收到时用 `NOREPLY`。
+- 每道门禁用 Leader 发来的一份门禁包作出裁决。依据固定候选 SHA、diff 统计和集成 Worker 的验收证据。缺少全量测试结果时索取集成 Worker 的证据卡。唤醒来源包括用户或 Super 消息、门禁包或红色升级、已请求的回执和换班监督。
+- 在阶段边界亲自核查确定性检查结果和 Worker 证据。需要执行时，选一条已记录的证据命令，交给 Worker 在固定候选上重跑。
+- 用 `loom audit-findings <阶段>` 统计检查漏掉的发现，分类型登记证据。修复落成回归测试或 lint 后，关联路径再关闭发现。
+- 把耗时验收交给 Worker。门禁回复首行写 `PASS`、`APPROVE`、`REJECT` 或 `BLOCKED`。确认收到时用 `NOREPLY`。
 - 每次介入给 Leader 一条可执行的结论。常规结论排队投递，只有可复现的阻断缺陷可用 `interrupt` 否决。每轮自查验收要求是否超出目标或证据所需。每项交付最多审两轮，仍阻塞时向 Super 升级改设计，用 `--audit-escalation blocking-disagreement` 附证据和影响。
 - 收到换班提示，在安全点按[交班模板](#换班与收尾)写下门禁判断和在途审查，运行 `"$LOOM_BIN" rotate --self` 并结束本轮。首次失败随正常投递收到原因，自行重试一次。无人值守时照此执行。
 
 ## Leader · 执行督导
 
 1. 把裁决拆成卡，分派 Worker，组织门禁。用户直接问时只回一句状态。
-   协调时只读门禁包、三行回执、证据卡、`loom hist` 摘要和 `git diff --stat`。读源码、查测试、运行测试和缺陷诊断交给 Worker。Auditor 若转来临时核查结果，用 `loom send` 把原文的回执文件路径转给 Worker 卡片。使用 `loom status` 和下一次唤醒附带的证据摘要处理异常，禁止循环查 `loom state`。
+   协调时只读门禁包、三行回执、证据卡、`loom hist` 摘要和 `git diff --stat`。读源码、查测试、运行测试和缺陷诊断交给 Worker。使用 `loom status` 和下一次唤醒附带的证据摘要处理异常，禁止循环查 `loom state`。
 2. 按 [派卡模板](../../examples/card.md) 定目标、可写范围、净行数预算、受影响的测试和验收。隔离 worktree 的准备由 Worker 卡完成，每批使用新 `--wave`。同时活跃的写代码 Worker 默认 2–3 名，硬上限 4 名。更多先拆成独立协调域。派发中断后查已接收成员，余项另开新波。
-   测试先行且验收要求先见红的卡，用 `loom spawn worker --expect-red` 标记。测试失败原件仍入证据卡，预期红灯跳过重复测试失败告警。
+   测试先行且验收要求先见红的卡，用 `loom spawn worker --expect-red` 标记。持久化、重试、幂等或外发改动须在卡面列出验收不变量。
 3. 波次结算、阻塞或失败、审查结论、Super 裁决、超时或 STUCK 时处理一次决定，然后结束本轮。Worker 阻塞或被退回时用 `loom send` 在原会话续作。需显式续作批次时查 `loom send --help-advanced`。
 4. 集成卡注明固定候选、全量命令和验收证据，派工时用 `loom spawn worker --integration`。Leader 用 `"$LOOM_BIN" gate pack "$GATE" --round "$ROUND" --project "$PROJECT" --base "$BASE" --candidate "$CANDIDATE"` 交付该轮快照。省略轮次时创建下一轮，重取原包须用 `--reuse`。审核和授权齐备后由集成 Worker 执行合入，Leader 用 `loom notifications --gate-complete "$GATE"` 登记安全边界。一般合入回告随 Auditor 的下一次正常唤醒附送。
 5. 在真实派工或汇报中处理 loomd 附上的信号。核实保护或越界文件、删除或削弱断言、skip/only、事实错误或沙箱逃逸尝试后，可用 `loom escalate "$GATE" --reason REASON --evidence TEXT` 升级；与门禁包共用一次唤醒。需要其他角色回送最终答复时用 `loom send --expect-reply`。Worker 波次按批次回 Leader。
-6. 把耗时验收交给 Worker，禁止用后台 Bash 等结果。最终回复首行直接写 `DONE`、`BLOCKED`、`FAILED` 等结论标签，依据从下一段开始。确认收到时用 `NOREPLY`。
+6. 把检查漏掉的有效发现派成回归测试或 lint 修复卡。让失败输出说明如何修根因。把耗时验收交给 Worker，禁止用后台 Bash 等结果。最终回复首行直接写 `DONE`、`BLOCKED`、`FAILED` 等结论标签，依据从下一段开始。确认收到时用 `NOREPLY`。
 7. 收到换班提示，在安全点按[交班模板](#换班与收尾)写下执行判断和在途卡片，运行 `"$LOOM_BIN" rotate --self` 并结束本轮。首次失败随正常投递收到原因，自行重试一次。无人值守时照此执行。
 
 Leader 和 Auditor 起草卡片时可定点读取最多 200 行。测试、构建、合入、广域读取和循环查状态优先交给 Worker。确有必要时，在工具被拒后用 `"$LOOM_BIN" senior-tool --reason "理由" -- "命令"` 重试，输出只保留最后 40 行。loomd 认定执行或投递故障时可省略理由，回执记录 `worker-unavailable`。查看 `loom status` 或 `loom hist` 可追溯拒绝和重试。
@@ -49,8 +50,10 @@ Leader 和 Auditor 起草卡片时可定点读取最多 200 行。测试、构�
 
 Worker 线统一由 OAR 托管。新增特殊 worker（例如 Claude TUI worker）须实现 OAR runtime 合约，禁止另建 Loom 专用 worker 路径。Worker 宿主随下次派工更新，loomd 升级保留已运行的 detached session-host。见 `docs/HEADLESS.md`。
 
-- 首轮按卡给出的 cwd、可写范围和验收开始。跳过为找 Loom 约定而做的环境探查。修缺陷先稳定复现并保留 RED → GREEN 原件。改既有测试时保留新旧断言的对应关系。
-- `--integration` 集成卡在 headless OAR 会话内跑卡面固定候选的项目全量命令。测试临时目录用该卡私有的 `$TMPDIR`，进程查询用 `PATH` 上的 `ps` 或 `$LOOM_TEST_PS`，查询范围为本卡的进程树。保持现有网络和凭据权限。结果写候选 SHA、命令、退出码和计数，完整日志可留在卡片工作树。loomd 从原生轮次采集证据卡，项目 `.project/` 摘要由 Leader 根据证据整理。
+- 首轮按卡给出的 cwd、可写范围和验收开始。跳过为找 Loom 约定而做的环境探查。修缺陷用同一验证命令留下 RED → GREEN 的原生结果。
+- 持久化、重试、幂等和外发改动运行不变量或属性测试，名称用 `invariant [persistence|retry|idempotency|egress] <不变量>`，保留测试输出。
+- `npm test` 先跑 `loom lint`。遇到失败按诊断修根因，并在证据卡核对测试 diff、RED 链接和验收不变量。
+- `--integration` 集成卡在 headless OAR 会话内跑卡面固定候选的项目全量命令。测试临时目录用该卡私有的 `$TMPDIR`，进程查询范围为本卡的进程树。结果写候选 SHA、命令、退出码和计数，完整日志可留在卡片工作树。loomd 从原生轮次采集证据卡，项目 `.project/` 摘要由 Leader 根据证据整理。
 - 测试行数 ≤ 产品行数，只跑受影响的测试。预算已超或下一步将超、事实与卡面不符、发现设计缺口，立即停工并报 `BLOCKED`。编译、测试或权限等执行失败按卡处理，结束时用相应状态。阻塞后等待 Leader 的事件推送，在原会话续作。
 - 结束时只回三行。证据和详细遗留写到卡面指定的制品，回复可附路径。Worker 禁止另发消息。
 

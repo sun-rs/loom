@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
-import { execFileSync } from 'node:child_process';
-import { mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
+import { execFileSync, mkdtempSync } from '../../fixtures/test-process.mjs';
+import { mkdirSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import test from 'node:test';
@@ -137,7 +137,7 @@ test('Claude peels prompt wrappers and attributes native user interruption and q
 
 function repo(t) {
   const cwd = directory(t);
-  const git = (...args) => execFileSync('git', args, { cwd, encoding: 'utf8',
+  const git = (...args) => execFileSync('/usr/bin/git', args, { cwd, encoding: 'utf8',
     stdio: ['ignore', 'pipe', 'pipe'] }).trim();
   git('init', '--quiet');
   mkdirSync(join(cwd, 'test'));

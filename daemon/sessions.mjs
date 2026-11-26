@@ -35,7 +35,7 @@ export const opencodeExportFailureLimit = 3;
 const pipeRecoveryLimit = 4;
 const pipeRecoveryWindow = 120_000;
 const hasText = value => typeof value === 'string' && value.trim().length > 0;
-const temporaryRole = role => ['worker', 'reviewer'].includes(role);
+const temporaryRole = role => role === 'worker' || role === 'reviewer'; // Old ledgers may still contain retired sessions.
 export const validInput = text => hasText(text) && !/[\x00-\x08\x0b\x0c\x0e-\x1f\x7f-\x9f]/.test(text);
 const unattended = 'No human is watching this session. Never ask the user interactively or open a native question. For a decision, write the facts, options and recommendation in a file. Run "$LOOM_BIN" notifications --needs-decision TEXT --kind decision with a short summary and the file path. Continue any independent work, then end the turn with BLOCKED <decision> while the decision is pending. The answer arrives as a normal delivery.';
 const leaderGuidance = 'Make decisions. Split work into cards, dispatch Workers, review their receipts and evidence summaries, and choose the next action. Use loom status, loom hist summaries and git diff --stat. Delegate source and test inspection, diagnosis, integration, merging and test/build execution to Workers. An integration Worker supplies fixed-candidate and full-suite evidence. Forward any Auditor-commissioned findings verbatim with loom send and the reply file path. Pack Worker evidence with loom gate pack and use loom escalate for confirmed red facts. End the turn while waiting for deliveries.';
@@ -463,8 +463,8 @@ export function ownedSessions(project, index, report, {
             (input.deliver === 'barrier' ? !addressPattern.test(input.barrier ?? '') : input.barrier !== undefined)) ||
         ['model', 'effort'].some(key => input[key] !== undefined && !hasText(input[key])) ||
         (input.role === 'worker' || input.task !== undefined) && !addressPattern.test(input.task ?? '') ||
-        (['worker', 'reviewer'].includes(input.role) || input.wave !== undefined) && !addressPattern.test(input.wave ?? '')) {
-      throw new ErrorCode('invalid-arguments', 'spawn requires role, cwd and prompt. Workers require task and wave. Reviewers require a gate ID as wave. Barrier delivery requires a set ID.');
+        (input.role === 'worker' || input.wave !== undefined) && !addressPattern.test(input.wave ?? '')) {
+      throw new ErrorCode('invalid-arguments', 'spawn requires role, cwd and prompt. Workers require task and wave. Barrier delivery requires a set ID.');
     }
     const cwd = inProjectDirectory(project, input.cwd);
     const predecessor = input['handover-from'] && rowFor(input['handover-from']);
@@ -475,15 +475,6 @@ export function ownedSessions(project, index, report, {
     }
     const actor = caller && rows().find(row => row.pane === caller || row.addr === caller);
     const parent = predecessor ?? (input.parent ? resolve(input.parent, caller) : actor);
-    if (input.role === 'reviewer') {
-      if (actor?.role !== 'auditor' || actor.addr !== parent?.addr || actor.endedAt !== null || !jobs.has(actor.addr)) {
-        throw new ErrorCode('invalid-arguments', 'Only the live managed Auditor can start a reviewer for its gate');
-      }
-      if ([...jobs.values()].some(({ row }) => row.project === actor.project && row.role === 'reviewer' &&
-          row.wave === input.wave && rowFor(row.parent)?.role === 'auditor')) {
-        throw new ErrorCode('reviewer-gate-limit', `Gate ${input.wave} already has an Auditor reviewer`);
-      }
-    }
     const existing = new Set(rows().map(row => row.project));
     const name = parent?.project ?? (existing.size === 1 ? existing.values().next().value : project);
     if (predecessor) checkRotation(name, input.role);
@@ -493,7 +484,7 @@ export function ownedSessions(project, index, report, {
       if (parent?.endedAt === null) gate = (await transport.inspect(targetBinding(parent))).active;
       await checkBarrier(parent?.addr ?? null, name, input.barrier, gate);
     }
-    const { requested, selected, deny, maxDurationMs, warnings, fastRequested, trustWorkspace } = spawnProfile(project,
+    const { requested, selected, deny, warnings, fastRequested, trustWorkspace } = spawnProfile(project,
       input.role === 'worker' ? { ...input, workerCaller: caller ?? null } : input, addr => routeParent(addr)?.addr, occupies);
     const { cli, mode, model, effort } = selected;
     if (input.integration && mode !== 'headless') throw new ErrorCode('invalid-arguments', 'Integration profile requires a headless worker');
@@ -527,7 +518,7 @@ export function ownedSessions(project, index, report, {
     }
     if (row.role === 'leader' || row.role === 'auditor') {
       const guidance = row.role === 'leader' ? leaderGuidance :
-        'Decide the gate verdict from the packet, fixed SHA, and integration Worker evidence. Ask for the integration Worker evidence if it is missing. Delegate investigation, tests, builds, merges and integration. When an exceptional issue requires a deep check, you alone may spawn one temporary read-only reviewer for that gate, passing its ID as --wave. Its conclusion may wake you once and counts against your gate wake budget. Other wake sources are user or Super messages, a gate packet or red escalation from Leader, succession supervision, and replies you explicitly requested.';
+        'Decide the gate verdict from the packet, fixed SHA, and integration Worker evidence. Ask for the integration Worker evidence if it is missing. Delegate investigation, tests, builds, merges and integration. At phase boundaries, inspect the deterministic checks and Worker evidence. Select one evidence command for a Worker to reproduce and record review-only findings with loom audit-findings. Wake sources are user or Super messages, a gate packet or red escalation from Leader, succession supervision, and replies you explicitly requested.';
       prompt = `## Loom role guidance\n${guidance} ${seniorGuidance} Do not wait on background Bash or poll loom state. ${unattended} If a result is overdue, run "$LOOM_BIN" status and check stalled deliveries and suppressed replies. At a rotation signal, write your judgment and in-flight card IDs to the indicated note, run "$LOOM_BIN" rotate --self, and finish the current turn. Loom starts the same profile at idle. After a failed acknowledgement, retain the role and retry once on the next notice. Put DONE, BLOCKED, FAILED, PASS, REJECT or APPROVE on the first line of the final conclusion, before any preamble. Use NOREPLY for acknowledgements.\n\n## Startup request\n${prompt}`;
       try { prompt = await projectMemoryPrompt(project) + prompt; }
       catch (error) { report(`Project memory unavailable: ${error.message}`); }
@@ -538,10 +529,6 @@ export function ownedSessions(project, index, report, {
       prompt = `${pointer} relative to $LOOM_PROJECT. Read the entire briefing and copy its final HANDOVER-ACK line verbatim onto the first line of your final reply. Include the SHA and paths you verified, then wait for Loom deliveries.`;
     }
     if (row.role === 'worker') prompt += `\n\n${cardConventions({ ...row, integration: input.integration })}`;
-    if (row.role === 'reviewer') prompt = [
-      'You are a one-turn Loom reviewer. Inspect read-only and answer the one question below. Do not edit files, change repository state, run broad test suites or delegate. Send only your conclusion to the spawning role. Start it with PASS, REJECT or BLOCKED and cite the evidence.',
-      prompt,
-    ].join('\n\n');
     const fast = selfHandoff?.inheritFast ? jobs.get(predecessor.addr)?.fast : selected.fast;
     const requestedFast = selfHandoff?.inheritFast ? jobs.get(predecessor.addr)?.fastRequested : fastRequested;
     const job = { row, firstId: randomUUID(), prompt, gate, requested, deny, release: releaseId(),
@@ -561,7 +548,6 @@ export function ownedSessions(project, index, report, {
       ...(row.role === 'worker' && { cardStart: headAt(cwd) }),
       ...(input['expect-red'] !== undefined && { expectRed: input['expect-red'] }),
       ...(deliver && { deliver, ...(input.barrier && { barrier: input.barrier }) }),
-      ...(row.role === 'reviewer' && { reviewDeadline: row.startedAt + maxDurationMs }),
       ...(cli === 'opencode' && mode === 'tui' && { plannedNativeId: `ses_${randomUUID().replaceAll('-', '')}` }) };
     save(job);
     jobs.set(addr, job);
@@ -816,6 +802,10 @@ export function ownedSessions(project, index, report, {
       const addr = job.row.addr;
       try {
         let row = rowFor(addr);
+        if (row?.role === 'reviewer' && row.endedAt === null) {
+          await stop(row);
+          continue;
+        }
         if (!row || row.endedAt === null) {
           if (job.pipeRecovery?.exhausted && !job.stopping) continue;
           if (!restored.has(addr) || job.stopping) {

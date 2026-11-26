@@ -40,6 +40,9 @@ export function clip(text, limit) {
 function runner(words) {
   const [exe, ...args] = words;
   const name = basename(exe ?? '');
+  if (['loom', '$LOOM_BIN'].includes(name) && args[0] === 'lint' ||
+      name === 'node' && /(?:^|\/)bin\/loom$/.test(args[0] ?? '') && args[1] === 'lint' ||
+      name === 'npm' && (args[0] === 'lint' || args[0] === 'run' && args[1] === 'lint')) return 'loom-lint';
   if (name === 'node' && args.includes('--test') &&
     !args.slice(0, args.indexOf('--test')).some(arg => ['--', '-e', '--eval', '-p', '--print'].includes(arg))) return name;
   if (name === 'pytest' || (/^python(?:[23](?:\.\d+)?)?$/.test(name) && args[0] === '-m' && ['pytest', 'unittest'].includes(args[1]))) return 'pytest';
@@ -134,6 +137,14 @@ export function checkEvidence({ command, cwd, exitCode, output, sandboxed, sourc
   const tail = normalized?.split('\n').slice(-5).join('\n') ?? null;
   const cleanOutput = clean(normalized ?? '').replace(/ \| (?=ℹ\s+)/g, '\n');
   const counts = summary(cleanOutput);
+  const invariants = [...cleanOutput.matchAll(/^[ \t]*(?:(not ok|ok)\s+\d+\s*(?:-\s*)?|([✔✖])\s+)invariant \[(persistence|retry|idempotency|egress)\] ([^\r\n]+)$/gm)]
+    .filter(match => !/\s#\s*(?:skip|todo)\b/i.test(match[4]))
+    .slice(0, 100).map(([, tap, spec, category, name]) => ({
+      category, name: clip(name.replace(/ \(\d+(?:\.\d+)?ms\)$/, ''), 160),
+      result: tap === 'not ok' || spec === '✖' ? 'failed' : 'passed',
+    }));
+  const lint = /^Loom lint passed \(\d+ files\)\.$/m.test(cleanOutput) ? 'passed' :
+    /\[(?:test-executable|credential-read|network-egress|global-config-write|parse)\]/.test(cleanOutput) ? 'failed' : undefined;
   if (!check.direct && !check.checksAfterCd && counts.passed === null && counts.failed === null &&
       !/^\s*(?:node\s+--test|npm\s+test|pytest|cargo\s+test|go\s+test|bun\s+test)\b/.test(shellBody(command))) return null;
   const reportedTotal = [...cleanOutput.matchAll(/^(?:#|ℹ)\s*tests\s+(\d+)\s*$/gm)].at(-1)?.[1];
@@ -145,6 +156,7 @@ export function checkEvidence({ command, cwd, exitCode, output, sandboxed, sourc
   return {
     command: clip(clean(command), 1024), cwd: cwd ?? null, runner: check.runner, exitCode: code,
     sandboxed: sandboxed ?? null, source, result, counts, total, countStatus: counts.passed === null ? 'count unrecognised' : 'recognised', selective: check.selective,
+    ...(invariants.length && { invariants }), ...(lint && { lint }),
     tailSha256: tail === null ? null : createHash('sha256').update(tail).digest('hex'),
     tail: tail === null ? null : clip(clean(tail), 1024),
   };

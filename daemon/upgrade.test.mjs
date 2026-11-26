@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
-import { execFile } from 'node:child_process';
+import { execFile, mkdtempSync } from '../fixtures/test-process.mjs';
 import { randomUUID } from 'node:crypto';
-import { cpSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { cpSync, mkdirSync, readFileSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { basename, join, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 import { test } from 'node:test';

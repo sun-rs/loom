@@ -11,7 +11,7 @@ const columns = {
   effort: 'TEXT', pane: 'TEXT',
 };
 const fields = Object.keys(columns);
-export const roles = Object.freeze(['super', 'leader', 'auditor', 'worker', 'reviewer']);
+export const roles = Object.freeze(['super', 'leader', 'auditor', 'worker']);
 export const rotatingRoles = Object.freeze(['leader', 'auditor']);
 const rotationSchema = `CREATE TABLE IF NOT EXISTS rotations (
   successor TEXT PRIMARY KEY, predecessor TEXT NOT NULL, project TEXT NOT NULL, role TEXT NOT NULL,
@@ -32,7 +32,7 @@ function checkFields(values) {
   }
 }
 
-function normalize(values) {
+function normalize(values, storedRole) {
   checkFields(values);
   const row = Object.fromEntries(fields.map(key => [key, values[key] ?? null]));
   for (const [key, value] of Object.entries(row)) {
@@ -45,7 +45,7 @@ function normalize(values) {
   }
   if (!row.addr || !row.project) throw new TypeError('Expected addr and project');
   if (!['tui', 'headless'].includes(row.backend)) throw new TypeError('Expected tui or headless backend');
-  if (row.role !== null && !roles.includes(row.role)) throw new TypeError(`Unknown role: ${row.role}`);
+  if (row.role !== null && !roles.includes(row.role) && !(row.role === 'reviewer' && storedRole === row.role)) throw new TypeError(`Unknown role: ${row.role}`);
   if (row.addr === row.parent) throw new RangeError('A session cannot be its own parent');
   if (row.account !== null) throw new TypeError('Expected null account placeholder');
   for (const key of ['cwd', 'transcriptPath']) {
@@ -140,7 +140,7 @@ export function openIndex(path = process.env.LOOM_INDEX_PATH ||
       return withDatabase(path, true, db => {
         const previous = find(db, addr);
         if (!previous) return null;
-        const row = normalize({ ...previous, ...changes });
+        const row = normalize({ ...previous, ...changes }, previous.role);
         if (previous.sessionId && row.sessionId !== previous.sessionId && !Object.hasOwn(changes, 'transcriptPath')) {
           row.transcriptPath = null;
         }
@@ -166,7 +166,8 @@ export function openIndex(path = process.env.LOOM_INDEX_PATH ||
 
     async importRelay(projectDir, options) {
       const { readRelay } = await import('./relay.mjs');
-      const rows = readRelay(projectDir, options).map(normalize);
+      const rows = readRelay(projectDir, options).map(row =>
+        normalize(row.role === 'reviewer' ? { ...row, role: null } : row));
       if (!rows.length) return [];
       return withDatabase(path, true, db => rows.map(row => {
         const previous = find(db, row.addr);
@@ -178,7 +179,7 @@ export function openIndex(path = process.env.LOOM_INDEX_PATH ||
         if (previous.sessionId && row.sessionId && previous.sessionId !== row.sessionId) {
           return { ...previous };
         }
-        const merged = normalize(Object.fromEntries(fields.map(key => [key, previous[key] ?? row[key]])));
+        const merged = normalize(Object.fromEntries(fields.map(key => [key, previous[key] ?? row[key]])), previous.role);
         if (!equal(previous, merged)) db.prepare(replace).run(...mutable.map(key => merged[key]), merged.addr);
         return merged;
       }));

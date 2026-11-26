@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
-import { execFile, spawn as spawnProcess, spawnSync } from 'node:child_process';
+import { execFile, spawn as spawnProcess, spawnSync, mkdtempSync } from '../fixtures/test-process.mjs';
 import { randomUUID } from 'node:crypto';
 import { once } from 'node:events';
-import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';

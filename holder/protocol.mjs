@@ -1,4 +1,4 @@
-import { createConnection } from 'node:net';
+import { connectUnix } from '../lib/unix-socket.mjs';
 
 export const protocol = 3;
 export const frameLimit = 65536;
@@ -93,7 +93,7 @@ export function holderClient(binding, controller) {
   function request(method, payload = Buffer.alloc(0), timeout = 4500) {
     const message = frame(Buffer.concat([Buffer.of(protocol, methods[method]), id, payload]));
     return new Promise((resolve, reject) => {
-      const socket = createConnection(binding.socket);
+      const socket = connectUnix(binding.socket);
       const decode = frameDecoder();
       const fail = error => { socket.destroy(); reject(error); };
       socket.setTimeout(timeout, () => fail(holderError('HOLDER_TIMEOUT')));

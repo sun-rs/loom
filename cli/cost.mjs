@@ -108,7 +108,7 @@ export function projectCost(directory, sessions, { includeAcceptance = true, now
   let leaderWakes = 0;
 
   for (const session of sessions) {
-    const name = session.role ?? 'unassigned';
+    const name = roles.includes(session.role) ? session.role : 'unassigned';
     const role = byRole[name];
     role.sessions++;
     let history;

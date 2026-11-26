@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
-import { execFile, spawnSync } from 'node:child_process';
+import { execFile, spawnSync, mkdtempSync } from '../fixtures/test-process.mjs';
 import { once } from 'node:events';
-import { mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { createServer } from 'node:net';
 import { tmpdir } from 'node:os';
 import { delimiter, join } from 'node:path';
@@ -9,7 +9,7 @@ import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
 import { openIndex } from '../index/index.mjs';
-import { spawnProfile } from './policy.mjs';
+import { readPolicy, spawnProfile } from './policy.mjs';
 import { projectIndex, socketPath } from './project.mjs';
 import { estimateTokens } from '../lib/token-budget.mjs';
 import { writeMemory } from '../memory/project.mjs';
@@ -23,7 +23,7 @@ function fixture(t) {
   const path = join(cwd, 'index.sqlite');
   const index = openIndex(path);
   const env = { ...process.env, HC_TERMINAL_ID: '', LOOM_PROJECT: '', LOOM_ADDR: '', LOOM_INDEX_PATH: path, PATH: `${cwd}${delimiter}${process.env.PATH}` };
-  const cli = (...args) => spawnSync(executable, args, { cwd, env, encoding: 'utf8' });
+  const cli = (...args) => spawnSync(process.execPath, [executable, ...args], { cwd, env, encoding: 'utf8' });
   const run = (code, ...args) => {
     const result = cli(...args);
     assert.equal(result.status, code, result.stderr || result.stdout);
@@ -175,7 +175,7 @@ test('8f1d01d6 binds agy journal ends and Git evidence even when native turn IDs
     JSON.stringify({ streamId: 'old-stream', turnId: 'runtime-span', turn: 1, ...row })).join('\n') + '\n');
   writeFileSync(path, native.map((row, step_index) =>
     JSON.stringify({ ...row, step_index, created_at: new Date(1000 + step_index * 200).toISOString() })).join('\n') + '\n');
-  f.register(addr, { cli: 'agy', backend: 'headless', role: 'reviewer', transcriptPath: path });
+  f.register(addr, { cli: 'agy', backend: 'headless', role: 'worker', transcriptPath: path });
   const result = f.run(0, 'hist', addr, '--level', 'L2', '--diff', '--json');
   assert.equal(result.turns.length, 1);
   assert.equal(result.turns[0].tools.length, 1);
@@ -268,7 +268,6 @@ test('validates the policy example and rejects malformed capacity, drift, fast a
     { roles: { worker: { maxActiveWorkers: 3 } } },
     { drift: { slowCommandFactor: 1 } },
     { delivery: { coalesceMs: -1 } },
-    { roles: { reviewer: { maxDurationMs: 0 } } },
     { roles: { leader: { auth: 'yes' } } },
     { roles: { worker: { preferred: [{ cli: 'codex', model: 'fixture', effort: 'high', fast: 'true' }] } } },
     { roles: { auditor: { guidance: { vendorFamily: 'same' } } } },
@@ -277,6 +276,23 @@ test('validates the policy example and rejects malformed capacity, drift, fast a
     writeFileSync(path, JSON.stringify({ ...example, ...invalid }));
     assert.throws(() => select('worker'), { code: 'invalid-policy' });
   }
+});
+
+test('legacy roles.reviewer is ignored with a migration warning', t => {
+  const f = fixture(t);
+  const metadata = join(f.cwd, '.project');
+  mkdirSync(metadata);
+  const path = join(metadata, 'policy.json');
+  const original = { roles: { reviewer: { maxDurationMs: 0, preferred: 'obsolete' }, leader: { maxActiveWorkers: 2 } } };
+  writeFileSync(path, JSON.stringify(original));
+  const warnings = [];
+  const load = () => readPolicy(f.cwd, { warn: warning => warnings.push(warning) });
+  assert.deepEqual(load().roles, { leader: { maxActiveWorkers: 2 } });
+  load();
+  assert.equal(warnings.length, 1);
+  assert.match(warnings[0], /Remove roles\.reviewer/);
+  assert.deepEqual(JSON.parse(readFileSync(path, 'utf8')), original);
+  assert.equal(f.run(2, 'spawn', 'reviewer', '--cwd', f.cwd, '--wave', 'W', 'Check evidence').error.code, 'invalid-arguments');
 });
 
 test('worker admission counts live sessions by parent and project across waves', async t => {

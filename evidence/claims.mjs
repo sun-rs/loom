@@ -79,7 +79,7 @@ function compare(claim, git, verification, checks, failed) {
 }
 
 export function compareClaims(text, git, verification, failed = false) {
-  const checks = latestChecks(verification.commands);
+  const checks = latestChecks(verification.commands.filter(command => command.runner !== 'loom-lint'));
   return claimsIn(text, checks).map(claim => {
     let scoped = checks;
     if (claim.commands) scoped = checks.filter(check => claim.commands.includes(shellBody(check.command).trim()));
