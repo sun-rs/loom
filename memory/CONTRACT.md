@@ -58,6 +58,8 @@
 
 请求通过项目 daemon 的协议 1 发送 `{ protocol: 1, command, args, caller }`。在进程内测试中调用 `supervisor.handle(command, args, caller)`。调用者必须是该项目当前托管会话的地址或 pane。角色和项目取自会话绑定。下表为进程内返回值，RPC 成功时另附 `ok: true`。
 
+当前 daemon RPC 仅信任同一系统用户下请求方自报的调用者身份。此角色校验不构成安全边界。基于会话凭证的强鉴权由 `main` 实现，合入 `main` 前必须解决。
+
 | `command` | `args` | 返回值与权限 |
 | --- | --- | --- |
 | `memory-review` | `{ id: string, decision: 'approve' \| 'reject' }` | `{ id, status: 'approved' \| 'rejected' }`。Auditor 审批项目提案，Super 审批用户提案。 |
@@ -71,6 +73,8 @@
 经代码验证的提案先进入持久待审队列。项目提案随下一门禁包交 Auditor，用户提案单独投递给 Super。批准应用变更，驳回记下决定。作废保留审计依据并撤出索引。
 
 项目策略 `memory.extractor` 接受 `format: 'openai' | 'anthropic'`、`baseURL`、`model` 和 `keyRef: 'loom-memory-extractor-deepseek'`，钥匙串账户固定为 `loom`。脱敏始终开启。可在 `limits` 覆盖 `maxInputBytes`、`dailyCalls`、`dailyTokens`，默认分别为 16,384、40 和 100,000。回合和阶段共用 UTC 日预算。调用前持久预留预算，成功后按报告用量结算，缺少用量时保留预留。状态与成本报告显示停因，成本分别记录回合和阶段的调用量和已报告 token。
+
+日 token 上限在上游响应返回后按报告用量结算。单次已发出的请求可能使当日用量越过上限，超限后阻止后续请求。
 
 `memoryPilot` 报告主角色每轮额外请求数、换班后首个已完成回合的 token 样本和平均值、事实遗漏数及提案通过率。通过率的分母是已批准加已驳回。可在 `memory.pilot.handoverFileBaseline` 提供交接文件试点的首轮平均 token 作为比较基线。基线和无样本的指标使用 `null`。
 

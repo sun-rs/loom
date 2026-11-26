@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto';
 import { historyReader } from '../cli/history.mjs';
 import { timestamp, turnTools } from '../cli/turns.mjs';
 import { deliveryFailed, deliveryId } from '../inbox/message.mjs';
+import { activitySummary, turnActivityFacts } from '../lib/activity-digest.mjs';
 import { sanitizeEntry } from '../memory/sanitize.mjs';
 import { classifySensitive } from './memory.mjs';
 
@@ -24,11 +25,21 @@ export function redactExtractor(value, key) {
   return clean.entry;
 }
 
+function workerSummary(row, item, tools, key) {
+  const turn = { ...item.turn, reply: redactExtractor(item.turn.reply ?? '', key) };
+  const activity = turnActivityFacts({ ...item, turn, tools, cwd: row.cwd });
+  // Keep the L1 reply preview and activity counts. Tool commands, diagnostics,
+  // and prompt previews can repeat content from the worker's inputs or files.
+  return activitySummary({ index: item.index, task: redactExtractor(row.task, key), turn, tools,
+    facts: { claims: [] }, activity: { ...activity, prompt: '', errors: [], tests: [], nonZero: [] },
+    source: {}, heads: item.heads });
+}
+
 export function extractionTurns(project, rows, messages) {
   const history = historyReader(project);
   const inbox = Map.groupBy(messages, message => message.target.addr);
   return rows.flatMap(row => {
-    if (!row.sessionId || row.project !== project) return [];
+    if (!row.sessionId || row.project !== project || !seniorExtractor(row.role) && row.role !== 'worker') return [];
     let items;
     try { ({ items } = history.sessionHistory(row)); } catch { return []; }
     return items.flatMap(item => {
@@ -37,6 +48,10 @@ export function extractionTurns(project, rows, messages) {
           observation?.end?.unconfirmed) return [];
       const at = timestamp(turn.endedAt);
       if (!Number.isFinite(at)) return [];
+      const identity = { key: digest([row.addr, row.sessionId, turn.id]), at, addr: row.addr, role: row.role };
+      const tools = turnTools(row.cli, turn, item.rows)
+        .concat(observation && !item.journalOnly ? turnTools(row.cli, turn, observation.rows) : []);
+      if (row.role === 'worker') return [{ ...identity, summarize: key => workerSummary(row, item, tools, key) }];
       const nativeIds = (turn.prompts ?? []).map(deliveryId).filter(Boolean);
       const ids = new Set(nativeIds.length ? nativeIds : [...(observation?.end?.inputIds ?? []), hook?.deliveryId].filter(Boolean));
       const deliveries = (inbox.get(row.addr) ?? []).filter(message =>
@@ -48,12 +63,10 @@ export function extractionTurns(project, rows, messages) {
         text: message.memoryReview ? 'Memory proposal review' : message.startup ?
           message.text.split('\n\n## Startup request\n').at(-1) : message.text,
       }));
-      const toolNames = [...new Set(turnTools(row.cli, turn, item.rows)
-        .concat(observation && !item.journalOnly ? turnTools(row.cli, turn, observation.rows) : [])
-        .map(tool => tool.name))];
-      return [{ key: digest([row.addr, row.sessionId, turn.id]), at,
-        startedAt: timestamp(turn.startedAt) || at, addr: row.addr, role: row.role,
-        received, reply: turn.reply ?? '', toolNames }];
+      const toolNames = [...new Set(tools.map(tool => tool.name))];
+      const directUserDeliveries = new Set(deliveries.filter(message => !message.startup).map(message => message.id));
+      return [{ ...identity, startedAt: timestamp(turn.startedAt) || at, received, reply: turn.reply ?? '', toolNames,
+        directUserDeliveries }];
     });
   }).sort((a, b) => a.at - b.at);
 }

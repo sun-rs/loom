@@ -118,7 +118,7 @@ export function createMemoryExtractor(project, { memory, sessions, now, report, 
     if (result?.failure) report('Loom memory extractor request failed');
     const sources = stage ? [...input.history.flatMap(turn => turn.received), ...input.events] :
       [...input.received, ...input.events];
-    await serialize(() => proposals.queue(result?.proposals, sources, { stage, key }));
+    return serialize(() => proposals.queue(result?.proposals, sources, { stage, key }));
   }
 
   async function tick(policy, messages) {
@@ -163,29 +163,64 @@ export function createMemoryExtractor(project, { memory, sessions, now, report, 
       await run(config, input, (messages, output) => requestProvider(options.fetch ?? globalThis.fetch,
         url, config, secret, messages, output), { key: secret });
     }
-    for (const boundary of notices.filter(stageBoundary)) {
+    const boundaries = notices.filter(stageBoundary);
+    const deferred = boundaries.findIndex(boundary => boundary.id === state.deferredStageBoundary);
+    for (const boundary of boundaries.slice(deferred + 1)) {
       if (closing) return;
       if (Object.hasOwn(state.boundaries, boundary.id)) continue;
       const since = state.stageAt ?? state.enrolledAt;
       const staged = state.stageTurns ??= {};
-      const history = turns.filter(turn => turn.at >= since && turn.at <= boundary.at &&
+      const stageTurns = turns.filter(turn => turn.at >= since && turn.at <= boundary.at &&
         !Object.hasOwn(staged, turn.key));
-      state.boundaries[boundary.id] = true;
-      state.stageAt = boundary.at;
-      for (const turn of history) staged[turn.key] = true;
-      save();
+      const history = [];
+      const userDeliveries = new Set();
+      for (const turn of stageTurns.filter(turn => seniorExtractor(turn.role))) {
+        const { directUserDeliveries, ...entry } = turn;
+        history.push(entry);
+        for (const delivery of entry.received) {
+          if (delivery.user && directUserDeliveries.has(delivery.source.id)) userDeliveries.add(delivery.source.id);
+        }
+      }
+      function markProcessed() {
+        state.boundaries[boundary.id] = true;
+        state.stageAt = boundary.at;
+        for (const turn of stageTurns) staged[turn.key] = true;
+        save();
+      }
+      function defer() {
+        // Keep the history eligible at the next boundary without retrying on idle ticks.
+        state.deferredStageBoundary = boundary.id;
+        save();
+      }
       const library = await proposals.stageLibrary();
-      if (!library.project.length && !library.user.length) continue;
+      const empty = !library.project.length && !library.user.length && !library.reference.length;
+      if (empty && !userDeliveries.size) {
+        markProcessed();
+        continue;
+      }
       const secret = await getKey();
-      if (!secret) continue;
-      const input = redactExtractor({ instructions: guidance + ' Only merge, invalidate, or correct existing memory. ' +
+      if (!secret) {
+        if (empty) defer();
+        else markProcessed();
+        continue;
+      }
+      const input = redactExtractor({ instructions: guidance + ' Only merge, invalidate, or correct memory. ' +
+        'A user correction supported by their own words may omit target to propose a new preference. ' +
         'Use reference entries as context only.',
-        history, events: signals.filter(signal => signal.at >= since && signal.at <= boundary.at),
+        history,
+        workerSummaries: stageTurns.filter(turn => turn.role === 'worker')
+          .map(({ addr, at, summarize }) => ({ addr, at, summary: summarize(secret) })),
+        events: signals.filter(signal => signal.at >= since && signal.at <= boundary.at),
         existing: { project: library.project.map(({ meta, title, body }) => ({ id: meta.id, title, body })),
           user: library.user.map(({ id, title, body }) => ({ id, title, body })),
           reference: library.reference.map(({ id, title, body }) => ({ id, title, body })) },
       }, secret);
-      await run(config, input, async (messages, output) => {
+      if (empty && !input.history.some(turn => turn.received.some(delivery =>
+        userDeliveries.has(delivery.source.id) && delivery.text.trim()))) {
+        markProcessed();
+        continue;
+      }
+      const queuedCorrection = await run(config, input, async (messages, output) => {
         const result = options.runStage ? await options.runStage(input) :
           await runOpenCodeStage(input, async () => {
             const result = await requestProvider(options.fetch ?? globalThis.fetch, url, config, secret,
@@ -195,6 +230,8 @@ export function createMemoryExtractor(project, { memory, sessions, now, report, 
           });
         return Array.isArray(result) ? { proposals: result } : result;
       }, { stage: true, key: secret });
+      if (empty && !queuedCorrection) defer();
+      else markProcessed();
     }
   }
 

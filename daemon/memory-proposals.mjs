@@ -96,6 +96,7 @@ export function createMemoryProposals(project, { memory, sessions, state, save, 
     const sources = new Map(input.map(row => [sourceKey(row.source), row]));
     const items = await library();
     const removals = { project: new Set(), user: new Set() };
+    let queuedCorrection = false;
     for (const raw of values.slice(0, 32)) {
       if (!raw || typeof raw !== 'object') continue;
       const { action, id, scope, source, title, body, target, targets = [] } = redactExtractor(candidateFields(raw), key);
@@ -130,8 +131,10 @@ export function createMemoryProposals(project, { memory, sessions, state, save, 
       }
       removals[scope] = deletions;
       state.proposals[id] = stored;
+      if (scope === 'user' && action === 'correct' && target === undefined) queuedCorrection = true;
     }
     save();
+    return queuedCorrection;
   }
 
   async function approve(item, binding) {
