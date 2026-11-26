@@ -6,6 +6,7 @@
 |---|---|---|
 | 2026-11-25 | AML 记忆排行榜、MemoraX 与开源冠军 | [2026-11-25-aml-memorax.md](2026-11-25-aml-memorax.md) |
 | 2026-11-25 | 记忆系统：单机、跨机，以及各 CLI 原生记忆的关闭方式 | [2026-11-25-memory-systems.md](2026-11-25-memory-systems.md) |
+| 2026-11-27 | cell 隔离与部署选型 | [2026-11-27-cell-isolation.md](2026-11-27-cell-isolation.md) |
 | 2026-11-26 | skill 拆分 | [2026-11-26-skill-split.md](2026-11-26-skill-split.md) |
 | 2026-11-26 | 长期角色换班时机 | [2026-11-26-senior-rotation.md](2026-11-26-senior-rotation.md) |
 | 2026-11-26 | worker 寿命：前辈经验与 pilot 实测 | [2026-11-26-worker-lifespan.md](2026-11-26-worker-lifespan.md) |
