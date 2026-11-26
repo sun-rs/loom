@@ -46,6 +46,18 @@ function limitsFor(config) {
   return limits;
 }
 
+function requestMessages(input, stage) {
+  return [{ role: 'user', content: (stage ? '' : guidance + '\n') + JSON.stringify(input) }];
+}
+
+function requestBytes(model, messages) {
+  return Buffer.byteLength(JSON.stringify({ model, messages, max_tokens: maxOutputTokens }));
+}
+
+function inputTokens(bytes, day) {
+  return bytes + requestFramingTokens + (day?.inputShortfall ?? 0);
+}
+
 async function requestProvider(fetch, url, config, key, messages, maxTokens) {
   const anthropic = config.format === 'anthropic';
   const headers = anthropic ? { 'x-api-key': key, 'anthropic-version': '2023-06-01' } : { authorization: 'Bearer ' + key };
@@ -96,16 +108,19 @@ export function createMemoryExtractor(project, { memory, sessions, now, report, 
     return task;
   }
 
+  function today() {
+    return state.days[extractorDay(now())] ??= { calls: 0, tokens: 0, stageCalls: 0, stageTokens: 0, charged: 0 };
+  }
+
   async function run(config, input, runner, { stage = false, key, onSuccess = save }) {
     const limits = limitsFor(config);
-    const day = state.days[extractorDay(now())] ??= { calls: 0, tokens: 0, stageCalls: 0, stageTokens: 0, charged: 0 };
-    const content = (stage ? '' : guidance + '\n') + JSON.stringify(input);
-    const messages = [{ role: 'user', content }];
-    const bytes = Buffer.byteLength(JSON.stringify({ model: config.model, messages, max_tokens: maxOutputTokens }));
+    const day = today();
+    const messages = requestMessages(input, stage);
+    const bytes = requestBytes(config.model, messages);
     // Allow one token per byte, room for provider framing, and any additional
     // input undercount observed today. Reserve synchronously before awaiting I/O.
-    const estimatedInput = bytes + requestFramingTokens;
-    const inputBudget = estimatedInput + (day.inputShortfall ?? 0);
+    const estimatedInput = inputTokens(bytes);
+    const inputBudget = inputTokens(bytes, day);
     const remaining = limits.dailyTokens - day.charged;
     const output = Math.min(maxOutputTokens, remaining - inputBudget);
     day.stopReason = bytes > limits.maxInputBytes ? 'maxInputBytes' :
@@ -142,6 +157,122 @@ export function createMemoryExtractor(project, { memory, sessions, now, report, 
       onSuccess();
     });
     return true;
+  }
+
+  async function stageWindow(config, url, boundary, turns, signals, getKey) {
+    const since = state.stageAt ?? state.enrolledAt;
+    const staged = state.stageTurns ??= {};
+    const stagedEvents = new Set(state.stageEventIds);
+    const work = [];
+    const userDeliveries = new Set();
+    for (const turn of turns) {
+      if (turn.at < since || turn.at > boundary.at || Object.hasOwn(staged, turn.key)) continue;
+      if (seniorExtractor(turn.role)) {
+        const { directUserDeliveries, ...entry } = turn;
+        work.push({ at: turn.at, key: turn.key, field: 'history', entry });
+        for (const delivery of entry.received) {
+          if (delivery.user && directUserDeliveries.has(delivery.source.id)) userDeliveries.add(delivery.source.id);
+        }
+      } else {
+        const { addr, at, summarize } = turn;
+        work.push({ at, key: turn.key, field: 'workerSummaries', entry: { addr, at, summary: summarize() } });
+      }
+    }
+    for (const signal of signals) {
+      if (signal.at >= since && signal.at <= boundary.at && !stagedEvents.has(signal.source.id)) {
+        work.push({ at: signal.at, eventId: signal.source.id, field: 'events', entry: signal });
+      }
+    }
+    work.sort((a, b) => a.at - b.at);
+
+    let offset = 0;
+    function markProcessed(end) {
+      const finished = end === work.length;
+      const at = finished ? boundary.at : work[end - 1].at;
+      // Turns have durable keys. For events, only IDs at the inclusive cursor
+      // timestamp are needed to avoid replay and still admit new events there.
+      if (at !== state.stageAt) stagedEvents.clear();
+      for (const item of work.slice(offset, end)) {
+        if (item.key) staged[item.key] = true;
+        else if (item.at === at) stagedEvents.add(item.eventId);
+      }
+      state.stageEventIds = [...stagedEvents];
+      state.stageAt = at;
+      if (finished) state.boundaries[boundary.id] = true;
+      save();
+      offset = end;
+    }
+
+    const library = await proposals.stageLibrary();
+    const empty = !library.project.length && !library.reference.length;
+    if (!work.length || empty && !userDeliveries.size) {
+      markProcessed(work.length);
+      return true;
+    }
+    const secret = await getKey();
+    if (!secret) {
+      report('Loom memory extractor credential unavailable');
+      return false;
+    }
+    const context = redactExtractor({ instructions: guidance + ' Only merge, invalidate, or correct memory. ' +
+      'A user correction supported by their own words may omit target to propose a new preference. ' +
+      'Use reference entries as context only.',
+      existing: { project: library.project.map(({ meta, title, body }) => ({ id: meta.id, title, body })),
+        // Shared history records can contain the same raw worker reply as an inbox receipt.
+        reference: library.reference.map(({ id, title, body, role, source }) =>
+          role === 'worker' && source?.hist ? { id } : { id, title, body }) },
+    }, secret);
+    for (const item of work) item.entry = redactExtractor(item.entry, secret);
+    const limits = limitsFor(config);
+    const size = input => requestBytes(config.model, requestMessages(input, true));
+    const hasCorrectionSource = input => input.history.some(turn => turn.received.some(delivery =>
+      userDeliveries.has(delivery.source.id) && delivery.text.trim()));
+
+    while (offset < work.length && !closing) {
+      const day = today();
+      const input = { ...context, history: [], workerSummaries: [], events: [] };
+      const first = work[offset];
+      input[first.field].push(first.entry);
+      const bytes = size(input);
+      // Today's observed estimation error can expire at rollover, so it
+      // counts against current headroom but cannot justify dropping history.
+      const oversize = bytes > limits.maxInputBytes ? 'maxInputBytes' :
+        inputTokens(bytes) >= limits.dailyTokens ? 'dailyTokens' : null;
+      if (oversize) {
+        day.stopReason = oversize;
+        report(`Loom memory extractor skipped oversized stage ${first.key ? 'turn' : 'event'} (${oversize})`);
+        markProcessed(offset + 1);
+        continue;
+      }
+
+      let end = offset + 1;
+      while (end < work.length) {
+        const { field, entry } = work[end];
+        input[field].push(entry);
+        const bytes = size(input);
+        if (bytes > limits.maxInputBytes || inputTokens(bytes, day) >= limits.dailyTokens - day.charged) {
+          input[field].pop();
+          break;
+        }
+        end++;
+      }
+      if (empty && !hasCorrectionSource(input)) {
+        markProcessed(end);
+        continue;
+      }
+      const completed = await run(config, input, async (messages, output) => {
+        const result = options.runStage ? await options.runStage(input) :
+          await runOpenCodeStage(input, async () => {
+            const result = await requestProvider(options.fetch ?? globalThis.fetch, url, config, secret,
+              messages, output);
+            return { ...result, proposals: Array.isArray(result.proposals) ?
+              redactExtractor(result.proposals.slice(0, 32).map(candidateFields), secret) : [] };
+          });
+        return Array.isArray(result) ? { proposals: result } : result;
+      }, { stage: true, key: secret, onSuccess: () => markProcessed(end) });
+      if (!completed) return false;
+    }
+    return offset === work.length;
   }
 
   async function tick(policy, messages) {
@@ -191,70 +322,11 @@ export function createMemoryExtractor(project, { memory, sessions, now, report, 
     for (const boundary of boundaries.slice(deferred + 1)) {
       if (closing) return;
       if (Object.hasOwn(state.boundaries, boundary.id)) continue;
-      const since = state.stageAt ?? state.enrolledAt;
-      const staged = state.stageTurns ??= {};
-      const stageTurns = turns.filter(turn => turn.at >= since && turn.at <= boundary.at &&
-        !Object.hasOwn(staged, turn.key));
-      const history = [];
-      const userDeliveries = new Set();
-      for (const turn of stageTurns.filter(turn => seniorExtractor(turn.role))) {
-        const { directUserDeliveries, ...entry } = turn;
-        history.push(entry);
-        for (const delivery of entry.received) {
-          if (delivery.user && directUserDeliveries.has(delivery.source.id)) userDeliveries.add(delivery.source.id);
-        }
-      }
-      function markProcessed() {
-        state.boundaries[boundary.id] = true;
-        state.stageAt = boundary.at;
-        for (const turn of stageTurns) staged[turn.key] = true;
-        save();
-      }
-      function defer() {
+      if (!await stageWindow(config, url, boundary, turns, signals, getKey)) {
         // Keep the history eligible at the next boundary without retrying on idle ticks.
         state.deferredStageBoundary = boundary.id;
         save();
       }
-      const library = await proposals.stageLibrary();
-      const empty = !library.project.length && !library.reference.length;
-      if (empty && !userDeliveries.size) {
-        markProcessed();
-        continue;
-      }
-      const secret = await getKey();
-      if (!secret) {
-        report('Loom memory extractor credential unavailable');
-        defer();
-        continue;
-      }
-      const input = redactExtractor({ instructions: guidance + ' Only merge, invalidate, or correct memory. ' +
-        'A user correction supported by their own words may omit target to propose a new preference. ' +
-        'Use reference entries as context only.',
-        history,
-        workerSummaries: stageTurns.filter(turn => turn.role === 'worker')
-          .map(({ addr, at, summarize }) => ({ addr, at, summary: summarize() })),
-        events: signals.filter(signal => signal.at >= since && signal.at <= boundary.at),
-        existing: { project: library.project.map(({ meta, title, body }) => ({ id: meta.id, title, body })),
-          // Shared history records can contain the same raw worker reply as an inbox receipt.
-          reference: library.reference.map(({ id, title, body, role, source }) =>
-            role === 'worker' && source?.hist ? { id } : { id, title, body }) },
-      }, secret);
-      if (empty && !input.history.some(turn => turn.received.some(delivery =>
-        userDeliveries.has(delivery.source.id) && delivery.text.trim()))) {
-        markProcessed();
-        continue;
-      }
-      const completed = await run(config, input, async (messages, output) => {
-        const result = options.runStage ? await options.runStage(input) :
-          await runOpenCodeStage(input, async () => {
-            const result = await requestProvider(options.fetch ?? globalThis.fetch, url, config, secret,
-              messages, output);
-            return { ...result, proposals: Array.isArray(result.proposals) ?
-              redactExtractor(result.proposals.slice(0, 32).map(candidateFields), secret) : [] };
-          });
-        return Array.isArray(result) ? { proposals: result } : result;
-      }, { stage: true, key: secret, onSuccess: markProcessed });
-      if (!completed) defer();
     }
   }
 
