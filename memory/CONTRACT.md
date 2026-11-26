@@ -34,6 +34,26 @@
 - `format.mjs` 的 `validateEntry` 和 `sanitize.mjs` 的 `sanitizeEntry` 为可独立测试的纯函数。
 - `cas-cache.mjs` 导出 `createCellMemory`。其 `show` 使用统一读取形状并可附 `cachedAt`。离线也通过 `getBinding()` 核对当前绑定，绑定失效或当前范围无授权缓存时返回 `{ item: null, seq: null }`。`write` 离线时只记录本地发件箱并返回候选回执，重连通过 home 的同一 `write` 校验。
 
+## 回执保留
+
+- 回执与请求指纹从首次成功提交起保留 30 天（每个 UTC 日按 24 小时计）。`createMemoryStore` 的 `receiptTtlMs` 可覆盖此时间上限，daemon 通过 `memoryOptions` 传入。重放不延长保留期，保留期内不按条数提前淘汰。
+- daemon 的周期 `tick()` 调用 `store.maintain()`，即使没有新写入也会清理。到达保留期限的回执与其指纹在首次维护时从持久快照移除，释放重放记录占用的存储。维护可在重启后清理先前提交的回执，条目、修订、变更序号及索引保持原样。
+- 保留期内，重启前后同一绑定范围内的相同 `requestId` 和请求内容均幂等重放，内容变更仍返回 `conflict`。清理提交后，旧 ID 可作为新请求使用，并重新接受授权、校验、去重及 CAS 检查。
+
+## `loom mem` JSON 接口
+
+下表各命令均可附 `--project DIR --json`。`DIR` 选择要连接的项目，调用角色与权限取自可信会话绑定。传给 `--entry` 的值是单个 JSON 对象参数，字段遵循本契约的条目写入规则。修订参数使用十进制正整数，创建使用字面量 `null`。
+
+| 命令及参数 | `--json` 成功输出 |
+| --- | --- |
+| `loom mem search <query>` | `{ ok: true, rows, nextCursor }`，`rows` 为无正文的索引行数组，`nextCursor` 为下一页游标或 `null`。 |
+| `loom mem show <id>` | `{ ok: true, item, seq }`，`item` 为完整可见条目，`seq` 为可见变更序号。ID 未知或条目不可见时二者均为 `null`，包括 Worker 未获附的条目。 |
+| `loom mem write --entry <json> --request-id <id> --expected-revision null` | `{ ok: true, item, receipt }`，`item` 为写入结果。 |
+| `loom mem update <id> --entry <json> --request-id <id> --expected-revision <revision>` | `{ ok: true, item, receipt }`，`item` 为修订后的条目。 |
+| `loom mem invalidate <id> --request-id <id> --expected-revision <revision>` | `{ ok: true, item, receipt }`，`item` 为无旧正文的墓碑。 |
+
+`receipt` 为 `{ requestId, status }`，其状态取值见写入约定。成功在 stdout 输出单个 JSON 对象并退出 0。失败也在 stdout 输出单个 JSON 对象 `{ ok: false, error: { code, message } }` 并以非零状态退出，`message` 经过脱敏。Worker 搜索或写入，以及 Auditor 修改已知 ID 的外项目条目，均返回 `forbidden`。
+
 ## 授权和读取
 
 - `access.mjs` 导出 `createAccess({ readState, history, now, ...options })`，集中执行授权过滤。`readState()` 提供最新条目和变更，也可传静态 `entries, changes`。
