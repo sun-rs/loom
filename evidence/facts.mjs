@@ -32,7 +32,7 @@ function inside(root, path) {
 }
 
 function pathStat(path, boundary) {
-  if (isCredentialPath(path.replace(/^\//, ''))) return;
+  if (boundary && !inside(boundary, path) || isCredentialPath(path.replace(/^\//, ''))) return;
   try {
     const canonical = realpathSync(path);
     if ((!boundary || inside(boundary, canonical)) && !isCredentialPath(canonical.replace(/^\//, ''))) {
@@ -52,7 +52,7 @@ function pathFacts(roots, gitRoot, snapshot, boundary) {
     if (isAbsolute(token)) return /^\/[\w.@+-]/.test(token);
     if (!token.includes('/')) return false;
     const prefix = firstDir(token);
-    return Boolean(prefix && (roots.some(root => pathStat(resolve(root, prefix))?.isDirectory()) || atEnd(prefix)));
+    return Boolean(prefix && (roots.some(root => pathStat(resolve(root, prefix), boundary)?.isDirectory()) || atEnd(prefix)));
   }
   function found(token) {
     const paths = isAbsolute(token) ? [resolve(token)] : roots.map(root => resolve(root, token))
@@ -92,7 +92,7 @@ export function plannedCardPaths(card) {
 }
 
 export function checkFacts(body, cwd, project = cwd, snapshot,
-  { pathBoundary, quotedMisses = [], noticeIds, plannedPaths } = {}) {
+  { pathBoundary, quotedMisses = [], noticeIds, plannedPaths, locationsOnly = false } = {}) {
   const gitRoot = cwd && git(cwd, 'rev-parse', '--show-toplevel').stdout?.trim();
   const roots = [...new Set([gitRoot, cwd, project].filter(Boolean))];
   const { checkable, found } = pathFacts(roots, gitRoot, snapshot, pathBoundary);
@@ -101,6 +101,7 @@ export function checkFacts(body, cwd, project = cwd, snapshot,
   const facts = new Map();
   const ignore = new Set(quotedMisses.map(({ kind, value }) => JSON.stringify([kind, value])));
   const add = (kind, value) => {
+    if (locationsOnly && kind !== 'sha' && kind !== 'path') return;
     const key = JSON.stringify([kind, value]);
     if (!ignore.has(key)) facts.set(key, { kind, value });
   };
@@ -124,7 +125,7 @@ export function checkFacts(body, cwd, project = cwd, snapshot,
     const token = value.replace(/:\d+(?::\d+)?$/, '').replace(/[.,;:]+$/, '').replace(/\/$/, '');
     const start = Math.max(prose.lastIndexOf('\n', offset) + 1, offset - 180);
     if (token.length <= 512 && (pathBoundary || token.includes('/')) && checkable(token) &&
-        (pathBoundary || !plannedPaths?.has(token.replace(/^\.\//, '')) &&
+        (pathBoundary && !locationsOnly || !plannedPaths?.has(token.replace(/^\.\//, '')) &&
           !planned.test(prose.slice(start, offset)) && !stillPlanned.test(prose.slice(end)))) {
       add('path', token);
     }
@@ -136,7 +137,7 @@ export function checkFacts(body, cwd, project = cwd, snapshot,
       return '';
     }
     const first = token.split(/\s/, 1)[0];
-    const firstStat = first !== token && pathStat(resolve(cwd ?? project ?? '.', first));
+    const firstStat = first !== token && pathStat(resolve(cwd ?? project ?? '.', first), pathBoundary);
     const command = commandPrefix.test(token) || /\s--?\S/.test(token) || first !== token &&
       (/\/bin\//.test(first) || firstStat?.isFile() && (firstStat.mode & 0o111) !== 0);
     if (!command && (first === token || token.includes('/') || pathExtensions.has(extname(token).slice(1).toLowerCase()))) {

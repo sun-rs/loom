@@ -25,6 +25,7 @@ import { gateId, saveGatePacket } from './gate-packet.mjs';
 import { gateBoundary, roleBudget } from './role-budget.mjs';
 import { leaderHandoverState } from '../handover/brief.mjs';
 import { startedOutstanding } from '../handover/outstanding.mjs';
+import { denialIdPattern } from '../lib/senior-command.mjs';
 import { authorizeSeniorTool, seniorToolEvents } from './senior-tools.mjs';
 import { replyForDelivery } from '../inbox/reply-file.mjs';
 import { auditorWakeFiltered, auditorWakeSource, redReasons } from './routing.mjs';
@@ -92,7 +93,18 @@ export function createSupervisor(project, {
   const rotation = selfRotation(project, { sessions, index, mail, notifications, now, spawn: spawnSession, failHandover, inFlight: rotationWork, report,
     v2: () => v2, cleanBoundary: name => rotationBoundary(name, sessions.rows().filter(row => row.project === name)) });
   const v2 = rotationPolicy(project, { now, sessions, mail, notifications, policy: policyForTick,
-    propose: rotation.propose, emergency: rotation.emergency });
+    propose: rotation.propose, emergency: rotation.emergency, reviewNote: queueRotationNoteReview });
+  function queueRotationNoteReview(member, row, request, work, id) {
+    const messageId = batchDeliveryId(id, 'v2-note-review');
+    if (mail.messages.some(message => message.id === messageId)) return messageId;
+    const proof = replyForDelivery(project, request.note, 0);
+    saved(sessions.targetBinding(member), [
+      `请先核对 ${row.role} ${row.addr} 的交接单，用命令确认 SHA、路径及在途项。`, proof,
+      `loomd 在途项：${work.map(item => [item.task, item.addr].filter(Boolean).join(' ')).join(' · ') || '无'}`,
+      `用 "$LOOM_BIN" rotation-policy verify-note --target ${row.addr} --id ${id} --verdict pass|fail --detail TEXT --evidence FILE[:LINE] 登记。`,
+    ].join('\n'), { id: messageId, rotationVerification: true });
+    return messageId;
+  }
   const budget = roleBudget(project, { now, sessions, notifications, batchDeliveryId, report, signalRotation: rotation.propose,
     observeRotation: (row, usage, snapshot, safe) => v2.observe(row, usage, { ...snapshot,
       health: progress.get(row.addr)?.health?.status }, safe), policyV2: v2.enabled });
@@ -978,8 +990,12 @@ ${details}`, {
     }
     const old = sessions.rowFor(args['handover-from']);
     const safety = old && v2.checkStart(old, selfHandoff);
-    const checkedHandoff = safety ? { ...selfHandoff, phase: safety.phase, expectedFacts: v2.repositoryFacts(old), facts: v2.facts(old, ['### 旧地址的在途消息（交接确认后处理）',
-      ...mail.handoverMessages(old.addr).map(item => `- ${item.id} ${item.action}`)]) } : selfHandoff;
+    const checkedHandoff = safety ? { ...selfHandoff, phase: safety.phase, expectedFacts: v2.repositoryFacts(old),
+      facts: v2.facts(old, [
+        ...(selfHandoff.urgent ? ['## Next action', '接管生效后向 Super 报告事故状态和待裁决事项。'] : []),
+        '### 旧地址的在途消息（交接确认后处理）',
+        ...mail.handoverMessages(old.addr).map(item => `- ${item.id} ${item.action}`),
+      ]) } : selfHandoff;
     const job = await sessions.newJob(args, caller, checkBarrier, occupied, handoverState, checkedHandoff);
     if (safety) v2.begin(old, job, safety.phase);
     let session;
@@ -996,7 +1012,10 @@ ${details}`, {
       await sessions.failSpawn(job, error);
       throw error;
     }
-    if (session.role === 'worker') failedWorkerLaunches.delete(session.project);
+    if (session.role === 'worker') {
+      failedWorkerLaunches.delete(session.project);
+      v2.recordDispatch(actor, session, { id: job.firstId }, args.prompt);
+    }
     let retirementIssue;
     const retired = await sessions.retirePredecessor(job).catch(error => { retirementIssue = error.message; });
     const handoff = job.hostGrant ? undefined : codexHandoff(session);
@@ -1071,6 +1090,7 @@ ${details}`, {
           if (first?.phase === 'queued') await sessions.verifyWorkerStart(job, now(), 'daemon');
         }));
         for (const [name, rows] of Map.groupBy(sessions.rows(), row => row.project)) {
+          v2.sync(name);
           const leader = liveRole(name, 'leader');
           const auditor = liveRole(name, 'auditor');
           const boundaryKey = JSON.stringify([leader, auditor].map(row => row &&
@@ -1139,7 +1159,8 @@ ${details}`, {
           `[${item.id}] ${item.from.addr}\n${item.text}`).join('\n\n'), policy.delivery?.replyBytes);
         if (digest) deliveryAppendix = [deliveryAppendix, `Loom Auditor next-wake digest\n${digest}`].filter(Boolean).join('\n\n');
         const replySuppressionNotices = senderSuppressions.filter(notice => visibleIds.has(notice.id)).map(notice => notice.id);
-        const shownRotationNotices = rotationNotices.filter(notice => visibleIds.has(notice.id)).map(notice => notice.id);
+        const shownRotationNotices = rotationNotices.filter(notice => visibleIds.has(notice.id))
+          .flatMap(notice => [notice.id, ...notice.aliases ?? []]);
         return { ...(deliveryAppendix && { deliveryAppendix }), ...(workerDigest && { resultContext: workerDigest }),
           ...(replySuppressionNotices.length && { replySuppressionNotices }),
           ...(shownRotationNotices.length && { rotationNotices: shownRotationNotices }),
@@ -1325,10 +1346,11 @@ ${details}`, {
       if (command === 'senior-override') {
         const rows = sessions.rows();
         const actor = caller && rows.find(row => row.addr === caller || row.pane === caller);
-        const reason = typeof args.reason === 'string' ? args.reason.trim() : '';
-        if (!actor || !senior(actor) || actor.endedAt !== null || !sessions.jobs.has(actor.addr) ||
-            !validInput(args.command) || args.command.length > 16_000 || reason && (!validInput(reason) || reason.length > 300)) {
-          throw new CommandError('invalid-arguments', 'A live Leader or Auditor, a command and a short reason are required');
+        const { command: toolCommand, retryId, reason } = args;
+        const hasCommand = retryId === undefined ? validInput(toolCommand) && toolCommand.length <= 16_000 :
+          toolCommand === undefined && typeof retryId === 'string' && denialIdPattern.test(retryId);
+        if (!actor || !senior(actor) || actor.endedAt !== null || !sessions.jobs.has(actor.addr) || !hasCommand) {
+          throw new CommandError('invalid-arguments', 'Use a live Leader or Auditor session and supply one command or a denial ID.');
         }
         const at = now();
         const gate = notifications.list(actor.project, false, true).findLast(gateBoundary);
@@ -1337,7 +1359,7 @@ ${details}`, {
           rows.some(row => row.role === 'worker' && row.project === actor.project && row.startedAt >= since &&
             (sessions.jobs.get(row.addr)?.exit?.code > 0 || ['silent-hang', 'auth-expired', 'quota-wait'].includes(progress.get(row.addr)?.health?.status))) ||
           stalledDeliveries(mail.messages, at).some(delivery => sessions.rowFor(delivery.target)?.project === actor.project);
-        const permit = authorizeSeniorTool(project, actor, { command: args.command, reason, workerUnavailable, since, at });
+        const permit = authorizeSeniorTool(project, actor, { command: toolCommand, retryId, reason, workerUnavailable, since, at });
         if (permit.category) {
           const count = rows.filter(row => row.role === actor.role && row.project === actor.project).flatMap(row => seniorToolEvents(project, row.addr))
             .filter(event => event.type === 'senior-override' && event.at >= since).length;
@@ -1424,11 +1446,12 @@ ${details}`, {
             `Loom red escalation (${red.reason}). Read gate packet ${path}` :
             `Read gate packet ${path}${v2.enabled() ? `\n在签收时用 "$LOOM_BIN" rotation-policy spot-check --target leader --id ${id} --verdict ok|error --detail TEXT --evidence FILE[:LINE] 登记抽查。` : ''}`, {
             id, gatePacket: path, gateId: gate, gateProject: name, gateRound: round,
-            ...(v2.enabled() && { gateCandidate: candidate, gateBase: base, gatePaths: members.flatMap(member => plannedCardPaths(sessions.jobs.get(member.addr)?.prompt ?? '')) }), ...(fullPath && { gateFullPath: fullPath }),
+            ...(v2.enabled() && { gateCandidate: candidate, gateBase: base, gatePaths: members.flatMap(member => [...plannedCardPaths(sessions.jobs.get(member.addr)?.prompt ?? '')]) }), ...(fullPath && { gateFullPath: fullPath }),
             ...(red && { redEscalation: red.reason }),
             ...(actor && { from: sessions.targetBinding(actor), expectReply: true }),
           });
           if (red) notifications.add(red);
+          v2.recordDecision(actor, 'gate-packet', id, gate);
           return { gate, round, path, ...(fullPath && { fullPath }),
             ...(red && { wakeQueued: true, evidencePath: red.evidencePath }), ...receiptFor(delivery) };
         }
@@ -1478,6 +1501,7 @@ ${details}`, {
               throw new CommandError('permission-denied', 'A received Auditor approval for this exact gate and SHA is required');
             }
             v2.authorizeGate(name, gate, args.candidate);
+            v2.recordDecision(actor, 'gate-authorization', approval.id, `${gate} ${args.candidate}`);
             return { gate, candidate: args.candidate, authorized: true };
           }
           const id = 'gate:' + batchDeliveryId(name, gate);
@@ -1485,9 +1509,10 @@ ${details}`, {
             const currentPolicy = policyForTick();
             const scoped = rows.filter(row => row.project === name);
             const auditor = liveRole(name, 'auditor');
-            await budget.check(name, scoped, currentPolicy, { completeGate: true, auditor });
+            await budget.check(name, scoped, currentPolicy, { completeGate: gate, auditor });
             notifications.add({ id, gate, project: name, at: now(), type: 'gate-completed',
               ...(actor && { addr: actor.addr }), logOnly: true, text: `门禁 ${gate} 已完成。` });
+            v2.recordDecision(actor, 'gate-complete', id, gate);
             await budget.check(name, scoped, currentPolicy, { gateRecorded: true, safe: rotationBoundary(name, scoped),
               leader: liveRole(name, 'leader'), auditor });
           }
@@ -1730,6 +1755,10 @@ ${details}`, {
         ...(args.reason !== undefined && { requestedDispatchReason: args.reason }),
         ...(args.nextCard && { nextCard: true }),
         mode, active, barrier: mode === 'queue' ? active : undefined });
+      if (successor.role === 'worker') {
+        const card = args.nextCard ? message.id : currentCard(successor, targetJob);
+        v2.recordDispatch(actor, successor, message, args.text, card === targetJob.firstId ? successor.task : card);
+      }
       return { addr: row.addr, ...receiptFor(message) };
     },
   };

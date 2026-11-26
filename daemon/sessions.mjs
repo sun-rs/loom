@@ -56,7 +56,7 @@ const leaderWorkerGuidance = [
   'Use a fresh Worker plus an exact RED reproduction for a changed area, rejected direction, R3, fabrication or overreach.',
   'New Workers verify branch, base SHA, WIP lines and active rulings before editing. Rotate resident roles at a card boundary after the first compaction. State the dispatch choice with --reason.',
 ].join(' ');
-const seniorGuidance = 'Use .project notes and evidence. For card preparation, keep targeted source reads to 200 lines. If a heavy tool is essential after a denial, retry through "$LOOM_BIN" senior-tool --reason "brief reason" -- "command". Loom keeps the output tail and records the reason. When workers or delivery are unavailable, Loom can authorize the same command without a reason.';
+const seniorGuidance = 'Use .project notes and evidence. For card preparation, keep targeted source reads to 200 lines. If a heavy tool is essential after a denial, paste the denial receipt’s "$LOOM_BIN" senior-tool --retry DENY-ID --reason "short sentence" line and state why the tool is essential. Loom keeps the output tail and records the reason. When workers or delivery are unavailable, Loom can authorize the same command without a reason.';
 const cardConventions = row => [
   '## Loom task conventions',
   `Task ${row.task}, working directory ${row.cwd}. Follow the card’s writable scope and acceptance commands. Start with the card and skip environment exploration or searches for AGENTS.md and skills to discover Loom conventions.`,
@@ -616,10 +616,10 @@ export function ownedSessions(project, index, report, {
       if (rotatingRoles.includes(input.role)) {
         handoverAck = `HANDOVER-ACK ${randomUUID()}`;
         const state = input.role === 'leader' || selfHandoff ? `\n\n${handoverState(predecessor)}` : '';
-        const note = extractOutstanding(selfHandoff?.note);
+        const note = extractOutstanding(selfHandoff?.urgent ? undefined : selfHandoff?.note);
         const startup = extractOutstanding(prompt);
         handoverItems = [...new Set([...note.items, ...startup.items])];
-        const judgment = selfHandoff ?
+        const judgment = selfHandoff && !selfHandoff.urgent ?
           `\n\n## 交班判断\n${selfHandoff.notePath}\n原因：${rotationReasonText(selfHandoff.reason)}\n\n${note.background}` : '';
         const rotationInstructions = selfHandoff?.v2 ?
           '\n\n首轮只核对原件。首行写完整确认码。逐行照抄事实卡的 HEAD、Branch、Base SHA、WIP、Rulings 标签，并报告现查的值。若发现不一致，第二行写 MISMATCH，列明差异后结束。接管生效通知到达后执行 Next action。' : '';
@@ -673,7 +673,8 @@ export function ownedSessions(project, index, report, {
       ...(handoverAck && { handoverAck }),
       ...(handoverItems?.length && { handoverItems }),
       ...(selfHandoff && { selfRotationId: selfHandoff.id }),
-      ...(selfHandoff?.v2 && { rotationV2: true, rotationPhase: selfHandoff.phase, rotationFacts: selfHandoff.expectedFacts }),
+      ...(selfHandoff?.v2 && { rotationV2: true, rotationPhase: selfHandoff.phase, rotationFacts: selfHandoff.expectedFacts,
+        ...(selfHandoff.noteReview && { rotationNoteReview: selfHandoff.noteReview }) }),
       ...(compactHandover && { compactHandover }),
       ...(row.role === 'worker' && { cardStart: headAt(cwd), card: input.prompt, checkpoint }),
       ...(input['expect-red'] !== undefined && { expectRed: input['expect-red'] }),

@@ -53,9 +53,10 @@ export function roleBudget(project, { now, sessions, notifications, batchDeliver
 
   function readContext(row, reader, snapshot) {
     const { items, raw } = reader.sessionHistory(row);
-    return sessionContext(row, { items, raw: raw.map(item => item.row) }, {
+    const context = sessionContext(row, { items, raw: raw.map(item => item.row) }, {
       snapshot: { ...snapshot, contextUsage: snapshot?.contextUsage ?? sessions.runtimeContext(row.addr) }, events: rootEvents(row, sessions.events(row.addr)), statusline: artifacts.context(row.addr),
     });
+    return { ...context, turns: items.filter(({ turn }) => timestamp(turn.startedAt) >= row.startedAt).length };
   }
 
   async function assessRotation(name, row, reader, gateBoundaryEvent, policy, at, safe) {
@@ -111,7 +112,7 @@ export function roleBudget(project, { now, sessions, notifications, batchDeliver
     pyramid: name => pyramids.get(name),
     context: addr => nativeContexts.get(addr),
     freshContext: row => readContext(row, historyReader(project)),
-    async check(name, rows, policy, { completeGate = false, safe, boundaryKey, leader, auditor, gateRecorded = false } = {}) {
+    async check(name, rows, policy, { completeGate, safe, boundaryKey, leader, auditor, gateRecorded = false } = {}) {
       const at = now();
       const periodic = at - (sampled.get(name) ?? -Infinity) >= sampleIntervalMs;
       const configured = policyV2?.() || [leader, auditor].some(row => row &&
@@ -128,18 +129,19 @@ export function roleBudget(project, { now, sessions, notifications, batchDeliver
       if (!completeGate) for (const row of [leader, auditor]) await assessRotation(name, row, reader, gate, policy, at, safe);
       if (newBoundary) boundaries.set(name, boundaryKey);
       if (gateRecorded || !completeGate && !periodic) return;
-      const wakes = assessAuditor(rows.filter(row => row.role === 'auditor'), reader, gate?.at ?? -Infinity);
-      const maxWakesPerGate = policy.roles?.auditor?.maxWakesPerGate ?? 3;
-      const usage = { wakes, maxWakesPerGate };
-      const overBudget = wakes > maxWakesPerGate;
       const prior = events.find(event => event.id === id);
-      if (overBudget || prior) {
-        const stamp = new Date(at).toISOString();
-        const action = overBudget ? ' 请检查派工节奏与门禁包，合并常规审查材料。' : '';
-        const text = `Auditor 本门禁唤醒 ${wakes}/${maxWakesPerGate}（采样 ${stamp}）。${action}`;
-        const sample = { text, usage, sampledAt: at, overBudget };
-        if (prior) notifications.refresh(id, { ...sample, logOnly: !overBudget && prior.pushedAt == null });
-        else notifications.add({ id, project: name, type: budgetType, at, role: 'auditor', addr: auditor?.addr, ...sample });
+      if (prior) {
+        if (completeGate && !prior.gate) notifications.refresh(id, { gate: completeGate });
+      } else {
+        const wakes = assessAuditor(rows.filter(row => row.role === 'auditor'), reader, gate?.at ?? -Infinity);
+        const maxWakesPerGate = policy.roles?.auditor?.maxWakesPerGate ?? 3;
+        if (wakes > maxWakesPerGate) {
+          const stamp = new Date(at).toISOString();
+          notifications.add({ id, project: name, type: budgetType, at, role: 'auditor', addr: auditor?.addr,
+            ...(completeGate && { gate: completeGate }), ...(gate && { afterGate: gate.gate }),
+            text: `Auditor 本门禁唤醒 ${wakes}/${maxWakesPerGate}（采样 ${stamp}）。请检查派工节奏与门禁包，合并常规审查材料。`,
+            usage: { wakes, maxWakesPerGate }, sampledAt: at, overBudget: true });
+        }
       }
       if (completeGate) return;
       const lastDrift = events.findLast(event => event.type === driftType);
