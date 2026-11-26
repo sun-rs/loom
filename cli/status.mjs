@@ -17,8 +17,8 @@ export async function projectStatus(project) {
     try { live = (await request(project, 'status')).sessions; }
     catch (error) { if (!daemonAbsent(error)) throw error; }
   }
-  const states = new Map((live ?? []).map(row => [row.addr, row.state]));
-  const lifecycle = row => states.get(row.addr) ?? (row.endedAt == null ? 'offline' : 'exited');
+  const states = new Map((live ?? []).map(row => [row.addr, row]));
+  const lifecycle = row => states.get(row.addr)?.state ?? (row.endedAt == null ? 'offline' : 'exited');
   const artifacts = readArtifacts(project);
   const messages = artifacts.messages();
   const notifications = readNotifications(project);
@@ -94,6 +94,7 @@ export async function projectStatus(project) {
       const authMode = row.cli === 'claude' ? artifacts.job(row.addr)?.authMode : undefined;
       return { role: row.role, addr: row.addr, cli: row.cli, task: row.task, state: lifecycle(row),
         ...(authMode && { authMode }),
+        ...(states.get(row.addr)?.hookGap && { hookGap: states.get(row.addr).hookGap }),
         ...(rotating.has(row.addr) && { awaitingVerifiedReport: true }) };
     }),
     waves, pendingContinuations, cards: cards.filter(card => card.active || ['blocked', 'result-undelivered'].includes(card.state)),
@@ -114,6 +115,8 @@ export function printStatus(result) {
   section('Stalled deliveries', result.stalledDeliveries, stallText, Infinity);
   section('Roles', result.sessions, row => [row.role ?? 'unassigned', row.cli, row.state,
     row.awaitingVerifiedReport ? 'awaiting report' : row.task ?? row.addr].join(' '), 6);
+  section('Hook gaps', result.sessions.filter(row => row.hookGap),
+    row => [row.role, row.addr, 'hook-gap', row.hookGap.source].join(' '), Infinity);
   section('Waves and cards', [...result.waves, ...result.pendingContinuations, ...result.cards], row => row.members ?
     [row.wave, row.state, row.members.length + ' cards'].join(' ') : row.batch ?
       ['continuation', row.batch, row.pending.length + ' pending'].join(' ') : [row.task, row.wave, row.state].join(' '), 6);

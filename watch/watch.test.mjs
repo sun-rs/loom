@@ -229,7 +229,9 @@ test('a matching Claude transcript boundary clears a persisted idle-without-stop
   transcript({ type: 'system', subtype: 'stop_hook_summary' });
   assert.equal((await watcher.poll())[0].reason, 'idle-without-stop');
   f.advance(1);
-  transcript({ type: 'system', subtype: 'turn_duration' });
+  transcript({ type: 'assistant', cwd: join(f.session.cwd, '.project'), message: { content: 'Fixture final' } });
+  f.advance(1);
+  transcript({ type: 'system', subtype: 'turn_duration', cwd: join(f.session.cwd, '.project') });
   assert.equal((await create().poll())[0].state, 'idle');
   assert.deepEqual(f.events().map(event => event.type), ['stuck', 'recovered']);
 });

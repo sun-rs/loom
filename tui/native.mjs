@@ -1,3 +1,5 @@
+import { isClaudeTranscriptEnd } from '../adapters/claude/parse.mjs';
+import { completedClaudeTurns, provesClaudeTurnEnd } from '../relay/sources.mjs';
 import { realpath } from 'node:fs/promises';
 import { basename, dirname, extname, isAbsolute, join, relative, sep } from 'node:path';
 import { jsonlTail } from '../runtimes/tui/read-jsonl.mjs';
@@ -112,10 +114,15 @@ export function nativeState(provider, { hookSink, evidenceRoot, cwd, sessionId, 
           if (actual === path && validTranscript(actual)) { transcript = actual; break; }
         }
       }
+      let verifiedEnds;
       for (const row of await readTranscript(transcript)) {
         if (row.isSidechain || row.parent_tool_use_id || row.parentToolUseId ||
             row.sessionId && row.sessionId !== sessionId ||
             resumedAt !== undefined && !(Date.parse(row.timestamp ?? row.created_at) >= resumedAt)) continue;
+        if (provider.id === 'claude' && isClaudeTranscriptEnd(row)) {
+          verifiedEnds ??= new Set(completedClaudeTurns(transcript, sessionId).filter(provesClaudeTurnEnd).map(turn => turn.endedAt));
+          if (!verifiedEnds.has(row.timestamp)) continue;
+        }
         const event = provider.transcriptRow(row, expectedPayload);
         if (!event) continue;
         const { userText, ...fields } = event;

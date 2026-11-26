@@ -275,7 +275,7 @@ test('Claude root transcript completion of a human-submitted delivery releases i
     sessionId, cwd: target.cwd, timestamp: new Date(at + offset).toISOString(), ...row,
   }) + '\n');
   transcript(0, { type: 'user', message: { content: prompt } });
-  transcript(1, { type: 'assistant', message: { id: 'reply', content: 'correlated reply' } });
+  transcript(1, { type: 'assistant', cwd: join(target.cwd, '.project'), message: { id: 'reply', content: 'correlated reply' } });
   transcript(2, { type: 'system', subtype: 'stop_hook_summary' });
   transcript(3, { type: 'system', subtype: 'turn_duration', isSidechain: true });
   transcript(4, { type: 'system', subtype: 'turn_duration', sessionId: randomUUID() });
@@ -284,7 +284,7 @@ test('Claude root transcript completion of a human-submitted delivery releases i
   assert.equal(f.lookup(first).completion, undefined);
   assert.deepEqual(f.sends.map(([, input]) => deliveryId(input)), [first]);
 
-  transcript(5, { type: 'system', subtype: 'turn_duration' });
+  transcript(5, { type: 'system', subtype: 'turn_duration', cwd: join(target.cwd, '.project') });
   await f.reopen().step();
   assert.deepEqual(f.lookup(first).completion, {
     at: at + 5, sessionId, turnId: promptId, body: 'correlated reply', source: 'claude transcript turn_duration',

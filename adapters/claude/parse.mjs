@@ -177,6 +177,8 @@ export function parseClaude(text) {
     const owner = activeTurn.origin ?? activeTurn;
     const pending = [...backgrounds.values()].some(task => task.owner === owner);
     const reply = status === 'interrupted' ? null : finalReply(groups.at(-1));
+    const tools = collectTools(groups, activeTurn.toolResults);
+    const pendingTools = tools.some(tool => !tool.id || !activeTurn.resolvedTools.has(tool.id));
     const usage = emptyUsage();
     const calls = [];
     for (const { call } of groups) {
@@ -196,7 +198,7 @@ export function parseClaude(text) {
       calls,
       prompts: activeTurn.prompts,
       ...(activeTurn.origin && { backgroundPrompts: owner.prompts }),
-      tools: collectTools(groups, activeTurn.toolResults),
+      tools, ...(pendingTools && { pendingTools: true }),
     });
     if (reply && !pending) session.lastReply = reply.text;
     addUsage(session.usage, usage, usage.calls);
@@ -226,6 +228,7 @@ export function parseClaude(text) {
       const results = blocks.filter(isClaudeToolResultContent);
       const metadata = results.length === 1 ? (record.toolUseResult ?? record.tool_use_result) : null;
       for (const result of results) {
+        if (result.tool_use_id) activeTurn.resolvedTools.add(result.tool_use_id);
         const code = toolExitCode(result, metadata);
         if (result.tool_use_id && code !== null) activeTurn.toolResults.set(result.tool_use_id, code);
         const task = backgrounds.get(result.tool_use_id);
@@ -252,7 +255,7 @@ export function parseClaude(text) {
       const origin = task && (!task.id || !notification.task || task.id === notification.task) ? task.owner : undefined;
       if (origin) backgrounds.delete(tool);
       activeTurn = { id: stringOrNull(record.uuid), startedAt: timestamp, groups: new Map(),
-        prompts: [prompt], toolResults: new Map(), origin };
+        prompts: [prompt], toolResults: new Map(), resolvedTools: new Set(), origin };
     } else if (activeTurn && type === 'attachment') {
       const queued = readQueuedPrompt(record);
       if (queued) activeTurn.prompts.push(queued);

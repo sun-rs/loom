@@ -304,7 +304,8 @@ ${details}`, {
     }));
   }
 
-  const reportedState = (snapshot, incident) => isStartupBlocker(snapshot?.state) ? snapshot.state :
+  const reportedState = (snapshot, incident) => isStartupBlocker(snapshot?.state) ||
+    snapshot?.hookGap && snapshot.state === 'idle' && incident?.reason === 'idle-without-stop' ? snapshot.state :
     incident?.state === 'needs-you' ? 'stuck' : snapshot?.state ?? 'unknown';
 
   function continuations() {
@@ -716,7 +717,8 @@ ${details}`, {
         .map(async row => {
           const incident = health.get(row.addr);
           const snapshot = await Promise.resolve().then(() => sessions.transport.inspect(sessions.targetBinding(row))).catch(() => undefined);
-          return { addr: row.addr, state: reportedState(snapshot, incident) };
+          return { addr: row.addr, state: reportedState(snapshot, incident),
+            ...(snapshot?.hookGap && { hookGap: snapshot.hookGap }) };
         })) };
       const row = sessions.resolve(args.target, caller);
       if (command === 'handover') {
@@ -743,6 +745,7 @@ ${details}`, {
           ...(tui && { transport: tui.transport, ...(tui.reason && { transportReason: tui.reason }) }),
           ...((snapshot?.reason ?? incident?.reason) && { reason: snapshot?.reason ?? incident.reason }),
           ...(snapshot?.writeEvidence && { writeEvidence: snapshot.writeEvidence }),
+          ...(snapshot?.hookGap && { hookGap: snapshot.hookGap }),
           ...(snapshot?.runtimeStatus && { runtimeStatus: snapshot.runtimeStatus }),
           deliveries: deliveries(row.addr).map(receiptFor), notifications: notifications.list(row.project),
           rotations: index.rotations().filter(item => item.project === row.project),

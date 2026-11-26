@@ -131,13 +131,23 @@ test('an agy feedback survey after a native turn sends only Skip once', async t 
 
 test('Claude releases an idle composer when the bound root transcript records turn_duration', async t => {
   const f = await setup(t, { transcript: true });
-  assert.equal((await f.account('submit', { id: randomUUID(), text: 'first' })).kind, 'confirmed');
+  const id = randomUUID();
+  assert.equal((await f.account('submit', { id, text: 'first' })).kind, 'confirmed');
   assert.equal((await f.account('state')).native.phase, 'busy');
-  await f.appendTranscript({ type: 'system', subtype: 'stop_hook_summary' });
+  await f.appendTranscript({ type: 'user', message: { content: wireText(id, 'first') } });
+  await f.appendTranscript({ type: 'assistant', message: { stop_reason: 'tool_use',
+    content: [{ type: 'tool_use', id: 'cd', name: 'Bash', input: { command: 'cd .project' } }] } });
+  await f.appendTranscript({ type: 'user', cwd: '/fixture/.project',
+    message: { content: [{ type: 'tool_result', tool_use_id: 'cd', content: '' }] } });
+  await f.appendTranscript({ type: 'assistant', cwd: '/fixture/.project',
+    message: { stop_reason: 'end_turn', content: [{ type: 'text', text: 'Fixture final' }] } });
+  await f.appendTranscript({ type: 'system', subtype: 'stop_hook_summary', cwd: '/fixture/.project' });
   await f.appendTranscript({ type: 'system', subtype: 'turn_duration', isSidechain: true });
   assert.equal((await f.account('state')).native.phase, 'busy');
-  await f.appendTranscript({ type: 'system', subtype: 'turn_duration' });
-  assert.equal((await f.account('state')).native.phase, 'idle');
+  await f.appendTranscript({ type: 'system', subtype: 'turn_duration', cwd: '/fixture/.project' });
+  const ended = (await f.account('state')).native;
+  assert.equal(ended.phase, 'idle');
+  assert.equal(ended.source, 'transcript');
   let state;
   for (let i = 0; i < 20; i++) {
     state = await f.account('state');
@@ -162,6 +172,8 @@ test('Claude idle compaction leaves the idle composer writable without creating 
   assert.equal(during.activeInputId, first);
   assert.equal(during.turnSequence, before.turnSequence);
 
+  await f.appendTranscript({ type: 'user', message: { content: 'first' } });
+  await f.appendTranscript({ type: 'assistant', message: { content: 'Fixture final' } });
   await f.appendTranscript({ type: 'system', subtype: 'turn_duration' });
   assert.equal((await f.account('state')).native.phase, 'idle');
   await f.hook({ hook_event_name: 'PreCompact', prompt_id: 'compact-prompt' });

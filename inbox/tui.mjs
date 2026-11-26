@@ -322,7 +322,10 @@ export function tui(project, call = hc, fixtureSend, control = controlTui) {
     let events = terminalEvents(project, terminal.address, terminal)
       .filter(row => !row.agent_id && session(row) && (!sessionId || session(row) === sessionId));
     if (provider === 'claude') events = withClaudeTranscriptStops(terminal, events, sessionId);
-    const snapshot = { terminal, events, provider, tui: binding, strictEnd: true };
+    const lastStop = provider === 'claude' && events.findLast(event => !event.paused &&
+      ['Stop', 'StopFailure', 'Interrupt'].includes(event.hook_event_name));
+    const hookGap = lastStop?.hookGap && { at: lastStop.receivedAt, source: 'transcript' };
+    const snapshot = { terminal, events, provider, tui: binding, strictEnd: true, ...(hookGap && { hookGap }) };
     if (terminal.state === 'finished') return { ...snapshot, state: 'finished' };
     const native = nativeInputState(provider, events);
     if (['loom-pty', 'holder-v3'].includes(binding?.transport)) {

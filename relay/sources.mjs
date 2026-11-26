@@ -65,19 +65,21 @@ export function boundTranscript(provider, terminal, stop) {
   return jsonl(transcriptPath(provider, realpathSync(terminal.cwd), terminal, stop));
 }
 
-function completedClaudeTurns(path, id, cwd) {
+export const provesClaudeTurnEnd = turn => turn.status === 'completed' && turn.boundary && Boolean(turn.reply) && !turn.pendingTools;
+
+export function completedClaudeTurns(path, id) {
   const stat = lstatSync(path, { bigint: true, throwIfNoEntry: false });
   if (!stat?.isFile()) return [];
   const revision = `${stat.dev}:${stat.ino}:${stat.size}:${stat.mtimeNs}`;
   const cached = claudeTurnCache.get(path);
-  if (cached?.revision === revision && cached.cwd === cwd) return cached.turns;
-  const rows = jsonl(path).filter(row => row.sessionId === id && (!row.cwd || row.cwd === cwd) && !row.agent_id);
+  if (cached?.revision === revision && cached.id === id) return cached.turns;
+  const rows = jsonl(path).filter(row => row.sessionId === id && !row.agent_id && !row.isSidechain && !row.parent_tool_use_id && !row.parentToolUseId);
   const boundaries = new Set(rows.filter(isClaudeTranscriptEnd).map(row => row.timestamp));
   const turns = parseClaude(rows.map(row => JSON.stringify(row)).join('\n')).turns
     .map(turn => ({ ...turn, boundary: boundaries.has(turn.endedAt) }));
   claudeTurnCache.delete(path);
   if (claudeTurnCache.size >= 16) claudeTurnCache.delete(claudeTurnCache.keys().next().value);
-  claudeTurnCache.set(path, { revision, cwd, turns });
+  claudeTurnCache.set(path, { revision, id, turns });
   return turns;
 }
 
@@ -103,7 +105,7 @@ export function withClaudeTranscriptStops(terminal, events, sessionId) {
   const path = binding?.transcript_path ?? binding?.transcriptPath ?? terminal.transcriptPath;
   if (typeof path !== 'string' || basename(path) !== `${id}.jsonl` || existingPath(path) !== path ||
       transcriptPath('claude', realpathSync(terminal.cwd), terminal, { transcript_path: path }) !== path) return events;
-  const turns = completedClaudeTurns(path, id, terminal.cwd);
+  const turns = completedClaudeTurns(path, id);
   if (!turns.length) return events;
   function decorate(stop, turn) {
     if (turn.status === 'paused') return { ...stop, paused: true };
@@ -128,16 +130,17 @@ export function withClaudeTranscriptStops(terminal, events, sessionId) {
     if (ended) return [];
     const next = starts[index + 1]?.row.receivedAt ?? Infinity;
     const marker = row.deliveryId ?? deliveryId(row.prompt);
-    const turn = turns.find(({ endedAt, prompts, status, boundary }) =>
-      (status === 'paused' || status === 'completed' && boundary) &&
+    const turn = turns.find(({ endedAt, prompts, status, boundary, reply, pendingTools }) =>
+      (status === 'paused' || provesClaudeTurnEnd({ status, boundary, reply, pendingTools })) &&
       Date.parse(endedAt) >= row.receivedAt && Date.parse(endedAt) < next && prompts.some(prompt =>
         marker ? deliveryId(prompt) === marker : prompt === row.prompt?.trim()));
     if (!turn) return [];
     return [decorate({ cwd: terminal.cwd, session_id: id, prompt_id: key, receivedAt: Date.parse(turn.endedAt),
-      hook_event_name: 'Stop', deliveryId: marker, last_assistant_message: turn.reply, source: 'claude transcript turn_duration' }, turn)];
+      hook_event_name: 'Stop', deliveryId: marker, last_assistant_message: turn.reply, source: 'claude transcript turn_duration',
+      ...(provesClaudeTurnEnd(turn) && { hookGap: true }) }, turn)];
   });
   for (const turn of turns) {
-    if (turn.status !== 'completed' || !turn.boundary || !turn.backgroundPrompts ||
+    if (!provesClaudeTurnEnd(turn) || !turn.backgroundPrompts ||
         [...decorated, ...stops].some(stop => stop.nativeTurnId === turn.id && stop.backgroundDeliveryIds)) continue;
     stops.push(decorate({ cwd: terminal.cwd, session_id: id, receivedAt: Date.parse(turn.endedAt), hook_event_name: 'Stop' }, turn));
   }
