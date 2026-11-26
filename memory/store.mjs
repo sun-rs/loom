@@ -4,6 +4,7 @@ import { itemPath, renderEntry, validateEntry, validateEntryFormat } from './for
 import { sanitizeEntry } from './sanitize.mjs';
 
 const day = 86_400_000;
+const ephemeralReceiptLimit = 1024;
 const decisions = new Map([
   ['promote', 'promoted'], ['merge', 'merged'], ['return', 'returned'], ['reject', 'rejected'],
 ]);
@@ -19,11 +20,15 @@ function select(source, fields) {
 }
 
 function requestFingerprint({ requestId, ...content }) {
-  const canonical = JSON.stringify(content, (_key, value) => {
-    if (!value || typeof value !== 'object' || Array.isArray(value)) return value;
-    return Object.fromEntries(Object.keys(value).sort().map(key => [key, value[key]]));
-  });
-  return createHash('sha256').update(canonical).digest('hex');
+  try {
+    const canonical = JSON.stringify(content, (_key, value) => {
+      if (!value || typeof value !== 'object' || Array.isArray(value)) return value;
+      return Object.fromEntries(Object.keys(value).sort().map(key => [key, value[key]]));
+    });
+    return createHash('sha256').update(canonical).digest('hex');
+  } catch {
+    return undefined;
+  }
 }
 
 function draftFields(entry, externalSource) {
@@ -97,6 +102,8 @@ export function createMemoryStore({ now = Date.now, readState, commitState, evid
   estimateTokens, maxMetadataBytes, staleDays, getObservations, classifySensitive, replacement, readRaw } = {}) {
   const format = { evidence, estimateTokens, maxMetadataBytes };
   const redaction = { classifySensitive, replacement };
+  // Keep only fingerprints. Merge replays still check the current snapshot and its forget markers.
+  const ephemeralReceipts = new Map();
   let pending = Promise.resolve();
 
   function serialize(action) {
@@ -361,25 +368,30 @@ export function createMemoryStore({ now = Date.now, readState, commitState, evid
     if (!nonempty(binding?.sessionId) || !nonempty(binding.principal)) return forbidden();
     if (!nonempty(request?.requestId)) return invalid('Expected a memory request ID');
     const { op, id, expectedRevision, requestId } = request;
-    if (bodyWrites.has(op) && typeof classifySensitive !== 'function') {
-      return { ok: false, code: 'classifier-missing', error: 'Memory sensitivity classifier is required' };
-    }
-    let fingerprint;
-    try {
-      fingerprint = requestFingerprint(request);
-    } catch {
-      return invalid('Invalid memory request content');
-    }
     const state = await snapshot();
     const scope = JSON.stringify([binding.sessionId, binding.principal, binding.role, binding.project, binding.cardId]);
     const prior = state.receipts.find(row => row.scope === scope && row.requestId === requestId);
-    const success = (fields, status = 'accepted') => ({ ok: true, ...fields, receipt: { requestId, status } });
-    const current = state.entries.find(entry => entry.id === id);
-    if (prior && prior.fingerprint !== fingerprint) {
+    const replayKey = JSON.stringify([scope, requestId]);
+    const priorFingerprint = prior ? prior.fingerprint : ephemeralReceipts.get(replayKey);
+    const fingerprint = requestFingerprint(request);
+    if ((prior || priorFingerprint !== undefined) && (fingerprint === undefined || fingerprint !== priorFingerprint)) {
       return { ok: false, code: 'conflict', error: 'Memory request ID was already used' };
     }
+    if (bodyWrites.has(op) && typeof classifySensitive !== 'function') {
+      return { ok: false, code: 'classifier-missing', error: 'Memory sensitivity classifier is required' };
+    }
+    if (fingerprint === undefined) return invalid('Invalid memory request content');
+    const success = (fields, status = 'accepted') => ({ ok: true, ...fields, receipt: { requestId, status } });
+    const current = state.entries.find(entry => entry.id === id);
     if (op === 'merge' && (current?.status === 'forgotten' || (!prior && current?.status === 'merged'))) {
-      return replayMerge(state, binding, request, current, success);
+      const result = replayMerge(state, binding, request, current, success);
+      if (result.ok && priorFingerprint === undefined) {
+        if (ephemeralReceipts.size === ephemeralReceiptLimit) {
+          ephemeralReceipts.delete(ephemeralReceipts.keys().next().value);
+        }
+        ephemeralReceipts.set(replayKey, fingerprint);
+      }
+      return result;
     }
     if (prior) return prior.response;
     const before = state.seq;
