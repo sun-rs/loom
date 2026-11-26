@@ -195,12 +195,16 @@ test('senior overrides cap output, keep reasons, and permit emergency retries pa
   const { session: leader } = await f.spawn(d, 'leader', 'L');
   const cli = await cliFor(t, f, () => d, leader.addr);
   await d.tick();
-  const command = 'seq 1 65';
-  const retry = () => cli('senior-tool', '--reason', 'inspect candidate during this exception', '--', command);
+  const command = '/usr/bin/seq 1 65';
+  const retry = () => cli('senior-tool', '--reason', 'inspect candidate during this exception', '--', `/usr/bin/seq  "1" '65'`);
   const requiresDenial = error => JSON.parse(error.stdout).error.code === 'senior-override-needs-denial';
   await assert.rejects(retry(), requiresDenial);
   const log = seniorToolLog(f.project, leader.addr);
   assert.match(recordSeniorToolDenial(log, f.project, f.project, 'Bash', { command }), /带理由重试/);
+  for (const reason of ['', 'probe', 'true', 'just checking']) {
+    await assert.rejects(cli('senior-tool', '--reason', reason, '--', command),
+      error => JSON.parse(error.stdout).error.code === 'senior-override-required');
+  }
   const { stdout } = await retry();
   assert.match(stdout, /final 40 lines.*\n26\n.*\n65\n$/s);
   assert.doesNotMatch(stdout, /^25$/m);
@@ -209,7 +213,7 @@ test('senior overrides cap output, keep reasons, and permit emergency retries pa
   await d.handle('send', { target: leader.addr, mode: 'queue', text: 'HOLD for an SLA test' });
   advance = 100;
   await d.tick();
-  for (let i = 0; i < 4; i++) await cli('senior-tool', '--', `seq ${i + 1} 2`);
+  for (let i = 0; i < 4; i++) await cli('senior-tool', '--', `/usr/bin/seq ${i + 1} 2`);
   const history = (await d.handle('notifications', { history: true })).notifications;
   assert.equal(history.filter(event => event.type === 'senior-override-budget').length, 1);
   const status = JSON.parse((await cli('status', '--json')).stdout);
@@ -219,6 +223,41 @@ test('senior overrides cap output, keep reasons, and permit emergency retries pa
   await d.tick();
   const nativeHistory = JSON.parse((await cli('hist', '--role', 'leader', '--json')).stdout);
   assert.ok(nativeHistory.turns[0].seniorTools.some(event => event.reason === 'inspect candidate during this exception'));
+});
+
+test('senior denial receipts bind one exact command and its work directory to the issuing session and gate', async t => {
+  let advance = 0;
+  const f = fixture(t, { now: () => Date.now() + advance });
+  const d = f.daemon();
+  t.after(d.shutdown);
+  const { session: leader } = await f.spawn(d, 'leader', 'L');
+  const { session: auditor } = await f.spawn(d, 'auditor', 'A');
+  const cli = await cliFor(t, f, () => d, leader.addr);
+  const cwd = join(f.project, 'nested');
+  mkdirSync(cwd);
+  writeFileSync(join(cwd, 'proof file.txt'), 'local proof\n');
+  const command = '/bin/cat "proof file.txt" | /usr/bin/head -n 1';
+  const deny = () => recordSeniorToolDenial(seniorToolLog(f.project, leader.addr), f.project, f.project, 'exec_command',
+    { command: ['/bin/sh', '-lc', command], workdir: 'nested' });
+  const receipt = deny();
+  const [, id, reason] = /^"\$LOOM_BIN" senior-tool --retry ([a-f0-9-]+) --reason "([^"]+)"$/m.exec(receipt);
+  assert.ok(!receipt.includes('proof file.txt'));
+  const args = { retryId: id, reason };
+  await assert.rejects(d.handle('senior-override', args, auditor.addr), { code: 'senior-override-needs-denial' });
+  await assert.rejects(cli('senior-tool', '--retry', id, '--reason', 'probe'),
+    error => JSON.parse(error.stdout).error.code === 'senior-override-required');
+  await assert.rejects(cli('senior-tool', '--retry', id, '--reason', reason, '--', '/bin/pwd'),
+    error => JSON.parse(error.stdout).error.code === 'invalid-arguments');
+  const results = await Promise.allSettled([cli('senior-tool', '--retry', id, '--reason', reason),
+    cli('senior-tool', '--retry', id, '--reason', reason)]);
+  assert.equal(results.filter(result => result.status === 'fulfilled').length, 1);
+  assert.equal(results.find(result => result.status === 'fulfilled').value.stdout, 'local proof\n');
+  assert.equal(JSON.parse(results.find(result => result.status === 'rejected').reason.stdout).error.code, 'senior-override-needs-denial');
+  const second = /--retry ([a-f0-9-]+)/.exec(deny())[1];
+  advance = 1_000;
+  await d.handle('notifications', { gateComplete: 'new-gate' }, leader.addr);
+  await assert.rejects(d.handle('senior-override', { ...args, retryId: second }, leader.addr),
+    { code: 'senior-override-needs-denial' });
 });
 
 test('Leader gate rotation waits for a card and publishes no Auditor wake', async t => {
@@ -365,10 +404,12 @@ test('Auditor wake overruns notify Super once per gate without proposing a rotat
   await d.tick();
   assert.equal((await budgets()).length, 1);
   assert.equal((await budgets())[0].id, first.id);
-  assert.equal((await budgets())[0].sampledAt, time);
-  assert.ok((await budgets())[0].usage.wakes > first.usage.wakes);
+  assert.equal((await budgets())[0].sampledAt, first.sampledAt);
+  assert.deepEqual((await budgets())[0].usage, first.usage);
+  assert.equal(f.read('inbox/state.json').messages.filter(message => message.projectEvents?.includes(first.id)).length, 1);
   await d.handle('notifications', { gateComplete: 'G1' }, leader.addr);
   assert.ok((await events()).some(event => event.type === 'gate-completed' && event.gate === 'G1'));
+  assert.equal((await budgets())[0].gate, 'G1');
   assert.equal((await events()).filter(event => event.type.endsWith('-rotation-proposed')).length, 0);
   time += 31_000;
   await nativeCost(f, auditor, time - 2, 299_000);
@@ -376,6 +417,8 @@ test('Auditor wake overruns notify Super once per gate without proposing a rotat
   await d.tick();
   assert.equal((await budgets()).length, 2);
   assert.notEqual((await budgets())[1].id, first.id);
+  assert.equal((await budgets())[1].afterGate, 'G1');
+  assert.equal((await budgets())[1].sampledAt, time);
 });
 
 test('an explicit window threshold waits for the native turn and in-flight card to settle', async t => {

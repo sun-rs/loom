@@ -283,7 +283,8 @@ export function printStatus(result) {
   }, Infinity);
   section('Senior rotations today', Object.entries(result.rotationsToday), ([role, rotations]) =>
     `${role} ${rotations.length}${rotations.length ? ` (${rotations.map(item => item.reason ?? 'unrecorded').join(', ')})` : ''}`, Infinity);
-  section('Senior tools', result.seniorTools, row => [row.type, row.role, row.count, row.reasons?.at(-1)?.reason].filter(Boolean).join(' · '), 8);
+  section('Senior tools', result.seniorTools, row => [row.type, row.role, row.count,
+    ...row.reasons?.slice(-2).toReversed().map(item => item.reason) ?? []].join(' · '), 8);
   section('Roles', result.sessions, row => [row.role ?? 'unassigned', row.cli, row.state,
     row.awaitingHandoverAck ? 'awaiting handover acknowledgement' :
       row.awaitingVerifiedReport ? 'awaiting report' : row.task ?? row.addr, row.rotationDue ? 'rotate at card boundary' : ''].join(' '), 6);

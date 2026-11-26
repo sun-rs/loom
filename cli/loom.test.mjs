@@ -226,6 +226,44 @@ test('8f1d01d6 binds agy journal ends and Git evidence even when native turn IDs
   assert.equal(result.turns[0].diff.turn.status, 'ok');
 });
 
+test('history pages through older L1 summaries and accepts stable cross-session cursors', t => {
+  const f = fixture(t);
+  function transcript(addr, offset, count, parent) {
+    const transcriptPath = join(f.cwd, addr + '.jsonl');
+    const rows = Array.from({ length: count }, (_, i) => {
+      const turn_id = addr + '-' + (i + 1);
+      const timestamp = new Date(Date.UTC(2026, 10, 24, 0, offset + i)).toISOString();
+      return [{ type: 'task_started', turn_id }, { type: 'task_complete', turn_id, last_agent_message: 'DONE ' + turn_id }]
+        .map(payload => JSON.stringify({ type: 'event_msg', timestamp, payload }));
+    });
+    writeFileSync(transcriptPath, rows.flat().join('\n') + '\n');
+    f.register(addr, { role: parent ? 'leader' : 'worker', transcriptPath, parent });
+  }
+  transcript('t-worker', 0, 13);
+  transcript('t-l1', 0, 7, 't-parent');
+  transcript('t-l2', 7, 6, 't-l1');
+  const read = (...args) => f.run(0, 'hist', ...args, '--json');
+  const turns = (...args) => read(...args).turns.map(turn => turn.index);
+  const latest = read('t-worker');
+  assert.deepEqual(latest.turns.map(turn => turn.index), [9, 10, 11, 12, 13]);
+  assert.equal(latest.pagination.nextBefore, '9');
+  assert.deepEqual(turns('t-worker', '--page', '2'), [4, 5, 6, 7, 8]);
+  assert.deepEqual(turns('t-worker', '--before', latest.pagination.nextBefore), [4, 5, 6, 7, 8]);
+  assert.deepEqual(turns('t-worker', '--page', '3'), [1, 2, 3]);
+  assert.deepEqual(turns('t-worker', '--page', '4'), []);
+  assert.deepEqual(turns('t-worker', '--page', '2', '--turns', '3'), [8, 9, 10]);
+  assert.deepEqual(turns('t-worker', '--all'), Array.from({ length: 13 }, (_, i) => i + 1));
+  const rolePage = read('--role', 'leader');
+  assert.equal(rolePage.pagination.nextBefore, 'turn:t-l2#2');
+  const older = read('--role', 'leader', '--before', rolePage.pagination.nextBefore).turns;
+  assert.deepEqual(older.map(turn => [turn.addr, turn.index]),
+    [['t-l1', 4], ['t-l1', 5], ['t-l1', 6], ['t-l1', 7], ['t-l2', 1]]);
+  assert.equal(f.run(2, 'hist', 't-worker', '--all', '--level', 'L2').error.code, 'invalid-arguments');
+  assert.equal(f.run(2, 'hist', 't-worker', '--page', '0').error.code, 'invalid-arguments');
+  assert.equal(f.run(2, 'hist', 't-worker', '--page', '2', '--turn', '2').error.code, 'invalid-arguments');
+  assert.equal(f.run(2, 'hist', 't-worker', '--before', 'yesterday').error.code, 'invalid-arguments');
+});
+
 test('queries parent chains and role timelines by time and turn across sessions', t => {
   const f = fixture(t);
   function transcript(name, time) {

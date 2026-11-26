@@ -203,7 +203,7 @@ function matchesKeyword(entry, kw) {
 }
 
 export async function history(sessions, reader, options) {
-  const { level, count, since, exact, exactAddr, timeline, outcome, grep, tool, command, tail, showDiff, evidence, withCalls, onlyFailed } = options;
+  const { level, count, since, before, page, exact, exactAddr, timeline, outcome, grep, tool, command, tail, showDiff, evidence, withCalls, onlyFailed } = options;
   const entries = [];
   const missing = [];
   const seen = new Set();
@@ -232,8 +232,15 @@ export async function history(sessions, reader, options) {
     from = entries.findIndex(({ session, index }) => session.addr === since.addr && index === since.index);
     if (from < 0) throw new CommandError('not-found', `No turn ${since.index} at ${since.addr}`);
   } else if (since?.index !== undefined) from = since.index - 1;
+  let until = entries.length;
+  if (before?.addr !== undefined) {
+    until = entries.findIndex(({ session, index }) => session.addr === before.addr && index === before.index);
+    if (until < 0) throw new CommandError('not-found', `No turn ${before.index} at ${before.addr}`);
+  }
   const matched = [];
   for (const [i, item] of entries.entries()) {
+    if (i >= until) break;
+    if (before && before.addr === undefined && (timeline ? i + 1 : item.index) >= before.index) continue;
     if (i < from || since?.at !== undefined && (item.at === null || item.at < since.at) ||
         exact && (exactAddr ? item.session.addr !== exactAddr || item.index !== exact : timeline ? i + 1 !== exact : item.index !== exact)) continue;
     const entry = enrich(item);
@@ -241,7 +248,16 @@ export async function history(sessions, reader, options) {
     matched.push({ ...entry, timelineIndex: i + 1 });
   }
   if (exact && !matched.length && !outcome && !grep) throw new CommandError('not-found', `No turn ${exact}`);
-  const selected = since ? matched.slice(0, count) : matched.slice(-count);
+  const forward = since && !page && !before;
+  const end = forward ? Math.min(count, matched.length) : Math.max(0, matched.length - (page ? (page - 1) * count : 0));
+  const start = forward ? 0 : Math.max(0, end - count);
+  const selected = matched.slice(start, end);
+  const first = selected[0];
+  const nextBefore = start > 0 && first ? (timeline ? `turn:${first.session.addr}#${first.index}` : String(first.index)) : undefined;
+  const pagination = (before || page || nextBefore) && {
+    page: page ?? 1, ...(Number.isFinite(count) && { pageSize: count }), hasOlder: Boolean(nextBefore),
+    ...(nextBefore && { nextBefore }),
+  };
   const seniorLogs = new Map();
   const turns = await Promise.all(selected.map(async entry => {
     const { session, turn, rows, path, cards, tools, heads, claims, git, activity, tags } = entry;
@@ -284,7 +300,7 @@ export async function history(sessions, reader, options) {
       status: activity.lifecycle, ...extra };
 
   }));
-  return { turns, ...(missing.length ? { missing } : {}) };
+  return { turns, ...(pagination && { pagination }), ...(missing.length ? { missing } : {}) };
 }
 
 export async function waveHistory(sessions, reader, project, wave, { evidence, showDiff }) {

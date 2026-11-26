@@ -26,6 +26,7 @@ const help = {
     'loom hist --role ROLE [--project DIR] [--since ISO-TIME|N|turn:ADDR#N] [--turn N | --turns N] [--level L1|L2] [--json]',
     'loom hist --wave W [--project DIR] [--diff] [--evidence] [--json]',
     'loom hist --grep KW [--project DIR] [--turns N] [--level L1|L2] [--json]',
+    'History paging: [--before N|turn:ADDR#N] [--page N] or [--all] for L1 summaries. Page 1 is the newest.',
     'Turn filters: [--outcome failed|aborted|quota|blocked|unverified|recovered] [--diff] [--evidence]',
     'L2 tool filters: [--tool shell|edit|read|other] [--cmd REGEX] [--tail N] [--only-failed] [--with-calls]',
   ],
@@ -71,8 +72,8 @@ const help = {
   ],
 };
 const commands = {
-  hist: { ...strings('turn', 'turns', 'level', 'role', 'project', 'since', 'outcome', 'wave', 'grep', 'tool', 'cmd', 'tail'),
-    ...flags('json', 'diff', 'evidence', 'only-failed', 'with-calls') },
+  hist: { ...strings('turn', 'turns', 'level', 'role', 'project', 'since', 'before', 'page', 'outcome', 'wave', 'grep', 'tool', 'cmd', 'tail'),
+    ...flags('json', 'diff', 'evidence', 'only-failed', 'with-calls', 'all') },
   state: projectArgs, stop: projectArgs, ls: projectArgs, cost: projectArgs,
   assign: { ...projectArgs, ...flags('resume-attempt'), ...strings('reason') },
   keep: { ...projectArgs, ...flags('clear') },
@@ -110,11 +111,16 @@ function positiveNumber(value) {
   if (/^\d+$/.test(value) && Number.isSafeInteger(number) && number > 0) return number;
 }
 
-function sinceValue(value) {
+function turnCursor(value) {
   const index = positiveNumber(value.replace(/^turn:/, ''));
   if (index !== undefined) return { index };
   const cursor = /^turn:([^#]+)#(\d+)$/.exec(value);
   if (cursor && positiveNumber(cursor[2]) !== undefined) return { addr: cursor[1], index: Number(cursor[2]) };
+}
+
+function sinceValue(value) {
+  const cursor = turnCursor(value);
+  if (cursor) return cursor;
   const date = /^\d{4}-\d{2}-\d{2}(?:T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:\d{2}))?$/;
   if (date.test(value)) {
     const at = Date.parse(value);
@@ -140,11 +146,12 @@ function printHistory(result) {
       for (const card of turn.evidence ?? []) console.log(`${card.path}\n${card.summary ?? ''}`);
     }
   }
+  if (result.pagination?.nextBefore) console.log(`\n更早轮次 · --before ${result.pagination.nextBefore}`);
   for (const gap of result.missing ?? []) console.log(`\n${gap.addr} · ${gap.message}`);
 }
 
 async function hist(values, positionals, directory) {
-  const { role, wave, outcome, tool, grep } = values;
+  const { role, wave, outcome, tool, grep, all } = values;
   const onlyFailed = values['only-failed'];
   const withCalls = values['with-calls'];
   const toolFilters = tool || values.cmd !== undefined || values.tail !== undefined || onlyFailed || withCalls;
@@ -153,10 +160,18 @@ async function hist(values, positionals, directory) {
   if (outcome !== undefined && !['failed', 'aborted', 'quota', 'blocked', 'unverified', 'recovered'].includes(outcome)) invalid('Invalid --outcome');
   if (tool !== undefined && !['shell', 'edit', 'read', 'other'].includes(tool)) invalid('Expected shell, edit, read or other for --tool');
   if (level === 'L1' && toolFilters) invalid('Tool filters require L2');
-  for (const key of ['turn', 'turns', 'tail']) {
+  for (const key of ['turn', 'turns', 'tail', 'page']) {
     if (values[key] !== undefined && positiveNumber(values[key]) === undefined) invalid(`Expected a positive integer for --${key}`);
   }
-  if (values.turn !== undefined && (values.turns !== undefined || values.since !== undefined)) invalid('--turn cannot be combined with --turns or --since');
+  const before = values.before === undefined ? undefined : turnCursor(values.before);
+  if (values.before !== undefined && !before) invalid('Expected a positive turn number or turn:ADDR#N for --before');
+  const page = positiveNumber(values.page);
+  if (values.turn !== undefined && (values.turns !== undefined || values.since !== undefined || before || page || all)) {
+    invalid('--turn selects a single turn. Use it without range or page options.');
+  }
+  if (all && (level !== 'L1' || page || values.turns !== undefined)) {
+    invalid('--all shows L1 summaries without a page size or page number.');
+  }
   if (grep !== undefined && !grep.trim()) invalid('Expected a keyword for --grep');
   if (positionals.length > 1 || positionals.some(target => !target.trim()) ||
       role !== undefined && (!roles.includes(role) || positionals.length > 0) ||
@@ -180,8 +195,10 @@ async function hist(values, positionals, directory) {
   }
   const since = values.since === undefined ? undefined : sinceValue(values.since);
   const exact = positiveNumber(values.turn);
-  const count = positiveNumber(values.turns) ?? (outcome || grep || since ? Infinity : level === 'L2' ? 1 : 5);
-  const options = { level, count, since, exact, outcome, grep: grep?.toLowerCase(), tool, command,
+  const defaultCount = level === 'L2' ? 1 : 5;
+  const count = all ? Infinity : positiveNumber(values.turns) ??
+    (!before && !page && (outcome || grep || since) ? Infinity : defaultCount);
+  const options = { level, count, since, before, page, exact, outcome, grep: grep?.toLowerCase(), tool, command,
     tail: positiveNumber(values.tail) ?? 20, showDiff, evidence, onlyFailed, withCalls };
   if (role || grep && !positionals.length) {
     const matches = role ? sessions.filter(row => row.role === role) : sessions;

@@ -50,7 +50,7 @@ description: 在 Loom 中启动、指挥、复核或接手由 Super、Auditor、
 - 换领域、方向被否、R3、造假或越权时新建 Worker，修复卡附精确的 RED 复现。
 - 新 Worker 开局收到卡面约定、适用裁决和相关记忆。首报确认分支、基线 SHA、WIP 行数和裁决。核不上即停止并报 BLOCKED。
 
-Leader 和 Auditor 起草卡片时可定点读取最多 200 行。测试、构建、合入、广域读取和循环查状态优先交给 Worker。确有必要时，在工具被拒后用 `"$LOOM_BIN" senior-tool --reason "理由" -- "命令"` 重试，输出只保留最后 40 行。loomd 认定执行或投递故障时可省略理由，回执记录 `worker-unavailable`。查看 `loom status` 或 `loom hist` 可追溯拒绝和重试。
+Leader 和 Auditor 起草卡片时可定点读取最多 200 行。测试、构建、合入、广域读取和循环查状态优先交给 Worker。确有必要时，复制拒绝回执中的 `"$LOOM_BIN" senior-tool --retry DENY-ID --reason "具体理由"`，用一个短句说明原因。输出只保留最后 40 行。loomd 认定执行或投递故障时可省略理由，回执记录 `worker-unavailable`。查看 `loom status` 或 `loom hist` 可追溯拒绝和重试。
 
 ## Worker · 按卡施工
 
@@ -77,7 +77,7 @@ Worker 线统一由 OAR 托管。新增特殊 worker（例如 Claude TUI worker�
   loom spawn worker --project "$PROJECT" --cwd "$WORKTREE" --parent "$LOOM_ADDR" --task "$TASK" --wave "$WAVE" "$PROMPT"
   ```
 
-- `loom status --project "$PROJECT"` 看项目总览，`loom ls` 查稳定地址，`loom state "$ADDR"` 查在途事项和换班状态。用 `loom hist "$ADDR" --evidence` 查证据卡，`loom hist --wave "$WAVE"` 查波次，`loom hist "$ADDR" --turn "$N" --level L2 --diff` 查单轮提交差异。未提交的改动查证据卡，正文未确认时按历史给出的路径和行号核查原件。
+- `loom status --project "$PROJECT"` 看项目总览，`loom ls` 查稳定地址，`loom state "$ADDR"` 查在途事项和换班状态。用 `loom hist "$ADDR" --evidence` 查证据卡，`loom hist --wave "$WAVE"` 查波次，`loom hist "$ADDR" --turn "$N" --level L2 --diff` 查单轮提交差异。用 `--before N` 或 `--page N` 翻到更早轮次，`--all` 输出全部 L1 摘要。未提交的改动查证据卡，正文未确认时按历史给出的路径和行号核查原件。
 - Leader、Auditor 和 Super 用 `loom send "$ADDR" --project "$PROJECT" "$TEXT"` 排队发信，也可用 `leader` 或 `auditor` 发送给当前已接任的唯一角色。loomd 使用已认证的会话作为发信人。外部 Super 在本机操作终端设置 `LOOM_EXTERNAL_SUPER=1`，可用 `--from super` 收取通知回执，并用 `--expect-reply` 请求答复。授权叫停用 `--mode interrupt` 并说明理由。loomd 按投递 SLA 对账并升级停滞投递。
 - Leader 和 Auditor 等待结果超过预期时，运行 `"$LOOM_BIN" status` 检查滞留投递和未回送的回复。
 - 有计划续作时派工加 `--keep-warm`。loomd 在缓存窗口后释放空闲 Worker，合入门禁 `APPROVE` 后关闭该波。需要提前释放时可用 `"$LOOM_BIN" release "$TASK"`。

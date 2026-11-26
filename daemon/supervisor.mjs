@@ -23,6 +23,7 @@ import { isStartupBlocker } from '../tui/agent-status.mjs';
 import { gateId, saveGatePacket } from './gate-packet.mjs';
 import { gateBoundary, roleBudget } from './role-budget.mjs';
 import { leaderHandoverState } from '../handover/brief.mjs';
+import { denialIdPattern } from '../lib/senior-command.mjs';
 import { authorizeSeniorTool, seniorToolEvents } from './senior-tools.mjs';
 import { replyForDelivery } from '../inbox/reply-file.mjs';
 import { auditorWakeFiltered, auditorWakeSource, redReasons } from './routing.mjs';
@@ -1212,10 +1213,11 @@ ${details}`, {
       if (command === 'senior-override') {
         const rows = sessions.rows();
         const actor = caller && rows.find(row => row.addr === caller || row.pane === caller);
-        const reason = typeof args.reason === 'string' ? args.reason.trim() : '';
-        if (!actor || !senior(actor) || actor.endedAt !== null || !sessions.jobs.has(actor.addr) ||
-            !validInput(args.command) || args.command.length > 16_000 || reason && (!validInput(reason) || reason.length > 300)) {
-          throw new CommandError('invalid-arguments', 'A live Leader or Auditor, a command and a short reason are required');
+        const { command: toolCommand, retryId, reason } = args;
+        const hasCommand = retryId === undefined ? validInput(toolCommand) && toolCommand.length <= 16_000 :
+          toolCommand === undefined && typeof retryId === 'string' && denialIdPattern.test(retryId);
+        if (!actor || !senior(actor) || actor.endedAt !== null || !sessions.jobs.has(actor.addr) || !hasCommand) {
+          throw new CommandError('invalid-arguments', 'Use a live Leader or Auditor session and supply one command or a denial ID.');
         }
         const at = now();
         const gate = notifications.list(actor.project, false, true).findLast(gateBoundary);
@@ -1224,7 +1226,7 @@ ${details}`, {
           rows.some(row => row.role === 'worker' && row.project === actor.project && row.startedAt >= since &&
             (sessions.jobs.get(row.addr)?.exit?.code > 0 || ['silent-hang', 'auth-expired', 'quota-wait'].includes(progress.get(row.addr)?.health?.status))) ||
           stalledDeliveries(mail.messages, at).some(delivery => sessions.rowFor(delivery.target)?.project === actor.project);
-        const permit = authorizeSeniorTool(project, actor, { command: args.command, reason, workerUnavailable, since, at });
+        const permit = authorizeSeniorTool(project, actor, { command: toolCommand, retryId, reason, workerUnavailable, since, at });
         if (permit.category) {
           const count = rows.filter(row => row.role === actor.role && row.project === actor.project).flatMap(row => seniorToolEvents(project, row.addr))
             .filter(event => event.type === 'senior-override' && event.at >= since).length;
@@ -1359,7 +1361,7 @@ ${details}`, {
             const currentPolicy = policyForTick();
             const scoped = rows.filter(row => row.project === name);
             const auditor = liveRole(name, 'auditor');
-            await budget.check(name, scoped, currentPolicy, { completeGate: true, auditor });
+            await budget.check(name, scoped, currentPolicy, { completeGate: gate, auditor });
             notifications.add({ id, gate, project: name, at: now(), type: 'gate-completed',
               ...(actor && { addr: actor.addr }), logOnly: true, text: `门禁 ${gate} 已完成。` });
             await budget.check(name, scoped, currentPolicy, { gateRecorded: true, safe: rotationBoundary(name, scoped),

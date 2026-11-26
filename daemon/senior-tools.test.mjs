@@ -10,6 +10,7 @@ import { managedEnvironment, releaseRoot } from './release.mjs';
 import { hookRunner, managedHookPath } from './tui.mjs';
 import { seniorToolEnvironment, seniorToolEvents } from './senior-tools.mjs';
 import { seniorToolCategory } from '../lib/senior-tool-guard.mjs';
+import { literalShellArgv, seniorCommandKey, seniorOverrideReason } from '../lib/senior-command.mjs';
 import openCodePlugin from '../adapters/opencode/prompt-events/index.js';
 
 test('senior hook gates are launch scoped and record denials without disabling targeted reads', async t => {
@@ -70,4 +71,16 @@ test('senior hook gates are launch scoped and record denials without disabling t
     ['test-build', 'test-build', 'git-integration', 'test-build']);
   writeFileSync(join(project, '.project/policy.json'), '{"roles":{"leader":{"toolGuard":false}}}');
   assert.deepEqual(seniorToolEnvironment(project, row), {});
+});
+
+test('senior command keys normalize literal argv and keep shell syntax distinct', () => {
+  const literal = `/usr/bin/printf   %s "a b" 'hello' ''`;
+  assert.deepEqual(literalShellArgv(literal), ['/usr/bin/printf', '%s', 'a b', 'hello', '']);
+  assert.equal(seniorCommandKey(literal), seniorCommandKey(`/usr/bin/printf %s a\\ b h"ell"o ""`));
+  assert.notEqual(seniorCommandKey("/usr/bin/printf '%s' '$HOME'"), seniorCommandKey('/usr/bin/printf %s "$HOME"'));
+  assert.notEqual(seniorCommandKey('/usr/bin/seq 1 5 | /usr/bin/head'), seniorCommandKey('/usr/bin/seq 1 5 ; /usr/bin/head'));
+  assert.notEqual(seniorCommandKey('/usr/bin/seq 1 5'), seniorCommandKey('/usr/bin/seq 1 6'));
+  assert.equal(seniorOverrideReason('核对本轮候选的验证结果'), '核对本轮候选的验证结果');
+  assert.equal(seniorOverrideReason('  Explain  this retry  '), 'Explain this retry');
+  assert.equal(seniorOverrideReason('probe'), undefined);
 });
