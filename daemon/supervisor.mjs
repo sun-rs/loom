@@ -28,6 +28,7 @@ import { deliveryBoard, gateBoard } from './status-board.mjs';
 import { activeRelease, managedCliPath, releaseId, releaseRoot } from './release.mjs';
 import { rotatingRoles } from '../index/index.mjs';
 import { createProjectMemory } from './memory.mjs';
+import { createMemoryExtractor } from './memory-extractor.mjs';
 
 function batchDeliveryId(batch, dest) {
   const bytes = createHash('sha256').update(`${batch}\0${dest}`).digest('hex').slice(0, 32);
@@ -51,7 +52,7 @@ function codexHandoff(row) {
 export function createSupervisor(project, {
   report = console.log, window = 900_000, sealWindow = window, partialWindow = Math.min(window, 120_000),
   uncertainWindow, blockedWindow = 60_000, sessionOptions, now = Date.now, watchOptions,
-  externalNotification = notifyExternal, memoryOptions,
+  externalNotification = notifyExternal, memoryOptions, memoryExtractorOptions,
 } = {}) {
   if (![window, sealWindow, partialWindow, uncertainWindow ?? defaultStallMs, blockedWindow].every(value => Number.isSafeInteger(value) && value >= 0)) {
     throw new RangeError('Invalid loomd timeout in milliseconds');
@@ -76,6 +77,19 @@ export function createSupervisor(project, {
     ...(message.issue === auditorWakeFiltered && { reason: auditorWakeFiltered, nextWakeDigest: Boolean(message.from) }) });
   const saved = (target, text, fields = {}) => mail.enqueue({
     id: randomUUID(), createdAt: now(), target, text, requestedMode: 'queue', mode: 'queue', phase: 'queued', ...fields,
+  });
+  const extractor = createMemoryExtractor(project, { memory, sessions, now, report,
+    options: memoryExtractorOptions, events: () => notifications.list(undefined, false, true),
+    enqueueReview(id, text, routedTo) {
+      const reviewer = liveRole(project, 'super');
+      if (!reviewer || reviewer.addr === routedTo) return reviewer?.addr;
+      const deliveryId = batchDeliveryId('memory-proposal:' + id, reviewer.addr);
+      if (!mail.messages.some(message => message.id === deliveryId)) {
+        saved(sessions.targetBinding(reviewer), 'User memory proposal for Super review\n' + text,
+          { id: deliveryId, memoryReview: true, superPriority: true });
+      }
+      return reviewer.addr;
+    },
   });
   const budget = roleBudget(project, { now, sessions, notifications, batchDeliveryId, report });
   const parentFor = addr => sessions.routeParent(addr)?.addr ?? addr;
@@ -769,6 +783,8 @@ ${details}`, {
       },
     });
     await memory.tick(mail.messages);
+    const extraction = extractor.tick(policy, mail.messages);
+    if (memoryExtractorOptions) await extraction;
     await closeReviews();
     const current = sessions.rows();
     for (const [name, rows] of Map.groupBy(current, row => row.project)) {
@@ -798,9 +814,13 @@ ${details}`, {
       }
       return attached;
     },
-    shutdown: sessions.shutdown,
+    async shutdown() {
+      await extractor.shutdown();
+      await sessions.shutdown();
+    },
     async handle(command, args, caller) {
       if (command === 'mem') return memory.handle(args, caller);
+      if (['memory-review', 'memory-index', 'memory-show'].includes(command)) return extractor.handle(command, args, caller);
       if (command === 'spawn') return spawnSession(args, caller);
       if (command === 'layout-up') {
         if (!sessionOptions?.layout) throw new CommandError('not-ready', 'Herdr layout is unavailable');
@@ -926,7 +946,8 @@ ${details}`, {
           const signals = leaderSignals(name).filter(notice => workerAddrs.has(notice.addr) ||
             notice.type === 'auditor-budget-exceeded' && notice.at >= boundary);
           const { path, fullPath } = saveGatePacket(project, { ...args, id, round }, { members, jobs: sessions.jobs, messages: mail.messages,
-            decisions, signalSummary: noticeLines(signals), signalCount: signals.length, red });
+            decisions, signalSummary: noticeLines(signals), signalCount: signals.length, red,
+            memoryProposals: name === project ? extractor.gateText() : '' });
           const delivery = saved(sessions.targetBinding(auditor), red ?
             `Loom red escalation (${red.reason}). Read gate packet ${path}` : `Read gate packet ${path}`, {
             id, gatePacket: path, gateId: gate, gateProject: name, gateRound: round, ...(fullPath && { gateFullPath: fullPath }),

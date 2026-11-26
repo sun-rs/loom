@@ -12,7 +12,7 @@ import { readText, writeState } from './io.mjs';
 
 const exec = promisify(execFile);
 
-function classifySensitive(text) {
+export function classifySensitive(text) {
   // Recognize explicit secret assignments and common credential formats locally.
   const patterns = [
     /\b(?:api[-_]?key|access[-_]?token|auth[-_]?token|client[-_]?secret|password)\s*["']?\s*[:=]\s*(?:"[^"\r\n]*"|'[^'\r\n]*'|[^\s,;]+)/giu,
@@ -75,6 +75,7 @@ export function createProjectMemory(project, { sessions, now, options, report })
   }
 
   return {
+    store, bindingFor,
     async handle(args, caller) {
       try { return await handle(args, caller); }
       catch (error) {

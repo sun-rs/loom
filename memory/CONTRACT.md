@@ -54,6 +54,26 @@
 
 `receipt` 为 `{ requestId, status }`，其状态取值见写入约定。成功在 stdout 输出单个 JSON 对象并退出 0。失败也在 stdout 输出单个 JSON 对象 `{ ok: false, error: { code, message } }` 并以非零状态退出，`message` 经过脱敏。Worker 搜索或写入，以及 Auditor 修改已知 ID 的外项目条目，均返回 `forbidden`。
 
+## 整理提案的 daemon 接口
+
+请求通过项目 daemon 的协议 1 发送 `{ protocol: 1, command, args, caller }`。在进程内测试中调用 `supervisor.handle(command, args, caller)`。调用者必须是该项目当前托管会话的地址或 pane。角色和项目取自会话绑定。下表为进程内返回值，RPC 成功时另附 `ok: true`。
+
+| `command` | `args` | 返回值与权限 |
+| --- | --- | --- |
+| `memory-review` | `{ id: string, decision: 'approve' \| 'reject' }` | `{ id, status: 'approved' \| 'rejected' }`。Auditor 审批项目提案，Super 审批用户提案。 |
+| `memory-index` | `{ scope: 'user' }` | `{ rows }`。Super 可读取生效的用户偏好和裁决索引。每行有 `id, revision, line, usage`。 |
+| `memory-show` | `{ id: string }` | `{ item, seq }`。Super 可按记忆 ID 读用户条目。未知或非用户条目返回 `{ item: null, seq: null }`。 |
+
+同一决定可幂等重试，反向决定或目标版本已变化返回 `conflict`。未知提案和无审批权限均返回 `forbidden`。参数错误返回 `invalid-arguments`。进程内抛出的异常含 `code`，RPC 失败返回 `{ ok: false, error: { code, message } }`。
+
+整理员输出 `{ proposals: [...] }`。每条提案含唯一小写 slug `id`、`action: 'add' | 'merge' | 'invalidate' | 'correct'`、`scope: 'project' | 'user'` 和 `source: { kind: 'delivery' | 'event', id }`。来源须对应本次整理输入里实际提供的投递或项目事件。新增提供 `title, body`。合并提供保留的 `target`、退出索引的 `targets` 及合并后的 `body`。作废只提供非空 `targets`。更正提供 `target, body`，用户更正可在有明确用户原话时省略 `target`，以生成待审的偏好条目。合并和更正可附新标题。阶段只接受合并、作废和更正，一批内退出索引的条目合计最多占所在范围生效条目的五分之一。
+
+经代码验证的提案先进入持久待审队列。项目提案随下一门禁包交 Auditor，用户提案单独投递给 Super。批准应用变更，驳回记下决定。作废保留审计依据并撤出索引。
+
+项目策略 `memory.extractor` 接受 `format: 'openai' | 'anthropic'`、`baseURL`、`model` 和 `keyRef: 'loom-memory-extractor-deepseek'`，钥匙串账户固定为 `loom`。脱敏始终开启。可在 `limits` 覆盖 `maxInputBytes`、`dailyCalls`、`dailyTokens`，默认分别为 16,384、40 和 100,000。回合和阶段共用 UTC 日预算。调用前持久预留预算，成功后按报告用量结算，缺少用量时保留预留。状态与成本报告显示停因，成本分别记录回合和阶段的调用量和已报告 token。
+
+`memoryPilot` 报告主角色每轮额外请求数、换班后首个已完成回合的 token 样本和平均值、事实遗漏数及提案通过率。通过率的分母是已批准加已驳回。可在 `memory.pilot.handoverFileBaseline` 提供交接文件试点的首轮平均 token 作为比较基线。基线和无样本的指标使用 `null`。
+
 ## 授权和读取
 
 - `access.mjs` 导出 `createAccess({ readState, history, now, ...options })`，集中执行授权过滤。`readState()` 提供最新条目和变更，也可传静态 `entries, changes`。
