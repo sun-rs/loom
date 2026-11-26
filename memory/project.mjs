@@ -110,6 +110,15 @@ export function searchMemory(project, query) {
   return results;
 }
 
+export function workerMemoryPrompt(project, card) {
+  const context = card.toLowerCase();
+  const matches = activeItems(project).map(item => ({ item, score: [item.title, ...(item.meta.keywords ?? '').split(/[,\s]+/)]
+    .filter(term => term.length >= 3 && context.includes(term.toLowerCase())).length }))
+    .filter(match => match.score > 0).sort((a, b) => b.score - a.score).slice(0, 2);
+  return matches.length ? ['## Relevant project memory', ...matches.map(({ item }) =>
+    `${indexLine(item)}\n${clipTokens(item.body.trim(), 100)}`)].join('\n\n') : '';
+}
+
 export async function projectMemoryPrompt(project) {
   const indexLines = syncMemoryIndex(project);
   if (!indexLines.length) return '';

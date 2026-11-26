@@ -1,6 +1,13 @@
 {
   "note": "Single-account operation only. Use one authorized account per provider for this project.",
   "delivery": { "coalesceMs": 45000, "replyBytes": 600, "stallMs": 120000 },
+  "workers": {
+    "warmMs": { "codex": 600000, "claude": 600000, "agy": 600000, "opencode": 600000 },
+    "reuseMaxContext": 0.6,
+    "reuseMaxCompactions": 1,
+    "handoffMinCompactions": 1,
+    "handoffMinRemaining": 0.15
+  },
   "drift": {
     "netLines": null,
     "budgetRaises": 2,

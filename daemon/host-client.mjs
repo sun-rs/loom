@@ -26,9 +26,12 @@ export async function attachHost(project, row, job, save, controller, { stop = f
     resume = native?.sessionId ?? resume;
     let owner = readJSON(join(dir, 'owner.json'));
     if (ended || failure) {
-      if (failure && !stop) throw new Error(failure.message);
+      if (failure && !stop && (!job.retention?.resuming || owner &&
+          sameProcess(owner.identity, (await processTable([owner.identity.pid])).get(owner.identity.pid)))) {
+        throw new Error(failure.message);
+      }
       return { endedAt: ended?.at ?? Date.now(), sessionId: ended?.sessionId ?? native?.sessionId,
-        transcriptPath: ended?.transcriptPath };
+        transcriptPath: ended?.transcriptPath, ...(failure && { error: failure.message }) };
     }
     if (stop && !owner) {
       writeState(join(dir, 'cancelled.json'), 'true');
@@ -144,7 +147,7 @@ export async function attachHost(project, row, job, save, controller, { stop = f
     return current;
   }
   return {
-    hosted: true, incarnation, protocol: hello.protocol, release, oar: current.oar, pid: current.identity.pid,
+    hosted: true, incarnation, protocol: hello.protocol, release, oar: current.oar, pid: current.identity.pid, identity: current.identity,
     streamId: current.streamId, pull,
     get session() { return { id: current.sessionId, status: () => ({ value: current.status }),
       effort: () => ({ value: current.effort }), model: () => ({ value: current.model }), steer: current.steer }; },
@@ -157,6 +160,6 @@ export async function attachHost(project, row, job, save, controller, { stop = f
     error: () => current.error,
     receipt: (action, id) => call('receipt', { action, id }),
     control: (action, { id, text, active }) => call('control', { action, id, text, active }),
-    close: () => call('close'),
+    close: options => call('close', options),
   };
 }

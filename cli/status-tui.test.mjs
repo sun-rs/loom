@@ -79,6 +79,17 @@ test('both cost signals appear after all three roles cross the sample floor', ()
   assert.doesNotMatch(output, /warming up/);
 });
 
+test('worker view shows warm retention, context, verdict and per-gate metrics', () => {
+  const sample = { ...board, workers: [{ ...board.workers[0], state: 'idle-warm', contextPercent: 37, lastResultTag: 'DONE',
+    retention: { remainingMs: 93_000 } }, { ...board.workers[1], state: 'closed', retention: {} }],
+  workerMetrics: [{ gate: 'TEST', newSpawns: 2, revives: 1, closed: 1, ttl: 1, coldRevives: 1,
+    coldRevivesMeasured: 1, coldReviveTokens: 150 }] };
+  const workers = boardLines(project, { board: sample }, { page: 1, now, width: 100 }).join('\n');
+  assert.match(workers, /idle-warm.*93s.*37%.*DONE/);
+  assert.match(workers, /closed/);
+  assert.match(workers, /TEST · new 2 · revived 1 · closed 1 · TTL offline 1 · cold 150 tokens/);
+});
+
 test('interactive tabs and keyboard selection open details with the full values', { timeout: 2000 }, async t => {
   const input = new PassThrough();
   const output = new PassThrough();

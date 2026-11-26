@@ -11,12 +11,13 @@ import { relay } from '../relay/project.mjs';
 import { withClaudeTranscriptStops } from '../relay/sources.mjs';
 import { createWatcher } from '../watch/index.mjs';
 import { createLiveness, returnedToShell } from '../watch/liveness.mjs';
-import { opencodeExportFailureLimit, ownedSessions, validInput } from './sessions.mjs';
+import { opencodeExportFailureLimit, ownedSessions, validDispatchReason, validInput } from './sessions.mjs';
 import { jsonRows, prepareJournal, readText } from './io.mjs';
 import { desktopEnabled, notifyExternal, projectNotifications } from './notifications.mjs';
 import { organization } from './org.mjs';
 import { clip } from '../evidence/checks.mjs';
-import { defaultCoalesceMs, readPolicy, setWorkerProfile, workerLimit } from '../cli/policy.mjs';
+import { defaultCoalesceMs, readPolicy, residentCompactionLimit, setWorkerProfile, workerHandoffLimits,
+  workerLimit, workerReuseLimits, workerWarmMs } from '../cli/policy.mjs';
 import { isStartupBlocker } from '../tui/agent-status.mjs';
 import { gateId, saveGatePacket } from './gate-packet.mjs';
 import { gateBoundary, roleBudget } from './role-budget.mjs';
@@ -29,6 +30,8 @@ import { deliveryBoard, gateBoard } from './status-board.mjs';
 import { activeRelease, managedCliPath, releaseId, releaseRoot } from './release.mjs';
 import { rotatingRoles } from '../index/index.mjs';
 import { selfRotation } from './self-rotation.mjs';
+import { approvedWaves, handoffReason, idleForRelease, isReleased, releaseConditions, retainedState, retirementReason, retentionStatus,
+  reuseStatus, workerCardId, workerContext, workerDetails, workerIdleSince, workerMetrics, workerStalledSince } from './worker-retention.mjs';
 
 function batchDeliveryId(batch, dest) {
   const bytes = createHash('sha256').update(`${batch}\0${dest}`).digest('hex').slice(0, 32);
@@ -73,18 +76,21 @@ export function createSupervisor(project, {
   const notifications = projectNotifications(project, now);
   const deliveries = addr => mail.messages.filter(message => message.target.addr === addr);
   const receiptFor = message => ({ ...receipt(message, now()), deliveryId: message.id, phase: message.phase,
+    ...(message.dispatch && { dispatch: message.dispatch, dispatchReason: message.dispatchReason }),
+    ...(message.nextCard && { nextCard: true }),
     ...(message.issue === auditorWakeFiltered && { reason: auditorWakeFiltered, nextWakeDigest: Boolean(message.from) }) });
   const saved = (target, text, fields = {}) => mail.enqueue({
     id: randomUUID(), createdAt: now(), target, text, requestedMode: 'queue', mode: 'queue', phase: 'queued', ...fields,
   });
-  const rotation = selfRotation(project, { sessions, index, mail, notifications, now, spawn: spawnSession, inFlight: rotationWork, report });
+  const rotation = selfRotation(project, { sessions, index, mail, notifications, now, spawn: spawnSession,
+    failHandover, inFlight: rotationWork, report });
   const budget = roleBudget(project, { now, sessions, notifications, batchDeliveryId, report, signalRotation: rotation.propose });
   const parentFor = addr => sessions.routeParent(addr)?.addr ?? addr;
   const targetEnded = addr => sessions.rowFor(addr)?.endedAt != null;
   const senior = row => row.role === 'leader' || row.role === 'auditor';
   const liveRole = (name, role) => sessions.rows().findLast(row => {
     const job = sessions.jobs.get(row.addr);
-    return row.project === name && row.role === role && row.endedAt === null && job && !job.stopping &&
+    return row.project === name && row.role === role && row.endedAt === null && job && !job.stopping && !job.handoverFailure &&
       (!job.handoverAck || job.handoverBound);
   });
   let health = new Map();
@@ -134,7 +140,7 @@ ${details}`, {
   }
 
   const watcher = createWatcher({
-    listSessions: () => sessions.rows().filter(row => row.backend === 'headless' || row.pane),
+    listSessions: () => sessions.rows().filter(row => (row.backend === 'headless' || row.pane) && !isReleased(sessions.jobs.get(row.addr))),
     readHooks(row) {
       const events = sessions.events(row.addr);
       return row.cli === 'claude' && row.backend === 'tui' ? withClaudeTranscriptStops(row, events, row.sessionId) : events;
@@ -197,6 +203,17 @@ ${details}`, {
     return leaderHandoverState(project, { cards, pending, packets, gates });
   }
 
+  function failHandover(job, reason) {
+    const row = sessions.rowFor(job.row.addr);
+    const type = `${row.role}-handover-failed`;
+    const title = row.role === 'leader' ? 'Leader' : 'Auditor';
+    const at = now();
+    notifications.add({ id: `${type}:${job.firstId}`, project: row.project, type,
+      addr: row.addr, deliveryId: job.firstId, reason, at, ...(job.selfRotationId && { logOnly: true }),
+      text: `${title} ${row.addr} 交接失败（${reason}）。` });
+    sessions.failHandover(job, reason, at);
+  }
+
   async function settleHandovers() {
     for (const rotation of index.rotations().filter(item => item.failedAt == null)) {
       const job = sessions.jobs.get(rotation.successor);
@@ -226,12 +243,7 @@ ${details}`, {
       const reason = job.error ?? (row.endedAt !== null ? 'successor-exited' : deliveryFailed(message) ? message.issue :
         done && !done.unconfirmed && (done.body || done.noReply) ? 'first-turn-missing-acknowledgement' : undefined);
       if (!reason) continue;
-      const type = `${row.role}-handover-failed`;
-      const title = row.role === 'leader' ? 'Leader' : 'Auditor';
-      notifications.add({ id: `${type}:${job.firstId}`, project: row.project, type,
-        addr: row.addr, deliveryId: job.firstId, reason, at: now(), ...(job.selfRotationId && { logOnly: true }),
-        text: `${title} ${row.addr} 交接失败（${reason}）。` });
-      await sessions.failSpawn(job, new Error(reason));
+      failHandover(job, reason);
     }
   }
 
@@ -270,15 +282,17 @@ ${details}`, {
         const job = sessions.jobs.get(row.addr);
         const message = byId.get(job.firstId);
         const completion = message?.completion;
+        const mismatch = job.firstReportCheck?.status === 'mismatch' && job.firstReportCheck.mismatches;
         const settled = completion?.body || completion?.noReply || row.endedAt !== null || deliveryFailed(message);
         const unconfirmed = completion?.unconfirmed;
         const reply = settled ? {
           key: job.firstId, at: completion?.at ?? row.endedAt ?? now(),
-          body: completion?.body ?? (unconfirmed ? `UNCONFIRMED ${row.task} 未确认正文\n${completion.unconfirmedBody ?? ''}` :
+          body: mismatch ? `BLOCKED ${row.task}\nWorker first-report mismatch: ${mismatch.join(', ')}` :
+            completion?.body ?? (unconfirmed ? `UNCONFIRMED ${row.task} 未确认正文\n${completion.unconfirmedBody ?? ''}` :
             `FAILED ${row.task}\n${job.error ?? message?.issue ?? '无原生最终回复'}`),
-          source: completion?.source ?? 'loom inbox', failed: !unconfirmed && !completion?.body,
+          source: completion?.source ?? 'loom inbox', failed: !mismatch && !unconfirmed && !completion?.body,
           unconfirmed, sessionId: row.sessionId,
-          evidenceInput: { cwd: row.cwd, sessionId: row.sessionId, expectRed: job.expectRed, nativeTurnIndex: completion?.nativeTurnIndex ?? 1,
+          evidenceInput: !mismatch && { cwd: row.cwd, sessionId: row.sessionId, expectRed: job.expectRed, nativeTurnIndex: completion?.nativeTurnIndex ?? 1,
             nativeTurnId: completion?.nativeTurnId ?? (row.backend === 'tui' ? completion?.turnId : undefined),
             transcriptPath: () => row.transcriptPath },
         } : undefined;
@@ -327,11 +341,11 @@ ${details}`, {
   async function observeSessions(stallMs) {
     await Promise.all(sessions.rows().filter(row => sessions.jobs.has(row.addr)).map(async row => {
       const job = sessions.jobs.get(row.addr);
-      if (row.endedAt !== null) {
+      if (row.endedAt !== null || isReleased(job)) {
         progress.delete(row.addr);
         observations.delete(row.addr);
         liveness.remove(row.addr);
-        if (job.exit && !sessions.successorOf(row.addr)) {
+        if (row.endedAt !== null && job.exit && !sessions.successorOf(row.addr)) {
           const hint = ['super', 'leader', 'auditor'].includes(row.role) ? ` Relaunch with loom spawn ${row.role} --cwd ${JSON.stringify(row.cwd)} --handover-from ${row.addr} and a startup prompt.` : '';
           notifications.add({ id: `${row.addr}:exit`, type: row.role === 'leader' ? 'leader-exited' : 'session-exited',
             project: row.project, addr: row.addr, role: row.role, at: job.exit.since, reason: 'exited',
@@ -371,6 +385,10 @@ ${details}`, {
         sessions.rememberLiveness(row.addr, { ...result, observedAt: now() });
       }
       const roleStatus = {};
+      if (row.role === 'worker' && row.backend === 'headless') {
+        roleStatus.workerContext = contextFor(row, snapshot);
+        roleStatus.stalledSince = workerStalledSince(snapshot, result?.lastProgressAt, now());
+      }
       if (senior(row)) {
         const events = sessions.events(row.addr);
         const root = events.filter(event => !event.agent_id && !event.isSidechain &&
@@ -378,8 +396,16 @@ ${details}`, {
         roleStatus.contextPercent = reportedContext(snapshot ?? {}, root, []).percent;
         roleStatus.activityAt = sessions.lastActivity(row, events.at(-1));
       }
+      if (senior(row) || row.role === 'super') {
+        const { compactions } = workerContext(snapshot?.events ?? sessions.events(row.addr), snapshot);
+        roleStatus.compactions = compactions;
+        roleStatus.rotationDue = compactions >= residentCompactionLimit(policy, row.role);
+        if (senior(row) && roleStatus.rotationDue && idleForRelease(snapshot) && !rotationWork(row).length) {
+          rotation.propose(row, 'compaction');
+        }
+      }
       observations.set(row.addr, { state: userPrompt?.kind ?? result?.health?.status ?? reportedState(snapshot, health.get(row.addr)),
-        awaitingUser: Boolean(userPrompt), ...roleStatus });
+        awaitingUser: Boolean(userPrompt), idle: idleForRelease(snapshot), ...roleStatus });
       if (!userPrompt || now() - userPrompt.since < stallMs ||
           !(senior(row) || row.role === 'super' || ['awaiting-user', 'overlay'].includes(userPrompt.kind))) return;
       const { kind, since, summary } = userPrompt;
@@ -418,7 +444,8 @@ ${details}`, {
       }
     }
     for (const row of sessions.rows().filter(row => row.role === 'leader' && row.endedAt !== null)) {
-      if (sessions.jobs.has(row.addr) && !sessions.successorOf(row.addr)) notifications.add({ id: `${row.addr}:exit`, type: 'leader-exited',
+      const job = sessions.jobs.get(row.addr);
+      if (job && !job.handoverFailure && !sessions.successorOf(row.addr)) notifications.add({ id: `${row.addr}:exit`, type: 'leader-exited',
         project: row.project, addr: row.addr, at: row.endedAt });
     }
     for (const message of mail.messages) {
@@ -591,7 +618,7 @@ ${details}`, {
 
   function leaderSignals(name) {
     return [...org.notices().filter(notice => notice.project === name), ...notifications.list(name, false, true)
-      .filter(event => event.type === 'auditor-budget-exceeded' && event.overBudget !== false ||
+      .filter(event => event.type === 'auditor-budget-exceeded' && event.overBudget !== false || event.type === 'worker-handoff' ||
         event.type === 'stuck' && sessions.rowFor(event.addr)?.role === 'worker')];
   }
 
@@ -622,6 +649,10 @@ ${details}`, {
 
   function messageIssue(message) {
     const row = sessions.rowFor(message.target.addr);
+    const targetJob = sessions.jobs.get(row?.addr);
+    if (targetJob?.firstReportCheck?.status === 'mismatch') return 'worker-first-report-mismatch';
+    if (!message.startup && targetJob?.handoverFailure) return 'handover-failed';
+    if (!message.startup && targetJob?.reviewDeadline) return 'reviewer-single-turn';
     if (row?.role === 'leader') {
       const stuck = message.stuckOf && mail.messages.find(item => item.id === message.stuckOf);
       if (message.orgEvents && !message.orgAppendix || stuck && sessions.rowFor(stuck.target.addr)?.role === 'worker' ||
@@ -643,7 +674,7 @@ ${details}`, {
       handoverId: job?.handoverReportId, senderRole: sessions.rowFor(message.from?.addr)?.role, deepReview })) return auditorWakeFiltered;
   }
 
-  async function closeReviews() {
+  function publishReviews() {
     for (const job of sessions.jobs.values()) {
       if (!job.reviewDeadline) continue;
       const row = sessions.rowFor(job.row.addr);
@@ -658,10 +689,6 @@ ${details}`, {
       const gate = audit && row.wave && mail.messages.some(message => matchesGate(message, row.project, row.wave)) ? row.wave : undefined;
       if (!audit && mail.messages.some(message => message.id === id) ||
           notifications.list(row.project, false, true).some(event => event.id === id)) continue;
-      if (row.endedAt == null) {
-        try { await sessions.stop(row); }
-        catch (error) { report(`${row.addr} reviewer stop: ${error.message}`); continue; }
-      }
       const onTime = result && result.at <= job.reviewDeadline;
       const body = onTime && (result.body ?? result.unconfirmedBody);
       const conclusion = body && conclusoryReply(body);
@@ -680,6 +707,164 @@ ${details}`, {
       } else if (!row.parent) {
         notifications.add({ id, type: 'reviewer-result', project: row.project, addr: row.addr,
           batch: id, at: result?.at ?? row.endedAt ?? job.reviewDeadline, text, externalOnly: true });
+      }
+    }
+  }
+
+  const retainMs = row => workerWarmMs(policy, row.cli);
+  const currentCard = (row, job) => workerCardId(deliveries(row.addr), job.firstId);
+  const workerFindings = (row, job) => org.workerFindings(currentCard(row, job));
+  const incidentFinding = (row, job) => workerFindings(row, job).findLast(finding =>
+    finding.kind === 'overreach' || finding.kind === 'fabrication');
+  function contextFor(row, view) {
+    const cached = sessions.jobs.get(row.addr)?.retention?.lastContext;
+    if (cached) return cached;
+    if (view) return workerContext(view.events ?? sessions.events(row.addr), view);
+    return observations.get(row.addr)?.workerContext ?? workerContext(sessions.events(row.addr));
+  }
+  async function requireNextCardReuse(row) {
+    const job = sessions.jobs.get(row.addr);
+    if (row.role !== 'worker' || row.backend !== 'headless' || !job) {
+      throw new CommandError('invalid-arguments', 'Cross-card reuse requires a managed headless Worker');
+    }
+    const view = !isReleased(job) && await sessions.transport.inspect(sessions.targetBinding(row));
+    await mail.observe(releaseConditions(mail.messages).relatedTargets(row.addr), now(),
+      policy.delivery?.stallMs ?? uncertainWindow ?? defaultStallMs);
+    const conditions = releaseConditions(mail.messages);
+    if (job.retention?.keepWarm || view && !idleForRelease(view) || conditions.pending(row.addr) || !conditions.workerResult(row, job)) {
+      throw new CommandError('not-ready', 'Wait for the current card and its deliveries to settle before reusing this Worker');
+    }
+    await org.collect([row]);
+    const context = contextFor(row, view);
+    const reason = retirementReason(context, workerReuseLimits(policy), workerFindings(row, job));
+    if (reason || context.contextPercent == null) {
+      throw new CommandError('worker-not-reusable', `Next-card reuse refused: ${reason ?? 'context-unmeasured'}`);
+    }
+  }
+  const resumeWorker = row => sessions.resume(row, mail, now(), retainMs(row));
+  const retentionFor = (row, at = now()) => retentionStatus(sessions.jobs.get(row.addr), at, retainMs(row));
+  function workerStatus(row, snapshot) {
+    const retention = retentionFor(row);
+    if (!retention) return;
+    const idle = snapshot ? idleForRelease(snapshot) : observations.get(row.addr)?.idle;
+    const context = contextFor(row, snapshot);
+    const job = sessions.jobs.get(row.addr);
+    const stalledSince = snapshot ? workerStalledSince(snapshot, progress.get(row.addr)?.lastProgressAt, now()) :
+      observations.get(row.addr)?.stalledSince;
+    const pressure = row.role === 'worker' && row.endedAt === null && (incidentFinding(row, job)?.kind ||
+      (stalledSince != null && 'no-progress') || handoffReason(context, workerHandoffLimits(policy)));
+    const draft = job.workerHandoff;
+    const handoff = draft?.ready ? draft : pressure && (draft?.reason === pressure &&
+      (draft.cardId == null || draft.cardId === currentCard(row, job)) ? draft : { reason: pressure, ready: false });
+    return { state: retainedState(retention, idle, row.endedAt != null), retention,
+      ...(job?.firstReportCheck?.status === 'mismatch' ? { lastResultTag: 'BLOCKED' } : workerDetails(deliveries(row.addr))), ...context,
+      ...(row.role === 'worker' && reuseStatus(job, row.endedAt != null, context, workerReuseLimits(policy), workerFindings(row, job))),
+      ...(job?.firstReportCheck && { firstReportCheck: job.firstReportCheck }),
+      ...(handoff && { handoff }) };
+  }
+  const metrics = rows => workerMetrics(rows, addr => sessions.jobs.get(addr), sessions.events, mail.messages);
+  async function publishWorkerHandoff(row, job, reason, { acceptance, evidence } = {}) {
+    const cardId = currentCard(row, job);
+    const card = deliveries(row.addr).find(message => message.id === cardId);
+    const handoff = await sessions.workerHandoff(job, reason, now(), { acceptance, card, evidence });
+    notifications.add({ id: `worker-handoff:${row.addr}:${cardId}:${reason}:${handoff.ready ? 'ready' : 'draft'}`,
+      project: row.project, addr: row.addr, task: row.task, type: 'worker-handoff', at: handoff.at, logOnly: true,
+      text: `Worker ${row.task} handoff ${handoff.ready ? 'ready' : 'draft'} · ${reason} · ${handoff.path}` });
+    return handoff;
+  }
+  async function seniorWorkerHandoff(args, caller) {
+    const actor = caller && sessions.rows().find(row => row.addr === caller || row.pane === caller);
+    if (!actor || actor.endedAt !== null || !(senior(actor) || actor.role === 'super')) {
+      throw new CommandError('invalid-arguments', 'A live Leader, Auditor or Super must request a replacement handoff');
+    }
+    const { target, evidence, reason = 'no-progress' } = args;
+    const reported = reason === 'fabrication' || reason === 'overreach';
+    if (typeof target !== 'string' || !target.trim() || [args.wip, args.passed, args.pending].some(value => value !== undefined) ||
+        (reported ? !validInput(evidence) || Buffer.byteLength(evidence) > 2048 : reason !== 'no-progress' || evidence !== undefined)) {
+      throw new CommandError('invalid-arguments', 'Use no-progress or a confirmed fabrication/overreach finding with evidence up to 2048 bytes');
+    }
+    const row = sessions.resolve(target, caller, { latestTask: true });
+    const job = sessions.jobs.get(row.addr);
+    if (row.project !== actor.project || row.role !== 'worker' || row.backend !== 'headless' || row.endedAt !== null || !job || job.stopping) {
+      throw new CommandError('invalid-arguments', 'Select a live managed headless Worker in your project');
+    }
+    if (reported) {
+      org.confirmWorkerFinding(currentCard(row, job), { kind: reason, at: now(), reporter: actor.addr, evidence });
+    } else {
+      const view = !isReleased(job) && await sessions.transport.inspect(sessions.targetBinding(row));
+      const current = view && await liveness.observe(row, view, job.liveness);
+      if (workerStalledSince(view, current?.lastProgressAt, now()) == null) {
+        throw new CommandError('not-ready', 'No active Worker turn has gone 10 minutes without progress');
+      }
+    }
+    if (job.workerHandoff?.ready) return { handoff: job.workerHandoff };
+    return { handoff: await publishWorkerHandoff(row, job, reason, { evidence }) };
+  }
+  async function reapSessions() {
+    const conditions = releaseConditions(mail.messages);
+    const rows = sessions.rows();
+    const approvals = approvedWaves(mail.messages, rows);
+    const acknowledged = new Set(mail.messages.filter(message => message.received && !deliveryFailed(message))
+      .flatMap(message => [...message.projectEvents ?? [], ...message.rotationNotices ?? []]));
+    const at = now();
+    for (const row of rows) {
+      const job = sessions.jobs.get(row.addr);
+      if (!job || row.endedAt !== null || job.stopping ||
+          !(row.role === 'worker' && (row.backend === 'headless' || job.firstReportCheck?.status === 'mismatch') ||
+            job.reviewDeadline || job.handoverFailure)) continue;
+      if (job.retention?.keepWarm && deliveries(row.addr).some(message => message.id !== job.firstId &&
+          message.received && !deliveryFailed(message))) sessions.setRetention(job, { keepWarm: undefined });
+      const approved = row.role === 'worker' && [row.wave, job.barrier].filter(Boolean)
+        .some(gate => approvals.get(JSON.stringify([row.project, gate])) >= row.startedAt);
+      const context = row.role === 'worker' && contextFor(row);
+      const mismatch = job.firstReportCheck?.status === 'mismatch';
+      const handoff = job.workerHandoff?.ready;
+      const closingReason = mismatch ? 'first-report-mismatch' : handoff ? 'worker-handoff' : approved && 'gate-approved';
+      if (isReleased(job) && (!closingReason || job.retention.resuming)) continue;
+      const events = job.reviewDeadline || job.handoverFailure ? notifications.list(row.project, false, true) : [];
+      const failureId = `${row.role}-handover-failed:${job.firstId}`;
+      const resultDelivered = mismatch ? conditions.workerSummaryDelivered(row.addr) :
+        job.handoverFailure ? acknowledged.has(failureId) ||
+        acknowledged.has(job.selfRotationId) || events.some(event => event.id === failureId && event.takenAt != null) :
+        job.reviewDeadline ? conditions.reviewerReceipt(row.addr) ||
+          events.some(event => event.id === reviewerDeliveryId(job) && event.takenAt != null &&
+            !mail.messages.some(message => message.id === event.id)) :
+        conditions.workerResult(row, job, { allowBlocked: handoff });
+      const eligible = Boolean(resultDelivered && !conditions.pending(row.addr));
+      if (!eligible) {
+        if (context && !isReleased(job) && !handoff && observations.get(row.addr)?.idle && !conditions.pending(row.addr)) {
+          const reason = handoffReason(context, workerHandoffLimits(policy));
+          const draft = job.workerHandoff;
+          if (reason && (draft?.cardId !== currentCard(row, job) || draft.reason !== reason) && !incidentFinding(row, job)) {
+            await publishWorkerHandoff(row, job, reason).catch(error => report(`${row.addr}: ${error.message}`));
+          }
+        }
+        if (job.retention?.eligible) sessions.setRetention(job, { eligible: false, idleSince: undefined, idleStream: undefined });
+        continue;
+      }
+      try {
+        if (isReleased(job)) {
+          await sessions.closeWorker(row, closingReason, at, context?.contextPercent);
+          continue;
+        }
+        const view = await sessions.transport.inspect(sessions.targetBinding(row));
+        const idle = idleForRelease(view);
+        const idleSince = idle ? workerIdleSince(view, at, job.retention) : undefined;
+        sessions.setRetention(job, { idleSince, idleStream: idle ? view.streamId : undefined, eligible: eligible && idle });
+        const finalContext = idle && contextFor(row, view);
+        if (idle && closingReason) {
+          if (row.backend === 'headless') await sessions.release(row, view, at, closingReason, finalContext);
+          await sessions.closeWorker(row, closingReason, at, finalContext.contextPercent);
+        } else if (idle && !job.retention.keep && !job.retention.keepWarm && at - idleSince >= retainMs(row)) {
+          if (row.backend === 'headless' && row.sessionId) {
+            await sessions.release(row, view, at, 'ttl', finalContext);
+            if (row.role !== 'worker') await sessions.stop(row);
+          }
+          else if (row.backend === 'tui') await sessions.stop(row);
+        }
+      } catch (error) {
+        sessions.setRetention(job, { eligible: false });
+        report(`${row.addr} release: ${error.message}`);
       }
     }
   }
@@ -719,6 +904,8 @@ ${details}`, {
     const handoff = codexHandoff(session);
     notifyProfile(session.project, session.addr, job.warnings);
     return { session, deliveryId: job.firstId, requested: job.requested, ...sessions.runtimeSelection(session),
+      ...(session.role === 'worker' && { dispatch: 'new', dispatchReason: args.reason ?? 'clean context',
+        ...(job.checkpoint && { checkpoint: job.checkpoint }) }),
       ...(job.integration && { workerProfile: 'integration' }),
       ...(job.deliver && { deliver: job.deliver, ...(job.barrier && { barrier: job.barrier }) }),
       ...(handoff && { handoff }), ...(job.handoverFrom && { handoverFrom: job.handoverFrom }),
@@ -752,19 +939,30 @@ ${details}`, {
         await rotation.advance();
         await stepRelay(now());
         continuations();
+        const queued = new Set(mail.messages.filter(message => message.phase === 'queued').map(message => message.target.addr));
+        for (const row of rows) {
+          if (row.endedAt !== null || !isReleased(sessions.jobs.get(row.addr)) || !queued.has(row.addr)) continue;
+          await resumeWorker(row).catch(error => report(`${row.addr} resume: ${error.message}`));
+        }
         seats = workerSeats(workerLimit(policy));
+        await Promise.all(rows.filter(row => seats.has(row.addr)).map(async row => {
+          const job = sessions.jobs.get(row.addr);
+          const first = mail.messages.find(message => message.id === job.firstId);
+          if (first?.phase === 'queued') await sessions.verifyWorkerStart(job, now(), 'daemon');
+        }));
       },
       now,
       messageIssue,
       canDispatchMessage: message => !sessions.holdsForHandover(message) && !rotation.holds(message.target.addr),
       stallMs: policy.delivery?.stallMs ?? uncertainWindow ?? defaultStallMs,
       coalesceMs: policy.delivery?.coalesceMs ?? defaultCoalesceMs,
-      decorate(message) {
+      async decorate(message, peers) {
         // Defer delivery notices until after the compact TUI briefing.
         if (message.startup && sessions.jobs.get(message.target.addr)?.compactHandover) return;
         const row = sessions.rowFor(message.target.addr);
         const rotationNotices = rotation.decorate(message, row);
         const byId = new Map(mail.messages.map(item => [item.id, item]));
+        const workerDigest = row?.role === 'leader' && await workerDigestFor(row, [message, ...peers], byId);
         const senderStalls = stalledDeliveries(mail.messages, now()).filter(delivery => {
           const pending = byId.get(delivery.id);
           return [delivery.from, pending.startup && sessions.rowFor(delivery.target)?.parent, ...(pending.resultWorkers ?? []),
@@ -805,7 +1003,8 @@ ${details}`, {
         if (digest) deliveryAppendix = [deliveryAppendix, `Loom Auditor next-wake digest\n${digest}`].filter(Boolean).join('\n\n');
         const replySuppressionNotices = senderSuppressions.filter(notice => visibleIds.has(notice.id)).map(notice => notice.id);
         const shownRotationNotices = rotationNotices.filter(notice => visibleIds.has(notice.id)).map(notice => notice.id);
-        return { ...(deliveryAppendix && { deliveryAppendix }), ...(replySuppressionNotices.length && { replySuppressionNotices }),
+        return { ...(deliveryAppendix && { deliveryAppendix }), ...(workerDigest && { resultContext: workerDigest }),
+          ...(replySuppressionNotices.length && { replySuppressionNotices }),
           ...(shownRotationNotices.length && { rotationNotices: shownRotationNotices }),
           ...(deferred.length && { auditorDigestIds: deferred.map(item => item.id) }),
           ...(batch.length && {
@@ -820,7 +1019,7 @@ ${details}`, {
         return now() < job.reviewDeadline && !first?.completion && !deliveryFailed(first);
       },
     });
-    await closeReviews();
+    publishReviews();
     const current = sessions.rows();
     for (const [name, rows] of Map.groupBy(current, row => row.project)) {
       await budget.check(name, rows, policy, { safeLeader: safeLeader(name, rows), leader: liveRole(name, 'leader'),
@@ -832,6 +1031,39 @@ ${details}`, {
     health = new Map((await watcher.poll()).map(row => [row.addr, row]));
     publishNotifications();
     await pushNotifications();
+    await reapSessions();
+  }
+
+  async function workerDigestFor(leader, messages, byId) {
+    const addrs = new Set(messages.flatMap(message => [
+      ...message.resultWorkers ?? [],
+      ...(message.continuationMembers ?? []).map(id => byId.get(id)?.target.addr),
+    ]));
+    const gates = new Set(messages.map(message => byId.get(message.replyTo)?.gateId).filter(Boolean));
+    const selected = workers().filter(row => row.project === leader.project && row.backend === 'headless' &&
+      (addrs.has(row.addr) || gates.has(row.wave) || gates.has(sessions.jobs.get(row.addr)?.barrier)));
+    const details = await Promise.all(selected.slice(-16).map(async row => {
+      const view = row.endedAt === null && !isReleased(sessions.jobs.get(row.addr)) ?
+        await sessions.transport.inspect(sessions.targetBinding(row)).catch(() => undefined) : undefined;
+      const status = workerStatus(row, view);
+      if (!status) return;
+      const { state, retention, contextPercent, lastResultTag, compactions, reuse, retirementReason, handoff, firstReportCheck } = status;
+      const at = now();
+      const onReceipt = idleForRelease(view) && addrs.has(row.addr) && lastResultTag &&
+        !['BLOCKED', 'UNCONFIRMED'].includes(lastResultTag) ?
+        Math.max(0, retainMs(row) - (at - workerIdleSince(view, at, retention))) : null;
+      const remaining = retention.remainingMs ?? onReceipt;
+      const warm = retention.keep || retention.keepWarm ? 'kept warm' :
+        remaining != null ? `warm ${Math.ceil(remaining / 1000)}s` : 'warm —';
+      const context = contextPercent == null ? 'context unknown' : `context ${Math.round(contextPercent)}%`;
+      const lifespan = reuse === 'same-card-only' ? `same card only (${retirementReason})` : reuse;
+      return [row.task, state, warm, context, lastResultTag ?? 'no result', `${compactions} compactions`, lifespan,
+        firstReportCheck && `baseline ${firstReportCheck.status}`, handoff && `handoff ${handoff.reason}${handoff.path ? ' · ' + handoff.path : ''}`]
+        .filter(Boolean).join(' · ');
+    }));
+    const lines = details.filter(Boolean);
+    if (selected.length > details.length) lines.push(`+${selected.length - details.length} workers in loom status`);
+    return lines.length ? 'Loom Workers\n' + clip(lines.join('\n'), 1400) : undefined;
   }
 
   return {
@@ -844,7 +1076,7 @@ ${details}`, {
       const represented = new Set(attached.map(session => session.addr));
       for (const binding of expected) {
         if (represented.has(binding.addr)) continue;
-        const endedAt = sessions.rowFor(binding.addr)?.endedAt;
+        const endedAt = sessions.rowFor(binding.addr)?.endedAt ?? sessions.jobs.get(binding.addr)?.retention?.releasedAt;
         attached.push(endedAt == null ? { ...binding, status: 'unavailable', reason: 'Session index binding missing' } :
           { ...binding, status: 'ended', endedAt });
       }
@@ -853,6 +1085,31 @@ ${details}`, {
     shutdown: sessions.shutdown,
     async handle(command, args, caller) {
       if (command === 'spawn') return spawnSession(args, caller);
+      if (command === 'worker-handoff' && args.target !== undefined) return seniorWorkerHandoff(args, caller);
+      if (command === 'worker-check' || command === 'worker-handoff') {
+        const actor = caller && sessions.rows().find(row => row.addr === caller || row.pane === caller);
+        const job = actor && sessions.jobs.get(actor.addr);
+        if (actor?.role !== 'worker' || actor.endedAt !== null || !job || isReleased(job)) {
+          throw new CommandError('invalid-arguments', 'This command requires the current live Worker');
+        }
+        if (command === 'worker-check') {
+          const check = await sessions.verifyWorkerStart(job, now(), 'worker');
+          if (check?.status === 'mismatch') {
+            throw new CommandError('worker-first-report-mismatch', `Stop work and report BLOCKED. Mismatch: ${check.mismatches.join(', ')}`);
+          }
+          return { firstReportCheck: check ?? { status: 'unavailable' } };
+        }
+        const { wip, passed, pending } = args;
+        if (![wip, passed, pending].every(value => validInput(value) && Buffer.byteLength(value) <= 2048)) {
+          throw new CommandError('invalid-arguments', 'Provide WIP, passed and remaining acceptance checks of up to 2048 bytes each');
+        }
+        const view = await sessions.transport.inspect(sessions.targetBinding(actor));
+        const finding = incidentFinding(actor, job);
+        const reason = finding?.kind || handoffReason(contextFor(actor, view), workerHandoffLimits(policy));
+        if (!reason) throw new CommandError('not-ready', 'Worker has not reached its mid-card handoff limit');
+        return { handoff: await publishWorkerHandoff(actor, job, reason, { acceptance: { wip, passed, pending }, evidence: finding?.evidence }) };
+      }
+      if (command === 'session-memory') return { memory: await sessions.sessionMemory() };
       if (command === 'rotate') return rotation.request(args, caller);
       if (command === 'layout-up') {
         if (!sessionOptions?.layout) throw new CommandError('not-ready', 'Herdr layout is unavailable');
@@ -869,15 +1126,20 @@ ${details}`, {
           ({ addr, cli, model, sessionId, cwd, transcriptPath, startedAt, state: observations.get(addr)?.state ?? 'starting' });
         return {
           layout: readLayout(project),
-          roles: rows.filter(row => row.endedAt === null && ['super', 'leader', 'auditor'].includes(row.role)).map(row => ({
+          roles: rows.filter(row => row.endedAt === null && !isReleased(sessions.jobs.get(row.addr)) &&
+            ['super', 'leader', 'auditor'].includes(row.role)).map(row => ({
             ...sessionFields(row), role: row.role, backend: row.backend,
             contextPercent: observations.get(row.addr)?.contextPercent ?? budget.contextPercent(row.addr) ?? null,
             activityAt: observations.get(row.addr)?.activityAt ?? row.startedAt,
+            ...(observations.get(row.addr)?.rotationDue && { rotationDue: true }),
+            compactions: observations.get(row.addr)?.compactions ?? 0,
             awaitingHandover: Boolean(sessions.jobs.get(row.addr)?.handoverAck && !sessions.jobs.get(row.addr)?.handoverBound),
           })),
-          workers: rows.filter(row => row.endedAt === null && row.role === 'worker' && row.backend === 'headless').map(row => ({
-            ...sessionFields(row), task: row.task, wave: row.wave,
-          })),
+          workers: rows.filter(row => row.backend === 'headless' && retentionFor(row)).map(row => {
+            return { ...sessionFields(row), role: row.role, task: row.task ?? row.role, wave: row.wave, ...workerStatus(row) };
+          }),
+          workerMetrics: metrics(rows),
+          memory: await sessions.sessionMemory(),
           delivery: deliveryBoard(mail.messages, observations, now()),
           gates: gateBoard(mail.messages, events),
           notifications: { count: pending.length, last: pending.slice(-8).reverse().map(({ id, type, at, text }) =>
@@ -1055,25 +1317,73 @@ ${details}`, {
         return { notifications: notifications.list(name, args.take === true, args.history === true) };
       }
       if (command === 'status' || command === 'ls') {
-        const live = await Promise.all(sessions.rows().filter(row => row.endedAt === null).map(async row => {
+        const rows = sessions.rows();
+        const live = await Promise.all(rows.filter(row => row.endedAt === null).map(async row => {
           const incident = health.get(row.addr);
           const { snapshot, userPrompt } = await inspectSession(row);
           const observed = progress.get(row.addr);
           const liveness = observed?.health;
           const pathWarnings = sessions.pathWarnings(row);
-          return { addr: row.addr, state: userPrompt?.kind ?? liveness?.status ?? reportedState(snapshot, incident),
+          const runtimeState = userPrompt?.kind ?? liveness?.status ?? reportedState(snapshot, incident);
+          const worker = workerStatus(row, snapshot);
+          return { addr: row.addr, state: runtimeState,
             lastProgressAt: observed?.lastProgressAt ?? row.startedAt, ...(liveness && { liveness }),
+            ...(worker && { ...worker, runtimeState }),
+            ...((senior(row) || row.role === 'super') && { compactions: observations.get(row.addr)?.compactions ?? 0,
+              ...(observations.get(row.addr)?.rotationDue && { rotationDue: true }) }),
             ...(pathWarnings.length && { pathWarnings }),
             ...(userPrompt && { userPrompt }), ...(snapshot?.hookGap && { hookGap: snapshot.hookGap }) };
         }));
-        if (command === 'status') return { sessions: live, exits: sessions.rows().flatMap(row => {
+        const closedWorkers = rows.filter(row => row.endedAt != null).flatMap(row => {
+          const status = workerStatus(row);
+          return status ? [{ addr: row.addr, ...status }] : [];
+        });
+        if (command === 'status') return { sessions: [...live, ...closedWorkers], workerMetrics: metrics(rows),
+          memory: await sessions.sessionMemory(), exits: rows.flatMap(row => {
           const exit = sessions.jobs.get(row.addr)?.exit;
           return row.endedAt !== null && exit && !sessions.successorOf(row.addr) ? [{ addr: row.addr, role: row.role, ...exit }] : [];
         }) };
         return { ...pendingWork(mail.messages, undefined, parentFor, targetEnded),
+          workers: [...live.filter(row => row.retention), ...closedWorkers].map(({ addr, state, retention, contextPercent, lastResultTag,
+            compactions, reuse, retirementReason, handoff, firstReportCheck }) =>
+            ({ addr, state, retention, contextPercent, lastResultTag, compactions, reuse, retirementReason, handoff, firstReportCheck })),
           awaitingUser: live.flatMap(row => row.userPrompt ? [{ addr: row.addr, ...row.userPrompt }] : []) };
       }
-      const row = sessions.resolve(args.target, caller);
+      const row = sessions.resolve(args.target, caller, { latestTask: ['send', 'keep', 'assign', 'release'].includes(command) });
+      if (['assign', 'keep', 'release'].includes(command)) {
+        const job = sessions.jobs.get(row.addr);
+        const actor = caller && sessions.rows().find(item => item.addr === caller || item.pane === caller);
+        if (!job || row.backend !== 'headless' || row.role !== 'worker' ||
+            caller && (!actor || actor.endedAt !== null || actor.role !== 'leader' || actor.project !== row.project)) {
+          throw new CommandError('invalid-arguments', 'Expected a headless worker in the Leader’s project');
+        }
+        sessions.requireLive(row);
+        if (command === 'keep') {
+          sessions.setRetention(job, { keep: args.keep !== false, ...(args.keep === false && { keepWarm: undefined }) });
+          return { addr: row.addr, retention: retentionFor(row) };
+        }
+        if (command === 'assign') {
+          if (!validDispatchReason(args.reason)) throw new CommandError('invalid-arguments', 'Expected a one-line dispatch reason');
+          const dispatch = isReleased(job) ? 'revived' : 'continued';
+          const dispatchReason = args.reason ?? (dispatch === 'revived' ? 'reuse task context' : 'continue in live context');
+          return { session: await resumeWorker(row), dispatch, dispatchReason, retention: retentionFor(row) };
+        }
+        if (!isReleased(job)) {
+          const at = now();
+          await mail.observe(releaseConditions(mail.messages).relatedTargets(row.addr), at,
+            policy.delivery?.stallMs ?? uncertainWindow ?? defaultStallMs);
+          const conditions = releaseConditions(mail.messages);
+          if (conditions.pending(row.addr) || !conditions.workerResult(row, job)) {
+            throw new CommandError('not-ready', 'Worker has pending deliveries or its final result has no native delivery receipt');
+          }
+          const view = await sessions.transport.inspect(sessions.targetBinding(row));
+          if (!row.sessionId || !idleForRelease(view)) throw new CommandError('not-ready', 'Worker is not idle');
+          await sessions.release(row, view, at, actor ? 'leader' : 'operator', contextFor(row, view));
+        } else if (job.retention.resuming) {
+          throw new CommandError('not-ready', 'The worker is starting a native resume');
+        }
+        return { addr: row.addr, state: 'offline', retention: retentionFor(row) };
+      }
       if (command === 'handover') {
         const old = sessions.rowFor(args.from);
         if (!validInput(args.text)) throw new CommandError('invalid-arguments', 'Handover brief is required');
@@ -1095,8 +1405,13 @@ ${details}`, {
         const tui = sessions.jobs.get(row.addr)?.tui;
         const { snapshot, userPrompt } = row.endedAt === null ? await inspectSession(row) : {};
         const observed = progress.get(row.addr);
-        const liveness = row.endedAt !== null ? sessions.jobs.get(row.addr)?.exit : observed?.health;
-        return { addr: row.addr, state: row.endedAt !== null ? 'exited' : userPrompt?.kind ?? liveness?.status ?? reportedState(snapshot, incident),
+        const liveness = row.endedAt !== null ? sessions.jobs.get(row.addr)?.exit : isReleased(sessions.jobs.get(row.addr)) ? undefined : observed?.health;
+        const runtimeState = userPrompt?.kind ?? liveness?.status ?? reportedState(snapshot, incident);
+        const worker = workerStatus(row, snapshot);
+        return { addr: row.addr, state: row.endedAt !== null ? 'exited' : runtimeState,
+          ...(worker && { ...worker, runtimeState }),
+          ...((senior(row) || row.role === 'super') && { compactions: observations.get(row.addr)?.compactions ?? 0,
+            ...(observations.get(row.addr)?.rotationDue && { rotationDue: true }) }),
           lastProgressAt: observed?.lastProgressAt ?? row.startedAt, ...(liveness && { liveness }),
           ...(tui && { transport: tui.transport, ...(tui.reason && { transportReason: tui.reason }) }),
           ...((snapshot?.reason ?? incident?.reason) && { reason: snapshot?.reason ?? incident.reason }),
@@ -1110,12 +1425,14 @@ ${details}`, {
           ...pendingWork(mail.messages, row.addr, parentFor, targetEnded) };
       }
       if (command === 'stop') {
-        const closed = row.endedAt !== null ? row : await sessions.stop(row);
+        const closed = row.endedAt !== null ? row : row.role === 'worker' && retentionFor(row) ?
+          await sessions.closeWorker(row, 'cancelled', now()) : await sessions.stop(row);
         return { addr: row.addr, endedAt: closed.endedAt };
       }
       if (command !== 'send') throw new CommandError('invalid-arguments', 'Unknown loomd request');
-      if (!validInput(args.text) || !['queue', 'steer', 'interrupt'].includes(args.mode) ||
-          args.expectReply !== undefined && typeof args.expectReply !== 'boolean') {
+      if (!validInput(args.text) || !validDispatchReason(args.reason) || !['queue', 'steer', 'interrupt'].includes(args.mode) ||
+          args.expectReply !== undefined && typeof args.expectReply !== 'boolean' ||
+          args.nextCard !== undefined && typeof args.nextCard !== 'boolean') {
         throw new CommandError('invalid-arguments', 'Invalid send request');
       }
       if (args.id !== undefined && !messageIdPattern.test(args.id) ||
@@ -1138,7 +1455,8 @@ ${details}`, {
           sessions.rowFor(initial)?.project === row.project : initial === row.addr;
         if (!sameTarget || existing.from?.addr !== sender?.addr || existing.text !== args.text ||
             existing.requestedMode !== args.mode || existing.batchId !== args.batch || existing.batchSize !== args.batchSize ||
-            Boolean(existing.expectReply) !== Boolean(args.expectReply)) {
+            Boolean(existing.expectReply) !== Boolean(args.expectReply) || existing.requestedDispatchReason !== args.reason ||
+            Boolean(existing.nextCard) !== Boolean(args.nextCard)) {
           throw new CommandError('id-conflict', 'Delivery ID is already bound to a different request');
         }
         return { addr: row.addr, ...receiptFor(existing) };
@@ -1148,6 +1466,13 @@ ${details}`, {
       const successor = effectiveMode === 'queue' ? sessions.routeParent(row.addr) : row;
       if (!holdForRole) sessions.requireLive(successor);
       if (from) sessions.requireLive(from);
+      const targetJob = sessions.jobs.get(successor.addr);
+      if (targetJob?.handoverFailure || targetJob?.reviewDeadline) {
+        throw new CommandError('not-ready', 'Temporary reviewers and failed successors do not accept follow-up messages');
+      }
+      if (targetJob?.firstReportCheck?.status === 'mismatch' || targetJob?.workerHandoff?.ready) {
+        throw new CommandError('not-ready', 'This Worker is awaiting closure. Use its report or handoff sheet to start a successor.');
+      }
       if (args.batch) {
         if (from?.role !== 'leader' || row.role !== 'worker' || from.project !== row.project) {
           throw new CommandError('invalid-arguments', 'Continuation batches require a Leader and workers in the same project');
@@ -1178,6 +1503,17 @@ ${details}`, {
       if (effectiveMode === 'interrupt' && !sessions.canInterrupt(target)) {
         throw new CommandError('unsupported', 'Runtime cannot guard the requested turn at interrupt submission');
       }
+      if (args.nextCard) {
+        if (from?.role !== 'leader' || from.project !== successor.project || effectiveMode !== 'queue') {
+          throw new CommandError('invalid-arguments', 'Next-card dispatch requires a Leader queuing work in this project');
+        }
+        await requireNextCardReuse(successor);
+      }
+      const revived = isReleased(targetJob);
+      if (revived) {
+        if (effectiveMode === 'interrupt') throw new CommandError('not-ready', 'interrupt requires an active turn');
+        await resumeWorker(successor);
+      }
       const observation = effectiveMode !== 'queue' && await sessions.transport.inspect(target).catch(() => undefined);
       if (observation?.state === 'finished') throw new CommandError('not-ready', 'Target has exited');
       const active = observation?.active;
@@ -1186,6 +1522,10 @@ ${details}`, {
       const continuation = mode === 'queue' && from?.role === 'leader' && row.role === 'worker' && from.project === row.project;
       const message = saved(target, args.text, { ...fields,
         ...(continuation && !args.batch && { implicitBatch: 'auto:' + randomUUID(), coalesceWindow: 0, streamContinuation: true }),
+        ...(row.role === 'worker' && { dispatch: revived ? 'revived' : 'continued',
+          dispatchReason: args.reason ?? (revived ? 'reuse task context' : 'continue in live context') }),
+        ...(args.reason !== undefined && { requestedDispatchReason: args.reason }),
+        ...(args.nextCard && { nextCard: true }),
         mode, active, barrier: mode === 'queue' ? active : undefined });
       return { addr: row.addr, ...receiptFor(message) };
     },

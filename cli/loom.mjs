@@ -39,7 +39,7 @@ const help = {
     'loom layout adopt --project DIR --leader HC_ADDRESS --auditor HC_ADDRESS',
   ],
   super: ['loom super --terminal HC_ADDRESS [--project DIR]'],
-  cost: ['loom cost [--project DIR]', 'Reports role usage, the rolling consumption pyramid, estimated USD costs and per-turn acceptance timing.'],
+  cost: ['loom cost [--project DIR]', 'Reports role usage, estimated USD costs, session-tree RSS and per-turn acceptance timing.'],
   gate: ['loom gate pack <gate-id> [--round N] [--reuse] [--project DIR] [--base REF] [--candidate REF] [--question TEXT]'],
   escalate: ['loom escalate <gate-id> --reason REASON --evidence TEXT [--round N] [--project DIR] [--base REF] [--candidate REF]',
     'Leader only. Reasons: protected-file, assertion, skip-only, confirmed-fact-miss, sandbox-escape.'],
@@ -47,6 +47,12 @@ const help = {
   send: [sendUsage, sendHelp],
   handover: ['loom handover <leader|auditor|super> --project DIR [--to ADDR]'],
   spawn: [spawnUsage, spawnHelp],
+  assign: ['loom assign --resume-attempt <task|addr> [--reason TEXT] [--project DIR]'],
+  keep: ['loom keep <task|addr> [--clear] [--project DIR]'],
+  release: ['loom release <task|addr> [--project DIR]'],
+  'worker-check': ['loom worker-check [--project DIR]'],
+  'worker-handoff': ['loom worker-handoff --wip TEXT --passed TEXT --pending TEXT [--project DIR]',
+    'loom worker-handoff <task|addr> [--reason no-progress | --reason fabrication|overreach --evidence TEXT] [--project DIR]'],
   rotate: ['loom rotate --self [--prepare | --reason R] [--project DIR]',
     'loom rotate --target <leader|auditor|ADDR> [--prepare | --reason R] [--cli CLI] [--model MODEL] [--effort EFFORT] [--project DIR] (managed Super)'],
   switch: ['loom switch <leader|auditor|worker> --project DIR --to <1-based index|cli/model/effort[/fast]>'],
@@ -66,6 +72,11 @@ const commands = {
   hist: { ...strings('turn', 'turns', 'level', 'role', 'project', 'since', 'outcome', 'wave', 'grep', 'tool', 'cmd', 'tail'),
     ...flags('json', 'diff', 'evidence', 'only-failed', 'with-calls') },
   state: projectArgs, stop: projectArgs, ls: projectArgs, cost: projectArgs,
+  assign: { ...projectArgs, ...flags('resume-attempt'), ...strings('reason') },
+  keep: { ...projectArgs, ...flags('clear') },
+  release: projectArgs,
+  'worker-check': projectArgs,
+  'worker-handoff': { ...projectArgs, ...strings('wip', 'passed', 'pending', 'reason', 'evidence') },
   status: { ...projectArgs, ...flags('json') },
   up: projectArgs,
   tui: { ...projectArgs, ...flags('all', 'once') },
@@ -321,6 +332,25 @@ export async function main(args) {
         throw new CommandError('not-ready', 'loomd is not running for this project');
       }
       if (result.session) result = await withTuiVersionWarnings(result, result.session);
+    } else if (['worker-check', 'worker-handoff'].includes(command)) {
+      const [target] = positionals;
+      const { wip, passed, pending, reason, evidence } = values;
+      if (command === 'worker-check' ? positionals.length :
+        positionals.length > 1 || !target && (reason !== undefined || evidence !== undefined ||
+          ![wip, passed, pending].every(value => value?.trim()))) invalid(help[command].join('\n'));
+      try { result = await request(directory, command, { target, wip, passed, pending, reason, evidence }); }
+      catch (error) {
+        if (!daemonAbsent(error)) throw error;
+        throw new CommandError('not-ready', 'loomd is not running for this project');
+      }
+    } else if (['keep', 'assign', 'release'].includes(command)) {
+      const [target] = positionals;
+      if (positionals.length !== 1 || !target.trim() || command === 'assign' && !values['resume-attempt']) invalid(help[command][0]);
+      try { result = await request(directory, command, { target, reason: values.reason, ...(command === 'keep' && { keep: !values.clear }) }); }
+      catch (error) {
+        if (!daemonAbsent(error)) throw error;
+        throw new CommandError('not-ready', 'loomd is not running for this project');
+      }
     } else if (command === 'hist') {
       result = await hist(values, positionals, directory);
       if (!values.json) { printHistory(result); return 0; }
@@ -362,7 +392,8 @@ export async function main(args) {
         if (!values.json) { printStatus({ ...result, ...projectReceipt(directory) }); return 0; }
       } else if (command === 'cost') {
         const { projectCost } = await import('./cost.mjs');
-        result = { ok: true, ...projectCost(directory, projectSessions(directory)) };
+        const { sessionMemory } = await import('./status.mjs');
+        result = { ok: true, ...projectCost(directory, projectSessions(directory)), memory: await sessionMemory(directory) };
       } else if (command === 'doctor') {
         if (values.prompts) {
           const { promptDoctor } = await import('./prompt-doctor.mjs');
@@ -395,14 +426,17 @@ export async function main(args) {
         let work;
         if (managedProject(directory)) {
           try {
-            const { pendingDeliveries, pendingContinuations, awaitingUser } = await request(directory, 'ls');
-            work = { pendingDeliveries, pendingContinuations, ...(awaitingUser?.length && { awaitingUser }) };
+            const { pendingDeliveries, pendingContinuations, awaitingUser, workers } = await request(directory, 'ls');
+            work = { pendingDeliveries, pendingContinuations, ...(awaitingUser?.length && { awaitingUser }), workers };
           } catch (error) { if (!daemonAbsent(error)) throw error; }
         }
         const prompts = new Map((work?.awaitingUser ?? []).map(({ addr, ...prompt }) => [addr, prompt]));
-        result = { ok: true, ...(work ?? readPendingWork(directory)),
+        const { workers = [], ...pending } = work ?? readPendingWork(directory);
+        const workerStates = new Map(workers.map(({ addr, ...fields }) => [addr, fields]));
+        result = { ok: true, ...pending,
           sessions: projectSessions(directory, values.project !== undefined || Boolean(process.env.LOOM_PROJECT)).map(row =>
-            prompts.has(row.addr) ? { ...row, state: prompts.get(row.addr).kind, userPrompt: prompts.get(row.addr) } : row) };
+            ({ ...row, ...(prompts.has(row.addr) && { state: prompts.get(row.addr).kind, userPrompt: prompts.get(row.addr) }),
+              ...workerStates.get(row.addr) })) };
       }
     }
     emit({ ...result, ...projectReceipt(directory) });
