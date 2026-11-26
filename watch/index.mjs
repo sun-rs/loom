@@ -109,6 +109,7 @@ function snapshot(entry, screen, state = screen) {
 export function createWatcher({
   listSessions, readHooks = async () => [], eventFile, trustedCwds = [], superAddr, hc = hcRequest,
   enqueue = loomQueue(), idleMs = 30_000, busyMs = 45_000, now = Date.now, inspectRuntime, report = () => {},
+  managedLiveness = false,
 }) {
   if (!eventFile || typeof listSessions !== 'function') throw new TypeError('eventFile and listSessions are required');
   if (![idleMs, busyMs].every(value => Number.isFinite(value) && value > 0)) throw new RangeError('Invalid timeout');
@@ -174,7 +175,7 @@ export function createWatcher({
   }
 
   function timedCondition(entry, screen, text, hooks, at) {
-    if (screen !== 'busy' && !(screen === 'idle' && hooks.open)) {
+    if ((screen !== 'busy' || managedLiveness) && !(screen === 'idle' && hooks.open)) {
       entry.timer = null;
       return null;
     }
@@ -249,7 +250,8 @@ export function createWatcher({
     if (session.backend === 'headless') {
       const { state, reason, lastEventAt } = await inspectRuntime(session);
       const at = now();
-      const condition = reason ?? (state === 'busy' && at - lastEventAt >= busyMs ? 'busy-without-output' : null);
+      const condition = managedLiveness && ['rate-limit', 'auth'].includes(reason) ? null :
+        reason ?? (state === 'busy' && at - lastEventAt >= busyMs ? 'busy-without-output' : null);
       if (state === 'unknown') return snapshot(entry, state);
       if (entry.incident && entry.incident.reason !== condition) close(entry, 'recovered', { state });
       if (condition && !entry.incident) {
@@ -275,6 +277,11 @@ export function createWatcher({
     if (!isVisibleFrame(terminal, frame)) return snapshot(entry, 'unknown');
     const adapter = adapters.get(session.cli).screen;
     const screen = adapter.classify(frame.text);
+    if (managedLiveness && ['rate-limit', 'auth-fail', 'trust-dialog', 'picker'].includes(screen)) {
+      close(entry, 'closed', { cause: 'managed-liveness' });
+      entry.timer = null;
+      return snapshot(entry, screen);
+    }
     let hooks;
     try {
       const rows = await readHooks(session);

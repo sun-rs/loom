@@ -1,12 +1,14 @@
 export const approval = 'awaiting-approval';
 export const choice = 'awaiting-choice';
 const kinds = new Map([['permission', approval], ['choice', choice], ['picker', 'picker'], ['overlay', 'overlay'],
+  ['trust-dialog', 'awaiting-user'], ['onboarding', 'awaiting-user'], ['awaiting-user', 'awaiting-user'],
   [approval, approval], [choice, choice]]);
 
 export const promptKind = kind => kinds.get(kind);
 
 const defaults = {
   [approval]: 'Tool approval', [choice]: 'Question for the user', picker: 'Selection menu', overlay: 'Interactive overlay',
+  'awaiting-user': 'Native dialog needs user input',
 };
 
 export function promptDetails(kind, summary, options) {
@@ -23,8 +25,10 @@ export function questionDetails(questions, fallback) {
 }
 
 export function screenPrompt(kind, text) {
+  const trust = kind === 'trust-dialog';
   kind = promptKind(kind);
   if (!kind) return;
+  if (trust) return promptDetails(kind, 'Workspace trust confirmation');
   const rows = text.trim().split('\n').map(line => line.trim().replace(/^[│┃]\s+|\s+[│┃]$/g, '')).filter(Boolean).slice(-38);
   const option = /^(?:[❯›>◯◉○●]\s*)?(?:\d+[.)]|\[[ x✓]\])\s+(.+)$/i;
   const heading = {
@@ -32,6 +36,7 @@ export function screenPrompt(kind, text) {
     [choice]: /^(?:question \d+\/\d+:\s*|[?]\s+)?[^›❯>].*\?$/i,
     picker: /^(?:select (?:a )?(?:model|effort|reasoning level|conversation)|switch model|commands\b|resume (?:a )?(?:session|conversation)|choose a theme)/i,
     overlay: /^(?:how['’]s the cli experience|introducing gemini)/i,
+    'awaiting-user': /^(?:codex just got an upgrade|(?:update|upgrade) available|choose working directory to|(?:this )?session (?:was|is) .*directory|resume .*directory|welcome to .*antigravity|antigravity cli setup|getting started with antigravity|introducing gemini|how['’]s the cli experience)/i,
   };
   const firstOption = rows.findLastIndex(line => /^(?:[❯›>◯◉○●]\s*)?1[.)]\s+/.test(line));
   const scope = kind === choice && firstOption > 0 ? rows.slice(0, firstOption) : rows;

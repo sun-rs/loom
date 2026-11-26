@@ -1,15 +1,32 @@
 import { createHash, randomUUID } from 'node:crypto';
-import { existsSync, readdirSync, readFileSync, realpathSync } from 'node:fs';
+import { chmodSync, existsSync, mkdirSync, readdirSync, readFileSync, realpathSync } from 'node:fs';
 import { delimiter, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { runtimeDirectory } from '../cli/project.mjs';
 import { readText, writeState } from './io.mjs';
 
 export const releaseRoot = realpathSync(fileURLToPath(new URL('..', import.meta.url)));
+export const managedCliPath = project => join(runtimeDirectory(project), 'bin', 'loom');
+const shellWord = value => "'" + value.replaceAll("'", "'\\''") + "'";
+export function installManagedCli(project) {
+  const dir = runtimeDirectory(project);
+  const bin = join(dir, 'bin');
+  mkdirSync(bin, { recursive: true, mode: 0o700 });
+  if (realpathSync(bin) !== bin) throw new Error('Managed CLI directory must be project-local');
+  const program = join(bin, 'dispatch.mjs');
+  const code = readFileSync(new URL('./cli-shim.mjs', import.meta.url), 'utf8');
+  if (readText(program, null) !== code) writeState(program, code);
+  const executable = managedCliPath(project);
+  const script = `#!/bin/sh\nexec ${[process.execPath, program, dir, releaseRoot].map(shellWord).join(' ')} "$@"\n`;
+  if (readText(executable, null) === null) writeState(executable, script);
+  chmodSync(executable, 0o700);
+}
+
 export function managedEnvironment(project, addr) {
-  const bin = join(releaseRoot, 'bin');
+  const executable = managedCliPath(project);
+  const bin = join(runtimeDirectory(project), 'bin');
   const inherited = (process.env.PATH ?? '').split(delimiter).filter(path => path && path !== bin);
-  return { LOOM_PROJECT: project, LOOM_ADDR: addr, LOOM_BIN: join(bin, 'loom'), PATH: [bin, ...inherited].join(delimiter) };
+  return { LOOM_PROJECT: project, LOOM_ADDR: addr, LOOM_BIN: executable, PATH: [bin, ...inherited].join(delimiter) };
 }
 export const activeReleaseFile = project => join(runtimeDirectory(project), 'release.json');
 export const activeRelease = project => JSON.parse(readText(activeReleaseFile(project), 'null'));

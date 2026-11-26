@@ -32,6 +32,7 @@ export const providers = {
       ...claude.screen,
       pastePlaceholder: matchesPastePlaceholder,
       classify(text) {
+        if (/^\s*[⏺⎿]\s+API Error:\s+401\b/m.test(text)) return 'auth-fail';
         if (/^\s*[⏺⎿]\s+API Error:\s+4(?!29)\d{2}\b/m.test(text)) return 'error';
         if (/^\s*[✻✳✶✢✽✺✹✸✷✴✵]\s+429\b[^\n]*retrying in /m.test(text)) return 'rate-limit';
         return screenEvidence(text).kind;

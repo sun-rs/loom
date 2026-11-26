@@ -1,5 +1,6 @@
 import { approval, choice } from '../adapters/prompt-state.mjs';
 import { createHash, randomUUID } from 'node:crypto';
+import { appendFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { CommandError } from '../cli/sessions.mjs';
 import { projectIndex } from '../cli/project.mjs';
@@ -8,6 +9,7 @@ import { conclusoryReply, deliveryFailed, isBlockedReply, messageIdPattern } fro
 import { relay } from '../relay/project.mjs';
 import { withClaudeTranscriptStops } from '../relay/sources.mjs';
 import { createWatcher } from '../watch/index.mjs';
+import { createLiveness, returnedToShell } from '../watch/liveness.mjs';
 import { opencodeExportFailureLimit, ownedSessions, validInput } from './sessions.mjs';
 import { jsonRows, prepareJournal, readText } from './io.mjs';
 import { desktopEnabled, notifyExternal, projectNotifications } from './notifications.mjs';
@@ -56,7 +58,7 @@ export function createSupervisor(project, {
     canRelayReply: addr => sessions.rowFor(addr)?.role !== 'auditor' });
   const org = organization(project, index, sessions, mail, now, report);
   const watchJournal = join(project, '.project', 'watch', 'events.jsonl');
-  prepareJournal(watchJournal);
+  const recordedLiveness = new Map(jsonRows(prepareJournal(watchJournal)).filter(event => event.liveness).map(event => [event.addr, event]));
   const notifications = projectNotifications(project, now);
   const deliveries = addr => mail.messages.filter(message => message.target.addr === addr);
   const receiptFor = message => ({ ...receipt(message, now()), deliveryId: message.id, phase: message.phase });
@@ -70,6 +72,8 @@ export function createSupervisor(project, {
   const liveRole = (name, role) => sessions.rows().findLast(row =>
     row.project === name && row.role === role && row.endedAt === null && sessions.jobs.has(row.addr));
   let health = new Map();
+  const liveness = createLiveness({ now, hangMs: watchOptions?.busyMs });
+  const progress = new Map();
   const startupBlockers = new Map();
   const desktop = externalNotification !== notifyExternal || desktopEnabled() ? async (name, batch) => {
     try { await externalNotification(name, batch); }
@@ -118,11 +122,12 @@ ${details}`, {
       return row.cli === 'claude' && row.backend === 'tui' ? withClaudeTranscriptStops(row, events, row.sessionId) : events;
     },
     eventFile: watchJournal,
-    hc: sessions.managedHc, report, now, ...watchOptions,
+    hc: sessions.managedHc, report, now, ...watchOptions, managedLiveness: true,
     async inspectRuntime(row) {
       const snapshot = await sessions.transport.inspect(sessions.targetBinding(row));
       const last = snapshot.events.findLast(event => ['stuck', 'recovered'].includes(event.type));
-      return { state: snapshot.state, reason: snapshot.reason ?? (last?.type === 'stuck' ? last.reason : undefined),
+      return { state: progress.get(row.addr)?.health?.status === 'waiting-poll' ? 'waiting-poll' : snapshot.state,
+        reason: snapshot.reason ?? (last?.type === 'stuck' ? last.reason : undefined),
         lastEventAt: snapshot.runtimeStatus?.lastEventAt ?? snapshot.active?.since ?? row.startedAt };
     },
     enqueue: async ({ addr, message, eventId }) => receiptFor(saved(sessions.targetBinding(sessions.rowFor(addr)), message,
@@ -228,17 +233,59 @@ ${details}`, {
     return { snapshot, userPrompt };
   }
 
-  async function checkUserPrompts(stallMs) {
-    await Promise.all(sessions.rows().filter(row => row.endedAt === null && senior(row) &&
-      sessions.jobs.has(row.addr)).map(async row => {
-      const { userPrompt } = await inspectSession(row);
-      if (!userPrompt || now() - userPrompt.since < stallMs) return;
+  async function observeSessions(stallMs) {
+    await Promise.all(sessions.rows().filter(row => sessions.jobs.has(row.addr)).map(async row => {
+      const job = sessions.jobs.get(row.addr);
+      if (row.endedAt !== null) {
+        progress.delete(row.addr);
+        liveness.remove(row.addr);
+        if (job.exit && !sessions.successorOf(row.addr)) {
+          const hint = ['super', 'leader', 'auditor'].includes(row.role) ? ` Relaunch with loom spawn ${row.role} --cwd ${JSON.stringify(row.cwd)} --handover-from ${row.addr} and a startup prompt.` : '';
+          notifications.add({ id: `${row.addr}:exit`, type: row.role === 'leader' ? 'leader-exited' : 'session-exited',
+            project: row.project, addr: row.addr, role: row.role, at: job.exit.since, reason: 'exited',
+            text: `Loom ${row.role} ${row.addr} · ${job.exit.reason}.${hint}`,
+            ...(row.role === 'super' && { externalOnly: true }) });
+        }
+        return;
+      }
+      const { snapshot, userPrompt } = await inspectSession(row);
+      if (!job.stopping && (snapshot?.exit || snapshot?.livenessScreen?.kind === 'unknown' &&
+          (row.transcriptPath || snapshot.events.length) &&
+          await returnedToShell(snapshot.terminal, snapshot.livenessScreen.text).catch(() => false))) {
+        await sessions.finishObserved(row, snapshot.exit ?? snapshot.terminal, now());
+        return;
+      }
+      const recorded = recordedLiveness.get(row.addr);
+      const durable = recorded?.at > (job.liveness?.observedAt ?? -Infinity) ? recorded.liveness : job.liveness;
+      const result = await liveness.observe(row, snapshot, durable).catch(error => {
+        report(`${row.addr} liveness: ${error.message}`);
+      });
+      const incident = result?.health;
+      if ((senior(row) || row.role === 'super') && ['quota-wait', 'auth-expired', 'silent-hang'].includes(incident?.status)) {
+        const { status, since, retryAt, reason } = incident;
+        const retry = retryAt == null ? '' : ` · retry ${new Date(retryAt).toISOString()}`;
+        const id = `${row.addr}:liveness:${status}:${since}`;
+        if (recorded?.incidentId !== id) {
+          const event = { type: 'stuck', addr: row.addr, incidentId: id, at: now(), since, reason: status, liveness: result };
+          appendFileSync(watchJournal, JSON.stringify(event) + '\n', { mode: 0o600, flush: true });
+          recordedLiveness.set(row.addr, event);
+        }
+        notifications.add({ id, type: 'session-liveness',
+          project: row.project, addr: row.addr, role: row.role, at: now(), reason: status,
+          summary: reason, text: `${row.role} ${row.addr} · ${status} · ${reason}${retry}`, externalOnly: true });
+      }
+      if (result) {
+        progress.set(row.addr, result);
+        sessions.rememberLiveness(row.addr, { ...result, observedAt: now() });
+      }
+      if (!userPrompt || now() - userPrompt.since < stallMs ||
+          !(senior(row) || row.role === 'super' || ['awaiting-user', 'overlay'].includes(userPrompt.kind))) return;
       const { kind, since, summary } = userPrompt;
       notifications.add({ id: `${row.addr}:user-prompt:${kind}:${since}`, type: 'target-awaiting-user',
         project: row.project, addr: row.addr, at: now(), reason: kind, role: row.role, summary,
         text: `Loom ${row.role} ${row.addr} ${kind} · ${summary}`,
         ...(row.role === 'leader' ? { auditor: true, batch: 'user-prompt:auditor',
-          ...([approval, choice].includes(kind) && { desktopAlso: true }) } :
+          ...([approval, choice, 'awaiting-user', 'overlay'].includes(kind) && { desktopAlso: true }) } :
           { externalOnly: true, batch: 'user-prompt:external' }),
       });
     }));
@@ -255,7 +302,7 @@ ${details}`, {
     }
     for (const event of jsonRows(readText(watchJournal)).filter(event => event.type === 'stuck')) {
       const row = sessions.rowFor(event.addr);
-      if (!row || senior(row) && event.reason === 'picker') continue;
+      if (!row || event.liveness || ['picker', 'trust', 'rate-limit', 'auth'].includes(event.reason)) continue;
       const job = sessions.jobs.get(row.addr);
       notifications.add({ id: event.incidentId, type: 'stuck', project: row.project, addr: row.addr,
         at: event.at, reason: event.reason, ...(row.role === 'worker' && { logOnly: true }) });
@@ -315,7 +362,7 @@ ${details}`, {
     await Promise.all(pending.map(async message => {
       const snapshot = await sessions.transport.inspect(message.target).catch(() => undefined);
       const blocker = snapshot?.state;
-      if (!isStartupBlocker(blocker) || blocker === 'draft-held' ||
+      if (!isStartupBlocker(blocker) || blocker === 'draft-held' || snapshot.userPrompt ||
           snapshot.writeEvidence?.heldDeliveryId === message.id) { startupBlockers.delete(message.id); return; }
       const at = now();
       const previous = startupBlockers.get(message.id);
@@ -606,9 +653,9 @@ ${details}`, {
     for (const [name, rows] of Map.groupBy(current, row => row.project)) {
       await budget.check(name, rows, policy).catch(error => report(`Role budget ${name}: ${error.message}`));
     }
-    health = new Map((await watcher.poll()).map(row => [row.addr, row]));
     await checkStartupBlockers();
-    await checkUserPrompts(policy.delivery?.stallMs ?? uncertainWindow ?? defaultStallMs);
+    await observeSessions(policy.delivery?.stallMs ?? uncertainWindow ?? defaultStallMs);
+    health = new Map((await watcher.poll()).map(row => [row.addr, row]));
     publishNotifications();
     await pushNotifications();
   }
@@ -743,10 +790,18 @@ ${details}`, {
         const live = await Promise.all(sessions.rows().filter(row => row.endedAt === null).map(async row => {
           const incident = health.get(row.addr);
           const { snapshot, userPrompt } = await inspectSession(row);
-          return { addr: row.addr, state: reportedState(snapshot, incident),
+          const observed = progress.get(row.addr);
+          const liveness = observed?.health;
+          const pathWarnings = sessions.pathWarnings(row);
+          return { addr: row.addr, state: userPrompt?.kind ?? liveness?.status ?? reportedState(snapshot, incident),
+            lastProgressAt: observed?.lastProgressAt ?? row.startedAt, ...(liveness && { liveness }),
+            ...(pathWarnings.length && { pathWarnings }),
             ...(userPrompt && { userPrompt }), ...(snapshot?.hookGap && { hookGap: snapshot.hookGap }) };
         }));
-        if (command === 'status') return { sessions: live };
+        if (command === 'status') return { sessions: live, exits: sessions.rows().flatMap(row => {
+          const exit = sessions.jobs.get(row.addr)?.exit;
+          return row.endedAt !== null && exit && !sessions.successorOf(row.addr) ? [{ addr: row.addr, role: row.role, ...exit }] : [];
+        }) };
         return { ...pendingWork(mail.messages, undefined, parentFor, targetEnded),
           awaitingUser: live.flatMap(row => row.userPrompt ? [{ addr: row.addr, ...row.userPrompt }] : []) };
       }
@@ -771,7 +826,10 @@ ${details}`, {
         const incident = health.get(row.addr);
         const tui = sessions.jobs.get(row.addr)?.tui;
         const { snapshot, userPrompt } = row.endedAt === null ? await inspectSession(row) : {};
-        return { addr: row.addr, state: row.endedAt !== null ? 'exited' : reportedState(snapshot, incident),
+        const observed = progress.get(row.addr);
+        const liveness = row.endedAt !== null ? sessions.jobs.get(row.addr)?.exit : observed?.health;
+        return { addr: row.addr, state: row.endedAt !== null ? 'exited' : userPrompt?.kind ?? liveness?.status ?? reportedState(snapshot, incident),
+          lastProgressAt: observed?.lastProgressAt ?? row.startedAt, ...(liveness && { liveness }),
           ...(tui && { transport: tui.transport, ...(tui.reason && { transportReason: tui.reason }) }),
           ...((snapshot?.reason ?? incident?.reason) && { reason: snapshot?.reason ?? incident.reason }),
           ...(snapshot?.writeEvidence && { writeEvidence: snapshot.writeEvidence }),

@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 import { chmodSync, lstatSync, mkdirSync } from 'node:fs';
 import { createConnection } from 'node:net';
 import { join } from 'node:path';
-import { runtimeDirectory } from '../cli/project.mjs';
+import { inDirectory, runtimeDirectory } from '../cli/project.mjs';
 import { readText } from './io.mjs';
 
 export const hostProtocol = 1;
@@ -18,7 +18,8 @@ export const readJSON = (path, fallback = null) => JSON.parse(readText(path, JSO
 export function hostSocket(project, addr, incarnation) {
   // Unix socket paths have a small platform limit. Keep the journal and
   // ownership record in the project, with only the socket in this private dir.
-  const dir = `/tmp/loom-host-${process.getuid()}`;
+  const temp = process.env.LOOM_WORKER_TMP;
+  const dir = temp && inDirectory(temp, project) ? join(temp, 's') : `/tmp/loom-host-${process.getuid()}`;
   mkdirSync(dir, { recursive: true, mode: 0o700 });
   const info = lstatSync(dir);
   if (!info.isDirectory() || info.uid !== process.getuid() || (info.mode & 0o077)) {

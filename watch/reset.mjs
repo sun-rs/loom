@@ -3,7 +3,7 @@ import { stripAnsiAndControl } from '../adapters/agy/lib/classify-screen.mjs';
 const monthNames = 'jan feb mar apr may jun jul aug sep oct nov dec'.split(' ');
 const clock = /^(?:([a-z]{3,9})\s+(\d{1,2})(?:st|nd|rd|th)?(?:,?\s+(\d{4}))?,?\s+)?(\d{1,2})(?::(\d{2}))?\s*(am|pm)?(?:\s*\(([\w/+.-]+)\))?/i;
 const rateMessage = /\b(?:429|resource_exhausted|too many requests|(?:rate|usage|weekly|daily|session|5-hour)\s+limit|hit your .*?limit|hit your limit|quota|model is at capacity)\b/i;
-const resetMarker = /\b(retry[-_ ]after|x-ratelimit-reset|resets?[_ -]at|resets?\s+(?:in|after|on)|try again\s+(?:at|in|after|on)|retry\s+in|resets?)\b["']?\s*[:=]?\s*["']?/gi;
+const resetMarker = /\b(retry[-_ ]after|x-ratelimit-reset|resets?[_ -]at|resets?\s+(?:in|after|on)|try again\s+(?:at|in|after|on)|retry(?:ing)?\s+in|resets?)\b["']?\s*[:=]?\s*["']?/gi;
 
 function clockTime(value, now) {
   const match = clock.exec(value);

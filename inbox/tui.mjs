@@ -335,7 +335,14 @@ export function tui(project, call = hc, fixtureSend, control = controlTui) {
       let frame;
       try { frame = await control(binding, 'state', undefined, terminal.address); }
       catch (error) {
-        return { ...snapshot, state: 'unknown', writeEvidence: {
+        const fallback = await call('read', terminal.address, '--lines', '0').catch(() => undefined);
+        const visible = terminal.screen !== 'inexact' && fallback?.complete === true &&
+          fallback.how === 'screen' && typeof fallback.text === 'string';
+        const kind = visible ? adapters.get(provider).screen.classify(fallback.text) : 'unknown';
+        const details = visible && screenPrompt(kind, fallback.text);
+        return { ...snapshot, state: details?.kind ?? 'unknown',
+          ...(visible && { livenessScreen: { kind, text: fallback.text } }),
+          ...(details && { userPrompt: { ...details, cli: provider, source: 'screen' } }), writeEvidence: {
           transport: binding.transport, screen: 'unavailable', hc: status ?? null, reason: error.code ?? 'control-unavailable',
         } };
       }
@@ -349,7 +356,8 @@ export function tui(project, call = hc, fixtureSend, control = controlTui) {
       const state = frame.exit ? 'finished' : userPrompt?.kind ?? frame.blocker ?? (native.background ? 'busy' : frame.ready && !veto ? 'idle' :
         ['blocked', 'error'].includes(status) ? 'blocked' : screen.kind === 'busy' && active ? 'busy' :
           ['idle', 'busy'].includes(screen.kind) ? 'unknown' : screen.kind);
-      return { ...snapshot, state, active, generation: host.generation,
+      return { ...snapshot, state, active, generation: host.generation, livenessScreen: screen,
+        ...(frame.exit && { exit: frame.exit }),
         ...(userPrompt && !frame.exit && { userPrompt }), urgentReady: !userPrompt && frame.urgentReady && !veto, writeEvidence: {
         transport: binding.transport, screen: screen.kind, native: native.background ? 'background-in-progress' : holderNative.phase ?? 'unknown', hc: status ?? null,
         complete: screen.text !== undefined, humanActive: host.humanActive, composerEmpty: screen.empty,
@@ -369,7 +377,8 @@ export function tui(project, call = hc, fixtureSend, control = controlTui) {
     const status = terminal.status?.state;
     const details = screenPrompt(screen, frame?.text ?? '');
     const userPrompt = details && { ...details, cli: provider, source: 'screen' };
-    if (readOnly) return { ...snapshot, state: userPrompt?.kind ?? 'blocked', ...(userPrompt && { userPrompt }),
+    const livenessScreen = visible ? { kind: screen, text: frame.text } : undefined;
+    if (readOnly) return { ...snapshot, state: userPrompt?.kind ?? 'blocked', livenessScreen, ...(userPrompt && { userPrompt }),
       writeEvidence: { transport: binding.transport ?? 'legacy-hc', reason: binding.reason ?? 'control-unavailable' } };
     let state = screen;
     if (status === 'blocked' || status === 'error') state = 'blocked';
@@ -381,7 +390,7 @@ export function tui(project, call = hc, fixtureSend, control = controlTui) {
     }
     const active = native.state === 'busy' ? activeTurn(terminal, native.opened) : undefined;
     const writeEvidence = { screen, native: native.state, hc: status ?? null, complete: visible, proof: native.proof };
-    return { ...snapshot, state: userPrompt?.kind ?? state, active, writeEvidence, ...(userPrompt && { userPrompt }) };
+    return { ...snapshot, state: userPrompt?.kind ?? state, active, writeEvidence, livenessScreen, ...(userPrompt && { userPrompt }) };
   }
 
   async function resolve(target) {

@@ -20,7 +20,7 @@ import { controlTui, wrapperFailedStart } from '../runtimes/tui/transport.mjs';
 import { controlHello, requestControl } from '../tui/pty-control.mjs';
 import { attachHost } from './host-client.mjs';
 import { attachCodexHolder, pipeTransport, useCodexHolder } from './codex-holder.mjs';
-import { releaseId } from './release.mjs';
+import { managedCliPath, releaseId, releaseRoot, upgradeState } from './release.mjs';
 import { projectMemoryPrompt } from '../memory/project.mjs';
 import { disposeSession } from './session-close.mjs';
 import { workerEnvironment } from './worker-environment.mjs';
@@ -35,10 +35,12 @@ const pipeRecoveryWindow = 120_000;
 const hasText = value => typeof value === 'string' && value.trim().length > 0;
 const temporaryRole = role => ['worker', 'reviewer'].includes(role);
 export const validInput = text => hasText(text) && !/[\x00-\x08\x0b\x0c\x0e-\x1f\x7f-\x9f]/.test(text);
+const unattended = 'No human is watching this session. Never ask the user interactively or open a native question. For a decision, write the facts, options and recommendation in a file. Run "$LOOM_BIN" notifications --needs-decision TEXT --kind decision with a short summary and the file path. Continue any independent work, then end the turn with BLOCKED <decision> while the decision is pending. The answer arrives as a normal delivery.';
 const cardConventions = row => [
   '## Loom task conventions',
   `Task ${row.task}, working directory ${row.cwd}. Follow the card’s writable scope and acceptance commands. Start with the card and skip environment exploration or searches for AGENTS.md and skills to discover Loom conventions.`,
   'Invoke Loom commands through "$LOOM_BIN", the absolute executable path.',
+  unattended,
   'Keep Git hooks enabled. Git --no-verify, core.hooksPath overrides, and equivalent bypasses are forbidden.',
   'Use relevant fragments of large files and output. Avoid rereading whole files already read. After the final acceptance passes, give the final reply immediately. Skip extra status/diff checks, rereads and reruns unless the card requires them.',
   `Final reply line 1: DONE ${row.task}, BLOCKED ${row.task} or FAILED ${row.task}.`,
@@ -107,6 +109,29 @@ export function ownedSessions(project, index, report, {
     jobs.set(job.row.addr, job);
   }
   const save = job => writeState(file(job.row.addr), JSON.stringify(job) + '\n');
+  function saveLaunchPaths(job) {
+    if (job.launchPaths) return;
+    const { backend, cli } = job.row;
+    const hooks = { claude: join(runtimeDirectory(project), 'hook.mjs'), codex: join(releaseRoot, 'adapters', 'codex', 'hook-capture.mjs'),
+      agy: join(releaseRoot, 'adapters', 'agy', 'capture-hook.mjs'), opencode: join(releaseRoot, 'adapters', 'opencode', 'prompt-events') };
+    job.launchPaths = { cli: managedCliPath(project), release: releaseRoot,
+      ...(backend === 'tui' && { hook: hooks[cli] }) };
+    save(job);
+  }
+  function pathWarnings(row) {
+    const job = jobs.get(row.addr);
+    if (!job) return [];
+    const launch = job.launchPaths;
+    if (launch) return launch.hook && within(launch.release, launch.hook) && launch.release !== releaseRoot
+      ? [{ kind: 'hook', path: launch.hook, reason: 'Hook is pinned to an older Loom release' }] : [];
+    const upgrade = upgradeState(project);
+    if (upgrade?.phase !== 'committed' || row.startedAt >= upgrade.finishedAt) return [];
+    const shimBorn = row.cli === 'claude' && statSync(join(runtimeDirectory(project), 'hook.mjs'), { throwIfNoEntry: false })?.birthtimeMs;
+    return [{ kind: 'cli', reason: 'Session predates the serving release and uses a legacy CLI path' },
+      ...(row.backend === 'tui' && !(shimBorn && shimBorn <= row.startedAt) ? [
+        { kind: 'hook', reason: 'Session predates the serving release and uses a legacy hook path' },
+      ] : [])];
+  }
   const holders = tuiHolders(project, controller, save);
   const events = addr => running.get(addr)?.rows ?? jsonRows(readText(eventPath(project, addr)));
   const transportReceipt = metadata => metadata && { transport: metadata.transport, reason: metadata.reason };
@@ -268,6 +293,18 @@ export function ownedSessions(project, index, report, {
     return current;
   }
 
+  function rememberLiveness(addr, result) {
+    const job = jobs.get(addr);
+    if (!job || !result) return;
+    const { health, screenFailure, lastProgressAt } = result;
+    const persisted = health && { ...health };
+    if (persisted) delete persisted.zeroProgressMs;
+    const previous = job.liveness;
+    if (JSON.stringify([previous?.health, previous?.screenFailure]) === JSON.stringify([persisted, screenFailure])) return;
+    job.liveness = { health: persisted, screenFailure, lastProgressAt, observedAt: result.observedAt };
+    save(job);
+  }
+
   function targetBinding(row) {
     const job = jobs.get(row.addr);
     if (!job) throw new ErrorCode('not-found', `Session is not managed by this daemon: ${row.addr}`);
@@ -286,7 +323,13 @@ export function ownedSessions(project, index, report, {
       ['loom-pty', 'holder-v3'].includes(jobs.get(binding.addr)?.tui?.transport) && binding.provider !== 'opencode';
   }
 
-  async function finish(job, row, at = Date.now()) {
+  async function finish(job, row, at = Date.now(), exit) {
+    if (exit && !job.stopping && !job.exit) {
+      const code = exit.code ?? exit.exit_code ?? exit.exitCode;
+      job.exit = { status: 'exited', since: Math.max(row.startedAt, at), code: Number.isSafeInteger(code) ? code : null,
+        reason: `Native CLI exited${Number.isSafeInteger(code) ? ` with code ${code}` : ' (exit code unavailable)'}` };
+      save(job);
+    }
     openCodeProofs.delete(row.addr);
     holders.detach(job.tui);
     const final = row.endedAt === null ? index.update(row.addr, { endedAt: Math.max(row.startedAt, at) }) : row;
@@ -432,7 +475,7 @@ export function ownedSessions(project, index, report, {
       const guidance = row.role === 'leader' ?
         'Coordinate work. Workers reproduce issues and run full test suites in their own sandboxes. Review their receipts and signals. Spawn an independent Reviewer on the fixed candidate with --wave set to the gate ID. Receive the conclusion before running loom gate pack. Use loom escalate for confirmed red facts, sharing one wake per gate with the packet.' :
         'For gate review, read only the gate packet and reviewer conclusions. The Leader commissions the independent review before packing. Delegate deep checks to one ephemeral read-only reviewer. Its conclusion may wake you once and counts against your gate wake budget. Other wake sources are user or Super messages, a gate packet or red escalation from Leader, and succession supervision. ';
-      prompt = `## Loom role guidance\n${guidance} Assign long-running work to a Worker or Reviewer. Do not wait on background Bash. For a user or Super decision, write the choices in a file and run "$LOOM_BIN" notifications --needs-decision TEXT --kind decision with a short summary and its path. Keep working where possible. The decision arrives as a normal delivery. If a result is overdue, run "$LOOM_BIN" status and check stalled deliveries. Begin conclusions with DONE, BLOCKED, FAILED, PASS, REJECT or APPROVE. Use NOREPLY for acknowledgements.\n\n## Startup request\n${prompt}`;
+      prompt = `## Loom role guidance\n${guidance} Assign long-running work to a Worker or Reviewer. Do not wait on background Bash. ${unattended} If a result is overdue, run "$LOOM_BIN" status and check stalled deliveries. Begin conclusions with DONE, BLOCKED, FAILED, PASS, REJECT or APPROVE. Use NOREPLY for acknowledgements.\n\n## Startup request\n${prompt}`;
       try { prompt = await projectMemoryPrompt(project) + prompt; }
       catch (error) { report(`Project memory unavailable: ${error.message}`); }
     }
@@ -530,6 +573,7 @@ export function ownedSessions(project, index, report, {
       if (!running.has(row.addr)) {
         const last = events(row.addr).findLast(event => ['stream-opened', 'exited', 'released'].includes(event.type));
         if (!job.host && ['exited', 'released'].includes(last?.type) && !last.suspending) return finish(job, row, last.at);
+        if (!job.host && !last) saveLaunchPaths(job);
         const runtime = open ? await openFixture(row, job) : await attachHeadless(row, job);
         if (runtime.endedAt != null) {
           if (runtime.sessionId && row.sessionId !== runtime.sessionId) row = index.update(row.addr, { sessionId: runtime.sessionId });
@@ -552,6 +596,7 @@ export function ownedSessions(project, index, report, {
         terminal = undefined;
       }
       if (!terminal && !job.paneBinding) {
+        saveLaunchPaths(job);
         if (row.cli === 'claude') {
           job.authMode = claudeAuthMode(project, row.role);
           save(job);
@@ -566,7 +611,7 @@ export function ownedSessions(project, index, report, {
         terminal = opened.terminal;
         nativeId = opened.nativeId;
       }
-      if (!terminal || completedPane(terminal)) return finish(job, row, terminal?.finished_ms);
+      if (!terminal || completedPane(terminal)) return finish(job, row, terminal?.finished_ms, terminal);
       activity.set(row.addr, terminal.status_ms);
       if (!job.paneBinding) {
         job.paneBinding = { createdAt: terminal.created_ms, pid: terminal.pid };
@@ -638,7 +683,14 @@ export function ownedSessions(project, index, report, {
       }
       catch (error) { report(error.message); }
     }
-    if (!terminal || completedPane(terminal)) row = await finish(job, row, terminal?.finished_ms);
+    if (!terminal || completedPane(terminal)) {
+      let exit = terminal;
+      if (job.tui?.exitPath) {
+        const recorded = JSON.parse(readText(job.tui.exitPath, 'null'));
+        if (recorded && Number.isSafeInteger(recorded.code)) exit = recorded;
+      }
+      row = await finish(job, row, terminal?.finished_ms, exit ?? {});
+    }
     return row;
   }
 
@@ -711,7 +763,7 @@ export function ownedSessions(project, index, report, {
               try { if (!runtime.hosted) await disposeSession(runtime.session); }
               catch (error) { report(`${addr} dispose: ${error.message}`); }
               finally { runtime.unsubscribe?.(); running.delete(addr); }
-              row = await finish(job, row, exit?.at ?? runtime.endedAt);
+              row = await finish(job, row, exit?.at ?? runtime.endedAt, exit ?? {});
             }
           }
         }
@@ -849,5 +901,6 @@ export function ownedSessions(project, index, report, {
 
   return { rows, rowFor, events, targetBinding, transport, requestedMode, canInterrupt, resolve, requireLive, newJob,
     activate, failSpawn, runtimeSelection, refresh, stop, shutdown, upgradeSessions, upgradeHolder, jobs, managedHc, sealed, lastActivity,
-    routeParent, bindSuccessor, retirePredecessor, successorOf, rememberUserPrompt };
+    routeParent, bindSuccessor, retirePredecessor, successorOf, rememberUserPrompt, pathWarnings, rememberLiveness,
+    finishObserved(row, exit, at) { return finish(jobs.get(row.addr), row, at, exit); } };
 }

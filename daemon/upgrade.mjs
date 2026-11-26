@@ -147,7 +147,8 @@ export async function checkUpgradeAttachments(project, plan) {
   }
 }
 
-export async function beginUpgrade(project, plan) {
+export async function beginUpgrade(project, plan, id = randomUUID()) {
+  if (!hostUUID.test(id)) throw new CommandError('invalid-arguments', 'Invalid upgrade ID');
   plan = await checkUpgradeAttachments(project, { ...plan, blockers: blockersFor(plan.sessions, plan.target) });
   if (plan.blockers.length) {
     if (plan.blockers.every(blocker => blocker.retryable)) {
@@ -156,12 +157,12 @@ export async function beginUpgrade(project, plan) {
     throw new CommandError('not-ready', 'Some sessions could not be verified. Run loom upgrade --check for details.');
   }
   const prior = upgradeState(project);
-  if (prior?.phase === 'switching' || prior?.recoveryPending && await liveHandoff(project, prior.id)) {
+  if (prior?.id === id || prior?.phase === 'switching' || prior?.recoveryPending && await liveHandoff(project, prior.id)) {
     throw new CommandError('not-ready', 'An upgrade is already switching');
   }
   const predecessor = (await processTable([process.pid])).get(process.pid);
   if (!predecessor) throw new Error('Previous loomd identity unavailable');
-  const state = { id: randomUUID(), phase: 'switching', startedAt: Date.now(), predecessorPid: process.pid, predecessor, ...plan };
+  const state = { id, phase: 'switching', startedAt: Date.now(), predecessorPid: process.pid, predecessor, ...plan };
   const path = upgradeFile(project);
   writeState(path, JSON.stringify(state));
   try {

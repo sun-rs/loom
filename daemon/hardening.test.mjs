@@ -16,8 +16,9 @@ import { deliveryId } from '../inbox/message.mjs';
 import { addCodexStartHook } from '../runtimes/tui/codex-start.mjs';
 import { request } from './rpc.mjs';
 import { hostDirectory, hostHello, hostRequest, hostSocket } from './host-control.mjs';
-import { processTable, sameProcess } from './processes.mjs';
+import { processCommand, processTable, sameProcess } from './processes.mjs';
 import { nextController, releaseId } from './release.mjs';
+import { nestedSeatbeltLimited } from './sandbox-test-capability.mjs';
 
 const fixture = path => fileURLToPath(new URL('../tasks/PROTO-HARDEN-0/fixtures/' + path, import.meta.url));
 const repository = fileURLToPath(new URL('..', import.meta.url));
@@ -32,7 +33,7 @@ function signal(pid, name) {
       // A process group consisting only of zombies can still have a PGID on
       // macOS. Verify there is no signalable fixture process before accepting
       // EPERM as cleanup, including when the child exits between ps and kill.
-      const rows = execFileSync('/bin/ps', ['-axo', 'pgid=,uid=,state='], { encoding: 'utf8', timeout: 2000 });
+      const rows = execFileSync(processCommand(), ['-axo', 'pgid=,uid=,state='], { encoding: 'utf8', timeout: 2000 });
       const live = rows.trim().split('\n').some(row => {
         const [group, uid, state] = row.trim().split(/\s+/);
         return Number(group) === -pid && Number(uid) === process.getuid() && !state.startsWith('Z');
@@ -45,7 +46,7 @@ function signal(pid, name) {
 
 after(async () => {
   if (!fixtureProjects.size) return;
-  const { stdout } = await exec('/bin/ps', ['-axww', '-o', 'pid=,pgid=,command='], { timeout: 10_000, maxBuffer: 4 * 1024 * 1024 });
+  const { stdout } = await exec(processCommand(), ['-axww', '-o', 'pid=,pgid=,command='], { timeout: 10_000, maxBuffer: 4 * 1024 * 1024 });
   const leftovers = stdout.trimEnd().split('\n').flatMap(line => {
     const [, pid, group, command] = /^\s*(\d+)\s+(\d+)\s+(.+)$/.exec(line) ?? [];
     if (!command || ![...fixtureProjects].some(path => command.includes(` ${path} `) ||
@@ -279,7 +280,8 @@ test(`real OAR and hc-shaped TUI prompts share durable idempotency for two concu
   f.write('verified-concurrency.json', { accepted: 2 * perSender, delivered: 2 * perSender, answered: 2 * perSender, duplicates: 0, fifo: true });
 });
 
-test('real ACP text chunks without a final boundary produce an UNCONFIRMED wave wakeup', { timeout: 25_000 }, async t => {
+test('real ACP text chunks without a final boundary produce an UNCONFIRMED wave wakeup',
+  { timeout: 25_000, skip: nestedSeatbeltLimited }, async t => {
   const f = fixtureProject(t);
   await f.start();
   const leader = await f.spawn('leader', 'LEADER', { mode: 'tui' });
@@ -517,7 +519,8 @@ test('watch and handover recover published records across daemon SIGKILL', { con
     await f.start();
     const event = await until(async () => {
       const { notifications } = await f.rpc('state', { target: session.addr });
-      return notifications.find(event => (retention ? 'leader-exited' : 'stuck') === event.type);
+      return notifications.find(event => retention ? event.type === 'leader-exited' :
+        event.type === 'session-liveness' && event.reason === 'quota-wait');
     }, stage + ' recovered external event');
     assert.ok(event.id);
     if (retention) {

@@ -140,7 +140,7 @@ export function readPolicy(project, { optional = false } = {}) {
 }
 
 export const allowNativeQuestions = (project, role) =>
-  readPolicy(project, { optional: true }).roles?.[role]?.allowNativeQuestions === true;
+  role === 'super' && readPolicy(project, { optional: true }).roles?.super?.allowNativeQuestions !== false;
 
 export const claudeAuthMode = (project, role) =>
   readPolicy(project, { optional: true }).roles?.[role]?.auth ?? 'subscription';

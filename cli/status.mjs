@@ -13,8 +13,9 @@ import { auditorWakeFiltered } from '../daemon/routing.mjs';
 export async function projectStatus(project) {
   const rows = projectSessions(project);
   let live;
+  let exits;
   if (managedProject(project)) {
-    try { live = (await request(project, 'status')).sessions; }
+    try { ({ sessions: live, exits } = await request(project, 'status')); }
     catch (error) { if (!daemonAbsent(error)) throw error; }
   }
   const states = new Map((live ?? []).map(row => [row.addr, row]));
@@ -93,12 +94,27 @@ export async function projectStatus(project) {
     const prompt = states.get(row.addr)?.userPrompt;
     return prompt && row.endedAt === null ? [{ addr: row.addr, role: row.role, ...prompt }] : [];
   });
-  return { ok: true, running: Boolean(live), stalledDeliveries: stalledDeliveries(messages), awaitingUser,
+  const sessionHealth = rows.flatMap(row => {
+    const health = states.get(row.addr)?.liveness ?? (!live && row.endedAt == null && artifacts.job(row.addr)?.liveness?.health);
+    return health ? [{ addr: row.addr, role: row.role, ...health,
+      ...(health.status === 'waiting-poll' && { zeroProgressMs: health.zeroProgressMs ?? Math.max(0, Date.now() - health.since) }) }] : [];
+  });
+  const crashed = exits ?? rows.flatMap(row => {
+    const exit = row.endedAt != null && artifacts.job(row.addr)?.exit;
+    return exit && !rotations.some(item => item.predecessor === row.addr && item.boundAt != null && item.failedAt == null) ?
+      [{ addr: row.addr, role: row.role, ...exit }] : [];
+  });
+  const byAddress = new Map(rows.map(row => [row.addr, row]));
+  const deliveryAlerts = stalledDeliveries(messages).map(item =>
+    ({ ...item, role: byAddress.get(item.target)?.role, since: item.stalledAt }));
+  return { ok: true, running: Boolean(live), stalledDeliveries: deliveryAlerts, awaitingUser, sessionHealth, exits: crashed,
     sessions: rows.filter(row => row.endedAt == null).map(row => {
       const authMode = row.cli === 'claude' ? artifacts.job(row.addr)?.authMode : undefined;
       return { role: row.role, addr: row.addr, cli: row.cli, task: row.task, state: lifecycle(row),
         ...(authMode && { authMode }),
         ...(states.get(row.addr)?.userPrompt && { userPrompt: states.get(row.addr).userPrompt }),
+        ...(states.get(row.addr)?.lastProgressAt != null && { lastProgressAt: states.get(row.addr).lastProgressAt }),
+        ...(states.get(row.addr)?.pathWarnings && { pathWarnings: states.get(row.addr).pathWarnings }),
         ...(states.get(row.addr)?.hookGap && { hookGap: states.get(row.addr).hookGap }),
         ...(rotating.has(row.addr) && { awaitingVerifiedReport: true }) };
     }),
@@ -116,10 +132,20 @@ export function printStatus(result) {
     if (rows.length > limit) shown.push('… ' + (rows.length - limit) + ' more in --json');
     console.log(label + ' · ' + (shown.join('  |  ') || 'none'));
   }
+  const stamp = value => Number.isFinite(value) ? new Date(value).toISOString() : 'unknown time';
+  const incident = row => [row.role ?? 'unassigned', row.addr, row.status ?? row.kind, stamp(row.since),
+    row.reason ?? row.summary, ...(row.retryAt != null ? [`retry ${stamp(row.retryAt)}`] : [])].join(' · ');
   console.log('Loom · ' + safe(result.project) + (result.running ? ' · online' : ' · offline'));
-  section('Stalled deliveries', result.stalledDeliveries, stallText, Infinity);
-  section('Awaiting user', result.awaitingUser, row =>
-    [row.role, row.cli, row.addr, row.kind, row.summary].join(' · '), Infinity);
+  section('Stalled deliveries', result.stalledDeliveries, row =>
+    [row.role ?? 'unassigned', stamp(row.since), stallText(row)].join(' · '), Infinity);
+  section('Awaiting user', result.awaitingUser, incident, Infinity);
+  section('Quota and authentication', result.sessionHealth.filter(row => ['quota-wait', 'auth-expired'].includes(row.status)), incident, Infinity);
+  section('Silent hangs', result.sessionHealth.filter(row => row.status === 'silent-hang'), incident, Infinity);
+  section('Exited', result.exits, incident, Infinity);
+  section('Waiting polls', result.sessionHealth.filter(row => row.status === 'waiting-poll'), row =>
+    `${incident(row)} · ${Math.floor(row.zeroProgressMs / 1000)}s zero progress`, Infinity);
+  section('Release paths', result.sessions.flatMap(row => (row.pathWarnings ?? []).map(warning => ({ ...row, ...warning }))),
+    row => [row.role, row.addr, row.reason, row.path].filter(Boolean).join(' · '), Infinity);
   section('Roles', result.sessions, row => [row.role ?? 'unassigned', row.cli, row.state,
     row.awaitingVerifiedReport ? 'awaiting report' : row.task ?? row.addr].join(' '), 6);
   section('Hook gaps', result.sessions.filter(row => row.hookGap),

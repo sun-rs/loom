@@ -30,7 +30,7 @@ function frameEvents(kernel, kind) {
 
 test('startup key rows and a custom status line never grant a dialog or draft the composer', () => {
   const update = '0.171.0\nEntercontinue · Escskip';
-  assert.equal(providers.codex.screen.classify(update), 'picker');
+  assert.equal(providers.codex.screen.classify(update), 'awaiting-user');
   assert.deepEqual(providers.codex.screen.dialogKeys('picker', update), ['esc']);
   const migration = 'Partial heading\nEnter/Esc continue · Do not show again';
   assert.equal(providers.codex.screen.classify(migration), 'picker');

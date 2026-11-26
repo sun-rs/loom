@@ -43,6 +43,8 @@ const TRUST_DIALOG_CHOICE_RE = /^(?:[❯›]\s*)?(?:\d+\.\s*)?(?:yes, i trust th
 // Orca b7fd7caa3 src/main/runtime/terminal/wait/startup-dialog-blocked-signals.ts.
 const CODEX_MODEL_MIGRATION_KEY_ROW_RE = /enter\/esc\s*(?:continue|confirm)\s*·/i;
 const CODEX_UPDATE_KEY_ROW_RE = /^enter\s*continue\s*·\s*esc\s*skip\s*$/i;
+const UPDATE_HEADING = /^(?:codex just got an upgrade|update available|upgrade available)\b/i;
+const RESUME_DIRECTORY = /^(?:choose working directory to (?:resume|continue)|(?:this )?session (?:was|is) (?:originally )?(?:started|created) in a different (?:working )?directory|resume (?:this )?session (?:in|from) a different (?:working )?directory)\b/i;
 const CODEX_STARTUP_HOOKS_KEY_ROW_RE = /^enter\s*confirm\s*·(?!\s*esc\s*back\b)/i;
 const PICKER_KEY_ROW_RE = /^enter(?: to)?\s*(?:select|confirm|continue)\s*·\s*esc\s*(?:back|skip|cancel)$/i;
 const PICKER_HEADING_RE = /^(?:select (?:a )?(?:model|reasoning (?:effort|level)|session|conversation)|(?:resume|fork) (?:a |an )?(?:previous )?(?:session|conversation)|choose working directory to|codex just got an upgrade|update available|hooks need review)\b/i;
@@ -455,8 +457,11 @@ export function classify(text) {
   if (entries.length === 0) return 'unknown';
 
   if (matchesTrustDialog(entries)) return 'trust-dialog';
-  if (matchesPicker(entries)) return 'picker';
   const footer = entries.at(-1).trimmed;
+  if (CODEX_UPDATE_KEY_ROW_RE.test(footer) || entries.some(entry => !entry.isToolOutput && !entry.hasPromptChevron &&
+      (UPDATE_HEADING.test(entry.trimmed) || RESUME_DIRECTORY.test(entry.trimmed))) &&
+      /\b(?:enter|esc)\b.*\b(?:continue|confirm|select|skip|back|cancel)\b/i.test(footer)) return 'awaiting-user';
+  if (matchesPicker(entries)) return 'picker';
   if (/(?:^|\| )enter to submit answer(?:\s*\||$)/i.test(footer) &&
       entries.some(entry => /^(?:[›> ]*)\d+[.)]\s+/.test(entry.trimmed))) return 'choice';
   const tail = entries.map(entry => entry.trimmed).join('\n');

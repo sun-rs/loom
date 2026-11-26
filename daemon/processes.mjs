@@ -1,4 +1,6 @@
-import { execFile } from 'node:child_process';
+import { execFile, execFileSync, spawnSync } from 'node:child_process';
+import { chmodSync, copyFileSync, mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { promisify } from 'node:util';
 import { setTimeout as delay } from 'node:timers/promises';
@@ -9,6 +11,30 @@ export const oarProcessPath = project => join(runtimeDirectory(project), 'oar-pr
 
 const exec = promisify(execFile);
 const fields = 'pid=,ppid=,pgid=,uid=,lstart=,comm=';
+let macPs;
+
+export function processCommand() {
+  if (process.platform !== 'darwin') return '/bin/ps';
+  if (macPs) return macPs;
+  const probe = spawnSync('/bin/ps', ['-p', String(process.pid), '-o', 'pid='], { timeout: 2000 });
+  if (probe.error?.code !== 'EPERM') return macPs = '/bin/ps';
+  // Seatbelt prevents exec of the system setuid binary. Run the same
+  // executable signed locally, with ordinary privileges and no entitlements.
+  const dir = mkdtempSync(join(tmpdir(), 'loom-ps-'));
+  const cleanup = () => rmSync(dir, { recursive: true, force: true });
+  try {
+    const copy = join(dir, 'ps');
+    copyFileSync('/bin/ps', copy);
+    chmodSync(copy, 0o500);
+    execFileSync('/usr/bin/codesign', ['--force', '--sign', '-', copy], { stdio: 'pipe', timeout: 3000 });
+    process.once('exit', cleanup);
+    return macPs = copy;
+  } catch (error) {
+    cleanup();
+    throw Object.assign(new Error('Unprivileged process enumeration unavailable in this sandbox', { cause: error }),
+      { code: 'process-enumeration-sandbox-limited' });
+  }
+}
 
 export async function processTable(pids, run = exec) {
   const selected = pids && [...new Set(pids.filter(pid => Number.isSafeInteger(pid) && pid > 0))];
@@ -16,12 +42,14 @@ export async function processTable(pids, run = exec) {
   let text;
   for (let attempt = 0; attempt < 3; attempt++) {
     try {
-      ({ stdout: text } = await run('/bin/ps', selected ? ['-p', selected.join(','), '-o', fields] : ['-axo', fields], {
+      ({ stdout: text } = await run(run === exec ? processCommand() : '/bin/ps',
+        selected ? ['-p', selected.join(','), '-o', fields] : ['-axo', fields], {
         encoding: 'utf8', timeout: 2000, killSignal: 'SIGKILL',
         maxBuffer: 4 * 1024 * 1024, env: { ...process.env, LC_ALL: 'C' },
       }));
       break;
     } catch (error) {
+      if (error.code === 'process-enumeration-sandbox-limited') throw error;
       if (selected && error.code === 1 && !error.stdout?.trim() && !error.stderr?.trim()) return new Map();
       const transient = error.killed || ['ETIMEDOUT', 'EAGAIN', 'EINTR', 'ENOMEM'].includes(error.code);
       if (!transient || attempt === 2) {

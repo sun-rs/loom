@@ -168,6 +168,10 @@ export function codexPipeSession(project, row, dir, incarnation, client, verify,
           status: item.status });
       }
     } else if (method === 'item/agentMessage/delta' && typeof p.delta === 'string') {
+      if (p.delta && !state.active.progress) {
+        add('model-progress', turnFields());
+        state.active.progress = true;
+      }
       const messages = state.active.messages;
       if (!Object.hasOwn(messages, p.itemId)) Object.defineProperty(messages, p.itemId, {
         enumerable: true, configurable: true, writable: true, value: { text: '' },

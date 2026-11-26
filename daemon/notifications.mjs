@@ -10,7 +10,8 @@ import { request } from './rpc.mjs';
 const logPath = project => resolve(runtimeDirectory(project), 'notifications.json');
 export const readNotifications = project => JSON.parse(readText(logPath(project), '[]'));
 const exec = promisify(execFile);
-const desktopTypes = new Set(['needs-decision', 'project-completed', 'audit-escalation', 'leader-exited', 'consumption-pyramid', 'delivery-stalled', 'target-awaiting-user']);
+const desktopTypes = new Set(['needs-decision', 'project-completed', 'audit-escalation', 'leader-exited', 'session-exited',
+  'session-liveness', 'consumption-pyramid', 'delivery-stalled', 'target-awaiting-user']);
 export const desktopIntervalMs = 5 * 60_000;
 export const desktopEnabled = () => process.platform === 'darwin' &&
   process.env.LOOM_DESKTOP_NOTIFY !== '0' && process.env.NODE_TEST_CONTEXT === undefined;
@@ -22,8 +23,9 @@ export async function notifyExternal(project, events, execute = exec) {
   if (!desktopEnabled()) return;
   const types = [...new Set(events.map(event => event.type).filter(type => desktopTypes.has(type)))].join(', ');
   if (!types) return;
-  const prompt = events.find(event => event.type === 'target-awaiting-user');
-  const body = prompt ? `${prompt.role} · ${prompt.summary}` : `${types.slice(0, 180)}. Open loom notifications for details.`;
+  const incidents = events.filter(event => ['target-awaiting-user', 'session-liveness', 'session-exited', 'leader-exited'].includes(event.type));
+  const body = incidents.length ? incidents.map(event => `${event.role ?? 'leader'} · ${event.reason ?? event.type} · ${event.summary ?? event.text ?? event.addr}`)
+    .join('\n').slice(0, 500) : `${types.slice(0, 180)}. Open loom notifications for details.`;
   await execute('/usr/bin/osascript', ['-e', appleScript, '--', `Loom · ${basename(project)}`,
     body], { timeout: 3000 });
 }

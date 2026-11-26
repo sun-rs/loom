@@ -840,7 +840,7 @@ test('headless quiet and quota conditions journal one edge across restart and qu
   const resumed = f.daemon();
   await resumed.tick();
   assert.deepEqual((await resumed.handle('notifications', { take: true })).notifications.map(row => row.reason),
-    ['busy-without-output', 'rate-limit']);
+    ['busy-without-output', 'quota-wait']);
   assert.deepEqual((await resumed.handle('notifications', { take: true })).notifications, []);
 });
 

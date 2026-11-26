@@ -77,11 +77,17 @@ export function classify(text) {
   const tail = rows.join('\n');
   const footer = rows.at(-1) ?? '';
   const state = classifyScreen('agy', text);
-  if (state === 'trust-dialog' || state === 'auth-fail' || state === 'rate-limit') return state;
+  if (overlayKey(rows)) return 'overlay';
+  if (state === 'trust-dialog') return state;
+  const dialog = rows.map(row => row.replace(/^[│┃]\s+|\s+[│┃]$/g, '').trim()).join('\n');
+  if (/^How['’]s the CLI experience so far\?/im.test(dialog) && /\[1\][\s\S]*\[0\]/.test(dialog) ||
+      /^(?:Welcome to (?:the )?Antigravity CLI|Antigravity CLI setup|Getting started with Antigravity)\s*[!.]?$/im.test(dialog) &&
+      /(?:\benter\b.*\b(?:continue|confirm|select)\b|↑\/↓.*\b(?:navigate|select)\b)/i.test(dialog) ||
+      /^Introducing Gemini \d+\b/im.test(dialog) && /[│┃]/.test(tail)) return 'awaiting-user';
+  if (state === 'auth-fail' || state === 'rate-limit') return state;
   if (/^(?:Select login method:|Welcome to the Antigravity CLI\. You are currently not signed in\.)$/im.test(tail)) {
     return 'auth-fail';
   }
-  if (overlayKey(rows)) return 'overlay';
   if (rows.some(row => /^Question \d+\/\d+:/i.test(row)) &&
       rows.some(row => /^(?:↑\/↓ Navigate).*\besc Skip\b/i.test(row))) return 'choice';
   if (/^(?:Switch Model|Select a model:?|Choose a theme:?|Select a conversation:?|Resume Conversation)$/im.test(tail) &&

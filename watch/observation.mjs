@@ -65,7 +65,10 @@ export function screenProgress(text) {
   const stable = stripAnsiAndControl(text)
     .replace(/^(\s*[•◦○]\s+(?:Working|Reconnecting\.{3}\s+\d+\/\d+)\s*\()(?:(?:\d+h|\d+m)\s*)*\d+(?:\.\d+)?s\b/gmi, '$1…')
     .replace(/^(\s*)[✻✳✶✢✽✺✹✸✷✴✵⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏⣾⣽⣻⣟⡿⢿⣷](?=\s)/gm, '$1◌')
-    .replace(/^(\s*◌[^\n]*?\()(?:(?:\d+h|\d+m)\s*)*\d+(?:\.\d+)?s\b/gm, '$1…');
+    .replace(/^(\s*◌[^\n]*?\()(?:(?:\d+h|\d+m)\s*)*\d+(?:\.\d+)?s\b/gm, '$1…')
+    .replace(/^(\s*[●•]\s+\[)\d{1,2}:\d{2}:\d{2}(?=\])/gm, '$1…')
+    .replace(/^(\s*(?:◌|[•◦○])[^\n]*?)\b(?:\d+h\s*)?(?:\d+m\s*)?\d+(?:\.\d+)?s(?=\s*(?:[·•)|]|$))/gm, '$1…')
+    .replace(/[ \t]+$/gm, '').trimEnd();
   return createHash('sha256').update(stable).digest('hex');
 }
 

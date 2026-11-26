@@ -176,7 +176,8 @@ export function bindTuiSession(terminal, provider, {
 
   async function recoverStartup({ observation: frame, result }) {
     let adoption;
-    if (result.userPrompt && result.userPrompt.kind !== 'overlay') return false;
+    if (result.userPrompt && result.userPrompt.kind !== 'overlay' &&
+        !(result.screen.kind === 'trust-dialog' && autoTrustWorkspace)) return false;
     const overlay = result.unsafeDraft && result.blocker === 'overlay' && agyOverlayKey(frame) === 'esc';
     if ((result.blocker === 'draft-held' || overlay) && readPending && terminal.provePaste) {
       const entry = requests.get(pending);
@@ -224,8 +225,10 @@ export function bindTuiSession(terminal, provider, {
         }
       }
     }
+    const rating = !result.native.userPrompt && agyOverlayKey(frame) === '0';
+    if (result.screen.kind !== 'overlay') startupAttempts.delete('overlay:0');
     if (!terminal.key || !frame.writable || frame.humanActive || frame.quietForMs < QUIET_OUTPUT_MS ||
-        ['busy', 'compacting'].includes(result.native.phase) || result.host.title === 'busy') return false;
+        !rating && (['busy', 'compacting'].includes(result.native.phase) || result.host.title === 'busy')) return false;
     const { kind, text } = result.screen;
     let action;
     if (kind === 'trust-dialog' && autoTrustWorkspace && !pending && !result.native.turnSequence) {

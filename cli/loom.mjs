@@ -2,7 +2,7 @@ import { parseArgs } from 'node:util';
 import { roles } from '../index/index.mjs';
 import { daemonAbsent, request } from '../daemon/rpc.mjs';
 import { control, daemonUsage, spawnHelp, spawnUsage } from './control.mjs';
-import { upgrade, upgradeUsage } from './upgrade.mjs';
+import { upgrade, upgradePendingExit, upgradeUsage } from './upgrade.mjs';
 import { history, historyReader, waveHistory } from './history.mjs';
 import { callerAddress, managedProject, projectDirectory, projectIndex, projectOption, projectReceipt, projectSessions } from './project.mjs';
 import { send, sendAdvancedHelp, sendHelp, sendUsage } from './send.mjs';
@@ -42,7 +42,7 @@ const help = {
   daemon: [daemonUsage],
   upgrade: [upgradeUsage],
   ls: ['loom ls [--project DIR]'],
-  doctor: ['loom doctor --project DIR [--fix]', 'Reports project-owned residue. --fix cleans only resources with verified ownership.'],
+  doctor: ['loom doctor --project DIR [--fix | --prompts]', 'Reports project-owned residue. --prompts checks local CLI versions and prompt handling in an isolated test.'],
   notifications: [
     'loom notifications [--project DIR] [--peek|--take|--history]',
     'loom notifications [--project DIR] --needs-decision TEXT [--kind decision | --audit-escalation REASON]',
@@ -60,7 +60,7 @@ const commands = {
   escalate: { ...projectArgs, ...strings('base', 'candidate', 'reason', 'evidence') },
   memory: { ...projectArgs, ...flags('json') },
   switch: { ...projectArgs, ...strings('to') },
-  doctor: { ...projectArgs, ...flags('fix') },
+  doctor: { ...projectArgs, ...flags('fix', 'prompts') },
   notifications: { ...projectArgs, ...flags('peek', 'take', 'history'),
     ...strings('needs-decision', 'kind', 'audit-escalation', 'complete', 'phase', 'gate-complete') },
 };
@@ -204,7 +204,7 @@ export async function main(args) {
     if (command === 'upgrade') {
       const result = await upgrade(rest);
       emit(result);
-      return result.ok ? 0 : 1;
+      return result.ok ? 0 : result.pending ? upgradePendingExit : 1;
     }
     if (command === 'handover') {
       const { main: handover, queueBrief } = await import('../handover/cli.mjs');
@@ -232,7 +232,7 @@ export async function main(args) {
       });
     }
     const { values, positionals } = parse(command, rest);
-    if (command === 'doctor' && values.project === undefined) invalid(help.doctor[0]);
+    if (command === 'doctor' && ((!values.prompts && values.project === undefined) || values.prompts && values.fix)) invalid(help.doctor[0]);
     const directory = projectDirectory(values.project);
     let result;
     if (command === 'memory') {
@@ -300,6 +300,12 @@ export async function main(args) {
         const { projectCost } = await import('./cost.mjs');
         result = { ok: true, ...projectCost(directory, projectSessions(directory)) };
       } else if (command === 'doctor') {
+        if (values.prompts) {
+          const { promptDoctor } = await import('./prompt-doctor.mjs');
+          const result = await promptDoctor(directory);
+          emit({ ...result, ...projectReceipt(directory) });
+          return result.ok ? 0 : 1;
+        }
         const { doctor } = await import('./doctor.mjs');
         result = await doctor(directory, Boolean(values.fix));
       } else if (command === 'notifications') {

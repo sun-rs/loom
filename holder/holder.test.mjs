@@ -3,6 +3,7 @@ import { execFileSync, spawn } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
 import { copyFileSync, chmodSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
+import { tmpdir } from 'node:os';
 import { setTimeout as delay } from 'node:timers/promises';
 import { test } from 'node:test';
 import pty from 'node-pty';
@@ -17,7 +18,7 @@ const quiet = 800_000_000n;
 const guard = (snapshot, minHumanQuietNs = quiet) => ({ ...snapshot, minHumanQuietNs });
 
 function fixture(t) {
-  const dir = realpathSync(mkdtempSync('/tmp/lh3-'));
+  const dir = realpathSync(mkdtempSync(join(tmpdir(), 'lh3-')));
   t.after(() => rmSync(dir, { recursive: true, force: true }));
   return dir;
 }

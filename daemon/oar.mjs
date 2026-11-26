@@ -136,7 +136,8 @@ export function trackOar(project, row, session, onError, incarnation, onExit) {
       return;
     }
     if (event.kind === 'exited' || event.kind === 'released' || event.kind.startsWith('compaction_')) {
-      append(event, event.kind, event.kind.startsWith('compaction_') ? { outcome: event.outcome } : { suspending });
+      append(event, event.kind, event.kind.startsWith('compaction_') ? { outcome: event.outcome } :
+        { suspending, ...(event.kind === 'exited' && { exitCode: event.exitCode ?? event.code }) });
       if (event.kind === 'exited' || event.kind === 'released') onExit?.();
     }
     if (event.kind === 'input_dropped' && event.inputId) {
@@ -184,6 +185,10 @@ export function trackOar(project, row, session, onError, incarnation, onExit) {
         content: event.content?.filter(part => part.type === 'text') });
     }
     if (event.kind === 'usage') append(event, 'usage', { turn, usage: event.usage });
+    if (['text_delta', 'reasoning'].includes(event.kind) && !active.progress) {
+      append(event, 'model-progress', { turn, turnId });
+      active.progress = true;
+    }
     if (event.kind !== 'turn_ended') return;
     const outcome = event.outcome;
     const reason = rateFailure.has(outcome.failure) ? 'rate-limit' : outcome.failure === 'auth' ? 'auth' : undefined;

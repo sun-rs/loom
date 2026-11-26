@@ -24,7 +24,9 @@ export function workerEnvironment(row) {
   const id = workerAddress.exec(row.addr)?.[1];
   if (!id) throw new Error('Invalid worker address');
   // Keep the temp prefix short enough for a Unix-domain socket pathname.
-  const root = privateDirectory(join(realpathSync('/tmp'), `lw-${id}`));
+  const parent = process.env.LOOM_WORKER_TMP;
+  const root = privateDirectory(parent && inDirectory(parent, row.cwd) ?
+    join(parent, `w-${id.replaceAll('-', '').slice(0, 24)}`) : join(realpathSync('/tmp'), `lw-${id}`));
   const home = privateDirectory(join(root, 'h'));
   const tmp = privateDirectory(join(root, 't'));
   const gitConfig = join(home, '.gitconfig');
@@ -40,7 +42,8 @@ export function workerEnvironment(row) {
     } catch (error) { if (error.code !== 'EEXIST') throw error; }
   }
   // Zsh uses TMPPREFIX for heredocs, independently of TMPDIR.
-  return { HOME: home, TMPDIR: tmp, TMP: tmp, TEMP: tmp, TMPPREFIX: join(tmp, 'zsh'), ZDOTDIR: home,
+  return { HOME: home, TMPDIR: tmp, TMP: tmp, TEMP: tmp, LOOM_WORKER_TMP: parent ?? tmp,
+    TMPPREFIX: join(tmp, 'zsh'), ZDOTDIR: home,
     GIT_CONFIG_GLOBAL: gitConfig, GIT_CONFIG_COUNT: '1',
     GIT_CONFIG_KEY_0: 'maintenance.auto', GIT_CONFIG_VALUE_0: 'false',
     XDG_CONFIG_HOME: privateDirectory(join(home, 'config')), XDG_CACHE_HOME: privateDirectory(join(home, 'cache')),
@@ -105,7 +108,7 @@ export function sandboxNativeWorker(project, row, login, isolated, command) {
     } catch (error) { if (error.code !== 'ENOENT') throw error; }
   }
   const policy = ['(version 1)', '(allow default)', '(deny file-write*)', '(allow file-write* (literal "/dev/null"))',
-    ...(agy ? ['(allow file-write-data (literal "/dev/ptmx") (regex #"^/dev/ttys[0-9]+$"))'] : []),
+    '(allow file-write-data (literal "/dev/ptmx") (regex #"^/dev/ttys[0-9]+$"))',
     ...(helper ? [`(allow file-write* (literal ${quote(helper)}))`] : []),
     ...writes.map(path => `(allow file-write* (subpath ${quote(path)}))`)].join('\n');
   const launch = join(dirname(isolated.HOME), 'native');

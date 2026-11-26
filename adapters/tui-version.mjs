@@ -12,6 +12,7 @@ const versions = {
   claude: /^(\d+\.\d+\.\d+(?:[-+][\w.-]+)?) \(Claude Code\)$/m,
   codex: /^codex-cli (\d+\.\d+\.\d+(?:[-+][\w.-]+)?)$/m,
   agy: /^(\d+\.\d+\.\d+(?:[-+][\w.-]+)?)$/m,
+  opencode: /^(?:opencode v)?(\d+\.\d+\.\d+(?:[-+][\w.-]+)?)$/m,
 };
 
 export function parseTuiVersion(provider, stdout) {

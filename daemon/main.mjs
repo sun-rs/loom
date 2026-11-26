@@ -8,7 +8,7 @@ import { claimProject } from '../relay/lock.mjs';
 import { createSupervisor } from './supervisor.mjs';
 import { maxLine } from './rpc.mjs';
 import { readText, syncDirectory } from './io.mjs';
-import { activeRelease, nextController, releaseDigest, releaseId, releaseRoot, upgradeState } from './release.mjs';
+import { activeRelease, installManagedCli, nextController, releaseDigest, releaseId, releaseRoot, upgradeState } from './release.mjs';
 import { beginUpgrade, checkUpgradeAttachments, daemonProtocol, liveHandoff, planUpgrade, selfCheck, validateHandoff, validateReattachment } from './upgrade.mjs';
 
 function excludeProjectMetadata(project) {
@@ -67,6 +67,7 @@ export async function main(args, { pollInterval = 350, ...options } = {}) {
   syncDirectory(metadata);
   syncDirectory(join(metadata, 'relay'));
   const handoff = await validateHandoff(project, values.handoff, values['handoff-recovery']);
+  installManagedCli(project);
   const controller = nextController(project);
 
   const path = socketPath(project);
@@ -151,7 +152,7 @@ export async function main(args, { pollInterval = 350, ...options } = {}) {
             if (!canDispatch()) throw Object.assign(new Error('loomd is switching releases'), { code: 'not-ready' });
             // Capture sessions started while the target was being verified.
             plan.sessions = await supervisor.upgradeSessions();
-            const receipt = await beginUpgrade(project, plan);
+            const receipt = await beginUpgrade(project, plan, args.upgradeId);
             switching = true;
             return receipt;
           });

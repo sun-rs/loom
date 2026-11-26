@@ -6,6 +6,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { test } from 'node:test';
 import { sandboxNativeWorker, workerCodexArgs, workerEnvironment, workerGitWritePaths } from './worker-environment.mjs';
+import { nestedSeatbeltLimited } from './sandbox-test-capability.mjs';
 
 test('worker launch grants only its worktree Git metadata and private HOME, XDG and socket paths', t => {
   const project = mkdtempSync(join(realpathSync(tmpdir()), 'loom-worker-'));
@@ -56,7 +57,7 @@ test('worker launch grants only its worktree Git metadata and private HOME, XDG 
 });
 
 test('macOS native workers can write their worktree and state without making the login home writable',
-  { skip: process.platform !== 'darwin' }, t => {
+  { skip: process.platform !== 'darwin' || nestedSeatbeltLimited }, t => {
     const project = mkdtempSync(join(realpathSync(tmpdir()), 'loom-native-worker-'));
     t.after(() => rmSync(project, { recursive: true, force: true }));
     const cwd = join(project, 'work');
@@ -80,7 +81,7 @@ test('macOS native workers can write their worktree and state without making the
   });
 
 test('restricted worker runs zsh heredocs and commits with hooks without the shared packed-refs lock',
-  { skip: process.platform !== 'darwin' }, t => {
+  { skip: process.platform !== 'darwin' || nestedSeatbeltLimited }, t => {
     const project = mkdtempSync(join(realpathSync(tmpdir()), 'loom-worker-refs-'));
     t.after(() => rmSync(project, { recursive: true, force: true }));
     const git = (...args) => execFileSync('/usr/bin/git', args, { cwd: project, stdio: 'pipe' });

@@ -3,19 +3,65 @@ import { execFile } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
 import { cpSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { basename, join, resolve } from 'node:path';
+import { tmpdir } from 'node:os';
 import { test } from 'node:test';
 import { setTimeout as delay } from 'node:timers/promises';
 import { promisify } from 'node:util';
 import { platforms } from '../holder/assets.mjs';
-import { includeReleaseEntry, releaseDigest } from './release.mjs';
+import { includeReleaseEntry, installManagedCli, managedEnvironment, releaseDigest } from './release.mjs';
+import { waitForUpgrade, upgradePendingExit } from '../cli/upgrade.mjs';
 
 const exec = promisify(execFile);
 const root = resolve(import.meta.dirname, '..');
 const supported = platforms.includes(`${process.platform}-${process.arch}`);
 const read = path => JSON.parse(readFileSync(path, 'utf8'));
 
+test('upgrade observes a late commit and reports a distinct pending outcome at its deadline', async () => {
+  const result = { upgradeId: 'this-upgrade', phase: 'switching' };
+  let at = 0;
+  const timing = { now: () => at, pause: async ms => { at += ms; }, waitMs: 300 };
+  const state = () => ({ id: result.upgradeId, phase: at >= 300 ? 'committed' : 'switching' });
+  assert.deepEqual(await waitForUpgrade(result, state, async () => {}, timing),
+    { id: result.upgradeId, phase: 'committed', ok: true });
+  at = 0;
+  const pending = await waitForUpgrade(result, () => ({ ...state(), phase: 'switching' }), async () => {}, timing);
+  assert.equal(pending.phase, 'switching');
+  assert.equal(pending.pending, true);
+  assert.match(pending.error, /upgrade --status/);
+  assert.equal(upgradePendingExit, 4);
+});
+
+test('one managed CLI path follows the serving release and preserves flags across a switch', async t => {
+  const project = realpathSync(mkdtempSync(join(tmpdir(), 'lshim-')));
+  t.after(() => rmSync(project, { recursive: true, force: true }));
+  const first = join(project, 'first');
+  const second = join(project, 'second');
+  for (const [root, name] of [[first, 'first'], [second, 'second']]) {
+    mkdirSync(join(root, 'cli'), { recursive: true });
+    writeFileSync(join(root, 'cli', 'loom.mjs'), `export function main(args) {
+      console.log(JSON.stringify({ name: ${JSON.stringify(name)}, args })); return 0;
+    }`);
+  }
+  installManagedCli(project);
+  const env = { ...process.env, ...managedEnvironment(project, 'fixture') };
+  const args = ['send', 'leader', '--expect-red', '--kind', 'decision', 'a "quoted" message\nsecond line'];
+  const invoke = async name => {
+    const result = await exec(env.LOOM_BIN, args, { env, cwd: project });
+    assert.deepEqual(JSON.parse(result.stdout), { name, args });
+  };
+  const pointer = join(project, '.project', 'loomd', 'release.json');
+  const upgrade = join(project, '.project', 'loomd', 'upgrade.json');
+  writeFileSync(pointer, JSON.stringify({ current: { root: first } }));
+  await invoke('first');
+  writeFileSync(upgrade, JSON.stringify({ id: 'switch', phase: 'switching', current: { root: first } }));
+  writeFileSync(pointer, JSON.stringify({ upgradeId: 'switch', current: { root: second } }));
+  await invoke('first');
+  writeFileSync(upgrade, JSON.stringify({ id: 'switch', phase: 'committed' }));
+  await invoke('second');
+});
+
 test('failed post-lock session verification restores the old writer and its native inbox', { skip: !supported }, async t => {
-  const dir = realpathSync(mkdtempSync('/tmp/loom-upgrade-'));
+  const dir = realpathSync(mkdtempSync(join(tmpdir(), 'lu-')));
   const project = join(dir, 'project');
   const metadata = join(project, '.project');
   const runtime = join(metadata, 'loomd');
@@ -23,7 +69,9 @@ test('failed post-lock session verification restores the old writer and its nati
   const cli = join(root, 'bin', 'loom');
   const codex = join(dir, 'codex');
   const env = { HOME: dir, TMPDIR: dir, CODEX_HOME: dir, PATH: process.env.PATH, LOOM_CODEX_BIN: codex,
-    OAR_CODEX_BIN: codex, LOOM_DESKTOP_NOTIFY: '0', LOOM_TEST_CODEX_PIPES: '1' };
+    OAR_CODEX_BIN: codex, LOOM_CLAUDE_BIN: codex, LOOM_AGY_BIN: codex, LOOM_OPENCODE_BIN: codex,
+    LOOM_DESKTOP_NOTIFY: '0', LOOM_TEST_CODEX_PIPES: '1',
+    ...(process.env.LOOM_WORKER_TMP && { LOOM_WORKER_TMP: process.env.LOOM_WORKER_TMP }) };
   const run = async (...args) => {
     const result = await exec(process.execPath, [cli, ...args, '--project', project], { cwd: project, env, timeout: 25_000 })
       .catch(error => {
@@ -45,6 +93,8 @@ test('failed post-lock session verification restores the old writer and its nati
   mkdirSync(runtime, { recursive: true });
   const initial = { current: { root, id: root, digest: releaseDigest(root) } };
   writeFileSync(join(runtime, 'release.json'), JSON.stringify(initial));
+  writeFileSync(join(runtime, 'prompt-smoke.json'),
+    JSON.stringify({ codex: { cli: 'codex', version: '0.171.0', binary: codex, status: 'passed' } }));
   writeFileSync(join(metadata, 'policy.json'), JSON.stringify({ deny: [], preferred: [], delivery: { coalesceMs: 0 } }));
   const fake = new URL('../tasks/PROTO-HARDEN-0/fixtures/native.mjs', import.meta.url);
   writeFileSync(codex, '#!' + process.execPath + '\nimport ' + JSON.stringify(fake.href) + ';\n', { mode: 0o700 });
@@ -86,6 +136,7 @@ test('failed post-lock session verification restores the old writer and its nati
   const preflight = await run('upgrade', '--to', candidate, '--check');
   assert.equal(preflight.eligible, true, JSON.stringify(preflight));
   assert.equal(preflight.attachmentCheck, 'checked');
+  assert.equal(preflight.promptSmoke.providers.find(item => item.cli === 'codex').cached, true);
   const original = preflight.sessions[0];
   assert.equal(original.protocol, 3);
   assert.deepEqual(read(join(runtime, 'generation.json')), generation);
