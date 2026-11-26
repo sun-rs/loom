@@ -297,11 +297,13 @@ test('worker admission counts live sessions by parent and project across waves',
 
   const server = createServer(socket => {
     socket.once('data', body => {
-      const { args, caller } = JSON.parse(body);
+      const { args, caller, capability } = JSON.parse(body);
       try {
-        assert.equal(args.workerCaller, caller);
+        assert.equal(caller, undefined);
+        assert.equal(args.workerCaller, undefined);
+        assert.equal(capability, 'fixture-leader');
         if (args.task === 'second') assert.deepEqual([args.deliver, args.barrier, args['expect-red']], ['barrier', 'W', true]);
-        spawnProfile(cwd, args);
+        spawnProfile(cwd, { ...args, workerCaller: 'lead' });
         const session = register(args.task, 'worker', { parent: 'lead', wave: args.wave });
         socket.end(JSON.stringify({ ok: true, session }));
       } catch (error) {
@@ -316,7 +318,9 @@ test('worker admission counts live sessions by parent and project across waves',
     const args = [executable, 'spawn', 'worker', '--cwd', cwd, '--project', cwd, '--task', task,
       '--wave', task, '--cli', 'codex', '--model', 'fixture', '--effort', 'medium', ...parent, 'start'];
     try {
-      const { stdout } = await promisify(execFile)(process.execPath, args, { env: { ...env, HC_TERMINAL_ID: 'lead-pane' } });
+      const { stdout } = await promisify(execFile)(process.execPath, args, {
+        env: { ...env, LOOM_PROJECT: cwd, LOOM_CAPABILITY: 'fixture-leader' },
+      });
       return JSON.parse(stdout);
     } catch (error) {
       assert.equal(error.code, 1, error.stderr);

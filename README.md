@@ -22,6 +22,7 @@ OAR 由根目录统一安装。在根目录运行 `node --test runtimes/oar/even
 
 ```sh
 loom=/path/to/loom_new/bin/loom
+export LOOM_EXTERNAL_SUPER=1
 "$loom" daemon start --project "$PWD"
 "$loom" spawn leader --cwd "$PWD" --project "$PWD" "开始本项目"
 "$loom" ls --project "$PWD"
@@ -63,7 +64,11 @@ Worker 用 `"$LOOM_BIN"` 的绝对路径调用 Loom。启动时分配私有可�
 
 macOS 无头 agy 和 Claude Worker 的原生进程使用原来的 `HOME` 定位登录。Seatbelt 将普通文件写入限制在工作树、对应 Git 元数据、Worker 私有主目录和临时目录，以及已存在的原生会话数据子目录。agy 的原生例外是 `brain`、`conversations`、`log` 和命令工具生成的单个 `bin/agentapi` 文件。命令工具的 PTY 只额外获得设备数据写入权限。Claude 的原生例外是 `projects`、`sessions`，其内部临时文件通过 `CLAUDE_CODE_TMPDIR` 写入 Worker 私有目录。登录目录根和凭据仍为只读，XDG 目录继续指向 Worker 私有位置。
 
-托管会话的 `LOOM_ADDR` 默认提供 `send --from`，也用于启动子会话时的父会话寻址。`send --wait` 只供非托管调用方同步取一次回复。项目通知用 `loom notifications` 一次领取，`--peek` 只查看。
+loomd 按会话能力凭证确认角色，`LOOM_ADDR` 只用于寻址。托管 `send` 自动使用本会话的已认证地址。无凭证调用可查询状态并发送不署名的普通排队消息。`send --wait` 供非托管调用方同步取一次回复。`loom notifications --take` 由 Super 领取，默认只查看。
+
+外部 Super 在本机操作终端设置 `LOOM_EXTERNAL_SUPER=1`。CLI 从 `${XDG_STATE_HOME:-$HOME/.local/state}/loom/socket-auth/` 下的项目私有目录读取 `0600` 凭证。每次换班给继任者分配独立凭证，前任退出后撤销其凭证。热升级继续使用同一状态目录。
+
+升级前已经运行的托管会话通过 Unix socket 对端和进程祖先链保留角色权限，可继续使用原进程和原窗口。此路径由 `/usr/bin/cc` 构建的辅助程序验证 macOS 审计令牌或 Linux `SO_PEERPIDFD`。有存量会话的升级会检查该能力。操作者和 Loom 会话使用同一个操作系统用户。
 
 - `drift.deferAuditorNotices` 默认为 `true`。事实检查和走偏通知随 Auditor 的下一条实际投递附送；完整通知仍可用 `loom status --json` 查看。
 - `delivery.replyBytes` 默认 600，最小 160，按 UTF-8 正文计量。超限的自动回传通过 `.project/replies/<sha256>.txt` 交付，文件名是保存内容的 SHA-256。

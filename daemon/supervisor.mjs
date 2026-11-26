@@ -842,9 +842,12 @@ ${details}`, {
       return attached;
     },
     shutdown: sessions.shutdown,
-    async handle(command, args, caller) {
+    liveCaller: sessions.liveCaller,
+    legacySessions: sessions.legacySessions,
+    legacyPeerCaller: sessions.legacyPeerCaller,
+    async handle(command, args, caller, { external = false } = {}) {
       if (command === 'spawn') return spawnSession(args, caller);
-      if (command === 'rotate') return rotation.request(args, caller);
+      if (command === 'rotate') return rotation.request(args, caller, external);
       if (command === 'layout-up') {
         if (!sessionOptions?.layout) throw new CommandError('not-ready', 'Herdr layout is unavailable');
         return { layout: await sessionOptions.layout.ensure(true) };
@@ -925,8 +928,9 @@ ${details}`, {
         const names = new Set(rows.map(row => row.project));
         const actor = caller && rows.find(row => row.addr === caller || row.pane === caller);
         const name = args.project ?? actor?.project ?? (names.size <= 1 ? (names.values().next().value ?? project) : undefined);
-        const gateWriter = name && (names.has(name) || name === project) && (!actor ||
-          ['leader', 'super'].includes(actor.role) && actor.endedAt === null && actor.project === name);
+        if (actor && name !== actor.project) throw new CommandError('forbidden', 'Choose your own project');
+        const gateWriter = name && (names.has(name) || name === project) && (external ||
+          ['leader', 'super'].includes(actor?.role) && actor.endedAt === null && actor.project === name);
         if (command !== 'notifications') {
           const escalation = command === 'escalate';
           if (!gateWriter || typeof args.gate !== 'string' || !gateId.test(args.gate) ||
@@ -1066,6 +1070,9 @@ ${details}`, {
         const old = sessions.rowFor(args.from);
         if (!validInput(args.text)) throw new CommandError('invalid-arguments', 'Handover brief is required');
         const actor = caller && sessions.rows().find(item => item.addr === caller || item.pane === caller);
+        if (actor?.role === 'leader' && (row.project !== actor.project || row.role !== 'auditor' && old?.addr !== actor.addr)) {
+          throw new CommandError('forbidden', 'Leader can hand over itself or its project Auditor');
+        }
         if (row.role === 'auditor' && actor && (actor.endedAt !== null || actor.project !== row.project ||
             !['leader', 'super'].includes(actor.role))) {
           throw new CommandError('invalid-arguments', 'Auditor succession requires Super or the project Leader');
@@ -1098,6 +1105,11 @@ ${details}`, {
           ...pendingWork(mail.messages, row.addr, parentFor, targetEnded) };
       }
       if (command === 'stop') {
+        const actor = sessions.liveCaller(caller);
+        if (actor?.role === 'leader' && row.addr !== actor.addr && (row.role !== 'worker' ||
+            row.project !== actor.project || sessions.routeParent(row.parent)?.addr !== actor.addr)) {
+          throw new CommandError('forbidden', 'Leader can only stop itself or its own Workers');
+        }
         const closed = row.endedAt !== null ? row : await sessions.stop(row);
         return { addr: row.addr, endedAt: closed.endedAt };
       }
@@ -1112,11 +1124,12 @@ ${details}`, {
         throw new CommandError('invalid-arguments', 'Invalid delivery ID or continuation batch');
       }
       const actor = caller && sessions.rows().find(row => row.addr === caller || row.pane === caller);
-      const externalSuper = args.from === 'super' && !actor;
-      if (args.from === 'super' && actor && actor.role !== 'super') {
-        throw new CommandError('invalid-arguments', 'Only Super can send as Super');
+      const externalSuper = args.from === 'super' && external;
+      if (args.from !== undefined && !externalSuper && (!actor || ![actor.addr, actor.pane,
+        ...(actor.role === 'super' ? ['super'] : [])].includes(args.from))) {
+        throw new CommandError('invalid-arguments', 'The sender must be the authenticated caller');
       }
-      const from = externalSuper ? undefined : args.from ? sessions.resolve(args.from, caller) : actor;
+      const from = actor;
       const sender = externalSuper ? { addr: 'super', role: 'super', external: true } : from && sessions.targetBinding(from);
       const existing = args.id && mail.messages.find(message => message.id === args.id);
       const requestedRole = rotatingRoles.includes(args.target) ? args.target : undefined;
@@ -1149,7 +1162,7 @@ ${details}`, {
         }
       }
       const target = sessions.targetBinding(successor);
-      const userWake = actor ? actor.role === 'super' && actor.endedAt === null : !from || from.role === 'super';
+      const userWake = external || actor?.role === 'super' && actor.endedAt === null;
       const fields = { ...(sender && { from: sender }), ...(args.expectReply && { expectReply: true }),
         ...(userWake && { superPriority: true, ...(successor.role === 'auditor' && { userWake: true }) }),
         ...(row.addr !== successor.addr && { originalTarget: row.addr }),

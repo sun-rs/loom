@@ -11,6 +11,8 @@ import { projectLayout } from './herdr-layout.mjs';
 import { readText, syncDirectory } from './io.mjs';
 import { activeRelease, installManagedCli, nextController, releaseDigest, releaseId, releaseRoot, upgradeState } from './release.mjs';
 import { beginUpgrade, checkUpgradeAttachments, daemonProtocol, liveHandoff, planUpgrade, selfCheck, validateHandoff, validateReattachment } from './upgrade.mjs';
+import { authorizeSocketCommand, hasStoredSessionCapability, mayUseLegacyCaller, socketCapabilities } from './socket-auth.mjs';
+import { preparePeerAuth } from './peer-auth.mjs';
 
 function excludeProjectMetadata(project) {
   const git = (...args) => execFileSync('git', ['-C', project, 'rev-parse', ...args],
@@ -52,9 +54,16 @@ export async function main(args, { pollInterval = 350, ...options } = {}) {
       roster += chunk;
       if (Buffer.byteLength(roster) > maxLine) throw new Error('Attachment roster is too large');
     }
-    console.log(JSON.stringify(await probeAttachments(project, JSON.parse(roster))));
+    const attached = await probeAttachments(project, JSON.parse(roster));
+    const legacy = attached.filter(session => session.status === 'attached' && !hasStoredSessionCapability(project, session.addr));
+    if (legacy.length && !preparePeerAuth().available) for (const session of legacy) {
+      Object.assign(session, { status: 'unavailable', reason: 'Kernel peer identity is unavailable for this legacy session' });
+    }
+    console.log(JSON.stringify(attached));
     return;
   }
+  delete process.env.LOOM_CAPABILITY;
+  delete process.env.LOOM_EXTERNAL_SUPER;
   const runningRelease = { id: releaseId(), root: releaseRoot, digest: releaseDigest(releaseRoot) };
   const metadata = join(project, '.project');
   mkdirSync(metadata, { recursive: true, mode: 0o700 });
@@ -68,6 +77,7 @@ export async function main(args, { pollInterval = 350, ...options } = {}) {
   syncDirectory(metadata);
   syncDirectory(join(metadata, 'relay'));
   const handoff = await validateHandoff(project, values.handoff, values['handoff-recovery']);
+  const capabilities = socketCapabilities(project);
   installManagedCli(project);
   const controller = nextController(project);
 
@@ -82,8 +92,13 @@ export async function main(args, { pollInterval = 350, ...options } = {}) {
     partialWindow: optionalTimeout('LOOM_WAVE_PARTIAL_MS'), uncertainWindow: optionalTimeout('LOOM_UNCERTAIN_MS'),
     blockedWindow: optionalTimeout('LOOM_BLOCKED_COALESCE_MS'),
     ...options,
-    sessionOptions: { layout: projectLayout(project), ...options.sessionOptions, controller },
+    sessionOptions: { layout: projectLayout(project), ...options.sessionOptions, controller, capabilities },
   });
+  const legacy = new Set(supervisor.legacySessions().map(row => row.addr));
+  const peers = legacy.size ? preparePeerAuth() : undefined;
+  if (peers && !peers.available) {
+    throw new Error(`Kernel peer identity is unavailable for running legacy Loom sessions. ${peers.reason}`);
+  }
   const recovering = Boolean(handoff && values['handoff-recovery']);
   let ready = !handoff || recovering;
   let attached, attachmentError;
@@ -125,10 +140,22 @@ export async function main(args, { pollInterval = 350, ...options } = {}) {
       }) + '\n'));
 
       async function serve() {
-        const { command, args, caller, protocol } = JSON.parse(data);
+        const { command, args = {}, capability, protocol } = JSON.parse(data);
         if (protocol !== undefined && protocol !== daemonProtocol) throw new Error('Unsupported loomd protocol');
+        if (typeof command !== 'string' || !args || typeof args !== 'object' || Array.isArray(args)) {
+          throw Object.assign(new Error('Expected a loomd command and an argument object'), { code: 'invalid-arguments' });
+        }
+        const authorize = async () => {
+          let actor = capabilities.identify(capability, supervisor.liveCaller);
+          if (!actor && capability === undefined && legacy.size && mayUseLegacyCaller(command)) {
+            actor = await supervisor.legacyPeerCaller(peers.ancestors(socket), legacy);
+          }
+          authorizeSocketCommand(command, args, actor);
+          return actor;
+        };
         let result;
         if (command === 'daemon-status' || command === 'daemon-stop') {
+          if (command === 'daemon-stop') await serial(authorize);
           result = { running: !closing && command === 'daemon-status', pid: process.pid,
             relay: closing ? 'stopping' : lastPollError ? 'degraded' : 'integrated',
             protocol: daemonProtocol, release: runningRelease, attachmentCheck: true,
@@ -139,17 +166,20 @@ export async function main(args, { pollInterval = 350, ...options } = {}) {
           result = { active: { ...activeRelease(project)?.current, ...runningRelease },
             upgrade: upgradeState(project), sessions: canDispatch() ? await serial(supervisor.upgradeSessions) : attached ?? [] };
         } else if (command === 'upgrade-holder') {
-          result = await serial(() => {
+          result = await serial(async () => {
+            await authorize();
             if (!canDispatch()) throw Object.assign(new Error('loomd is switching releases'), { code: 'not-ready' });
             return supervisor.upgradeHolder(args);
           });
         } else if (command === 'upgrade-plan' || command === 'upgrade-apply') {
+          await serial(authorize);
           if (!canDispatch()) throw Object.assign(new Error('loomd is switching releases'), { code: 'not-ready' });
           const plan = await planUpgrade(project, args, runningRelease, () => serial(supervisor.upgradeSessions));
           if (command === 'upgrade-plan') {
             const checked = await checkUpgradeAttachments(project, plan);
             result = { ...checked, eligible: !checked.blockers.length };
           } else result = await serial(async () => {
+            await authorize();
             if (!canDispatch()) throw Object.assign(new Error('loomd is switching releases'), { code: 'not-ready' });
             // Capture sessions started while the target was being verified.
             plan.sessions = await supervisor.upgradeSessions();
@@ -158,9 +188,10 @@ export async function main(args, { pollInterval = 350, ...options } = {}) {
             return receipt;
           });
         } else {
-          result = await serial(() => {
+          result = await serial(async () => {
             if (!canDispatch()) throw Object.assign(new Error('loomd is switching releases'), { code: 'not-ready' });
-            return supervisor.handle(command, args, caller);
+            const actor = await authorize();
+            return supervisor.handle(command, args, actor?.addr, { external: actor?.external });
           });
         }
         socket.end(JSON.stringify({ ok: true, ...result }) + '\n');

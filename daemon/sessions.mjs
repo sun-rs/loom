@@ -92,7 +92,7 @@ function defaultTrustWorkspace(project, cwd) {
 }
 
 export function ownedSessions(project, index, report, {
-  open, openPane = openTui, getPane = ownedPane, callHc = hc, controller, layout,
+  open, openPane = openTui, getPane = ownedPane, callHc = hc, controller, layout, capabilities,
 } = {}) {
   const path = join(runtimeDirectory(project), 'sessions');
   mkdirSync(path, { recursive: true, mode: 0o700 });
@@ -106,6 +106,12 @@ export function ownedSessions(project, index, report, {
   const openCodeProofs = new Map();
   const rows = addr => index.query(addr ? { addr } : {});
   const rowFor = addr => addr ? rows(addr)[0] : undefined;
+  const liveCaller = addr => {
+    const row = rowFor(addr);
+    const job = jobs.get(addr);
+    if (job && restored.has(addr) && row?.endedAt === null && !job.stopping && !awaitingBrief(job) &&
+        routeParent(addr)?.addr === addr) return row;
+  };
   const file = addr => join(path, `${addr}.json`);
   for (const entry of readdirSync(path, { withFileTypes: true })) {
     if (!entry.isFile() || !/^(?:loom|oar)-[0-9a-f-]{36}\.json$/.test(entry.name)) continue;
@@ -114,6 +120,51 @@ export function ownedSessions(project, index, report, {
     jobs.set(job.row.addr, job);
   }
   const save = job => writeState(file(job.row.addr), JSON.stringify(job) + '\n');
+
+  function legacySessions() {
+    return rows().filter(row => row.endedAt === null && jobs.has(row.addr) && !jobs.get(row.addr).stopping &&
+      !capabilities?.hasSession(row.addr));
+  }
+
+  async function legacyPeerCaller(ancestors, eligible) {
+    if (!ancestors.length) return;
+    const chain = new Map(ancestors.map(process => [process.pid, process]));
+    const matches = [];
+    for (const addr of eligible) {
+      const job = jobs.get(addr);
+      if (!job) continue;
+      const runtime = running.get(addr);
+      const host = runtime?.identity ?? job.host?.identity;
+      const pane = job.paneBinding;
+      const proof = chain.get(host?.pid ?? pane?.pid);
+      const child = job.host?.childPid ?? job.tui?.childPid;
+      if (!proof || child && chain.get(child)?.parent !== proof.pid || capabilities?.hasSession(addr)) continue;
+      const actor = liveCaller(addr);
+      if (!actor) continue;
+      if (job.legacyPeer) {
+        if (job.legacyPeer.pid !== proof.pid || job.legacyPeer.birth !== proof.birth) continue;
+      } else if (host) {
+        if (!runtime?.hosted || runtime.endedAt != null || Math.floor(proof.startedAt / 1000) !==
+            Math.floor(Date.parse(host.started) / 1000)) continue;
+      } else {
+        // hc's original creation clock is the only persisted start evidence in
+        // old pane records. Confirm that pane before pinning the kernel birth.
+        if (!Number.isFinite(pane.createdAt) || Math.abs(pane.createdAt - proof.startedAt) > 5000) continue;
+        const terminal = await getPane(job, actor).catch(() => undefined);
+        if (terminal?.state !== 'live' || terminal.pid !== pane.pid || terminal.created_ms !== pane.createdAt) continue;
+      }
+      matches.push({ actor, job, proof });
+    }
+    if (matches.length !== 1) return;
+    const { actor, job, proof } = matches[0];
+    if (!job.legacyPeer) {
+      job.legacyPeer = { pid: proof.pid, birth: proof.birth };
+      try { save(job); }
+      catch (error) { delete job.legacyPeer; throw error; }
+    }
+    return actor;
+  }
+
   function saveLaunchPaths(job) {
     if (job.launchPaths) return;
     const { backend, cli } = job.row;
@@ -340,6 +391,10 @@ export function ownedSessions(project, index, report, {
     }
     openCodeProofs.delete(row.addr);
     holders.detach(job.tui);
+    if (row.endedAt === null) {
+      try { capabilities?.revokeSession(row.addr); }
+      catch (error) { report(`Could not remove finished session capability for ${row.addr}: ${error.code ?? 'filesystem error'}`); }
+    }
     const final = row.endedAt === null ? index.update(row.addr, { endedAt: Math.max(row.startedAt, at) }) : row;
     try { layout?.clear(final); }
     catch (error) { report(`Herdr layout ${row.addr}: ${error.message}`); }
@@ -475,6 +530,9 @@ export function ownedSessions(project, index, report, {
     }
     const actor = caller && rows().find(row => row.pane === caller || row.addr === caller);
     const parent = predecessor ?? (input.parent ? resolve(input.parent, caller) : actor);
+    if (input.role === 'worker' && actor?.role === 'leader' && parent?.addr !== actor.addr) {
+      throw new ErrorCode('forbidden', 'Leader must be the parent of its Workers');
+    }
     if (input.role === 'reviewer') {
       if (actor?.role !== 'auditor' || actor.addr !== parent?.addr || actor.endedAt !== null || !jobs.has(actor.addr)) {
         throw new ErrorCode('invalid-arguments', 'Only the live managed Auditor can start a reviewer for its gate');
@@ -606,7 +664,7 @@ export function ownedSessions(project, index, report, {
       throw new ErrorCode('not-ready', 'Codex attachment retry budget exhausted');
     }
     try {
-      return await (pipe ? attachCodexHolder : attachHost)(project, row, job, save, controller, options);
+      return await (pipe ? attachCodexHolder : attachHost)(project, row, job, save, controller, { ...options, capabilities });
     } catch (error) {
       if (pipe && !options?.stop) recordPipeRecovery(job);
       throw error;
@@ -614,7 +672,8 @@ export function ownedSessions(project, index, report, {
   }
 
   async function openFixture(row, job) {
-    const session = await open(job.fast === undefined ? row : { ...row, fast: job.fast }, project, row.sessionId);
+    const session = await open(job.fast === undefined ? row : { ...row, fast: job.fast }, project, row.sessionId,
+      capabilities?.ensureSession(row.addr).token);
     try {
       if (row.sessionId && session.id !== row.sessionId) throw new Error('OAR resumed a different native session');
       return trackOar(project, row, session, error => report(error.message));
@@ -672,7 +731,7 @@ export function ownedSessions(project, index, report, {
         }, binding => {
           job.tui = binding;
           save(job);
-        }, controller);
+        }, controller, capabilities?.ensureSession(row.addr).path);
         terminal = opened.terminal;
         nativeId = opened.nativeId;
       }
@@ -1000,5 +1059,6 @@ export function ownedSessions(project, index, report, {
   return { rows, rowFor, events, targetBinding, transport, requestedMode, canInterrupt, resolve, requireLive, newJob,
     activate, failSpawn, runtimeSelection, refresh, stop, shutdown, upgradeSessions, upgradeHolder, jobs, managedHc, sealed, lastActivity,
     routeParent, bindSuccessor, retirePredecessor, successorOf, holdsForHandover, rememberUserPrompt, pathWarnings, rememberLiveness, adoptLayout,
+    liveCaller, legacySessions, legacyPeerCaller,
     finishObserved(row, exit, at) { return finish(jobs.get(row.addr), row, at, exit); } };
 }

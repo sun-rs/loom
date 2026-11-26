@@ -17,6 +17,7 @@ import { socketPath } from '../cli/project.mjs';
 import { readArtifacts } from '../cli/artifacts.mjs';
 import { recordSeniorToolDenial } from '../lib/senior-tool-guard.mjs';
 import { seniorToolLog } from './senior-tools.mjs';
+import { authorizeSocketCommand, socketCapabilities } from './socket-auth.mjs';
 
 function fixture(t, options) {
   const project = mkdtempSync(join(realpathSync(tmpdir()), 'loomd-test-'));
@@ -29,7 +30,7 @@ function fixture(t, options) {
   const resumes = [];
   const read = part => JSON.parse(readFileSync(join(project, '.project', part), 'utf8'));
 
-  async function open(row, _, resume) {
+  async function open(row, _, resume, capability) {
     if (resume) resumes.push(resume);
     const id = resume ?? randomUUID();
     const path = join(project, `${id}.jsonl`);
@@ -107,12 +108,16 @@ function fixture(t, options) {
       emit('app_request', { requestId, type: 'item/tool/requestUserInput' }, at);
       return () => emit('app_answered', { requestId });
     }
-    sessions.set(row.addr, { finish, check, context, session, question, loseEnd: () => { active = undefined; } });
+    sessions.set(row.addr, { finish, check, context, session, question, capability, loseEnd: () => { active = undefined; } });
     return session;
   }
 
-  const daemon = () => createSupervisor(project, { report: () => {}, externalNotification: async () => {},
-    ...options, sessionOptions: { open, ...options?.sessionOptions } });
+  const daemon = () => {
+    const supervisor = createSupervisor(project, { report: () => {}, externalNotification: async () => {},
+      ...options, sessionOptions: { open, ...options?.sessionOptions } });
+    return { ...supervisor, handle: (command, args, caller, identity = { external: !caller }) =>
+      supervisor.handle(command, args, caller, identity) };
+  };
   const spawn = (d, role, task, parent, fields = {}) => d.handle('spawn', {
     role, task, wave: role === 'worker' ? 'W' : 'ROOT', cli: 'codex', model: 'model', effort: 'high',
     cwd: project, project, mode: 'headless', prompt: 'start', ...fields,
@@ -152,16 +157,25 @@ test('only Leader and Auditor get a bounded project memory block on spawn', asyn
 });
 
 async function cliFor(t, f, daemon, caller) {
+  const state = mkdtempSync(join(realpathSync(tmpdir()), 'loom-cli-auth-'));
+  t.after(() => rmSync(state, { recursive: true, force: true }));
+  const capabilities = socketCapabilities(f.project, { XDG_STATE_HOME: state });
+  const capability = caller ? capabilities.ensureSession(caller).token : '';
   const server = createServer(socket => socket.once('data', async body => {
     const request = JSON.parse(body);
-    try { socket.end(JSON.stringify({ ok: true, ...await daemon().handle(request.command, request.args, request.caller) })); }
+    try {
+      const d = daemon();
+      const actor = capabilities.identify(request.capability, d.liveCaller);
+      authorizeSocketCommand(request.command, request.args, actor);
+      socket.end(JSON.stringify({ ok: true, ...await d.handle(request.command, request.args, actor?.addr, { external: actor?.external }) }));
+    }
     catch (error) { socket.end(JSON.stringify({ ok: false, error: { code: error.code, message: error.message } })); }
   })).listen(socketPath(f.project));
   t.after(() => new Promise(resolve => server.close(resolve)));
   await once(server, 'listening');
   const loom = new URL('../bin/loom', import.meta.url);
   return (...args) => promisify(execFile)(process.execPath, [loom.pathname, ...args], {
-    env: { ...process.env, LOOM_PROJECT: f.project, LOOM_ADDR: caller, HC_TERMINAL_ID: '' },
+    env: { ...process.env, LOOM_PROJECT: f.project, LOOM_ADDR: caller, LOOM_CAPABILITY: capability, HC_TERMINAL_ID: '' },
   });
 }
 
@@ -1249,11 +1263,17 @@ test('a role delivery waits for the acknowledgement even if the predecessor has 
 });
 
 for (const [role, cli] of [['leader', 'agy'], ['auditor', 'claude']]) test(`${role} self-rotation uses a normal wake and waits for idle and acknowledgement`, async t => {
-  const f = fixture(t);
+  const state = mkdtempSync(join(realpathSync(tmpdir()), 'loom-rotation-auth-'));
+  t.after(() => rmSync(state, { recursive: true, force: true }));
+  const sessionOptions = {};
+  const f = fixture(t, { sessionOptions });
+  const capabilities = sessionOptions.capabilities = socketCapabilities(f.project, { XDG_STATE_HOME: state });
   f.policy({ roles: { [role]: { rotateAt: 'gate' } } });
   const d = f.daemon();
   t.after(d.shutdown);
   const { session: old } = await f.spawn(d, role, 'OLD', undefined, { cli, model: 'same-model', effort: 'low', prompt: 'HOLD startup' });
+  const oldCapability = f.sessions.get(old.addr).capability;
+  assert.equal(capabilities.identify(oldCapability, d.liveCaller)?.addr, old.addr);
   await d.tick();
   const prior = f.read('inbox/state.json').messages.length;
   await d.handle('notifications', { gateComplete: 'ROT-SELF' });
@@ -1275,6 +1295,10 @@ for (const [role, cli] of [['leader', 'agy'], ['auditor', 'claude']]) test(`${ro
   await d.tick();
   await d.tick();
   const next = (await d.handle('state', { target: old.addr })).rotations[0].successor;
+  const nextCapability = f.sessions.get(next).capability;
+  assert.ok(nextCapability && nextCapability !== oldCapability);
+  assert.equal(capabilities.identify(nextCapability, d.liveCaller), undefined);
+  assert.equal(capabilities.identify(oldCapability, d.liveCaller)?.addr, old.addr);
   const { brief, ack } = handoverBrief(f, next);
   assert.ok(brief.includes(note) && brief.includes(notePath) && brief.includes('handoff readiness'));
   const job = f.read(`loomd/sessions/${next}.json`);
@@ -1283,6 +1307,9 @@ for (const [role, cli] of [['leader', 'agy'], ['auditor', 'claude']]) test(`${ro
   assert.equal((await d.handle('state', { target: role })).addr, old.addr);
   f.sessions.get(next).finish(ack);
   await d.tick();
+  assert.equal(capabilities.identify(oldCapability, d.liveCaller), undefined);
+  assert.equal(capabilities.identify(oldCapability, d.liveCaller), undefined);
+  assert.equal(capabilities.identify(nextCapability, d.liveCaller)?.addr, next);
   assert.equal((await d.handle('state', { target: role })).addr, next);
   assert.equal((await d.handle('state', { target: old.addr })).state, 'exited');
   const history = (await d.handle('notifications', { history: true })).notifications;

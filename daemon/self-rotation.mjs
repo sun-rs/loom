@@ -37,18 +37,19 @@ export function selfRotation(project, { sessions, index, mail, notifications, no
   const describe = row => ({ addr: row.addr, role: row.role, notePath: notePath(row),
     inFlight: inFlight(row).map(({ addr, task, wave }) => ({ addr, task, wave })) });
 
-  function request(args, caller) {
+  function request(args, caller, external) {
     const actor = sessions.rows().find(row => row.addr === caller || row.pane === caller);
     const overrides = Object.fromEntries(['cli', 'model', 'effort'].filter(key => args[key] !== undefined)
       .map(key => [key, args[key]]));
     const override = Object.keys(overrides).length > 0;
-    if (!actor || actor.endedAt !== null || !sessions.jobs.has(actor.addr) ||
+    if (external ? args.self === true || typeof args.target !== 'string' :
+        !actor || actor.endedAt !== null || !sessions.jobs.has(actor.addr) ||
         (args.self === true) === (typeof args.target === 'string') ||
         (args.target !== undefined || override) && actor.role !== 'super') {
-      throw new CommandError('invalid-arguments', 'A managed Leader or Auditor can rotate itself. Only a managed Super may select a target or override its profile.');
+      throw new CommandError('invalid-arguments', 'A managed Leader or Auditor can rotate itself. Only Super may select a target or override its profile.');
     }
     const row = args.self === true ? actor : sessions.resolve(args.target, caller);
-    if (!active(row) || row.project !== actor.project) throw new CommandError('not-ready', 'Choose an active Leader or Auditor in this project');
+    if (!active(row) || actor && row.project !== actor.project) throw new CommandError('not-ready', 'Choose an active Leader or Auditor in this project');
     if (args.reason !== undefined && (!validText(args.reason) || Buffer.byteLength(args.reason) > 512 || /[\r\n]/.test(args.reason)) ||
         Object.values(overrides).some(value => !validText(value))) throw new CommandError('invalid-arguments', 'Invalid rotation reason or runtime override');
     ensureNotes();
@@ -57,7 +58,7 @@ export function selfRotation(project, { sessions, index, mail, notifications, no
     const entry = progress(row.addr);
     if (entry.request) return { rotation: { ...details, status: 'scheduled', requestId: entry.request.id,
       profile: entry.request.profile } };
-    if ((entry.failures?.length ?? 0) >= 2 && actor.role !== 'super') {
+    if ((entry.failures?.length ?? 0) >= 2 && !external && actor.role !== 'super') {
       throw new CommandError('rotation-retry-exhausted', 'Two handovers failed. Loom has notified the supervising role.');
     }
     const info = lstatSync(details.notePath, { throwIfNoEntry: false });

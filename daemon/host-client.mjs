@@ -12,7 +12,7 @@ import { claudeAuthMode } from '../cli/policy.mjs';
 
 const lastExit = path => jsonRows(readText(path)).findLast(event => ['stream-opened', 'exited', 'released'].includes(event.type));
 
-export async function attachHost(project, row, job, save, controller, { stop = false } = {}) {
+export async function attachHost(project, row, job, save, controller, { stop = false, capabilities } = {}) {
   const addr = row.addr;
   const journal = eventPath(project, addr);
   let resume = row.sessionId;
@@ -85,6 +85,7 @@ export async function attachHost(project, row, job, save, controller, { stop = f
         save(job);
       }
     }
+    if (capabilities) env = { ...(env ?? process.env), LOOM_CAPABILITY: capabilities.ensureSession(addr).token };
     const log = openSync(join(dir, 'host.log'), constants.O_WRONLY | constants.O_CREAT | constants.O_APPEND | constants.O_NOFOLLOW, 0o600);
     try {
       const child = spawn(process.execPath, [join(root, 'daemon', 'session-host.mjs'), project, addr, incarnation, release], {
@@ -145,6 +146,7 @@ export async function attachHost(project, row, job, save, controller, { stop = f
   }
   return {
     hosted: true, incarnation, protocol: hello.protocol, release, oar: current.oar, pid: current.identity.pid,
+    identity: current.identity,
     streamId: current.streamId, pull,
     get session() { return { id: current.sessionId, status: () => ({ value: current.status }),
       effort: () => ({ value: current.effort }), model: () => ({ value: current.model }), steer: current.steer }; },

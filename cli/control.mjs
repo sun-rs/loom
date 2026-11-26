@@ -6,7 +6,7 @@ import { setTimeout as delay } from 'node:timers/promises';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { parseArgs } from 'node:util';
 import { CommandError } from './sessions.mjs';
-import { callerAddress, projectDirectory, projectReceipt } from './project.mjs';
+import { projectDirectory, projectReceipt } from './project.mjs';
 import { providers } from './policy.mjs';
 import { daemonAbsent, request } from '../daemon/rpc.mjs';
 import { activeRelease } from '../daemon/release.mjs';
@@ -89,8 +89,7 @@ export async function control(command, args) {
     }
     const project = projectDirectory(values.project);
     try {
-      const result = await request(project, 'spawn', { ...values, project, cwd: realpathSync(values.cwd), role, prompt,
-        ...(role === 'worker' && { workerCaller: callerAddress() ?? null }) });
+      const result = await request(project, 'spawn', { ...values, project, cwd: realpathSync(values.cwd), role, prompt });
       return withTuiVersionWarnings({ ...result, ...projectReceipt(project) }, result.session);
     } catch (error) {
       if (daemonAbsent(error)) throw new CommandError('not-ready', 'loomd is not running for this project');

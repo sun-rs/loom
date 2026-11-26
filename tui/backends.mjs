@@ -30,17 +30,18 @@ const wrapper = fileURLToPath(new URL('./loom-pty', import.meta.url));
 
 export function hcWrappedBackend({ command = 'hc', modules } = {}) {
   return {
-    async launch({ cwd, argv, env, unset, name, provider, evidence, sessionDir, socket = join(sessionDir, 'pty.sock'), placementLabels }) {
+    async launch({ cwd, argv, env, unset, name, provider, nativeCommand = argv[0], evidence, sessionDir,
+      socket = join(sessionDir, 'pty.sock'), placementLabels }) {
       const wrapEnv = {
         ...env,
         LOOM_PTY_SOCKET: socket,
         LOOM_PTY_PROVIDER: provider,
-        LOOM_PTY_CLI: argv[0],
+        LOOM_PTY_CLI: nativeCommand,
         LOOM_PTY_EVIDENCE: JSON.stringify(evidence),
         ...(modules ? { LOOM_PTY_MODULES: modules } : {}),
       };
       const pane = await startPane(command, cwd, [wrapper, ...argv], {
-      env: wrapEnv, unset, name, provider, nativeCommand: argv[0], placementLabels,
+        env: wrapEnv, unset, name, provider, nativeCommand, placementLabels,
       });
       const request = (method, params) => requestControl(socket, method, params, evidence.incarnation);
       async function readExit() {

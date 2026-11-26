@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { execFile, spawn as spawnProcess, spawnSync } from 'node:child_process';
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { once } from 'node:events';
 import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -15,6 +15,7 @@ import codex from '../adapters/codex/index.mjs';
 import { deliveryId } from '../inbox/message.mjs';
 import { addCodexStartHook } from '../runtimes/tui/codex-start.mjs';
 import { request } from './rpc.mjs';
+import { clientCapability } from './socket-auth.mjs';
 import { hostDirectory, hostHello, hostRequest, hostSocket } from './host-control.mjs';
 import { processCommand, processTable, sameProcess } from './processes.mjs';
 import { nextController, releaseId } from './release.mjs';
@@ -97,6 +98,7 @@ async function until(read, message, wait = 18_000) {
 function fixtureProject(t, options = {}) {
   const root = process.env.LOOM_HARDEN_TEST_ROOT ?? realpathSync(tmpdir());
   const project = mkdtempSync(join(root, 'lh-'));
+  const authState = mkdtempSync(join(root, 'lh-state-'));
   fixtureProjects.add(project);
   const read = name => JSON.parse(readFileSync(join(project, name), 'utf8'));
   const write = (name, data) => writeFileSync(join(project, name), JSON.stringify(data) + '\n');
@@ -109,24 +111,27 @@ function fixtureProject(t, options = {}) {
   const native = () => lines('native-deliveries.jsonl');
   const deliveries = id => native().filter(row => deliveryId(row.text) === id);
   const fixtureEnv = Object.fromEntries(Object.entries(process.env).filter(([key]) =>
-    !['HC_TERMINAL_ID', 'LOOM_ADDR', 'LOOM_WAVE_WINDOW_MS', 'LOOM_WAVE_SEAL_MS', 'LOOM_WAVE_PARTIAL_MS',
+    !['HC_TERMINAL_ID', 'LOOM_ADDR', 'LOOM_CAPABILITY', 'LOOM_EXTERNAL_SUPER', 'LOOM_WAVE_WINDOW_MS', 'LOOM_WAVE_SEAL_MS', 'LOOM_WAVE_PARTIAL_MS',
       'LOOM_UNCERTAIN_MS', 'LOOM_BLOCKED_COALESCE_MS'].includes(key)));
   const codex = join(project, 'codex');
   const agy = join(project, 'agy');
   for (const cli of [codex, agy]) writeFileSync(cli, '#!' + process.execPath + '\nimport(' +
     JSON.stringify(new URL('../tasks/PROTO-HARDEN-0/fixtures/native.mjs', import.meta.url).href) + ');\n', { mode: 0o700 });
-  for (const dir of ['codex-local', 'xdg-state', 'xdg-config', 'xdg-data']) mkdirSync(join(project, dir));
+  for (const dir of ['codex-local', 'xdg-config', 'xdg-data']) mkdirSync(join(project, dir));
   mkdirSync(join(project, '.project'));
   write('.project/policy.json', { preferred: [], deny: [], delivery: { coalesceMs: 0 } });
   Object.assign(fixtureEnv, { LOOM_CODEX_BIN: codex, LOOM_AGY_BIN: agy,
     OAR_CODEX_BIN: codex, OAR_ANTIGRAVITY_BIN: agy, CODEX_HOME: join(project, 'codex-local'),
-    XDG_STATE_HOME: join(project, 'xdg-state'), XDG_CONFIG_HOME: join(project, 'xdg-config'),
+    XDG_STATE_HOME: authState, XDG_CONFIG_HOME: join(project, 'xdg-config'),
     XDG_DATA_HOME: join(project, 'xdg-data'), LOOM_FAULT_PROJECT: project, LOOM_DESKTOP_NOTIFY: '0',
     NODE_OPTIONS: '--import=' + new URL('../tasks/HOTSWAP-1/fault-host.mjs', import.meta.url).href, ...options.env });
   write('panes.json', []);
   const children = [];
   const extraHosts = [];
-  const rpc = (command, args) => request(project, command, args);
+  const authDir = join(authState, 'loom', 'socket-auth', createHash('sha256').update(project).digest('hex'));
+  const rpc = (command, args) => request(project, command, args, { capability: command === 'send' && args.from ?
+    readFileSync(join(authDir, args.from), 'utf8').trim() :
+    clientCapability(project, { XDG_STATE_HOME: authState, LOOM_EXTERNAL_SUPER: '1' }) });
   function launch() {
     const child = spawnProcess(process.execPath, ['--import', fixture('fault.mjs'), fixture('loomd.mjs'), project], {
       env: fixtureEnv, cwd: repository, detached: true, stdio: ['ignore', 'pipe', 'pipe'],
@@ -196,6 +201,7 @@ function fixtureProject(t, options = {}) {
         if (child.exitCode === null && child.signalCode === null) signal(-child.pid, 'SIGKILL');
         await exit;
       }
+      rmSync(authState, { recursive: true, force: true });
       if (!process.env.LOOM_HARDEN_TEST_ROOT) rmSync(project, { recursive: true, force: true });
     }
   });

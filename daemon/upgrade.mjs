@@ -15,6 +15,8 @@ import { daemonAbsent, request } from './rpc.mjs';
 import { hostUUID, readJSON } from './host-control.mjs';
 import { processTable, sameProcess } from './processes.mjs';
 import { checkHolder } from '../holder/assets.mjs';
+import { hasStoredSessionCapability, socketAuthVersion } from './socket-auth.mjs';
+import { preparePeerAuth } from './peer-auth.mjs';
 
 const exec = promisify(execFile);
 export const daemonProtocol = 1;
@@ -34,7 +36,8 @@ export async function selfCheck() {
   const { controlProtocol } = await import('../tui/pty-control.mjs');
   const holder = await checkHolder(releaseRoot, { pipes: true });
   return { root: releaseRoot, digest: releaseDigest(releaseRoot, { legacy: true }), releaseDigest: releaseDigest(releaseRoot),
-    daemonProtocol, hostProtocol, hostProtocols: [...hostProtocols, 3], ptyProtocol: controlProtocol, ptyProtocols: [0, 1, 2, 3],
+    legacyPeerAuth: preparePeerAuth().available,
+    daemonProtocol, socketAuthVersion, hostProtocol, hostProtocols: [...hostProtocols, 3], ptyProtocol: controlProtocol, ptyProtocols: [0, 1, 2, 3],
     defaultTuiProtocol: 3, defaultCodexHostProtocol: 3, holderDigest: holder.digest, attachmentCheck: true, storageVersions, packages,
     platform: process.platform, arch: process.arch, node: process.versions.node };
 }
@@ -99,6 +102,7 @@ export async function planUpgrade(project, args, current, sessions) {
   const [target, verifiedCurrent] = await Promise.all([
     verifyRelease(args.rollback ? active.previous.root : args.target), verifyRelease(current.root),
   ]);
+  if (target.socketAuthVersion !== socketAuthVersion) throw new Error('Release does not support Loom socket capabilities');
   if (target.root === current.root) throw new CommandError('invalid-arguments', 'Prepare the new build in a different release directory');
   if (current.digest !== verifiedCurrent.digest || active?.current.digest &&
       ![verifiedCurrent.digest, verifiedCurrent.legacyDigest].includes(active.current.digest)) {
@@ -117,6 +121,11 @@ export async function planUpgrade(project, args, current, sessions) {
   }
   sessions = await sessions();
   const blockers = blockersFor(sessions, target);
+  if (!target.legacyPeerAuth) for (const session of sessions) {
+    if (session.status === 'attached' && !hasStoredSessionCapability(project, session.addr)) {
+      blockers.push({ ...session, reason: 'Target cannot authenticate this legacy session by its kernel peer' });
+    }
+  }
   return { current: { ...verifiedCurrent, id: current.id }, target, sessions, blockers, storageVersion: version, rollback: Boolean(args.rollback) };
 }
 
