@@ -6,7 +6,7 @@ import { PassThrough } from 'node:stream';
 import { test } from 'node:test';
 import { pagerArgs, statusTui } from '../cli/status-tui.mjs';
 import { herdrCommands, herdrProjects, projectLayout, readLayout, superLayout } from './herdr-layout.mjs';
-import { deliveryBoard, gateBoard } from './status-board.mjs';
+import { attentionBoard, deliveryBoard, gateBoard, notificationBoard, workerBoard } from './status-board.mjs';
 
 const fake = String.raw`
 const { readFileSync, writeFileSync } = require('node:fs');
@@ -269,21 +269,68 @@ test('test processes require both fake Herdr executables even for mandatory layo
   }
 });
 
-test('the board reports delivery states and the latest verified verdict across gate rounds', () => {
-  const base = { createdAt: 3_000, phase: 'queued', target: { addr: 't1' } };
+test('the board keeps delivery history out of the last-hour attention counts', () => {
+  const now = 4_000_000;
+  const base = { createdAt: now - 7_000, phase: 'queued', target: { addr: 't1' } };
   const observed = new Map([['t2', { awaitingUser: true }]]);
-  assert.deepEqual(deliveryBoard([base, { ...base, typedAt: 4_000 }, { ...base, stalledAt: 9_000 }, { ...base, phase: 'refused' },
-    { ...base, target: { addr: 't2' }, createdAt: 500 }, { ...base, received: { at: 9_000 } }], observed, 10_000), {
+  const delivery = deliveryBoard([base, { ...base, typedAt: now - 6_000 }, { ...base, stalledAt: now - 1_000 },
+    { ...base, createdAt: 0, refusedAt: now - 10, phase: 'refused' }, { ...base, refusedAt: 5, phase: 'refused' },
+    { ...base, createdAt: 200, stalledAt: 201 }, { ...base, target: { addr: 't2' }, createdAt: now - 9_500 },
+    { ...base, received: { at: now - 1_000 } }], observed, now);
+  assert.deepEqual(delivery, {
     counts: { queued: 1, typed: 1, stalled: 1, refused: 1, 'awaiting-user': 1 }, oldestAgeMs: 9_500,
+    allTime: { counts: { queued: 1, typed: 1, stalled: 2, refused: 2, 'awaiting-user': 1 }, oldestAgeMs: now - 200 },
   });
+  const attention = attentionBoard(delivery, [{ role: 'leader', addr: 't2', state: 'auth-expired' }], [],
+    [{ id: 'check', round: 1, waitingOn: 'auditor' }], [{ id: 's1', type: 'needs-decision', reason: 'self-rotation-overdue', addr: 't2' }],
+    () => 'leader');
+  assert.deepEqual(attention.map(item => item.kind), ['stalled', 'refused', 'awaiting-user', 'auth-expired', 'rotation-overdue', 'gate-wait']);
+  assert.equal(attention[0].count, 1);
+  assert.equal(attention[1].count, 1);
+});
+
+test('the board keeps each gate round and applies closure only to the round it closed', () => {
+  const base = { createdAt: 3_000, phase: 'queued', target: { addr: 't1', role: 'auditor' }, from: { role: 'leader' } };
   const packet = { ...base, gateId: 'G1', gatePacket: 'gate.md' };
-  const [gate] = gateBoard([{ ...packet, gateRound: 1, completion: { at: 4_000, body: 'PASS\nVerified' } },
+  const [open, closed, earlier] = gateBoard([{ ...packet, gateRound: 1, completion: { at: 4_000, body: 'PASS\nVerified' } },
     { ...packet, gateRound: 2, completion: { at: 5_000, body: 'REJECT', unconfirmed: true } },
-    { ...packet, gateRound: 2, completion: { at: 5_500, body: 'NOREPLY' } }],
+    { ...packet, gateRound: 2, completion: { at: 5_500, body: 'NOREPLY' } },
+    { ...packet, gateRound: 3, createdAt: 7_000 }],
     [{ type: 'gate-completed', gate: 'G1', at: 6_000 }]);
-  assert.deepEqual([gate.round, gate.verdict.tag, gate.verdict.round, gate.completedAt], [2, 'PASS', 1, 6_000]);
-  assert.equal(gate.verdict.text, 'PASS\nVerified');
-  assert.equal(gate.packet, 'gate.md');
+  assert.deepEqual([open.round, open.waitingOn, closed.round, closed.completedAt, earlier.round, earlier.superseded],
+    [3, 'auditor', 2, 6_000, 1, true]);
+  assert.equal(closed.verdict, undefined);
+  assert.equal(earlier.verdict.text, 'PASS\nVerified');
+  assert.equal(earlier.packet, 'gate.md');
+  assert.equal(gateBoard([{ ...packet, completion: { at: 4_000, body: 'PASS' } }], [])[0].waitingOn, 'leader');
+});
+
+test('worker records preserve release timing and the last confirmed result', () => {
+  const make = (addr, endedAt = null) => ({ addr, endedAt, role: 'worker', backend: 'headless' });
+  const rows = [make('idle'), make('released', 100), make('ended', 200)];
+  const messages = ['DONE result', 'BLOCKED waiting', 'FAILED issue', 'DONE unsafe'].map((body, index) => ({
+    target: { addr: rows[index % 3].addr }, completion: { at: index, body, unconfirmed: index === 3 },
+  }));
+  const workers = workerBoard(rows, messages, new Map([['idle', { releaseAt: 800 }], ['released', { releasedAt: 100 }]]), new Map(),
+    row => ({ addr: row.addr, state: 'idle' }));
+  assert.deepEqual(workers.map(row => [row.state, row.releaseAt, row.lastResult]),
+    [['idle', 800, 'DONE'], ['released', null, 'BLOCKED'], ['ended', null, 'FAILED']]);
+});
+
+test('routine receipts count toward Super notices without crowding out recent actionable entries', () => {
+  const noise = Array.from({ length: 12 }, (_, index) => ({
+    id: `routine-${index}`, type: 'super-delivery-receipt', reason: 'received', at: 10 + index,
+  }));
+  const { count, routineReceipts, last } = notificationBoard([
+    { id: 'newest', type: 'needs-decision', at: 6, text: 'Need confirmation' }, ...noise,
+    { id: 'older', type: 'super-delivery-receipt', reason: 'refused', at: 5 },
+    { id: 'taken', type: 'needs-decision', at: 4, takenAt: 51, text: 'Need confirmation' },
+    { id: 'log', type: 'needs-decision', at: 50, logOnly: true },
+    { id: 'other-read', type: 'project-completed', at: 3, takenAt: 51 },
+  ]);
+  assert.equal(count, 14);
+  assert.equal(routineReceipts, 12);
+  assert.deepEqual(last.map(notice => [notice.id, notice.count, notice.unread]), [['newest', 2, 1], ['older', 1, 1], ['other-read', 1, 0]]);
 });
 
 test('status TUI reconnects with read-only board requests and passes pager queries as data', { timeout: 5_000 }, async () => {

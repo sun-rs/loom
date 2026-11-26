@@ -100,7 +100,7 @@ export async function readState(session) {
   if (session.endedAt !== null) return { state: 'exited', deliveries: [] };
   if (session.backend === 'headless') throw new CommandError('unsupported', 'Headless state is not connected to the runtime');
   const adapter = adapterFor(session);
-  const { stdout } = await run('hc', ['read', '--json', '--', session.addr], { timeout: 5000 });
+  const { stdout } = await run(process.env.LOOM_HC_BIN ?? 'hc', ['read', '--json', '--', session.addr], { timeout: 5000 });
   const { text } = JSON.parse(stdout);
   if (typeof text !== 'string') throw new Error(`No screen returned for ${session.addr}`);
   const screen = adapter.screen.classify(text);

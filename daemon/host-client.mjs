@@ -5,18 +5,27 @@ import { join } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
 import { hostAbsent, hostDirectory, hostHello, hostRequest, hostSocket, hostUUID, readJSON } from './host-control.mjs';
 import { eventPath, jsonRows, readText, syncDirectory, writeState } from './io.mjs';
-import { processTable, sameProcess } from './processes.mjs';
+import { inspectProcess } from './processes.mjs';
 import { releaseId, releaseRoot } from './release.mjs';
 import { claudeApiEnvKeys } from '../adapters/claude/launch.mjs';
 import { claudeAuthMode } from '../cli/policy.mjs';
 
 const lastExit = path => jsonRows(readText(path)).findLast(event => ['stream-opened', 'exited', 'released'].includes(event.type));
+const unknown = () => Object.assign(new Error('Session host liveness is unknown; preserving the existing host binding'),
+  { code: 'liveness-unknown' });
 
-export async function attachHost(project, row, job, save, controller, { stop = false } = {}) {
+async function connect(path, incarnation) {
+  try { return await hostHello(path, incarnation); }
+  catch (error) { if (!hostAbsent(error)) throw error; }
+}
+
+export async function attachHost(project, row, job, save, controller, { stop = false, capabilities } = {}) {
   const addr = row.addr;
   const journal = eventPath(project, addr);
   let resume = row.sessionId;
   let start = !job.host;
+  let hello;
+  let boundIdentity;
   if (job.host) {
     if (!hostUUID.test(job.host.incarnation)) throw new Error('Invalid stored session host incarnation');
     const dir = hostDirectory(project, addr, job.host.incarnation);
@@ -26,9 +35,12 @@ export async function attachHost(project, row, job, save, controller, { stop = f
     resume = native?.sessionId ?? resume;
     let owner = readJSON(join(dir, 'owner.json'));
     if (ended || failure) {
-      if (failure && !stop) throw new Error(failure.message);
+      if (failure && !stop && (!job.retention?.resuming || owner &&
+          sameProcess(owner.identity, (await processTable([owner.identity.pid])).get(owner.identity.pid)))) {
+        throw new Error(failure.message);
+      }
       return { endedAt: ended?.at ?? Date.now(), sessionId: ended?.sessionId ?? native?.sessionId,
-        transcriptPath: ended?.transcriptPath };
+        transcriptPath: ended?.transcriptPath, ...(failure && { error: failure.message }) };
     }
     if (stop && !owner) {
       writeState(join(dir, 'cancelled.json'), 'true');
@@ -39,19 +51,24 @@ export async function attachHost(project, row, job, save, controller, { stop = f
       if (owner.addr !== addr || owner.project !== project || owner.incarnation !== job.host.incarnation) {
         throw new Error('Session host binding changed');
       }
-      start = !sameProcess(owner.identity, (await processTable([owner.identity.pid])).get(owner.identity.pid));
-      if (start) {
+      boundIdentity = owner.identity;
+      const socket = hostSocket(project, addr, owner.incarnation);
+      hello = await connect(socket, owner.incarnation);
+      if (!hello) {
         const event = lastExit(journal);
         if (event && ['exited', 'released'].includes(event.type) && event.incarnation === owner.incarnation) {
           return { endedAt: event.at };
         }
-        const socket = hostSocket(project, addr, owner.incarnation);
-        if (lstatSync(socket, { throwIfNoEntry: false })?.isSocket()) unlinkSync(socket);
+        const status = await inspectProcess(owner.identity);
+        if (status !== 'dead') throw unknown();
+        start = status === 'dead';
+        if (start && lstatSync(socket, { throwIfNoEntry: false })?.isSocket()) unlinkSync(socket);
       }
     }
     if (stop && (start || !owner)) return { endedAt: Date.now() };
   } else if (stop) return { endedAt: Date.now() };
   if (start) {
+    boundIdentity = undefined;
     if (row.cli === 'claude') job.authMode = claudeAuthMode(project, row.role);
     job.host = { incarnation: randomUUID(), release: releaseId(), root: releaseRoot };
     const dir = hostDirectory(project, addr, job.host.incarnation);
@@ -68,11 +85,7 @@ export async function attachHost(project, row, job, save, controller, { stop = f
   const dir = hostDirectory(project, addr, incarnation);
   const path = hostSocket(project, addr, incarnation);
   let spawnError;
-  async function connect() {
-    try { return await hostHello(path, incarnation); }
-    catch (error) { if (!hostAbsent(error)) throw error; }
-  }
-  let hello = await connect();
+  hello ??= await connect(path, incarnation);
   if (!hello && !readJSON(join(dir, 'owner.json'))) {
     let env;
     if (row.role === 'worker' && row.cli === 'codex') env = { ...process.env, OAR_CODEX_SANDBOX: 'inherit' };
@@ -85,6 +98,7 @@ export async function attachHost(project, row, job, save, controller, { stop = f
         save(job);
       }
     }
+    if (capabilities) env = { ...(env ?? process.env), LOOM_CAPABILITY: capabilities.ensureSession(addr).token };
     const log = openSync(join(dir, 'host.log'), constants.O_WRONLY | constants.O_CREAT | constants.O_APPEND | constants.O_NOFOLLOW, 0o600);
     try {
       const child = spawn(process.execPath, [join(root, 'daemon', 'session-host.mjs'), project, addr, incarnation, release], {
@@ -104,19 +118,20 @@ export async function attachHost(project, row, job, save, controller, { stop = f
     if (ended) return { endedAt: ended.at, sessionId: ended.sessionId, transcriptPath: ended.transcriptPath };
     if (failure) throw new Error(failure.message);
     const owner = readJSON(join(dir, 'owner.json'));
-    if (owner && !sameProcess(owner.identity, (await processTable([owner.identity.pid])).get(owner.identity.pid))) {
+    if (owner && await inspectProcess(owner.identity) === 'dead') {
       throw new Error(readJSON(join(dir, 'failed.json'))?.message ?? 'Session host exited during startup');
     }
-    if (Date.now() >= deadline) throw new Error('Session host did not become ready');
+    if (Date.now() >= deadline) throw owner ? unknown() : new Error('Session host did not become ready');
     await delay(125);
-    hello = await connect();
+    hello = await connect(path, incarnation);
   }
 
   const call = (method, params) => hostRequest(path, incarnation, method, params, hello.protocol, controller);
   let current = await call('claim');
   function verify(state) {
     if (state.project !== project || state.addr !== addr || state.incarnation !== incarnation ||
-        state.release !== release || state.root !== root || resume && state.sessionId !== resume) {
+        state.release !== release || state.root !== root || resume && state.sessionId !== resume ||
+        boundIdentity && ['pid', 'started', 'uid'].some(key => state.identity?.[key] !== boundIdentity[key])) {
       throw new Error('Session host binding changed');
     }
     resume ??= state.sessionId;
@@ -138,13 +153,17 @@ export async function attachHost(project, row, job, save, controller, { stop = f
     catch (error) {
       if (!hostAbsent(error)) throw error;
       const ended = readJSON(join(dir, 'ended.json'));
-      if (!ended) throw error;
+      if (!ended) {
+        if (await inspectProcess(current.identity) !== 'dead') throw unknown();
+        throw error;
+      }
       current = { ...current, endedAt: ended.at };
     }
     return current;
   }
   return {
     hosted: true, incarnation, protocol: hello.protocol, release, oar: current.oar, pid: current.identity.pid,
+    identity: current.identity,
     streamId: current.streamId, pull,
     get session() { return { id: current.sessionId, status: () => ({ value: current.status }),
       effort: () => ({ value: current.effort }), model: () => ({ value: current.model }), steer: current.steer }; },
@@ -157,6 +176,6 @@ export async function attachHost(project, row, job, save, controller, { stop = f
     error: () => current.error,
     receipt: (action, id) => call('receipt', { action, id }),
     control: (action, { id, text, active }) => call('control', { action, id, text, active }),
-    close: () => call('close'),
+    close: options => call('close', options),
   };
 }

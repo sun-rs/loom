@@ -75,7 +75,7 @@ function replay(policy, guard) {
     const at = Date.parse(turn.startedAt);
     const gate = boundaries.findLast(item => lastRotation < item.at && item.at <= at);
     const safe = !busy.some(([start, end]) => start <= at && at < end);
-    const reason = policy && safe && rotationReason(policy, 'leader', { contextTokens: context, gate: gate?.name });
+    const reason = policy && safe && rotationReason(policy, 'leader', { inputTokens: context, gate: gate?.name });
     if (reason) {
       prefix = Math.max(0, previous.inputTokens - removedBefore(previous, guard) - briefContext);
       lastRotation = at;
@@ -96,8 +96,8 @@ const scenarios = {
   historical: replay(null, false),
   guardOnly: replay(null, true),
   gateOnly: replay({ roles: { leader: { rotateAt: 'gate', maxContextTokens: Number.MAX_SAFE_INTEGER } } }, false),
-  defaultRotation: replay({}, false),
-  guardAndRotation: replay({ roles: { leader: { rotateAt: 'gate' } } }, true),
+  defaultRotation: replay({ roles: { leader: { maxContextTokens: 150_000 } } }, false),
+  guardAndRotation: replay({ roles: { leader: { rotateAt: 'gate', maxContextTokens: 150_000 } } }, true),
 };
 for (const item of Object.values(scenarios)) item.savedRawTokens = scenarios.historical.rawTokens - item.rawTokens;
 console.log(JSON.stringify({ goalTurns: goal.length, goalCalls: goal.flatMap(turn => turn.calls).length,

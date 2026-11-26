@@ -1,5 +1,5 @@
 import { parseArgs } from 'node:util';
-import { roles, rotatingRoles } from '../index/index.mjs';
+import { roles } from '../index/index.mjs';
 import { daemonAbsent, request } from '../daemon/rpc.mjs';
 import { control, daemonUsage, spawnHelp, spawnUsage, startDaemon } from './control.mjs';
 import { upgrade, upgradePendingExit, upgradeUsage } from './upgrade.mjs';
@@ -39,7 +39,7 @@ const help = {
     'loom layout adopt --project DIR --leader HC_ADDRESS --auditor HC_ADDRESS',
   ],
   super: ['loom super --terminal HC_ADDRESS [--project DIR]'],
-  cost: ['loom cost [--project DIR]', 'Reports role usage, the rolling consumption pyramid, estimated USD costs and per-turn acceptance timing.'],
+  cost: ['loom cost [--project DIR]', 'Reports role usage, rotation briefing tokens, the rolling consumption pyramid, estimated USD costs, session-tree RSS and per-turn acceptance timing.'],
   gate: ['loom gate pack <gate-id> [--round N] [--reuse] [--project DIR] [--base REF] [--candidate REF] [--question TEXT]'],
   escalate: ['loom escalate <gate-id> --reason REASON --evidence TEXT [--round N] [--project DIR] [--base REF] [--candidate REF]',
     'Leader only. Reasons: protected-file, assertion, skip-only, confirmed-fact-miss, sandbox-escape.'],
@@ -47,8 +47,16 @@ const help = {
   send: [sendUsage, sendHelp],
   handover: ['loom handover <leader|auditor|super> --project DIR [--to ADDR]'],
   spawn: [spawnUsage, spawnHelp],
+  assign: ['loom assign --resume-attempt <task|addr> [--reason TEXT] [--project DIR]'],
+  keep: ['loom keep <task|addr> [--clear] [--project DIR]'],
+  release: ['loom release <task|addr> [--project DIR]'],
+  'worker-check': ['loom worker-check [--project DIR]'],
+  'worker-handoff': ['loom worker-handoff --wip TEXT --passed TEXT --pending TEXT [--project DIR]',
+    'loom worker-handoff <task|addr> [--reason no-progress | --reason fabrication|overreach --evidence TEXT] [--project DIR]'],
   rotate: ['loom rotate --self [--prepare | --reason R] [--project DIR]',
-    'loom rotate --target <leader|auditor|ADDR> [--prepare | --reason R] [--cli CLI] [--model MODEL] [--effort EFFORT] [--project DIR] (managed Super)'],
+    'loom rotate --target <leader|auditor|ADDR> [--prepare | --reason R] [--cli CLI] [--model MODEL] [--effort EFFORT] [--passive] [--project DIR] (Super)'],
+  'rotation-policy': ['loom rotation-policy <scope|ruling|correction|profile|error|incident|spot-check|audit|verify|abort|rule-change> [--project DIR]',
+    'Scope uses --phase or --goal. Records use --target, --detail and --evidence FILE[:LINE] where required. See docs/ORG.md for actions and verdicts.'],
   switch: ['loom switch <leader|auditor|worker> --project DIR --to <1-based index|cli/model/effort[/fast]>'],
   daemon: [daemonUsage],
   upgrade: [upgradeUsage],
@@ -58,7 +66,7 @@ const help = {
     'loom notifications [--project DIR] [--peek|--take|--history]',
     'loom notifications [--project DIR] --needs-decision TEXT [--kind decision | --audit-escalation REASON]',
     'loom notifications [--project DIR] --complete TEXT [--phase ID]',
-    'loom notifications [--project DIR] --gate-complete ID',
+    'loom notifications [--project DIR] --gate-complete ID [--candidate SHA]',
     'Previews pending events by default. --take acknowledges them. --history includes acknowledged events.',
   ],
 };
@@ -66,6 +74,11 @@ const commands = {
   hist: { ...strings('turn', 'turns', 'level', 'role', 'project', 'since', 'outcome', 'wave', 'grep', 'tool', 'cmd', 'tail'),
     ...flags('json', 'diff', 'evidence', 'only-failed', 'with-calls') },
   state: projectArgs, stop: projectArgs, ls: projectArgs, cost: projectArgs,
+  assign: { ...projectArgs, ...flags('resume-attempt'), ...strings('reason') },
+  keep: { ...projectArgs, ...flags('clear') },
+  release: projectArgs,
+  'worker-check': projectArgs,
+  'worker-handoff': { ...projectArgs, ...strings('wip', 'passed', 'pending', 'reason', 'evidence') },
   status: { ...projectArgs, ...flags('json') },
   up: projectArgs,
   tui: { ...projectArgs, ...flags('all', 'once') },
@@ -74,11 +87,12 @@ const commands = {
   gate: { ...projectArgs, ...strings('base', 'candidate', 'question', 'round'), ...flags('reuse') },
   escalate: { ...projectArgs, ...strings('base', 'candidate', 'reason', 'evidence', 'round') },
   memory: { ...projectArgs, ...flags('json') },
+  'rotation-policy': { ...projectArgs, ...strings('target', 'id', 'detail', 'evidence', 'verdict', 'phase', 'goal', 'version') },
   switch: { ...projectArgs, ...strings('to') },
-  rotate: { ...projectArgs, ...flags('self', 'prepare'), ...strings('target', 'reason', 'cli', 'model', 'effort') },
+  rotate: { ...projectArgs, ...flags('self', 'prepare', 'passive'), ...strings('target', 'reason', 'cli', 'model', 'effort') },
   doctor: { ...projectArgs, ...flags('fix', 'prompts') },
   notifications: { ...projectArgs, ...flags('peek', 'take', 'history'),
-    ...strings('needs-decision', 'kind', 'audit-escalation', 'complete', 'phase', 'gate-complete') },
+    ...strings('needs-decision', 'kind', 'audit-escalation', 'complete', 'phase', 'gate-complete', 'candidate') },
 };
 
 function readPendingWork(project, addr) {
@@ -195,7 +209,8 @@ const errorExit = code => code === 'invalid-arguments' ? 2 : ['not-found', 'ambi
 export async function main(args) {
   const [command, ...rest] = args;
   if (!command || args.length === 1 && ['--help', '-h'].includes(command)) {
-    console.log([...Object.values(help).flat(), projectOption].join('\n'));
+    console.log([...Object.values(help).flat(), projectOption,
+      'External Super uses LOOM_EXTERNAL_SUPER=1 from a local operator shell.'].join('\n'));
     return 0;
   }
   try {
@@ -287,8 +302,11 @@ export async function main(args) {
     let result;
     if (command === 'rotate') {
       if (positionals.length || values.prepare && values.reason !== undefined ||
-          Boolean(values.self) === Boolean(values.target)) invalid(help.rotate[0]);
+          Boolean(values.self) === Boolean(values.target) || values.self && values.passive) invalid(help.rotate[0]);
       result = await request(directory, 'rotate', values);
+    } else if (command === 'rotation-policy') {
+      if (positionals.length !== 1) invalid(help['rotation-policy'][0]);
+      result = await request(directory, 'rotation-policy', { ...values, action: positionals[0] });
     } else if (command === 'memory') {
       const [action, query] = positionals;
       if (positionals.length !== 2 || action !== 'search' || !query.trim()) invalid(help.memory[0]);
@@ -321,6 +339,25 @@ export async function main(args) {
         throw new CommandError('not-ready', 'loomd is not running for this project');
       }
       if (result.session) result = await withTuiVersionWarnings(result, result.session);
+    } else if (['worker-check', 'worker-handoff'].includes(command)) {
+      const [target] = positionals;
+      const { wip, passed, pending, reason, evidence } = values;
+      if (command === 'worker-check' ? positionals.length :
+        positionals.length > 1 || !target && (reason !== undefined || evidence !== undefined ||
+          ![wip, passed, pending].every(value => value?.trim()))) invalid(help[command].join('\n'));
+      try { result = await request(directory, command, { target, wip, passed, pending, reason, evidence }); }
+      catch (error) {
+        if (!daemonAbsent(error)) throw error;
+        throw new CommandError('not-ready', 'loomd is not running for this project');
+      }
+    } else if (['keep', 'assign', 'release'].includes(command)) {
+      const [target] = positionals;
+      if (positionals.length !== 1 || !target.trim() || command === 'assign' && !values['resume-attempt']) invalid(help[command][0]);
+      try { result = await request(directory, command, { target, reason: values.reason, ...(command === 'keep' && { keep: !values.clear }) }); }
+      catch (error) {
+        if (!daemonAbsent(error)) throw error;
+        throw new CommandError('not-ready', 'loomd is not running for this project');
+      }
     } else if (command === 'hist') {
       result = await hist(values, positionals, directory);
       if (!values.json) { printHistory(result); return 0; }
@@ -331,15 +368,13 @@ export async function main(args) {
         projectSessions(directory, values.project !== undefined || Boolean(process.env.LOOM_PROJECT)), target, callerAddress());
       let session;
       if (managedProject(directory)) {
-        const liveRole = rotatingRoles.includes(target);
-        if (!liveRole) session = resolveSession();
         try {
-          result = await request(directory, command, { target: session?.addr ?? target });
-          if (liveRole && command === 'state') session = projectIndex(directory).query({ addr: result.addr })[0];
+          result = await request(directory, command, { target });
+          if (command === 'state') session = projectIndex(directory).query({ addr: result.addr })[0];
         } catch (error) {
           if (!daemonAbsent(error)) throw error;
           if (command === 'stop') throw new CommandError('not-ready', 'loomd is not running for this project');
-          session ??= resolveSession();
+          session = resolveSession();
           result = { ok: true, addr: session.addr, state: session.endedAt === null ? 'offline' : 'exited',
             deliveries: [], ...readPendingWork(directory, session.addr) };
         }
@@ -362,7 +397,8 @@ export async function main(args) {
         if (!values.json) { printStatus({ ...result, ...projectReceipt(directory) }); return 0; }
       } else if (command === 'cost') {
         const { projectCost } = await import('./cost.mjs');
-        result = { ok: true, ...projectCost(directory, projectSessions(directory)) };
+        const { sessionMemory } = await import('./status.mjs');
+        result = { ok: true, ...projectCost(directory, projectSessions(directory)), memory: await sessionMemory(directory) };
       } else if (command === 'doctor') {
         if (values.prompts) {
           const { promptDoctor } = await import('./prompt-doctor.mjs');
@@ -380,10 +416,10 @@ export async function main(args) {
         if ([values.peek, values.take, values.history].filter(Boolean).length > 1 ||
             writes > 1 || auditEscalation !== undefined && decision === undefined || values.kind !== undefined &&
             (decision === undefined || values.kind !== 'decision' || auditEscalation !== undefined) ||
-            values.phase !== undefined && values.complete === undefined ||
+            values.phase !== undefined && values.complete === undefined || values.candidate !== undefined && gateComplete === undefined ||
             (values.take || values.history) && writes) invalid(help.notifications[0]);
         try { result = await request(directory, command, { take: values.take, history: values.history,
-          decision, kind: values.kind, auditEscalation, gateComplete, complete: values.complete, phase: values.phase }); }
+          decision, kind: values.kind, auditEscalation, gateComplete, candidate: values.candidate, complete: values.complete, phase: values.phase }); }
         catch (error) {
           if (!daemonAbsent(error)) throw error;
           if (values.take || writes) {
@@ -395,14 +431,17 @@ export async function main(args) {
         let work;
         if (managedProject(directory)) {
           try {
-            const { pendingDeliveries, pendingContinuations, awaitingUser } = await request(directory, 'ls');
-            work = { pendingDeliveries, pendingContinuations, ...(awaitingUser?.length && { awaitingUser }) };
+            const { pendingDeliveries, pendingContinuations, awaitingUser, workers } = await request(directory, 'ls');
+            work = { pendingDeliveries, pendingContinuations, ...(awaitingUser?.length && { awaitingUser }), workers };
           } catch (error) { if (!daemonAbsent(error)) throw error; }
         }
         const prompts = new Map((work?.awaitingUser ?? []).map(({ addr, ...prompt }) => [addr, prompt]));
-        result = { ok: true, ...(work ?? readPendingWork(directory)),
+        const { workers = [], ...pending } = work ?? readPendingWork(directory);
+        const workerStates = new Map(workers.map(({ addr, ...fields }) => [addr, fields]));
+        result = { ok: true, ...pending,
           sessions: projectSessions(directory, values.project !== undefined || Boolean(process.env.LOOM_PROJECT)).map(row =>
-            prompts.has(row.addr) ? { ...row, state: prompts.get(row.addr).kind, userPrompt: prompts.get(row.addr) } : row) };
+            ({ ...row, ...(prompts.has(row.addr) && { state: prompts.get(row.addr).kind, userPrompt: prompts.get(row.addr) }),
+              ...workerStates.get(row.addr) })) };
       }
     }
     emit({ ...result, ...projectReceipt(directory) });

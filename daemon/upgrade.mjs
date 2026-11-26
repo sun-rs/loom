@@ -13,8 +13,10 @@ import { activeRelease, activeReleaseFile, releaseDigest, releaseRoot, upgradeFi
 import { readText, writeState } from './io.mjs';
 import { daemonAbsent, request } from './rpc.mjs';
 import { hostUUID, readJSON } from './host-control.mjs';
-import { processTable, sameProcess } from './processes.mjs';
+import { inspectProcess, processTable } from './processes.mjs';
 import { checkHolder } from '../holder/assets.mjs';
+import { hasStoredSessionCapability, socketAuthVersion } from './socket-auth.mjs';
+import { preparePeerAuth } from './peer-auth.mjs';
 
 const exec = promisify(execFile);
 export const daemonProtocol = 1;
@@ -34,7 +36,8 @@ export async function selfCheck() {
   const { controlProtocol } = await import('../tui/pty-control.mjs');
   const holder = await checkHolder(releaseRoot, { pipes: true });
   return { root: releaseRoot, digest: releaseDigest(releaseRoot, { legacy: true }), releaseDigest: releaseDigest(releaseRoot),
-    daemonProtocol, hostProtocol, hostProtocols: [...hostProtocols, 3], ptyProtocol: controlProtocol, ptyProtocols: [0, 1, 2, 3],
+    legacyPeerAuth: preparePeerAuth().available,
+    daemonProtocol, socketAuthVersion, hostProtocol, hostProtocols: [...hostProtocols, 3], ptyProtocol: controlProtocol, ptyProtocols: [0, 1, 2, 3],
     defaultTuiProtocol: 3, defaultCodexHostProtocol: 3, holderDigest: holder.digest, attachmentCheck: true, storageVersions, packages,
     platform: process.platform, arch: process.arch, node: process.versions.node };
 }
@@ -72,7 +75,7 @@ const handoffOwner = (project, id) => {
 
 export async function liveHandoff(project, id) {
   const owner = readJSON(handoffOwner(project, id));
-  return Boolean(owner && sameProcess(owner, (await processTable([owner.pid])).get(owner.pid)));
+  return Boolean(owner && await inspectProcess(owner) !== 'dead');
 }
 
 async function projectStatus(project) {
@@ -99,6 +102,7 @@ export async function planUpgrade(project, args, current, sessions) {
   const [target, verifiedCurrent] = await Promise.all([
     verifyRelease(args.rollback ? active.previous.root : args.target), verifyRelease(current.root),
   ]);
+  if (target.socketAuthVersion !== socketAuthVersion) throw new Error('Release does not support Loom socket capabilities');
   if (target.root === current.root) throw new CommandError('invalid-arguments', 'Prepare the new build in a different release directory');
   if (current.digest !== verifiedCurrent.digest || active?.current.digest &&
       ![verifiedCurrent.digest, verifiedCurrent.legacyDigest].includes(active.current.digest)) {
@@ -117,6 +121,11 @@ export async function planUpgrade(project, args, current, sessions) {
   }
   sessions = await sessions();
   const blockers = blockersFor(sessions, target);
+  if (!target.legacyPeerAuth) for (const session of sessions) {
+    if (session.status === 'attached' && !hasStoredSessionCapability(project, session.addr)) {
+      blockers.push({ ...session, reason: 'Target cannot authenticate this legacy session by its kernel peer' });
+    }
+  }
   return { current: { ...verifiedCurrent, id: current.id }, target, sessions, blockers, storageVersion: version, rollback: Boolean(args.rollback) };
 }
 
@@ -277,11 +286,10 @@ async function handoff(project, id) {
     await waitFor(async () => {
       if (upgradeState(project)?.phase !== 'switching') throw new Error('Upgrade launcher no longer owns the handoff');
       if (state.predecessor) {
-        try { return !sameProcess(state.predecessor, (await processTable([state.predecessorPid])).get(state.predecessorPid)); }
-        catch (error) { if (error.code === 'process-enumeration-retry') return false; throw error; }
+        return await inspectProcess(state.predecessor) === 'dead';
       }
       try { process.kill(state.predecessorPid, 0); }
-      catch (error) { if (error.code === 'ESRCH') return true; throw error; }
+      catch (error) { if (error.code === 'ESRCH') return true; if (error.code !== 'EPERM') throw error; }
     }, 'Previous loomd did not release the project');
   } catch (error) {
     if (upgradeState(project)?.phase === 'switching') save('failed', { error: error.message });

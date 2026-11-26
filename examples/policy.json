@@ -1,6 +1,14 @@
 {
   "note": "Single-account operation only. Use one authorized account per provider for this project.",
+  "rotation": { "mode": "explicit" },
   "delivery": { "coalesceMs": 45000, "replyBytes": 600, "stallMs": 120000 },
+  "workers": {
+    "warmMs": { "codex": 600000, "claude": 600000, "agy": 600000, "opencode": 600000 },
+    "reuseMaxContext": 0.6,
+    "reuseMaxCompactions": 1,
+    "handoffMinCompactions": 1,
+    "handoffMinRemaining": 0.15
+  },
   "drift": {
     "netLines": null,
     "budgetRaises": 2,
@@ -27,8 +35,6 @@
     "leader": {
       "trustWorkspace": true,
       "maxActiveWorkers": 3,
-      "rotateAt": "gate",
-      "maxContextTokens": 150000,
       "toolGuard": true,
       "guidance": { "modelTier": "strong", "effort": ["medium", "high"], "preferLongPromptCacheTtl": true },
       "preferred": [
@@ -38,9 +44,7 @@
     },
     "auditor": {
       "trustWorkspace": true,
-      "rotateAt": "gate",
       "maxWakesPerGate": 3,
-      "maxContextTokens": 150000,
       "toolGuard": true,
       "guidance": { "modelTier": "strong", "vendorFamily": "different-from-workers", "preferLongPromptCacheTtl": true },
       "preferred": [

@@ -1,8 +1,9 @@
 import { spawnSync } from 'node:child_process';
+import { basename } from 'node:path';
 import { readArtifacts } from './artifacts.mjs';
 import { projectCost } from './cost.mjs';
 import { request, daemonAbsent } from '../daemon/rpc.mjs';
-import { activeOrgNotices, readOrg } from '../daemon/org.mjs';
+import { activeOrgNotices, readOrg, workerCardFindings } from '../daemon/org.mjs';
 import { readNotifications } from '../daemon/notifications.mjs';
 import { deliveryFailed, isBlockedReply } from '../inbox/message.mjs';
 import { managedProject, projectIndex, projectSessions } from './project.mjs';
@@ -11,20 +12,88 @@ import { isStartupBlocker } from '../tui/agent-status.mjs';
 import { auditorWakeFiltered } from '../daemon/routing.mjs';
 import { seniorToolSummary } from '../daemon/senior-tools.mjs';
 import { readLayout } from '../daemon/herdr-layout.mjs';
+import { rotatingRoles } from '../index/index.mjs';
+import { rootEvents, sessionContext } from '../lib/session-context.mjs';
+import { historyReader } from './history.mjs';
+import { readPolicy, workerReuseLimits, workerWarmMs } from './policy.mjs';
+import { retainedState, retentionStatus, reuseStatus, workerCardId, workerContext, workerDetails, workerMetrics } from '../daemon/worker-retention.mjs';
+
+export async function sessionMemory(project) {
+  if (managedProject(project)) {
+    try { return (await request(project, 'session-memory')).memory; }
+    catch (error) { if (!daemonAbsent(error)) throw error; }
+  }
+  return null;
+}
+
+export function memoryLabel({ rssKiB, unavailableSessions }) {
+  return `${rssKiB == null ? 'unavailable' : (rssKiB / 1024).toFixed(1) + ' MiB RSS'}` +
+    (unavailableSessions ? ` · ${unavailableSessions} unmeasured` : '');
+}
+
+export const workerMetricsLabel = ({ gate, newSpawns, revives, coldRevives, coldRevivesMeasured, coldReviveTokens,
+  reuses, crossCardReuses, workerHandoffs, firstReportMismatches, thresholdRetirements,
+  averageRetirementContextPercent, leader, ttl, operator, closed, fixAfterReject }) =>
+  [gate, `new ${newSpawns}`, `revived ${revives}`, `closed ${closed}`, `TTL offline ${ttl}`,
+    reuses != null && `reused ${reuses}`, thresholdRetirements != null && `threshold retirements ${thresholdRetirements}`,
+    crossCardReuses && `cross-card ${crossCardReuses}`, workerHandoffs && `handoffs ${workerHandoffs}`,
+    firstReportMismatches && `first-report mismatches ${firstReportMismatches}`,
+    averageRetirementContextPercent != null && `mean retirement context ${Math.round(averageRetirementContextPercent)}%`,
+    leader && `Leader offline ${leader}`, operator && `operator offline ${operator}`,
+    coldRevives && `cold ${coldRevivesMeasured ? coldReviveTokens + ' tokens' : 'usage unavailable'} (${coldRevivesMeasured}/${coldRevives} measured)`,
+    fixAfterReject?.new.rounds + fixAfterReject?.revived.rounds > 0 &&
+      `post-REJECT approved/decided · new ${fixAfterReject.new.approved}/${fixAfterReject.new.decided} · revived ${fixAfterReject.revived.approved}/${fixAfterReject.revived.decided}`]
+    .filter(Boolean).join(' · ');
 
 export async function projectStatus(project) {
   let live;
   let exits;
+  let rotationPolicy;
+  let memory;
+  let metrics;
   if (managedProject(project)) {
-    try { ({ sessions: live, exits } = await request(project, 'status')); }
+    try { ({ sessions: live, exits, rotationPolicy, memory, workerMetrics: metrics } = await request(project, 'status')); }
     catch (error) { if (!daemonAbsent(error)) throw error; }
   }
   const rotations = projectIndex(project).rotations();
   const rows = projectSessions(project);
   const states = new Map((live ?? []).map(row => [row.addr, row]));
-  const lifecycle = row => states.get(row.addr)?.state ?? (row.endedAt == null ? 'offline' : 'exited');
   const artifacts = readArtifacts(project);
+  const jobs = new Map(rows.map(row => [row.addr, artifacts.job(row.addr)]));
+  const at = Date.now();
+  let policy = {};
+  try { policy = readPolicy(project, { optional: true }); } catch {}
+  const retentionFor = row => states.get(row.addr)?.retention ?? retentionStatus(jobs.get(row.addr), at, workerWarmMs(policy, row.cli));
+  const lifecycle = row => {
+    const retention = retentionFor(row);
+    return states.get(row.addr)?.state ?? (retention ? retainedState(retention, false, row.endedAt != null) :
+      row.endedAt != null ? 'exited' : 'offline');
+  };
+  const runtimeState = row => states.get(row.addr)?.runtimeState ?? lifecycle(row);
   const messages = artifacts.messages();
+  const incoming = Map.groupBy(messages, message => message.target.addr);
+  const org = readOrg(project);
+  const details = row => {
+    const observed = states.get(row.addr);
+    if (observed?.retention) {
+      const { contextPercent, contextAfterCompactionPercent, lastResultTag, compactions, reuse, retirementReason, handoff, firstReportCheck } = observed;
+      return { contextPercent, contextAfterCompactionPercent, lastResultTag, compactions, reuse, retirementReason, handoff, firstReportCheck };
+    }
+    const context = jobs.get(row.addr)?.retention?.lastContext ?? workerContext(artifacts.journal(row.addr));
+    const job = jobs.get(row.addr);
+    const inputs = incoming.get(row.addr) ?? [];
+    const cardId = workerCardId(inputs, job?.firstId);
+    const findings = workerCardFindings(org, cardId);
+    const incident = findings.findLast(finding => finding.kind === 'overreach' || finding.kind === 'fabrication');
+    const draft = job?.workerHandoff;
+    const handoff = draft?.ready || draft?.reason !== 'no-progress' && (draft?.cardId == null || draft.cardId === cardId) ?
+      draft : undefined;
+    return { ...(job?.firstReportCheck?.status === 'mismatch' ? { lastResultTag: 'BLOCKED' } :
+      workerDetails(inputs)), ...context,
+      ...(row.role === 'worker' && reuseStatus(job, row.endedAt != null, context, workerReuseLimits(policy), findings)),
+      ...((handoff || incident && row.endedAt == null) && { handoff: handoff ?? { reason: incident.kind, ready: false } }),
+      ...(job?.firstReportCheck && { firstReportCheck: job.firstReportCheck }) };
+  };
   const notifications = readNotifications(project);
   const relay = artifacts.relay();
   const pendingWaves = new Set(messages.filter(message => message.waveKey &&
@@ -54,26 +123,29 @@ export async function projectStatus(project) {
     const turn = messages.findLast(message => message.target.addr === row.addr && message.completion?.body);
     const key = row.task + '/' + row.addr;
     const status = relay.progress?.[key]?.result?.outcome?.toLowerCase();
-    const state = undelivered.has(row.addr) ? 'result-undelivered' : turn ? isBlockedReply(turn.completion.body) ? 'blocked' :
+    const mismatch = jobs.get(row.addr)?.firstReportCheck?.status === 'mismatch';
+    const state = undelivered.has(row.addr) ? 'result-undelivered' : mismatch ? 'blocked' : turn ? isBlockedReply(turn.completion.body) ? 'blocked' :
       /^\**FAILED\b/i.test(turn.completion.body.trimStart()) ? 'failed' : 'done' : status ?? lifecycle(row);
-    return { task: row.task, addr: row.addr, wave: row.wave, state, lifecycle: lifecycle(row),
+    return { task: row.task, addr: row.addr, wave: row.wave, state, lifecycle: lifecycle(row), runtimeState: runtimeState(row),
+      ...(retentionFor(row) && { retention: retentionFor(row), ...details(row) }),
       active: row.endedAt == null || selected.has(key) };
   });
   const blocked = [
-    ...cards.filter(card => card.state === 'blocked' || card.lifecycle === 'stuck' || isStartupBlocker(card.lifecycle))
+    ...cards.filter(card => card.state === 'blocked' || card.runtimeState === 'stuck' || isStartupBlocker(card.runtimeState))
       .map(card => ({ task: card.task, addr: card.addr,
-        ...(isStartupBlocker(card.lifecycle) && { reason: card.task + ' ' + card.lifecycle }) })),
-    ...rows.filter(row => row.role !== 'worker' && (lifecycle(row) === 'stuck' || isStartupBlocker(lifecycle(row))))
-      .map(row => ({ addr: row.addr, reason: row.role + ' ' + lifecycle(row) })),
+        ...(isStartupBlocker(card.runtimeState) && { reason: card.task + ' ' + card.runtimeState }) })),
+    ...rows.filter(row => row.role !== 'worker' && (runtimeState(row) === 'stuck' || isStartupBlocker(runtimeState(row))))
+      .map(row => ({ addr: row.addr, reason: row.role + ' ' + runtimeState(row) })),
     ...notifications.filter(event => event.type === 'needs-decision' && event.takenAt == null)
       .map(event => ({ addr: event.addr, reason: event.text })),
   ];
   const workers = new Set(rows.filter(row => row.role === 'worker').map(row => row.addr));
   const seniorTools = seniorToolSummary(project, rows);
-  const notices = [...activeOrgNotices(readOrg(project)).map(notice => ({ ...notice, audience: 'leader' })),
+  const notices = [...activeOrgNotices(org).map(notice => ({ ...notice, audience: 'leader' })),
     ...notifications.flatMap(event =>
-      event.type === 'auditor-budget-exceeded' || event.type === 'stuck' && workers.has(event.addr) ?
-        [{ ...event, audience: 'leader' }] : ['red-escalation', 'senior-override-budget', 'senior-tool-output-share'].includes(event.type) ? [event] : []),
+      event.type === 'auditor-budget-exceeded' ? [{ ...event, audience: 'super' }] :
+        event.type === 'stuck' && workers.has(event.addr) ? [{ ...event, audience: 'leader' }] :
+          ['red-escalation', 'senior-override-budget', 'senior-tool-output-share'].includes(event.type) ? [event] : []),
   ].sort((a, b) => b.at - a.at);
   const digestReceived = new Set(messages.filter(message => message.received && !deliveryFailed(message))
     .flatMap(message => message.auditorDigestIds ?? []));
@@ -93,10 +165,28 @@ export async function projectStatus(project) {
     }));
   const merges = [...new Map([...history, ...verified].filter(merge => merge.sha).map(merge => [merge.sha, merge])).values()]
     .sort((a, b) => b.at - a.at).slice(0, 5);
-  const { byRole, rawTokens, missing, pyramid } = projectCost(project, rows, { includeAcceptance: false });
+  const reader = historyReader(project);
+  const { byRole, rawTokens, missing, pyramid } = projectCost(project, rows, { includeAcceptance: false, reader });
   const activeAddresses = new Set(rows.filter(row => row.endedAt === null).map(row => row.addr));
   const rotationNotices = notifications.filter(event => event.type === 'leader-handover-failed' ||
-    event.type === 'leader-rotation-proposed' && activeAddresses.has(event.addr)).slice(-6).reverse();
+    ['leader-rotation-proposed', 'auditor-rotation-proposed'].includes(event.type) && activeAddresses.has(event.addr)).slice(-6).reverse();
+  const now = Date.now();
+  const startOfDay = new Date(now).setHours(0, 0, 0, 0);
+  const rotationDetails = rotations.map(rotation => ({ ...rotation,
+    reason: artifacts.job(rotation.successor)?.rotationReason ??
+      notifications.findLast(event => event.addr === rotation.predecessor && event.at <= rotation.startedAt &&
+        event.type === `${rotation.role}-rotation-proposed`)?.reason ?? null,
+  }));
+  const rotationsToday = Object.fromEntries(rotatingRoles.map(role => [role, rotationDetails.filter(rotation =>
+    rotation.role === role && rotation.boundAt >= startOfDay && rotation.boundAt <= now)]));
+  const seniorSessions = rows.filter(row => rotatingRoles.includes(row.role)).map(row => {
+    const { items, raw, transcriptBytes } = reader.sessionHistory(row);
+    const events = rootEvents(row, artifacts.journal(row.addr));
+    return { addr: row.addr, role: row.role, cli: row.cli, model: row.model, endedAt: row.endedAt,
+      turns: items.length, runtimeMs: row.startedAt == null ? null : Math.max(0, (row.endedAt ?? now) - row.startedAt), transcriptBytes,
+      context: sessionContext(row, { items, raw: raw.map(item => item.row) }, { events, statusline: artifacts.context(row.addr) }) };
+  });
+  const seniorByAddress = new Map(seniorSessions.map(metric => [metric.addr, metric]));
   const awaitingAck = new Set(rotations.filter(item => item.boundAt == null && item.failedAt == null)
     .map(item => item.successor));
   const rotating = new Set(rotations.filter(item => item.boundAt != null && item.verifiedAt == null && item.failedAt == null)
@@ -106,19 +196,19 @@ export async function projectStatus(project) {
     return prompt && row.endedAt === null ? [{ addr: row.addr, role: row.role, ...prompt }] : [];
   });
   const sessionHealth = rows.flatMap(row => {
-    const health = states.get(row.addr)?.liveness ?? (!live && row.endedAt == null && artifacts.job(row.addr)?.liveness?.health);
+    const health = states.get(row.addr)?.liveness ?? (!live && row.endedAt == null && jobs.get(row.addr)?.liveness?.health);
     return health ? [{ addr: row.addr, role: row.role, ...health,
       ...(health.status === 'waiting-poll' && { zeroProgressMs: health.zeroProgressMs ?? Math.max(0, Date.now() - health.since) }) }] : [];
   });
   const crashed = exits ?? rows.flatMap(row => {
-    const exit = row.endedAt != null && artifacts.job(row.addr)?.exit;
+    const exit = row.endedAt != null && jobs.get(row.addr)?.exit;
     return exit && !rotations.some(item => item.predecessor === row.addr && item.boundAt != null && item.failedAt == null) ?
       [{ addr: row.addr, role: row.role, ...exit }] : [];
   });
   const byAddress = new Map(rows.map(row => [row.addr, row]));
   const incidents = new Map(crashed.map(exit => [exit.addr, exit]));
   for (const rotation of rotations) {
-    if (rotation.failedAt != null && byAddress.get(rotation.successor)?.endedAt != null) {
+    if (rotation.failedAt != null) {
       incidents.set(rotation.successor, { ...incidents.get(rotation.successor), addr: rotation.successor, role: rotation.role,
         status: 'handover-failed', since: rotation.failedAt, reason: rotation.failure });
     }
@@ -127,9 +217,14 @@ export async function projectStatus(project) {
     ({ ...item, role: byAddress.get(item.target)?.role, since: item.stalledAt }));
   return { ok: true, running: Boolean(live), layout: readLayout(project), stalledDeliveries: deliveryAlerts, awaitingUser, sessionHealth, exits: [...incidents.values()],
     suppressedReplies: suppressedReplies(messages).sort((a, b) => b.at - a.at),
-    sessions: rows.filter(row => row.endedAt == null).map(row => {
-      const authMode = row.cli === 'claude' ? artifacts.job(row.addr)?.authMode : undefined;
+    sessions: rows.filter(row => row.endedAt == null || retentionFor(row)).map(row => {
+      const authMode = row.cli === 'claude' ? jobs.get(row.addr)?.authMode : undefined;
       return { role: row.role, addr: row.addr, cli: row.cli, task: row.task, state: lifecycle(row),
+        ...(seniorByAddress.has(row.addr) && { metrics: seniorByAddress.get(row.addr),
+          rotationsToday: rotationsToday[row.role].length }),
+        ...(retentionFor(row) && { retention: retentionFor(row), runtimeState: runtimeState(row), ...details(row) }),
+        ...(states.get(row.addr)?.rotationDue && { rotationDue: true }),
+        ...(states.get(row.addr)?.compactions != null && { compactions: states.get(row.addr).compactions }),
         ...(authMode && { authMode }),
         ...(states.get(row.addr)?.userPrompt && { userPrompt: states.get(row.addr).userPrompt }),
         ...(states.get(row.addr)?.lastProgressAt != null && { lastProgressAt: states.get(row.addr).lastProgressAt }),
@@ -139,7 +234,8 @@ export async function projectStatus(project) {
         ...(awaitingAck.has(row.addr) && { awaitingHandoverAck: true }) };
     }),
     waves, pendingContinuations, cards: cards.filter(card => card.active || ['blocked', 'result-undelivered'].includes(card.state)),
-    blocked, notices, merges, rotations, rotationNotices, seniorTools, routing: { filtered },
+    blocked, notices, merges, ...(rotationPolicy && { rotationPolicy }), rotations: rotationDetails, rotationsToday, seniorSessions, rotationNotices, seniorTools, routing: { filtered },
+    memory: memory ?? null, workerMetrics: metrics ?? workerMetrics(rows, addr => jobs.get(addr), artifacts.journal, messages),
     cost: { rawTokens, byRole: Object.fromEntries(Object.entries(byRole).map(([role, value]) => [role, value.rawTokens])),
       usageByRole: byRole, pyramid, missingSessions: missing.length },
   };
@@ -173,11 +269,33 @@ export function printStatus(result) {
     `${incident(row)} · ${Math.floor(row.zeroProgressMs / 1000)}s zero progress`, Infinity);
   section('Release paths', result.sessions.flatMap(row => (row.pathWarnings ?? []).map(warning => ({ ...row, ...warning }))),
     row => [row.role, row.addr, row.reason, row.path].filter(Boolean).join(' · '), Infinity);
-  section('Leader rotation', result.rotationNotices, row => [row.addr, row.text].join(' · '), 6);
+  for (const [role, label] of [['leader', 'Leader'], ['auditor', 'Auditor']]) {
+    section(`${label} rotation`, result.rotationNotices.filter(row => row.type.startsWith(`${role}-`)),
+      row => [row.addr, row.text].join(' · '), 6);
+  }
+  section('Senior context', result.sessions.filter(row => row.metrics).map(row => row.metrics), row => {
+    const { context, role, turns, runtimeMs, transcriptBytes } = row;
+    const percentage = value => Number.isFinite(value) ? `${value.toFixed(1)}%` : '—';
+    return [role, `${percentage(context.percent)} of ${context.contextWindow ?? '—'} (${context.windowSource ?? 'unknown source'})`,
+      `${context.compactions ?? '—'} compactions`, `${turns} turns`, `${runtimeMs == null ? '—' : Math.floor(runtimeMs / 1000)}s`,
+      `${transcriptBytes ?? '—'} transcript bytes`,
+      ...(context.afterCompaction.length ? [`after compact ${context.afterCompaction.map(sample => percentage(sample.percent)).join(', ')}`] : [])].join(' · ');
+  }, Infinity);
+  section('Senior rotations today', Object.entries(result.rotationsToday), ([role, rotations]) =>
+    `${role} ${rotations.length}${rotations.length ? ` (${rotations.map(item => item.reason ?? 'unrecorded').join(', ')})` : ''}`, Infinity);
   section('Senior tools', result.seniorTools, row => [row.type, row.role, row.count, row.reasons?.at(-1)?.reason].filter(Boolean).join(' · '), 8);
   section('Roles', result.sessions, row => [row.role ?? 'unassigned', row.cli, row.state,
     row.awaitingHandoverAck ? 'awaiting handover acknowledgement' :
-      row.awaitingVerifiedReport ? 'awaiting report' : row.task ?? row.addr].join(' '), 6);
+      row.awaitingVerifiedReport ? 'awaiting report' : row.task ?? row.addr, row.rotationDue ? 'rotate at card boundary' : ''].join(' '), 6);
+  section('Workers', result.sessions.filter(row => row.retention), ({ task, addr, state, retention, contextPercent, lastResultTag,
+    compactions, reuse, retirementReason, handoff, firstReportCheck }) =>
+    [task ?? addr, state, retention.keep || retention.keepWarm ? 'kept warm' :
+      retention.remainingMs != null ? `warm for ${Math.ceil(retention.remainingMs / 1000)}s` : undefined,
+    contextPercent == null ? 'context unknown' : `context ${Math.round(contextPercent)}%`, lastResultTag,
+    `${compactions ?? 0} compactions`, reuse === 'same-card-only' ? `same card only (${retirementReason})` : reuse,
+    firstReportCheck && `baseline ${firstReportCheck.status}`,
+    handoff && `handoff ${handoff.reason}${handoff.path ? ' · ' + handoff.path : ''}`].filter(Boolean).join(' · '), 12);
+  section('Worker metrics by gate', result.workerMetrics, workerMetricsLabel, 8);
   section('Hook gaps', result.sessions.filter(row => row.hookGap),
     row => [row.role, row.addr, 'hook-gap', row.hookGap.source].join(' '), Infinity);
   section('Waves and cards', [...result.waves, ...result.pendingContinuations, ...result.cards], row => row.members ?
@@ -191,6 +309,7 @@ export function printStatus(result) {
   section('Last merges', result.merges, row => [row.sha.slice(0, 12), row.subject].join(' '), 3);
   console.log('Cost · ' + result.cost.rawTokens.toLocaleString() + ' recorded tokens' +
     (result.cost.missingSessions ? ' · ' + result.cost.missingSessions + ' sessions with transcript gaps' : ''));
+  section('Session memory', result.memory ?? [], row => `${basename(row.project)} · ${memoryLabel(row)}`, Infinity);
   for (const [role, usage] of Object.entries(result.cost.usageByRole)) {
     const share = result.cost.rawTokens ? (100 * usage.rawTokens / result.cost.rawTokens).toFixed(1) + '%' : '—';
     console.log(`  ${role} · ${usage.modelCalls} calls · ${usage.rawTokens} raw (${share}) · ${usage.freshInputTokens} fresh input · ${usage.outputTokens} output`);

@@ -11,7 +11,7 @@ import { codexPipeSession } from './codex-pipe-session.mjs';
 import { hostDirectory, hostSocket, hostUUID } from './host-control.mjs';
 import { syncDirectory } from './io.mjs';
 import { holderAbsent, switchHolder, verifyHolderBuild } from './native-holder.mjs';
-import { processTable } from './processes.mjs';
+import { inspectProcess, processLiveness, processTable } from './processes.mjs';
 import { controllerFile, managedEnvironment, releaseRoot } from './release.mjs';
 import { workerEnvironment, workerProviderEnvironment } from './worker-environment.mjs';
 import { seniorToolEnvironment } from './senior-tools.mjs';
@@ -21,8 +21,10 @@ export const useCodexHolder = (row, job) => row.cli === 'codex' &&
   (job.host ? job.host.transport === pipeTransport : !job.integration && process.env.LOOM_TEST_CODEX_PIPES === '1');
 const sameBirth = (identity, live) => live && live.pid === identity?.pid &&
   live.started === identity.started && live.uid === process.getuid();
+const unknown = () => Object.assign(new Error('Codex holder liveness is unknown; preserving the existing holder binding'),
+  { code: 'liveness-unknown' });
 
-async function launch(project, row, job, dir, socket) {
+async function launch(project, row, job, dir, socket, capabilities) {
   const { incarnation, holderRelease } = job.host;
   const asset = holderAsset(holderRelease.root);
   if (asset.digest !== holderRelease.digest) throw holderError('HOLDER_BUILD');
@@ -30,6 +32,7 @@ async function launch(project, row, job, dir, socket) {
   const isolated = workerEnvironment(row);
   const env = { ...process.env, ...managed, ...isolated, ...workerProviderEnvironment(row), ...seniorToolEnvironment(project, row) };
   delete env.HC_TERMINAL_ID;
+  if (capabilities) env.LOOM_CAPABILITY = capabilities.ensureSession(row.addr).token;
   const command = await absoluteCommand(process.env.LOOM_CODEX_BIN ?? process.env.OAR_CODEX_BIN ?? 'codex', 'codex');
   const args = ['app-server', ...codexConfiguration(project, { ...row, fast: job.fast }, managed, isolated), '--listen', 'stdio://'];
   const fd = openSync(join(dir, 'holder.log'),
@@ -43,7 +46,7 @@ async function launch(project, row, job, dir, socket) {
   } finally { closeSync(fd); }
 }
 
-export async function attachCodexHolder(project, row, job, saveJob, controller, { stop = false } = {}) {
+export async function attachCodexHolder(project, row, job, saveJob, controller, { stop = false, capabilities } = {}) {
   const save = () => saveJob(job);
   if (!job.host) {
     if (stop) return { endedAt: Date.now() };
@@ -64,7 +67,7 @@ export async function attachCodexHolder(project, row, job, saveJob, controller, 
   let snapshot = await hello();
   if (!snapshot && !binding.identity && !lstatSync(socket, { throwIfNoEntry: false })) {
     if (stop) return { endedAt: Date.now() };
-    const candidate = await launch(project, row, job, dir, socket);
+    const candidate = await launch(project, row, job, dir, socket, capabilities);
     const limit = performance.now() + 8000;
     do {
       if (candidate.exitCode != null || candidate.signalCode) throw holderError('HOLDER_START', 'Codex holder exited during launch');
@@ -81,15 +84,23 @@ export async function attachCodexHolder(project, row, job, saveJob, controller, 
     }
     verifyHolderBuild(binding, value, save);
   }
-  const gone = async () => !binding.identity ||
-    !sameBirth(binding.identity, (await processTable([binding.identity.pid])).get(binding.identity.pid));
+  const gone = async () => Boolean(binding.identity && await inspectProcess(binding.identity) === 'dead');
   if (snapshot) {
     verify(snapshot);
-    const processes = await processTable([snapshot.pid, snapshot.childPid]);
+    const processes = await processTable([snapshot.pid, snapshot.childPid]).catch(error => {
+      // The persisted holder identity and verified socket are still usable
+      // when process enumeration itself is temporarily unavailable.
+      if (!binding.identity || !error.code?.startsWith('process-enumeration-')) throw error;
+      return new Map();
+    });
     const pid = processes.get(snapshot.pid);
     const child = processes.get(snapshot.childPid);
-    if (pid?.uid !== process.getuid() || binding.identity && !sameBirth(binding.identity, pid) ||
-        !snapshot.ended && (child?.uid !== pid.uid || child.ppid !== pid.pid)) throw holderError('HOLDER_IDENTITY');
+    if (pid && (pid.uid !== process.getuid() || binding.identity && !sameBirth(binding.identity, pid)) ||
+        !snapshot.ended && child && (child.uid !== process.getuid() || child.ppid !== snapshot.pid)) {
+      throw holderError('HOLDER_IDENTITY');
+    }
+    if (!binding.identity && (!pid || !snapshot.ended && !child)) throw unknown();
+    if (binding.identity && processLiveness(binding.identity, pid) === 'dead') throw holderError('HOLDER_IDENTITY');
     if (!binding.identity) {
       binding.identity = { pid: pid.pid, started: pid.started };
       binding.childPid = snapshot.childPid;
@@ -98,7 +109,7 @@ export async function attachCodexHolder(project, row, job, saveJob, controller, 
     const claimed = await client.claim();
     verify(claimed);
     if (claimed.epoch !== BigInt(controller.generation)) throw holderError('HOLDER_STALE');
-  } else if (!await gone()) throw holderError('HOLDER_NOT_READY');
+  } else if (!await gone()) throw unknown();
 
   const runtime = codexPipeSession(project, row, dir, incarnation, client, value => {
     verify(value);

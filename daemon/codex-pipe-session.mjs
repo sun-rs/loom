@@ -179,7 +179,8 @@ export function codexPipeSession(project, row, dir, incarnation, client, verify,
       messages[p.itemId].text += p.delta;
     } else if (method === 'thread/tokenUsage/updated' && p.tokenUsage?.last) {
       const { inputTokens, cachedInputTokens, outputTokens, reasoningOutputTokens } = p.tokenUsage.last;
-      add('usage', { ...turnFields(), usage: { inputTokens, cachedInputTokens, outputTokens, reasoningOutputTokens } });
+      add('usage', { ...turnFields(), usage: { inputTokens, cachedInputTokens, outputTokens, reasoningOutputTokens,
+        context: { tokens: p.tokenUsage.last.totalTokens, contextWindow: p.tokenUsage.modelContextWindow } } });
     }
   }
 

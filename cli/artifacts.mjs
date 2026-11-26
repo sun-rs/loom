@@ -43,6 +43,7 @@ export function readArtifacts(project) {
     messages: () => messages ??= json('inbox', 'state.json')?.messages ?? [],
     relay: () => json('relay', 'state.json') ?? {},
     job: addr => safeName.test(addr) ? json('loomd', 'sessions', `${addr}.json`) : null,
+    context: addr => safeName.test(addr) ? json('relay', 'events', `${addr}.context.json`) : null,
     journal: addr => safeName.test(addr) ? jsonRows(projectText(project, 'relay', 'events', `${addr}.jsonl`) ?? '') : [],
     journalSource(addr) {
       if (!safeName.test(addr)) return null;

@@ -3,20 +3,53 @@ import { adapterFor, readTranscript, transcriptFor } from './sessions.mjs';
 import { transcriptRows } from './turns.mjs';
 
 const numeric = (...values) => values.find(Number.isFinite) ?? null;
+const codexWindow = raw => raw.findLast(row => row.payload?.type === 'token_count' &&
+  Number.isFinite(row.payload.info?.model_context_window))?.payload.info;
 
 export function reportedContext(result, root, raw) {
   const journal = root.findLast(row => row.contextUsage || row.context || row.usage?.context);
   const reported = result.signals?.context ?? result.contextUsage ?? result.runtimeStatus?.contextUsage ??
     journal?.contextUsage ?? journal?.context ?? journal?.usage?.context;
   const context = reported?.value ?? reported;
-  const codex = raw.findLast(row => row.payload?.type === 'token_count' &&
-    Number.isFinite(row.payload.info?.model_context_window))?.payload.info;
+  const codex = codexWindow(raw);
   const tokens = reported != null ? numeric(context?.tokens, context?.contextTokens) :
     numeric(codex?.last_token_usage?.total_tokens);
   const contextWindow = reported != null ? numeric(context?.contextWindow, context?.window) :
     numeric(codex?.model_context_window);
   const percent = numeric(context?.percent, tokens !== null && contextWindow > 0 ? 100 * tokens / contextWindow : null);
   return { tokens, contextWindow, percent };
+}
+
+export function nativeCallContext(session, { parsed, raw }, runtime) {
+  const call = parsed.turns.findLast(turn => turn.calls?.length)?.calls.at(-1);
+  const transcript = raw.map(({ row }) => row);
+  let model = session.model;
+  let window;
+  let estimate;
+  let input = call?.inputTokens;
+  if (session.cli === 'codex') {
+    const usage = codexWindow(transcript);
+    window = usage?.model_context_window;
+    input ??= usage?.last_token_usage?.input_tokens;
+  } else if (session.cli === 'claude') {
+    const assistant = call?.id && transcript.findLast(row => row.type === 'assistant' && !row.isSidechain && row.message?.id === call.id);
+    model = assistant?.message?.model ?? model;
+    if (model) {
+      window = transcript.findLast(row => row.type === 'result' && row.modelUsage?.[model]?.contextWindow > 0)
+        ?.modelUsage[model].contextWindow;
+      // Published maximum for the resolved model, used when the CLI has not reported its window.
+      // https://www.anthropic.com/claude/sonnet
+      if (/^claude-sonnet-5-5(?:-\d{8})?$/.test(model)) estimate = 1_000_000;
+    }
+  } else if (session.cli === 'agy') {
+    const step = call?.id != null && transcript.findLast(row => row.source === 'MODEL' &&
+      row.type === 'PLANNER_RESPONSE' && String(row.step_index) === call.id);
+    model = step?.model ?? model;
+    // Published maximum for Neon, including Antigravity CLI effort variants.
+    // https://antigravity.google/docs/models#gemini-4-neon
+    if (/^gemini-4-neon(?:-(?:low|medium|high|xhigh))?$/.test(model)) estimate = 512 * 1024;
+  }
+  return { tokens: numeric(input, runtime?.tokens), window: runtime?.contextWindow > 0 ? runtime.contextWindow : window, estimate };
 }
 
 export function presentState(result, session, directory) {

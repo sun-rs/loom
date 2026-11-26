@@ -1,6 +1,6 @@
 import { appendFileSync, constants } from 'node:fs';
 import { approval, choice, promptDetails } from '../../prompt-state.mjs';
-import { recordSeniorToolDenial, seniorToolCategory } from '../../../lib/senior-tool-guard.mjs';
+import { recordSeniorToolDenial, rotationToolDenial, seniorToolCategory } from '../../../lib/senior-tool-guard.mjs';
 
 export default {
   id: 'loom-prompt-events',
@@ -13,8 +13,14 @@ export default {
       await ctx.permission.hook('evaluate', event => {
         if (sessionId && event.sessionID !== sessionId) return;
         const input = event.metadata?.input;
-        if (event.action === 'read' && input && !seniorToolCategory('read', input, cwd, project)) return;
         const inputs = event.action === 'shell' ? event.resources.map(command => ({ command })) : [{ paths: event.resources }];
+        const restriction = (input ? [input, ...inputs] : inputs)
+          .map(value => rotationToolDenial(guardLog, project, cwd, event.action, value)).find(Boolean);
+        if (restriction) {
+          Object.assign(event, { effect: 'deny', message: restriction });
+          return;
+        }
+        if (event.action === 'read' && input && !seniorToolCategory('read', input, cwd, project)) return;
         const reason = inputs.find(input => seniorToolCategory(event.action, input, cwd, project));
         if (reason) Object.assign(event, { effect: 'deny', message: recordSeniorToolDenial(guardLog, project, cwd, event.action, reason) });
       });

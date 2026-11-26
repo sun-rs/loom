@@ -1,3 +1,4 @@
+import { validateRotation } from '../lib/rotation-settings.mjs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { readText, writeState } from '../daemon/io.mjs';
@@ -15,6 +16,23 @@ const defaultMaxActiveWorkers = 3;
 const hardMaxActiveWorkers = 4;
 export const defaultCoalesceMs = 45_000;
 export const defaultReplyBytes = 600;
+export const workerWarmMs = (policy, cli) => policy.workers?.warmMs?.[cli] ?? policy.workers?.idleRetainMs ?? 10 * 60_000;
+export const workerReuseLimits = policy => ({
+  contextPercent: 100 * (policy.workers?.reuseMaxContext ?? 0.6),
+  compactions: policy.workers?.reuseMaxCompactions ?? 1,
+});
+export const workerHandoffLimits = policy => ({
+  remainingPercent: 100 * (policy.workers?.handoffMinRemaining ?? 0.15),
+  compactions: policy.workers?.handoffMinCompactions ?? 1,
+});
+const nonnegativeMs = value => Number.isSafeInteger(value) && value >= 0;
+function validWorkerPolicy(key, value) {
+  if (key === 'idleRetainMs' || key === 'reuseMaxCompactions') return nonnegativeMs(value);
+  if (key === 'reuseMaxContext' || key === 'handoffMinRemaining') return Number.isFinite(value) && value >= 0 && value <= 1;
+  if (key === 'handoffMinCompactions') return Number.isSafeInteger(value) && value >= 1;
+  return key === 'warmMs' && value && typeof value === 'object' && !Array.isArray(value) &&
+    Object.entries(value).every(([cli, ms]) => providers.includes(cli) && nonnegativeMs(ms));
+}
 export const costPriceFields = ['freshInput', 'cacheWrite', 'cacheRead', 'output'];
 export const driftDefaults = Object.freeze({
   netLines: null, budgetRaises: 2, slowCommandFactor: 2, slowCommandSamples: 1,
@@ -25,7 +43,6 @@ const guidanceFields = {
   leader: { modelTier: 'strong', effort: ['medium', 'high'], preferLongPromptCacheTtl: 'boolean' },
   auditor: { modelTier: 'strong', vendorFamily: 'different-from-workers', preferLongPromptCacheTtl: 'boolean' },
   worker: { routineEffort: ['low', 'medium'], hardEffort: ['high', 'xhigh'] },
-  reviewer: {},
 };
 
 function validateGuidance(role, guidance) {
@@ -55,6 +72,8 @@ function validateProfiles({ preferred = [], deny = [] }) {
   }
 }
 
+const warnedLegacyReviewer = new Set();
+
 export function readPolicy(project, { optional = false } = {}) {
   const path = join(project, '.project', 'policy.json');
   try {
@@ -65,6 +84,7 @@ export function readPolicy(project, { optional = false } = {}) {
     if (!policy || typeof policy !== 'object' || Array.isArray(policy)) throw new Error('Expected a policy object');
     if (Object.hasOwn(policy, 'maxActiveWorkers')) throw new Error('Set maxActiveWorkers under roles.leader');
     validateProfiles(policy);
+    validateRotation(policy.rotation);
     if (policy.cost !== undefined) {
       const prices = policy.cost?.prices;
       if (!prices || typeof prices !== 'object' || Array.isArray(prices) ||
@@ -81,6 +101,10 @@ export function readPolicy(project, { optional = false } = {}) {
           !Number.isSafeInteger(value) || (['coalesceMs', 'stallMs'].includes(key) ? value < 0 : key !== 'replyBytes' || value < 160)))) {
       throw new Error('Expected nonnegative integer delivery.coalesceMs or delivery.stallMs, or delivery.replyBytes (≥ 160)');
     }
+    if (policy.workers !== undefined && (!policy.workers || typeof policy.workers !== 'object' ||
+        Array.isArray(policy.workers) || Object.entries(policy.workers).some(([key, value]) => !validWorkerPolicy(key, value)))) {
+      throw new Error('Invalid worker cache, reuse or handoff settings');
+    }
     if (policy.drift !== undefined) {
       if (!policy.drift || typeof policy.drift !== 'object' || Array.isArray(policy.drift)) throw new Error('Expected a drift object');
       for (const [key, value] of Object.entries(policy.drift)) {
@@ -96,16 +120,32 @@ export function readPolicy(project, { optional = false } = {}) {
     }
     if (policy.roles !== undefined) {
       if (!policy.roles || typeof policy.roles !== 'object' || Array.isArray(policy.roles)) throw new Error('Expected a roles object');
+      if (Object.hasOwn(policy.roles, 'reviewer')) {
+        if (!warnedLegacyReviewer.has(path)) {
+          warnedLegacyReviewer.add(path);
+          process.emitWarning(`${path}: roles.reviewer is retired. Use Auditor and Worker evidence at phase boundaries.`);
+        }
+        delete policy.roles.reviewer;
+      }
       for (const [role, entry] of Object.entries(policy.roles)) {
         if (!roles.includes(role) || !entry || typeof entry !== 'object' || Array.isArray(entry)) throw new Error(`Invalid role policy: ${role}`);
         validateProfiles(entry);
         validateGuidance(role, entry.guidance);
         const rotates = ['leader', 'auditor'].includes(role);
+        if (entry.rotateAtCompactions !== undefined && (!['super', 'leader', 'auditor'].includes(role) ||
+            !Number.isSafeInteger(entry.rotateAtCompactions) || entry.rotateAtCompactions < 1)) {
+          throw new Error(`Expected a positive resident compaction limit for roles.${role}.rotateAtCompactions`);
+        }
         if (entry.toolGuard !== undefined && (!rotates || typeof entry.toolGuard !== 'boolean')) {
           throw new Error('Expected roles.leader.toolGuard or roles.auditor.toolGuard to be a boolean');
         }
         if (entry.rotateAt !== undefined && (!rotates || entry.rotateAt !== 'gate')) {
           throw new Error('Expected roles.leader.rotateAt or roles.auditor.rotateAt to be gate');
+        }
+        for (const key of ['maxContextFraction', 'minRemainingAfterCompaction']) {
+          if (entry[key] !== undefined && (!rotates || !Number.isFinite(entry[key]) || entry[key] <= 0 || entry[key] > 1)) {
+            throw new Error(`Invalid roles.${role}.${key}: expected a fraction in (0, 1] for Leader or Auditor`);
+          }
         }
         for (const [key, min] of [['maxWakesPerGate', 0], ['maxContextTokens', 1]]) {
           const allowed = key === 'maxWakesPerGate' ? role === 'auditor' : rotates;
@@ -130,11 +170,6 @@ export function readPolicy(project, { optional = false } = {}) {
         if (Object.hasOwn(entry, 'maxActiveWorkers') && (role !== 'leader' ||
             !Number.isInteger(entry.maxActiveWorkers) || entry.maxActiveWorkers < 1 || entry.maxActiveWorkers > hardMaxActiveWorkers)) {
           throw new Error(`Expected roles.leader.maxActiveWorkers to be an integer from 1 to ${hardMaxActiveWorkers}`);
-        }
-        if (Object.hasOwn(entry, 'maxDurationMs') &&
-            (role !== 'reviewer' || !Number.isSafeInteger(entry.maxDurationMs) ||
-              entry.maxDurationMs < 1 || entry.maxDurationMs > Number.MAX_SAFE_INTEGER - Date.now())) {
-          throw new Error('Expected roles.reviewer.maxDurationMs to be a positive duration in milliseconds');
         }
       }
     }
@@ -218,7 +253,7 @@ export function spawnProfile(project, input, owner, occupies) {
   }
   enforceDeny(selected, deny);
   selected.mode = requested.mode ?? profile?.mode ?? input.defaultMode ??
-    (['worker', 'reviewer'].includes(input.role) ? 'headless' : 'tui');
+    (input.role === 'worker' ? 'headless' : 'tui');
   const fastRequested = profile?.fast;
   const number = choice?.number ?? preferred.findIndex(entry => matches(entry, selected) &&
     (entry.fast ?? false) === (fastRequested ?? false)) + 1;
@@ -234,15 +269,13 @@ export function spawnProfile(project, input, owner, occupies) {
     checkWorkerCapacity(project, input, workerLimit(policy), owner, occupies);
   }
   return { requested, selected, deny, fastRequested, warnings, trustWorkspace: role?.trustWorkspace ?? true,
-    ...(input.role === 'reviewer' && { maxDurationMs: role?.maxDurationMs ?? 1_800_000 }) };
+  };
 }
 
 export const workerLimit = policy => policy.roles?.leader?.maxActiveWorkers ?? defaultMaxActiveWorkers;
 
-export const rotationLimits = (policy, role) => ({
-  ...(role === 'auditor' && { maxWakesPerGate: policy.roles?.auditor?.maxWakesPerGate ?? 3 }),
-  maxContextTokens: policy.roles?.[role]?.maxContextTokens ?? 150_000,
-});
-
 export const toolGuardEnabled = (project, role) => ['leader', 'auditor'].includes(role) &&
-  readPolicy(project, { optional: true }).roles?.[role]?.toolGuard !== false;
+  (() => {
+    const policy = readPolicy(project, { optional: true });
+    return policy.rotation?.mode === 'v2' || policy.roles?.[role]?.toolGuard !== false;
+  })();

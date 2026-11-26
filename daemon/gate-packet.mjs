@@ -6,7 +6,6 @@ import { CommandError } from '../cli/sessions.mjs';
 import { clip } from '../evidence/checks.mjs';
 import { writeState } from './io.mjs';
 import { workerRedFacts } from './routing.mjs';
-import { conclusoryReply } from '../inbox/message.mjs';
 
 export const gateId = /^[A-Za-z0-9][A-Za-z0-9_.-]{0,127}$/;
 const oneLine = text => String(text ?? '').replace(/\s+/g, ' ').replace(/[\x00-\x1f\x7f-\x9f]/g, '').trim();
@@ -24,7 +23,7 @@ function commit(project, ref) {
 }
 
 export function saveGatePacket(project, { id, gate, round, base: baseRef, candidate: candidateRef = 'HEAD', question },
-  { members, jobs, messages, decisions, signalSummary, signalCount, red }) {
+  { members, decisions, signalSummary, signalCount, red }) {
   const baseDirectory = join(project, '.project');
   const directory = join(baseDirectory, 'gates');
   if (realpathSync(baseDirectory) !== baseDirectory) throw new Error('Gate directory must be project-local');
@@ -65,14 +64,6 @@ export function saveGatePacket(project, { id, gate, round, base: baseRef, candid
   const passed = checks.filter(check => check.result === 'passed').length;
   const failed = checks.filter(check => check.result === 'failed').length;
   const sandboxed = checks.filter(check => check.sandboxed === true).length;
-  const reviews = members.filter(row => row.role === 'reviewer').flatMap(row => {
-    const job = jobs.get(row.addr);
-    const result = messages.find(message => message.id === job?.firstId)?.completion;
-    const verdict = result && result.at <= (job?.reviewDeadline ?? Infinity) && (result.body ?? result.unconfirmedBody);
-    const conclusion = Boolean(verdict && conclusoryReply(verdict));
-    const detail = conclusion && `${result.body ? '' : 'UNCONFIRMED '}${verdict.trimStart().split('\n', 1)[0]}`;
-    return detail ? [{ summary: `- ${row.addr} · ${oneLine(detail)}`, text: `### ${row.addr}\n${verdict}` }] : [];
-  });
   const questions = [question, ...decisions.map(event => event.text)]
     .filter(Boolean).map(value => '- ' + value);
   const redEvidence = red ? [
@@ -83,8 +74,6 @@ export function saveGatePacket(project, { id, gate, round, base: baseRef, candid
     preview('Evidence cards', `${cards.length} cards · .project/evidence/\n${bullet(evidence, 'No recorded cards.')}`, 250),
     preview('Diff --stat', stat || 'No changes.', 240, diff),
     `## Test summary\n${checks.length ? `${passed} passed, ${failed} failed, ${checks.length - passed - failed} inconclusive commands; ${sandboxed} ran in a sandbox.` : 'No verified test commands.'}`,
-    ...(reviews.length ? [preview('Reviewer verdicts', reviews.map(item => item.text).join('\n\n'), 175,
-      reviews.map(item => item.summary).join('\n'))] : []),
     preview('Open questions', bullet(questions, 'None recorded.'), 110),
     preview('Red facts', bullet(redEvidence, 'None recorded.'), 170, bullet(redLines, 'None recorded.')),
     preview('Drift and fact checks', `${signalCount} signals\n${signalSummary || 'None recorded.'}`, 165),
@@ -92,5 +81,5 @@ export function saveGatePacket(project, { id, gate, round, base: baseRef, candid
   ];
   if (full.length) writeState(fullPath, `# Gate ${gate} · Round ${round}\n\n${full.join('\n\n')}\n`);
   writeState(path, sections.join('\n\n') + '\n');
-  return { path, ...(full.length && { fullPath }) };
+  return { path, candidate, base, ...(full.length && { fullPath }) };
 }

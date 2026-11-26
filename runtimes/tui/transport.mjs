@@ -48,7 +48,7 @@ export function wrapperFailedStart(binding) {
 export async function openNativeTui({
   cli, cwd, command, hcCommand = 'hc', env = {}, unset = [], name, authMode,
   stateDir, hookSink, recordBinding = () => {}, previous, recordTemporary = () => {}, boundTranscript = true,
-  controllerPath, placementLabels, ...options
+  controllerPath, placementLabels, capabilityPath, ...options
 }) {
   const provider = Object.hasOwn(providers, cli) && providers[cli];
   if (!provider) throw new RangeError(`Unsupported TUI: ${cli}`);
@@ -62,6 +62,11 @@ export async function openNativeTui({
   prepareJournal(hookSink);
   const { argv, env: launchEnv, sessionId, promptSink } = await provider.start({ ...options, cwd, hookSink, boundTranscript });
   argv[0] = executable;
+  // hc retains its command arguments. Read the capability inside the native
+  // process wrapper so the bearer value appears only in the session env.
+  if (capabilityPath) argv.unshift('/bin/sh', '-c',
+    'IFS= read -r LOOM_CAPABILITY < "$1" && [ -n "$LOOM_CAPABILITY" ] || exit 126; shift; export LOOM_CAPABILITY; exec "$@"',
+    'loom-session', capabilityPath);
   if (cli === 'claude') {
     if (authMode !== 'api-key') unset = [...new Set([...unset, ...claudeApiEnvKeys])];
     // Opt in through inherited credentials, never via hc's command arguments.
@@ -102,7 +107,7 @@ export async function openNativeTui({
   }
   const plain = async () => {
     recordBinding({ transport: 'plain-hc', reason: 'loom-pty-start-failed' });
-    const pane = await startPane(hcCommand, cwd, argv, { name, env, unset, provider: cli, placementLabels });
+    const pane = await startPane(hcCommand, cwd, argv, { name, env, unset, provider: cli, nativeCommand: executable, placementLabels });
     return {
       id: pane.address, sessionId, hookSink, status: pane.status, warnings: pane.warnings,
       async close() {
@@ -158,7 +163,8 @@ export async function openNativeTui({
     }
     recordBinding(binding);
     wrapped = await hcWrappedBackend({ command: hcCommand }).launch({
-      cwd, argv, env, unset: ['LOOM_PTY_MODULES', ...unset], name, provider: cli, evidence, sessionDir, socket: binding.socket, placementLabels,
+      cwd, argv, env, unset: ['LOOM_PTY_MODULES', ...unset], name, provider: cli, nativeCommand: executable,
+      evidence, sessionDir, socket: binding.socket, placementLabels,
     });
     const deadline = performance.now() + 5_000;
     do {
@@ -189,7 +195,7 @@ export async function openNativeTui({
               const requestedEnv = { ...env };
               delete requestedEnv.LOOM_AGY_HOOK_WORKSPACE;
               return openNativeTui({ ...options, cli, cwd, stateDir, hcCommand, env: requestedEnv, unset, authMode,
-                command: executable, name, resume, recordBinding, recordTemporary, boundTranscript });
+                command: executable, name, resume, recordBinding, recordTemporary, boundTranscript, capabilityPath });
             })().catch(error => { restarting = undefined; throw error; });
             return restarting;
           },

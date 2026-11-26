@@ -15,7 +15,7 @@
 2. 并发：活跃写代码 worker 默认 2–3，硬上限 4；更多先拆成独立协调域。
 3. Leader 和 Auditor 在安全点写交班判断，用 `loom rotate --self` 启动同配置接任者。同一项目一次只交接一个角色。在途卡片须写入交班单。新会话首轮报到中的 SHA 和路径须现查。Leader 的交班结果随 Auditor 的正常投递附送，Auditor 的交班结果通知 Super。
 4. 走偏信号由 loomd 记录，附在 Leader 下一次实际唤醒，并纳入所属门禁包。信号包括预算反复上调或实际净行数超预算、测试或编译变慢、计划文件膨胀、同类失败再次出现、事实核验和 Worker 卡死。
-5. Leader 打包固定候选的 Worker 证据。Auditor 依包裁决，遇到异常时可就同一门禁启动一次临时只读 Reviewer。审查最多 2 轮，仍阻塞升级 Super 改设计。Auditor 自查验收要求是否过重。
+5. Leader 打包固定候选的 Worker 证据。Auditor 依包裁决，遇到异常时在阶段边界核查原件，需要运行时采用 Worker 证据卡。审查最多 2 轮，仍阻塞升级 Super 改设计。Auditor 自查验收要求是否过重。
 6. 派卡模板：目标、可写范围、预算上限、测试行数不超过产品行数、只跑受影响的测试、停工触发器、三行回报格式。
 7. 不新增常驻角色。不做缓存保活。
 
@@ -27,7 +27,7 @@
 ## 消耗金字塔（2026-11-25，用户裁决）
 目标结构：**worker 消耗最多，Leader 次之，Auditor 最少**。按 token 和调用次数衡量，不按价格。
 - **Auditor 只看证据，不重新做一遍工作。**
-  - 门禁复核使用证据卡和 diff 统计。确需读原件时，Auditor 可用 `loom spawn reviewer --wave <gate-id>` 启动一次临时只读核查，默认限时 30 分钟，只答一个问题。有效结论回送一次，计入 Auditor 的 `maxWakesPerGate`。
+  - 门禁复核使用证据卡和 diff 统计。Auditor 在阶段边界核查固定候选与原件，依 Worker 证据卡核对测试。旧配置中的 `roles.reviewer` 会触发迁移提示并被忽略。
   - loomd 只允许用户或 Super 消息、Leader 的门禁包或红色升级、Auditor 主动发起的追加审查结论，以及换班监督唤醒 Auditor。Leader 的投递停滞可由 loomd 发出一次基础设施告警。
 - **Leader 负责协调（R21）。** 使用门禁包、三行回执、证据卡、`loom hist` 摘要、`git diff --stat` 和 `loom status`。源码、测试和缺陷诊断交给 Worker。Auditor 若转来临时核查结果，用 `loom send` 把原文的回执文件路径转给 Worker 卡片。Leader 在下一次正常唤醒接收 loomd 推送的证据摘要。
 - **worker 承担实际工作。**
@@ -35,11 +35,37 @@
   - Worker 在自己的沙箱运行测试并记录验收证据。候选分支集成、固定候选 SHA 的全量测试和获授权合入也由集成 Worker 按卡执行。
 - **loomd 统计各角色的调用次数和 token。** `loom cost` 和 `loom status` 显示累计调用、原始 token、新输入和输出，同时检查最近一小时的调用数和原始 token。Claude 写入缓存的输入计入新输入。某项出现倒金字塔（Auditor 高于 Leader，或 Leader 高于 worker 合计）时，loomd 每项目每小时最多提醒 Super 一次。
 - **每轮门禁包唤醒一次。** Leader 用 `loom gate pack <gate-id> --round <n> --base <ref> --candidate <ref> --question <text>` 快照同名 `--wave` 或 `--barrier` 的 Worker 证据、已有审查结论和待决问题。省略 `--round` 自动创建下一轮。只有 `--reuse` 才沿用已保存的快照和投递 ID。`.project/gates/` 的短包在每处缩略旁附完整段落路径。
-- **Leader 与 Auditor 共用换班预算。** 两个角色的 `maxContextTokens` 默认 150000，可分别设置 `rotateAt: "gate"`。Leader 或 Super 用 `loom notifications --gate-complete <gate-id>` 登记门禁完成。上下文超预算或达到配置的门禁边界时，loomd 随该角色下一条现有投递附上换班提示。超过三次正常投递的回合或 15 分钟，或接任确认连续失败两次时，Leader 的问题升级给 Auditor，Auditor 的问题升级给 Super。
-- **Auditor 的额外门禁预算。** `roles.auditor.maxWakesPerGate` 默认 3，计两次门禁完成之间实际开始的原生轮次，含启动、用户消息、升级和追加审查结论。loomd 在每次预算评估和门禁完成时重新采样，意见附采样时间。两角色的换班共用持久化互斥约束。
-- **Leader 的交接确认。** `loom spawn leader --handover-from` 把开放卡片、波次、续作、投递、近期门禁裁决和项目文件指针存入完整的 SHA-256 回执文件。继任者的首轮原生回复带回文件末尾的确认码后，loomd 绑定路由并退休前任。在途结果随后按原投递 ID 交付。简报交付受投递 SLA 监测，停滞时通知 Super。
+- **Leader 与 Auditor 的换班。** 项目默认使用 `rotation.mode: "explicit"`。在此模式可主动交班，也可显式设置 `rotateAt: "gate"`、`maxContextTokens`、`maxContextFraction` 或 `minRemainingAfterCompaction`。最后一项只在已有一次成功压缩、其后的剩余比例再次低于配置值时触发。未知窗口保留为空。
+- **Auditor 的门禁唤醒预算。** `roles.auditor.maxWakesPerGate` 默认 3，计两次门禁完成之间实际开始的原生轮次，含启动、用户消息、升级和追加审查结论。超额时向 Super 发一次组织流程通知，后续采样更新同一条记录。唤醒次数独立于换班策略。
+- **接任简报。** loomd 将章程、判例账本、当前事实卡、开放卡片和投递清单存入 SHA-256 回执文件。v2 的继任首报由另一方核实后才绑定路由并退休前任。简报投递受投递 SLA 监测。
 - **高级角色工具守卫。** Leader 和 Auditor 启动时默认启用 `roles.<role>.toolGuard`。Loom 命令、`.project/` 读写、Git 摘要和最多 200 行的定点读取照常使用。测试、构建、Git 集成、广域读取和循环查状态优先派 Worker。必要时在原工具被拒后用 `"$LOOM_BIN" senior-tool --reason "理由" -- "命令"` 重试。loomd 认定 Worker、OAR 或投递不可用时可省略理由，按 `worker-unavailable` 登记。输出只保留末尾 40 行，最多 12 KB。每次拒绝和重试可在 `loom status` 与 `loom hist` 查看，每角色每门禁第 4 次重试提示 Super。
 - **工具输出漂移。** loomd 对 Leader 和 Auditor 各统计最近一小时的工具输出，按测试、读取、Git、Loom 状态回执及其他归类。新增上下文达到 5000 token 且工具输出估计占比超过 35% 时，通知 Super 检查分工或卡片设计。
+
+## 高级角色换班 v2
+
+在项目策略设置 `rotation.mode: "v2"`。建议先有在位的 Leader、Auditor 和 Super。Unix socket 使用 SOCK-AUTH-1 的角色凭证，既有会话用内核对端验证。外部 Super 使用 `LOOM_EXTERNAL_SUPER=1`。托管角色继续使用 `"$LOOM_BIN"`。
+
+- loomd 在卡片已结算且角色空闲时评估路径或 Git 根变更、显式阶段或目标、Super 登记的授权变化、工作切换密度和已核实的重复事实错误。普通门禁只更新门禁边界。轮数、运行时间、等待时长与剩余百分比保留用于观测。Super 本身不进入自动换班流程。
+- 默认比较过去 24 小时的去重卡片数 >10、子系统数 >4、原生压缩次数 ≥5，任一达到阈值即产生密度候选。单主线且只有一个子系统时，卡片阈值放宽为 >20。可用 `rotation.densityRequiresCompaction: true` 要求切换和压缩都达到阈值。路径优先匹配最长 `rotation.subsystemPrefixes`，再按顶层目录分组。文档、卡片说明、运行元数据和账本目录不计子系统。统计使用派卡记录、交付的提交差异和原生压缩事件，缺少原生用量时保留缺测。
+- 默认绝对高水位为 Claude 675,000、Codex 210,000、agy 420,000。用 `rotation.highWaterTokens` 分 CLI 覆盖或设为 `null`。高水位进入只读核对并在边界建议换班。用户纠正、原生阻塞超过 30 分钟、模型或 CLI 版本变更各自登记。阻塞或版本变更只有实际发生接任时才计一笔被动换班。
+- `rotation.protectedRefs` 为项目指定的完整受保护分支名列表。启用后，先在隔离工作树定稿目标提交和审核证据。Leader 或 Super 用 `loom notifications --gate-complete GATE --candidate SHA` 登记已收到 Auditor 明确批准的精确 SHA。该授权只消费一次。受保护分支移到未授权目标、被删除或失去祖先关系时，loomd 记 P0 并冻结其执行责任角色。普通门禁结算仍用 `--gate-complete GATE`。
+- 按 [交接模板](../skills/loom/SKILL.md#换班与收尾) 填全部标题。首轮只核对事实卡，首行写确认码，逐行写 `HEAD:`、`Branch:`、`Base SHA:`、`WIP:`、`Rulings:`，以及原件路径。WIP 包含 Git 已跟踪改动的增删行数和未跟踪文件数。有差异在第二行写 `MISMATCH` 并停止。
+- 另一方收到核实信封后登记通过或失败。通过后 loomd 绑定继任并退休前任。继任收到「接管生效」信封后才释放改投工作。失败回退前任并锁同阶段。首报发出后 30 分钟未获核实会通知 Super，交接继续待定。Super 可取消该次等待，或让另一方继续核实。同角色和两高级角色之间的换班均至少隔一个登记阶段。
+- loomd 在压缩后首次托管投递、换班的首份简报和长等待后的首次托管投递附事实卡。等待阈值默认一小时，由 `rotation.longIdleMs` 配置。新任当日改变合入时机、并发上限和预算需要另一方或 Super 确认。Project socket 与支持该版本工具守卫的运行时均执行只读和规则限制。已经启动的旧版无头 CLI 若固定了旧钩子，其原生工具限制随下一次运行时启动更新。
+
+| 命令 `loom rotation-policy` | 角色及字段 |
+| --- | --- |
+| `scope --phase ID` 或 `scope --goal ID` | Super 登记阶段或目标。 |
+| `ruling --target ROLE --detail TEXT --evidence FILE[:LINE]` | Super 登记影响该角色的职责或授权裁决。 |
+| `incident --target ROLE --verdict overreach\|fabrication --detail TEXT --evidence FILE[:LINE]` | Super 或另一方登记 P0 原件。loomd 冻结写入并立即启动接任。 |
+| `error --target ROLE --detail TEXT --evidence FILE[:LINE]` | Super、另一方或当事角色登记已核实的事实错误。首次进入加严核查，此后新增错误在干净边界换班。 |
+| `spot-check --target leader --id DELIVERY --verdict ok\|error --detail TEXT --evidence FILE[:LINE]` | Auditor 在收到门禁包后登记抽查，`ok` 也计入分母。 |
+| `audit --id CARD --verdict return\|pass --detail TEXT` | Auditor 登记独立审查往返。门禁回执也从原生裁决提取。连续三次退回通知 Super。 |
+| `correction --target ROLE --detail TEXT` | Super 登记用户纠正。当事角色需要同时给出已收到的用户或 Super 投递的 `--id`。 |
+| `profile --target ROLE --version TEXT --detail TEXT` | Super 登记版本变更。确认过的被动原因也可用 `loom rotate --target ROLE --passive`。 |
+| `verify --target ADDR --verdict pass\|fail --detail TEXT --evidence FILE[:LINE]` | 在位的另一方核实继任首报。 |
+| `abort --target ADDR --detail TEXT` | Super 可取消核实已超时的交接，恢复前任。 |
+| `rule-change --target ADDR --id merge\|concurrency\|budget --detail TEXT --evidence FILE[:LINE]` | Super 或另一方确认接任当日的一项规则变更。 |
 
 ## 消息路由（R20，2026-11-25）
 

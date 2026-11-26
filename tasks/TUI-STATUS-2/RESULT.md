@@ -130,4 +130,12 @@ Release · loomd cafe1234
 ↑↓ select  Enter detail  h hist  g grep  m mem  r refresh  q quit  ? help
 ```
 
+## v1.1
+
+- 基于 `main` 的 `cf865965` 更新。Leader、Auditor 和 Worker 的短地址显示 UUID 的前八位十六进制字符，回车仍可查看完整地址。
+- Workers 和 Gates 按本屏内容的显示宽度分配列宽。Wave、Addr 和 Gate 优先获得空间，任务名与裁决摘要随空间伸缩。较窄的屏幕上仍可在详情里查看完整字段。
+- Context 使用最近一次原生模型调用的输入 token，含缓存读写，优先使用运行时或原生记录报告的模型窗口。Gemini 4 Neon 和 Claude Sonnet 5.5 在缺少实际窗口时按公布容量估算，界面用 `≈` 标记。只知道用量时显示 token 数。采样复用 loomd 已缓存的历史读取，换班预算继续使用项目策略阈值。[Antigravity 模型窗口](https://antigravity.google/docs/models#gemini-4-neon) [Claude Code 模型窗口](https://code.claude.com/docs/en/model-config#1m-context-window)
+- Super 通知按时间从新到旧排列并标注相对时间。普通成功投递回执只计数，失败回执仍可见。先过滤常规回执再截取最近八条，避免回执挤掉待处理事项。
+- 隔离环境下 `npm test` 通过 727 项。更新了 80、100、140 列快照，并通过临时 fixture 套接字在 120 列验证实际 `loom tui --once`。回归覆盖带前缀 UUID、完整 Wave 和 Gate ID、实测与估算上下文、回执过滤、时间排序及重连。
+
 STATUS: done

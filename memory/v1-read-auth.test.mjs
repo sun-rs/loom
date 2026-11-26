@@ -115,11 +115,15 @@ test('U08 ACK 丢失时复用批次，确认接管后推进游标', async () => 
 test('U08 重试前撤权，只有确认未接管才重新调度', async () => {
   const { createAccess } = await import('./access.mjs');
   const { createDeltaDelivery } = await import('./delta.mjs');
-  const changes = [change(1, item('revoked-secret')), change(2, item('retained'))];
+  const changes = [change(1, item('revoked-secret', { project: 'B' })), change(2, item('retained'))];
   const sent = [], reconciled = [], scheduled = [];
   let nativeStatus = 'unknown';
   const access = createAccess({ changes, now: () => start });
-  const binding = session('reviewer', { authorizedIds: { memory: ids(changes), history: [] } });
+  const binding = session('leader');
+  const operator = session('super');
+  const granted = await access.grant(operator, { sourceProject: 'B', recipient: binding.principal,
+    reason: 'Fixture dependency', expiresAt: stamp(start + day) });
+  assert.equal(granted.ok, true);
   const delta = createDeltaDelivery({
     access, binding: () => binding, prefix: frozen, initialCursor: 0,
     send: delivery => { sent.push(structuredClone(delivery)); },
@@ -128,7 +132,7 @@ test('U08 重试前撤权，只有确认未接管才重新调度', async () => {
   });
   const request = { deliveryId: 'original', body: 'business payload' };
   assert.deepEqual(ids((await delta.deliver(request)).suffix.rows), ['revoked-secret', 'retained']);
-  binding.authorizedIds.memory = ['retained'];
+  assert.equal((await access.revoke(operator, granted.grant.id)).ok, true);
   const pending = await delta.deliver(request);
   assert.deepEqual(reconciled, ['original']);
   assert.equal(sent.length, 1);
@@ -245,7 +249,7 @@ test('U10 各读取入口使用同一角色授权，猜测未授权 ID 与未知
       dependencies: [{ project: 'A', cardId: 'dep' }], attachments: ['attached', 'auditor-note', 'unmatched'] }),
     [], ['attached', 'unmatched'], [], ['attached'], ['own', 'lineage', 'dependency']],
     [session('reviewer', { cardId: 'review', authorizedIds: { memory: ['shared'], history: ['dependency'] } }),
-      ['shared'], ['shared'], ['shared'], ['shared'], ['dependency']],
+      [], [], [], [], []],
   ];
   const expectRows = ({ rows }, expected, context) =>
     assert.deepEqual(ids(rows).sort(), [...expected].sort(), context);
@@ -322,7 +326,7 @@ test('Goal 3f user entries are visible according to role and review-card authori
     ['worker', session('worker', { cardId: 'card', attachments: ids(userEntries) }), []],
     ['reviewer with explicit IDs', session('reviewer', {
       cardId: 'review', authorizedIds: { memory: ids(reviewEntries), history: [] },
-    }), reviewEntries],
+    }), []],
     ['reviewer without authorization', session('reviewer', { cardId: 'other-review' }), []],
   ];
   for (const [name, binding, expected] of matrix) {

@@ -5,10 +5,13 @@ import { mergeBoundary, worktreeAt, worktreeDelta } from '../evidence/worktree.m
 import { readText, writeState } from './io.mjs';
 
 export const headAt = worktreeAt;
+const readSettings = project => JSON.parse(projectText(project, 'evidence.json') ?? '{}');
 function settingsFor(project, row) {
-  const settings = JSON.parse(projectText(project, 'evidence.json') ?? '{}');
+  const settings = readSettings(project);
   return { ...settings, ...settings.tasks?.[row.task] };
 }
+const capturedSettings = ({ mergeRef, protectedPaths, testPaths, allowedPaths }) =>
+  ({ mergeRef, protectedPaths, testPaths, allowedPaths });
 
 export function finishHead(project, row, start, end = headAt(row.cwd)) {
   let git;
@@ -23,19 +26,30 @@ export function finishHead(project, row, start, end = headAt(row.cwd)) {
 export function captureOarTurnEnd(project, row) {
   const gitBoundary = headAt(row.cwd);
   try {
-    const { mergeRef, protectedPaths, testPaths, allowedPaths } = settingsFor(project, row);
-    gitBoundary.settings = { mergeRef, protectedPaths, testPaths, allowedPaths };
+    const projectSettings = readSettings(project);
+    const task = projectSettings.tasks?.[row.task];
+    const settings = gitBoundary.settings = capturedSettings({ ...projectSettings, ...task });
+    const { mergeRef } = settings;
     gitBoundary.mergeBoundary = mergeBoundary(row.cwd, mergeRef);
+    gitBoundary.projectScope = task ? { settings: capturedSettings(projectSettings),
+      mergeBoundary: projectSettings.mergeRef === mergeRef ? gitBoundary.mergeBoundary : mergeBoundary(row.cwd, projectSettings.mergeRef) } : null;
   } catch { gitBoundary.settings = null; }
   return { head: gitBoundary.head, observedAt: gitBoundary.observedAt, gitBoundary };
 }
 
-export function oarTurnEndHead(project, row, start, end) {
+export function oarTurnEndHead(project, row, start, end, { nextCard = false } = {}) {
   if (end?.gitBoundary) {
-    const { settings } = end.gitBoundary;
-    if (settings === undefined) return finishHead(project, row, start, end.gitBoundary);
+    const boundary = end.gitBoundary;
+    if (nextCard && boundary.projectScope === undefined && boundary.settings !== null) {
+      // Hosts attached before the upgrade may only have captured the startup card's scope.
+      const { mergeBoundary: _, ...legacy } = boundary;
+      return finishHead(project, { cwd: row.cwd }, start, legacy);
+    }
+    const scope = nextCard ? boundary.projectScope ?? boundary : boundary;
+    const { settings, mergeBoundary } = scope;
+    if (settings === undefined) return finishHead(project, row, start, boundary);
     return { head: end.head, observedAt: end.observedAt,
-      git: settings ? worktreeDelta(row.cwd, start, end.gitBoundary, settings) : { status: 'unavailable' } };
+      git: settings ? worktreeDelta(row.cwd, start, { ...boundary, mergeBoundary }, settings) : { status: 'unavailable' } };
   }
   if (end?.observedAt) return { head: end.head, observedAt: end.observedAt, git: end.git };
 }
