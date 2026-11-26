@@ -24,3 +24,13 @@ Base: main @ e17e06c3. Do not commit.
 6. **Flaky test capture.** A full `npm test` failed 1 test twice (762b702a, e17e06c3) and passed on rerun; the failure was not captured. Run the suite in a loop (≥10 runs, with saved logs), identify the test(s), and fix the root cause.
 Regression: replay pilot-2 57883071 and the earlier 919d7ab2 half-pasted briefing; both must reach `stalled` + escalation within the bound, and the 57883071 frame must auto-submit under item 4.
 npm test green; RESULT.md Chinese, `STATUS: done`. Red lines as before; live checks in isolated HOME; never type into pilot-2 panes.
+
+## Item 7 (added after Orca study, docs/research/2026-11-25-aggregators.md)
+- **No blind second Enter.** A dialog can appear *after* the first Enter (tool approval, Claude AskUserQuestion where Enter picks option 1, trust/plan prompts), and a later paste or human typing could be submitted early.
+  - Allowed: at most one re-Enter, and only when all of these hold: native shows no new turn after ≥1.5 s; the composer still shows our `[loom:<id>]` draft and is otherwise ours; no overlay/approval/selection on screen (provider recogniser); no printable human input since the write.
+  - Record it as `re-enter` in the receipt.
+- **Pointer mode for long TUI deliveries (Orca-style).** Above `delivery.inlineMaxBytes` (default ~300 bytes), or when the body is multi-line or contains CJK, a TUI target gets one short single-line ASCII pointer:
+  `[loom:<id>] N new: run "$LOOM_BIN" inbox read <id>`.
+  - The agent reads the body via CLI, and that read is the receipt (in addition to the native turn).
+  - Unread past the SLA → one redrive, then stall + escalate (item 3).
+  - Report the token trade-off (one extra tool call per wake) in RESULT.md, using pilot-2 delivery sizes.
