@@ -21,6 +21,19 @@ export function candidateFields(raw) {
   };
 }
 const normalize = value => value.toLowerCase().replace(/[.!?]+$/u, '').replace(/\s+/gu, ' ').trim();
+const noiseSignals = [
+  /^(?:git\s+(?:history|log)|code(?:base)?\s+(?:structure|layout)|current\s+(?:progress|status)|(?:git\s+)?(?:commit|revision)\s+`?[a-f\d]{7,64}\b)/iu,
+  /\b(?:lives|is located|can be found)\s+in\s+[`'"]?(?:[\w.-]+\/)+[\w.-]+/iu,
+  /\b(?:as\s+(?:already\s+)?documented\s+in\s+the\s+(?:repo(?:sitory)?|codebase)|(?:the\s+)?current\s+(?:command|build|test|job|task)\s+is\s+(?:waiting|running|pending))\b/iu,
+  /^(?:the\s+)?(?:latest|last|current)\s+(?:build|test run|command|job)\s+(?:has\s+)?(?:passed|failed|finished|completed|timed out)\b/iu,
+  /^(?:git\s*历史|代码结构|当前进度|当前状态|(?:提交|修订)\s*[a-f\d]{7,64}\b)|(?:已(?:在|由)(?:仓库|代码库)记录|(?:当前|本轮)(?:命令|构建|测试|任务)(?:正在|尚在)(?:运行|等待))/iu,
+];
+function isNoise(title, body) {
+  const marker = label => new RegExp('^[ \\t]*(?:[-*] |#{1,6} )?(?:\\*\\*)?' + label +
+    '(?:\\*\\*)?[ \\t]*[:：][ \\t]*(?:\\*\\*)?[^\\s*]', 'imu').test(body);
+  if (marker('Why') && marker('How to apply')) return false;
+  return [title, body].some(value => value && noiseSignals.some(pattern => pattern.test(value.trim())));
+}
 const revision = item => item?.meta ? digest(item) : item?.revision ?? null;
 const userDraft = ({ title, body, createdAt, source, targets }, current) => ({
   layer: 'user', project: null, kind: current?.kind ?? 'preference',
@@ -106,6 +119,7 @@ export function createMemoryProposals(project, { memory, sessions, state, save, 
           (action !== 'invalidate' && (!text(body, 4000) || body.split(/\r\n|\n|\r/u).length > 200 ||
             estimateTokens(body) > 200)) || !Array.isArray(targets) || targets.length > 32 ||
           !targets.every(isId) || new Set(targets).size !== targets.length) continue;
+      if (action !== 'invalidate' && isNoise(title, body)) continue;
       const proof = sources.get(sourceKey(source));
       if (!proof || !Object.hasOwn(evidencePath, source.kind) ||
           scope === 'user' && action !== 'invalidate' && !(proof.user && userFact(proof.text, body))) continue;

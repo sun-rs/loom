@@ -718,6 +718,7 @@ ${details}`, {
           !(actor.role === 'leader' && sessions.rowFor(args['handover-from'])?.project === actor.project))) {
       throw new CommandError('invalid-arguments', 'Auditor startup requires Super or a Leader supervising succession');
     }
+    await memory.prepareLibrary();
     const job = await sessions.newJob(args, caller, checkBarrier, occupied, handoverState, selfHandoff);
     let session;
     try {
@@ -746,6 +747,7 @@ ${details}`, {
 
   async function tick() {
     policy = policyForTick();
+    await memory.prepareLibrary();
     await sessions.refresh(mail);
     for (const job of sessions.jobs.values()) {
       await sessions.retirePredecessor(job).catch(error => report(`handover retirement: ${error.message}`));
@@ -846,7 +848,7 @@ ${details}`, {
         return now() < job.reviewDeadline && !first?.completion && !deliveryFailed(first);
       },
     });
-    await memory.tick(mail.messages);
+    await memory.recordExplicit();
     for (const row of sessions.rows()) {
       const job = sessions.jobs.get(row.addr);
       if (job && row.endedAt === null && row.cli === 'claude') {

@@ -1,6 +1,9 @@
 import { createHash } from 'node:crypto';
+import { isDeepStrictEqual } from 'node:util';
 import { createAccess } from './access.mjs';
 import { itemPath, renderEntry, validateEntry, validateEntryFormat } from './format.mjs';
+import { isShortMemoryId } from './index-row.mjs';
+import { eventMemoryId, isLegacyMechanicalMemory, ledgerRulings, rulingPath } from './ledger.mjs';
 import { sanitizeEntry } from './sanitize.mjs';
 
 const day = 86_400_000;
@@ -109,7 +112,7 @@ function candidateTargets(receipts) {
 
 export function createMemoryStore({ now = Date.now, readState, commitState, evidence, allocateId,
   estimateTokens, maxMetadataBytes, staleDays, getObservations, classifySensitive, replacement, readRaw,
-  receiptTtlMs = 30 * day } = {}) {
+  receiptTtlMs = 30 * day, eventProject } = {}) {
   if (!Number.isFinite(receiptTtlMs) || receiptTtlMs < 0) throw new RangeError('Invalid memory receipt TTL');
   const format = { evidence, estimateTokens, maxMetadataBytes };
   const redaction = { classifySensitive, replacement };
@@ -146,8 +149,8 @@ export function createMemoryStore({ now = Date.now, readState, commitState, evid
     return id;
   }
 
-  async function prepare(fields, knownHist) {
-    const raw = validateEntryFormat(fields, format);
+  async function prepare(fields, knownHist, validation = format) {
+    const raw = validateEntryFormat(fields, validation);
     if (!raw.ok) return raw;
     const safe = sanitizeEntry(fields, redaction);
     if (!safe.ok) return safe;
@@ -161,10 +164,10 @@ export function createMemoryStore({ now = Date.now, readState, commitState, evid
         safe.entry.source?.hist?.turnId !== fields.source.hist.turnId)) {
       return invalid('Memory history could not be reliably redacted');
     }
-    const result = await validateEntry(safe.entry, knownHist ? { ...format, evidence: {
+    const result = await validateEntry(safe.entry, knownHist ? { ...validation, evidence: {
       ...evidence,
       hasHist: hist => hist.addr === knownHist.addr && hist.turnId === knownHist.turnId,
-    } } : format);
+    } } : validation);
     return result.ok ? safe : result;
   }
 
@@ -409,14 +412,21 @@ export function createMemoryStore({ now = Date.now, readState, commitState, evid
     }
     if (fingerprint === undefined) return invalid('Invalid memory request content');
     const success = (fields, status = 'accepted') => ({ ok: true, ...fields, receipt: { requestId, status } });
-    const current = state.entries.find(entry => entry.id === id);
+    let current = state.entries.find(entry => entry.id === id);
     const forgottenMerge = op === 'merge' && current?.status === 'forgotten';
     if (prior && !forgottenMerge) return prior.response;
+    let resolved = request;
+    if (isShortMemoryId(id) && (op === 'put' || op === 'forget')) {
+      const match = access.resolveShortId(binding, state, id);
+      if (!match.item) return { ok: false, code: match.code, error: match.error };
+      current = match.item;
+      resolved = { ...request, id: current.id };
+    }
     const before = state.seq;
     let result;
     if (forgottenMerge || (op === 'merge' && current?.status === 'merged')) {
       result = replayMerge(state, binding, request, current, success);
-    } else if (op === 'put' || op === 'propose') result = await put(state, binding, request, current, success);
+    } else if (op === 'put' || op === 'propose') result = await put(state, binding, resolved, current, success);
     else if (decisions.has(op)) result = await review(state, binding, request, current, success);
     else if (op === 'import_rulings') result = await importRulings(state, binding, request, success);
     else if (op === 'forget') {
@@ -441,7 +451,10 @@ export function createMemoryStore({ now = Date.now, readState, commitState, evid
     const ids = new Set([...text.matchAll(/\[memory:([\w-]+)\]/gu)].map(match => match[1]));
     const usedAt = time();
     for (const id of ids) {
-      const { item } = await access.show(binding, id);
+      const { item } = await access.show(binding, id).catch(error => {
+        if (error.code === 'not-found' || error.code === 'ambiguous') return {};
+        throw error;
+      });
       if (item && active(item)) {
         const entry = state.entries.find(row => row.id === item.id);
         updateEntry(state, { ...entry, usage: (entry.usage ?? 0) + 1, lastUsedAt: usedAt });
@@ -471,15 +484,71 @@ export function createMemoryStore({ now = Date.now, readState, commitState, evid
     });
     const cutoff = at - staleDays * day;
     const stale = Number.isFinite(staleDays) && staleDays > 0 ? state.entries.filter(entry => active(entry)
+      && entry.source?.path !== rulingPath
       && Date.parse(entry.lastUsedAt ?? entry.effectiveAt ?? entry.updatedAt) <= cutoff) : [];
-    if (!stale.length && !receiptsChanged) return;
+    const migrated = eventProject ? state.entries.filter(entry => ['active', 'stale'].includes(entry.status) &&
+      entry.withdrawnBy !== 'legacy-mechanical-memory' && isLegacyMechanicalMemory(eventProject, entry)) : [];
+    if (!stale.length && !migrated.length && !receiptsChanged) return;
     if (Object.keys(links).length) state.candidateTargets = { ...links, ...state.candidateTargets };
     const updatedAt = new Date(at).toISOString();
-    for (const entry of stale) {
-      updateEntry(state, { ...entry, status: 'stale', revision: entry.revision + 1, updatedAt }, 'withdraw');
+    const retired = new Set(migrated);
+    for (const entry of new Set([...stale, ...migrated])) {
+      updateEntry(state, { ...entry, status: 'stale', revision: entry.revision + 1, updatedAt,
+        ...(retired.has(entry) && { withdrawnBy: 'legacy-mechanical-memory' }) }, 'withdraw');
     }
-    if (stale.length) indexFiles(state);
+    if (stale.length || migrated.length) indexFiles(state);
     await commitState(state);
+  }
+
+  async function syncLedger(text) {
+    if (!eventProject || typeof classifySensitive !== 'function') return invalid('Memory ledger is unavailable');
+    const state = await snapshot();
+    const current = new Map(state.entries.map(item => [item.id, item]));
+    const parsed = ledgerRulings(eventProject, text);
+    const ledger = new Map(parsed.map(item => [item.id, item]));
+    const incoming = new Map();
+    const updatedAt = time();
+    // Ledger entries preserve the source quote, including rulings longer than a manual note.
+    const validation = { ...format, estimateTokens: () => 0 };
+    const before = state.seq;
+    let changed = false;
+    for (const { id, supersedes } of parsed) {
+      if (current.get(id)?.status === 'forgotten') continue;
+      for (const target of supersedes) {
+        if (!incoming.has(target)) incoming.set(target, []);
+        incoming.get(target).push(id);
+      }
+    }
+    for (const { id, title, body, supersedes, continuationOf } of parsed) {
+      const prior = current.get(id);
+      if (prior?.status === 'forgotten') continue;
+      if (prior && (prior.kind !== 'ruling' || prior.layer !== 'user' || prior.source?.path !== rulingPath)) {
+        return invalid('Memory ledger ID is in use');
+      }
+      const date = /\b\d{4}-\d{2}-\d{2}\b/u.exec(body)?.[0];
+      const draft = { title, body, kind: 'ruling', layer: 'user', project: null,
+        checkedAt: Number.isFinite(Date.parse(date)) ? date + 'T00:00:00.000Z' : prior?.checkedAt ?? updatedAt,
+        source: prior?.source ?? { path: rulingPath } };
+      const fields = await prepare(draft, prior?.source?.hist, validation);
+      if (!fields.ok) return fields;
+      const replacedBy = [...new Set([...(prior?.supersededBy ?? []).filter(id => !ledger.has(id) ||
+        current.get(id)?.status === 'forgotten'), ...(incoming.get(id) ?? [])])];
+      const next = { ...(prior ?? version(state, { principal: 'super', role: 'super' }, fields.entry, { id, revision: 0 })),
+        ...fields.entry, status: replacedBy.length ? 'superseded' : prior?.status === 'stale' ? 'stale' : 'active' };
+      if (supersedes.length || prior?.supersedes) next.supersedes = supersedes;
+      if (replacedBy.length || prior?.supersededBy) next.supersededBy = replacedBy;
+      if (continuationOf) next.continuationOf = continuationOf;
+      if (isDeepStrictEqual(prior, next)) continue;
+      const item = { ...next, revision: (prior?.revision ?? 0) + 1, updatedAt };
+      const result = validateEntryFormat(item, validation);
+      if (!result.ok) return result;
+      updateEntry(state, item, active(item) ? (prior && active(prior) ? 'update' : 'add') :
+        prior && active(prior) ? 'withdraw' : null);
+      changed = true;
+    }
+    if (state.seq !== before) indexFiles(state);
+    if (changed) await commitState(state);
+    return { ok: true };
   }
 
   // Internal event ingestion, callable only with a history verifier supplied by the daemon.
@@ -488,7 +557,7 @@ export function createMemoryStore({ now = Date.now, readState, commitState, evid
     const allowed = access.canWrite(binding, entry) || (binding?.role === 'worker' && binding.cardId &&
       entry.project === binding.project && entry.layer === 'shared' && entry.kind === 'lesson');
     if (!allowed || !nonempty(key) || !entry.source?.hist) return forbidden();
-    const id = `memory-event-${createHash('sha256').update(key).digest('hex')}`;
+    const id = eventMemoryId(key);
     const state = await snapshot();
     if (state.entries.some(item => item.id === id)) return { ok: true };
     const fields = await prepare({ ...draftFields(entry, await observations(binding)), source: entry.source });
@@ -526,6 +595,7 @@ export function createMemoryStore({ now = Date.now, readState, commitState, evid
     access,
     write: (binding, request) => serialize(() => write(binding, request)),
     recordEvent: (binding, key, entry) => serialize(() => recordEvent(binding, key, entry)),
+    syncLedger: text => serialize(() => syncLedger(text)),
     withdrawReviewed: (binding, revisions, requestId) => serialize(() => withdrawReviewed(binding, revisions, requestId)),
     recordTurn: event => serialize(() => recordTurn(event)),
     maintain: () => serialize(maintain),

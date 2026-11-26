@@ -22,5 +22,6 @@ export function extractorMetrics(project, now = Date.now()) {
   const { charged, calls, stageCalls, stopReason } = days[extractorDay(now)] ?? {};
   return { ...totals, today: { calls: (calls ?? 0) + (stageCalls ?? 0), chargedTokens: charged ?? 0 },
     stopReason: stopReason ?? null, pendingProposals: entries.length - approved - rejected,
+    approvedProposals: approved, rejectedProposals: rejected,
     proposalPassRate: approved + rejected ? approved / (approved + rejected) : null };
 }

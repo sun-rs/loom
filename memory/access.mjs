@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { matchesGlob } from 'node:path';
 import { sanitizeEntry } from './sanitize.mjs';
+import { formatIndexRow, isShortMemoryId, resolveShortMemoryId } from './index-row.mjs';
 
 const kindRank = { ruling: 0, preference: 1, lesson: 2 };
 const indexSurfaces = new Set(['index', 'search', 'attachments', 'delta']);
@@ -51,7 +52,8 @@ function canReadRole(binding, row, surface) {
 }
 
 function compareEntries(a, b) {
-  return (b.importance ?? 0) - (a.importance ?? 0)
+  return Number(b.kind === 'ruling') - Number(a.kind === 'ruling')
+    || (b.importance ?? 0) - (a.importance ?? 0)
     || (kindRank[a.kind] ?? 3) - (kindRank[b.kind] ?? 3)
     || (b.usage ?? 0) - (a.usage ?? 0)
     || (a.id < b.id ? -1 : Number(a.id > b.id));
@@ -69,12 +71,12 @@ function indexLine(entry, source) {
   return '- ' + entry.id + label + origin;
 }
 
-function indexRow(binding, entry, asOf) {
+function indexRow(binding, entry, asOf, compact = false) {
   const source = provenance(binding, entry, asOf);
   return {
     id: entry.id,
     revision: entry.revision,
-    line: indexLine(entry, source),
+    line: compact ? formatIndexRow(entry, indexLine(entry, source)) : indexLine(entry, source),
     usage: entry.usage ?? 0,
     ...source,
   };
@@ -209,15 +211,23 @@ export function createAccess({ readState, commitState, serialize, entries = [], 
   }
 
   return {
+    resolveShortId(binding, state, id, project) {
+      const time = now();
+      const grants = grantsOf(state);
+      const visible = row => mayRead(binding, row, 'show', time, grants, project);
+      const exact = state.entries.find(row => row.id === id && visible(row));
+      return exact ? { item: exact } : resolveShortMemoryId(state.entries, id, visible);
+    },
     async index(binding, { project } = {}) {
       const { visible, asOf } = await readIndex(binding, 'index', project);
-      return { rows: visible.sort(compareEntries).map(entry => indexRow(binding, entry, asOf)) };
+      return { rows: visible.sort(compareEntries).map(entry => indexRow(binding, entry, asOf, true)) };
     },
 
     async search(binding, { query = '', limit = 50, cursor = 0, project } = {}) {
       const { visible, asOf } = await readIndex(binding, 'search', project);
       const needle = query.trim().toLowerCase();
-      const matches = visible.filter(entry => !needle || [entry.title, ...(entry.keywords ?? [])]
+      const matches = visible.filter(entry => !needle || [entry.title, ...(entry.keywords ?? []),
+        ...(entry.layer === 'user' && entry.kind === 'ruling' && entry.source?.path === '.project/rulings.md' ? [entry.body] : [])]
         .some(value => value?.toLowerCase().includes(needle))).sort(compareEntries);
       const offset = Number.isSafeInteger(cursor) && cursor >= 0 ? cursor : 0;
       const size = Number.isSafeInteger(limit) && limit > 0 ? limit : 50;
@@ -231,7 +241,13 @@ export function createAccess({ readState, commitState, serialize, entries = [], 
     async show(binding, id, { project } = {}) {
       const state = await snapshot();
       const time = now();
-      const entry = state.entries.find(row => mayRead(binding, row, 'show', time, state.grants, project) && row.id === id);
+      const visible = row => mayRead(binding, row, 'show', time, state.grants, project);
+      let entry = state.entries.find(row => row.id === id && visible(row));
+      if (!entry && isShortMemoryId(id)) {
+        const result = resolveShortMemoryId(state.entries, id, visible);
+        if (!result.item) throw Object.assign(new Error(result.error), { code: result.code });
+        entry = result.item;
+      }
       if (!entry) return { item: null, seq: null };
       // Use the visible publication watermark of the snapshot, including the rest of a maintenance batch.
       const currentById = new Map(state.entries.map(row => [row.id, row]));
@@ -239,7 +255,7 @@ export function createAccess({ readState, commitState, serialize, entries = [], 
       for (const change of state.changes) {
         const publication = visibleChange(binding, change, currentById, time, state.grants);
         if ((publication && (project === undefined || publication.project === project))
-          || (change.id === id && (!change.entry || mayRead(binding, change.entry, 'show', time, state.grants, project)))) {
+          || (change.id === entry.id && (!change.entry || mayRead(binding, change.entry, 'show', time, state.grants, project)))) {
           seq = Math.max(seq ?? 0, change.seq);
         }
       }

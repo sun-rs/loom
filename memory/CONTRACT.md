@@ -34,6 +34,14 @@
 - `format.mjs` 的 `validateEntry` 和 `sanitize.mjs` 的 `sanitizeEntry` 为可独立测试的纯函数。
 - `cas-cache.mjs` 导出 `createCellMemory`。其 `show` 使用统一读取形状并可附 `cachedAt`。离线也通过 `getBinding()` 核对当前绑定，绑定失效或当前范围无授权缓存时返回 `{ item: null, seq: null }`。`write` 离线时只记录本地发件箱并返回候选回执，重连通过 home 的同一 `write` 校验。
 
+## 裁决账本与历史迁移
+
+自动机械同步只读取 `.project/rulings.md`。编号裁决和带「修正」「更正」「补充」的续行分别写入用户层，类型为 `ruling`。保留经脱敏的原话与日期，正文可超过普通记忆的 200 token 限制。同一账本条目使用稳定 ID，原地改写推进原条目的修订，重复同步或重启幂等。续行通过 `continuationOf` 关联原裁决，原裁决继续生效。
+
+编号裁决中的「整条取代 Rn」才会建立 `supersedes` / `supersededBy` 链，使较早被取代的条目退出索引。「取代 R24③」「取代 R21 中的……」等部分替代关系保留在原文中，相关旧裁决仍有效。
+
+卡片结果、门禁结论、升级结论及换班交接保留在各自的历史和证据中。维护按历史事件 ID、来源及生成类别识别旧机械记录，标记其为 `stale`，以 `withdrawnBy` 和 `withdraw` 变更留痕。迁移可重复执行，保留合法裁决、人工条目和已审提案。高级角色明确写出的 `REMEMBER:` 仍属于显式记录。
+
 ## 回执保留
 
 - 完整回执从首次成功提交起保留 30 天（每个 UTC 日按 24 小时计）。`createMemoryStore` 的 `receiptTtlMs` 可覆盖此期限，daemon 通过 `memoryOptions` 传入。重放不延长保留期，保留期内不按条数提前淘汰。
@@ -53,6 +61,8 @@
 | `loom mem invalidate <id> --request-id <id> --expected-revision <revision>` | `{ ok: true, item, receipt }`，`item` 为无旧正文的墓碑。 |
 
 `receipt` 为 `{ requestId, status }`，其状态取值见写入约定。成功在 stdout 输出单个 JSON 对象并退出 0。失败也在 stdout 输出单个 JSON 对象 `{ ok: false, error: { code, message } }` 并以非零状态退出，`message` 经过脱敏。Worker 搜索或写入，以及 Auditor 修改已知 ID 的外项目条目，均返回 `forbidden`。
+
+`show`、`update`、`invalidate` 接受完整 ID，或 `memory-<uuid>` 与 `memory-event-<hash>` 中 UUID 或哈希开头的八位十六进制字符，大小写均可。短 ID 仅在调用者当前可见的条目中解析，之后执行相应的写权限与修订校验。多个可见命中返回 `ambiguous`，零命中返回 `not-found`，包括只有不可见条目命中的情况。完整 ID 的既有行为保持不变。
 
 ## 整理提案的 daemon 接口
 
@@ -78,19 +88,24 @@
 
 回合与阶段整理的外发输入排除已存的用户层条目。阶段整理只提供项目记忆，Worker 历史以任务、轮次、工具及测试计数概括，批次和自动回执正文继续使用占位。
 
+逐轮和阶段整理均按 `user`、`feedback`、`project`、`reference` 四类找可跨会话复用的观察，使用 `Why` 说明依据，使用 `How to apply` 说明适用情形及行动。没有值得记录的内容时返回空提案数组。观察取舍和空结果约定参考 claude-mem v17（Apache-2.0）。
+
+提案入队前统一过滤标题或正文中只描述提交历史、代码位置、仓库已有文档和当前命令或任务进度的表述。完整的 `Why` 和 `How to apply` 保留有应用场景的结论，路径和提交号可以作为依据。过滤在证据、权限和审批规则之外额外执行，作废提案仍按其目标验证。
+
 阶段整理的库上下文 `existing` 使用独立字节预算。按请求 JSON 中转义后的 UTF-8 字节计，预算为 `maxInputBytes` 的一半（向下取整），并按每批首条轮次或事件加入后的剩余字节和当日剩余 token 进一步压缩，预留至少一个输出 token。先处理项目条目，再处理共享引用，各组按条目 `id` 的字典序排列。依序保留完整条目，首个放不下的条目及后续条目只保留 `id` 和可外发的标题，摘要仍放不下时省略该条及其后的条目，必要时保留空库上下文。
 
 阶段窗口超出 `maxInputBytes` 或当日剩余 token 预算时，从最早未处理的轮次起按时间顺序分批，每批的序列化请求都须符合字节限制，且余额须足以预留输入和至少一个输出 token。每批成功后立即持久记录进度，即使没有提案也推进游标。请求失败、凭据不可用或当日预算耗尽时，在下一次符合条件的边界继续处理未完成的部分，成功的批次不再外发。只有单轮或单条项目事件在空库上下文下仍超出字节上限，或按基础估算连整日 token 额度也放不下时，才告警并推进游标跳过该项。库上下文大小本身永远不会触发告警、跳过条目或推进游标。
 
-`memoryPilot` 报告主角色每轮额外请求数、换班后首个已完成回合的 token 样本和平均值、事实遗漏数及提案通过率。通过率的分母是已批准加已驳回。可在 `memory.pilot.handoverFileBaseline` 提供交接文件试点的首轮平均 token 作为比较基线。基线和无样本的指标使用 `null`。
+`memoryPilot` 报告主角色每轮额外请求数、换班后首个已完成回合的 token 样本和平均值、事实遗漏数、提案通过率及 `indexSubstantiveRatio`。通过率的分母是已批准加已驳回，报告同时列出两项计数。可读行比例以本项目共享条目及用户指导中的生效条目为样本，在预算截断前计算具有可用短 ID、标题和正文钩子的条目占比，范围为 `0..1`。可在 `memory.pilot.handoverFileBaseline` 提供交接文件试点的首轮平均 token 作为比较基线。基线和无样本的指标使用 `null`。
 
 ## 授权和读取
 
 - `access.mjs` 导出 `createAccess({ readState, history, now, ...options })`，集中执行授权过滤。`readState()` 提供最新条目和变更，也可传静态 `entries, changes`。
 - `store.access` 是接入持久快照的读取实例。授权在排名、计数、截断、摘录及报错前执行。
 - `createIndexQuery({ access, countTokens })`（`index-query.mjs`）复用该实例提供启动索引和搜索。`createDeltaDelivery({ access, binding, prefix, initialCursor, send, ... })`（`delta.mjs`）复用它过滤增量与重试，可用 `() => binding` 读取最新绑定。
-- `search(binding, { query, limit?, cursor? })` 返回 `{ rows, nextCursor }`。`index(binding)` 返回 `{ rows }`，启动索引另附 `indexText, text`。索引行含 `id, revision, line, usage`，搜索匹配标题和关键词。
-- `show(binding, id, options?)` 返回 `{ item, seq }`，未知或不可见时均为 `{ item: null, seq: null }`。
+- `search(binding, { query, limit?, cursor? })` 返回 `{ rows, nextCursor }`。`index(binding)` 返回 `{ rows }`，启动索引另附 `indexText, text`。索引行含 `id, revision, line, usage`。搜索匹配标题和关键词，账本同步条目也匹配正文。
+- 启动索引采用 `MEMORY.md` 风格，每行 `- [标题](8位短ID) — 一句话钩子`，最多 150 个 Unicode 字符。裁决先于其他条目，完整索引含提示文字最多 200 行及 25,000 UTF-8 字节。无短 ID 的旧式条目使用完整 ID。
+- `show(binding, id, options?)` 返回 `{ item, seq }`，完整 ID 未知或不可见时均为 `{ item: null, seq: null }`。短 ID 的解析错误与 CLI 一致。
 - Super 维护用户层的 `preference` 和 `ruling`。Auditor 与 Leader 可通过 `index`、`search` 和 `show` 读取这两类条目，并通过 `delta` 接收新增与撤回。用户层的 `lesson`、Super 的私人笔记和跨项目材料对二者不可见。Auditor 与 Leader 对用户层条目的创建、修改、遗忘和替代均返回 `forbidden`。Worker 不可读用户层。Reviewer 仅读复核卡显式授权条目。
 - `delta(binding, { cursor })` 返回 `{ rows, baseCursor, endCursor, truncated }`，每行有 `seq, id, revision, operation`。变更可用 `entry` 供内部授权，公开行提供安全元数据和使用已脱敏标题生成的索引行 `line`。投递的 `suffix` 使用同形结果，另附 `text`。
 - 重试可复用已投递的批次，包括条目后来变成 `stale` 的情况。当前授权撤销、过期或条目被遗忘时，不再复用含该条目原索引行的批次。

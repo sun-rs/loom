@@ -14,7 +14,7 @@ import { nativeClaude } from './executables.mjs';
 import { captureOarTurnEnd, headAt } from './turn-heads.mjs';
 import { codexConfiguration } from './codex-launch.mjs';
 import { codexRefusal } from './codex-pipe-errors.mjs';
-import { claudeMemoryArgs, memoryLaunch } from '../memory/launch-config.mjs';
+import { claudeMemoryArgs, codexDeveloperArgs, memoryLaunch } from '../memory/launch-config.mjs';
 import { claudeApiEnvKeys } from '../adapters/claude/launch.mjs';
 import { allowNativeQuestions, claudeAuthMode, claudeIdleCompaction } from '../cli/policy.mjs';
 import { managedEnvironment } from './release.mjs';
@@ -111,8 +111,9 @@ export async function openOar(row, project, resume) {
       if (row.cli === 'codex') launchArgs = codexConfiguration(project, row, { ...managed, ...integration.env }, isolated);
     }
     const { cwd, model, effort } = row;
+    if (row.cli === 'codex') launchArgs.push(...codexDeveloperArgs(row.memory?.indexText));
     const session = await runtime.session(installation, { cwd, model, effort, env, launchArgs,
-      ...(['claude', 'codex'].includes(row.cli) && row.memory?.indexText && { appendSystemPrompt: row.memory.indexText }),
+      ...(row.cli === 'claude' && row.memory?.indexText && { appendSystemPrompt: row.memory.indexText }),
       ...(row.cli === 'claude' && !questions && { disallowedTools: ['AskUserQuestion'] }),
       ...(row.cli === 'codex' && { endTurnProcessesOnAbort: true }), ...(resume ? { resume } : {}) });
     if (agyWorkspace || integration) {

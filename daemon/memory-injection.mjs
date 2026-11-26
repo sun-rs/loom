@@ -2,6 +2,7 @@ import { isAbsolute, join, relative } from 'node:path';
 import { runtimeDirectory } from '../cli/project.mjs';
 import { renderMemoryDelta } from '../memory/delta.mjs';
 import { createIndexQuery } from '../memory/index-query.mjs';
+import { memoryStartupPrompt } from '../memory/prompts.mjs';
 import { readText, writeState } from './io.mjs';
 
 export function sessionMemoryBinding(row, job) {
@@ -68,7 +69,8 @@ export function createMemoryInjection(project, access) {
     async launch(job, binding) {
       if (!binding) return {};
       const text = indexText(await query.index(binding));
-      return { indexText: text, ...(job.row.cli === 'claude' && { compactIndexPath: saveCompactIndex(job, text) }) };
+      return { indexText: memoryStartupPrompt(binding.role, text),
+        ...(job.row.cli === 'claude' && { compactIndexPath: saveCompactIndex(job, text) }) };
     },
     async decorate(job, binding, message, messages, events) {
       const taken = messages.filter(item => item.received && item.target.addr === job.row.addr);
@@ -87,7 +89,8 @@ export function createMemoryInjection(project, access) {
         }
         if (memoryCompaction || job.row.cli === 'agy' && message.startup) {
           const index = await query.index(binding);
-          appendices.push(indexText(index));
+          const text = indexText(index);
+          appendices.push(job.row.cli === 'agy' && message.startup ? memoryStartupPrompt(binding.role, text) : text);
           if (index.rows.length) memoryAccess.index = index.rows.map(row => row.id);
         }
       }

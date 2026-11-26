@@ -6,6 +6,7 @@ import { promisify } from 'node:util';
 import { validateMemoryCommand } from '../cli/memory.mjs';
 import { runtimeDirectory } from '../cli/project.mjs';
 import { CommandError } from '../cli/sessions.mjs';
+import { projectDocument } from '../handover/organization.mjs';
 import { createMemoryStore } from '../memory/store.mjs';
 import { collectMemoryEvents } from './memory-events.mjs';
 import { sessionMemoryBinding } from './memory-injection.mjs';
@@ -31,7 +32,7 @@ export function createProjectMemory(project, { sessions, now, options, report })
   const path = join(runtimeDirectory(project), 'memory-v1.json');
   const events = collectMemoryEvents(project, { sessions, report, classifySensitive, now, ...options });
   const store = createMemoryStore({
-    now, classifySensitive, allocateId: () => `memory-${randomUUID()}`,
+    now, classifySensitive, eventProject: project, allocateId: () => `memory-${randomUUID()}`,
     readState: () => JSON.parse(readText(path, 'null')),
     commitState: state => writeState(path, JSON.stringify(state) + '\n'),
     ...options,
@@ -46,6 +47,23 @@ export function createProjectMemory(project, { sessions, now, options, report })
     },
   });
   const bindingFor = row => sessionMemoryBinding(row, sessions.jobs.get(row?.addr));
+  let syncedLedger;
+
+  async function prepareLibrary() {
+    await store.maintain();
+    try {
+      const { text } = await projectDocument(project, 'rulings');
+      if (text === undefined || text === syncedLedger) return;
+      const result = await store.syncLedger(text);
+      if (result.ok) {
+        syncedLedger = text;
+        return;
+      }
+    } catch {
+      // A later refresh retries a failed read or commit.
+    }
+    report('Loom could not synchronize the memory rulings ledger');
+  }
 
   async function handle(args, caller) {
     const row = caller && sessions.rows().find(session => session.addr === caller || session.pane === caller);
@@ -67,17 +85,18 @@ export function createProjectMemory(project, { sessions, now, options, report })
   return {
     access: store.access,
     store, bindingFor,
+    prepareLibrary,
     async handle(args, caller) {
       try { return await handle(args, caller); }
       catch (error) {
         if (error instanceof CommandError) throw error;
+        if (error.code === 'not-found' || error.code === 'ambiguous') {
+          throw new CommandError(error.code, error.message);
+        }
         report('Loom project memory is unavailable');
         throw new CommandError('unavailable', 'Project memory is unavailable');
       }
     },
-    async tick(messages) {
-      await store.maintain();
-      await events.collect(messages, bindingFor, store.recordEvent);
-    },
+    recordExplicit: () => events.collect(bindingFor, store.recordEvent),
   };
 }

@@ -1,5 +1,20 @@
 const reminder = '默认不写。未来的 agent 看到这条，会因此做得更好吗？';
 const background = '背景笔记，仅供参考，使用前核验';
+export const observationRules = [
+  'Keep durable observations for future sessions: user (preferences), feedback (confirmed corrections or practices), project (lasting decisions or constraints), reference (where to verify information).',
+  'Skip code structure, Git history, facts already documented in the repository, and one-off progress or details of the current conversation.',
+  'Use separate Why: and How to apply: lines in the body to explain the reason and specify when and what to do.',
+].join(' ');
+
+export function memoryStartupPrompt(role, indexText) {
+  const guidance = ['leader', 'auditor'].includes(role) ? [
+    'Memory writing',
+    observationRules,
+    'Search for duplicates with loom mem search and verify with loom mem show. Update the existing entry when the fact changes.',
+    'Use loom mem write for a new fact, loom mem update to correct outdated guidance, and loom mem invalidate when it no longer applies. Follow your role’s write permissions.',
+  ].join('\n') : '';
+  return [guidance, indexText].filter(Boolean).join('\n\n');
+}
 const rules = [
   reminder,
   'ruling 记录已确认的裁决，preference 记录持久偏好，lesson 记录已验证的经验，candidate 等待审查。',

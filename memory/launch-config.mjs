@@ -1,5 +1,6 @@
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { memoryStartupPrompt } from './prompts.mjs';
 
 const codexMemorySettings = [
   'features.memories', 'memories.generate_memories', 'memories.use_memories',
@@ -73,7 +74,7 @@ async function buildLaunch(mode, options, { readFile, readDir } = {}) {
   const warnings = [];
   const instructionFiles = [];
   const coverage = memoryIsolationCoverage(provider);
-  const { indexText } = options;
+  const indexText = memoryStartupPrompt(binding?.role, options.indexText);
   const settingsFlag = provider === 'claude' ? argv.findLastIndex(arg => arg === '--settings') : -1;
   const config = memoryLaunch(provider, { indexText, openCodeConfig: env.OPENCODE_CONFIG_CONTENT,
     claudeSettings: settingsFlag < 0 ? {} : JSON.parse(argv[settingsFlag + 1]) });
