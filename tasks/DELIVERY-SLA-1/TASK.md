@@ -29,8 +29,8 @@ npm test green; RESULT.md Chinese, `STATUS: done`. Red lines as before; live che
 - **No blind second Enter.** A dialog can appear *after* the first Enter (tool approval, Claude AskUserQuestion where Enter picks option 1, trust/plan prompts), and a later paste or human typing could be submitted early.
   - Allowed: at most one re-Enter, and only when all of these hold: native shows no new turn after ≥1.5 s; the composer still shows our `[loom:<id>]` draft and is otherwise ours; no overlay/approval/selection on screen (provider recogniser); no printable human input since the write.
   - Record it as `re-enter` in the receipt.
-- **Pointer mode for long TUI deliveries (Orca-style).** Above `delivery.inlineMaxBytes` (default ~300 bytes), or when the body is multi-line or contains CJK, a TUI target gets one short single-line ASCII pointer:
-  `[loom:<id>] N new: run "$LOOM_BIN" inbox read <id>`.
-  - The agent reads the body via CLI, and that read is the receipt (in addition to the native turn).
-  - Unread past the SLA → one redrive, then stall + escalate (item 3).
-  - Report the token trade-off (one extra tool call per wake) in RESULT.md, using pilot-2 delivery sizes.
+- **Pointer mode is REJECTED (user ruling 2026-11-25).** loom's advantage is fewer model requests; making the agent call a tool to read each message adds a full-context request per wake. Inline paste stays the default for every size up to the existing oversize reply-file threshold (PILOT2-TOOLS-1, unchanged). Do not implement pointer mode.
+- **Instead, make inline paste provable without extra requests:**
+  - The native transcript receipt (`[loom:<id>]` turn) remains the ground truth.
+  - Draft proof uses holder byte receipts plus the visible tail (DRAFT-HOLD-2) and the human-input class from item 4.
+  - Evaluate (report only, don't ship unless safe): keeping the holder PTY tall enough for the whole draft during a write. Measure the impact on the attached hc view first.

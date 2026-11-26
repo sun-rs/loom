@@ -54,7 +54,6 @@
 - **不往 TUI 里贴正文。** 只写一段短"指针"，内容是条数、邮箱名和读取命令，然后等约 500ms（`cmi=500`，可配）单独写一次 `\r`。正文由 agent 自己运行 CLI 去邮箱读。
 - **送达以"agent 读过"为准**（unread→read），不以屏幕为准。按 Enter 之前先查一次：消息已读就不按（`areUnreadMessages`）。每个指针只按一次 Enter（`markMailboxPointerEnterAttempted`）。
 - **仍未读就 `redrive`**，重新写一个指针。PTY 处于"等待用户输入"（审批、选择题）时不按 Enter，推迟到空闲（`isPtyAwaitingUserInput` → `deferFlightUntilIdle`）。另外核对进程化身（processIncarnation），防止投错到重启后的进程。
-- **对 loom 的启发**：
-  - 长消息改走"短指针加读取回执"，粘贴、折行、滚动、截断这类问题整体消失；
-  - 代价是每条消息多一次工具调用；
-  - 不盲按第二次 Enter。
+- **对 loom 的取舍**：
+  - 借鉴三点：不盲按第二次 Enter、弹窗时推迟按键、核对进程化身。
+  - **不采用指针模式**（用户裁决 2026-11-25）：每条消息都会让 agent 多一次带全量上下文的请求，丢掉 loom 少请求的优势。正文照旧内联，以原生记录回执为准。
