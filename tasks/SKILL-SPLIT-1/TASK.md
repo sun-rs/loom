@@ -12,3 +12,10 @@ Draft design (Super, to be revised by the research):
 Tests: skill lint (every pointer resolves, each module referenced by the loomd event that delivers it, size budgets). RESULT.md Chinese, STATUS: done, uncommitted.
 
 **Research done:** docs/research/2026-11-26-skill-split.md — implement its design conclusions 1–8 (they supersede the draft above where they differ), starting with the eval harness (item 7) before rewriting any text.
+
+**User 2026-11-26: redesign the skill, cut filler and low-value sentences, make sure the model executes fully rather than half-understanding.** Concretely:
+- Every sentence must be an instruction the model can act on or a fact it needs; delete explanations of rationale, history, restatements, hedges and examples that don't change behaviour (keep rationale only where it prevents a known misreading, one clause).
+- Prefer "When X: do Y (command)." over prose; one rule per line, numbered, no nested conditions beyond one "unless".
+- Each rule gets a test in the eval (item 7): a scenario where the rule must fire, measured for full execution (all steps, correct order, correct command) — not "mentions the rule".
+- Report per rule: kept/merged/deleted/moved-to-loomd, and the size of each role core before/after.
+**Phasing so we don't wait on other cards:** Phase 1 now — eval harness + scenarios per role run against the current 13 KB skill (baseline numbers), plus a line-by-line concision audit table. Phase 2 after ROT-TUNE-1, SKILL-VERIFY-1 and pilot-2's memory-writing rules land — write the new cores/modules/pointers incorporating them, rerun the eval, then hand to the veterans for review.
