@@ -58,7 +58,7 @@ function fixture(t, options) {
         else emit('turn_active', { inputId });
         const prompt = input.split('\n').slice(1).join('\n').split('\n\n## Loom task conventions', 1)[0]
           .split('\n\n## Startup request\n').at(-1);
-        const body = row.role === 'reviewer' ? prompt.split('\n\n').at(-1) : prompt;
+        const body = prompt;
         if (!/^(?:Loom Super message\n\n)?HOLD/.test(body) &&
             !(row.role === 'auditor' && body.startsWith('Read gate packet') && body.includes('rotation-policy spot-check')) &&
             (row.role !== 'leader' || body.includes('波次') || body.includes('续作批次') || body.endsWith('replacement')) &&
@@ -151,7 +151,7 @@ test('only Leader and Auditor get a bounded project memory block on spawn', asyn
   const { session: worker } = await f.spawn(daemon, 'worker', 'W', leader.addr);
   await daemon.tick();
   const guidance = [/Make decisions.*dispatch Workers.*integration Worker supplies fixed-candidate and full-suite evidence.*reply file path.*poll loom state/,
-    /Decide the gate verdict.*Ask for the integration Worker evidence.*exceptional issue.*one temporary read-only reviewer/];
+    /Decide the gate verdict.*Ask for the integration Worker evidence.*phase boundary.*Worker evidence card/];
   for (const [{ addr }, rule] of [[leader, guidance[0]], [auditor, guidance[1]]]) {
     const prompt = f.prompts.find(item => item.addr === addr).input;
     assert.ok(prompt.endsWith('\n\n## Startup request\nstart'));
@@ -278,7 +278,7 @@ test('consumption drift warms up before reaching Super and a restart preserves t
   assert.deepEqual(await ledger(), []);
   const warmBoard = await d.handle('board', {});
   assert.equal(warmBoard.pyramids[0].byRole.worker.modelCalls, 0);
-  assert.equal(warmBoard.roles.find(role => role.addr === auditor.addr).contextPercent, 100 * 80 / 300_000);
+  assert.equal(warmBoard.roles.find(role => role.addr === auditor.addr).contextPercent, 100 * 120 / 300_000);
   const { session: worker } = await f.spawn(d, 'worker', 'W', leader.addr, { prompt: 'HOLD worker' });
   async function addSample() {
     for (const [row, calls, tokens] of [[auditor, 4, 80], [leader, 3, 60], [worker, 3, 50]]) {
@@ -418,7 +418,7 @@ test('gate pack snapshots scoped evidence into one compact file and enqueues one
   const candidate = f.git('rev-parse', 'HEAD');
   let d = f.daemon();
   t.after(() => d.shutdown());
-  f.policy({ roles: { auditor: { maxWakesPerGate: 2 } } });
+  f.policy({ roles: { auditor: { maxWakesPerGate: 1 } } });
   const { session: leader } = await f.spawn(d, 'leader', 'L');
   const { session: auditor } = await f.spawn(d, 'auditor', 'A');
   await d.tick();
@@ -454,36 +454,21 @@ test('gate pack snapshots scoped evidence into one compact file and enqueues one
   assert.equal(retry.deliveryId, packet.deliveryId);
   assert.equal(readFileSync(packet.path, 'utf8'), contents);
   for (let i = 0; i < 3; i++) await d.tick();
-  const detail = 'PASS investigated edge\n' + '证据'.repeat(500);
-  const { session: deep } = await f.spawn(d, 'reviewer', 'DEEP', auditor.addr,
-    { wave: 'GATE', prompt: 'RETURN ' + detail });
-  await assert.rejects(f.spawn(d, 'reviewer', 'DUPLICATE', auditor.addr, { wave: 'GATE' }), { code: 'reviewer-gate-limit' });
-  const { session: ack } = await f.spawn(d, 'reviewer', 'ACK', auditor.addr,
-    { wave: 'OTHER', prompt: 'RETURN NOREPLY received' });
-  for (let i = 0; i < 3; i++) await d.tick();
+  await assert.rejects(f.spawn(d, 'reviewer', 'RETIRED', auditor.addr, { wave: 'GATE' }), { code: 'invalid-arguments' });
   const auditMessages = f.read('inbox/state.json').messages.filter(message => message.target.addr === auditor.addr && !message.startup);
-  assert.equal(auditMessages.length, 2);
-  assert.equal(auditMessages[0].text, `Read gate packet ${packet.path}`);
-  assert.equal(auditMessages[1].reviewerResult, deep.addr);
-  const wire = f.prompts.find(message => deliveryId(message.input) === auditMessages[1].id).input;
-  const [, file, digest] = /Read (\.project\/replies\/([a-f0-9]{64})\.txt) \(SHA-256\)/.exec(wire);
-  const savedReply = readFileSync(join(f.project, file), 'utf8');
-  assert.ok(savedReply.endsWith(detail));
-  assert.equal(payloadDigest(savedReply), digest);
-  assert(f.read('loomd/notifications.json').some(event => event.type === 'reviewer-result' && event.addr === ack.addr && event.logOnly));
+  assert.deepEqual(auditMessages.map(message => message.text), [`Read gate packet ${packet.path}`]);
   assert.equal(f.prompts.filter(message => message.addr === auditor.addr && message.input.includes(packet.path)).length, 1);
   const related = f.read('inbox/state.json').messages.filter(message => message.replyTo === packet.deliveryId);
   assert.deepEqual(related.map(message => message.target.addr), [leader.addr]);
   const budget = await d.handle('notifications', { gateComplete: 'GATE', history: true }, leader.addr);
-  assert.equal(budget.notifications.find(event => event.type === 'auditor-budget-exceeded').usage.wakes, 3);
+  assert.equal(budget.notifications.find(event => event.type === 'auditor-budget-exceeded').usage.wakes, 2);
   assert.ok(budget.notifications.some(event => event.gate === 'GATE' && event.type === 'gate-completed'));
   writeFileSync(join(f.project, '.project/evidence/next-round.json'), JSON.stringify({ addr: worker.addr, card: 'New round evidence' }));
   const next = await d.handle('gate-pack', { gate: 'GATE', candidate, question: 'Latest question' }, leader.addr);
   assert.equal(next.round, 2);
   assert.notEqual(next.deliveryId, packet.deliveryId);
-  assert.match(readFileSync(next.path, 'utf8'), /Reviewer verdicts.*PASS investigated edge.*Latest question/s);
-  const full = readFileSync(next.fullPath, 'utf8');
-  assert.ok(full.includes(detail));
+  assert.match(readFileSync(next.path, 'utf8'), /Latest question/);
+  const full = next.fullPath ? readFileSync(next.fullPath, 'utf8') : '';
   assert.match(readFileSync(next.path, 'utf8') + full, /next-round\.json/);
   assert.equal(readFileSync(packet.path, 'utf8'), contents);
 
@@ -493,7 +478,7 @@ test('gate pack snapshots scoped evidence into one compact file and enqueues one
   assert.equal((await d.handle('gate-pack', { gate: 'MISSING', reuse: true }, leader.addr)).deliveryId, missing.deliveryId);
   await d.shutdown();
   d = f.daemon();
-  await assert.rejects(f.spawn(d, 'reviewer', 'RESTART', auditor.addr, { wave: 'GATE' }), { code: 'reviewer-gate-limit' });
+  await assert.rejects(f.spawn(d, 'reviewer', 'RESTART', auditor.addr, { wave: 'GATE' }), { code: 'invalid-arguments' });
 });
 
 test('Super sees one completion per phase and a plain Auditor decision across daemon restart', async t => {
@@ -1688,45 +1673,6 @@ test('puts Super first and includes a newly settled wave in the same turn despit
   assert.equal(waves[0].phase, 'received');
 });
 
-test('reviewers occupy no worker seat and release only while idle after verdict delivery', async t => {
-  let advance = 0;
-  const f = fixture(t, { now: () => Date.now() + advance });
-  f.policy({ workers: { idleRetainMs: 0 } });
-  const d = f.daemon();
-  t.after(d.shutdown);
-  const leader = (await f.spawn(d, 'leader', 'L')).session.addr;
-  const auditor = (await f.spawn(d, 'auditor', 'A', undefined, { prompt: 'HOLD audit' })).session.addr;
-  await d.tick();
-  f.sessions.get(auditor).finish('Ready');
-  for (const task of ['A', 'B', 'C']) await f.spawn(d, 'worker', task, leader, { prompt: 'HOLD worker' });
-  await assert.rejects(f.spawn(d, 'worker', 'D', leader), { code: 'worker-capacity' });
-  const review = (await f.spawn(d, 'reviewer', 'REVIEW', auditor, { prompt: 'RETURN PASS review conclusion' })).session;
-  const job = f.read('loomd/sessions/' + review.addr + '.json');
-  assert.equal(job.reviewDeadline - review.startedAt, 1_800_000);
-  await d.tick();
-  await assert.rejects(d.handle('send', { target: review.addr, mode: 'queue', text: 'another question' }), { code: 'not-ready' });
-  assert.equal((await d.handle('state', { target: review.addr })).state, 'idle-warm');
-  for (let i = 0; i < 3; i++) await d.tick();
-  assert.equal((await d.handle('state', { target: review.addr })).state, 'closed');
-  assert.equal(f.prompts.filter(row => row.addr === review.addr).length, 1);
-  assert.match(f.prompts.find(row => row.addr === review.addr).input, /read-only.*one question/s);
-  f.policy({ roles: { reviewer: { maxDurationMs: 5_000 } }, workers: { idleRetainMs: 0 } });
-  const late = (await f.spawn(d, 'reviewer', 'LATE', auditor, { wave: 'LATE-GATE', prompt: 'HOLD reviewer' })).session;
-  await d.tick();
-  advance = 10_000;
-  await d.tick();
-  await d.tick();
-  const results = f.read('inbox/state.json').messages.filter(message => message.reviewerResult);
-  assert.deepEqual(results.map(message => message.target.addr), [auditor]);
-  assert.match(results[0].text, /review conclusion/);
-  assert.match(f.read('loomd/notifications.json').find(event => event.addr === late.addr && event.logOnly).text, /TIMED OUT/);
-  assert.equal((await d.handle('state', { target: late.addr })).state, 'working');
-  await d.handle('notifications', { take: true });
-  f.sessions.get(late.addr).finish('PASS late review', undefined, Date.now() + advance);
-  await d.tick();
-  assert.equal((await d.handle('state', { target: late.addr })).state, 'closed');
-});
-
 test('delivered workers release by Leader or TTL and resume Codex, agy, Claude and OpenCode by native ID', async t => {
   let advance = 0;
   const f = fixture(t, { now: () => Date.now() + advance });
@@ -2084,8 +2030,9 @@ test('new Worker verifies checkout, WIP and rulings and a mismatch blocks its fi
     /BLOCKED IN-FLIGHT[\s\S]*Worker first-report mismatch: wipLines/.test(input)));
 });
 
-test('resident compaction proposes rotation at the idle card boundary', async t => {
+test('an opt-in resident compaction limit proposes rotation at the idle card boundary', async t => {
   const f = fixture(t);
+  f.policy({ roles: { leader: { rotateAtCompactions: 1 } } });
   const d = f.daemon();
   t.after(d.shutdown);
   const { session: leader } = await f.spawn(d, 'leader', 'L');
@@ -2098,32 +2045,6 @@ test('resident compaction proposes rotation at the idle card boundary', async t 
   runtime.finish('Card boundary');
   await d.tick();
   assert.equal(f.read('loomd/self-rotation.json')[leader.addr].signal.reason, 'compaction');
-});
-
-test('8f1d01d6 oversized reviewer output is preserved through the digest pointer', async t => {
-  const f = fixture(t);
-  const d = f.daemon();
-  t.after(d.shutdown);
-  const { session: auditor } = await f.spawn(d, 'auditor', 'A', undefined, { prompt: 'HOLD audit' });
-  await d.tick();
-  f.sessions.get(auditor.addr).finish('Dispatch complete');
-  const heading = '### 结论\n';
-  const body = heading + '核'.repeat(25_702 - heading.length - 1) + '终';
-  assert.equal(body.length, 25_702);
-  const { session: reviewer } = await f.spawn(d, 'reviewer', 'HIST-LONG', auditor.addr, { cli: 'agy', prompt: 'HOLD reviewer' });
-  await d.tick();
-  const runtime = f.sessions.get(reviewer.addr);
-  runtime.finish(body);
-  writeFileSync(await runtime.session.nativeSessionFile(), '');
-  for (let i = 0; i < 4; i++) await d.tick();
-  const input = f.read('inbox/state.json').messages.find(message => message.reviewerResult === reviewer.addr);
-  const wire = f.prompts.find(message => deliveryId(message.input) === input.id).input;
-  const [, file, digest] = /Read (\.project\/replies\/([a-f0-9]{64})\.txt) \(SHA-256\)/.exec(wire);
-  const stored = readFileSync(join(f.project, file), 'utf8');
-  assert.ok(stored.includes('\nUNCONFIRMED\n'));
-  assert.ok(stored.endsWith(body));
-  assert.equal(payloadDigest(stored), digest);
-  assert.equal(payloadDigest(wire.split('\n').slice(1).join('\n')), input.payloadDigest ?? payloadDigest(input.wireBody));
 });
 
 test('switches Claude Leader to agy and agy Auditor to Codex under one durable succession guard', async t => {

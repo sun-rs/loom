@@ -218,7 +218,7 @@ test('8f1d01d6 binds agy journal ends and Git evidence even when native turn IDs
     JSON.stringify({ streamId: 'old-stream', turnId: 'runtime-span', turn: 1, ...row })).join('\n') + '\n');
   writeFileSync(path, native.map((row, step_index) =>
     JSON.stringify({ ...row, step_index, created_at: new Date(1000 + step_index * 200).toISOString() })).join('\n') + '\n');
-  f.register(addr, { cli: 'agy', backend: 'headless', role: 'reviewer', transcriptPath: path });
+  f.register(addr, { cli: 'agy', backend: 'headless', role: 'auditor', transcriptPath: path });
   const result = f.run(0, 'hist', addr, '--level', 'L2', '--diff', '--json');
   assert.equal(result.turns.length, 1);
   assert.equal(result.turns[0].tools.length, 1);
@@ -312,7 +312,6 @@ test('validates the policy example and rejects malformed capacity, drift, fast a
     { roles: { worker: { maxActiveWorkers: 3 } } },
     { drift: { slowCommandFactor: 1 } },
     { delivery: { coalesceMs: -1 } },
-    { roles: { reviewer: { maxDurationMs: 0 } } },
     { roles: { leader: { auth: 'yes' } } },
     { roles: { worker: { preferred: [{ cli: 'codex', model: 'fixture', effort: 'high', fast: 'true' }] } } },
     { roles: { auditor: { guidance: { vendorFamily: 'same' } } } },

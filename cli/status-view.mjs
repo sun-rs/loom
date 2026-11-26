@@ -23,7 +23,7 @@ const tones = new Map([
   ...['stuck', 'refused', 'auth-expired', 'silent-hang', 'REJECT', 'FAILED'].map(state => [state, 'bad']),
 ]);
 const badge = (state, paint) => paint(tones.get(state) ?? 'muted', '[' + show(state) + ']');
-const roleName = value => ({ leader: 'Leader', auditor: 'Auditor', super: 'Super', worker: 'Worker', reviewer: 'Reviewer' })[value] ?? show(value);
+const roleName = value => ({ leader: 'Leader', auditor: 'Auditor', super: 'Super', worker: 'Worker' })[value] ?? show(value);
 const clickLine = (text, item) => ({ ...row(text), hits: [{ from: 1, to: widthOf(text), item }] });
 const attentionLabels = {
   stalled: '投递停滞', refused: '投递被拒', 'awaiting-user': '等待用户', 'needs-decision': '需要决定',
@@ -173,8 +173,9 @@ export function boardView(project, { board, error } = {}, { width = 80, now = Da
     const showRetention = workers.some(worker => worker.retention);
     const columns = [
       { title: 'Task', min: 8, priority: 0 }, { title: 'Wave', min: 8, priority: 3 }, { title: 'State', min: 5, priority: 2 },
-      { title: 'CLI·model', priority: 1 }, { title: 'Addr', min: 8, priority: 3 }, { title: showRetention ? 'Warm' : 'Age' }, { title: 'Result', priority: 3 },
-      ...(showRetention ? [{ title: 'Ctx', priority: 4 }, { title: 'Cmp', priority: 5 }, { title: 'Reuse', priority: 6 }] : []),
+      { title: 'CLI·model', priority: 1 }, { title: 'Addr', min: 8, priority: 3 },  { title: showRetention ? 'Warm' : 'Age' },
+      ...(showRetention ? [{ title: 'Ctx', priority: 3 }] : []), { title: 'Result', priority: 3 },
+      ...(showRetention ? [{ title: 'Cmp', priority: 5 }, { title: 'Reuse', priority: 6 }] : []),
     ];
     const records = showEnded ? workers : liveWorkers;
     const entries = records.map(worker => {
@@ -204,8 +205,8 @@ export function boardView(project, { board, error } = {}, { width = 80, now = Da
       return { item, cells: [tableLabel(item, show(worker.task)), show(worker.wave),
         paint(tones.get(worker.state) ?? 'muted', state), [show(worker.cli), worker.model && show(worker.model)].filter(Boolean).join('·'),
         shortAddress(worker.addr), showRetention ? countdown : age(worker.startedAt, now),
-        (worker.lastResultTag ?? worker.lastResult) ? badge(worker.lastResultTag ?? worker.lastResult, paint) : '—',
-        ...(showRetention ? [context, show(worker.compactions), show(reuse)] : [])] };
+        ...(showRetention ? [context] : []), (worker.lastResultTag ?? worker.lastResult) ? badge(worker.lastResultTag ?? worker.lastResult, paint) : '—',
+        ...(showRetention ? [show(worker.compactions), show(reuse)] : [])] };
     });
     const toggle = { id: 'workers:filter', toggle: true };
     const label = showEnded ? 'All workers · a Show live only' : `Live workers · a Show all (${workers.length - liveWorkers.length} inactive)`;

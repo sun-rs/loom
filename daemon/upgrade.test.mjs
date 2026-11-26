@@ -5,6 +5,7 @@ import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync,
 import { basename, join, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 import { test } from 'node:test';
+import { PassThrough } from 'node:stream';
 import { setTimeout as delay } from 'node:timers/promises';
 import { promisify } from 'node:util';
 import { platforms } from '../holder/assets.mjs';
@@ -14,6 +15,7 @@ import { request } from './rpc.mjs';
 import { clientCapability } from './socket-auth.mjs';
 import { projectIndex } from '../cli/project.mjs';
 import { preparePeerAuth } from './peer-auth.mjs';
+import { statusTui } from '../cli/status-tui.mjs';
 
 const exec = promisify(execFile);
 const root = resolve(import.meta.dirname, '..');
@@ -201,7 +203,7 @@ test('failed verification restores the old writer and a successful upgrade prese
   await checkCapabilities();
 });
 
-test('running legacy sessions keep their role rights across an authenticated hot upgrade', { skip: !supported }, async t => {
+test('live legacy rights, Worker TTL and Status TUI survive an authenticated hot upgrade', { skip: !supported }, async t => {
   const peers = preparePeerAuth();
   if (!peers.available && process.platform === 'linux') return t.skip(peers.reason);
   assert.equal(peers.available, true, peers.reason);
@@ -237,7 +239,10 @@ test('running legacy sessions keep their role rights across an authenticated hot
   await exec('/usr/bin/git', ['init', '-q'], { cwd: project, env });
   await exec('/usr/bin/git', ['-c', 'user.name=Loom Fixture', '-c', 'user.email=loom@invalid', 'commit', '--allow-empty', '-qm', 'Fixture candidate'],
     { cwd: project, env });
-  writeFileSync(join(project, '.project', 'policy.json'), JSON.stringify({ deny: [], preferred: [], delivery: { coalesceMs: 0 } }));
+  const ttl = 16_000;
+  writeFileSync(join(project, '.git/info/exclude'), '/.native/\n/runtime-pids.jsonl\n/native-deliveries.jsonl\n/*.operation*\n/*.result*\n');
+  writeFileSync(join(project, '.project', 'policy.json'),
+    JSON.stringify({ deny: [], preferred: [], delivery: { coalesceMs: 0 }, workers: { warmMs: { codex: ttl } } }));
   copyRelease(legacy, process.env.LOOM_TEST_LEGACY_RELEASE);
   if (!process.env.LOOM_TEST_LEGACY_RELEASE) {
     const oldMain = join(legacy, 'daemon', 'main.mjs');
@@ -274,15 +279,15 @@ test('running legacy sessions keep their role rights across an authenticated hot
 
   const started = await run(['daemon', 'start']);
   assert.equal(started.release.root, legacy);
-  const start = async (role, options = []) => {
+  const start = async (role, options = [], prompt = 'Fixture startup') => {
     const result = await run(['spawn', role, '--cwd', project, '--cli', 'codex', '--mode', 'headless',
-      '--model', 'fixture', '--effort', 'high', ...options, 'Fixture startup']);
+      '--model', 'fixture', '--effort', 'high', ...options, prompt]);
     assert.equal(result.ok, true, JSON.stringify(result));
     return result.session.addr;
   };
   const leader = await start('leader');
   const auditor = await start('auditor');
-  const worker = await start('worker', ['--parent', leader, '--task', 'fixture', '--wave', 'G1']);
+  const worker = await start('worker', ['--parent', leader, '--task', 'fixture', '--wave', 'G1'], 'RETURN DONE fixture');
   async function nativeCall(addr, args, overrides) {
     const operation = join(project, addr + '.operation');
     const result = join(project, addr + '.result');
@@ -303,15 +308,61 @@ test('running legacy sessions keep their role rights across an authenticated hot
     assert.equal(probe.value.running, true);
     initial.set(addr, probe.pid);
   }
+  async function until(probe, ready, timeout = 10_000) {
+    const start = Date.now();
+    do {
+      const value = await probe();
+      if (ready(value)) return value;
+      await delay(60);
+    } while (Date.now() - start < timeout);
+    assert.fail('Timed out waiting for the live upgrade fixture');
+  }
+  const workerState = () => run(['state', worker]);
+  const ready = await until(workerState, state => state.state === 'idle-warm' && state.retention?.remainingMs > 0);
+  const input = new PassThrough();
+  const output = new PassThrough();
+  Object.assign(input, { isTTY: true, isRaw: false, setRawMode(value) { this.isRaw = value; } });
+  Object.assign(output, { isTTY: true, columns: 100, rows: 32 });
+  let rendered = '';
+  output.on('data', bytes => { rendered += bytes; });
+  let boardReads = 0;
+  let disconnects = 0;
+  let connectedRoles = [];
+  const tui = statusTui({ project }, { input, output, interval: 50, env: { NO_COLOR: '' },
+    async rpc(directory, command, args, options) {
+      try {
+        const board = await request(directory, command, args, options);
+        connectedRoles = board.roles.map(row => row.addr);
+        boardReads++;
+        return board;
+      } catch (error) {
+        if (['ENOENT', 'ECONNREFUSED', 'ECONNRESET', 'not-ready'].includes(error.code)) disconnects++;
+        throw error;
+      }
+    } });
+  t.after(async () => { input.write('q'); await tui; });
+  await until(() => boardReads, count => count >= 1);
+  assert.match(rendered, /online/);
+  assert.ok(connectedRoles.includes(leader));
   const before = (await run(['upgrade', '--status'])).sessions;
   const upgraded = await run(['upgrade', '--to', root]);
   assert.equal(upgraded.phase, 'committed', JSON.stringify(upgraded));
   assert.notEqual((await run(['daemon', 'status'])).pid, started.pid);
   assert.deepEqual((await run(['upgrade', '--status'])).sessions, before);
+  const afterUpgrade = boardReads;
+  await until(() => boardReads, count => count > afterUpgrade);
+  assert.ok(connectedRoles.includes(leader));
+  assert.ok(connectedRoles.includes(auditor));
+  assert.ok(disconnects > 0, 'The same TUI must recover after observing the actual upgrade interruption');
+  assert.match(rendered, /Waiting for loomd to reconnect/);
+  const attached = await workerState();
+  assert.equal(attached.retention.idleSince, ready.retention.idleSince);
+  assert.ok(attached.retention.remainingMs < ready.retention.remainingMs);
   const operations = [
     [leader, ['gate', 'pack', 'G1']],
     [leader, ['escalate', 'G1', '--reason', 'protected-file', '--evidence', 'fixture evidence']],
     [auditor, ['notifications', '--needs-decision', 'Auditor proof', '--kind', 'decision']],
+    [worker, ['worker-check']],
     [worker, ['send', leader, 'Worker proof']],
   ];
   for (const [addr, args] of operations) {
@@ -329,5 +380,8 @@ test('running legacy sessions keep their role rights across an authenticated hot
   const pinned = await nativeCall(leader, ['gate', 'pack', 'G1', '--reuse'], { LOOM_BIN: join(legacy, 'bin', 'loom') });
   assert.equal(pinned.value.ok, true, JSON.stringify(pinned.value));
   assert.deepEqual([pinned.pid, pinned.issued], [initial.get(leader), false]);
+  const offline = await until(workerState, state => state.state === 'offline', ttl + 5000);
+  assert.ok(offline.retention.releasedAt >= ready.retention.idleSince + ttl);
+  t.diagnostic(`native PIDs unchanged, Status TUI recovered (${disconnects} transient board failures), idleSince ${ready.retention.idleSince}, remaining ${ready.retention.remainingMs} → ${attached.retention.remainingMs} ms, expiry ${offline.retention.releasedAt}`);
   assert.deepEqual(projectIndex(project).rotations(), []);
 });

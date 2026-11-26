@@ -15,7 +15,7 @@
 2. 并发：活跃写代码 worker 默认 2–3，硬上限 4；更多先拆成独立协调域。
 3. Leader 和 Auditor 在安全点写交班判断，用 `loom rotate --self` 启动同配置接任者。同一项目一次只交接一个角色。在途卡片须写入交班单。新会话首轮报到中的 SHA 和路径须现查。Leader 的交班结果随 Auditor 的正常投递附送，Auditor 的交班结果通知 Super。
 4. 走偏信号由 loomd 记录，附在 Leader 下一次实际唤醒，并纳入所属门禁包。信号包括预算反复上调或实际净行数超预算、测试或编译变慢、计划文件膨胀、同类失败再次出现、事实核验和 Worker 卡死。
-5. Leader 打包固定候选的 Worker 证据。Auditor 依包裁决，遇到异常时可就同一门禁启动一次临时只读 Reviewer。审查最多 2 轮，仍阻塞升级 Super 改设计。Auditor 自查验收要求是否过重。
+5. Leader 打包固定候选的 Worker 证据。Auditor 依包裁决，遇到异常时在阶段边界核查原件，需要运行时采用 Worker 证据卡。审查最多 2 轮，仍阻塞升级 Super 改设计。Auditor 自查验收要求是否过重。
 6. 派卡模板：目标、可写范围、预算上限、测试行数不超过产品行数、只跑受影响的测试、停工触发器、三行回报格式。
 7. 不新增常驻角色。不做缓存保活。
 
@@ -27,7 +27,7 @@
 ## 消耗金字塔（2026-11-25，用户裁决）
 目标结构：**worker 消耗最多，Leader 次之，Auditor 最少**。按 token 和调用次数衡量，不按价格。
 - **Auditor 只看证据，不重新做一遍工作。**
-  - 门禁复核使用证据卡和 diff 统计。确需读原件时，Auditor 可用 `loom spawn reviewer --wave <gate-id>` 启动一次临时只读核查，默认限时 30 分钟，只答一个问题。有效结论回送一次，计入 Auditor 的 `maxWakesPerGate`。
+  - 门禁复核使用证据卡和 diff 统计。Auditor 在阶段边界核查固定候选与原件，依 Worker 证据卡核对测试。旧配置中的 `roles.reviewer` 会触发迁移提示并被忽略。
   - loomd 只允许用户或 Super 消息、Leader 的门禁包或红色升级、Auditor 主动发起的追加审查结论，以及换班监督唤醒 Auditor。Leader 的投递停滞可由 loomd 发出一次基础设施告警。
 - **Leader 负责协调（R21）。** 使用门禁包、三行回执、证据卡、`loom hist` 摘要、`git diff --stat` 和 `loom status`。源码、测试和缺陷诊断交给 Worker。Auditor 若转来临时核查结果，用 `loom send` 把原文的回执文件路径转给 Worker 卡片。Leader 在下一次正常唤醒接收 loomd 推送的证据摘要。
 - **worker 承担实际工作。**

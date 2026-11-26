@@ -5,11 +5,10 @@ export const auditorWakeFiltered = 'auditor-wake-filtered';
 
 // A restored queue can predate ROUTING-1. Recognize its user and succession
 // records by provenance, never by matching natural-language prompt text.
-export function auditorWakeSource(message, { startupId, handoverId, senderRole, deepReview = false } = {}) {
+export function auditorWakeSource(message, { startupId, handoverId, senderRole } = {}) {
   if (message.startup && startupId && startupId === message.id || handoverId && message.id === handoverId) return 'succession';
   if (message.rotationVerification) return 'succession';
   if (message.gatePacket) return message.redEscalation ? 'escalation' : 'gate';
-  if (message.reviewerResult && deepReview) return 'deep-review';
   if (message.replyKey || message.replyTo || message.waveBatch || message.continuationBatch ||
       message.reviewerResult || message.stuckOf || message.watchResume || message.corruptedOf ||
       message.uncertainOf || message.projectEvents || message.orgEvents && !message.orgAppendix) return;

@@ -26,8 +26,8 @@ description: 在 Loom 中启动、指挥、复核或接手由 Super、Auditor、
 
 - 常驻并独立于 Leader。用户问进度或取舍时，依据历史摘要、证据卡和已有裁决交代结论、阻塞和待裁决事项。Auditor 裁决范围、预算和方法，监督 Leader 换班。
 - 每道门禁用 Leader 发来的一份门禁包作出裁决。依据固定候选 SHA、diff 统计和集成 Worker 的验收证据。缺少全量测试结果时索取集成 Worker 的证据卡。唤醒来源包括用户或 Super 消息、门禁包或红色升级、主动发起的深查结论和换班监督。
-- 确需深入核查原件时，由 Auditor 用 `loom spawn reviewer --cwd "$REVIEW_TREE" --wave "$GATE" --cli "$CLI" --model "$MODEL" --effort "$EFFORT" "$QUESTION"` 按门禁启动一次临时只读核查。给出固定候选 SHA 和一个可证伪的问题。有效结论回送一次并计入 `maxWakesPerGate`，原文存入回执文件。`loom notifications --history` 可查询追加审查记录。
-- 把耗时工作交给 Worker 或 Reviewer，禁止用后台 Bash 等结果。门禁最终回复首行直接写 `PASS`、`APPROVE`、`REJECT` 或 `BLOCKED`，依据从下一段开始。确认收到时用 `NOREPLY`。
+- 在阶段边界核查固定候选与原件。需要运行工具时采用 Worker 的证据卡。
+- 把耗时工作交给 Worker，禁止用后台 Bash 等结果。门禁最终回复首行直接写 `PASS`、`APPROVE`、`REJECT` 或 `BLOCKED`，依据从下一段开始。确认收到时用 `NOREPLY`。
 - 每次介入给 Leader 一条可执行的结论。常规结论排队投递，只有可复现的阻断缺陷可用 `interrupt` 否决。每轮自查验收要求是否超出目标或证据所需。门禁退回先写清同一卡或主线 ID。该范围连续退回三轮时 loomd 通知 Super 评估换班或改设计。每次签收用 `rotation-policy spot-check` 按门禁回执 ID 登记有原件依据的抽查结论，包括「抽查无误」。已核实错误可用 `rotation-policy error` 自报；首次进入加严核对，每个结论现场查原件。
 - 收到换班提示，在当前卡结算后按[交班模板](#换班与收尾)写下门禁判断和在途审查，运行 `"$LOOM_BIN" rotate --self` 并结束本轮。v2 失败后由前任继续执行并停止本阶段换班。loomd 通知 Super。
 

@@ -209,11 +209,11 @@ export function releaseConditions(messages) {
   const outgoing = Map.groupBy(messages.filter(message => message.from), message => message.from.addr);
   const byResult = new Map();
   for (const message of messages) {
-    const { continuationMembers, replyTo, reviewerResult } = message;
+    const { continuationMembers, replyTo } = message;
     // Older wave deliveries identify workers in the result heading.
     const workers = message.resultWorkers ?? (message.waveBatch ? [...message.text
       .matchAll(/^\S+ ((?:loom|oar)-[0-9a-f-]+) (?:DONE|FAILED|BLOCKED|UNCONFIRMED)\b/gm)].map(match => match[1]) : []);
-    for (const key of [...workers, ...continuationMembers ?? [], replyTo, reviewerResult].filter(Boolean)) {
+    for (const key of [...workers, ...continuationMembers ?? [], replyTo].filter(Boolean)) {
       if (!byResult.has(key)) byResult.set(key, []);
       byResult.get(key).push(message);
     }
@@ -235,7 +235,6 @@ export function releaseConditions(messages) {
         reports.every(message => hasReceipt(message.id === job.firstId ? row.addr : message.id)));
     },
     workerSummaryDelivered: hasReceipt,
-    reviewerReceipt: hasReceipt,
     relatedTargets: addr => new Set([addr, ...(outgoing.get(addr) ?? []).map(message => message.target.addr),
       ...(byResult.get(addr) ?? []).map(message => message.target.addr),
       ...(incoming.get(addr) ?? []).flatMap(message => (byResult.get(message.id) ?? []).map(result => result.target.addr))]),

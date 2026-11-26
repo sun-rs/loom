@@ -331,7 +331,7 @@ export function inbox(project, transport, report = console.error, { replyLimit, 
       '\n--- Loom result ---\n' : message.waveSeparator;
     const decorated = { ...message, ...extras, waveSeparator };
     const combined = combinedDeliveryText(decorated, waves);
-    const automatic = message.replyKey || message.waveBatch || message.continuationBatch || message.reviewerResult || message.projectEvents;
+    const automatic = message.replyKey || message.waveBatch || message.continuationBatch || message.projectEvents;
     let text = combined;
     if (automatic) {
       const limit = replyLimit?.() ?? defaultReplyBytes;
