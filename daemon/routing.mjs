@@ -7,6 +7,7 @@ export const auditorWakeFiltered = 'auditor-wake-filtered';
 // records by provenance, never by matching natural-language prompt text.
 export function auditorWakeSource(message, { startupId, handoverId, senderRole, deepReview = false } = {}) {
   if (message.startup && startupId && startupId === message.id || handoverId && message.id === handoverId) return 'succession';
+  if (message.rotationVerification) return 'succession';
   if (message.gatePacket) return message.redEscalation ? 'escalation' : 'gate';
   if (message.reviewerResult && deepReview) return 'deep-review';
   if (message.replyKey || message.replyTo || message.waveBatch || message.continuationBatch ||

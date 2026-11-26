@@ -1,3 +1,4 @@
+import { validateRotation } from '../lib/rotation-settings.mjs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { readText, writeState } from '../daemon/io.mjs';
@@ -65,6 +66,7 @@ export function readPolicy(project, { optional = false } = {}) {
     if (!policy || typeof policy !== 'object' || Array.isArray(policy)) throw new Error('Expected a policy object');
     if (Object.hasOwn(policy, 'maxActiveWorkers')) throw new Error('Set maxActiveWorkers under roles.leader');
     validateProfiles(policy);
+    validateRotation(policy.rotation);
     if (policy.cost !== undefined) {
       const prices = policy.cost?.prices;
       if (!prices || typeof prices !== 'object' || Array.isArray(prices) ||
@@ -106,6 +108,11 @@ export function readPolicy(project, { optional = false } = {}) {
         }
         if (entry.rotateAt !== undefined && (!rotates || entry.rotateAt !== 'gate')) {
           throw new Error('Expected roles.leader.rotateAt or roles.auditor.rotateAt to be gate');
+        }
+        for (const key of ['maxContextFraction', 'minRemainingAfterCompaction']) {
+          if (entry[key] !== undefined && (!rotates || !Number.isFinite(entry[key]) || entry[key] <= 0 || entry[key] > 1)) {
+            throw new Error(`Invalid roles.${role}.${key}: expected a fraction in (0, 1] for Leader or Auditor`);
+          }
         }
         for (const [key, min] of [['maxWakesPerGate', 0], ['maxContextTokens', 1]]) {
           const allowed = key === 'maxWakesPerGate' ? role === 'auditor' : rotates;
@@ -239,10 +246,8 @@ export function spawnProfile(project, input, owner, occupies) {
 
 export const workerLimit = policy => policy.roles?.leader?.maxActiveWorkers ?? defaultMaxActiveWorkers;
 
-export const rotationLimits = (policy, role) => ({
-  ...(role === 'auditor' && { maxWakesPerGate: policy.roles?.auditor?.maxWakesPerGate ?? 3 }),
-  maxContextTokens: policy.roles?.[role]?.maxContextTokens ?? 150_000,
-});
-
 export const toolGuardEnabled = (project, role) => ['leader', 'auditor'].includes(role) &&
-  readPolicy(project, { optional: true }).roles?.[role]?.toolGuard !== false;
+  (() => {
+    const policy = readPolicy(project, { optional: true });
+    return policy.rotation?.mode === 'v2' || policy.roles?.[role]?.toolGuard !== false;
+  })();

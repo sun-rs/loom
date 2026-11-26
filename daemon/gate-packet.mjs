@@ -92,5 +92,5 @@ export function saveGatePacket(project, { id, gate, round, base: baseRef, candid
   ];
   if (full.length) writeState(fullPath, `# Gate ${gate} · Round ${round}\n\n${full.join('\n\n')}\n`);
   writeState(path, sections.join('\n\n') + '\n');
-  return { path, ...(full.length && { fullPath }) };
+  return { path, candidate, base, ...(full.length && { fullPath }) };
 }

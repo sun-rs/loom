@@ -67,7 +67,8 @@ macOS 无头 agy 和 Claude Worker 的原生进程使用原来的 `HOME` 定位�
 
 - `drift.deferAuditorNotices` 默认为 `true`。事实检查和走偏通知随 Auditor 的下一条实际投递附送；完整通知仍可用 `loom status --json` 查看。
 - `delivery.replyBytes` 默认 600，最小 160，按 UTF-8 正文计量。超限的自动回传通过 `.project/replies/<sha256>.txt` 交付，文件名是保存内容的 SHA-256。
-- 配置 `roles.auditor.rotateAt: "gate"` 后，由 Leader 或 Super 用 `loom notifications --gate-complete ID` 记录门禁完成。loomd 就每个门禁向 Super 提议一次 Auditor 换班。实际换班仍使用 `loom switch` 和现有的 Leader、Auditor 错峰校验。
+- 设置 `rotation.mode: "v2"` 可启用 [高级角色换班政策](docs/ORG.md#高级角色换班-v2)。默认由角色或 Super 主动换班。项目也可在显式规则模式配置 `rotateAt: "gate"` 或上下文窗口阈值。
+- `loom status --json` 提供 Leader 和 Auditor 的轮次、会话时长、转录字节数、上下文窗口及来源、压缩后首个可用读数和换班原因。`loom cost` 单列已匹配到原生用量的接任简报 token。
 
 ## 历史与巡检
 

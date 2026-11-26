@@ -354,6 +354,17 @@ export async function superLayout(project, terminalAddress, commands) {
   return layout.load();
 }
 
+export async function externalSuperPeer(ancestors, commands) {
+  if (!ancestors.length) return false;
+  const registered = readLayoutFile(join(localState(), 'herdr-super.json'))?.tabs.super;
+  if (!registered?.terminal || !Number.isFinite(registered.createdAt)) return false;
+  commands ??= await herdrCommands({ optional: true });
+  const terminal = await commands?.hc('get', registered.terminal);
+  return terminal?.state === 'live' && terminal.address === registered.terminal &&
+    terminal.created_ms === registered.createdAt &&
+    ancestors.some(proof => proof.pid === terminal.pid && Math.abs(proof.startedAt - terminal.created_ms) <= 5000);
+}
+
 export function herdrProjects() {
   const roster = join(localState(), 'herdr-projects');
   let files;

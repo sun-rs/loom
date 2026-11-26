@@ -16,6 +16,7 @@ import { jsonRows, prepareJournal, readText } from './io.mjs';
 import { desktopEnabled, notifyExternal, projectNotifications } from './notifications.mjs';
 import { organization } from './org.mjs';
 import { clip } from '../evidence/checks.mjs';
+import { plannedCardPaths } from '../evidence/facts.mjs';
 import { defaultCoalesceMs, readPolicy, setWorkerProfile, workerLimit } from '../cli/policy.mjs';
 import { isStartupBlocker } from '../tui/agent-status.mjs';
 import { gateId, saveGatePacket } from './gate-packet.mjs';
@@ -28,6 +29,7 @@ import { readLayout } from './herdr-layout.mjs';
 import { deliveryBoard, gateBoard } from './status-board.mjs';
 import { activeRelease, managedCliPath, releaseId, releaseRoot } from './release.mjs';
 import { rotatingRoles } from '../index/index.mjs';
+import { rotationPolicy } from './rotation-policy.mjs';
 import { selfRotation } from './self-rotation.mjs';
 
 function batchDeliveryId(batch, dest) {
@@ -77,8 +79,13 @@ export function createSupervisor(project, {
   const saved = (target, text, fields = {}) => mail.enqueue({
     id: randomUUID(), createdAt: now(), target, text, requestedMode: 'queue', mode: 'queue', phase: 'queued', ...fields,
   });
-  const rotation = selfRotation(project, { sessions, index, mail, notifications, now, spawn: spawnSession, inFlight: rotationWork, report });
-  const budget = roleBudget(project, { now, sessions, notifications, batchDeliveryId, report, signalRotation: rotation.propose });
+  const rotation = selfRotation(project, { sessions, index, mail, notifications, now, spawn: spawnSession, inFlight: rotationWork, report,
+    v2: () => v2, cleanBoundary: name => rotationBoundary(name, sessions.rows().filter(row => row.project === name)) });
+  const v2 = rotationPolicy(project, { now, sessions, mail, notifications, policy: policyForTick,
+    propose: rotation.propose, emergency: rotation.emergency });
+  const budget = roleBudget(project, { now, sessions, notifications, batchDeliveryId, report, signalRotation: rotation.propose,
+    observeRotation: (row, usage, snapshot, safe) => v2.observe(row, usage, { ...snapshot,
+      health: progress.get(row.addr)?.health?.status }, safe), policyV2: v2.enabled });
   const parentFor = addr => sessions.routeParent(addr)?.addr ?? addr;
   const targetEnded = addr => sessions.rowFor(addr)?.endedAt != null;
   const senior = row => row.role === 'leader' || row.role === 'auditor';
@@ -167,12 +174,10 @@ ${details}`, {
       item.project === row.project && parentFor(item.parent) === row.addr && occupied(item));
   }
 
-  function safeLeader(name, rows) {
-    const leader = liveRole(name, 'leader');
-    if (!leader || rows.some(row => row.endedAt === null && ['worker', 'reviewer'].includes(row.role) &&
-        sessions.jobs.has(row.addr) && occupied(row))) return;
-    if (index.rotations().some(item => item.project === name && item.verifiedAt === null && item.failedAt === null)) return;
-    return leader;
+  function rotationBoundary(name, rows) {
+    return !rows.some(row => row.endedAt === null && ['worker', 'reviewer'].includes(row.role) &&
+      sessions.jobs.has(row.addr) && occupied(row)) &&
+      !index.rotations().some(item => item.project === name && item.verifiedAt === null && item.failedAt === null);
   }
 
   function handoverState(old) {
@@ -197,10 +202,77 @@ ${details}`, {
     return leaderHandoverState(project, { cards, pending, packets, gates });
   }
 
+  async function settleV2Handover(job, row, message, rotation) {
+    const record = v2.pending(row.addr) ?? v2.begin(sessions.rowFor(job.handoverFrom), job, job.rotationPhase);
+    if (record.failed) {
+      if (!job.stopping || rotation.failedAt == null) await sessions.failSpawn(job, new Error(record.failed.reason));
+      return;
+    }
+    const done = message?.completion;
+    const old = sessions.rowFor(record.predecessor);
+    const verification = record.verification;
+    const confirmed = Boolean(message?.received && done?.body && !done.unconfirmed &&
+      (!done.outcome || done.outcome.kind === 'completed') &&
+      done.body.trimStart().split(/\r?\n/, 1)[0] === job.handoverAck);
+    const mismatch = /^MISMATCH(?:\b|$)/im.test(done?.body ?? '');
+    const observedMismatch = confirmed && !v2.reportMatches(job, done.body);
+    const reason = record.cancelled ? 'verification-cancelled' : mismatch || observedMismatch ? 'first-report-mismatch' :
+      verification?.verdict === 'fail' ? 'first-report-rejected' :
+      !confirmed && v2.firstReportExpired(record) ? 'first-report-timeout' :
+      job.error ?? (row.endedAt !== null ? 'successor-exited' : deliveryFailed(message) ? message.issue :
+      done && !done.unconfirmed && (done.body || done.noReply) && !confirmed ? 'first-turn-missing-acknowledgement' : undefined);
+    if (reason && rotation.verifiedAt == null) {
+      v2.fail(row, job, reason);
+      if (reason === 'first-report-mismatch') {
+        const other = liveRole(row.project, row.role === 'leader' ? 'auditor' : 'leader');
+        if (other) saved(sessions.targetBinding(other), `继任 ${row.addr} 首报与交接原件不符，已停止接管。请核对原件与 Super 处理。`,
+          { id: batchDeliveryId(job.firstId, 'v2-mismatch'), rotationVerification: true });
+      }
+      await sessions.failSpawn(job, new Error(reason));
+      return;
+    }
+    if (!confirmed) return;
+    if (!verification) {
+      const announced = v2.ready(row, done.body, message.id);
+      v2.verificationTimeout(row, announced);
+      const other = liveRole(row.project, row.role === 'leader' ? 'auditor' : 'leader');
+      if (other) {
+        const proof = replyForDelivery(project, done.body, 0);
+        saved(sessions.targetBinding(other), [
+          `请核对 ${row.role} ${row.addr} 的首报，核对 HEAD、分支、基线、WIP 和裁决编号。`,
+          proof,
+          `用 "$LOOM_BIN" rotation-policy verify --target ${row.addr} --verdict pass|fail --detail TEXT --evidence FILE[:LINE] 登记原件和结论。`,
+        ].join('\n'), { id: batchDeliveryId(message.id, 'v2-verification'), rotationVerification: true });
+      }
+      return;
+    }
+    const target = sessions.targetBinding(row);
+    const plan = record.messages ?? mail.handoverMessages(old.addr, target);
+    if (!record.completedAt) {
+      v2.savePlan(row, plan);
+      if (!job.handoverBound) sessions.bindSuccessor(old, row);
+      index.reportRotation(row.addr, { at: verification.at, turn: done.turnId ?? message.id, misses: 0 });
+      mail.handoverMessages(old.addr, target, true);
+      v2.finish(row, plan);
+    }
+    saved(target, v2.facts(row, [
+      `接管生效。另一方已核对首报（${verification.actor}，原件 ${verification.evidence}）。立即执行交接单中触发条件已满足的首个动作。`,
+      '### 旧地址的在途消息', ...plan.map(item => `- ${item.id} ${item.action}`),
+    ]), { id: batchDeliveryId(message.id, 'v2-confirmation'), rotationVerification: true, superPriority: true,
+      rotationActivation: true });
+    sessions.finalizeV2(job);
+    await sessions.retirePredecessor(job).catch(error => report(`handover retirement: ${error.message}`));
+  }
+
   async function settleHandovers() {
     for (const rotation of index.rotations().filter(item => item.failedAt == null)) {
       const job = sessions.jobs.get(rotation.successor);
       if (!job?.handoverAck) continue;
+      if (job.rotationV2) {
+        const row = sessions.rowFor(rotation.successor);
+        if (row && !job.rotationV2Finalized) await settleV2Handover(job, row, mail.messages.find(item => item.id === job.firstId), rotation);
+        continue;
+      }
       if (job.handoverBound) {
         if (job.herdr && sessions.rowFor(rotation.successor)?.endedAt === null &&
             (!job.herdrPublished || sessions.rowFor(rotation.predecessor)?.endedAt === null)) {
@@ -591,8 +663,7 @@ ${details}`, {
 
   function leaderSignals(name) {
     return [...org.notices().filter(notice => notice.project === name), ...notifications.list(name, false, true)
-      .filter(event => event.type === 'auditor-budget-exceeded' && event.overBudget !== false ||
-        event.type === 'stuck' && sessions.rowFor(event.addr)?.role === 'worker')];
+      .filter(event => event.type === 'stuck' && sessions.rowFor(event.addr)?.role === 'worker')];
   }
 
   function auditorDigest(row) {
@@ -699,7 +770,12 @@ ${details}`, {
           !(actor.role === 'leader' && sessions.rowFor(args['handover-from'])?.project === actor.project))) {
       throw new CommandError('invalid-arguments', 'Auditor startup requires Super or a Leader supervising succession');
     }
-    const job = await sessions.newJob(args, caller, checkBarrier, occupied, handoverState, selfHandoff);
+    const old = sessions.rowFor(args['handover-from']);
+    const safety = old && v2.checkStart(old, selfHandoff);
+    const checkedHandoff = safety ? { ...selfHandoff, phase: safety.phase, expectedFacts: v2.repositoryFacts(old), facts: v2.facts(old, ['### 旧地址的在途消息（交接确认后处理）',
+      ...mail.handoverMessages(old.addr).map(item => `- ${item.id} ${item.action}`)]) } : selfHandoff;
+    const job = await sessions.newJob(args, caller, checkBarrier, occupied, handoverState, checkedHandoff);
+    if (safety) v2.begin(old, job, safety.phase);
     let session;
     try {
       if (!job.herdr) await sessionOptions?.layout?.ensure(false).catch(error => {
@@ -710,6 +786,7 @@ ${details}`, {
       sessions.requireLive(session);
     } catch (error) {
       if (job.row.role === 'worker') failedWorkerLaunches.set(job.row.project, now());
+      if (safety) v2.fail(old, job, error.code ?? 'spawn-failed');
       await sessions.failSpawn(job, error);
       throw error;
     }
@@ -728,6 +805,7 @@ ${details}`, {
   async function tick() {
     policy = policyForTick();
     await sessions.refresh(mail);
+    if (v2.enabled()) v2.checkProtectedRefs();
     for (const job of sessions.jobs.values()) {
       await sessions.retirePredecessor(job).catch(error => report(`handover retirement: ${error.message}`));
     }
@@ -753,17 +831,28 @@ ${details}`, {
         await stepRelay(now());
         continuations();
         seats = workerSeats(workerLimit(policy));
+        for (const [name, rows] of Map.groupBy(sessions.rows(), row => row.project)) {
+          const leader = liveRole(name, 'leader');
+          const auditor = liveRole(name, 'auditor');
+          const boundaryKey = JSON.stringify([leader, auditor].map(row => row &&
+            [row.addr, mail.messages.findLast(message => message.target.addr === row.addr && message.completion)?.id,
+              v2.enabled() ? mail.messages.findLast(message => message.target.addr === row.addr && message.phase === 'queued')?.id : undefined]));
+          await budget.check(name, rows, policy, { safe: rotationBoundary(name, rows), boundaryKey, leader, auditor })
+            .catch(error => report(`Role budget ${name}: ${error.message}`));
+        }
       },
       now,
       messageIssue,
-      canDispatchMessage: message => !sessions.holdsForHandover(message) && !rotation.holds(message.target.addr),
+      canDispatchMessage: message => !sessions.holdsForHandover(message) && !rotation.holds(message.target.addr) &&
+        v2.deliverable(message),
       stallMs: policy.delivery?.stallMs ?? uncertainWindow ?? defaultStallMs,
       coalesceMs: policy.delivery?.coalesceMs ?? defaultCoalesceMs,
       decorate(message) {
         // Defer delivery notices until after the compact TUI briefing.
         if (message.startup && sessions.jobs.get(message.target.addr)?.compactHandover) return;
         const row = sessions.rowFor(message.target.addr);
-        const rotationNotices = rotation.decorate(message, row);
+        const rotationNotices = [...v2.decorate(message, row, v2.enabled() && senior(row ?? {}) ?
+          budget.freshContext(row) : budget.context(row?.addr)), ...rotation.decorate(message, row)];
         const byId = new Map(mail.messages.map(item => [item.id, item]));
         const senderStalls = stalledDeliveries(mail.messages, now()).filter(delivery => {
           const pending = byId.get(delivery.id);
@@ -783,7 +872,9 @@ ${details}`, {
           row && parentFor(item.target.addr) === row.addr).flatMap(item => item.replySuppressionNotices ?? []));
         const senderSuppressions = suppressedReplies(mail.messages).filter(notice =>
           row && notice.from && parentFor(notice.from) === row.addr && !seenSuppressions.has(notice.id));
-        const deliveryLines = [...rotationNotices, ...senderSuppressions.map(notice => ({ text: suppressedReplyText(notice), id: notice.id })),
+        const deliveryLines = [...rotationNotices.map(notice => ({ ...notice,
+          text: Buffer.byteLength(notice.text) > 950 ? replyForDelivery(project, notice.text, 500) : notice.text })),
+          ...senderSuppressions.map(notice => ({ text: suppressedReplyText(notice), id: notice.id })),
           ...senderStalls.map(delivery => ({ text: stallText(delivery) }))];
         let deliveryAppendix;
         const visibleIds = new Set();
@@ -821,12 +912,6 @@ ${details}`, {
       },
     });
     await closeReviews();
-    const current = sessions.rows();
-    for (const [name, rows] of Map.groupBy(current, row => row.project)) {
-      await budget.check(name, rows, policy, { safeLeader: safeLeader(name, rows), leader: liveRole(name, 'leader'),
-        auditor: liveRole(name, 'auditor') })
-        .catch(error => report(`Role budget ${name}: ${error.message}`));
-    }
     await checkStartupBlockers();
     await observeSessions(policy.delivery?.stallMs ?? uncertainWindow ?? defaultStallMs);
     health = new Map((await watcher.poll()).map(row => [row.addr, row]));
@@ -836,6 +921,8 @@ ${details}`, {
 
   return {
     tick,
+    rotationV2: v2.enabled,
+    rotationPeer: proof => sessions.legacyPeerCaller(proof, sessions.jobs.keys()),
     upgradeSessions: sessions.upgradeSessions,
     upgradeHolder: sessions.upgradeHolder,
     async reattach(expected) {
@@ -851,9 +938,29 @@ ${details}`, {
       return attached;
     },
     shutdown: sessions.shutdown,
-    async handle(command, args, caller) {
+    async handle(command, args, caller, { external = false } = {}) {
+      const rpcActor = caller && sessions.liveCaller(caller);
+      if (v2.enabled() && (rpcActor || external)) v2.checkProtectedRefs();
+      if (command === 'rotation-policy') return v2.admin(args, rpcActor, external);
+      const read = ['ls', 'status', 'state', 'board'].includes(command) ||
+        command === 'notifications' && ![args.take, args.complete, args.gateComplete, args.decision].some(value => value != null && value !== false);
+      if (caller && v2.restricted(caller) && !read && !(command === 'rotate' && v2.canRequest(caller))) {
+        throw new CommandError('permission-denied', 'The role is in read-only verification');
+      }
+      if (rpcActor && v2.enabled() && command === 'switch') v2.ruleChange(rpcActor, 'budget');
+      if (rpcActor && v2.enabled() && command === 'senior-override') v2.ruleChange(rpcActor, 'merge');
+      if (v2.enabled() && rpcActor && rpcActor.role !== 'super') {
+        if (['layout-up', 'layout-adopt', 'switch', 'handover'].includes(command) ||
+            command === 'spawn' && !(rpcActor.role === 'leader' && args.role === 'worker') &&
+              !(rpcActor.role === 'auditor' && args.role === 'reviewer') ||
+            command === 'stop' && caller !== args.target &&
+              (rpcActor.role !== 'leader' || !['worker'].includes(sessions.resolve(args.target, caller)?.role) ||
+                parentFor(sessions.resolve(args.target, caller).parent) !== caller)) {
+          throw new CommandError('permission-denied', 'The authenticated role cannot perform this operation');
+        }
+      }
       if (command === 'spawn') return spawnSession(args, caller);
-      if (command === 'rotate') return rotation.request(args, caller);
+      if (command === 'rotate') return rotation.request(args, caller, external);
       if (command === 'layout-up') {
         if (!sessionOptions?.layout) throw new CommandError('not-ready', 'Herdr layout is unavailable');
         return { layout: await sessionOptions.layout.ensure(true) };
@@ -871,7 +978,7 @@ ${details}`, {
           layout: readLayout(project),
           roles: rows.filter(row => row.endedAt === null && ['super', 'leader', 'auditor'].includes(row.role)).map(row => ({
             ...sessionFields(row), role: row.role, backend: row.backend,
-            contextPercent: observations.get(row.addr)?.contextPercent ?? budget.contextPercent(row.addr) ?? null,
+            contextPercent: observations.get(row.addr)?.contextPercent ?? budget.context(row.addr)?.percent ?? null,
             activityAt: observations.get(row.addr)?.activityAt ?? row.startedAt,
             awaitingHandover: Boolean(sessions.jobs.get(row.addr)?.handoverAck && !sessions.jobs.get(row.addr)?.handoverBound),
           })),
@@ -976,15 +1083,14 @@ ${details}`, {
           const decisions = notifications.list(name).filter(event => event.type === 'needs-decision' &&
             (event.gate === gate || members.some(row => row.addr === event.addr)));
           const workerAddrs = new Set(members.filter(row => row.role === 'worker').map(row => row.addr));
-          const boundary = notifications.list(name, false, true)
-            .findLast(gateBoundary)?.at ?? 0;
-          const signals = leaderSignals(name).filter(notice => workerAddrs.has(notice.addr) ||
-            notice.type === 'auditor-budget-exceeded' && notice.at >= boundary);
-          const { path, fullPath } = saveGatePacket(project, { ...args, id, round }, { members, jobs: sessions.jobs, messages: mail.messages,
+          const signals = leaderSignals(name).filter(notice => workerAddrs.has(notice.addr));
+          const { path, fullPath, candidate, base } = saveGatePacket(project, { ...args, id, round }, { members, jobs: sessions.jobs, messages: mail.messages,
             decisions, signalSummary: noticeLines(signals), signalCount: signals.length, red });
           const delivery = saved(sessions.targetBinding(auditor), red ?
-            `Loom red escalation (${red.reason}). Read gate packet ${path}` : `Read gate packet ${path}`, {
-            id, gatePacket: path, gateId: gate, gateProject: name, gateRound: round, ...(fullPath && { gateFullPath: fullPath }),
+            `Loom red escalation (${red.reason}). Read gate packet ${path}` :
+            `Read gate packet ${path}${v2.enabled() ? `\n在签收时用 "$LOOM_BIN" rotation-policy spot-check --target leader --id ${id} --verdict ok|error --detail TEXT --evidence FILE[:LINE] 登记抽查。` : ''}`, {
+            id, gatePacket: path, gateId: gate, gateProject: name, gateRound: round,
+            ...(v2.enabled() && { gateCandidate: candidate, gateBase: base, gatePaths: members.flatMap(member => plannedCardPaths(sessions.jobs.get(member.addr)?.prompt ?? '')) }), ...(fullPath && { gateFullPath: fullPath }),
             ...(red && { redEscalation: red.reason }),
             ...(actor && { from: sessions.targetBinding(actor), expectReply: true }),
           });
@@ -1025,20 +1131,27 @@ ${details}`, {
             throw new CommandError('invalid-arguments', 'A Leader or Super must supply a completed gate ID in this project');
           }
           const gate = args.gateComplete;
+          if (args.candidate !== undefined && !v2.enabled()) throw new CommandError('invalid-arguments', '--candidate requires rotation v2');
+          if (v2.enabled() && args.candidate !== undefined) {
+            const approval = mail.messages.findLast(message => matchesGate(message, name, gate) && message.gateCandidate === args.candidate);
+            const audit = approval?.completion;
+            if (!approval?.received || !audit?.body || audit.unconfirmed ||
+                !/^\**(?:PASS|APPROVE)\b/i.test(audit.body.trimStart())) {
+              throw new CommandError('permission-denied', 'A received Auditor approval for this exact gate and SHA is required');
+            }
+            v2.authorizeGate(name, gate, args.candidate);
+            return { gate, candidate: args.candidate, authorized: true };
+          }
           const id = 'gate:' + batchDeliveryId(name, gate);
           if (!notifications.list(name, false, true).some(event => event.id === id)) {
             const currentPolicy = policyForTick();
-            const auditor = liveRole(name, 'auditor');
-            const sample = await budget.check(name, rows.filter(row => row.project === name), currentPolicy, { completeGate: true, auditor });
-            const proposal = sample || currentPolicy.roles?.auditor?.rotateAt === 'gate';
-            if (proposal) rotation.propose(auditor, sample ? 'budget' : 'gate');
-            if (currentPolicy.roles?.leader?.rotateAt === 'gate') rotation.propose(liveRole(name, 'leader'), 'gate');
-            notifications.add({ id, gate, project: name, at: now(), type: proposal ? 'auditor-rotation-proposed' : 'gate-completed',
-              ...(actor && { addr: actor.addr }), ...sample, logOnly: true,
-              text: proposal ? `门禁 ${gate} 已完成。${sample ? `Auditor 已超出预算（采样 ${new Date(sample.sampledAt).toISOString()}）。` : ''}Auditor 在下一次现有投递收到自助换班提示。` :
-                `门禁 ${gate} 已完成。` });
             const scoped = rows.filter(row => row.project === name);
-            await budget.check(name, scoped, currentPolicy, { gateRecorded: true, safeLeader: safeLeader(name, scoped) });
+            const auditor = liveRole(name, 'auditor');
+            await budget.check(name, scoped, currentPolicy, { completeGate: true, auditor });
+            notifications.add({ id, gate, project: name, at: now(), type: 'gate-completed',
+              ...(actor && { addr: actor.addr }), logOnly: true, text: `门禁 ${gate} 已完成。` });
+            await budget.check(name, scoped, currentPolicy, { gateRecorded: true, safe: rotationBoundary(name, scoped),
+              leader: liveRole(name, 'leader'), auditor });
           }
         }
         if (args.decision !== undefined || args.auditEscalation !== undefined || args.kind !== undefined) {
@@ -1066,7 +1179,7 @@ ${details}`, {
             ...(pathWarnings.length && { pathWarnings }),
             ...(userPrompt && { userPrompt }), ...(snapshot?.hookGap && { hookGap: snapshot.hookGap }) };
         }));
-        if (command === 'status') return { sessions: live, exits: sessions.rows().flatMap(row => {
+        if (command === 'status') return { sessions: live, ...(v2.enabled() && { rotationPolicy: [...new Set(sessions.rows().filter(row => row.endedAt === null).map(row => row.project))].map(name => v2.snapshot(name)) }), exits: sessions.rows().flatMap(row => {
           const exit = sessions.jobs.get(row.addr)?.exit;
           return row.endedAt !== null && exit && !sessions.successorOf(row.addr) ? [{ addr: row.addr, role: row.role, ...exit }] : [];
         }) };
@@ -1075,6 +1188,7 @@ ${details}`, {
       }
       const row = sessions.resolve(args.target, caller);
       if (command === 'handover') {
+        if (v2.enabled() && senior(row)) throw new CommandError('rotation-note-required', 'Use loom rotate for a v2 handover');
         const old = sessions.rowFor(args.from);
         if (!validInput(args.text)) throw new CommandError('invalid-arguments', 'Handover brief is required');
         const actor = caller && sessions.rows().find(item => item.addr === caller || item.pane === caller);
@@ -1125,6 +1239,9 @@ ${details}`, {
       }
       const actor = caller && sessions.rows().find(row => row.addr === caller || row.pane === caller);
       const externalSuper = args.from === 'super' && !actor;
+      if (v2.enabled() && args.from && !externalSuper && args.from !== actor?.addr && args.from !== actor?.role) {
+        throw new CommandError('permission-denied', 'Send can only use the authenticated role');
+      }
       if (args.from === 'super' && actor && actor.role !== 'super') {
         throw new CommandError('invalid-arguments', 'Only Super can send as Super');
       }

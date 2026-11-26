@@ -138,10 +138,12 @@ export function historyReader(directory) {
     let path;
     let parsed = { turns: [] };
     let raw = [];
+    let transcriptBytes = null;
     let missing;
     try {
       path = transcriptFor(session);
       const text = readTranscript(path);
+      transcriptBytes = Buffer.byteLength(text);
       parsed = transcript.parse(text);
       raw = transcriptRows(text);
     } catch (error) { missing = error; }
@@ -159,7 +161,7 @@ export function historyReader(directory) {
       });
     }
     for (const [i, item] of items.entries()) item.index = i + 1;
-    const result = { path, items, missing, project, raw };
+    const result = { path, items, missing, project, raw, transcriptBytes };
     read.set(session.addr, result);
     return result;
   }

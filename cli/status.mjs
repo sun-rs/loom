@@ -11,12 +11,16 @@ import { isStartupBlocker } from '../tui/agent-status.mjs';
 import { auditorWakeFiltered } from '../daemon/routing.mjs';
 import { seniorToolSummary } from '../daemon/senior-tools.mjs';
 import { readLayout } from '../daemon/herdr-layout.mjs';
+import { rotatingRoles } from '../index/index.mjs';
+import { rootEvents, sessionContext } from '../lib/session-context.mjs';
+import { historyReader } from './history.mjs';
 
 export async function projectStatus(project) {
   let live;
   let exits;
+  let rotationPolicy;
   if (managedProject(project)) {
-    try { ({ sessions: live, exits } = await request(project, 'status')); }
+    try { ({ sessions: live, exits, rotationPolicy } = await request(project, 'status')); }
     catch (error) { if (!daemonAbsent(error)) throw error; }
   }
   const rotations = projectIndex(project).rotations();
@@ -72,8 +76,9 @@ export async function projectStatus(project) {
   const seniorTools = seniorToolSummary(project, rows);
   const notices = [...activeOrgNotices(readOrg(project)).map(notice => ({ ...notice, audience: 'leader' })),
     ...notifications.flatMap(event =>
-      event.type === 'auditor-budget-exceeded' || event.type === 'stuck' && workers.has(event.addr) ?
-        [{ ...event, audience: 'leader' }] : ['red-escalation', 'senior-override-budget', 'senior-tool-output-share'].includes(event.type) ? [event] : []),
+      event.type === 'auditor-budget-exceeded' ? [{ ...event, audience: 'super' }] :
+        event.type === 'stuck' && workers.has(event.addr) ? [{ ...event, audience: 'leader' }] :
+          ['red-escalation', 'senior-override-budget', 'senior-tool-output-share'].includes(event.type) ? [event] : []),
   ].sort((a, b) => b.at - a.at);
   const digestReceived = new Set(messages.filter(message => message.received && !deliveryFailed(message))
     .flatMap(message => message.auditorDigestIds ?? []));
@@ -93,10 +98,28 @@ export async function projectStatus(project) {
     }));
   const merges = [...new Map([...history, ...verified].filter(merge => merge.sha).map(merge => [merge.sha, merge])).values()]
     .sort((a, b) => b.at - a.at).slice(0, 5);
-  const { byRole, rawTokens, missing, pyramid } = projectCost(project, rows, { includeAcceptance: false });
+  const reader = historyReader(project);
+  const { byRole, rawTokens, missing, pyramid } = projectCost(project, rows, { includeAcceptance: false, reader });
   const activeAddresses = new Set(rows.filter(row => row.endedAt === null).map(row => row.addr));
   const rotationNotices = notifications.filter(event => event.type === 'leader-handover-failed' ||
-    event.type === 'leader-rotation-proposed' && activeAddresses.has(event.addr)).slice(-6).reverse();
+    ['leader-rotation-proposed', 'auditor-rotation-proposed'].includes(event.type) && activeAddresses.has(event.addr)).slice(-6).reverse();
+  const now = Date.now();
+  const startOfDay = new Date(now).setHours(0, 0, 0, 0);
+  const rotationDetails = rotations.map(rotation => ({ ...rotation,
+    reason: artifacts.job(rotation.successor)?.rotationReason ??
+      notifications.findLast(event => event.addr === rotation.predecessor && event.at <= rotation.startedAt &&
+        event.type === `${rotation.role}-rotation-proposed`)?.reason ?? null,
+  }));
+  const rotationsToday = Object.fromEntries(rotatingRoles.map(role => [role, rotationDetails.filter(rotation =>
+    rotation.role === role && rotation.boundAt >= startOfDay && rotation.boundAt <= now)]));
+  const seniorSessions = rows.filter(row => rotatingRoles.includes(row.role)).map(row => {
+    const { items, raw, transcriptBytes } = reader.sessionHistory(row);
+    const events = rootEvents(row, artifacts.journal(row.addr));
+    return { addr: row.addr, role: row.role, cli: row.cli, model: row.model, endedAt: row.endedAt,
+      turns: items.length, runtimeMs: row.startedAt == null ? null : Math.max(0, (row.endedAt ?? now) - row.startedAt), transcriptBytes,
+      context: sessionContext(row, { items, raw: raw.map(item => item.row) }, { events, statusline: artifacts.context(row.addr) }) };
+  });
+  const seniorByAddress = new Map(seniorSessions.map(metric => [metric.addr, metric]));
   const awaitingAck = new Set(rotations.filter(item => item.boundAt == null && item.failedAt == null)
     .map(item => item.successor));
   const rotating = new Set(rotations.filter(item => item.boundAt != null && item.verifiedAt == null && item.failedAt == null)
@@ -130,6 +153,8 @@ export async function projectStatus(project) {
     sessions: rows.filter(row => row.endedAt == null).map(row => {
       const authMode = row.cli === 'claude' ? artifacts.job(row.addr)?.authMode : undefined;
       return { role: row.role, addr: row.addr, cli: row.cli, task: row.task, state: lifecycle(row),
+        ...(seniorByAddress.has(row.addr) && { metrics: seniorByAddress.get(row.addr),
+          rotationsToday: rotationsToday[row.role].length }),
         ...(authMode && { authMode }),
         ...(states.get(row.addr)?.userPrompt && { userPrompt: states.get(row.addr).userPrompt }),
         ...(states.get(row.addr)?.lastProgressAt != null && { lastProgressAt: states.get(row.addr).lastProgressAt }),
@@ -139,7 +164,7 @@ export async function projectStatus(project) {
         ...(awaitingAck.has(row.addr) && { awaitingHandoverAck: true }) };
     }),
     waves, pendingContinuations, cards: cards.filter(card => card.active || ['blocked', 'result-undelivered'].includes(card.state)),
-    blocked, notices, merges, rotations, rotationNotices, seniorTools, routing: { filtered },
+    blocked, notices, merges, ...(rotationPolicy && { rotationPolicy }), rotations: rotationDetails, rotationsToday, seniorSessions, rotationNotices, seniorTools, routing: { filtered },
     cost: { rawTokens, byRole: Object.fromEntries(Object.entries(byRole).map(([role, value]) => [role, value.rawTokens])),
       usageByRole: byRole, pyramid, missingSessions: missing.length },
   };
@@ -173,7 +198,20 @@ export function printStatus(result) {
     `${incident(row)} · ${Math.floor(row.zeroProgressMs / 1000)}s zero progress`, Infinity);
   section('Release paths', result.sessions.flatMap(row => (row.pathWarnings ?? []).map(warning => ({ ...row, ...warning }))),
     row => [row.role, row.addr, row.reason, row.path].filter(Boolean).join(' · '), Infinity);
-  section('Leader rotation', result.rotationNotices, row => [row.addr, row.text].join(' · '), 6);
+  for (const [role, label] of [['leader', 'Leader'], ['auditor', 'Auditor']]) {
+    section(`${label} rotation`, result.rotationNotices.filter(row => row.type.startsWith(`${role}-`)),
+      row => [row.addr, row.text].join(' · '), 6);
+  }
+  section('Senior context', result.sessions.filter(row => row.metrics).map(row => row.metrics), row => {
+    const { context, role, turns, runtimeMs, transcriptBytes } = row;
+    const percentage = value => Number.isFinite(value) ? `${value.toFixed(1)}%` : '—';
+    return [role, `${percentage(context.percent)} of ${context.contextWindow ?? '—'} (${context.windowSource ?? 'unknown source'})`,
+      `${context.compactions ?? '—'} compactions`, `${turns} turns`, `${runtimeMs == null ? '—' : Math.floor(runtimeMs / 1000)}s`,
+      `${transcriptBytes ?? '—'} transcript bytes`,
+      ...(context.afterCompaction.length ? [`after compact ${context.afterCompaction.map(sample => percentage(sample.percent)).join(', ')}`] : [])].join(' · ');
+  }, Infinity);
+  section('Senior rotations today', Object.entries(result.rotationsToday), ([role, rotations]) =>
+    `${role} ${rotations.length}${rotations.length ? ` (${rotations.map(item => item.reason ?? 'unrecorded').join(', ')})` : ''}`, Infinity);
   section('Senior tools', result.seniorTools, row => [row.type, row.role, row.count, row.reasons?.at(-1)?.reason].filter(Boolean).join(' · '), 8);
   section('Roles', result.sessions, row => [row.role ?? 'unassigned', row.cli, row.state,
     row.awaitingHandoverAck ? 'awaiting handover acknowledgement' :

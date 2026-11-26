@@ -725,6 +725,34 @@ export function inbox(project, transport, report = console.error, { replyLimit, 
     return message;
   }
 
+  function handoverMessages(predecessor, successor, apply = false) {
+    const affected = messages.filter(message => !message.startup && message.target.addr === predecessor &&
+      (pendingReply(message) || mayReroute(message)));
+    const plan = affected.map(message => ({ id: message.id, action: mayReroute(message) ? 'reroute' : 'void' }));
+    if (!apply || !affected.length) return plan;
+    const before = affected.map(message => ({ ...message }));
+    for (const [i, message] of affected.entries()) {
+      message.originalTarget ??= predecessor;
+      if (plan[i].action === 'reroute') {
+        message.target = successor;
+        message.phase = 'queued';
+        for (const field of ['active', 'barrier', 'issue', 'refusedAt', 'waitingForWritable']) delete message[field];
+      } else {
+        message.phase = 'refused';
+        message.issue = 'handover-void';
+        message.refusedAt = Date.now();
+      }
+    }
+    try { save(); } catch (error) {
+      for (const [i, message] of affected.entries()) {
+        for (const field of Object.keys(message)) delete message[field];
+        Object.assign(message, before[i]);
+      }
+      throw error;
+    }
+    return plan;
+  }
+
   function refuseQueued(message, issue) {
     if (message.phase !== 'queued') return;
     message.phase = 'refused';
@@ -740,5 +768,5 @@ export function inbox(project, transport, report = console.error, { replyLimit, 
     }
   }
 
-  return { step, routesForTurn, enqueue, refuseQueued, messages };
+  return { step, routesForTurn, enqueue, refuseQueued, handoverMessages, messages };
 }

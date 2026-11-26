@@ -59,6 +59,7 @@ export async function openTui(job, row, project, recordTemporary, recordBinding,
     autoTrustWorkspace: job.autoTrustWorkspace, ...(controller && { controllerPath: controllerFile(project) }),
     stateDir: join(project, '.project', 'pty'),
     ...(row.cli === 'claude' && { command: nativeClaude(), env: { ...env, DISABLE_AUTOUPDATER: '1' },
+      ...(['leader', 'auditor'].includes(row.role) && { contextStatusPath: hookSink.replace(/\.jsonl$/, '.context.json') }),
       authMode: job.authMode, idleCompaction: claudeIdleCompaction(project, row.role), unset: [...guardUnset, 'CLAUDE_CODE_ENTRYPOINT', 'CLAUDECODE'] }),
     ...(row.cli === 'codex' && { extraArgs: ['--disable', 'memories', ...codexEnvironmentArgs(env), ...codexFastArgs(job.fast)] }),
   });

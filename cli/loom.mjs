@@ -39,7 +39,7 @@ const help = {
     'loom layout adopt --project DIR --leader HC_ADDRESS --auditor HC_ADDRESS',
   ],
   super: ['loom super --terminal HC_ADDRESS [--project DIR]'],
-  cost: ['loom cost [--project DIR]', 'Reports role usage, the rolling consumption pyramid, estimated USD costs and per-turn acceptance timing.'],
+  cost: ['loom cost [--project DIR]', 'Reports role usage, rotation briefing tokens, the rolling consumption pyramid, estimated USD costs and per-turn acceptance timing.'],
   gate: ['loom gate pack <gate-id> [--round N] [--reuse] [--project DIR] [--base REF] [--candidate REF] [--question TEXT]'],
   escalate: ['loom escalate <gate-id> --reason REASON --evidence TEXT [--round N] [--project DIR] [--base REF] [--candidate REF]',
     'Leader only. Reasons: protected-file, assertion, skip-only, confirmed-fact-miss, sandbox-escape.'],
@@ -48,7 +48,9 @@ const help = {
   handover: ['loom handover <leader|auditor|super> --project DIR [--to ADDR]'],
   spawn: [spawnUsage, spawnHelp],
   rotate: ['loom rotate --self [--prepare | --reason R] [--project DIR]',
-    'loom rotate --target <leader|auditor|ADDR> [--prepare | --reason R] [--cli CLI] [--model MODEL] [--effort EFFORT] [--project DIR] (managed Super)'],
+    'loom rotate --target <leader|auditor|ADDR> [--prepare | --reason R] [--cli CLI] [--model MODEL] [--effort EFFORT] [--passive] [--project DIR] (Super)'],
+  'rotation-policy': ['loom rotation-policy <scope|ruling|correction|profile|error|incident|spot-check|audit|verify|abort|rule-change> [--project DIR]',
+    'Scope uses --phase or --goal. Records use --target, --detail and --evidence FILE[:LINE] where required. See docs/ORG.md for actions and verdicts.'],
   switch: ['loom switch <leader|auditor|worker> --project DIR --to <1-based index|cli/model/effort[/fast]>'],
   daemon: [daemonUsage],
   upgrade: [upgradeUsage],
@@ -58,7 +60,7 @@ const help = {
     'loom notifications [--project DIR] [--peek|--take|--history]',
     'loom notifications [--project DIR] --needs-decision TEXT [--kind decision | --audit-escalation REASON]',
     'loom notifications [--project DIR] --complete TEXT [--phase ID]',
-    'loom notifications [--project DIR] --gate-complete ID',
+    'loom notifications [--project DIR] --gate-complete ID [--candidate SHA]',
     'Previews pending events by default. --take acknowledges them. --history includes acknowledged events.',
   ],
 };
@@ -74,11 +76,12 @@ const commands = {
   gate: { ...projectArgs, ...strings('base', 'candidate', 'question', 'round'), ...flags('reuse') },
   escalate: { ...projectArgs, ...strings('base', 'candidate', 'reason', 'evidence', 'round') },
   memory: { ...projectArgs, ...flags('json') },
+  'rotation-policy': { ...projectArgs, ...strings('target', 'id', 'detail', 'evidence', 'verdict', 'phase', 'goal', 'version') },
   switch: { ...projectArgs, ...strings('to') },
-  rotate: { ...projectArgs, ...flags('self', 'prepare'), ...strings('target', 'reason', 'cli', 'model', 'effort') },
+  rotate: { ...projectArgs, ...flags('self', 'prepare', 'passive'), ...strings('target', 'reason', 'cli', 'model', 'effort') },
   doctor: { ...projectArgs, ...flags('fix', 'prompts') },
   notifications: { ...projectArgs, ...flags('peek', 'take', 'history'),
-    ...strings('needs-decision', 'kind', 'audit-escalation', 'complete', 'phase', 'gate-complete') },
+    ...strings('needs-decision', 'kind', 'audit-escalation', 'complete', 'phase', 'gate-complete', 'candidate') },
 };
 
 function readPendingWork(project, addr) {
@@ -287,8 +290,11 @@ export async function main(args) {
     let result;
     if (command === 'rotate') {
       if (positionals.length || values.prepare && values.reason !== undefined ||
-          Boolean(values.self) === Boolean(values.target)) invalid(help.rotate[0]);
+          Boolean(values.self) === Boolean(values.target) || values.self && values.passive) invalid(help.rotate[0]);
       result = await request(directory, 'rotate', values);
+    } else if (command === 'rotation-policy') {
+      if (positionals.length !== 1) invalid(help['rotation-policy'][0]);
+      result = await request(directory, 'rotation-policy', { ...values, action: positionals[0] });
     } else if (command === 'memory') {
       const [action, query] = positionals;
       if (positionals.length !== 2 || action !== 'search' || !query.trim()) invalid(help.memory[0]);
@@ -380,10 +386,10 @@ export async function main(args) {
         if ([values.peek, values.take, values.history].filter(Boolean).length > 1 ||
             writes > 1 || auditEscalation !== undefined && decision === undefined || values.kind !== undefined &&
             (decision === undefined || values.kind !== 'decision' || auditEscalation !== undefined) ||
-            values.phase !== undefined && values.complete === undefined ||
+            values.phase !== undefined && values.complete === undefined || values.candidate !== undefined && gateComplete === undefined ||
             (values.take || values.history) && writes) invalid(help.notifications[0]);
         try { result = await request(directory, command, { take: values.take, history: values.history,
-          decision, kind: values.kind, auditEscalation, gateComplete, complete: values.complete, phase: values.phase }); }
+          decision, kind: values.kind, auditEscalation, gateComplete, candidate: values.candidate, complete: values.complete, phase: values.phase }); }
         catch (error) {
           if (!daemonAbsent(error)) throw error;
           if (values.take || writes) {
