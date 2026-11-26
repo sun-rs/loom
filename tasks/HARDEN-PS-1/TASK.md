@@ -6,3 +6,5 @@ From pilot-2 goal-5 merge gate (decision-goal5-merge.md, ruling R24). Base: main
 RESULT.md Chinese, STATUS: done, uncommitted. Red lines as before.
 
 3. **(Super addendum) auth warning ≠ auth expired.** agy 1.5.17 printed "⚠ Sign-in update needed — Your sign-in is missing permissions that are now required, so some requests may fail. Run /logout to sign in again." while the session kept working (it produced the handover ack). loomd raised `session-liveness auth-expired`. Classify this as `auth-warning` (keep working, notify Super once per account with the exact CLI text), and keep `auth-expired` for real failed requests/login prompts. Fixture from this text.
+
+4. **(Super addendum) stalled threshold while the target is busy.** Twice on pilot-2 a delivery to the agy Leader (busy, mid-turn running commands) was reported `delivery-stalled … waiting-writable` at 122 s and 159 s, then delivered normally. DELIVERY-SLA-1 says 360 s when the target is busy/compacting. Find why the busy threshold wasn't applied (agy busy detection lag? waiting-writable bucketed as idle?) and fix; fixture from these two cases.
