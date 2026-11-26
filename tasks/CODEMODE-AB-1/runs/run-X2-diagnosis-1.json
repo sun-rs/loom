@@ -1,0 +1,43 @@
+{
+  "kind": "benchmark-run",
+  "arm": "X2",
+  "task": "diagnosis",
+  "repetition": 1,
+  "base": "0ca39c54b8eed922a7127fd022b99b1ffb84be0a",
+  "vendor": "codex",
+  "version": "0.172.0",
+  "model": "gpt-6.2-sol",
+  "startedAt": "2026-11-26T16:09:46.198Z",
+  "finishedAt": "2026-11-26T16:11:18.175Z",
+  "wallMs": 91977,
+  "modelRequests": 12,
+  "inputTokens": 423960,
+  "cachedTokens": 379776,
+  "cacheWriteTokens": 0,
+  "outputTokens": 2590,
+  "peakContextTokens": 42668,
+  "toolCalls": 26,
+  "replCalls": 11,
+  "scriptCalls": 26,
+  "nativeWallMs": 94440,
+  "humanInterventions": 0,
+  "codeModeConsent": "not-applicable",
+  "scriptAudit": {
+    "checked": 26,
+    "outsideWorkingCopy": 2
+  },
+  "outcome": "completed",
+  "checker": {
+    "passed": true,
+    "changedFiles": 0,
+    "tests": {
+      "exit": 0,
+      "passed": 1,
+      "failed": 0
+    }
+  },
+  "consentFiles": [],
+  "workspaceTrustSetup": false,
+  "codeModeBanner": false,
+  "changedGlobalConfigFiles": []
+}

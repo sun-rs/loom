@@ -1,0 +1,36 @@
+{
+  "kind": "benchmark-run",
+  "arm": "X1",
+  "task": "survey",
+  "repetition": 1,
+  "base": "0ca39c54b8eed922a7127fd022b99b1ffb84be0a",
+  "vendor": "codex",
+  "version": "0.171.0",
+  "model": "gpt-6.2-sol",
+  "startedAt": "2026-11-26T13:30:56.682Z",
+  "finishedAt": "2026-11-26T13:32:33.077Z",
+  "wallMs": 96395,
+  "modelRequests": 8,
+  "inputTokens": 288724,
+  "cachedTokens": 239744,
+  "cacheWriteTokens": 0,
+  "outputTokens": 3586,
+  "peakContextTokens": 48043,
+  "toolCalls": 24,
+  "replCalls": 7,
+  "scriptCalls": 24,
+  "nativeWallMs": 97714,
+  "humanInterventions": 0,
+  "codeModeConsent": "not-applicable",
+  "scriptAudit": {
+    "checked": 24,
+    "outsideWorkingCopy": 3
+  },
+  "outcome": "completed",
+  "checker": {
+    "passed": true,
+    "rows": 22
+  },
+  "consentFiles": [],
+  "workspaceTrustSetup": false
+}

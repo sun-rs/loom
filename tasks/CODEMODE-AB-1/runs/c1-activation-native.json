@@ -1,0 +1,30 @@
+{
+  "date": "2026-11-26T16:03:05.328Z",
+  "version": "2.1.331",
+  "model": "claude-sonnet-5-5",
+  "auth": {
+    "signedIn": true,
+    "directSubscription": true,
+    "routingOverrides": []
+  },
+  "nativeConsent": true,
+  "code": "enabled-banner",
+  "accepted": true,
+  "noTaskSubmitted": true,
+  "observations": [
+    "code-mode-consent",
+    "moved-consent-selection"
+  ],
+  "visibleChoices": [
+    "Code Mode (experimental)",
+    "continue it, and older versions of Claude Code may open it but not work properly in it.",
+    "No, start without it",
+    "❯ Yes, turn on Code Mode"
+  ],
+  "changedBeforeConsent": [
+    ".claude.json"
+  ],
+  "changedFiles": [
+    ".claude.json"
+  ]
+}
