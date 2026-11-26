@@ -289,7 +289,8 @@ export function printStatus(result) {
   }, Infinity);
   section('Senior rotations today', Object.entries(result.rotationsToday), ([role, rotations]) =>
     `${role} ${rotations.length}${rotations.length ? ` (${rotations.map(item => item.reason ?? 'unrecorded').join(', ')})` : ''}`, Infinity);
-  section('Senior tools', result.seniorTools, row => [row.type, row.role, row.count, row.reasons?.at(-1)?.reason].filter(Boolean).join(' · '), 8);
+  section('Senior tools', result.seniorTools, row => [row.type, row.role, row.count,
+    ...(row.reasons?.slice(-2).toReversed().map(item => item.reason) ?? [])].join(' · '), 8);
   const elevated = result.sessions.filter(row => row.workerTier && row.workerTier !== 'sandbox');
   if (elevated.length) section('Elevated workers', elevated, row => [row.workerTier, row.task, row.addr, row.state].join(' · '), Infinity);
   section('Roles', result.sessions, row => [row.role ?? 'unassigned', row.cli, row.state,

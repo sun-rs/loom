@@ -56,7 +56,7 @@ const leaderWorkerGuidance = [
   'Use a fresh Worker plus an exact RED reproduction for a changed area, rejected direction, R3, fabrication or overreach.',
   'New Workers verify branch, base SHA, WIP lines and active rulings before editing. Rotate resident roles at a card boundary after the first compaction. State the dispatch choice with --reason.',
 ].join(' ');
-const seniorGuidance = 'Use .project notes and evidence. For card preparation, keep targeted source reads to 200 lines. If a heavy tool is essential after a denial, retry through "$LOOM_BIN" senior-tool --reason "brief reason" -- "command". Loom keeps the output tail and records the reason. When workers or delivery are unavailable, Loom can authorize the same command without a reason.';
+const seniorGuidance = 'Use .project notes and evidence. For card preparation, keep targeted source reads to 200 lines. If a heavy tool is essential after a denial, paste the denial receipt’s "$LOOM_BIN" senior-tool --retry DENY-ID --reason "short sentence" line and state why the tool is essential. Loom keeps the output tail and records the reason. When workers or delivery are unavailable, Loom can authorize the same command without a reason.';
 const cardConventions = row => [
   '## Loom task conventions',
   `Task ${row.task}, working directory ${row.cwd}. Follow the card’s writable scope and acceptance commands. Start with the card and skip environment exploration or searches for AGENTS.md and skills to discover Loom conventions.`,

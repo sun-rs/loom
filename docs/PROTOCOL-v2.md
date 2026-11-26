@@ -109,7 +109,7 @@ Leader 用 `loom gate pack <gate-id> --round <n>` 打包固定候选的 Worker �
 | --- | --- |
 | `loom spawn` | Worker 先按父地址与项目检查活跃席位。将 `--cli` 解析为 `Runtime.id`。headless Codex 走 app-server，agy 与 OpenCode 走 ACP，Claude 走 OAR 的 Claude runtime。TUI 绑定本地 hc 窗格，Claude TUI 使用 `claude-tui`。先保存 spawn 意图与首轮 ID，再登记、打开和绑定原生会话，首轮经收件箱投递。 |
 | `loom send` | 先登记收件箱，再按上表调用 `prompt`、`steer` 或 `abort` 后 `prompt`。用 `--expect-reply` 请求一次回送。回执给出 `deliveryId`、`deliveryStatus`、`requestedMode` 及当前有效模式。后续变化从 `state` 查询。 |
-| `loom hist` | 归并适配器的原生 transcript 投影、OAR 根轮日志及可归属的账本记录。L1 摘要、L2 轮次详情按有证据的根轮查询。`ViewTurn` 可在同一轮内产生多个展示段，按轮归并后再应用 `--turns`。 |
+| `loom hist` | 归并适配器的原生 transcript 投影、OAR 根轮日志及可归属的账本记录。L1 摘要、L2 轮次详情按有证据的根轮查询。`ViewTurn` 可在同一轮内产生多个展示段，按轮归并后再分页。`--page N` 从最新页开始编号，`--before N` 或 `--before turn:ADDR#N` 排除游标及之后的轮次，`--all` 输出全部 L1 摘要。 |
 | `loom state` | 读取 `Session.status()`，结合记录中的 `exited`／`released` 和 loom 的投递账本。受管会话 daemon 停止时报告离线或已退出。活跃 headless 返回 OAR 根状态及巡检状态。`src/observe/index.ts:8-15` |
 | `loom cost` | 从会话索引和原生历史汇总 [角色用量、Leader 唤醒与 Worker 验收后调用](PILOT-COST.md)。 |
 | `loom ls` | 按项目过滤本地索引，包含活动和历史会话、待处理续作和投递。 |
