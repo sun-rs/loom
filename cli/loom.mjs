@@ -325,12 +325,14 @@ export async function main(args) {
         let work;
         if (managedProject(directory)) {
           try {
-            const { pendingDeliveries, pendingContinuations } = await request(directory, 'ls');
-            work = { pendingDeliveries, pendingContinuations };
+            const { pendingDeliveries, pendingContinuations, awaitingUser } = await request(directory, 'ls');
+            work = { pendingDeliveries, pendingContinuations, ...(awaitingUser?.length && { awaitingUser }) };
           } catch (error) { if (!daemonAbsent(error)) throw error; }
         }
+        const prompts = new Map((work?.awaitingUser ?? []).map(({ addr, ...prompt }) => [addr, prompt]));
         result = { ok: true, ...(work ?? readPendingWork(directory)),
-          sessions: projectSessions(directory, values.project !== undefined || Boolean(process.env.LOOM_PROJECT)) };
+          sessions: projectSessions(directory, values.project !== undefined || Boolean(process.env.LOOM_PROJECT)).map(row =>
+            prompts.has(row.addr) ? { ...row, state: prompts.get(row.addr).kind, userPrompt: prompts.get(row.addr) } : row) };
       }
     }
     emit({ ...result, ...projectReceipt(directory) });

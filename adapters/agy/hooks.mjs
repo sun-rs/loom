@@ -1,3 +1,4 @@
+import { questionDetails } from '../prompt-state.mjs';
 import { replyForStop } from './transcript.mjs';
 
 // Orca b7fd7caa3: src/main/antigravity/hook-events.ts:3-22 (events used by loom).
@@ -89,4 +90,17 @@ export function normalize(payload) {
     if (reply !== undefined) event.finalReply = reply;
   }
   return event;
+}
+
+export function agyPrompt(payload, event) {
+  const call = payload.toolCall ?? payload.tool_call;
+  if (event === 'PreToolUse' && call?.name === 'ask_question') {
+    return questionDetails((call.args ?? call.arguments ?? call.input)?.questions);
+  }
+}
+
+export function agyQuestionDenial(payload, event, policy) {
+  const call = payload.toolCall ?? payload.tool_call;
+  return policy === 'deny-questions' && event === 'PreToolUse' && call?.name === 'ask_question' ?
+    JSON.stringify({ decision: 'deny', reason: 'Use Loom notifications for decisions and continue other work.' }) : undefined;
 }

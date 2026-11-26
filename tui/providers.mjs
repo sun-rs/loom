@@ -1,3 +1,5 @@
+import { promptDetails, questionDetails } from '../adapters/prompt-state.mjs';
+import { claudePrompt } from '../adapters/claude/hooks.mjs';
 import { fileURLToPath } from 'node:url';
 import { randomUUID } from 'node:crypto';
 import claude from '../adapters/claude/index.mjs';
@@ -63,7 +65,13 @@ export const providers = {
         const { failure } = stopFailure(row);
         return activity(failure === 'rate_limited' || failure === 'quota' ? 'rate-limit' : 'error');
       }
-      if (row.tool_name && row.hook_event_name === 'PermissionRequest') return activity('permission');
+      const prompt = row.promptState ?? claudePrompt(row);
+      if (prompt) return { prompt, promptTool: row.tool_name,
+        genericApproval: row.notification_type === 'permission_prompt' };
+      if (row.hook_event_name === 'Notification' && /^elicitation_(?:complete|response)$/.test(row.notification_type)) {
+        return { clearPrompt: true };
+      }
+      if (/^PostToolUse(?:Failure)?$/.test(row.hook_event_name)) return { clearPrompt: row.tool_name };
     },
     transcriptRow(row, expectedPayload) {
       if (row.isCompactSummary === true || row.type === 'system' && row.subtype === 'compact_boundary') {
@@ -154,6 +162,10 @@ export const providers = {
     hook(row) {
       if (abortReason.test(row.terminationReason ?? '')) return activity('idle', { interrupted: true });
       if (row.hook_event_name === 'Stop' && row.fullyIdle !== true) return activity('busy');
+      if (row.toolName === 'ask_question') {
+        if (row.hook_event_name === 'PreToolUse' && !row.questionDenied) return { prompt: row.promptState ?? questionDetails(), promptTool: row.toolName };
+        if (row.hook_event_name === 'PostToolUse') return { clearPrompt: row.toolName };
+      }
     },
     transcriptRow(row) {
       const user = parseAgyTranscriptLine(row, { preserveUserWhitespace: true }).find(event => event.kind === 'user');
@@ -164,7 +176,14 @@ export const providers = {
     ...opencode,
     screen: { ...opencode.screen, hasEmptyComposer: text => opencode.screen.classify(text) === 'idle' },
     start: options => ({ ...opencode.launch(options), sessionId: options.sessionId }),
-    hook: row => row.hook_event_name === 'SessionStart' ? activity('idle') : undefined,
+    hook(row) {
+      if (row.hook_event_name === 'SessionStart') return activity('idle');
+      if (row.hook_event_name === 'PromptOpened') {
+        const { kind, summary, options } = row.promptState ?? {};
+        return { prompt: promptDetails(kind, summary, options), promptTool: row.requestId };
+      }
+      if (row.hook_event_name === 'PromptClosed') return { clearPrompt: row.requestId };
+    },
     transcriptRow: () => undefined,
   },
 };

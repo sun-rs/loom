@@ -111,6 +111,9 @@ export function readPolicy(project, { optional = false } = {}) {
         if (entry.trustWorkspace !== undefined && typeof entry.trustWorkspace !== 'boolean') {
           throw new Error(`Expected roles.${role}.trustWorkspace to be a boolean`);
         }
+        if (entry.allowNativeQuestions !== undefined && typeof entry.allowNativeQuestions !== 'boolean') {
+          throw new Error(`Expected roles.${role}.allowNativeQuestions to be a boolean`);
+        }
         if (entry.auth !== undefined && !['subscription', 'api-key'].includes(entry.auth)) {
           throw new Error(`Expected roles.${role}.auth to be subscription or api-key`);
         }
@@ -135,6 +138,9 @@ export function readPolicy(project, { optional = false } = {}) {
     throw new CommandError('invalid-policy', `${path}: ${error.message}`);
   }
 }
+
+export const allowNativeQuestions = (project, role) =>
+  readPolicy(project, { optional: true }).roles?.[role]?.allowNativeQuestions === true;
 
 export const claudeAuthMode = (project, role) =>
   readPolicy(project, { optional: true }).roles?.[role]?.auth ?? 'subscription';

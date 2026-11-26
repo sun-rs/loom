@@ -6,6 +6,7 @@ import { setTimeout as sleep } from 'node:timers/promises';
 import { deliveryId, messageIdPattern, wireText } from '../inbox/message.mjs';
 import { agyPasteSegments, QUIET_OUTPUT_MS } from './agent-input.mjs';
 import { draftExpectation, isAgyDraftSubset, verifyAgyDraft, verifyDraft, verifyReflowedDraft } from './composer-draft.mjs';
+import { screenPrompt } from '../adapters/prompt-state.mjs';
 import { blocksInput, currentTitle, isDialog, isFailure } from './agent-status.mjs';
 import { hcBackend, hcWrappedBackend } from './backends.mjs';
 import { nativeState } from './native.mjs';
@@ -33,7 +34,7 @@ export function createTuiHost(backend) {
       const ownedStaging = staging && dirname(staging) === sessionDir ? staging : undefined;
       if (executable) spec.argv[0] = executable;
       const name = `tui-host-0-${randomUUID().slice(0, 16)}`;
-      const evidence = { cwd, evidenceRoot, hookSink, sessionId: spec.sessionId };
+      const evidence = { cwd, evidenceRoot, hookSink, sessionId: spec.sessionId, promptSink: spec.promptSink };
       let terminal;
       try {
         terminal = await backend.launch({ cwd, argv: spec.argv, env: { ...env, ...spec.env }, unset, name, provider: cli, evidence, sessionDir });
@@ -70,6 +71,7 @@ export function bindTuiSession(terminal, provider, {
   let interruptionFallback;
   let paste;
   let startupFrame;
+  let previousPrompt;
   let startupKeyAt = -Infinity;
   const startupAttempts = new Map();
   const classify = text => provider.screen.classify(text);
@@ -106,13 +108,24 @@ export function bindTuiSession(terminal, provider, {
       outputSequence, buffer, bufferSequence, resizeSequence, size, humanActive, humanInputAt, humanSequence,
       writable, exited, code, reason } = observation;
     const screen = text == null ? 'unavailable' : classifyFrame(observation);
+    const visiblePrompt = screenPrompt(screen, composerText ?? '');
+    const nativePrompt = evidence.userPrompt;
+    const matchingNative = nativePrompt && (!visiblePrompt || nativePrompt.kind === visiblePrompt.kind);
+    const details = matchingNative ? nativePrompt : visiblePrompt;
+    const userPrompt = !exited && details ? { ...details, cli: provider.id, source: matchingNative ? 'native' : 'screen',
+      since: previousPrompt?.kind === details.kind &&
+        !(matchingNative && previousPrompt.source === 'native' && details.since > previousPrompt.since) ?
+        previousPrompt.since : details.since ?? observedAt,
+      summary: matchingNative && details.options == null && visiblePrompt ? visiblePrompt.summary : details.summary,
+      options: details.options ?? visiblePrompt?.options ?? null } : undefined;
+    previousPrompt = userPrompt;
     const host = hostPhase(state);
     const title = currentTitle(observation, evidence, observedAt);
     const fallback = sameInterruptedTurn(evidence);
     const empty = text != null && provider.screen.hasEmptyComposer(composerText) &&
       (generation === undefined ? !draft : draft === '');
     // A stale native idle edge cannot authorize writes into current UI activity.
-    const liveBlocker = blocksInput(screen) ? { phase: screen, source: 'screen' } :
+    const liveBlocker = userPrompt ? { phase: userPrompt.kind, source: userPrompt.source } : blocksInput(screen) ? { phase: screen, source: 'screen' } :
       blocksInput(host) ? { phase: host, source: 'host' } :
       title === 'busy' && !fallback && !evidence.phase ? { phase: title, source: 'title' } : undefined;
     const status = exited ? { phase: 'exited', source: 'host' } : liveBlocker ??
@@ -148,9 +161,9 @@ export function bindTuiSession(terminal, provider, {
       outstanding.beforeSubmit?.nativeSequence === evidence.turnSequence &&
       outstanding.beforeSubmit?.phase === evidence.phase && outstanding.beforeSubmit?.observedAt === evidence.observedAt;
     const blocker = screen === 'trust-dialog' || screen === 'overlay' ? screen :
-      pending && (draft || unsafe) && !blocksInput(screen) ? 'draft-held' : undefined;
+      pending && (draft || unsafe) && !userPrompt && !blocksInput(screen) ? 'draft-held' : undefined;
     return { observation, result: {
-      incarnation, ...status, observedAt, native: evidence,
+      incarnation, ...status, observedAt, native: evidence, ...(userPrompt && { userPrompt }),
       host: { state, agent, lastOutputAt, quietForMs, generation, outputSequence, buffer, bufferSequence, resizeSequence,
         size, title, humanActive, humanInputAt, humanSequence },
       screen: { kind: screen, text, draft, cursor, empty }, pending,
@@ -163,6 +176,7 @@ export function bindTuiSession(terminal, provider, {
 
   async function recoverStartup({ observation: frame, result }) {
     let adoption;
+    if (result.userPrompt && result.userPrompt.kind !== 'overlay') return false;
     const overlay = result.unsafeDraft && result.blocker === 'overlay' && agyOverlayKey(frame) === 'esc';
     if ((result.blocker === 'draft-held' || overlay) && readPending && terminal.provePaste) {
       const entry = requests.get(pending);
@@ -242,7 +256,7 @@ export function bindTuiSession(terminal, provider, {
     if (!stable || attempts >= limit || performance.now() - startupKeyAt < 1000) return false;
     const stillSafe = async (current = frame, { held } = {}) => {
       const latest = await native.read();
-      return idleBefore(latest, attemptAt) && latest.sessionId === result.native.sessionId &&
+      return !latest.userPrompt && idleBefore(latest, attemptAt) && latest.sessionId === result.native.sessionId &&
         !native.confirmations(dismissFor ?? token).count &&
         (dismissFor ? agyOverlayKey(current) === 'esc' : !blocksInput(classifyFrame(current))) &&
         (!held || heldComposer(current));
@@ -354,9 +368,9 @@ export function bindTuiSession(terminal, provider, {
       if (native.confirmations(id).count) return refusal('id-conflict');
       if (pending && !retry && urgent !== true) return refusal('previous-input-unconfirmed');
       const canWrite = value => retry ? value.retryableDeliveryId === id : value.ready || urgent === true && value.urgentReady;
-      const state = await until(value => canWrite(value) || isDialog(value.screen.kind) || isFailure(value.screen.kind), deferMs);
+      const state = await until(value => canWrite(value) || value.userPrompt || isDialog(value.screen.kind) || isFailure(value.screen.kind), deferMs);
       if (!canWrite(state)) {
-        const blocked = [state.screen.kind, state.phase].find(kind => isDialog(kind) || isFailure(kind));
+        const blocked = state.userPrompt?.kind ?? [state.screen.kind, state.phase].find(kind => isDialog(kind) || isFailure(kind));
         const busy = [state.phase, state.screen.kind].some(phase => phase === 'busy' || phase === 'compacting');
         return refusal(state.exit ? 'exited' : state.host.humanActive ? 'human-active' : blocked ?? (busy ? 'busy' : 'composer-not-proven-empty'));
       }
@@ -373,7 +387,7 @@ export function bindTuiSession(terminal, provider, {
       try {
         entry.hostReceipt = await terminal.writeIf(input, state, async (frame, { collapsed, held, reenter } = {}) => {
           const latest = await native.read();
-          if (native.confirmations(id).count || latest.sessionId !== state.native.sessionId ||
+          if (latest.userPrompt || native.confirmations(id).count || latest.sessionId !== state.native.sessionId ||
               latest.turnSequence !== state.native.turnSequence || latest.activeSince !== state.native.activeSince ||
               latest.phase !== state.native.phase || reenter && latest.identityChanged) return false;
           return !blocksInput(classifyFrame(frame)) &&
@@ -412,7 +426,7 @@ export function bindTuiSession(terminal, provider, {
       if (sessionId && before.native.sessionId !== sessionId ||
           turnId && before.native.activeTurn !== turnId ||
           turnAt !== undefined && before.native.activeSince !== turnAt) return refusal('turn-changed');
-      if (before.exit || before.unsafeDraft || before.screen.kind !== 'busy' || !before.screen.empty) return refusal('not-interruptible');
+      if (before.exit || before.userPrompt || before.unsafeDraft || before.screen.kind !== 'busy' || !before.screen.empty) return refusal('not-interruptible');
       const active = { sessionId: before.native.sessionId, turnId: before.native.activeTurn, since: before.native.activeSince,
         inputId: before.native.activeInputId };
       if (key) put(key, { active, attemptedAt: Date.now() });

@@ -60,7 +60,7 @@ export async function openNativeTui({
   hookSink ??= join(sessionDir, 'hooks.jsonl');
   await mkdir(dirname(hookSink), { recursive: true, mode: 0o700 });
   prepareJournal(hookSink);
-  const { argv, env: launchEnv, sessionId } = await provider.start({ ...options, cwd, hookSink, boundTranscript });
+  const { argv, env: launchEnv, sessionId, promptSink } = await provider.start({ ...options, cwd, hookSink, boundTranscript });
   argv[0] = executable;
   if (cli === 'claude') {
     if (authMode !== 'api-key') unset = [...new Set([...unset, ...claudeApiEnvKeys])];
@@ -92,7 +92,7 @@ export async function openNativeTui({
     startPath: join(sessionDir, 'startup'), exitPath: join(sessionDir, 'exit.json'), transport: 'loom-pty',
   };
   const evidence = {
-    cwd, evidenceRoot: stateDir, hookSink, sessionId, boundTranscript, requireNative: true,
+    cwd, evidenceRoot: stateDir, hookSink, sessionId, ...(promptSink && { promptSink }), boundTranscript, requireNative: true,
     autoTrustWorkspace: options.autoTrustWorkspace === true,
     bookPath: binding.bookPath, startPath: binding.startPath, exitPath: binding.exitPath, incarnation: binding.incarnation,
     ...(options.resume && { resumedAt: Date.now() }),

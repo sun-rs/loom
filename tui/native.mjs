@@ -11,14 +11,16 @@ function inside(root, path) {
   return child !== '' && child !== '..' && !child.startsWith(`..${sep}`) && !isAbsolute(child);
 }
 
-export function nativeState(provider, { hookSink, evidenceRoot, cwd, sessionId, boundTranscript = false, resumedAt, expectedPayload }) {
+export function nativeState(provider, { hookSink, promptSink, evidenceRoot, cwd, sessionId, boundTranscript = false, resumedAt, expectedPayload }) {
   const readHook = jsonlTail();
+  const readPrompt = jsonlTail();
   const readTranscript = jsonlTail();
   const receipts = new Map();
   const changedInputs = new Set();
   let transcript;
   let candidate;
   let state;
+  let userPrompt;
   let activeTurn;
   let activeSince;
   let activeInputId;
@@ -32,7 +34,7 @@ export function nativeState(provider, { hookSink, evidenceRoot, cwd, sessionId, 
 
   async function hooks() {
     const observations = [];
-    for (const row of await readHook(hookSink)) {
+    for (const row of [...await readHook(hookSink), ...await readPrompt(promptSink)]) {
       if (resumedAt !== undefined && !(row.receivedAt >= resumedAt)) continue;
       if (provider.id === 'claude' && row.hook_event_name === 'SessionBindingChanged' &&
           row.session_id === sessionId && row.observed_session_id !== sessionId) {
@@ -71,6 +73,14 @@ export function nativeState(provider, { hookSink, evidenceRoot, cwd, sessionId, 
       state = { ...event, phase: activeSince === undefined ? 'idle' : 'busy' };
       return;
     }
+    if (event.prompt && !(event.genericApproval && userPrompt?.kind === 'awaiting-choice')) {
+      const current = userPrompt?.kind === event.prompt.kind;
+      const details = current && userPrompt.options != null && event.prompt.options == null ? userPrompt : event.prompt;
+      userPrompt = { kind: details.kind, summary: details.summary, options: details.options,
+        tool: event.promptTool ?? (current ? userPrompt.tool : undefined),
+        since: current ? userPrompt.since : event.observedAt };
+    }
+    if (event.clearPrompt && (event.clearPrompt === true || event.clearPrompt === userPrompt?.tool)) userPrompt = undefined;
     if (!event.phase) return;
     if (event.phase === 'busy') {
       if (state?.phase !== 'busy' || event.turnId && activeTurn && event.turnId !== activeTurn ||
@@ -85,6 +95,7 @@ export function nativeState(provider, { hookSink, evidenceRoot, cwd, sessionId, 
       activeInputId = event.inputId ?? activeInputId;
       activeHookKey = event.beginKey ?? activeHookKey;
     }
+    if (event.beginKey != null || ['idle', 'unknown', 'error', 'rate-limit'].includes(event.phase)) userPrompt = undefined;
     if (event.phase === 'idle' || event.phase === 'unknown') {
       if (activeTurn && event.turnId && activeTurn !== event.turnId) return;
       activeTurn = undefined;
@@ -149,6 +160,8 @@ export function nativeState(provider, { hookSink, evidenceRoot, cwd, sessionId, 
       return {
         sessionId, phase: sessionChanged ? 'unknown' : state?.phase, source: state?.source, observedAt: state?.observedAt, interruption,
         activeTurn, activeSince, activeInputId, turnSequence, transcriptPath: transcript,
+        ...(!sessionChanged && userPrompt && { userPrompt: { kind: userPrompt.kind, since: userPrompt.since,
+          summary: userPrompt.summary, options: userPrompt.options } }),
         ...(sessionChanged && { identityChanged: true }),
       };
     },

@@ -1,3 +1,4 @@
+import { codexPrompt } from '../adapters/prompt-state.mjs';
 import { createHash, randomUUID } from 'node:crypto';
 import { appendFileSync, constants } from 'node:fs';
 import { join } from 'node:path';
@@ -186,6 +187,10 @@ export function codexPipeSession(project, row, dir, incarnation, client, verify,
         const result = nativeRefusals.get(frame.method);
         queueFrame(state.rpc, { id: frame.id, ...(result ? { result } :
           { error: { code: -32601, message: 'Unsupported Loom client request' } }) });
+        const prompt = codexPrompt(frame.method, frame.params);
+        if (prompt && (!frame.params?.threadId || frame.params.threadId === state.threadId)) {
+          state.rpc.outgoing.at(-1).userPrompt = { ...prompt, since: now(), cli: 'codex', source: 'native' };
+        }
       } else notification(frame.method, frame.params ?? {});
       return;
     }
@@ -483,6 +488,7 @@ export function codexPipeSession(project, row, dir, incarnation, client, verify,
     get endedAt() { return state.endedAt; },
     get transcriptPath() { return state.transcriptPath; },
     active: () => state.active,
+    userPrompt: () => state.rpc.outgoing.find(frame => frame.userPrompt)?.userPrompt,
     error: () => broken ?? state.fault,
     receipt: (action, id) => {
       const request = state.requests[`${action}:${id}`];

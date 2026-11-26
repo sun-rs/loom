@@ -61,6 +61,10 @@ TUI 发键前须同时看到两项证据。完整可见屏幕由适配器明确�
 
 Claude hook 以原生会话 ID 归属事件，记录实际 cwd，并排除子代理。一个绑定轮次缺 Stop 时，loomd 仅在根 transcript 中同时看到助手最终回复、轮末 `turn_duration` 或未要求继续的末尾 `stop_hook_summary`、全部工具结果且没有运行中的后台任务，才以 transcript 结算。正常屏幕和人工输入守卫仍适用。最近一次轮末由 transcript 补齐时，`loom status` 标记 `hook-gap`，`loom state --json` 返回证据时间和来源。
 
+原生审批、用户选择、选择器和覆盖层分别显示为 `awaiting-approval`、`awaiting-choice`、`picker` 和 `overlay`。`loom status` 和 `loom ls` 显示起始时间、CLI、原生或屏幕来源、最多 120 字的题干和可核实的选项数。状态和通知只保存题干及选项数量。投递等待期间使用 `target-awaiting-user`。达到投递期限后，Leader 的提示送 Auditor，Auditor 的提示进入 Super／用户的通知账本和桌面。Leader 和 Auditor 的审批或选择也附一条带角色、题干的桌面提示。同一处等待跨 loomd 重启去重。
+
+托管角色默认停用原生问答，可通过 `roles.<role>.allowNativeQuestions: true` 为个别角色启用。Claude 使用会话参数，Codex 默认模式关闭 `request_user_input`，OpenCode 使用当次启动的问答权限，agy TUI 用当次挂载的原生 hook 拒绝问答。需要用户或 Super 作决定时，先写文件列出选项，然后运行 `"$LOOM_BIN" notifications --needs-decision TEXT --kind decision`，在摘要带上文件路径，并继续不依赖该决定的工作。答复沿普通投递返回。
+
 loomd 在常规定时轮询中扫描所有未确认投递，包括没有屏幕或 hook 变化的目标。账本保留创建时间、阻塞原因和首次超时点，接管新版本后从同一份账本继续。超时从创建开始计算，`delivery.stallMs` 默认 120000 毫秒，观测到忙轮或压缩时使用三倍期限。排队回执提供 `ageMs` 和 `reason`，例如 `waiting-writable`、`draft-held`、`uncertain` 或 `no-native-turn`。`LOOM_UNCERTAIN_MS` 兼容为未配置策略时的期限覆盖。
 
 holder 记录每段外部输入的分类和偏移，覆盖终端协议回报与编辑键，输入内容不落盘。无法分类的历史记录按编辑输入保护。Loom 依次核对完整写入、可安全清除并一次重发的 Loom 草稿子集，以及重排后仅空白有差异、光标在末尾的完整读回。每次发键重新检查原生轮次和当前画面。首次 Enter 之后至少等待 1.5 秒，连续核对原生轮、可见的完整自有草稿和输入序号。审批、选项、覆盖层或编辑输入都会禁止再按 Enter。允许的一次再次按键记为 `re-enter`。若已看到提交动作而原生轮仍未出现，loomd 在超时后复查原生记录与可写性，在有完整守卫证据时最多用同一 ID 重试一次。

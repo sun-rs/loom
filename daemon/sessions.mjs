@@ -245,6 +245,29 @@ export function ownedSessions(project, index, report, {
     },
   };
 
+  function rememberUserPrompt(addr, snapshot, at) {
+    const job = jobs.get(addr);
+    const prompt = snapshot?.userPrompt;
+    if (!job || !snapshot) return prompt;
+    const previous = job.userPrompt;
+    if (!prompt) {
+      if (previous && snapshot.state !== 'unknown') {
+        delete job.userPrompt;
+        save(job);
+      }
+      return;
+    }
+    const since = previous?.kind === prompt.kind &&
+      !(prompt.source === 'native' && previous.source === 'native' && prompt.since > previous.since) ?
+      previous.since : Math.min(prompt.since ?? at, at);
+    const current = { ...prompt, since };
+    if (JSON.stringify(previous) !== JSON.stringify(current)) {
+      job.userPrompt = current;
+      save(job);
+    }
+    return current;
+  }
+
   function targetBinding(row) {
     const job = jobs.get(row.addr);
     if (!job) throw new ErrorCode('not-found', `Session is not managed by this daemon: ${row.addr}`);
@@ -408,8 +431,8 @@ export function ownedSessions(project, index, report, {
     if (row.role === 'leader' || row.role === 'auditor') {
       const guidance = row.role === 'leader' ?
         'Coordinate work. Workers reproduce issues and run full test suites in their own sandboxes. Review their receipts and signals. Spawn an independent Reviewer on the fixed candidate with --wave set to the gate ID. Receive the conclusion before running loom gate pack. Use loom escalate for confirmed red facts, sharing one wake per gate with the packet.' :
-        'For gate review, read only the gate packet and reviewer conclusions. The Leader commissions the independent review before packing. Delegate deep checks to one ephemeral read-only reviewer. Its conclusion may wake you once and counts against your gate wake budget. Other wake sources are user or Super messages, a gate packet or red escalation from Leader, and succession supervision. Use loom notifications --needs-decision TEXT --kind decision for ordinary Super decisions.';
-      prompt = `## Loom role guidance\n${guidance} Assign long-running work to a Worker or Reviewer. Do not wait on background Bash. If a result is overdue, run "$LOOM_BIN" status and check stalled deliveries. Begin conclusions with DONE, BLOCKED, FAILED, PASS, REJECT or APPROVE. Use NOREPLY for acknowledgements.\n\n## Startup request\n${prompt}`;
+        'For gate review, read only the gate packet and reviewer conclusions. The Leader commissions the independent review before packing. Delegate deep checks to one ephemeral read-only reviewer. Its conclusion may wake you once and counts against your gate wake budget. Other wake sources are user or Super messages, a gate packet or red escalation from Leader, and succession supervision. ';
+      prompt = `## Loom role guidance\n${guidance} Assign long-running work to a Worker or Reviewer. Do not wait on background Bash. For a user or Super decision, write the choices in a file and run "$LOOM_BIN" notifications --needs-decision TEXT --kind decision with a short summary and its path. Keep working where possible. The decision arrives as a normal delivery. If a result is overdue, run "$LOOM_BIN" status and check stalled deliveries. Begin conclusions with DONE, BLOCKED, FAILED, PASS, REJECT or APPROVE. Use NOREPLY for acknowledgements.\n\n## Startup request\n${prompt}`;
       try { prompt = await projectMemoryPrompt(project) + prompt; }
       catch (error) { report(`Project memory unavailable: ${error.message}`); }
     }
@@ -826,5 +849,5 @@ export function ownedSessions(project, index, report, {
 
   return { rows, rowFor, events, targetBinding, transport, requestedMode, canInterrupt, resolve, requireLive, newJob,
     activate, failSpawn, runtimeSelection, refresh, stop, shutdown, upgradeSessions, upgradeHolder, jobs, managedHc, sealed, lastActivity,
-    routeParent, bindSuccessor, retirePredecessor, successorOf };
+    routeParent, bindSuccessor, retirePredecessor, successorOf, rememberUserPrompt };
 }

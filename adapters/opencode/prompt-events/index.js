@@ -1,0 +1,42 @@
+import { appendFileSync, constants } from 'node:fs';
+import { approval, choice, promptDetails } from '../../prompt-state.mjs';
+
+export default {
+  id: 'loom-prompt-events',
+  setup(ctx) {
+    const sink = process.env.LOOM_OPENCODE_PROMPT_SINK;
+    const sessionId = process.env.LOOM_OPENCODE_PROMPT_SESSION;
+    if (!sink || !sessionId) return;
+    const controller = new AbortController();
+    void (async () => {
+      for await (const event of ctx.event.subscribe({ signal: controller.signal })) {
+        const data = event.data;
+        const form = data?.form;
+        if ((data?.sessionID ?? form?.sessionID) !== sessionId) continue;
+        let requestId;
+        let promptState;
+        if (event.type === 'permission.asked') {
+          requestId = data.id;
+          promptState = promptDetails(approval, data.action && `Allow ${data.action}?`, 3);
+        } else if (event.type === 'form.created' && form.metadata?.kind === 'question') {
+          const field = form.fields?.[0];
+          requestId = form.id;
+          promptState = promptDetails(choice, field?.description ?? field?.title, field?.options?.length);
+        } else if (event.type === 'permission.replied') {
+          requestId = data.requestID;
+        } else if (/^form\.(?:replied|dismissed|cancelled|rejected)$/.test(event.type)) {
+          requestId = data.id;
+        }
+        if (typeof requestId !== 'string') continue;
+        appendFileSync(sink, JSON.stringify({
+          receivedAt: Date.now(), session_id: sessionId, requestId,
+          hook_event_name: promptState ? 'PromptOpened' : 'PromptClosed',
+          ...(promptState && { promptState }),
+        }) + '\n', {
+          mode: 0o600, flag: constants.O_WRONLY | constants.O_APPEND | constants.O_CREAT | constants.O_NOFOLLOW | constants.O_NONBLOCK,
+        });
+      }
+    })().catch(() => { /* The visible TUI remains the fallback. */ });
+    return () => controller.abort();
+  },
+};

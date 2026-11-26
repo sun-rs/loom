@@ -444,6 +444,9 @@ export function classify(text) {
   if (matchesPicker(rows)) return 'picker';
   const footer = rows.at(-1) ?? '';
   if (/\bEsc to (?:cancel|skip)\b/i.test(footer) &&
+      /\b(?:Enter to (?:select|submit)|Tab to (?:cycle|navigate))\b/i.test(footer) &&
+      rows.some(row => /^(?:[☐☒]|[❯ ]*\d+\. (?:Type something|Chat about this)|Review your answers)/i.test(row))) return 'choice';
+  if (/\bEsc to (?:cancel|skip)\b/i.test(footer) &&
       /\b(?:Enter to (?:select|submit|confirm)|Tab to (?:cycle|navigate))\b/i.test(footer)) return 'permission';
   if (matchesError(entries, AUTH_FAIL_PATTERNS)) return 'auth-fail';
   if (matchesError(entries, RATE_LIMIT_PATTERNS)) return 'rate-limit';

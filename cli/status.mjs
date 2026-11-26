@@ -89,11 +89,16 @@ export async function projectStatus(project) {
   const rotations = projectIndex(project).rotations();
   const rotating = new Set(rotations.filter(item => item.boundAt != null && item.verifiedAt == null && item.failedAt == null)
     .map(item => item.successor));
-  return { ok: true, running: Boolean(live), stalledDeliveries: stalledDeliveries(messages),
+  const awaitingUser = rows.flatMap(row => {
+    const prompt = states.get(row.addr)?.userPrompt;
+    return prompt && row.endedAt === null ? [{ addr: row.addr, role: row.role, ...prompt }] : [];
+  });
+  return { ok: true, running: Boolean(live), stalledDeliveries: stalledDeliveries(messages), awaitingUser,
     sessions: rows.filter(row => row.endedAt == null).map(row => {
       const authMode = row.cli === 'claude' ? artifacts.job(row.addr)?.authMode : undefined;
       return { role: row.role, addr: row.addr, cli: row.cli, task: row.task, state: lifecycle(row),
         ...(authMode && { authMode }),
+        ...(states.get(row.addr)?.userPrompt && { userPrompt: states.get(row.addr).userPrompt }),
         ...(states.get(row.addr)?.hookGap && { hookGap: states.get(row.addr).hookGap }),
         ...(rotating.has(row.addr) && { awaitingVerifiedReport: true }) };
     }),
@@ -113,6 +118,8 @@ export function printStatus(result) {
   }
   console.log('Loom · ' + safe(result.project) + (result.running ? ' · online' : ' · offline'));
   section('Stalled deliveries', result.stalledDeliveries, stallText, Infinity);
+  section('Awaiting user', result.awaitingUser, row =>
+    [row.role, row.cli, row.addr, row.kind, row.summary].join(' · '), Infinity);
   section('Roles', result.sessions, row => [row.role ?? 'unassigned', row.cli, row.state,
     row.awaitingVerifiedReport ? 'awaiting report' : row.task ?? row.addr].join(' '), 6);
   section('Hook gaps', result.sessions.filter(row => row.hookGap),

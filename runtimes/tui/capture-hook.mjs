@@ -1,4 +1,5 @@
 import { appendFileSync, constants, readFileSync } from 'node:fs';
+import { claudePrompt } from '../../adapters/claude/hooks.mjs';
 import claude from '../../adapters/claude/index.mjs';
 import { deliveryId } from '../../inbox/message.mjs';
 
@@ -7,7 +8,7 @@ import { deliveryId } from '../../inbox/message.mjs';
 const fields = [
   'hook_event_name', 'session_id', 'transcript_path', 'cwd', 'source', 'model',
   'prompt_id', 'prompt', 'turn_id', 'tool_name', 'tool_use_id', 'last_assistant_message',
-  'is_interrupt', 'stop_hook_active', 'error', 'error_details',
+  'is_interrupt', 'stop_hook_active', 'error', 'error_details', 'notification_type',
 ];
 
 try {
@@ -20,6 +21,8 @@ try {
       (payload.session_id === sessionId || changed) &&
       (['SessionStart', 'SessionEnd', 'PreCompact', 'PostCompact'].includes(event) || claude.hooks.normalize(payload))) {
     const row = { receivedAt: Date.now(), deliveryId: deliveryId(payload.prompt) };
+    const promptState = claudePrompt(payload);
+    if (promptState) row.promptState = promptState;
     if (payload.tool_name === 'Bash' && payload.tool_input?.run_in_background === true) row.backgroundBash = true;
     for (const field of fields) {
       const value = payload[field];

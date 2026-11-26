@@ -151,6 +151,7 @@ export async function attachHost(project, row, job, save, controller, { stop = f
     get endedAt() { return current.endedAt; },
     get transcriptPath() { return current.transcriptPath; },
     get stuck() { return current.stuck; },
+    userPrompt: () => current.userPrompt,
     active: () => current.active && { ...current.active, turn: current.active.hcTurn },
     error: () => current.error,
     receipt: (action, id) => call('receipt', { action, id }),

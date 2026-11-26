@@ -1,10 +1,10 @@
 import { acceptsAgyHook } from './hook-binding.mjs';
 import { closeSync, constants, fstatSync, openSync, readFileSync, writeSync } from 'node:fs';
-import { getAntigravityNoOpStdout, normalize } from './hooks.mjs';
+import { agyPrompt, agyQuestionDenial, getAntigravityNoOpStdout, normalize } from './hooks.mjs';
 import { locateHookTranscript, replyForStop } from './transcript.mjs';
 import { deliveryId } from '../../inbox/message.mjs';
 
-const [sink, cwd, hookEventName, binding = sink + '.agy-session', sessionId] = process.argv.slice(2);
+const [sink, cwd, hookEventName, binding = sink + '.agy-session', sessionId, questionPolicy] = process.argv.slice(2);
 const openFlags = constants.O_NOFOLLOW | constants.O_NONBLOCK;
 
 function readRegularFile(path) {
@@ -40,12 +40,16 @@ function captureReply(event, payload) {
   }
 }
 
+let questionDenial;
+
 function capture() {
   const receivedAt = Date.now();
   const payload = JSON.parse(readFileSync(0, 'utf8'));
   if (!payload || typeof payload !== 'object') return;
   const event = normalize({ ...payload, hookEventName });
   if (!event?.sessionId || !acceptsAgyHook(payload, event, cwd, binding, sessionId, hookEventName)) return;
+
+  questionDenial = agyQuestionDenial(payload, hookEventName, questionPolicy);
 
   // Follow relay/hooks.mjs's per-worker append-only sink and keep the native correlation fields.
   const fields = ['invocationNum', 'initialNumSteps', 'executionNum', 'terminationReason', 'fullyIdle', 'stepIdx', 'modelName'];
@@ -67,6 +71,9 @@ function capture() {
   if (payload.error) row.error = true;
   const toolName = (payload.toolCall ?? payload.tool_call)?.name;
   if (typeof toolName === 'string') row.toolName = toolName;
+  const promptState = !questionDenial && agyPrompt(payload, hookEventName);
+  if (questionDenial) row.questionDenied = true;
+  if (promptState) row.promptState = promptState;
   if (event.type === 'turn-end') {
     const reply = captureReply(event, payload);
     if (reply !== undefined) row.finalReply = reply;
@@ -87,6 +94,6 @@ try {
 } catch {
   // Observing a hook does not change the CLI's decisions.
 } finally {
-  const reply = getAntigravityNoOpStdout(hookEventName);
+  const reply = questionDenial ?? getAntigravityNoOpStdout(hookEventName);
   if (reply !== undefined) process.stdout.write(reply);
 }

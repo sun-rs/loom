@@ -8,7 +8,7 @@ import { absoluteCommand, openNativeTui } from '../runtimes/tui/transport.mjs';
 import { codexFastArgs, nativeClaude } from './executables.mjs';
 import { eventPath, readText, writeState } from './io.mjs';
 import { codexEnvironmentArgs, runtimeDirectory } from '../cli/project.mjs';
-import { claudeIdleCompaction } from '../cli/policy.mjs';
+import { allowNativeQuestions, claudeIdleCompaction } from '../cli/policy.mjs';
 import { controllerFile, managedEnvironment, releaseRoot } from './release.mjs';
 import { workerEnvironment, workerProviderEnvironment } from './worker-environment.mjs';
 
@@ -42,7 +42,7 @@ export async function openTui(job, row, project, recordTemporary, recordBinding,
   const name = paneName(row.addr);
   const host = await openNativeTui({
     ...row, fast: job.fast, hookSink, name, env, sessionId: job.plannedNativeId, recordTemporary, recordBinding, previous: job.tui,
-    autoTrustWorkspace: job.autoTrustWorkspace, ...(controller && { controllerPath: controllerFile(project) }),
+    allowNativeQuestions: allowNativeQuestions(project, row.role), autoTrustWorkspace: job.autoTrustWorkspace, ...(controller && { controllerPath: controllerFile(project) }),
     stateDir: join(project, '.project', 'pty'),
     ...(row.cli === 'claude' && { command: nativeClaude(), hookRunner: claudeHookRunner(project),
       env: { ...env, DISABLE_AUTOUPDATER: '1', LOOM_HOOK_RELEASE: releaseRoot },

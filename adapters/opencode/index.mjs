@@ -1,3 +1,4 @@
+import { fileURLToPath } from 'node:url';
 import { deliveryId } from '../../inbox/message.mjs';
 
 const iso = value => typeof value === 'number' ? new Date(value).toISOString() : value ?? null;
@@ -52,12 +53,19 @@ function parse(text) {
   return { provider: 'opencode', turns, lastReply: turns.findLast(turn => turn.reply)?.reply ?? null, usage: {} };
 }
 
-function launch({ model, effort, sessionId }) {
+const promptObserver = fileURLToPath(new URL('./prompt-events', import.meta.url));
+export const openCodeQuestionDeny = { action: 'question', resource: '*', effect: 'deny' };
+
+function launch({ model, effort, sessionId, hookSink, allowNativeQuestions }) {
   const variant = effort ? `${model}#${effort}` : model;
-  return {
-    argv: ['opencode', 'mini', '--standalone', '--session', sessionId, '--agent', 'loom', '--model', variant],
-    env: { OPENCODE_CONFIG_CONTENT: JSON.stringify({ default_agent: 'loom', agents: { loom: { mode: 'primary', model: variant } } }) },
-  };
+  const promptSink = hookSink && sessionId ? hookSink + '.prompts' : undefined;
+  const permissions = allowNativeQuestions === false ? [openCodeQuestionDeny] : undefined;
+  const env = { OPENCODE_CONFIG_CONTENT: JSON.stringify({
+    default_agent: 'loom', agents: { loom: { mode: 'primary', model: variant, permissions } },
+    ...(promptSink && { plugins: [promptObserver] }),
+  }) };
+  if (promptSink) Object.assign(env, { LOOM_OPENCODE_PROMPT_SINK: promptSink, LOOM_OPENCODE_PROMPT_SESSION: sessionId });
+  return { argv: ['opencode', 'mini', '--standalone', '--session', sessionId, '--agent', 'loom', '--model', variant], env, promptSink };
 }
 
 const miniMenuFooter = / · ctrl\+p menu\s*$/i;
@@ -69,6 +77,11 @@ function classify(text) {
   const lines = text.trim().split('\n').map(line => line.trim()).filter(Boolean);
   const footer = lines.at(-1) ?? '';
   const prompt = lines.at(-2) ?? '';
+  if (/enter confirm\s+esc reject$/i.test(footer) &&
+      lines.some(line => /^(?:△\s+)?Permission required$/i.test(line))) return 'permission';
+  if (/↑↓ select\s+enter choose\s+tab next\s+esc dismiss$/i.test(footer) &&
+      lines.some(line => /^(?:◆\s+)?Questions$/i.test(line))) return 'choice';
+  if (lines.some(line => /^(?:Commands|Select (?:model|agent|variant)(?: \d+(?:\/\d+)?)?)\s+esc$/i.test(line))) return 'picker';
   if (/^(?:[!✗]\s*)?(?:HTTP 429|rate limit(?:ed)?|quota exceeded)\b/i.test(prompt)) return 'rate-limit';
   if (/^(?:[!✗]\s*)?(?:no credentials|not authenticated|unauthorized)\b/i.test(prompt)) return 'auth-fail';
   if (/\besc interrupt · /i.test(footer) || interruptFooter.test(footer)) return 'busy';

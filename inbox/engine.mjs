@@ -1,3 +1,4 @@
+import { promptKind } from '../adapters/prompt-state.mjs';
 import { randomUUID } from 'node:crypto';
 import { openStore } from './store.mjs';
 import { refusals } from './tui.mjs';
@@ -472,6 +473,7 @@ export function inbox(project, transport, report = console.error, { replyLimit, 
   }
 
   function pendingReason(message, observation) {
+    if (observation?.userPrompt || promptKind(observation?.state)) return 'target-awaiting-user';
     const proof = observation?.writeEvidence;
     if (proof?.heldDeliveryId === message.id || proof?.pendingDeliveryId === message.id && observation.state === 'draft-held') {
       return 'draft-held';
@@ -486,8 +488,9 @@ export function inbox(project, transport, report = console.error, { replyLimit, 
   function sweep(group, observation, at, stallMs) {
     let changed = false;
     const byId = new Map(group.map(message => [message.id, message]));
-    const busy = ['busy', 'compacting'].includes(observation?.state) ||
-      ['busy', 'compacting', 'background-in-progress'].includes(observation?.writeEvidence?.native);
+    const busy = !observation?.userPrompt && !promptKind(observation?.state) &&
+      (['busy', 'compacting'].includes(observation?.state) ||
+      ['busy', 'compacting', 'background-in-progress'].includes(observation?.writeEvidence?.native));
     for (const message of group.filter(awaitingDelivery)) {
       const carrier = byId.get(message.combinedInto) ?? message;
       const reason = !observation && message.pendingReason || pendingReason(carrier, observation);
@@ -546,7 +549,7 @@ export function inbox(project, transport, report = console.error, { replyLimit, 
 
   async function processTarget(all, observation, { canDispatch, known, at, coalesceMs, decorate } = {}) {
     const group = all.filter(message => !message.combinedInto);
-    if (!group.length || !observation || observation.state === 'finished') return;
+    if (!group.length || !observation || observation.state === 'finished' || observation.userPrompt || promptKind(observation.state)) return;
     const { target } = group[0];
     const retry = group.find(message => stalledDelivery(message) &&
       observation.writeEvidence?.retryableDeliveryId === message.id && message.retryAt == null);

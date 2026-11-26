@@ -45,7 +45,7 @@ const CODEX_MODEL_MIGRATION_KEY_ROW_RE = /enter\/esc\s*(?:continue|confirm)\s*·
 const CODEX_UPDATE_KEY_ROW_RE = /^enter\s*continue\s*·\s*esc\s*skip\s*$/i;
 const CODEX_STARTUP_HOOKS_KEY_ROW_RE = /^enter\s*confirm\s*·(?!\s*esc\s*back\b)/i;
 const PICKER_KEY_ROW_RE = /^enter(?: to)?\s*(?:select|confirm|continue)\s*·\s*esc\s*(?:back|skip|cancel)$/i;
-const PICKER_HEADING_RE = /^(?:select (?:a )?(?:model|reasoning effort|session|conversation)|(?:resume|fork) (?:a |an )?(?:previous )?(?:session|conversation)|choose working directory to|codex just got an upgrade|update available|hooks need review)\b/i;
+const PICKER_HEADING_RE = /^(?:select (?:a )?(?:model|reasoning (?:effort|level)|session|conversation)|(?:resume|fork) (?:a |an )?(?:previous )?(?:session|conversation)|choose working directory to|codex just got an upgrade|update available|hooks need review)\b/i;
 
 const AUTH_FAIL_PATTERNS = [
   /^authentication\s+failed\b/i,
@@ -352,7 +352,7 @@ function matchesPicker(entries) {
   // Orca startup-dialog-blocked-signals.ts. These complete last key rows
   // survive Codex's character-diff redraw even when its title is fragmented.
   return CODEX_MODEL_MIGRATION_KEY_ROW_RE.test(footer) || CODEX_UPDATE_KEY_ROW_RE.test(footer) ||
-    heading && (PICKER_KEY_ROW_RE.test(footer) || CODEX_STARTUP_HOOKS_KEY_ROW_RE.test(footer));
+    heading && (PICKER_KEY_ROW_RE.test(footer) || /^enter default · s session · esc back$/i.test(footer) || CODEX_STARTUP_HOOKS_KEY_ROW_RE.test(footer));
 }
 
 function matchesAuthFail(entries) {
@@ -456,6 +456,9 @@ export function classify(text) {
 
   if (matchesTrustDialog(entries)) return 'trust-dialog';
   if (matchesPicker(entries)) return 'picker';
+  const footer = entries.at(-1).trimmed;
+  if (/(?:^|\| )enter to submit answer(?:\s*\||$)/i.test(footer) &&
+      entries.some(entry => /^(?:[›> ]*)\d+[.)]\s+/.test(entry.trimmed))) return 'choice';
   const tail = entries.map(entry => entry.trimmed).join('\n');
   // Orca b7fd7caa3: src/main/runtime/agent-state-rules/codex.json, plan_implement_menu.
   if (/implement this plan\?[\s\S]*no,\s*stay\s*in\s*plan\s*mode[\s\S]*enter\s*select\s*·\s*esc\s*back\s*$/i.test(tail) ||

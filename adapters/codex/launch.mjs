@@ -35,7 +35,7 @@ function computeCodexTrustedHash(eventLabel, command, timeout) {
   return `sha256:${createHash('sha256').update(serialized).digest('hex')}`;
 }
 
-export function launch({ model, effort, cwd, prompt, hookSink, extraArgs = [] }) {
+export function launch({ model, effort, cwd, prompt, hookSink, allowNativeQuestions, extraArgs = [] }) {
   const directory = realpathSync(cwd);
   if (!Array.isArray(extraArgs) || extraArgs.some(arg => typeof arg !== 'string' || arg === '--')) {
     throw new TypeError('extraArgs must be an array of Codex options');
@@ -46,6 +46,8 @@ export function launch({ model, effort, cwd, prompt, hookSink, extraArgs = [] })
   const argv = ['codex', '--no-daemon', '--no-alt-screen', ...extraArgs,
     '--cd', directory, '--ask-for-approval', 'never', '--sandbox', 'workspace-write',
     '-c', 'check_for_update_on_startup=false'];
+  if (allowNativeQuestions !== undefined) argv.push('-c',
+    `features.default_mode_request_user_input=${allowNativeQuestions}`);
   if (process.platform !== 'win32') argv.push('-c', 'disable_paste_burst=true');
   // Orca b7fd7caa3 src/main/codex/trust/toml/config-toml-project-trust.ts uses trust_level.
   // Scope the same setting to this invocation.

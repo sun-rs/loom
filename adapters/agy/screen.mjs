@@ -82,9 +82,11 @@ export function classify(text) {
     return 'auth-fail';
   }
   if (overlayKey(rows)) return 'overlay';
+  if (rows.some(row => /^Question \d+\/\d+:/i.test(row)) &&
+      rows.some(row => /^(?:↑\/↓ Navigate).*\besc Skip\b/i.test(row))) return 'choice';
   if (/^(?:Switch Model|Select a model:?|Choose a theme:?|Select a conversation:?|Resume Conversation)$/im.test(tail) &&
       pickerFooter.test(footer)) return 'picker';
-  if (/(?:Allow once|Allow for this session|Do you want to (?:allow|run)|Permission Required)/i.test(tail) &&
+  if (/(?:Allow once|Allow for this session|Yes, run command|Do you want to (?:allow|run)|Permission Required)/i.test(tail) &&
       /(?:enter|esc) (?:to )?(?:select|confirm|deny|cancel)\b/i.test(footer)) return 'permission';
   if (/^[\u2800-\u28ff]\s+Compacting\b/imu.test(tail)) return 'compacting';
   if (state === 'busy') return state;

@@ -34,7 +34,8 @@ test('launch uses session settings and literal argv without creating files', (t)
   assert.equal(settings.skipDangerousModePermissionPrompt, true);
   assert.equal(settings.idleCompaction, false);
   assert.deepEqual(Object.keys(settings.hooks), ['UserPromptSubmit', 'Stop', 'StopFailure', 'PreToolUse',
-    'PostToolUse', 'PostToolUseFailure', 'PermissionRequest']);
+    'PostToolUse', 'PostToolUseFailure', 'PermissionRequest', 'Notification']);
+  assert.match(settings.hooks.Notification[0].matcher, /permission_prompt/);
   assert.equal(settings.hooks.Stop[0].hooks[0].args[1], join(cwd, 'event logs/worker\'s.jsonl'));
   assert.equal(settings.hooks.PostToolUse[0].matcher, '*');
   assert.deepEqual(readdirSync(cwd), []);

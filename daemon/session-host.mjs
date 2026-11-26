@@ -76,7 +76,7 @@ export async function main(project, addr, incarnation, release, { ownerGraceMs =
     const snapshot = oarSnapshot(runtime, runtime.rows, endedAt != null);
     const exit = runtime.rows.findLast(event => ['exited', 'released'].includes(event.type) && event.streamId === runtime.streamId);
     return { ...binding, sessionId: session.id, streamId: runtime.streamId, status: snapshot.runtimeStatus,
-      active: snapshot.active, error: runtime.error()?.message,
+      active: snapshot.active, ...(snapshot.userPrompt && { userPrompt: snapshot.userPrompt }), error: runtime.error()?.message,
       endedAt: endedAt ?? exit?.at, transcriptPath: transcript,
       ...(stalled && { stuck: { reason: 'request-timeout', at: stalled.at } }),
       model: session.model().value, effort: session.effort().value, steer: Boolean(session.steer) };

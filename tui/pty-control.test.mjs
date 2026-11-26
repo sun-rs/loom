@@ -190,6 +190,22 @@ test('Claude idle compaction leaves the idle composer writable without creating 
   assert.equal(second.kind, 'confirmed');
 });
 
+test('a native Claude approval vetoes an idle-looking composer before paste or Enter', async t => {
+  const f = await setup(t);
+  await f.hook({ hook_event_name: 'PermissionRequest', tool_name: 'Bash' });
+  const state = await f.account('state');
+  assert.equal(state.screen.kind, 'idle');
+  assert.equal(state.userPrompt.kind, 'awaiting-approval');
+  assert.equal(state.userPrompt.source, 'native');
+  assert.equal(state.ready, false);
+  const refused = await f.account('submit', { id: randomUUID(), text: 'held' });
+  assert.deepEqual(refused, { kind: 'refused', code: 'awaiting-approval' });
+  assert.deepEqual(f.writes, []);
+  await f.hook({ hook_event_name: 'PostToolUse', tool_name: 'Bash' });
+  await f.hook({ hook_event_name: 'Stop' });
+  assert.equal((await f.account('submit', { id: randomUUID(), text: 'after approval' })).kind, 'confirmed');
+});
+
 test('socket rejects a stale frame or a recent human draft without writing any automated bytes', async t => {
   const f = await setup(t);
   await assert.rejects(requestControl(f.socket, 'state'), /identity changed/);

@@ -1,10 +1,12 @@
+import { approval, choice, codexPrompt, promptDetails } from '../adapters/prompt-state.mjs';
 import { appendFileSync, constants, lstatSync, realpathSync, statSync } from 'node:fs';
 import { randomUUID } from 'node:crypto';
 import { join } from 'node:path';
-import { antigravityRuntime, claudeRuntime, codexRuntime, createRuntimeRegistry, opencodeRuntime } from '@botiverse/oar';
+import { appRequestKind, antigravityRuntime, claudeRuntime, codexRuntime, createRuntimeRegistry, opencodeRuntime } from '@botiverse/oar';
 import agy from '../adapters/agy/index.mjs';
 import claude from '../adapters/claude/index.mjs';
 import codex from '../adapters/codex/index.mjs';
+import { openCodeQuestionDeny } from '../adapters/opencode/index.mjs';
 import { deliveryId, wireText } from '../inbox/message.mjs';
 import { eventPath, jsonRows, prepareJournal } from './io.mjs';
 import { nativeClaude } from './executables.mjs';
@@ -12,7 +14,7 @@ import { captureOarTurnEnd, headAt } from './turn-heads.mjs';
 import { codexConfiguration } from './codex-launch.mjs';
 import { codexRefusal } from './codex-pipe-errors.mjs';
 import { claudeApiEnvKeys } from '../adapters/claude/launch.mjs';
-import { claudeAuthMode, claudeIdleCompaction } from '../cli/policy.mjs';
+import { allowNativeQuestions, claudeAuthMode, claudeIdleCompaction } from '../cli/policy.mjs';
 import { managedEnvironment } from './release.mjs';
 import { sandboxNativeWorker, workerEnvironment, workerNativeLogin,
   workerProviderEnvironment } from './worker-environment.mjs';
@@ -45,6 +47,12 @@ export async function openOar(row, project, resume) {
   const login = workerNativeLogin(row);
   const env = { HC_TERMINAL_ID: null, ...managed, ...isolated, ...workerProviderEnvironment(row), ...login };
   let launchArgs;
+  const questions = allowNativeQuestions(project, row.role);
+  if (row.cli === 'opencode' && !questions) {
+    const existing = JSON.parse(env.OPENCODE_CONFIG_CONTENT ?? process.env.OPENCODE_CONFIG_CONTENT ?? '{}');
+    const permissions = Array.isArray(existing.permissions) ? existing.permissions : [];
+    env.OPENCODE_CONFIG_CONTENT = JSON.stringify({ ...existing, permissions: [...permissions, openCodeQuestionDeny] });
+  }
   if (row.cli === 'codex') {
     launchArgs = codexConfiguration(project, row, managed, isolated);
   } else if (row.cli === 'agy') {
@@ -73,6 +81,7 @@ export async function openOar(row, project, resume) {
   if (login) installation = { ...installation, command: sandboxNativeWorker(project, row, login, isolated, installation.command) };
   const { cwd, model, effort } = row;
   return runtime.session(installation, { cwd, model, effort, env, launchArgs,
+    ...(row.cli === 'claude' && !questions && { disallowedTools: ['AskUserQuestion'] }),
     ...(row.cli === 'codex' && { endTurnProcessesOnAbort: true }), ...(resume ? { resume } : {}) });
 }
 
@@ -95,6 +104,7 @@ export function trackOar(project, row, session, onError, incarnation, onExit) {
   let failure = rows.findLast(event => ['stuck', 'recovered'].includes(event.type));
   failure = failure?.type === 'stuck' ? failure.reason : undefined;
   let suspending = false;
+  const prompts = new Map();
 
   const append = (event, type, fields = {}) => {
     if (seq !== event.seq) { seq = event.seq; ordinal = 0; }
@@ -108,6 +118,15 @@ export function trackOar(project, row, session, onError, incarnation, onExit) {
 
   function onEvent(event) {
     if (event.agentPath.length || event.sessionId !== session.id) return;
+    if (event.kind === 'app_request') {
+      const kind = appRequestKind(event.type);
+      if (kind === 'approval' || kind === 'question') {
+        const request = session.records().findLast(record => record.kind === 'request' && record.id === event.requestId);
+        const prompt = codexPrompt(event.type, request?.body?.native) ?? promptDetails(kind === 'approval' ? approval : choice);
+        prompts.set(event.requestId, { ...prompt, since: event.receivedAt, cli: row.cli, source: 'native' });
+      }
+    } else if (event.kind === 'app_answered') prompts.delete(event.requestId);
+    if (['turn_ended', 'exited', 'released'].includes(event.kind)) prompts.clear();
     if (event.kind === 'turn_started') {
       pending = { requestId: event.requestId, id: deliveryId(event.input), seq: event.seq };
       return;
@@ -196,7 +215,7 @@ export function trackOar(project, row, session, onError, incarnation, onExit) {
     append({ seq, receivedAt: Date.now() }, 'turn-unconfirmed', { turn, turnId, sinceSeq });
     active = pending = undefined;
   }
-  return { session, provider: row.cli, streamId, rows, active: () => active, clearInactive, unsubscribe,
+  return { session, provider: row.cli, streamId, rows, active: () => active, userPrompt: () => prompts.values().next().value, clearInactive, unsubscribe,
     sampleInputHead: () => { nextHead = headAt(row.cwd); },
     noteAbort: () => {
       const turn = active;
@@ -208,8 +227,9 @@ export function trackOar(project, row, session, onError, incarnation, onExit) {
 
 export function oarSnapshot(runtime, events, ended) {
   const status = runtime?.session.status().value;
-  const state = ended || status?.released ? 'finished' : !status ? 'unknown' :
-    status.kind === 'running' ? 'busy' : 'idle';
+  const userPrompt = !ended && !status?.released && runtime?.userPrompt?.();
+  const state = ended || status?.released ? 'finished' : userPrompt?.kind ?? (!status ? 'unknown' :
+    status.kind === 'running' ? 'busy' : 'idle');
   const current = runtime?.active();
   const active = status?.kind === 'running' ? {
     hcTurn: current?.turn ?? events.findLast(event => event.type === 'turn-start')?.turn ?? 0,
@@ -217,7 +237,7 @@ export function oarSnapshot(runtime, events, ended) {
     since: current?.since ?? status.lastEventAt,
   } : undefined;
   return { state, terminal: { turn: current?.turn ?? events.findLast(event => event.type === 'turn-end')?.turn ?? 0 },
-    active, events, strictEnd: true, runtimeStatus: status, streamId: runtime?.streamId };
+    active, events, ...(userPrompt && { userPrompt }), strictEnd: true, runtimeStatus: status, streamId: runtime?.streamId };
 }
 
 export function oarEnd(frame, observation) {

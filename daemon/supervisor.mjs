@@ -1,3 +1,4 @@
+import { approval, choice } from '../adapters/prompt-state.mjs';
 import { createHash, randomUUID } from 'node:crypto';
 import { join } from 'node:path';
 import { CommandError } from '../cli/sessions.mjs';
@@ -65,6 +66,7 @@ export function createSupervisor(project, {
   const budget = roleBudget(project, { now, sessions, notifications, batchDeliveryId, report });
   const parentFor = addr => sessions.routeParent(addr)?.addr ?? addr;
   const targetEnded = addr => sessions.rowFor(addr)?.endedAt != null;
+  const senior = row => row.role === 'leader' || row.role === 'auditor';
   const liveRole = (name, role) => sessions.rows().findLast(row =>
     row.project === name && row.role === role && row.endedAt === null && sessions.jobs.has(row.addr));
   let health = new Map();
@@ -84,10 +86,11 @@ export function createSupervisor(project, {
         const auditor = liveRole(name, 'auditor');
         if (auditor) {
           const details = batch.map(event => event.text).join('\n');
+          const deliveryEscalations = batch.map(event => event.deliveryId).filter(Boolean);
           saved(sessions.targetBinding(auditor), `Loom delivery infrastructure exception
 
 ${details}`, {
-            id, deliveryEscalations: batch.map(event => event.deliveryId), projectEvents: batch.map(event => event.id),
+            id, ...(deliveryEscalations.length && { deliveryEscalations }), projectEvents: batch.map(event => event.id),
           });
           return auditor.addr;
         }
@@ -219,6 +222,28 @@ ${details}`, {
     }
   }
 
+  async function inspectSession(row) {
+    const snapshot = await Promise.resolve().then(() => sessions.transport.inspect(sessions.targetBinding(row))).catch(() => undefined);
+    const userPrompt = sessions.rememberUserPrompt(row.addr, snapshot, now());
+    return { snapshot, userPrompt };
+  }
+
+  async function checkUserPrompts(stallMs) {
+    await Promise.all(sessions.rows().filter(row => row.endedAt === null && senior(row) &&
+      sessions.jobs.has(row.addr)).map(async row => {
+      const { userPrompt } = await inspectSession(row);
+      if (!userPrompt || now() - userPrompt.since < stallMs) return;
+      const { kind, since, summary } = userPrompt;
+      notifications.add({ id: `${row.addr}:user-prompt:${kind}:${since}`, type: 'target-awaiting-user',
+        project: row.project, addr: row.addr, at: now(), reason: kind, role: row.role, summary,
+        text: `Loom ${row.role} ${row.addr} ${kind} · ${summary}`,
+        ...(row.role === 'leader' ? { auditor: true, batch: 'user-prompt:auditor',
+          ...([approval, choice].includes(kind) && { desktopAlso: true }) } :
+          { externalOnly: true, batch: 'user-prompt:external' }),
+      });
+    }));
+  }
+
   function publishNotifications() {
     for (const row of sessions.rows().filter(row => row.endedAt === null)) {
       const job = sessions.jobs.get(row.addr);
@@ -230,7 +255,7 @@ ${details}`, {
     }
     for (const event of jsonRows(readText(watchJournal)).filter(event => event.type === 'stuck')) {
       const row = sessions.rowFor(event.addr);
-      if (!row) continue;
+      if (!row || senior(row) && event.reason === 'picker') continue;
       const job = sessions.jobs.get(row.addr);
       notifications.add({ id: event.incidentId, type: 'stuck', project: row.project, addr: row.addr,
         at: event.at, reason: event.reason, ...(row.role === 'worker' && { logOnly: true }) });
@@ -267,8 +292,9 @@ ${details}`, {
     for (const delivery of stalledDeliveries(mail.messages, now())) {
       const message = byId.get(delivery.id);
       const row = sessions.rowFor(delivery.target);
-      const upstream = row?.role === 'leader' && !message.deliveryEscalations;
-      const external = row?.role === 'auditor' || row?.role === 'super' || Boolean(message.deliveryEscalations);
+      const promptEscalation = row && senior(row) && delivery.reason === 'target-awaiting-user';
+      const upstream = !promptEscalation && row?.role === 'leader' && !message.deliveryEscalations;
+      const external = !promptEscalation && (row?.role === 'auditor' || row?.role === 'super' || Boolean(message.deliveryEscalations));
       const origin = message.deliveryEscalations?.map(id => byId.get(id)).filter(Boolean);
       const text = [stallText(delivery), ...(origin ?? []).map(item => `Original delivery ${item.id} to ${item.target.addr}`)].join('\n');
       notifications.add({ id: `${delivery.id}:stalled`, type: 'delivery-stalled',
@@ -304,7 +330,7 @@ ${details}`, {
     }));
   }
 
-  const reportedState = (snapshot, incident) => isStartupBlocker(snapshot?.state) ||
+  const reportedState = (snapshot, incident) => snapshot?.userPrompt || isStartupBlocker(snapshot?.state) ||
     snapshot?.hookGap && snapshot.state === 'idle' && incident?.reason === 'idle-without-stop' ? snapshot.state :
     incident?.state === 'needs-you' ? 'stuck' : snapshot?.state ?? 'unknown';
 
@@ -582,6 +608,7 @@ ${details}`, {
     }
     health = new Map((await watcher.poll()).map(row => [row.addr, row]));
     await checkStartupBlockers();
+    await checkUserPrompts(policy.delivery?.stallMs ?? uncertainWindow ?? defaultStallMs);
     publishNotifications();
     await pushNotifications();
   }
@@ -712,14 +739,17 @@ ${details}`, {
         }
         return { notifications: notifications.list(name, args.take === true, args.history === true) };
       }
-      if (command === 'ls') return pendingWork(mail.messages, undefined, parentFor, targetEnded);
-      if (command === 'status') return { sessions: await Promise.all(sessions.rows().filter(row => row.endedAt === null)
-        .map(async row => {
+      if (command === 'status' || command === 'ls') {
+        const live = await Promise.all(sessions.rows().filter(row => row.endedAt === null).map(async row => {
           const incident = health.get(row.addr);
-          const snapshot = await Promise.resolve().then(() => sessions.transport.inspect(sessions.targetBinding(row))).catch(() => undefined);
+          const { snapshot, userPrompt } = await inspectSession(row);
           return { addr: row.addr, state: reportedState(snapshot, incident),
-            ...(snapshot?.hookGap && { hookGap: snapshot.hookGap }) };
-        })) };
+            ...(userPrompt && { userPrompt }), ...(snapshot?.hookGap && { hookGap: snapshot.hookGap }) };
+        }));
+        if (command === 'status') return { sessions: live };
+        return { ...pendingWork(mail.messages, undefined, parentFor, targetEnded),
+          awaitingUser: live.flatMap(row => row.userPrompt ? [{ addr: row.addr, ...row.userPrompt }] : []) };
+      }
       const row = sessions.resolve(args.target, caller);
       if (command === 'handover') {
         const old = sessions.rowFor(args.from);
@@ -740,12 +770,13 @@ ${details}`, {
       if (command === 'state') {
         const incident = health.get(row.addr);
         const tui = sessions.jobs.get(row.addr)?.tui;
-        const snapshot = row.endedAt === null && await sessions.transport.inspect(sessions.targetBinding(row)).catch(() => undefined);
+        const { snapshot, userPrompt } = row.endedAt === null ? await inspectSession(row) : {};
         return { addr: row.addr, state: row.endedAt !== null ? 'exited' : reportedState(snapshot, incident),
           ...(tui && { transport: tui.transport, ...(tui.reason && { transportReason: tui.reason }) }),
           ...((snapshot?.reason ?? incident?.reason) && { reason: snapshot?.reason ?? incident.reason }),
           ...(snapshot?.writeEvidence && { writeEvidence: snapshot.writeEvidence }),
           ...(snapshot?.hookGap && { hookGap: snapshot.hookGap }),
+          ...(userPrompt && { userPrompt }),
           ...(snapshot?.runtimeStatus && { runtimeStatus: snapshot.runtimeStatus }),
           deliveries: deliveries(row.addr).map(receiptFor), notifications: notifications.list(row.project),
           rotations: index.rotations().filter(item => item.project === row.project),

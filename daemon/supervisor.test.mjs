@@ -31,9 +31,10 @@ function fixture(t, options) {
     let nativeStep = 0;
     let observer;
     let active;
+    const records = [];
     const session = {
       id,
-      records: () => [],
+      records: () => records,
       status: () => ({ value: active ? { kind: 'running', sinceSeq: active.sinceSeq, lastEventAt: active.at } : { kind: 'idle' } }),
       events: notify => { observer = notify; return () => { observer = undefined; }; },
       nativeSessionFile: async () => path,
@@ -91,7 +92,15 @@ function fixture(t, options) {
       emit('tool_call_ended', { callId, toolName: 'exec_command', exitCode }, end);
     }
     const context = tokens => emit('usage', { usage: { context: { tokens, contextWindow: 300_000 } } });
-    sessions.set(row.addr, { finish, check, context, session, loseEnd: () => { active = undefined; } });
+    function question(text, at) {
+      const requestId = randomUUID();
+      records.push({ kind: 'request', id: requestId, body: { native: { questions: [
+        { question: text, options: ['one', 'two'] },
+      ] } } });
+      emit('app_request', { requestId, type: 'item/tool/requestUserInput' }, at);
+      return () => emit('app_answered', { requestId });
+    }
+    sessions.set(row.addr, { finish, check, context, session, question, loseEnd: () => { active = undefined; } });
     return session;
   }
 
@@ -1425,4 +1434,44 @@ test('overdue pilot-shaped holds reach Auditor once, are shown on worker cards, 
   assert.equal((await stalls()).filter(event => event.deliveryId === pilotId).length, 1);
   assert.equal(f.read('inbox/state.json').messages.filter(message => message.deliveryEscalations).length, 1);
   await d.shutdown();
+});
+
+
+test('a native question holds deliveries and reaches Auditor and desktop once after its bound', async t => {
+  let time = Date.now();
+  const desktop = [];
+  const f = fixture(t, { now: () => time, externalNotification: async (_, events) => desktop.push(...events) });
+  const d = f.daemon();
+  t.after(() => d.shutdown());
+  const { session: leader } = await f.spawn(d, 'leader', 'L');
+  const { session: auditor } = await f.spawn(d, 'auditor', 'A');
+  await d.tick();
+  const answer = f.sessions.get(leader.addr).question('Pick ' + '决'.repeat(140), time);
+  const { deliveryId: id } = await d.handle('send', { target: leader.addr, mode: 'queue', text: 'held while asking' });
+  await d.tick();
+  const expected = { cli: 'codex', kind: 'awaiting-choice', since: time, source: 'native',
+    summary: 'Pick ' + '决'.repeat(115), options: 2 };
+  const visible = await d.handle('status', {});
+  assert.deepEqual(visible.sessions.find(row => row.addr === leader.addr).userPrompt, expected);
+  assert.deepEqual((await d.handle('ls', {})).awaitingUser, [{ addr: leader.addr, ...expected }]);
+  assert.equal((await d.handle('state', { target: leader.addr })).deliveries.find(row => row.deliveryId === id).reason,
+    'target-awaiting-user');
+  const notices = async () => (await d.handle('notifications', { history: true })).notifications
+    .filter(event => event.type === 'target-awaiting-user');
+  assert.equal((await notices()).length, 0);
+  time += 120_000;
+  await d.tick();
+  await d.tick();
+  await d.tick();
+  const [notice] = await notices();
+  assert.equal(notice.summary, expected.summary);
+  assert.equal((await notices()).length, 1);
+  assert.deepEqual(desktop.map(event => event.id), [notice.id]);
+  assert.equal(f.read('inbox/state.json').messages.find(row => row.projectEvents?.includes(notice.id)).target.addr, auditor.addr);
+  assert(!f.prompts.some(row => row.input.includes('held while asking')));
+  answer();
+  f.sessions.get(leader.addr).finish('question resolved');
+  await d.tick();
+  assert(f.prompts.some(row => row.input.includes('held while asking')));
+  assert.deepEqual((await d.handle('ls', {})).awaitingUser, []);
 });

@@ -10,7 +10,7 @@ import { request } from './rpc.mjs';
 const logPath = project => resolve(runtimeDirectory(project), 'notifications.json');
 export const readNotifications = project => JSON.parse(readText(logPath(project), '[]'));
 const exec = promisify(execFile);
-const desktopTypes = new Set(['needs-decision', 'project-completed', 'audit-escalation', 'leader-exited', 'consumption-pyramid', 'delivery-stalled']);
+const desktopTypes = new Set(['needs-decision', 'project-completed', 'audit-escalation', 'leader-exited', 'consumption-pyramid', 'delivery-stalled', 'target-awaiting-user']);
 export const desktopIntervalMs = 5 * 60_000;
 export const desktopEnabled = () => process.platform === 'darwin' &&
   process.env.LOOM_DESKTOP_NOTIFY !== '0' && process.env.NODE_TEST_CONTEXT === undefined;
@@ -22,8 +22,10 @@ export async function notifyExternal(project, events, execute = exec) {
   if (!desktopEnabled()) return;
   const types = [...new Set(events.map(event => event.type).filter(type => desktopTypes.has(type)))].join(', ');
   if (!types) return;
+  const prompt = events.find(event => event.type === 'target-awaiting-user');
+  const body = prompt ? `${prompt.role} · ${prompt.summary}` : `${types.slice(0, 180)}. Open loom notifications for details.`;
   await execute('/usr/bin/osascript', ['-e', appleScript, '--', `Loom · ${basename(project)}`,
-    `${types.slice(0, 180)}. Open loom notifications for details.`], { timeout: 3000 });
+    body], { timeout: 3000 });
 }
 
 export function projectNotifications(project, now = Date.now) {
@@ -86,12 +88,19 @@ export function projectNotifications(project, now = Date.now) {
       const ledgerOnly = unrouted.filter(event => !desktop || !desktopTypes.has(event.type));
       if (ledgerOnly.length) mark(ledgerOnly, 'log');
       if (!desktop) return;
-      const eligible = unrouted.filter(event => desktopTypes.has(event.type));
+      const eligible = [...unrouted.filter(event => desktopTypes.has(event.type)), ...events.filter(event =>
+        event.desktopAlso && event.pushedAt != null && event.pushRoute !== 'external' && event.desktopAt == null)];
       for (const [name, batch] of Map.groupBy(eligible, event => event.project)) {
-        if (events.some(event => event.project === name && event.pushRoute === 'external' &&
-            desktopTypes.has(event.type) && now() - event.pushedAt < desktopIntervalMs)) continue;
-        // Reserve a banner durably before the desktop side effect, including across loomd restarts.
-        mark(batch, 'external');
+        if (events.some(event => event.project === name &&
+            now() - (event.desktopAt ?? (event.pushRoute === 'external' ? event.pushedAt : -Infinity)) < desktopIntervalMs)) continue;
+        // Keep one durable notice when both the Auditor and desktop receive it.
+        const routed = batch.filter(event => event.pushedAt != null);
+        for (const event of routed) event.desktopAt = now();
+        try { mark(batch.filter(event => event.pushedAt == null), 'external'); }
+        catch (error) {
+          for (const event of routed) delete event.desktopAt;
+          throw error;
+        }
         await desktop(name, batch);
       }
     },

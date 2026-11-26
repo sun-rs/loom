@@ -11,6 +11,7 @@ import opencode from '../adapters/opencode/index.mjs';
 import { boundTranscript, finalFromStop, terminalEvents, withClaudeTranscriptStops } from '../relay/sources.mjs';
 import { agyDeliveryParts, checksDeliveryIntegrity, claudeDigestVersion, claudeNativeDigest, deliveryId, payloadDigest } from './message.mjs';
 import { controlTui } from '../runtimes/tui/transport.mjs';
+import { screenPrompt } from '../adapters/prompt-state.mjs';
 import { readRequestBook } from '../tui/request-book.mjs';
 
 const exec = promisify(execFile);
@@ -339,14 +340,17 @@ export function tui(project, call = hc, fixtureSend, control = controlTui) {
         } };
       }
       const { screen, host, native: holderNative } = frame;
+      const fallback = screenPrompt(screen.kind, screen.text ?? '');
+      const userPrompt = frame.userPrompt ?? (fallback && { ...fallback, cli: provider, source: 'screen' });
       const active = frame.phase === 'busy' && holderNative.activeSince !== undefined && {
         pty: true, hcTurn: terminal.turn, since: holderNative.activeSince, sessionId: holderNative.sessionId, turnId: holderNative.activeTurn,
       };
       const veto = ['working', 'blocked', 'error'].includes(status);
-      const state = frame.exit ? 'finished' : frame.blocker ?? (native.background ? 'busy' : frame.ready && !veto ? 'idle' :
+      const state = frame.exit ? 'finished' : userPrompt?.kind ?? frame.blocker ?? (native.background ? 'busy' : frame.ready && !veto ? 'idle' :
         ['blocked', 'error'].includes(status) ? 'blocked' : screen.kind === 'busy' && active ? 'busy' :
           ['idle', 'busy'].includes(screen.kind) ? 'unknown' : screen.kind);
-      return { ...snapshot, state, active, generation: host.generation, urgentReady: frame.urgentReady && !veto, writeEvidence: {
+      return { ...snapshot, state, active, generation: host.generation,
+        ...(userPrompt && !frame.exit && { userPrompt }), urgentReady: !userPrompt && frame.urgentReady && !veto, writeEvidence: {
         transport: binding.transport, screen: screen.kind, native: native.background ? 'background-in-progress' : holderNative.phase ?? 'unknown', hc: status ?? null,
         complete: screen.text !== undefined, humanActive: host.humanActive, composerEmpty: screen.empty,
         pendingDeliveryId: frame.pending, submittedDeliveryId: frame.submittedDeliveryId,
@@ -355,15 +359,18 @@ export function tui(project, call = hc, fixtureSend, control = controlTui) {
           heldDraftBytes: frame.heldDraftBytes }),
       } };
     }
-    if (binding?.transport === 'plain-hc' || (!fixtureSend && binding)) {
-      return { ...snapshot, state: 'blocked',
-        writeEvidence: { transport: binding.transport ?? 'legacy-hc', reason: binding.reason ?? 'control-unavailable' } };
-    }
-    const frame = await call('read', terminal.address, '--lines', '0');
+    const readOnly = binding?.transport === 'plain-hc' || (!fixtureSend && binding);
+    const frame = await call('read', terminal.address, '--lines', '0').catch(error => {
+      if (!readOnly) throw error;
+    });
     const visible = terminal.screen !== 'inexact' && frame?.complete === true &&
       frame.how === 'screen' && typeof frame.text === 'string';
     const screen = visible ? adapters.get(provider).screen.classify(frame.text) : 'unknown';
     const status = terminal.status?.state;
+    const details = screenPrompt(screen, frame?.text ?? '');
+    const userPrompt = details && { ...details, cli: provider, source: 'screen' };
+    if (readOnly) return { ...snapshot, state: userPrompt?.kind ?? 'blocked', ...(userPrompt && { userPrompt }),
+      writeEvidence: { transport: binding.transport ?? 'legacy-hc', reason: binding.reason ?? 'control-unavailable' } };
     let state = screen;
     if (status === 'blocked' || status === 'error') state = 'blocked';
     else if (['idle', 'busy', 'unknown'].includes(screen)) {
@@ -374,7 +381,7 @@ export function tui(project, call = hc, fixtureSend, control = controlTui) {
     }
     const active = native.state === 'busy' ? activeTurn(terminal, native.opened) : undefined;
     const writeEvidence = { screen, native: native.state, hc: status ?? null, complete: visible, proof: native.proof };
-    return { ...snapshot, state, active, writeEvidence };
+    return { ...snapshot, state: userPrompt?.kind ?? state, active, writeEvidence, ...(userPrompt && { userPrompt }) };
   }
 
   async function resolve(target) {
