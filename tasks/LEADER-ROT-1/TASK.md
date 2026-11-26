@@ -21,3 +21,28 @@ npm test green; RESULT.md Chinese, `STATUS: done`. Red lines as before; never ty
 The pilot-2 agy Leader read memory/store.mjs, thought for 26 s and diagnosed the defect itself before forwarding. That work belongs to a worker or reviewer, and every file read costs the Leader's whole big context.
 - Leader prompt and skill: the Leader does not read source or tests or diagnose. It forwards reviewer findings verbatim to the worker card (`loom send` with the reply file path) and spawns a reviewer for anything that needs reading. Allowed reads: gate packs, evidence cards, `loom hist` summaries, `git diff --stat`.
 - Measure from `loom hist --role leader` (pilot-2, read-only): count Leader file reads/greps/test runs per gate before the change, and report it in RESULT.md as the baseline metric.
+
+## Item 7 (user ruling R21, 2026-11-26) — no routine reviewer; the Leader stops running tests
+User: "新增一个角色，这是在原计划之外的，不合理。你可以顶多是auditor自己派出sub或者小worker，但是一般是临时的，不是常规动作。"
+User also noted the Leader in the pure-hc prototype was woken often and had long conversations, yet was never the top token consumer.
+
+Measured from the pilot-2 Leader transcript (9a62b0a0, 478 steps). Context grew from 57K to 317K tokens with no compaction. Tool-output and system content by category:
+
+| Category | Count | Share |
+|---|---|---|
+| Running tests | 47 | 46% (192K chars) |
+| File reads/searches | 35 | 21% |
+| Other | 38 | 12% |
+| `loom state`/send JSON | 27 | 8% |
+| git merge/worktree | 11 | 6% |
+| agy efficiency reminders | 44 | 5% |
+
+Ten background-task results were ~10K chars each.
+
+1. **Revert PYRAMID-2 item 2 as a default.** Gates no longer spawn a reviewer. `loom gate pack` no longer warns about a missing reviewer conclusion. A reviewer is an Auditor-only, occasional, temporary one-turn check: rate-limited per gate, counted against `maxWakesPerGate`, never spawned by the Leader by default.
+   - Update docs/ORG.md, the skill and role prompts, and the policy example (reviewer no longer listed as a standing role; keep the spawn mechanism for the Auditor's rare use).
+2. **Verification lives in the worker card.**
+   - The worker runs the full suite in its own card (now possible under the sandbox, LIVENESS-1 item 9) and the evidence card records it.
+   - Integration/merge of candidate branches and the full-suite run on the candidate are a worker card ("integration worker"), not Leader commands.
+   - The Leader never runs `npm test`, never reads source/tests, never polls `loom state` in loops. It uses `loom status`/evidence summaries that loomd pushes on its next wake.
+3. **Measure** with the same categorisation (script in the task dir), before and after on a replay, and report the expected Leader context and raw-token drop.
