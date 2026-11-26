@@ -1,0 +1,7 @@
+# MERGE-ACCT-1 — bring pilot-cell's `loom accounts` into main, modular (user approved 2026-11-27)
+Source: branch pilot-cell @ 880b0110 (CELL-ACCT-1, gated and approved there). Target: main (f733e616 or newer). User condition: "注意从组织架构上的模块化，不要混在一起".
+1. New worktree /Users/sun/Code/repos/loom-acct-merge, branch merge/accounts from main. Bring in the accounts feature as a clearly bounded module set (collection/passive extraction, store, refresh callers, rendering/CLI, alerts) — list its files; anything that touched unrelated loomd parts (e.g. daemon/host-client.mjs socket-handshake change, executable resolver changes) goes in separate, separately-explained commits and must be reconciled with main's versions (main has SOCK-AUTH, HARDEN-PS, CCP-rejecting nativeClaude) — prefer main's behaviour, keep the CCP-rejecting resolver for every CLI.
+2. Wire the Status TUI Accounts panel (TUI-STATUS-2 contract, docs/ACCOUNTS-SCHEMA.md) to the real `loom accounts --json`; reconcile schema differences.
+3. Version allowlist: if a newer CLI version's payload passes structural validation, show it tagged "unverified version" and notify Super; hide only on structural mismatch (Super ruling).
+4. npm run lint, npm test twice, git diff --check; module boundary check: a short doc docs/ACCOUNTS.md listing module responsibilities and interfaces.
+Don't push, don't move main. RESULT.md Chinese, STATUS: done.
