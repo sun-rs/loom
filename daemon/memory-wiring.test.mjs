@@ -271,12 +271,12 @@ test('5a · redaction stays on and multiline private blocks never appear in entr
   assert.doesNotMatch(JSON.stringify([first, bypass, replay, await show(f, auditor, first.item.id), f.snapshot()]),
     /SYNTHETIC_MEMORY_SECRET|PRIVATE_BLOCK_[AB]|<\/?private>/);
 });
-test('6b L8 · store maintenance prunes full receipts and rejects changed expired replay', async () => {
+async function expiredReceiptReplay() {
   let state, now = initialTime;
   const binding = { sessionId: 'S', principal: 'A', role: 'auditor', project: 'P', cardId: null };
   const open = () => createMemoryStore({
     now: () => now, readState: () => state, commitState: next => { state = structuredClone(next); },
-    evidence: { root: '/fixture', realpath: path => path }, classifySensitive, receiptTtlMs: 1000,
+    evidence: { root: '/fixture', realpath: path => path }, classifySensitive,
   });
   let store = open();
   const request = title => ({
@@ -287,7 +287,7 @@ test('6b L8 · store maintenance prunes full receipts and rejects changed expire
   now += 750;
   const second = await store.write(binding, fresh);
   assert.ok(first.ok && second.ok);
-  now += 300;
+  now = initialTime + 30 * 86_400_000 + 1;
   store = open();
   await store.maintain();
   assert.deepEqual(state.receipts.map(row => row.requestId), [fresh.requestId]);
@@ -296,10 +296,25 @@ test('6b L8 · store maintenance prunes full receipts and rejects changed expire
   assert.equal((await store.write(binding, { ...fresh, entry: { ...fresh.entry, body: 'Changed.' } })).code, 'conflict');
   assert.deepEqual(state, retained);
   assert.equal((await store.access.show(binding, first.item.id)).item.revision, 1);
+  return { store, binding, request, old, first, retained, snapshot: () => state };
+}
+
+test('6b L8 · store maintenance prunes full receipts and rejects changed expired replay', async () => {
+  const { store, binding, request, old, retained, snapshot } = await expiredReceiptReplay();
   const replay = await store.write(binding, { ...request('new'), requestId: old.requestId });
   assert.equal(replay.code, 'conflict', 'changed replay of an expired request ID must conflict');
   assert.equal(replay.ok, false);
-  assert.deepEqual(state, retained);
+  assert.deepEqual(snapshot(), retained);
+});
+
+test('6b L8 · identical replay after 30 days never creates a second entry', async () => {
+  const { store, binding, old, first, retained, snapshot } = await expiredReceiptReplay();
+  const replay = await store.write(binding, old);
+  const conflict = replay.ok === false && replay.code === 'conflict';
+  const idempotent = replay.ok === true && replay.item?.id === first.item.id &&
+    replay.receipt?.requestId === old.requestId;
+  assert.deepEqual({ entriesAdded: snapshot().entries.length - retained.entries.length, conflictOrIdempotent: conflict || idempotent },
+    { entriesAdded: 0, conflictOrIdempotent: true });
 });
 test('6b L8 · expired receipt conflicts persist across daemon tick and restart', async t => {
   const statePath = join(mkdtempSync(join(isolatedHome, 'receipts-')), 'state.json');

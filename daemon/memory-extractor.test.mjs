@@ -24,7 +24,8 @@ const baseURL = 'http://127.0.0.1/fixture/v1';
 const model = 'fixture-extractor';
 const turnUsage = { input: 13, output: 7 };
 
-function fakeProvider(t, { statusFor = () => 200, usage = turnUsage, proposals = () => [], networkError } = {}) {
+function fakeProvider(t, { statusFor = () => 200, usage = turnUsage, proposals = () => [], networkError,
+  beforeResponse } = {}) {
   const requests = [];
   const addresses = [];
   const networkAuth = [];
@@ -37,6 +38,7 @@ function fakeProvider(t, { statusFor = () => 200, usage = turnUsage, proposals =
     requests.push(attempt);
     const counts = typeof usage === 'function' ? usage(JSON.parse(raw), requests.length) : usage;
     const content = JSON.stringify({ proposals: proposals(requests.length) });
+    if (beforeResponse) await beforeResponse(JSON.parse(raw));
     const anthropic = req.url.endsWith('/messages');
     const envelope = anthropic ? {
       id: 'msg-fixture', type: 'message', role: 'assistant', model, stop_reason: 'end_turn',
@@ -208,8 +210,9 @@ function fixture(t, { config = {}, runStage, fixtureCredential = () => fixtureKe
     await tick();
     return addr;
   }
+  const finishTurn = (addr, reply, options) => sessions.get(addr).finish(reply, options);
   async function finish(addr, reply, options) {
-    const turnId = sessions.get(addr).finish(reply, options);
+    const turnId = finishTurn(addr, reply, options);
     await tick();
     return turnId;
   }
@@ -226,7 +229,7 @@ function fixture(t, { config = {}, runStage, fixtureCredential = () => fixtureKe
       'commit', '--allow-empty', '-qm', 'Gate fixture candidate');
   }
   return { root, project, get daemon() { return daemon; }, ...provider, keyReads, logs, reports, prompts,
-    tick, restart, spawn, finish, send, read, initGit,
+    tick, restart, spawn, finish, finishTurn, send, read, initGit,
     advance: (ms = 86_400_000) => { clock += ms; },
     cost: () => projectCost(project, projectSessions(project), { now: clock }),
     status: () => projectStatus(project) };
@@ -574,12 +577,13 @@ console.log(stdout);
     });
   }
   // Drive the real loopback request handler without a socket, then give its response to the child.
-  let bridge;
+  const bridges = new Map();
   t.mock.method(Server.prototype, 'listen', function (port, host, ready) {
     assert.equal(port, 0);
     assert.equal(host, '127.0.0.1');
-    bridge = this;
-    this.address = () => ({ port: 12345 });
+    const fixturePort = 12345 + bridges.size;
+    bridges.set(fixturePort, this);
+    this.address = () => ({ port: fixturePort });
     queueMicrotask(ready);
     return this;
   });
@@ -592,7 +596,9 @@ console.log(stdout);
     const configPath = envPairs.find(pair => pair.startsWith('OPENCODE_CONFIG=')).slice('OPENCODE_CONFIG='.length);
     const config = JSON.parse(readFileSync(configPath, 'utf8'));
     const url = new URL(config.providers.loom.settings.baseURL + '/chat/completions');
-    assert.equal(url.origin, 'http://127.0.0.1:12345');
+    assert.equal(url.hostname, '127.0.0.1');
+    const bridge = bridges.get(Number(url.port));
+    assert.ok(bridge, 'the child uses its own fixture bridge');
     const result = spawn.call(this, { ...options, file: executable, args: [executable, ...options.args.slice(1)], envPairs });
     const stdin = this.stdin;
     bridge.emit('request', { method: 'POST', url: url.pathname, resume() {} }, {
@@ -794,15 +800,16 @@ test('6b R25: stored user preferences and rulings stay out of turn and stage req
     { turn: [], child: [], upstream: [] });
 });
 
-test('6b stage sends worker activity without the head of the reply', async t => {
+test('6b stage sends worker activity without any raw worker reply lines', async t => {
   const f = fixture(t);
   const runner = fakeOpenCode(t, f.root);
   seedLegacyStageMemory(f.project);
   const leader = await f.spawn('leader', 'Prepare the worker activity fixture.');
   await f.finish(leader, 'Ready to review the worker activity.');
   const worker = await f.spawn('worker', 'Read the fixture record.', leader, { task: 'G6B-WORKER-ACTIVITY' });
-  const sentinel = 'WORKER_HEAD_RAW_SENTINEL_G6B';
-  await f.finish(worker, `${sentinel}\nDONE FIXTURE`, { tools: true });
+  const headSentinel = 'WORKER_HEAD_RAW_SENTINEL_G6B';
+  const tailSentinel = 'WORKER_TAIL_RAW_SENTINEL_G6B';
+  await f.finish(worker, `${headSentinel}\n${tailSentinel}\nDONE FIXTURE`, { tools: true });
   await completeStageGate(f, leader, 'G6B-WORKER-PRIVACY');
   assert.equal(f.requests.length, 2, 'the stage reached upstream after the Leader turn');
   const { child, upstream } = r3bStageInputs(f, runner);
@@ -813,8 +820,9 @@ test('6b stage sends worker activity without the head of the reply', async t => 
     assert.match(activity.summary, /工具 [1-9]\d*\b/, `${channel} preserves a positive tool count`);
   }
   const { path, method, headers, raw } = f.requests.at(-1);
-  assert.deepEqual({ child: JSON.stringify(child).includes(sentinel),
-    upstream: JSON.stringify({ path, method, headers, raw }).includes(sentinel) }, { child: false, upstream: false });
+  const rawReplyHits = payload => [headSentinel, tailSentinel].filter(sentinel => JSON.stringify(payload).includes(sentinel));
+  assert.deepEqual({ child: rawReplyHits(child), upstream: rawReplyHits({ path, method, headers, raw }) },
+    { child: [], upstream: [] });
 });
 
 test('6b reserves the provider input estimate and maximum output within the remaining daily tokens', async t => {
@@ -840,6 +848,96 @@ test('6b reserves the provider input estimate and maximum output within the rema
   if (day.charged > dailyTokens) violations.push(`charged ${day.charged} tokens against a cap of ${dailyTokens}`);
   if (day.tokens > dailyTokens) violations.push(`settled ${day.tokens} tokens against a cap of ${dailyTokens}`);
   assert.deepEqual(violations, []);
+});
+
+test('6b competing stage requests keep outstanding and settled tokens within the daily limit', async t => {
+  const dailyTokens = 2000;
+  const inputTokens = ({ messages }) => estimateTokens(JSON.stringify(messages));
+  const firstRequest = Promise.withResolvers();
+  const release = Promise.withResolvers();
+  let outstanding = 0;
+  let peak = 0;
+  const reservations = [];
+  const f = fixture(t, { config: { limits: { dailyTokens } },
+    usage: request => ({ input: inputTokens(request), output: request.max_tokens }),
+    async beforeResponse(request) {
+      const required = inputTokens(request) + request.max_tokens;
+      outstanding += required;
+      peak = Math.max(peak, outstanding);
+      reservations.push(Object.values(readExtractorState(f.project).days)[0].charged);
+      firstRequest.resolve(request);
+      await release.promise;
+      outstanding -= required;
+    },
+  });
+  fakeOpenCode(t, f.root);
+  seedLegacyStageMemory(f.project);
+  const leader = await f.spawn('leader', 'Prepare the concurrent stage fixture.');
+  const workers = [];
+  for (const suffix of ['FIRST', 'SECOND']) {
+    workers.push(await f.spawn('worker', 'Check the fixture.', leader, { task: `G6B-CONCURRENT-${suffix}` }));
+  }
+  for (const [index, gate] of ['G6B-CONCURRENT-FIRST', 'G6B-CONCURRENT-SECOND'].entries()) {
+    f.advance(1000);
+    f.finishTurn(workers[index], 'Fixture check complete.', { tools: true });
+    await f.daemon.handle('notifications', { gateComplete: gate }, leader);
+  }
+
+  const firstTick = f.daemon.tick();
+  let competingTick;
+  try {
+    const first = await Promise.race([firstRequest.promise, firstTick.then(() => assert.fail('no stage request reached the provider'))]);
+    const fullRequest = inputTokens(first) + 1024;
+    assert.ok(fullRequest <= dailyTokens && 2 * 1024 > dailyTokens,
+      'the daily budget fits one full request and cannot fit two full output allowances');
+    competingTick = f.daemon.tick();
+    await new Promise(resolve => setImmediate(resolve));
+  } finally {
+    release.resolve();
+    await Promise.all([firstTick, competingTick]);
+  }
+  const [day] = Object.values(readExtractorState(f.project).days);
+  const settled = f.requests.reduce((total, { raw }) => {
+    const request = JSON.parse(raw);
+    return total + inputTokens(request) + request.max_tokens;
+  }, 0);
+  assert.equal(day.stageTokens, settled, 'the ledger accounts for every stage response');
+  assert.ok(Math.max(peak, ...reservations, settled, day.charged) <= dailyTokens,
+    `daily cap ${dailyTokens}; outstanding peak ${peak}, reservations ${reservations.join(', ')}, settled ${settled}, charged ${day.charged}`);
+});
+
+test('6b stage catches up a daily-cap window at the next boundary exactly once', async t => {
+  const f = fixture(t, { config: { limits: { dailyCalls: 2 } } });
+  const runner = fakeOpenCode(t, f.root);
+  seedLegacyStageMemory(f.project);
+  const leader = await f.spawn('leader', 'Prepare the daily-cap fixture.');
+  const auditor = await f.spawn('auditor', 'Review the daily-cap fixture.');
+  const skippedReplies = ['Leader history from the capped day.', 'Auditor history from the capped day.'];
+  await f.finish(leader, skippedReplies[0]);
+  f.advance(1000);
+  await f.finish(auditor, skippedReplies[1]);
+  assert.equal(f.addresses.length, 2, 'the ordinary turns exhaust the daily call allowance');
+  await completeStageGate(f, leader, 'G6B-STAGE-DAILY-CAP');
+  assert.equal(f.addresses.length, 2, 'the capped boundary sends no provider request');
+  assert.throws(() => runner.exchange(), { code: 'ENOENT' }, 'the capped boundary launches no child');
+  assert.equal(Object.values(readExtractorState(f.project).days)[0].stopReason, 'dailyCalls');
+
+  f.advance();
+  await f.tick();
+  assert.equal(f.addresses.length, 2, 'rollover alone does not send the window');
+  await completeStageGate(f, leader, 'G6B-STAGE-DAILY-RECOVERY');
+  assert.equal(f.requests.length, 3, 'the first boundary after rollover reaches upstream');
+  const stagedReplies = () => Object.values(r3bStageInputs(f, runner))
+    .map(({ history }) => history.map(({ reply }) => reply));
+  assert.deepEqual(stagedReplies(), [skippedReplies, skippedReplies], 'both targets receive the retained window');
+
+  f.advance();
+  await f.send(leader, 'Prepare new history after recovery.');
+  const freshReply = 'Fresh history after the recovered window.';
+  await f.finish(leader, freshReply);
+  await completeStageGate(f, leader, 'G6B-STAGE-DAILY-NEXT');
+  assert.equal(f.requests.length, 5, 'the next boundary also reaches upstream');
+  assert.deepEqual(stagedReplies(), [[freshReply], [freshReply]], 'the recovered history is sent only once');
 });
 
 for (const failure of ['upstream HTTP error', 'unavailable credential']) {
@@ -997,7 +1095,9 @@ test('R3B extractor only forwards inbox bodies from allowlisted sources', async 
       JSON.stringify(delivery.input.received).includes(sentinel));
     leaks[`per-turn request ${delivery.reply}`] = denied.filter(sentinel => delivery.raw.includes(sentinel));
   }
-  for (const [channel, { workerSummaries, history, ...rest }] of Object.entries(stages)) {
+  const { path, method, headers, raw } = f.requests.at(-1);
+  const stageRequests = { child: stages.child, upstream: { path, method, headers, raw } };
+  for (const [channel, { workerSummaries, history }] of Object.entries(stages)) {
     for (const delivery of deliveries) {
       const turn = history.find(({ reply }) => reply === delivery.reply);
       assert.ok(turn, `${channel} stage contains the completed inbox turn`);
@@ -1005,13 +1105,7 @@ test('R3B extractor only forwards inbox bodies from allowlisted sources', async 
     }
     assert.equal(workerSummaries.filter(({ addr }) => addr === worker).length, 2,
       `${channel} stage retains both worker activity summaries`);
-    leaks[`${channel} stage outside L1`] = denied.filter(sentinel => JSON.stringify({ history, ...rest }).includes(sentinel));
-    const withoutWorkerPreviews = workerSummaries.map(({ addr, summary, ...metadata }) => ({ addr, ...metadata,
-      summary: addr === worker ? summary.split('\n').filter(line => !line.startsWith('回复 ')).join('\n') : summary }));
-    leaks[`${channel} stage inside other L1 fields`] = denied.filter(sentinel =>
-      JSON.stringify(withoutWorkerPreviews).includes(sentinel));
-    leaks[`${channel} stage ordinary messages in L1`] = denied.filter(sentinel =>
-      ![batchSentinel, receiptSentinel].includes(sentinel) && JSON.stringify(workerSummaries).includes(sentinel));
+    leaks[`${channel} stage request`] = denied.filter(sentinel => JSON.stringify(stageRequests[channel]).includes(sentinel));
   }
   assert.deepEqual({ leaks: Object.fromEntries(Object.entries(leaks).filter(([, hits]) => hits.length)),
     placeholderCount: texts.size }, { leaks: {}, placeholderCount: 1 });
