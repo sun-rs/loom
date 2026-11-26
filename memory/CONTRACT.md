@@ -25,11 +25,12 @@
 - 持久快照含 `entries, changes, seq, files` 及重放元数据。`files` 以路径为键，值为 Markdown 文本。允许空快照启动。`rebuildIndex()` 用生效条目重建持久索引。遗忘只保留最小标记，持久快照与旧回执重放均须去除旧正文。
 - 有审结权的角色可遗忘对应候选，包括 `pending, returned, rejected, merged`。遗忘并入目标时一并遗忘源候选，删除 Markdown 正文、清理旧回执，并使源候选和目标的 `show` 均返回空。
 - `evidence` 提供 `root, realpath(path), hasCommit(sha)`。可信观察与脱敏用 `getObservations(sessionId), classifySensitive(text), replacement`。未向 `createMemoryStore` 注入 `classifySensitive` 时，落正文的写操作（`put`、`propose`、`promote`、`merge`、`import_rulings`）返回 `{ ok: false, code: 'classifier-missing' }`，不提交且持久状态不变。授权失败使用独立的 `forbidden` 错误码。符合权限与修订要求的 `forget` 仍可删除内容。`readRaw(sessionId)` 提供待派生的历史。
-- `merge` 将目标和候选已有的外部来源与审查者会话的 web/MCP 观察合并，经脱敏后存入结果的 `externalSource`。并入正文经脱敏后写入条目、Markdown 和回执，持久快照各处均须去除敏感原文。对已并入候选更换 `targetId` 或 `body` 的请求返回 `conflict`，不提交且持久状态不变。原样重放复用回执，仅更换 `requestId` 的重试也幂等成功且不新增提交。
+- `merge` 将目标和候选已有的外部来源与审查者会话的 web/MCP 观察合并，经脱敏后存入结果的 `externalSource`。并入正文经脱敏后写入条目、Markdown 和回执，持久快照各处均须去除敏感原文。对已并入候选更换 `targetId` 或 `body` 的请求返回 `conflict`，不提交且持久状态不变。原样重放复用回执。仅更换 `requestId` 的重试也幂等成功，恰好提交一次以新增该请求的回执和指纹，其他持久状态保持不变。
 - 来源候选为 `forgotten` 时，任何 `merge`（包括重放和改用其他目标）均返回 `ok: false`，不提交且持久状态不变，回应不含候选或目标的旧正文。无审结权的调用者仍返回 `forbidden`。
 - 成功回执为 `{ ok: true, item, receipt, ... }`。`receipt` 含 `requestId, status`，状态为 `accepted | duplicate | candidate`。导入用 `items`，审结另带 `candidate`，遗忘的 `item` 为墓碑。
 - 失败回执为 `{ ok: false, code, error, currentRevision? }`。`error` 为脱敏字符串，授权失败用 `forbidden`，CAS 失败用 `conflict`。审结幂等也按卡片与候选识别。
 - 同一绑定范围的 `requestId` 命中回执时，须核对 `op`、候选或目标 `id`、`targetId` 及适用的条目或正文摘要。完全相同的请求复用原回执且不新增提交，遗忘后的回执仍遵循正文清除规则。若并入源候选已遗忘（包括遗忘目标导致的连带遗忘），原样重放 `merge` 仍失败，适用前述遗忘规则。内容有变则返回 `{ ok: false, code: 'conflict' }`，不返回旧回执，不提交且持久状态不变。遗忘或并入后改用同一 `requestId` 重放不同请求，冲突回应不得包含旧正文。
+- 命中旧快照中缺少请求指纹的回执时，原样重放也保守返回 `conflict`。
 - `format.mjs` 的 `validateEntry` 和 `sanitize.mjs` 的 `sanitizeEntry` 为可独立测试的纯函数。
 - `cas-cache.mjs` 导出 `createCellMemory`。其 `show` 使用统一读取形状并可附 `cachedAt`。离线也通过 `getBinding()` 核对当前绑定，绑定失效或当前范围无授权缓存时返回 `{ item: null, seq: null }`。`write` 离线时只记录本地发件箱并返回候选回执，重连通过 home 的同一 `write` 校验。
 

@@ -419,10 +419,19 @@ test('Goal 3e replaying a merge is idempotent and changing its target or body co
   assert.deepEqual(readState(), beforeReplay);
 
   await t.test('unchanged merge with a new request ID', async () => {
-    const retry = await store.write(leader, { ...request, requestId: 'merge-retry' });
+    const retryRequest = { ...request, requestId: 'merge-retry' };
+    const retry = await store.write(leader, retryRequest);
     assert.deepEqual([saved(retry), retry.candidate], [accepted.item, accepted.candidate]);
-    assert.equal(commits.length, replayCommits);
-    assert.deepEqual(readState(), beforeReplay);
+    assert.equal(commits.length, replayCommits + 1);
+    const afterRetry = readState();
+    const { receipts: beforeReceipts, ...beforeData } = beforeReplay;
+    const { receipts: afterReceipts, ...afterData } = afterRetry;
+    assert.deepEqual(afterData, beforeData);
+    assert.equal(afterReceipts.length, beforeReceipts.length + 1);
+    assert.deepEqual(afterReceipts.filter(row => row.requestId !== retryRequest.requestId), beforeReceipts);
+    assert.deepEqual(await store.write(leader, retryRequest), retry);
+    assert.equal(commits.length, replayCommits + 1);
+    assert.deepEqual(readState(), afterRetry);
   });
 
   const variants = {
@@ -510,6 +519,62 @@ test('Goal 4a write receipts reject changed requests across all write operations
           [false, 'conflict', undefined, false]);
       });
     }
+  }
+});
+
+test('Goal 4a successful retries reserve their new request IDs across restarts', async t => {
+  const { leader, worker } = bindings;
+  const proposal = { ...fact, kind: 'candidate', layer: 'candidate', proposedKind: 'lesson' };
+  const propose = requestId => put(requestId, proposal, { op: 'propose' });
+  const cas = ({ id, revision }) => ({ id, expectedRevision: revision });
+
+  const cases = [
+    ...['merge', 'promote', 'return', 'reject'].map(op => [op, leader, async store => {
+      const candidate = saved(await store.write(worker, propose('seed-candidate')));
+      const request = { op, requestId: 'card-close', cardId: worker.cardId, ...cas(candidate) };
+      if (op === 'merge') {
+        const target = saved(await store.write(leader, put('seed-target')));
+        Object.assign(request, { targetId: target.id, targetExpectedRevision: target.revision, body: correctedBody });
+      }
+      saved(await store.write(leader, request));
+      return request;
+    }]),
+    ['forget', leader, async store => {
+      const item = saved(await store.write(leader, put('seed-forget')));
+      const forgotten = saved(await store.write(leader, { op: 'forget', requestId: 'forget', ...cas(item) }));
+      assert.equal(forgotten.status, 'forgotten');
+      return { op: 'forget', requestId: 'forget', ...cas(forgotten) };
+    }],
+    ['duplicate put', leader, async store => {
+      const request = put('seed-duplicate');
+      saved(await store.write(leader, request));
+      return request;
+    }],
+    ['duplicate propose', worker, async store => {
+      const request = propose('seed-duplicate');
+      saved(await store.write(worker, request));
+      return request;
+    }],
+  ];
+
+  for (const [name, actor, prepareRetry] of cases) {
+    await t.test(name, async () => {
+      const { store, readState } = await fixture();
+      const request = await prepareRetry(store);
+      const requestId = `${request.requestId}-retry`;
+      const retry = await store.write(actor, { ...request, requestId });
+      saved(retry);
+      assert.equal(retry.receipt.requestId, requestId);
+      if (name.startsWith('duplicate ')) assert.equal(retry.receipt.status, 'duplicate');
+
+      const snapshot = JSON.parse(JSON.stringify(readState()));
+      const reopened = await fixture({ initialState: snapshot });
+      const changed = put(requestId, { ...fact, title: 'Different retry guidance', body: 'Escalate after review.' });
+      const result = await reopened.store.write(actor, changed);
+      assert.deepEqual({ ok: result.ok, code: result.code, commits: reopened.commits.length },
+        { ok: false, code: 'conflict', commits: 0 });
+      assert.deepEqual(reopened.readState(), snapshot);
+    });
   }
 });
 
