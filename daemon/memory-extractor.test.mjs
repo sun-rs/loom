@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict';
-import { execFileSync } from 'node:child_process';
+import { ChildProcess, execFileSync } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
 import { appendFileSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, realpathSync, readlinkSync,
   rmSync, writeFileSync } from 'node:fs';
-import { createServer, request } from 'node:http';
+import { createServer, request, Server } from 'node:http';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { Duplex } from 'node:stream';
@@ -15,6 +15,7 @@ import { projectStatus } from '../cli/status.mjs';
 import { deliveryId } from '../inbox/message.mjs';
 import { searchMemory, writeMemory } from '../memory/project.mjs';
 import { createSupervisor } from './supervisor.mjs';
+import { readExtractorState } from './memory-extractor-state.mjs';
 
 const keyRef = 'loom-memory-extractor-deepseek';
 const fixtureKey = 'synthetic-test-key';
@@ -537,6 +538,194 @@ test('5e OpenCode receives L1 only at gate and phase and routes valid staged pro
   assert.doesNotMatch(JSON.stringify(calls[1]), /stage-history/, 'stage history advances after a boundary');
   assert.doesNotMatch(JSON.stringify(calls[1]), /tool-(?:output|argument)-sentinel|file-content-sentinel/);
 });
+
+function fakeOpenCode(t, root) {
+  const bin = join(root, 'stage-bin');
+  const executable = join(root, 'stage-opencode');
+  const trace = join(root, 'opencode-path.log');
+  const capture = join(root, 'stage-exchange.json');
+  mkdirSync(bin);
+  writeFileSync(join(bin, 'opencode'), `#!${process.execPath}
+require('node:fs').appendFileSync(${JSON.stringify(trace)}, 'opencode resolved via PATH\\n');
+process.exitCode = 73;
+`, { mode: 0o700 });
+  writeFileSync(executable, `#!${process.execPath}
+const { readFileSync, writeFileSync } = require('node:fs');
+const input = JSON.parse(process.argv.at(-1));
+const wire = readFileSync(0, 'utf8');
+const content = wire.split('\\n').filter(line => line.startsWith('data: {'))
+  .map(line => JSON.parse(line.slice(6)).choices[0].delta.content ?? '').join('');
+const stdout = JSON.stringify({ type: 'text', part: { text: content } });
+writeFileSync(${JSON.stringify(capture)}, JSON.stringify({ input, wire, stdout }));
+console.log(stdout);
+`, { mode: 0o700 });
+  for (const [name, value] of Object.entries({
+    PATH: [bin, process.env.PATH].filter(Boolean).join(':'),
+    OAR_OPENCODE_BIN: executable,
+    LOOM_OPENCODE_BIN: executable,
+  })) {
+    const previous = process.env[name];
+    process.env[name] = value;
+    t.after(() => {
+      if (previous === undefined) delete process.env[name];
+      else process.env[name] = previous;
+    });
+  }
+  // Drive the real loopback request handler without a socket, then give its response to the child.
+  let bridge;
+  t.mock.method(Server.prototype, 'listen', function (port, host, ready) {
+    assert.equal(port, 0);
+    assert.equal(host, '127.0.0.1');
+    bridge = this;
+    this.address = () => ({ port: 12345 });
+    queueMicrotask(ready);
+    return this;
+  });
+  const spawn = ChildProcess.prototype.spawn;
+  t.mock.method(ChildProcess.prototype, 'spawn', function (options) {
+    if (!options.args.includes('loom-stage')) return spawn.call(this, options);
+    // Pin stage launches to the stand-in before the OS can resolve a bare name.
+    if (options.file !== executable && options.file !== 'opencode') throw new Error('Unexpected stage executable');
+    const envPairs = [...options.envPairs.filter(pair => !pair.startsWith('PATH=')), `PATH=${bin}`];
+    const configPath = envPairs.find(pair => pair.startsWith('OPENCODE_CONFIG=')).slice('OPENCODE_CONFIG='.length);
+    const config = JSON.parse(readFileSync(configPath, 'utf8'));
+    const url = new URL(config.providers.loom.settings.baseURL + '/chat/completions');
+    assert.equal(url.origin, 'http://127.0.0.1:12345');
+    const result = spawn.call(this, { ...options, file: executable, args: [executable, ...options.args.slice(1)], envPairs });
+    const stdin = this.stdin;
+    bridge.emit('request', { method: 'POST', url: url.pathname, resume() {} }, {
+      writeHead() { return this; },
+      end(wire) { stdin.end(wire); },
+    });
+    return result;
+  });
+  return { bin, trace, exchange: () => JSON.parse(readFileSync(capture, 'utf8')) };
+}
+
+function seedLegacyStageMemory(project) {
+  writeMemory(project, { id: 'stage-existing', scope: 'project', owner: 'leader', source: 'fixture.txt',
+    verified: '2026-11-26', title: 'Existing fixture memory', body: 'Keep fixture records.' });
+}
+
+async function completeStageGate(f, leader, gate) {
+  const { notifications } = await f.daemon.handle('notifications', { gateComplete: gate, history: true }, leader);
+  await f.tick();
+  return notifications.find(event => event.gate === gate && event.type === 'gate-completed').id;
+}
+
+test('R23 stage child and upstream history exclude worker file contents', async t => {
+  const f = fixture(t);
+  f.initGit();
+  const runner = fakeOpenCode(t, f.root);
+  seedLegacyStageMemory(f.project);
+  const leader = await f.spawn('leader', 'Prepare the R23 stage.');
+  await f.finish(leader, 'Retain this senior stage context.');
+  const worker = await f.spawn('worker', 'Check the fixture. '.repeat(10) + 'WORKER_FILE_BODY_SENTINEL_R23_RECEIVED', leader);
+  // hist L1 clips the reply preview, so put the file body past that preview.
+  await f.finish(worker, 'DONE FIXTURE ' + 'Fixture steps completed. '.repeat(6) + 'WORKER_FILE_BODY_SENTINEL_R23_REPLY');
+  assert.equal(f.requests.length, 1, 'only the Leader turn was sent before the gate');
+  await completeStageGate(f, leader, 'R23-HISTORY');
+  assert.equal(f.requests.length, 2, 'the stage request reached the fixture provider');
+  const outbound = { child: JSON.stringify(runner.exchange().input), upstream: f.requests.at(-1).raw };
+  const leaked = {};
+  for (const [channel, payload] of Object.entries(outbound)) {
+    assert.match(payload, /Retain this senior stage context/);
+    leaked[channel] = payload.match(/WORKER_FILE_BODY_SENTINEL_R23_(?:RECEIVED|REPLY)/g) ?? [];
+  }
+  assert.deepEqual(leaked, { child: [], upstream: [] });
+});
+
+test('stage with an empty library preserves a targetless user correction until proposed', async t => {
+  const calls = [];
+  const f = fixture(t, { runStage: async input => { calls.push(input); return candidates; } });
+  let candidates = [];
+  const leader = await f.spawn('leader', 'Prepare to record a correction.');
+  await f.finish(leader, 'Ready.');
+  const body = 'I prefer compact fixture reports.';
+  const delivery = await f.send(leader, body);
+  await f.finish(leader, 'Acknowledged the correction.');
+  const first = await completeStageGate(f, leader, 'EMPTY-RETRY');
+  const afterEmpty = readExtractorState(f.project);
+  const attemptedBeforeProposal = calls.length > 0;
+  f.advance(1000);
+  const source = { kind: 'delivery', id: delivery.id };
+  candidates = [{ id: 'empty-user-correction', action: 'correct', scope: 'user', source, body }];
+  await completeStageGate(f, leader, 'EMPTY-PROPOSAL');
+  const proposal = readExtractorState(f.project).proposals['empty-user-correction'];
+  assert.deepEqual({ attemptedBeforeProposal, boundaryProcessed: Object.hasOwn(afterEmpty.boundaries, first),
+    stagedTurns: Object.keys(afterEmpty.stageTurns ?? {}).length, status: proposal?.status, body: proposal?.body,
+    source: proposal?.source, target: proposal?.target }, {
+    attemptedBeforeProposal: true, boundaryProcessed: false, stagedTurns: 0,
+    status: 'pending', body, source, target: undefined,
+  });
+});
+
+test('stage runs with only v1 shared project memory', async t => {
+  const calls = [];
+  const f = fixture(t, { runStage: async input => { calls.push(input); return []; } });
+  const leader = await f.spawn('leader', 'Prepare with shared memory.');
+  const auditor = await f.spawn('auditor', 'Write the shared fixture rule.');
+  const { item } = await f.daemon.handle('mem', { action: 'write', requestId: 'stage-shared-only', expectedRevision: null,
+    entry: { layer: 'shared', kind: 'ruling', title: 'Shared fixture rule', body: 'Verify the fixture manifest.',
+      checkedAt: '2026-11-26T12:00:00.000Z', source: { path: 'fixture.txt' } } }, auditor);
+  await f.finish(leader, 'Shared memory is ready for stage.');
+  await completeStageGate(f, leader, 'SHARED-ONLY');
+  assert.deepEqual(calls.map(({ existing }) => existing), [{ project: [], user: [],
+    reference: [{ id: item.id, title: item.title, body: item.body }] }]);
+});
+
+test('stage fixture traps PATH lookups and pins the child to its stand-in', async t => {
+  const f = fixture(t);
+  const runner = fakeOpenCode(t, f.root);
+  assert.throws(() => execFileSync('opencode', [], { env: { PATH: runner.bin }, stdio: 'pipe' }), { status: 73 });
+  assert.equal(readFileSync(runner.trace, 'utf8'), 'opencode resolved via PATH\n');
+  seedLegacyStageMemory(f.project);
+  const leader = await f.spawn('leader', 'Prepare the stage launch.');
+  await f.finish(leader, 'Stage launch ready.');
+  await completeStageGate(f, leader, 'ISOLATED-STAGE');
+  assert.match(JSON.stringify(runner.exchange().input), /Stage launch ready/);
+  assert.equal(readFileSync(runner.trace, 'utf8'), 'opencode resolved via PATH\n', 'only the probe hit the PATH trap');
+});
+
+for (const stage of [false, true]) {
+  test(`synthetic key echoed in a successful ${stage ? 'stage' : 'turn'} proposal is redacted`, async t => {
+    let candidate;
+    const f = fixture(t, { proposals: count => count === (stage ? 2 : 1) ? [candidate] : [] });
+    f.initGit();
+    const runner = stage ? fakeOpenCode(t, f.root) : undefined;
+    if (stage) seedLegacyStageMemory(f.project);
+    const leader = await f.spawn('leader', 'Retain the fixture procedure.');
+    await f.spawn('auditor', 'Review the fixture procedure.');
+    const source = { kind: 'delivery', id: deliveryId(f.prompts.find(prompt => prompt.addr === leader).input) };
+    candidate = { id: 'echoed-fixture-key', scope: 'project', action: stage ? 'correct' : 'add', source,
+      ...(stage ? { target: 'stage-existing' } : { title: 'Fixture procedure' }), body: `Fixture value was ${fixtureKey}.` };
+    await f.finish(leader, 'Fixture procedure ready.');
+    if (stage) await completeStageGate(f, leader, 'STAGE-KEY-ECHO');
+    const { status, responseBody } = f.requests.at(-1);
+    assert.equal(f.requests.length, stage ? 2 : 1);
+    assert.equal(status, 200);
+    assert.ok(responseBody.includes(fixtureKey), 'the fake upstream echoed its credential in the proposal');
+    const stored = readExtractorState(f.project).proposals[candidate.id];
+    assert.equal(stored?.status, 'pending');
+    assertNoFixtureKey('persisted proposal', stored);
+    assert.equal(stored.body, 'Fixture value was [REDACTED].');
+    const packet = await f.daemon.handle('gate-pack', {
+      gate: 'KEY-ECHO-REVIEW', question: 'Review the stored proposal and its provenance. '.repeat(10),
+    }, leader);
+    await f.tick();
+    const review = [packet.path, packet.fullPath].map(path => readFileSync(path, 'utf8'));
+    assert.match(review.join('\n'), /Fixture value was \[REDACTED\]/);
+    assertNoFixtureKey('review and diagnostics', [packet, review, f.logs, f.reports, f.status(), f.cost()]);
+    assertNoFixtureKey('upstream request bodies', f.requests.map(({ raw }) => raw));
+    if (runner) {
+      const exchange = runner.exchange();
+      assert.match(exchange.wire, /Fixture value was \[REDACTED\]/);
+      assert.match(exchange.stdout, /Fixture value was \[REDACTED\]/);
+      assertNoFixtureKey('stage child input, loopback response and stdout', exchange);
+    }
+    for (const { bytes } of treeFiles(f.root)) assertNoFixtureKey('fixture files', bytes);
+  });
+}
 
 test('5f pilot cost measures model overhead, extractor usage, rotation, fact misses and proposal pass rate', async t => {
   const f = fixture(t);
