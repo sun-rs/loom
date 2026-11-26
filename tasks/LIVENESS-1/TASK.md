@@ -38,3 +38,16 @@ npm test green; RESULT.md Chinese, `STATUS: done`. Red lines as before; live che
 
 ## Item 8 (found deploying 46c7e0ab to pilot-2)
 `loom upgrade --project P --to R` exited 1 while the upgrade record was still `switching`. Seconds later the upgrade was `committed` with the new loomd serving. The CLI must not report failure for an upgrade that then commits. Wait for a terminal phase (committed / rolled-back / failed) within a bound, or exit with a distinct "still switching, check --status" code and message. Add a regression test.
+
+## Item 9 (pilot-2 T18-GOAL4-IMPL, 2026-11-25 23:40): full `npm test` cannot pass inside the worker sandbox
+The worker reported 574 tests: 509 pass, 16 fail, 49 cancelled. The sandbox returns `EPERM` for `ps` and for some temp-dir operations (likely the PYRAMID-2 leak guard / process-identity checks and SIGKILL suites). Every worker's full-suite gate is therefore red for environmental reasons.
+- Make the suite run under the worker sandbox loom itself applies: process checks degrade to PID-scoped/`kill -0` or skip with an explicit "sandbox-limited" result, and temp dirs go under the allowed tmp root.
+- Or loom's sandbox profile allows read-only `ps`, if that is safe.
+- Prove it by running `npm test` through the real worker sandbox path on macOS.
+
+## Item 10: `$LOOM_BIN` pinned to an old release inside live roles
+The pilot-2 Leader ran `/Users/sun/.loom-cell/releases/bdd865c2/bin/loom send …` while loomd is on 46c7e0ab, so new CLI flags (`--expect-red`, `--kind decision`) are unavailable to it. Same class as HOOK-CWD-1:
+- give roles a stable CLI shim path (e.g. `~/.loom-cell/bin/loom` or `<project>/.project/loomd/bin/loom`) that dispatches to the release loomd currently serves;
+- keep old flags compatible.
+
+Show in `loom status` when a role's CLI or hook path is older than the serving release.
