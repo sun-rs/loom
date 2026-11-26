@@ -1,5 +1,5 @@
 import { execFile } from 'node:child_process';
-import { createHash } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { mkdirSync, readdirSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { basename, dirname, isAbsolute, join } from 'node:path';
@@ -29,15 +29,36 @@ async function json(executable, args) {
     return JSON.parse(stdout);
   } catch (error) {
     let detail;
-    try { detail = JSON.parse(error.stderr || error.stdout).error; } catch { /* Transport failure. */ }
-    throw Object.assign(new Error(`${basename(executable)} ${args.slice(0, args[0] === 'do' ? 2 : 1).join(' ')}: ${detail?.message ?? detail ?? error.code ?? 'unavailable'}`),
-      { code: detail?.kind === 'not_found' ? 'not-found' : 'herdr-unavailable', cause: error });
+    for (const output of [error.stderr, error.stdout]) {
+      try { detail = JSON.parse(output).error; } catch { /* Try the other stream. */ }
+      if (detail) break;
+    }
+    const message = detail?.message ?? detail ?? error.code ?? 'unavailable';
+    const code = detail?.kind === 'not_found' ? 'not-found' :
+      error.killed || detail?.kind === 'unavailable' || /^unavailable$/i.test(message) ? 'herdr-unavailable' : 'herdr-command-failed';
+    throw Object.assign(new Error(`${basename(executable)} ${args.slice(0, args[0] === 'do' ? 2 : 1).join(' ')}: ${message}`),
+      { code, cause: error });
   }
+}
+
+async function retry(operation) {
+  for (const backoff of [100, 200, 400]) {
+    try { return await operation(); }
+    catch (error) {
+      if (error.code !== 'herdr-unavailable') throw error;
+      await delay(backoff);
+    }
+  }
+  return operation();
 }
 
 export async function herdrCommands({ optional = false } = {}) {
   const appOverride = process.env.LOOM_HERDR_APP_BIN;
-  if (optional && (process.env.LOOM_HERDR_LAYOUT === '0' || process.env.NODE_TEST_CONTEXT && !appOverride)) return;
+  if (process.env.LOOM_HERDR_LAYOUT === '0' ||
+      process.env.NODE_TEST_CONTEXT !== undefined && !(appOverride && process.env.LOOM_HC_BIN)) {
+    if (optional) return;
+    throw Object.assign(new Error('Herdr layout is disabled in this process'), { code: 'herdr-disabled' });
+  }
   let application;
   let core;
   try {
@@ -49,17 +70,20 @@ export async function herdrCommands({ optional = false } = {}) {
   }
   return {
     core,
-    async spaces() { return (await json(application, ['ls'])).spaces; },
-    app: (command, args) => json(application, ['do', command, JSON.stringify(args)]),
-    hc: (command, ...args) => json(core, [command, '--json', ...args]),
+    async spaces() { return (await retry(() => json(application, ['ls']))).spaces; },
+    app(command, args) {
+      const invoke = () => json(application, ['do', command, JSON.stringify(args)]);
+      return command.endsWith('.new') ? invoke() : retry(invoke);
+    },
+    hc(command, ...args) {
+      const invoke = () => json(core, [command, '--json', ...args]);
+      return command === 'run' ? invoke() : retry(invoke);
+    },
   };
 }
 
 const findPane = (tab, terminal) => tab?.terminals.find(item => item.terminal === terminal);
 const sameTerminal = (a, b) => a.address === b.address && a.created_ms === b.created_ms && a.pid === b.pid;
-const pauseProgram = role => [process.execPath, '-e',
-  `console.log(${JSON.stringify(`Waiting for Loom ${titleFor(role)}`)}); setInterval(() => {}, 2147483647)`];
-
 function panels(project, path, name, slug, roles, commands) {
   const get = terminal => commands.hc('get', terminal).catch(error => {
     if (error.code !== 'not-found') throw error;
@@ -67,132 +91,196 @@ function panels(project, path, name, slug, roles, commands) {
   let state;
   const load = () => state ??= readLayoutFile(path);
   const save = () => writeState(path, JSON.stringify(state, null, 2) + '\n');
-  const labelsFor = tab => ({ 'herdr.space': state.space.id, 'herdr.tab': tab.id });
-  const action = (command, args) => commands.app(command, args);
-  async function findSpace() {
-    return (await commands.spaces()).find(space => space.id === load()?.space.id && !space.machine);
+  const findSpace = spaces => spaces.find(space => space.id === load()?.space.id && !space.machine);
+  const namedTab = (role, space, terminal) => {
+    const byName = space?.tabs.filter(tab => tab.name === titleFor(role)) ?? [];
+    return byName.find(tab => findPane(tab, terminal)) ??
+      space?.tabs.find(tab => tab.id === load().tabs[role]?.id) ?? byName[0];
+  };
+  const labelsFor = tab => ({ 'herdr.space': state.space.id, ...(tab && { 'herdr.tab': tab.id }) });
+  const setLabels = (terminal, labels) => commands.hc('label', terminal.address,
+    ...Object.entries(labels).map(([key, value]) => `${key}=${value}`));
+
+  async function retirePlaceholder(address) {
+    if (!address) return;
+    const terminal = await get(address);
+    if (terminal?.state === 'live') {
+      if (terminal.keep) await commands.hc('keep', address, '--off');
+      await commands.hc('kill', address);
+    }
+    if ((await get(address))?.state === 'finished') {
+      await commands.hc('rm', address).catch(error => {
+        if (error.code !== 'not-found') throw error;
+      });
+    }
   }
 
-  async function ensureTabs() {
-    const current = await findSpace();
-    if (!current) {
-      const [first] = roles;
-      const created = await action('space.new', {
-        name, folder: project, tab: titleFor(first), argv: pauseProgram(first), focus: false,
-      });
-      state = { space: { id: created.space, name }, tabs: {
-        [first]: { id: created.tab, name: titleFor(first), placeholder: created.terminal },
-      } };
-      save();
-    }
+  async function order(space) {
+    const tabs = [...space.tabs];
+    let index = 0;
     for (const role of roles) {
-      const tab = state.tabs[role];
-      if (tab && (!current || current.tabs.some(item => item.id === tab.id))) continue;
-      const created = await action('tab.new', {
-        space: state.space.id, name: titleFor(role), folder: project, argv: pauseProgram(role), focus: false,
-      });
-      state.tabs[role] = { id: created.tab, name: titleFor(role), placeholder: created.terminal };
-      save();
-    }
-    const visible = (await findSpace())?.tabs ?? [];
-    for (const [index, role] of roles.entries()) {
-      const id = state.tabs[role].id;
-      const position = visible.findIndex(tab => tab.id === id);
-      if (position >= 0 && position !== index) {
-        await action('tab.move', { id, index: index + 1 });
-        visible.splice(index, 0, ...visible.splice(position, 1));
+      const id = namedTab(role, space)?.id;
+      const position = tabs.findIndex(tab => tab.id === id);
+      if (position < 0) continue;
+      if (position !== index) {
+        await commands.app('tab.move', { id, index: index + 1 });
+        tabs.splice(index, 0, ...tabs.splice(position, 1));
       }
+      index++;
     }
-    return state;
   }
 
-  async function finishPlacement(role, terminal) {
-    const tab = load().tabs[role];
-    const deadline = Date.now() + 4_000;
-    let visible;
-    do {
-      const current = (await findSpace())?.tabs.find(item => item.id === tab.id);
-      if (findPane(current, terminal.address)) { visible = current; break; }
-      await delay(100);
-    } while (Date.now() < deadline);
-    if (!visible) throw new Error(`Herdr did not place ${terminal.address} in the ${tab.name} tab`);
-    let placed = await get(terminal.address);
-    if (!placed || placed.state !== 'live' || !sameTerminal(terminal, placed)) {
-      throw new Error(`hc terminal identity changed during placement: ${terminal.address}`);
+  async function prepare(argv) {
+    let current = findSpace(await commands.spaces());
+    let placeholder;
+    try {
+      if (!current) {
+        // space.new requires a program. The named Status process replaces this
+        // temporary pane, and the unique tab title identifies a lost reply.
+        const setup = `Loom setup ${randomUUID()}`;
+        let attempted = false;
+        async function recover() {
+          for (const space of await commands.spaces()) {
+            const tab = !space.machine && space.name === name && space.folder === project &&
+              space.tabs.find(item => item.name === setup);
+            if (tab) return { space: space.id, tab: tab.id, terminal: tab.terminals[0]?.terminal };
+          }
+        }
+        const created = await retry(async () => {
+          const recovered = attempted && await recover();
+          if (recovered) return recovered;
+          attempted = true;
+          return commands.app('space.new', { name, folder: project, tab: setup, argv: ['/bin/sleep', '60'], focus: false });
+        }).catch(async error => {
+          if (error.code === 'herdr-unavailable') {
+            const recovered = await recover();
+            if (recovered) return recovered;
+          }
+          throw error;
+        });
+        placeholder = created.terminal;
+        state = { space: { id: created.space, name }, tabs: { status: { id: created.tab, name: 'Status' } } };
+        save();
+      } else {
+        const legacy = roles.filter(role => state.tabs[role]?.placeholder);
+        for (const role of legacy) {
+          await retirePlaceholder(state.tabs[role].placeholder);
+          delete state.tabs[role].placeholder;
+        }
+        if (legacy.length) current = findSpace(await commands.spaces());
+        for (const role of roles) {
+          const old = state.tabs[role];
+          const tab = namedTab(role, current);
+          if (tab && old?.id !== tab.id) state.tabs[role] = { id: tab.id, name: titleFor(role) };
+          if (!tab && old) delete state.tabs[role];
+        }
+        save();
+      }
+      await status(argv);
+      return state;
+    } finally {
+      await retirePlaceholder(placeholder);
     }
-    // Herdr enables keep when it lays out a terminal. A replacement shell
-    // would hide the original program's exit from Loom's holder binding.
-    if (placed.keep) {
+  }
+
+  async function disableKeep(terminal) {
+    let placed = await get(terminal.address);
+    if (placed?.state === 'live' && sameTerminal(terminal, placed) && placed.keep) {
+      // A replacement shell would hide the original program's exit from Loom.
       await commands.hc('keep', placed.address, '--off');
       placed = await get(placed.address);
-      if (!placed || placed.keep || placed.state !== 'live' || !sameTerminal(terminal, placed)) {
-        throw new Error(`hc could not disable keep for ${terminal.address}`);
-      }
     }
-    const placeholder = findPane(visible, tab.placeholder);
-    if (placeholder) {
-      await action('pane.close', { pane: placeholder.pane });
-      const retired = await get(placeholder.terminal);
-      if (retired?.state === 'finished') await commands.hc('rm', retired.address);
-    }
-    if (tab.placeholder) { delete tab.placeholder; save(); }
     return placed;
   }
 
-  function publish(role, terminal, addr) {
+  async function finishPlacement(role, terminal, expected, attach = false) {
+    let space, tab, placed;
+    const title = titleFor(role);
+    try {
+      if (attach) {
+        await setLabels(terminal, { ...labelsFor(expected), ...(!expected && { 'herdr.tab': '' }) }).catch(error => {
+          if (error.code !== 'herdr-unavailable') throw error;
+          // The Core may have applied the labels even without a reply.
+        });
+      }
+      const deadline = Date.now() + 4_000;
+      do {
+        space = findSpace(await commands.spaces());
+        tab = space?.tabs.find(item => findPane(item, terminal.address));
+        if (tab) break;
+        await delay(100);
+      } while (Date.now() < deadline);
+      if (!tab || expected && tab.id !== expected.id || !expected && tab.name !== title && !/^\d+$/.test(tab.name)) {
+        throw new Error(`Herdr did not place ${terminal.address} in the ${title} tab`);
+      }
+      const rename = tab.name !== title;
+      if (rename) {
+        await commands.app('tab.rename', { id: tab.id, name: title });
+        tab.name = title;
+      }
+      await order(space);
+    } finally {
+      placed = await disableKeep(terminal);
+    }
+    if (!placed || placed.keep || placed.state !== 'live' || !sameTerminal(terminal, placed)) {
+      throw new Error(`hc could not confirm live placement with keep disabled for ${terminal.address}`);
+    }
+    if (load().tabs[role]?.id !== tab.id) state.tabs[role] = { id: tab.id, name: title };
+    return placed;
+  }
+
+  function publish(role, terminal, addr, persist = true) {
     const tab = load().tabs[role];
     Object.assign(tab, { terminal: terminal.address, hcName: terminal.name, createdAt: terminal.created_ms, ...(addr && { addr }) });
-    save();
+    if (persist) save();
   }
 
-  async function adopt(role, terminal, addr) {
+  async function adopt(role, terminal) {
     if (!terminalId.test(terminal.address) || terminal.state !== 'live') throw new Error('Adoption requires a live local hc terminal');
-    const tab = load().tabs[role];
-    const placement = labelsFor(tab);
-    const visible = (await commands.spaces()).flatMap(space => space.tabs.map(item => ({ space, item })))
-      .find(({ item }) => findPane(item, terminal.address));
-    if (visible && (visible.space.id !== state.space.id || visible.item.id !== tab.id)) {
+    const spaces = await commands.spaces();
+    const space = findSpace(spaces);
+    const tab = namedTab(role, space, terminal.address);
+    const visibleSpace = spaces.filter(item => !item.machine).find(item => item.tabs.some(t => findPane(t, terminal.address)));
+    const visible = visibleSpace?.tabs.find(item => findPane(item, terminal.address));
+    const unnamed = !tab && /^\d+$/.test(visible?.name) &&
+      (await get(terminal.address))?.labels?.['herdr.space'] === state.space.id;
+    if (visible && (visibleSpace.id !== state.space.id || (!unnamed && visible.id !== tab?.id))) {
       throw new Error(`Terminal ${terminal.address} already has a pane outside the requested tab`);
     }
-    if (tab.terminal && tab.terminal !== terminal.address && (await get(tab.terminal))?.state === 'live') {
-      throw new Error(`The ${tab.name} tab already has a live terminal`);
+    const record = load().tabs[role];
+    if (record?.terminal && record.terminal !== terminal.address && (await get(record.terminal))?.state === 'live') {
+      throw new Error(`The ${titleFor(role)} tab already has a live terminal`);
     }
-    if (!visible) {
-      await commands.hc('label', terminal.address, ...Object.entries(placement).map(([key, value]) => `${key}=${value}`));
-    }
-    const placed = await finishPlacement(role, terminal);
-    publish(role, placed, addr);
-    return placed;
+    return finishPlacement(role, terminal, tab, !visible);
   }
 
   async function status(argv) {
     const tab = load().tabs.status;
-    const previous = tab.terminal && await get(tab.terminal);
+    const previous = tab?.terminal && await get(tab.terminal);
     if (previous?.state === 'live' && previous.created_ms === tab.createdAt) {
-      await finishPlacement('status', previous);
-      return state;
+      return adopt('status', previous);
     }
     const name = slug + '-status';
     const labels = { ...labelsFor(tab), 'loom.status': path };
-    const existing = await get(name);
-    if (existing?.state === 'live' && existing.labels?.['loom.status'] !== path) {
-      throw new Error(`hc name ${name} is already in use`);
-    }
-    let terminal = existing;
-    if (terminal?.state !== 'live') {
+    const terminal = await retry(async () => {
+      const existing = await get(name);
+      if (existing?.state === 'live') {
+        if (existing.labels?.['loom.status'] !== path) throw new Error(`hc name ${name} is already in use`);
+        return existing;
+      }
       const started = await commands.hc('run', '--bg', '--no-parent', '--no-notify', '--name', name, '--cwd', project,
         ...Object.entries(labels).flatMap(([key, value]) => ['--label', `${key}=${value}`]), '--', ...argv);
-      terminal = terminalId.test(started.address) && await get(started.address);
-      if (terminal?.name !== name || terminal.labels?.['loom.status'] !== path || terminal.state !== 'live') {
+      const confirmed = terminalId.test(started.address) && await get(started.address);
+      if (confirmed?.name !== name || confirmed.labels?.['loom.status'] !== path || confirmed.state !== 'live') {
         throw new Error(`hc did not confirm the new Status terminal ${started.address}`);
       }
-    }
-    if (terminal.labels?.['herdr.tab'] !== tab.id) await adopt('status', terminal);
-    else publish('status', await finishPlacement('status', terminal));
-    return state;
+      return confirmed;
+    });
+    const attach = terminal.labels?.['herdr.space'] !== state.space.id;
+    publish('status', await finishPlacement('status', terminal, tab, attach));
   }
 
-  return { ensureTabs, finishPlacement, adopt, publish, get, status, labelsFor, load, save };
+  return { prepare, finishPlacement, adopt, publish, get, labelsFor, load, save };
 }
 
 export function projectLayout(project, { connect = herdrCommands } = {}) {
@@ -204,14 +292,14 @@ export function projectLayout(project, { connect = herdrCommands } = {}) {
     client ??= await connect({ optional: !required });
     if (!client) return;
     layout ??= panels(project, path, `Loom ${basename(project)}`, slug, [...visibleRoles, 'status'], client);
-    await layout.ensureTabs();
+    const state = await layout.prepare([managedCliPath(project), 'tui', '--project', project]);
     const roster = join(localState(), 'herdr-projects');
     const registration = join(roster, createHash('sha256').update(project).digest('hex') + '.json');
     if (readLayoutFile(registration) !== project) {
       mkdirSync(roster, { recursive: true, mode: 0o700 });
       writeState(registration, JSON.stringify(project) + '\n');
     }
-    return layout.status([managedCliPath(project), 'tui', '--project', project]);
+    return state;
   }
 
   return {
@@ -226,7 +314,7 @@ export function projectLayout(project, { connect = herdrCommands } = {}) {
     },
     async place(row, terminal, pending) {
       if (!layout) await ensure(true);
-      const placed = await layout.finishPlacement(row.role, terminal);
+      const placed = await layout.finishPlacement(row.role, terminal, layout.load().tabs[row.role]);
       if (!pending) layout.publish(row.role, placed, row.addr);
     },
     async publish(row, terminal) {
@@ -235,7 +323,10 @@ export function projectLayout(project, { connect = herdrCommands } = {}) {
     },
     async adopt(entries) {
       await ensure(true);
-      for (const { row, terminal } of entries) await layout.adopt(row.role, terminal, row.addr);
+      const placed = [];
+      for (const { row, terminal } of entries) placed.push({ row, terminal: await layout.adopt(row.role, terminal) });
+      for (const { row, terminal } of placed) layout.publish(row.role, terminal, row.addr, false);
+      layout.save();
       return layout.load();
     },
     clear(row) {
@@ -257,10 +348,10 @@ export async function superLayout(project, terminalAddress, commands) {
   const layout = panels(project, path, 'Loom', 'loom-global', ['super', 'status'], commands);
   const terminal = await layout.get(terminalAddress);
   if (terminal?.state !== 'live') throw new Error('Specify a live local Super terminal');
-  await layout.ensureTabs();
-  await layout.adopt('super', terminal);
   const stateEnvironment = process.env.XDG_STATE_HOME ? [`XDG_STATE_HOME=${process.env.XDG_STATE_HOME}`] : [];
-  return layout.status(['/usr/bin/env', ...stateEnvironment, process.execPath, join(releaseRoot, 'bin', 'loom'), 'tui', '--all']);
+  await layout.prepare(['/usr/bin/env', ...stateEnvironment, process.execPath, join(releaseRoot, 'bin', 'loom'), 'tui', '--all']);
+  layout.publish('super', await layout.adopt('super', terminal));
+  return layout.load();
 }
 
 export function herdrProjects() {

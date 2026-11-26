@@ -10,7 +10,7 @@
     "loomd": "bin/loomd"
   },
   "scripts": {
-    "test": "LOOM_DESKTOP_NOTIFY=0 node --test",
+    "test": "LOOM_DESKTOP_NOTIFY=0 LOOM_HERDR_LAYOUT=0 node --test",
     "postinstall": "node tui/install-pty.mjs"
   },
   "dependencies": {

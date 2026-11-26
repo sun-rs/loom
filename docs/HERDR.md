@@ -1,6 +1,6 @@
 # Loom in Herdr
 
-Run `loom up --project /absolute/project` to start loomd and create the project's Herdr space. The first spawn also creates the layout when Herdr is available. Loom places Leader, Auditor and Status in that order. Run `loom up` again to repair a deleted space or tab. A tab for a role awaiting launch shows a placeholder. Closing a pane, tab or space in Herdr ends the terminals it contains. Relaunch a role through Loom after closing its pane.
+Run `loom up --project /absolute/project` to start loomd and create the project's Herdr space. The first spawn also creates the layout when Herdr is available. Loom opens Leader and Auditor tabs when those roles launch or are adopted, and orders the visible tabs as Leader, Auditor and Status. Run `loom up` again to repair a deleted space or Status tab. Closing a pane, tab or space in Herdr ends the terminals it contains. Relaunch a role through Loom after closing its pane.
 
 Use `loom status --project /absolute/project` for the space ID, tab IDs and current terminal addresses and names. During a Leader or Auditor handover, both terminals occupy the same tab until the successor confirms its briefing. Queued messages sent to the role wait for that acknowledgement. Loom delivers them by the session record and its verified terminal binding.
 
@@ -22,4 +22,4 @@ After deploying Loom with layout support, Super can run the following command to
 loom layout adopt --project /Users/sun/Code/loom-pilot2 --leader LEADER_HC_ADDRESS --auditor AUDITOR_HC_ADDRESS
 ```
 
-Adoption adds Herdr placement labels and checks that the same terminal and process remain live. Herdr turns on core `keep` when it adds the pane. Loom turns it off after placement so holder loss remains visible as an exit. The original hc address and name remain available. A terminal with a pane in a different space or tab must be parked by the operator before adoption.
+Adoption reuses each role's tab in the recorded space and checks the pane in Herdr's layout. If the terminal is already in that tab, Loom records the existing placement. Herdr turns on core `keep` when it adds a pane. Loom checks the terminal identity and turns off `keep` so holder loss remains visible as an exit. The original hc address and name remain available. A terminal with a pane in a different space or tab must be parked by the operator before adoption.

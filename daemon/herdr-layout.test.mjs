@@ -24,8 +24,12 @@ const tabs = () => state.spaces.flatMap(space => space.tabs);
 const visible = () => tabs().flatMap(tab => tab.terminals);
 function place(terminal) {
   const space = spaceFor(terminal.labels['herdr.space']);
-  const tab = space?.tabs.find(item => item.id === terminal.labels['herdr.tab']);
-  if (tab && !visible().some(item => item.terminal === terminal.address)) {
+  if (space && !visible().some(item => item.terminal === terminal.address)) {
+    let tab = space.tabs.find(item => item.id === terminal.labels['herdr.tab']);
+    if (!tab) {
+      tab = { id: allocate('tb'), name: String(space.tabs.length + 1), terminals: [] };
+      space.tabs.push(tab);
+    }
     tab.terminals.push({ terminal: terminal.address, pane: allocate('p') });
     terminal.keep = true;
   }
@@ -46,17 +50,27 @@ function close(terminal) {
   }
 }
 function fail(kind) {
-  console.error(JSON.stringify({ error: { kind, message: kind } }));
+  writeFileSync(statePath, JSON.stringify(state));
+  console.error(JSON.stringify({ error: kind === 'unavailable' ? kind : { kind, message: kind } }));
   process.exit(3);
 }
+function fault(command, when) {
+  if (state.faults[0]?.command === command && state.faults[0]?.when === when) {
+    fail(state.faults.shift().kind ?? 'unavailable');
+  }
+}
 let result;
-if (app && verb === 'ls') result = { spaces: state.spaces };
+if (app && verb === 'ls') {
+  fault('ls', 'before');
+  result = { spaces: state.spaces };
+}
 else if (app) {
   const [command, raw] = args;
   const options = JSON.parse(raw);
   state.actions.push({ command, options });
+  fault(command, 'before');
   if (command === 'space.new' || command === 'tab.new') {
-    const space = command === 'space.new' ? { id: allocate('sp'), name: options.name, tabs: [] } : spaceFor(options.space);
+    const space = command === 'space.new' ? { id: allocate('sp'), name: options.name, folder: options.folder, tabs: [] } : spaceFor(options.space);
     if (command === 'space.new') state.spaces.push(space);
     const tab = { id: allocate('tb'), name: options.tab ?? options.name, terminals: [] };
     space.tabs.push(tab);
@@ -64,6 +78,8 @@ else if (app) {
     result = { space: space.id, tab: tab.id, terminal: terminal.address };
   } else if (command === 'pane.close') {
     close(target(visible().find(item => item.pane === options.pane).terminal));
+  } else if (command === 'tab.rename') {
+    tabs().find(tab => tab.id === options.id).name = options.name;
   } else if (command === 'tab.move') {
     const space = state.spaces.find(space => space.tabs.some(tab => tab.id === options.id));
     const previous = space.tabs.findIndex(tab => tab.id === options.id);
@@ -73,6 +89,7 @@ else if (app) {
       spaceFor(options.id).tabs.flatMap(tab => tab.terminals);
     for (const pane of [...panes]) close(target(pane.terminal));
   } else fail('unsupported-app-command');
+  fault(command, 'after');
 } else if (verb === 'run') {
   const name = args[args.indexOf('--name') + 1];
   if (target(name)?.state === 'live') fail('name_taken');
@@ -92,6 +109,7 @@ else if (app) {
   else if (verb !== 'get') fail('unsupported-hc-command');
   result = terminal;
 }
+fault(verb, 'after');
 writeFileSync(statePath, JSON.stringify(state));
 console.log(JSON.stringify(result ?? { ok: true }));
 `;
@@ -100,9 +118,9 @@ async function fixture(t) {
   const project = mkdtempSync(join(realpathSync(tmpdir()), 'loom-layout-'));
   mkdirSync(join(project, '.project', 'loomd'), { recursive: true });
   const state = join(project, 'herdr.json');
-  writeFileSync(state, JSON.stringify({ seq: 0, spaces: [], terminals: [], actions: [] }));
+  writeFileSync(state, JSON.stringify({ seq: 0, spaces: [], terminals: [], actions: [], faults: [] }));
   const env = { LOOM_HC_BIN: join(project, 'hc'), LOOM_HERDR_APP_BIN: join(project, 'herdr-app'),
-    FAKE_HERDR_STATE: state, XDG_STATE_HOME: join(project, 'state') };
+    LOOM_HERDR_LAYOUT: '1', FAKE_HERDR_STATE: state, XDG_STATE_HOME: join(project, 'state') };
   const original = new Map(Object.keys(env).map(key => [key, process.env[key]]));
   Object.assign(process.env, env);
   t.after(() => {
@@ -118,34 +136,43 @@ async function fixture(t) {
   const commands = await herdrCommands();
   const layout = projectLayout(project);
   const inspect = () => JSON.parse(readFileSync(state, 'utf8'));
+  const faults = (...entries) => writeFileSync(state, JSON.stringify({ ...inspect(), faults: entries }));
   async function launch(name, labels = {}) {
     const term = await commands.hc('run', '--bg', '--name', name, '--cwd', project,
       ...Object.entries(labels).flatMap(([key, value]) => ['--label', key + '=' + value]), '--', '/bin/sleep', '60');
     return commands.hc('get', term.address);
   }
-  return { project, commands, layout, inspect, launch };
+  return { project, commands, layout, inspect, launch, faults };
 }
 
 test('project layout reuses ordered tabs and repairs deleted tabs and spaces without focusing them', async t => {
-  const { project, commands, layout, inspect } = await fixture(t);
+  const { project, commands, layout, inspect, launch } = await fixture(t);
   const first = structuredClone(await layout.ensure(true));
   const reopened = projectLayout(project);
   assert.deepEqual(await reopened.ensure(true), first);
   assert.deepEqual(herdrProjects(), [project]);
   const status = first.tabs.status;
   assert.equal((await commands.hc('get', status.hcName)).keep, false);
-  await commands.app('tab.close', { id: first.tabs.auditor.id, confirmed: true });
-  const fixed = structuredClone(await reopened.ensure(true));
+  const auditor = { role: 'auditor', addr: 'loom-auditor' };
+  async function spawnAuditor() {
+    const placement = await reopened.placement(auditor);
+    await reopened.place(auditor, await launch(placement.hcName, placement.labels), false);
+    return structuredClone(readLayout(project));
+  }
+  const before = await spawnAuditor();
+  await commands.app('tab.close', { id: before.tabs.auditor.id, confirmed: true });
+  const fixed = await spawnAuditor();
   assert.equal(fixed.space.id, first.space.id);
   assert.equal(fixed.tabs.status.terminal, status.terminal);
-  assert.notEqual(fixed.tabs.auditor.id, first.tabs.auditor.id);
-  assert.deepEqual(inspect().spaces[0].tabs.map(tab => tab.name), ['Leader', 'Auditor', 'Status']);
+  assert.notEqual(fixed.tabs.auditor.id, before.tabs.auditor.id);
+  assert.deepEqual(inspect().spaces[0].tabs.map(tab => tab.name), ['Auditor', 'Status']);
   await commands.app('space.close', { id: first.space.id, confirmed: true });
   const rebuilt = await reopened.ensure(true);
   assert.notEqual(rebuilt.space.id, first.space.id);
   assert.equal(rebuilt.tabs.status.hcName, status.hcName);
   assert.ok(inspect().actions.filter(item => ['space.new', 'tab.new'].includes(item.command))
     .every(({ options }) => options.focus === false));
+  assert.equal(inspect().terminals.filter(term => term.state === 'live').length, 1);
 });
 
 test('successor shares the role tab, keeps the predecessor record until acknowledged, and remains alone after retirement', async t => {
@@ -156,7 +183,7 @@ test('successor shares the role tab, keeps the predecessor record until acknowle
   await layout.place(old, previous, false);
   const next = { role: 'leader', addr: 'loom-12345678' };
   const placement = await layout.placement(next);
-  assert.equal(placement.labels['herdr.tab'], oldPlacement.labels['herdr.tab']);
+  assert.equal(placement.labels['herdr.tab'], readLayout(project).tabs.leader.id);
   assert.notEqual(placement.hcName, oldPlacement.hcName);
   const candidate = await launch(placement.hcName, placement.labels);
   await layout.place(next, candidate, true);
@@ -194,6 +221,52 @@ test('explicit adoption preserves process identity and keeps the separate global
   assert.equal(global.tabs.super.terminal, superTerminal.address);
   assert.deepEqual(inspect().terminals.find(term => term.address === global.tabs.status.terminal).argv.slice(-2), ['tui', '--all']);
   await assert.rejects(superLayout(project, leader.address, commands), /already has a pane/);
+});
+
+test('adoption reconciles lost create and label acknowledgements and reuses an unrecorded tab by name', async t => {
+  const { project, commands, layout, inspect, launch, faults } = await fixture(t);
+  const leader = await launch('existing-leader');
+  const auditor = await launch('existing-auditor');
+  const pairs = [{ row: { role: 'leader', addr: 'loom-leader' }, terminal: leader },
+    { row: { role: 'auditor', addr: 'loom-auditor' }, terminal: auditor }];
+  faults({ command: 'space.new', when: 'after' }, { command: 'ls', when: 'before' },
+    { command: 'label', when: 'after' }, { command: 'ls', when: 'before' });
+  const first = structuredClone(await layout.adopt(pairs));
+  const path = join(project, '.project', 'loomd', 'layout.json');
+  delete first.tabs.auditor;
+  writeFileSync(path, JSON.stringify(first));
+  const recovered = await projectLayout(project).adopt(pairs);
+  assert.equal(recovered.tabs.auditor.terminal, auditor.address);
+  assert.deepEqual(inspect().spaces.map(space => space.tabs.map(tab => tab.name)), [['Leader', 'Auditor', 'Status']]);
+  assert.equal(inspect().actions.filter(({ command }) => command === 'space.new').length, 1);
+  assert.equal(inspect().terminals.length, 3);
+  assert.equal((await commands.hc('get', leader.address)).keep, false);
+  assert.equal((await commands.hc('get', auditor.address)).keep, false);
+});
+
+test('failed setup removes its placeholder and failed placement disables keep before a retry', async t => {
+  const { layout, inspect, launch, faults } = await fixture(t);
+  faults({ command: 'run', when: 'after', kind: 'invalid' });
+  await assert.rejects(layout.ensure(true), /invalid/);
+  assert.ok(inspect().terminals.every(term => term.name));
+  await layout.ensure(true);
+  const leader = await launch('existing-leader');
+  const pairs = [{ row: { role: 'leader', addr: 'loom-leader' }, terminal: leader }];
+  faults({ command: 'tab.rename', when: 'before', kind: 'invalid' });
+  await assert.rejects(layout.adopt(pairs), /invalid/);
+  assert.equal(inspect().terminals.find(term => term.address === leader.address).keep, false);
+  assert.equal((await layout.adopt(pairs)).tabs.leader.terminal, leader.address);
+});
+
+test('test processes require both fake Herdr executables even for mandatory layouts', async () => {
+  const original = process.env.LOOM_HC_BIN;
+  delete process.env.LOOM_HC_BIN;
+  try {
+    await assert.rejects(herdrCommands(), { code: 'herdr-disabled' });
+    assert.equal(await herdrCommands({ optional: true }), undefined);
+  } finally {
+    if (original !== undefined) process.env.LOOM_HC_BIN = original;
+  }
 });
 
 test('the board reports delivery states and the latest verified verdict across gate rounds', () => {
