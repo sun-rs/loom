@@ -13,6 +13,7 @@ import { allowNativeQuestions, claudeIdleCompaction } from '../cli/policy.mjs';
 import { controllerFile, managedEnvironment, releaseRoot } from './release.mjs';
 import { workerEnvironment, workerProviderEnvironment } from './worker-environment.mjs';
 import { seniorToolEnvironment } from './senior-tools.mjs';
+import { statuslinePath } from './account-collection.mjs';
 
 const exec = promisify(execFile);
 export const paneName = addr => `loom-${addr.replace(/^loom-/, '').replaceAll('-', '').slice(0, 22)}`;
@@ -43,7 +44,7 @@ export function hookRunner(project, cli) {
   return path;
 }
 
-export async function openTui(job, row, project, recordTemporary, recordBinding, controller, capabilityPath) {
+export async function openTui(job, row, project, recordTemporary, recordBinding, controller, capabilityPath, statusline = {}) {
   const worker = row.role === 'worker';
   const command = worker ? nativeWorkerExecutable(row.cli) : row.cli === 'claude' ? nativeClaude() : undefined;
   const hookSink = eventPath(project, row.addr);
@@ -55,8 +56,14 @@ export async function openTui(job, row, project, recordTemporary, recordBinding,
   const name = job.herdr?.hcName ?? paneName(row.addr);
   const guardUnset = ['LOOM_CAPABILITY', 'LOOM_EXTERNAL_SUPER',
     ...(env.LOOM_SENIOR_TOOL_LOG ? [] : ['LOOM_SENIOR_TOOL_LOG', 'LOOM_SENIOR_TOOL_PROJECT'])];
+  const accountStatusline = job.accountStatusline && {
+    sinkPath: statuslinePath(project, job.accountStatusline.generation),
+    generation: job.accountStatusline.generation,
+    sessionId: row.addr,
+    cliVersion: statusline.cliVersion,
+  };
   const host = await openNativeTui({
-    ...row, command, fast: job.fast, hookSink,
+    ...row, ...(accountStatusline && { accountStatusline, statusLine: statusline.statusLine }), command, fast: job.fast, hookSink,
     ...(worker && { recordExecutable: path => recordWorkerExecutable(project, row, path, 'launch') }), ...(runner && { hookRunner: runner }), name, env,
     ...(job.herdr && { hcCommand: job.herdr.hcCommand, placementLabels: job.herdr.labels }),
     sessionId: job.plannedNativeId, recordTemporary, recordBinding, previous: job.tui, unset: guardUnset, capabilityPath,
@@ -68,7 +75,16 @@ export async function openTui(job, row, project, recordTemporary, recordBinding,
       authMode: job.authMode, idleCompaction: claudeIdleCompaction(project, row.role), unset: [...guardUnset, 'CLAUDE_CODE_ENTRYPOINT', 'CLAUDECODE'] }),
     ...(row.cli === 'codex' && { extraArgs: ['--disable', 'memories', ...codexEnvironmentArgs(env), ...codexFastArgs(job.fast)] }),
   });
-  try { return { terminal: await host.status(), nativeId: host.sessionId }; }
+  try {
+    const terminal = await host.status();
+    const version = terminal.labels?.['loom-tui-version'];
+    if (accountStatusline && terminal.labels?.['loom-tui-provider'] === row.cli &&
+        typeof version === 'string' && /^v?\d+\.\d+\.\d+(?:[-+][a-z0-9.-]+)?$/i.test(version)) {
+      try { writeState(accountStatusline.sinkPath + '.version', version); }
+      catch { /* Version evidence is optional to the managed pane. */ }
+    }
+    return { terminal, nativeId: host.sessionId };
+  }
   catch (error) { await host.close(); throw error; }
 }
 

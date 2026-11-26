@@ -12,6 +12,8 @@ import { pendingWork, stalledDeliveries, stallText, suppressedReplies, suppresse
 import { isStartupBlocker } from '../tui/agent-status.mjs';
 import { auditorWakeFiltered } from '../daemon/routing.mjs';
 import { seniorToolSummary } from '../daemon/senior-tools.mjs';
+import { readAccounts } from '../daemon/accounts.mjs';
+import { accountSummaryLines } from './accounts.mjs';
 import { readLayout } from '../daemon/herdr-layout.mjs';
 import { storedWorkerTier } from '../lib/worker-tiers.mjs';
 import { rotatingRoles } from '../index/index.mjs';
@@ -220,7 +222,9 @@ export async function projectStatus(project) {
   }
   const deliveryAlerts = stalledDeliveries(messages).map(item =>
     ({ ...item, role: byAddress.get(item.target)?.role, since: item.stalledAt }));
-  return { ok: true, running: Boolean(live), layout: readLayout(project), stalledDeliveries: deliveryAlerts, awaitingUser, sessionHealth, exits: [...incidents.values()],
+  const { accounts, diagnostics, snapshotUnavailable } = readAccounts(project);
+  return { ok: true, accounts, ...(diagnostics.length && { accountDiagnostics: diagnostics }),
+    ...(snapshotUnavailable && { accountSnapshotUnavailable: true }), running: Boolean(live), layout: readLayout(project), stalledDeliveries: deliveryAlerts, awaitingUser, sessionHealth, exits: [...incidents.values()],
     suppressedReplies: suppressedReplies(messages).sort((a, b) => b.at - a.at),
     sessions: rows.filter(row => row.endedAt == null || retentionFor(row)).map(row => {
       const authMode = row.cli === 'claude' ? jobs.get(row.addr)?.authMode : undefined;
@@ -267,6 +271,10 @@ export function printStatus(result) {
   section('Stalled deliveries', result.stalledDeliveries, row =>
     [row.role ?? 'unassigned', stamp(row.since), stallText(row)].join(' · '), Infinity);
   section('Awaiting user', result.awaitingUser, incident, Infinity);
+  console.log('Accounts · ' + accountSummaryLines({ accounts: result.accounts, diagnostics: result.accountDiagnostics,
+    snapshotUnavailable: result.accountSnapshotUnavailable }, {
+    color: Boolean(process.stdout.isTTY && !Object.hasOwn(process.env, 'NO_COLOR')),
+  }).join('  |  '));
   section('Quota and authentication', result.sessionHealth.filter(row => ['quota-wait', 'auth-expired'].includes(row.status)), incident, Infinity);
   section('Silent hangs', result.sessionHealth.filter(row => row.status === 'silent-hang'), incident, Infinity);
   section('Exited', result.exits, incident, Infinity);

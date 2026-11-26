@@ -187,6 +187,13 @@ export async function main(args, { pollInterval = 350, ...options } = {}) {
             switching = true;
             return receipt;
           });
+        } else if (command === 'accounts-refresh') {
+          const { pending } = await serial(async () => {
+            if (!canDispatch()) throw Object.assign(new Error('loomd is switching releases'), { code: 'not-ready' });
+            const actor = await authorize();
+            return { pending: supervisor.handle(command, args, actor?.addr, { external: actor?.external }) };
+          });
+          result = await pending;
         } else {
           result = await serial(async () => {
             if (!canDispatch()) throw Object.assign(new Error('loomd is switching releases'), { code: 'not-ready' });

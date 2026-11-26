@@ -34,6 +34,7 @@ import { projectSessionMemory } from './processes.mjs';
 import { workerCheckpoint, workerCheckpointMismatch, workerCheckpointText, writeWorkerHandoff } from './worker-handoff.mjs';
 import { requestedWorkerTier, storedWorkerTier } from '../lib/worker-tiers.mjs';
 import { recordHostEvidence } from '../evidence/host.mjs';
+import { accountCollector } from './account-collection.mjs';
 
 const runtimeIds = { codex: 'codex', agy: 'antigravity', claude: 'claude', opencode: 'opencode' };
 const modes = new Set(['tui', 'headless']);
@@ -112,6 +113,7 @@ function defaultTrustWorkspace(project, cwd) {
 
 export function ownedSessions(project, index, report, {
   open, exportOpenCode, openPane = openTui, getPane = ownedPane, callHc = hc, controller, layout, capabilities, hostGrants,
+  observeAccounts, observeAccountDiagnostics, observeAccountIncidents, accountBinding, accountStatusline,
 } = {}) {
   const path = join(runtimeDirectory(project), 'sessions');
   mkdirSync(path, { recursive: true, mode: 0o700 });
@@ -140,6 +142,9 @@ export function ownedSessions(project, index, report, {
     jobs.set(job.row.addr, job);
   }
   const save = job => writeState(file(job.row.addr), JSON.stringify(job) + '\n');
+  const { accountOptions, accountCallbacks, reserveStatusline, refreshAccounts, clear: clearAccounts } =
+    accountCollector(project, { jobs, save, report, events: addr => events(addr), accountBinding,
+      observeAccounts, observeAccountDiagnostics, observeAccountIncidents });
 
   function legacySessions() {
     return rows().filter(row => row.endedAt === null && roles.includes(row.role) && jobs.has(row.addr) && !jobs.get(row.addr).stopping &&
@@ -413,6 +418,7 @@ export function ownedSessions(project, index, report, {
       save(job);
     }
     openCodeProofs.delete(row.addr);
+    clearAccounts(row.addr);
     holders.detach(job.tui);
     if (row.endedAt === null) {
       try { capabilities?.revokeSession(row.addr); }
@@ -744,7 +750,8 @@ export function ownedSessions(project, index, report, {
       capabilities?.ensureSession(row.addr).token);
     try {
       if (row.sessionId && session.id !== row.sessionId) throw new Error('OAR resumed a different native session');
-      return trackOar(project, row, session, error => report(error.message));
+      return trackOar(project, row, session, error => report(error.message), undefined, undefined,
+        { ...accountCallbacks, binding: accountOptions({ ...row, sessionId: session.id }) });
     } catch (error) {
       await disposeSession(session).catch(failure => report(failure.message));
       throw error;
@@ -784,6 +791,7 @@ export function ownedSessions(project, index, report, {
           }
           if (runtime.sessionId && row.sessionId !== runtime.sessionId) row = index.update(row.addr, { sessionId: runtime.sessionId });
           const transcriptPath = checkedTranscript(runtime.transcriptPath, row);
+          await refreshAccounts(job, row, { transcript: transcriptPath, runtime });
           if (transcriptPath && row.transcriptPath !== transcriptPath) row = index.update(row.addr, { transcriptPath });
           return job.retention?.releasing ? released(job, row, runtime.endedAt) : finish(job, row, runtime.endedAt);
         }
@@ -793,6 +801,7 @@ export function ownedSessions(project, index, report, {
       const runtime = running.get(row.addr);
       const transcript = await getOarTranscript(runtime, row).catch(error => report(error.message));
       if (transcript && row.transcriptPath !== transcript) row = index.update(row.addr, { transcriptPath: transcript });
+      await refreshAccounts(job, row, { transcript, runtime });
       if (job.retention?.resuming) {
         const { at, warmUntil } = job.retention.resuming;
         (job.revivals ??= []).push({ at, warmUntil, streamId: runtime.streamId });
@@ -813,13 +822,15 @@ export function ownedSessions(project, index, report, {
           job.authMode = claudeAuthMode(project, row.role);
           save(job);
         }
+        reserveStatusline(job, row);
         const opened = await openPane(job, row, project, temporary => {
           job.temporary = temporary;
           save(job);
         }, binding => {
           job.tui = binding;
           save(job);
-        }, controller, capabilities?.ensureSession(row.addr).path);
+        }, controller, capabilities?.ensureSession(row.addr).path,
+          job.accountStatusline ? accountStatusline?.(row) : undefined);
         terminal = opened.terminal;
         nativeId = opened.nativeId;
       }
@@ -919,6 +930,7 @@ export function ownedSessions(project, index, report, {
       }
       catch (error) { report(error.message); }
     }
+    await refreshAccounts(job, row, { transcript: row.transcriptPath, hooks });
     if (!terminal || completedPane(terminal)) {
       let exit = terminal;
       if (job.tui?.exitPath) {
@@ -1001,6 +1013,7 @@ export function ownedSessions(project, index, report, {
             }
             const transcript = await getOarTranscript(runtime, row);
             if (row.transcriptPath !== transcript && transcript) row = index.update(addr, { transcriptPath: transcript });
+            await refreshAccounts(job, row, { transcript, runtime });
             await refreshOpenCodeProof(runtime, row);
             const exit = runtime.rows.findLast(event => ['exited', 'released'].includes(event.type) && event.streamId === runtime.streamId);
             if (exit || runtime.endedAt != null) {
@@ -1146,7 +1159,10 @@ export function ownedSessions(project, index, report, {
       if (!runtime && job.host && (!isReleased(job) || job.retention.resuming)) {
         runtime = await attachHeadless(row, job, { stop: true });
       }
-      if (runtime?.hosted) endedAt = (await runtime.close()).endedAt;
+      if (runtime?.hosted) {
+        endedAt = (await runtime.close()).endedAt;
+        await refreshAccounts(job, row, { transcript: runtime.transcriptPath, runtime });
+      }
       else if (runtime?.session) await disposeSession(runtime.session);
       else endedAt = runtime?.endedAt;
       runtime?.unsubscribe?.();

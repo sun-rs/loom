@@ -58,7 +58,7 @@ export function overlayRows(view, width, height, paint) {
     ...block.map(line => row(x + line.text))] };
 }
 
-export function boardView(project, { board, error } = {}, { width = 80, now = Date.now(),
+export function boardView(project, { board, error, offlineAccounts } = {}, { width = 80, now = Date.now(),
   page = 0, selected, showEnded = false, interactive = false, depth = 1 } = {}) {
   const paint = theme(depth);
   const marker = (item, text) => interactive && selected === item.id ? paint('selected', '› ' + text) : text;
@@ -85,7 +85,8 @@ export function boardView(project, { board, error } = {}, { width = 80, now = Da
   header.push({ ...row(truncate(tabs.join('  '), width)), hits: tabHits }, row());
   const tail = (error ? [row(paint('warn', truncate(safe(error), width))), row()] : []);
   const frame = body => ({ header, body: [...tail, ...body], footer: truncate(footer, width) });
-  if (!board) return frame([]);
+  const accounts = () => panel(width, 'Accounts', accountRows(offlineAccounts ?? board?.accounts, width, now, paint));
+  if (!board) return frame(pages[page] === 'Cost' ? accounts() : []);
 
   const { roles = [], workers = [], delivery, gates = [], notifications, pyramids = [], layout, memory, workerMetrics = [] } = board;
   const samplesReady = pyramids.some(pyramidSampleReady);
@@ -299,7 +300,6 @@ export function boardView(project, { board, error } = {}, { width = 80, now = Da
       (warnings.length ? ' · ' + paint('warn', warnings.length + ' path warnings') : ''), item)];
   }
 
-  const accounts = () => panel(width, 'Accounts', accountRows(board.accounts, width, now, paint));
   switch (pages[page]) {
     case 'Workers': return frame([...workerTable(width), ...metrics()]);
     case 'Gates': return frame(gateList(width));

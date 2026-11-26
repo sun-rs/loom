@@ -50,11 +50,21 @@ function accountHeader(fields, width) {
   return [...lines, ...wrap(line, width)];
 }
 
+function diagnosticRows(diagnostics, width, paint) {
+  return (diagnostics ?? []).flatMap(item => {
+    const text = item.reason === 'unverified-version' ? 'unverified version' : item.reason === 'unsupported-version-shape' ?
+      'account payload did not match the supported structure' : 'usage unavailable';
+    return wrap([privateText(item.cli), text, privateText(item.cliVersion)].filter(Boolean).join(' · '), width)
+      .map(line => row(paint('warn', line)));
+  });
+}
+
 export function accountRows(document, width, now, paint) {
   const space = inside(width);
   const accounts = document?.accounts;
   if (!Array.isArray(accounts)) return [row(paint('muted', 'Waiting for loom accounts snapshots.'))];
-  if (!accounts.length) return [row(paint('muted', 'No quota snapshots · R refresh'))];
+  const empty = document.snapshotUnavailable ? 'Account snapshots unavailable · R refresh' : 'No quota snapshots · R refresh';
+  if (!accounts.length) return [row(paint('muted', empty)), ...diagnosticRows(document.diagnostics, space, paint)];
 
   const lines = [row(paint('muted', 'Usage shown as used % · │ elapsed window time'))];
   for (const account of accounts) {
@@ -69,6 +79,8 @@ export function accountRows(document, width, now, paint) {
       Number.isSafeInteger(account.resetCredits) && account.resetCredits >= 0 ? `⟲${account.resetCredits} reset credits` : '',
       Number.isFinite(expires) && `expires ${new Date(expires).toISOString().slice(0, 10)}`,
     ], space).map(line => row(paint('accent', line))));
+    const notes = diagnosticRows(account.diagnostics, space, paint);
+    if (notes.length) lines.push(...notes);
     if (!windows.length) {
       lines.push(row(paint('muted', '  No snapshot · R refresh')));
       continue;
@@ -78,6 +90,7 @@ export function accountRows(document, width, now, paint) {
       const label = privateText(window.label || window.model || window.kind || window.id || 'Quota');
       const caption = [
         used == null ? 'used % unknown' : `${used}% used`,
+        window.versionStatus === 'unverified' && 'unverified version',
         !stale && used != null && pace != null && (lead >= 10 ? '↑ ahead' : lead <= -10 ? '↓ behind' : '~ on pace'),
         resetText(reset, now),
         window.windowMinutes > 0 && duration(window.windowMinutes * minute),
@@ -96,5 +109,5 @@ export function accountRows(document, width, now, paint) {
       }
     }
   }
-  return lines;
+  return [...lines, ...diagnosticRows(document.diagnostics, space, paint)];
 }

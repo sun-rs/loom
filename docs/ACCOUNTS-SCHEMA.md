@@ -23,6 +23,8 @@ The root object has an `accounts` array. Each entry describes one provider accou
 | `resetsAt` | timestamp or null | When the recorded window resets |
 | `source` | string | Identifier for the source of the observation |
 | `observedAt` | timestamp or null | When the source reported this value |
+| `versionStatus` | string or omitted | `unverified` for a structurally valid payload outside the version allowlist |
+| `cliVersion` | string, null or omitted | Native version reported for an unverified window |
 
 Use ISO 8601 timestamps with an explicit offset. Nullable fields can be omitted. Keep zero-valued observations and credits. Mask account identifiers before serializing them. Keep provider credentials out of the payload.
 
@@ -53,6 +55,6 @@ Use ISO 8601 timestamps with an explicit offset. Nullable fields can be omitted.
 }
 ```
 
-The TUI accepts this root object at `board.accounts`. The v1 fixture exercises it there. Before CELL-ACCT-1 connects the producer, the daemon can omit the field and the TUI displays a placeholder. The refresh key reloads the board snapshot.
+The CLI and `board.accounts` share the root document. The Status TUI renders it in the Cost tab. The refresh key reloads the stored snapshot. Optional `diagnostics` can appear at the root or on an account. Their `reason` explains `unverified-version`, `unsupported-version-shape`, or `usage-unavailable`. Valid unverified windows retain their numbers. A structural mismatch supplies no new windows.
 
 The bar fill is used quota. The pace marker is the elapsed fraction of the current window, calculated from the current time, reset timestamp and window duration. The display marks a snapshot stale after two hours or once its recorded reset has passed. It shows the shortest upcoming reset per account.

@@ -1,0 +1,310 @@
+{
+  "recordedAt": "2026-11-26T14:30:19Z",
+  "versions": {
+    "codex": "0.171.0",
+    "codex0172": "0.172.0",
+    "claude": "2.1.331",
+    "agy": "1.5.17",
+    "agy1518": "1.5.18",
+    "opencode": "v2.3.0"
+  },
+  "codex": {
+    "accountRead": {
+      "account": {
+        "type": "chatgpt",
+        "email": "a***@example.com",
+        "planType": "pro"
+      },
+      "requiresOpenaiAuth": false
+    },
+    "rateLimitsRead": {
+      "rateLimitResetCredits": { "availableCount": 2, "credits": null },
+      "rateLimits": {
+        "limitId": "codex",
+        "planType": "pro",
+        "primary": {
+          "usedPercent": 58,
+          "windowDurationMins": 10080,
+          "resetsAt": 1796281200
+        },
+        "secondary": null
+      },
+      "rateLimitsByLimitId": {
+        "codex": {
+          "limitId": "codex",
+          "planType": "pro",
+          "primary": {
+            "usedPercent": 58,
+            "windowDurationMins": 10080,
+            "resetsAt": 1796281200
+          },
+          "secondary": null
+        }
+      }
+    },
+    "unauthenticatedAccountRead": {
+      "account": null,
+      "requiresOpenaiAuth": true
+    },
+    "unauthenticatedRateLimitsError": {
+      "code": -32600,
+      "message": "codex account authentication required to read rate limits"
+    }
+  },
+  "codex0172": {
+    "accountRead": {
+      "account": {
+        "type": "chatgpt",
+        "email": "c***@example.com",
+        "planType": "pro",
+        "workspaceName": null
+      },
+      "userId": "user-fixture-codex",
+      "requiresOpenaiAuth": true,
+      "workspaceRouting": {
+        "chatgptAccountId": "00000000-0000-4000-8000-000000000002",
+        "backendOrigin": "https://chatgpt.com",
+        "accountRoutingOverride": "NO_CONSTRAINT"
+      }
+    },
+    "rateLimitsRead": {
+      "ordinaryUsageAllowed": true,
+      "rateLimits": {
+        "limitId": "codex",
+        "limitName": null,
+        "normalModelSlug": null,
+        "primary": {
+          "usedPercent": 67,
+          "windowDurationMins": 10080,
+          "resetsAt": 1795769002
+        },
+        "secondary": null,
+        "credits": {
+          "hasCredits": false,
+          "unlimited": false,
+          "balance": "0"
+        },
+        "individualLimit": null,
+        "spendControlReached": false,
+        "planType": "pro",
+        "rateLimitReachedType": null
+      },
+      "rateLimitsByLimitId": {
+        "codex": {
+          "limitId": "codex",
+          "limitName": null,
+          "normalModelSlug": null,
+          "primary": {
+            "usedPercent": 67,
+            "windowDurationMins": 10080,
+            "resetsAt": 1795769002
+          },
+          "secondary": null,
+          "credits": {
+            "hasCredits": false,
+            "unlimited": false,
+            "balance": "0"
+          },
+          "individualLimit": null,
+          "spendControlReached": false,
+          "planType": "pro",
+          "rateLimitReachedType": null
+        }
+      },
+      "rateLimitResetCredits": {
+        "availableCount": 3,
+        "credits": [
+          {
+            "id": "RateLimitResetCredit_00000000000000000000000000000001",
+            "resetType": "codexRateLimits",
+            "status": "available",
+            "grantedAt": 1793573232,
+            "expiresAt": 1796165232,
+            "title": "Full reset",
+            "description": "Thanks for using Codex! You've been granted one free rate limit reset."
+          },
+          {
+            "id": "RateLimitResetCredit_00000000000000000000000000000002",
+            "resetType": "codexRateLimits",
+            "status": "available",
+            "grantedAt": 1794523322,
+            "expiresAt": 1797115322,
+            "title": "Full reset",
+            "description": "Thanks for using Codex! You've been granted one free rate limit reset."
+          },
+          {
+            "id": "RateLimitResetCredit_00000000000000000000000000000003",
+            "resetType": "codexRateLimits",
+            "status": "available",
+            "grantedAt": 1795673665,
+            "expiresAt": 1798265665,
+            "title": "Full reset",
+            "description": "Thanks for using Codex! You've been granted one free rate limit reset."
+          }
+        ]
+      },
+      "accountId": "00000000-0000-4000-8000-000000000002",
+      "rateLimitUpsell": null
+    }
+  },
+  "claude": {
+    "authStatus": {
+      "loggedIn": true,
+      "authMethod": "claude.ai",
+      "apiProvider": "firstParty",
+      "email": "b***@example.com",
+      "orgId": "00000000-0000-4000-8000-000000000001",
+      "subscriptionType": "max",
+      "planTier": "max_5x",
+      "loginExpiresAt": "2026-12-19T18:28:28.275Z"
+    },
+    "usageJson": {
+      "type": "result",
+      "subtype": "success",
+      "is_error": false,
+      "local_command": "usage",
+      "num_turns": 0,
+      "duration_api_ms": 0,
+      "total_cost_usd": 0,
+      "usage": {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0
+      },
+      "result": "You are currently using your subscription to power your Claude Code usage\n\nCurrent session: 10% used · resets Nov 26 at 12pm (America/New_York)\nCurrent week (all models): 8% used · resets Dec 2 at 12pm (America/New_York)\nCurrent week (Fable): 0% used · resets Dec 2 at 12pm (America/New_York)\n"
+    },
+    "authLoggedOut": {
+      "loggedIn": false,
+      "authMethod": "none",
+      "apiProvider": "firstParty"
+    }
+  },
+  "agy": {
+    "usageJson": {
+      "conversation_id": "",
+      "status": "SUCCESS",
+      "duration_seconds": 0,
+      "num_turns": 0,
+      "usage": {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "thinking_tokens": 0,
+        "cache_read_tokens": 0,
+        "total_tokens": 0
+      },
+      "command": {
+        "name": "usage",
+        "data": {
+          "groups": [
+            {
+              "name": "Gemini Models",
+              "buckets": [
+                {
+                  "id": "gemini-weekly",
+                  "name": "Weekly Limit Remaining",
+                  "window": "weekly",
+                  "remaining_fraction": 0.8642972111701965,
+                  "reset_time": "2026-12-03T07:02:03Z"
+                },
+                {
+                  "id": "gemini-5h",
+                  "name": "Five Hour Limit Remaining",
+                  "window": "5h",
+                  "remaining_fraction": 0.7436690330505371,
+                  "reset_time": "2026-11-26T17:02:03Z"
+                }
+              ]
+            },
+            {
+              "name": "Claude and GPT models",
+              "buckets": [
+                {
+                  "id": "3p-weekly",
+                  "name": "Weekly Limit Remaining",
+                  "window": "weekly",
+                  "remaining_fraction": 1,
+                  "reset_time": "1970-01-01T00:00:00Z"
+                },
+                {
+                  "id": "3p-5h",
+                  "name": "Five Hour Limit Remaining",
+                  "window": "5h",
+                  "remaining_fraction": 1,
+                  "reset_time": "1970-01-01T00:00:00Z"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "usageJson_1_5_18": {
+      "conversation_id": "",
+      "status": "SUCCESS",
+      "response": "Gemini Models\tWeekly Limit Remaining\t81%\t2026-12-03T07:02:03Z\nGemini Models\tFive Hour Limit Remaining\t50%\t2026-11-26T17:02:03Z\nClaude and GPT models\tWeekly Limit Remaining\t100%\t1970-01-01T00:00:00Z\nClaude and GPT models\tFive Hour Limit Remaining\t100%\t1970-01-01T00:00:00Z\n",
+      "duration_seconds": 0,
+      "num_turns": 0,
+      "usage": {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "thinking_tokens": 0,
+        "cache_read_tokens": 0,
+        "total_tokens": 0
+      },
+      "command": {
+        "name": "usage",
+        "data": {
+          "groups": [
+            {
+              "name": "Gemini Models",
+              "buckets": [
+                {
+                  "id": "gemini-weekly",
+                  "name": "Weekly Limit Remaining",
+                  "window": "weekly",
+                  "remaining_fraction": 0.8077865242958069,
+                  "reset_time": "2026-12-03T07:02:03Z"
+                },
+                {
+                  "id": "gemini-5h",
+                  "name": "Five Hour Limit Remaining",
+                  "window": "5h",
+                  "remaining_fraction": 0.503609299659729,
+                  "reset_time": "2026-11-26T17:02:03Z"
+                }
+              ]
+            },
+            {
+              "name": "Claude and GPT models",
+              "buckets": [
+                {
+                  "id": "3p-weekly",
+                  "name": "Weekly Limit Remaining",
+                  "window": "weekly",
+                  "remaining_fraction": 1,
+                  "reset_time": "1970-01-01T00:00:00Z"
+                },
+                {
+                  "id": "3p-5h",
+                  "name": "Five Hour Limit Remaining",
+                  "window": "5h",
+                  "remaining_fraction": 1,
+                  "reset_time": "1970-01-01T00:00:00Z"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  },
+  "opencode": {
+    "noGoData": {
+      "location": {
+        "directory": "/tmp/isolated-project"
+      },
+      "data": null
+    }
+  }
+}

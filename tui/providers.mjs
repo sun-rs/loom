@@ -1,3 +1,4 @@
+import { createStatuslineSettings } from '../adapters/accounts/statusline.mjs';
 import { promptDetails, questionDetails } from '../adapters/prompt-state.mjs';
 import { claudePrompt } from '../adapters/claude/hooks.mjs';
 import { fileURLToPath } from 'node:url';
@@ -22,6 +23,16 @@ const content = input => typeof input === 'string' ? input :
 const agyScreen = text => text.trimEnd().replace(/\n[ \t]*(?:accept-edits|auto|plan|yolo) · [^·\n]+$/i, '');
 const abortReason = /cancel|interrupt|abort/i;
 const input = (value, key) => ({ inputId: deliveryId(value), key });
+function launchStatusline(cli, options, nativeId) {
+  if (!options.accountStatusline) return options.statusLine;
+  const status = options.statusLine;
+  if (status && (status.type !== 'command' || typeof status.command !== 'string')) return status;
+  return { ...status, ...createStatuslineSettings({
+    ...options.accountStatusline, cli, sessionId: nativeId ?? options.accountStatusline.sessionId,
+    userCommand: status?.command ?? options.accountStatusline.userCommand, bindNative: true,
+  }).statusLine };
+}
+
 const activity = (phase, extra) => ({ phase, ...extra });
 
 export const providers = {
@@ -49,12 +60,14 @@ export const providers = {
       const index = argv.indexOf('--settings') + 1;
       const settings = JSON.parse(argv[index]);
       if (options.fast !== undefined) settings.fastMode = options.fast;
+      let statusLine = options.statusLine;
       if (options.contextStatusPath) {
         const recorder = fileURLToPath(new URL('../runtimes/tui/claude-context.mjs', import.meta.url));
         const command = [process.execPath, recorder, options.contextStatusPath, sessionId]
           .map(word => "'" + word.replaceAll("'", "'\\''") + "'").join(' ');
-        settings.statusLine = { type: 'command', command };
+        statusLine = { type: 'command', command };
       }
+      if (statusLine || options.accountStatusline) settings.statusLine = launchStatusline('claude', { ...options, statusLine }, sessionId);
       const observer = { ...settings.hooks.Stop[0].hooks[0], args: [options.hookRunner ?? capture, options.hookSink, sessionId, options.cwd] };
       for (const entries of Object.values(settings.hooks)) for (const entry of entries) entry.hooks = [observer];
       for (const event of ['SessionStart', 'SessionEnd', 'PreCompact', 'PostCompact']) {
@@ -157,7 +170,7 @@ export const providers = {
       },
     },
     start(options) {
-      const spec = agy.launch({ ...options,
+      const spec = agy.launch({ ...options, statusLine: launchStatusline('agy', options),
         captureScript: options.boundTranscript === false ? agyActivityCapture : options.hookRunner,
         ...(options.resume && { expectedSessionId: options.resume, extraArgs: [...agentResumeArgs('agy', options.resume), ...(options.extraArgs ?? [])] }),
       });

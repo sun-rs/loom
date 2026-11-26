@@ -86,6 +86,12 @@ export function readPolicy(project, { optional = false, warn = console.error } =
     if (Object.hasOwn(policy, 'maxActiveWorkers')) throw new Error('Set maxActiveWorkers under roles.leader');
     validateProfiles(policy);
     validateRotation(policy.rotation);
+    if (policy.accounts !== undefined && (!policy.accounts || typeof policy.accounts !== 'object' ||
+        Array.isArray(policy.accounts) || Object.keys(policy.accounts).some(key => key !== 'warningPercent') ||
+        Object.hasOwn(policy.accounts, 'warningPercent') && (!Number.isFinite(policy.accounts.warningPercent) ||
+          policy.accounts.warningPercent < 0 || policy.accounts.warningPercent > 100))) {
+      throw new Error('Expected accounts.warningPercent from 0 to 100');
+    }
     if (policy.cost !== undefined) {
       const prices = policy.cost?.prices;
       if (!prices || typeof prices !== 'object' || Array.isArray(prices) ||
@@ -184,6 +190,8 @@ export function readPolicy(project, { optional = false, warn = console.error } =
     throw new CommandError('invalid-policy', `${path}: ${error.message}`);
   }
 }
+
+export const accountWarningPercent = project => readPolicy(project, { optional: true }).accounts?.warningPercent ?? 85;
 
 export const allowNativeQuestions = (project, role) =>
   role === 'super' && readPolicy(project, { optional: true }).roles?.super?.allowNativeQuestions !== false;

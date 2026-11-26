@@ -10,7 +10,8 @@ import { request } from './rpc.mjs';
 const logPath = project => resolve(runtimeDirectory(project), 'notifications.json');
 export const readNotifications = project => JSON.parse(readText(logPath(project), '[]'));
 const exec = promisify(execFile);
-const desktopTypes = new Set(['host-tier-grant', 'host-tier-used', 'host-tier-expired', 'host-tier-refused', 'needs-decision', 'project-completed', 'audit-escalation', 'leader-exited', 'session-exited',
+const accountNoticeTypes = new Set(['account-version-unverified', 'account-version-unsupported', 'account-quota-warning']);
+const desktopTypes = new Set([...accountNoticeTypes, 'host-tier-grant', 'host-tier-used', 'host-tier-expired', 'host-tier-refused', 'needs-decision', 'project-completed', 'audit-escalation', 'leader-exited', 'session-exited',
   'session-liveness', 'consumption-pyramid', 'delivery-stalled', 'target-awaiting-user', 'senior-override-budget', 'senior-tool-output-share',
   'auditor-rotation-completed', 'auditor-budget-exceeded', 'super-delivery-receipt', 'super-delivery-reply']);
 export const desktopIntervalMs = 5 * 60_000;
@@ -104,7 +105,7 @@ export function projectNotifications(project, now = Date.now) {
         if (route) mark(batch, route);
         else unrouted.push(...batch);
       }
-      const ledgerOnly = unrouted.filter(event => event.type !== 'project-completed' && (!desktop || !desktopTypes.has(event.type)));
+      const ledgerOnly = unrouted.filter(event => event.type !== 'project-completed' && !accountNoticeTypes.has(event.type) && (!desktop || !desktopTypes.has(event.type)));
       if (ledgerOnly.length) mark(ledgerOnly, 'log');
       if (!desktop) return;
       const eligible = [...unrouted.filter(event => desktopTypes.has(event.type)), ...events.filter(event =>

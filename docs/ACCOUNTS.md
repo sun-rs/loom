@@ -1,0 +1,16 @@
+# Accounts
+
+`loom accounts --json` reads the project's masked quota snapshot. The Accounts panel in the Status TUI Cost tab and `loom status` read the same store. `R` in the TUI reloads the snapshot. An authenticated Super or a Worker with an active host grant can request a provider probe with `loom accounts --refresh`. An external Super uses `LOOM_EXTERNAL_SUPER=1` with the project's existing socket capability.
+
+| Responsibility | Files and interfaces |
+| --- | --- |
+| Collection and passive extraction | `adapters/accounts/passive.mjs` normalizes Codex rollout and push records, Claude raw events and statuslines, and agy statuslines. `transcript.mjs` incrementally reads the bound session. `statusline.mjs` collects masked observations and passes stdin and output through the existing statusline command. `versions.mjs` identifies previously verified versions. |
+| Session binding | `daemon/account-collection.mjs` binds evidence to the owned session and generation. `daemon/sessions.mjs`, `daemon/oar.mjs`, and `daemon/codex-pipe-session.mjs` pass session evidence through those interfaces. `daemon/tui.mjs`, `runtimes/tui/transport.mjs`, `tui/providers.mjs`, and the agy and Claude launch adapters pass the launch-scoped statusline settings. |
+| Store and public projection | `daemon/accounts.mjs` exposes `createAccountStore` and `readAccounts`. It writes `.project/loomd/accounts.json` atomically, merges passive and refresh evidence, and renders the public accounts document without internal identity keys. [JSON contract](ACCOUNTS-SCHEMA.md) |
+| Refresh | `daemon/account-refresh.mjs` selects an account and returns normalized observations and per-provider outcomes. `daemon/account-refresh/providers.mjs` validates native replies, `claude-time.mjs` parses provider reset times, and `process.mjs` owns bounded subprocesses and cancellation. `daemon/executables.mjs` supplies the canonical, CCP-rejecting executable path. |
+| RPC and alerts | `daemon/account-service.mjs` coalesces refresh, stores observations, and publishes durable warnings. `daemon/main.mjs`, `daemon/socket-auth.mjs`, `daemon/rpc.mjs`, and `daemon/supervisor.mjs` expose authenticated refresh and the board snapshot. `daemon/notifications.mjs` routes account notices to Super. `accounts.warningPercent` in `cli/policy.mjs` defaults to 85. |
+| CLI and rendering | `cli/accounts.mjs` implements the snapshot reader and text renderer. `cli/loom.mjs` registers the command. `cli/status.mjs`, `cli/status-tui.mjs`, `cli/status-view.mjs`, and `cli/status-accounts.mjs` consume the public projection. |
+
+The native providers manage their own login. Loom receives bounded, structured responses, masks account labels before persistence, and uses a project-local opaque identity for aggregation. Passive collection takes priority for the same quota window while it is fresh. A recorded snapshot becomes stale after two hours or at its recorded reset.
+
+The allowlist identifies previously verified CLI versions. Valid payloads from other versions remain visible with `unverified version`, and loomd sends Super one notice per provider and version. A structural mismatch emits a diagnostic and supplies no new usage numbers. Earlier valid samples retain their timestamps and freshness.
