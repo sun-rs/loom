@@ -62,10 +62,19 @@ Evidence that the cause is our own planning, not the model:
    - Remove every instruction that makes a senior role integrate, merge, run tests or read code.
    - Integration, merge and full-suite runs on the candidate are an integration worker card. Its evidence card is what the Auditor asks for.
    - Fix the Auditor wording so it asks for "the integration worker's evidence", never "run npm test and send me".
-2. **Mechanical guard (PreToolUse/permission hooks, per CLI, launch-scoped).** For roles leader/auditor (policy `roles.<r>.toolGuard`, default on):
-   - Deny with a short reason ("delegate to a worker card"): test/build runners (npm/node --test/pytest/cargo/go test, make…), `git merge/rebase/cherry-pick/worktree add`, reading source/test files outside `.project/`, recursive grep over the repo, and loop polling of `loom state`.
-   - Allow: `$LOOM_BIN` commands, reading `.project/` files (gate packs, evidence, rulings, charter, reply files), `git log/diff --stat/rev-parse`, and writing `.project/` notes.
-   - Claude: PreToolUse deny. agy: the PreToolUse hook already mounted at launch. Codex/OpenCode: their launch-scoped equivalents. Super is exempt.
-   - Every denial is counted and shown in `loom status` as "senior-tool-denied".
+2. **Graduated guard, never an absolute ban (user + Super decision, 2026-11-26).** User: "不能绝对限制，可以留口子……否则真的遇到处理不了的问题怎么办". Decision: default-deny with a reasoned override, cap the output, count it. Hooks are launch-scoped and per CLI (Claude PreToolUse; agy's mounted PreToolUse; Codex/OpenCode equivalents). The setting is `roles.<r>.toolGuard`, default on for leader/auditor. Super is exempt.
+   - **Tier 0, always allowed:**
+     - `$LOOM_BIN` commands;
+     - reading `.project/` (gate packs, evidence, rulings, charter, reply files);
+     - `git log` / `diff --stat` / `rev-parse`;
+     - a targeted read of a source range of at most ~200 lines, needed to write good cards;
+     - writing `.project/` notes.
+   - **Tier 1, not recommended, needs a reason:**
+     - what it covers: test/build runners, `git merge/rebase/cherry-pick/worktree add`, broad reads or recursive grep over the repo, loop polling of `loom state`;
+     - the first attempt is denied with "建议派 worker 卡；确有必要请带理由重试", and the retry passes when it carries a reason (e.g. `LOOM_SENIOR_OVERRIDE="<reason>" <cmd>`, or the CLI's equivalent);
+     - an allowed Tier-1 call has its output capped to a tail (~40 lines) or a one-line summary before it enters the role's context — this matters more than the deny;
+     - each override is recorded in hist and `loom status` (`senior-override`, with the reason);
+     - the budget is 3 per gate by default; going over it is never blocked and raises one Super notice ("division of labour or card design needs a look").
+   - **Tier 2, emergency:** when loomd itself sees worker spawn failing, OAR down, or a delivery stalled past the SLA, Tier-1 overrides are auto-permitted with reason `worker-unavailable` (still capped and logged).
 3. **Context hygiene signal.** loomd tracks the per-role share of context filled by tool output (the categorisation from item 7) and raises a Super-visible drift notice when a senior role's tool-output share in a window exceeds a bound. Local counters only.
 4. Measure: replay the pilot-2 Leader transcript with the guard. Report which of the 47 test runs, 35 reads and 11 git operations would have been denied, and the expected context ceiling.
