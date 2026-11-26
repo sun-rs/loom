@@ -19,6 +19,9 @@ const emptyUsage = () => ({
 });
 const emptyRole = () => ({ sessions: 0, turns: 0, turnsWithUsage: 0, ...emptyUsage(), estimatedCostUsd: 0 });
 export const pyramidWindowMs = 60 * 60_000;
+const minimumPyramidCalls = 3;
+export const pyramidSampleReady = sample => ['auditor', 'leader', 'worker']
+  .every(role => sample?.byRole?.[role]?.modelCalls >= minimumPyramidCalls);
 const eventTime = row => timestamp(row.timestamp ?? row.created_at ?? row.receivedAt ?? row.at);
 
 function addUsage(totals, usage, cli, price) {

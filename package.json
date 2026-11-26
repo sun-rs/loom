@@ -16,6 +16,7 @@
   "dependencies": {
     "@botiverse/oar": "0.130.1",
     "@xterm/headless": "5.5.0",
-    "node-pty": "1.1.0"
+    "node-pty": "1.1.0",
+    "string-width": "8.2.2"
   }
 }

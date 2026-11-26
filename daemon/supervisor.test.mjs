@@ -238,32 +238,49 @@ async function nativeCost(f, row, at, inputTokens, contextTokens = inputTokens) 
   appendFileSync(path, records.map(record => JSON.stringify({ ...record, timestamp: new Date(at).toISOString() }) + '\n').join(''));
 }
 
-test('consumption drift reaches only Super and a restart preserves the one-hour throttle', async t => {
+test('consumption drift warms up before reaching Super and a restart preserves the one-hour throttle', async t => {
   let advance = 0;
   const f = fixture(t, { now: () => Date.now() + advance });
   let d = f.daemon();
   t.after(() => d.shutdown());
   const { session: superSession } = await f.spawn(d, 'super', 'S');
   const { session: auditor } = await f.spawn(d, 'auditor', 'A');
+  const { session: leader } = await f.spawn(d, 'leader', 'L');
   await d.tick();
   advance = 31_000;
   await nativeCost(f, auditor, Date.now(), 80);
   await d.tick();
-  const ledger = () => f.read('loomd/notifications.json').filter(event => event.type === 'consumption-pyramid');
+  const ledger = async () => (await d.handle('notifications', { history: true })).notifications
+    .filter(event => event.type === 'consumption-pyramid');
   const delivery = event => f.read('inbox/state.json').messages.filter(message => message.projectEvents?.includes(event.id));
-  assert.equal(ledger().length, 1);
-  assert.deepEqual(delivery(ledger()[0]).map(item => item.target.addr), [superSession.addr]);
+  assert.deepEqual(await ledger(), []);
+  const warmBoard = await d.handle('board', {});
+  assert.equal(warmBoard.pyramids[0].byRole.worker.modelCalls, 0);
+  assert.equal(warmBoard.roles.find(role => role.addr === auditor.addr).contextPercent, 100 * 80 / 300_000);
+  const { session: worker } = await f.spawn(d, 'worker', 'W', leader.addr, { prompt: 'HOLD worker' });
+  async function addSample() {
+    for (const [row, calls, tokens] of [[auditor, 4, 80], [leader, 3, 60], [worker, 3, 50]]) {
+      for (let i = 0; i < calls; i++) await nativeCost(f, row, Date.now() + advance - 1_000, tokens);
+    }
+  }
+  advance += 31_000;
+  await addSample();
+  await d.tick();
+  const initial = await ledger();
+  assert.equal(initial.length, 1);
+  assert.deepEqual(delivery(initial[0]).map(item => item.target.addr), [superSession.addr]);
   await d.shutdown();
   d = f.daemon();
   advance += 59 * 60_000;
   await d.tick();
-  assert.equal(ledger().length, 1);
+  assert.equal((await ledger()).length, 1);
   advance += 120_000;
-  await nativeCost(f, auditor, Date.now() + advance - 1_000, 100);
+  await addSample();
   await d.tick();
-  assert.equal(ledger().length, 2);
-  assert.ok(ledger()[1].at - ledger()[0].at >= 3_600_000);
-  assert.deepEqual(delivery(ledger()[1]).map(item => item.target.addr), [superSession.addr]);
+  const afterThrottle = await ledger();
+  assert.equal(afterThrottle.length, 2);
+  assert.ok(afterThrottle[1].at - afterThrottle[0].at >= 3_600_000);
+  assert.deepEqual(delivery(afterThrottle[1]).map(item => item.target.addr), [superSession.addr]);
 });
 
 test('Auditor wakes and context have independent budgets and rotation waits for a completed gate', async t => {

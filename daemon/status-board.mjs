@@ -24,12 +24,12 @@ export function gateBoard(messages, events) {
     const { gateId: id, gateRound: round, completion, phase } = message;
     const gate = gates.get(id) ?? { id };
     if (gate.round === undefined || gate.round <= round) {
-      Object.assign(gate, { round, phase, at: message.createdAt });
+      Object.assign(gate, { round, phase, at: message.createdAt, packet: message.gatePacket });
     }
     if (!completion?.unconfirmed && completion?.at >= (gate.verdict?.at ?? -Infinity) && conclusoryReply(completion.body, true)) {
       const { tag, body } = replyConclusion(completion.body);
       const line = (body ?? completion.body).trimStart().split(/\r?\n/, 1)[0].slice(0, 200);
-      gate.verdict = { tag: tag ?? 'REPLY', round, at: completion.at, line };
+      gate.verdict = { tag: tag ?? 'REPLY', round, at: completion.at, line, text: completion.body };
     }
     gates.set(id, gate);
   }

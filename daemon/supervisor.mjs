@@ -4,6 +4,7 @@ import { appendFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { CommandError } from '../cli/sessions.mjs';
 import { projectIndex } from '../cli/project.mjs';
+import { reportedContext } from '../cli/state.mjs';
 import { defaultStallMs, inbox, pendingWork, receipt, stalledDeliveries, stallText, suppressedReplies, suppressedReplyText } from '../inbox/engine.mjs';
 import { conclusoryReply, deliveryFailed, isBlockedReply, messageIdPattern } from '../inbox/message.mjs';
 import { relay } from '../relay/project.mjs';
@@ -369,8 +370,16 @@ ${details}`, {
         progress.set(row.addr, result);
         sessions.rememberLiveness(row.addr, { ...result, observedAt: now() });
       }
+      const roleStatus = {};
+      if (senior(row)) {
+        const events = sessions.events(row.addr);
+        const root = events.filter(event => !event.agent_id && !event.isSidechain &&
+          (!row.sessionId || (event.session_id ?? event.sessionId ?? event.conversationId) === row.sessionId));
+        roleStatus.contextPercent = reportedContext(snapshot ?? {}, root, []).percent;
+        roleStatus.activityAt = sessions.lastActivity(row, events.at(-1));
+      }
       observations.set(row.addr, { state: userPrompt?.kind ?? result?.health?.status ?? reportedState(snapshot, health.get(row.addr)),
-        awaitingUser: Boolean(userPrompt) });
+        awaitingUser: Boolean(userPrompt), ...roleStatus });
       if (!userPrompt || now() - userPrompt.since < stallMs ||
           !(senior(row) || row.role === 'super' || ['awaiting-user', 'overlay'].includes(userPrompt.kind))) return;
       const { kind, since, summary } = userPrompt;
@@ -856,20 +865,23 @@ ${details}`, {
         const pending = events.filter(event => !event.auditor && !event.logOnly && event.takenAt == null);
         const names = new Set(rows.map(row => row.project));
         if (!names.size) names.add(project);
+        const sessionFields = ({ addr, cli, model, sessionId, cwd, transcriptPath, startedAt }) =>
+          ({ addr, cli, model, sessionId, cwd, transcriptPath, startedAt, state: observations.get(addr)?.state ?? 'starting' });
         return {
           layout: readLayout(project),
           roles: rows.filter(row => row.endedAt === null && ['super', 'leader', 'auditor'].includes(row.role)).map(row => ({
-            role: row.role, addr: row.addr, backend: row.backend, cli: row.cli,
-            state: observations.get(row.addr)?.state ?? 'starting',
+            ...sessionFields(row), role: row.role, backend: row.backend,
+            contextPercent: observations.get(row.addr)?.contextPercent ?? budget.contextPercent(row.addr) ?? null,
+            activityAt: observations.get(row.addr)?.activityAt ?? row.startedAt,
             awaitingHandover: Boolean(sessions.jobs.get(row.addr)?.handoverAck && !sessions.jobs.get(row.addr)?.handoverBound),
           })),
           workers: rows.filter(row => row.endedAt === null && row.role === 'worker' && row.backend === 'headless').map(row => ({
-            addr: row.addr, task: row.task, wave: row.wave, state: observations.get(row.addr)?.state ?? 'starting',
+            ...sessionFields(row), task: row.task, wave: row.wave,
           })),
           delivery: deliveryBoard(mail.messages, observations, now()),
           gates: gateBoard(mail.messages, events),
-          notifications: { count: pending.length, last: pending.slice(-8).reverse().map(({ type, at, text }) =>
-            ({ type, at, text: text?.slice(0, 200) })) },
+          notifications: { count: pending.length, last: pending.slice(-8).reverse().map(({ id, type, at, text }) =>
+            ({ id, type, at, text: text?.slice(0, 200) })) },
           pyramids: [...names].flatMap(name => {
             const sample = budget.pyramid(name);
             return sample ? [{ project: name, ...sample }] : [];

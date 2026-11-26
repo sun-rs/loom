@@ -1,5 +1,5 @@
 import { execFile } from 'node:child_process';
-import { basename, join } from 'node:path';
+import { join } from 'node:path';
 import { emitKeypressEvents } from 'node:readline';
 import { promisify } from 'node:util';
 import { herdrProjects } from '../daemon/herdr-layout.mjs';
@@ -7,59 +7,33 @@ import { managedCliPath, releaseRoot } from '../daemon/release.mjs';
 import { request } from '../daemon/rpc.mjs';
 import { roles } from '../index/index.mjs';
 import { managedProject } from './project.mjs';
+import { duration } from './status-accounts.mjs';
+import { changedLines, row, safe, terminalColors, theme, truncate } from './status-layout.mjs';
+import { boardLines, boardView, overlayRows, pages } from './status-view.mjs';
+
+export { boardLines };
 
 const exec = promisify(execFile);
 const refreshMs = 5_000;
-const safe = value => String(value ?? '').replace(/[\x00-\x1f\x7f-\x9f]/g, ' ');
+const scrollKeys = { down: 1, j: 1, up: -1, k: -1 };
 
-export function boardLines(project, { board, error } = {}) {
-  const lines = [`Loom · ${project}${error ? ' · disconnected' : board ? ' · online' : ' · connecting'}`];
-  if (error) lines.push(error);
-  if (!board) return lines;
-  const { layout, roles, workers, delivery, gates, notifications, pyramids, release } = board;
-  if (layout) {
-    lines.push('', `Herdr · ${layout.space.name} · ${layout.space.id}`);
-    for (const slot of Object.values(layout.tabs)) {
-      lines.push(`  ${slot.name} · ${slot.id} · ${slot.terminal ?? 'vacant'}${slot.hcName ? ' · ' + slot.hcName : ''}`);
-    }
-  }
-  lines.push('', 'Roles');
-  for (const role of roles) lines.push(`  ${role.role} · ${role.cli} · ${role.state} · ${role.addr}${role.awaitingHandover ? ' · awaiting handover' : ''}`);
-  if (!roles.length) lines.push('  none');
-  lines.push('', 'Delivery · ' + deliveryText(delivery));
-  lines.push('', `Headless workers · ${workers.length}`);
-  for (const worker of workers) lines.push(`  ${worker.task} · wave ${worker.wave} · ${worker.state} · ${worker.addr}`);
-  lines.push('', 'Gates');
-  for (const gate of gates) lines.push(`  ${gate.id}${gate.round != null ? ' · round ' + gate.round : ''} · ${gate.completedAt ? 'completed' : gate.phase}` +
-    (gate.verdict ? ` · round ${gate.verdict.round} ${gate.verdict.line}` : ''));
-  if (!gates.length) lines.push('  none');
-  lines.push('', `Super notifications · ${notifications.count} pending`);
-  for (const notice of notifications.last) lines.push(`  ${notice.type} · ${notice.text ?? ''}`);
-  lines.push('', 'Cost pyramid (1h)');
-  for (const pyramid of pyramids) lines.push(`  ${basename(pyramid.project)} · ${pyramid.state} · ${new Date(pyramid.sampledAt).toISOString()}` +
-    pyramid.inversions.map(item => ` · ${item.higher} > ${item.lower} (${item.metric})`).join(''));
-  if (!pyramids.length) lines.push('  awaiting sample');
-  lines.push('', 'Release paths', `  loomd · ${release.id} · ${release.root}`, `  CLI · ${release.cli}`);
-  if (release.active && release.active !== release.root) lines.push(`  active · ${release.active}`);
-  for (const warning of release.warnings) lines.push(`  ${warning.role} · ${warning.reason}${warning.path ? ' · ' + warning.path : ''}`);
-  return lines;
-}
-
-function deliveryText({ counts, oldestAgeMs }) {
-  return Object.entries(counts).map(([key, count]) => `${key} ${count}`).join(' · ') +
-    (oldestAgeMs === null ? '' : ` · oldest pending ${Math.floor(oldestAgeMs / 1000)}s`);
-}
-
-function globalLines(projects, snapshots, selected) {
-  const lines = ['Loom · All projects', ''];
-  if (!projects.length) lines.push('No projects registered. Run loom up in a project.');
-  for (const [index, project] of projects.entries()) {
+function globalView(projects, snapshots, selected, error, paint, width) {
+  const body = projects.map((project, index) => {
     const { board, error } = snapshots.get(project) ?? {};
-    const parts = [index === selected ? '›' : ' ', project, error ? 'disconnected' : board ? 'online' : 'connecting'];
-    if (board) parts.push(`${board.workers.length} workers`, `${board.notifications.count} Super notices`, deliveryText(board.delivery));
-    lines.push(parts.join(' · '));
-  }
-  return lines;
+    const parts = [project, error ? 'disconnected' : board ? 'online' : 'connecting'];
+    if (board) {
+      const { delivery } = board;
+      parts.push(`${board.workers.length} workers`, `${board.notifications.count} Super notices`,
+        Object.entries(delivery.counts).map(([key, count]) => `${key} ${count}`).join(' · '));
+      if (delivery.oldestAgeMs != null) parts.push('oldest ' + duration(delivery.oldestAgeMs));
+    }
+    const line = safe(parts.filter(Boolean).join(' · '));
+    return row(truncate(index === selected ? paint('selected', '› ' + line) : '  ' + line, width));
+  });
+  if (error) body.push(row(truncate(safe(error), width)));
+  else if (!projects.length) body.push(row(truncate('No projects registered. Run loom up in a project.', width)));
+  return { header: [row(paint('accent', 'Loom · All projects')), row()], body,
+    footer: '↑↓ select  Enter open  r refresh  q quit  ? help' };
 }
 
 export function pagerArgs(mode, query, project) {
@@ -70,45 +44,71 @@ export function pagerArgs(mode, query, project) {
 }
 
 export async function statusTui({ project, once }, { input = process.stdin, output = process.stdout, rpc = request,
-  discover = herdrProjects, interval = refreshMs } = {}) {
+  discover = herdrProjects, interval = refreshMs, now = Date.now, env = process.env } = {}) {
   const snapshots = new Map();
   let projects = [];
   let current = project;
-  let selected = 0;
+  let selectedProject = 0;
+  let page = 0;
+  let selected;
   let offset = 0;
   let prompt;
-  let pager;
+  let overlay;
   let pagerRequest;
   let timer;
   let closed = false;
   let refreshing = false;
   let discoveryError;
+  let previous = [];
+  let bodyRows = 1;
+  let items = [];
   const interactive = input.isTTY && output.isTTY && !once;
+  const columns = () => Math.max(1, output.columns || Number.parseInt(env.COLUMNS, 10) || 80);
 
-  function lines() {
-    if (pager) return [pager.title, '', ...pager.lines];
-    if (current) return boardLines(current, snapshots.get(current));
-    const global = globalLines(projects, snapshots, interactive ? selected : -1);
-    if (discoveryError) global.push('', discoveryError);
-    return global;
-  }
-
-  const pageSize = () => Math.max(1, (output.rows || 24) - 2);
-  function render() {
+  function render({ reveal = false } = {}) {
     if (closed) return;
-    const content = lines().map(safe);
-    if (!interactive) return output.write(content.join('\n') + '\n');
-    const width = Math.max(1, (output.columns || 80) - 1);
-    const screen = content.flatMap(line => {
-      const chars = Array.from(line);
-      return chars.length ? Array.from({ length: Math.ceil(chars.length / width) },
-        (_, index) => chars.slice(index * width, (index + 1) * width).join('')) : [''];
-    });
-    offset = Math.min(Math.max(0, offset), Math.max(0, screen.length - pageSize()));
-    const hints = prompt ? `${prompt.label} › ${prompt.text}` : pager ? '↑/↓ or Page Up/Down · Esc back · q quit' :
-      current ? '↑/↓ scroll · h history · g grep · m memory · r refresh · q quit' + (project ? '' : ' · Esc projects') :
-        '↑/↓ select · Enter open · r refresh · q quit';
-    output.write('\x1b[H\x1b[2J' + [...screen.slice(offset, offset + pageSize()), '', safe(hints).slice(0, width)].join('\r\n'));
+    const width = columns();
+    const depth = interactive ? terminalColors(output, env) : 1;
+    const paint = theme(depth);
+    const options = { width, now: now(), page, selected, depth, interactive };
+    if (!interactive) {
+      const global = current ? undefined : globalView(projects, snapshots, -1, discoveryError, paint, width);
+      const lines = current ? boardLines(current, snapshots.get(current), options) : [...global.header, ...global.body].map(line => line.text);
+      output.write(lines.join('\n') + '\n');
+      return;
+    }
+
+    let frame = current ? boardView(current, snapshots.get(current), options) :
+      globalView(projects, snapshots, selectedProject, discoveryError, paint, width);
+    items = frame.body.flatMap((line, index) => line.items.map(item => ({ ...item, index })));
+    if (items.length && !items.some(item => item.id === selected)) {
+      selected = items[0].id;
+      frame = boardView(current, snapshots.get(current), { ...options, selected });
+    }
+    const height = output.rows || 24;
+    const header = frame.header.slice(0, Math.max(0, height - 2));
+    bodyRows = Math.max(1, height - header.length - 1);
+    if (reveal) {
+      const index = current ? items.find(item => item.id === selected)?.index : selectedProject;
+      if (index != null) offset = Math.max(index - bodyRows + 1, Math.min(offset, index));
+    }
+    offset = Math.min(Math.max(0, offset), Math.max(0, frame.body.length - bodyRows));
+
+    let body = frame.body.slice(offset, offset + bodyRows);
+    let hints = frame.footer + (current && !project ? '  Esc projects' : '');
+    if (overlay) {
+      const layer = overlayRows(overlay, width, bodyRows, paint);
+      body = layer.rows.slice(0, bodyRows);
+      overlay.offset = layer.offset;
+      hints = '↑↓ scroll  PgUp/PgDn page  Esc back  q quit';
+    }
+    if (prompt) hints = `${prompt.label} › ${prompt.text}`;
+    const next = [...header, ...body].map(line => line.text);
+    while (next.length < height - 1) next.push('');
+    next[height - 1] = paint('muted', truncate(hints, width));
+    const changes = changedLines(previous, next);
+    previous = next;
+    if (changes) output.write(changes);
   }
 
   async function refresh() {
@@ -119,7 +119,7 @@ export async function statusTui({ project, once }, { input = process.stdin, outp
       projects = project ? [project] : discover();
       discoveryError = undefined;
     } catch (error) { discoveryError = error.message; }
-    selected = Math.min(selected, Math.max(0, projects.length - 1));
+    selectedProject = Math.min(selectedProject, Math.max(0, projects.length - 1));
     await Promise.all(projects.map(async directory => {
       try {
         const board = await rpc(directory, 'board', {}, { timeout: 3_000 });
@@ -144,17 +144,22 @@ export async function statusTui({ project, once }, { input = process.stdin, outp
   emitKeypressEvents(input);
   input.setRawMode(true);
   input.resume();
-  output.write('\x1b[?1049h\x1b[?25l');
+  output.write('\x1b[?1049h\x1b[?25l\x1b[2J');
 
   return new Promise(resolve => {
     const signals = ['SIGINT', 'SIGTERM', 'SIGHUP'];
+    function resize() {
+      previous = [];
+      output.write('\x1b[2J');
+      render({ reveal: Boolean(current && offset === 0) });
+    }
     function exit() {
       if (closed) return;
       closed = true;
       clearTimeout(timer);
       pagerRequest?.abort();
       for (const signal of signals) process.off(signal, exit);
-      output.off('resize', render);
+      output.off('resize', resize);
       input.off('keypress', keypress);
       input.off('end', exit);
       input.setRawMode(previousRaw);
@@ -166,8 +171,7 @@ export async function statusTui({ project, once }, { input = process.stdin, outp
     async function show(query) {
       const { label, mode } = prompt;
       prompt = undefined;
-      pager = { title: `${label} · ${query}`, lines: ['Loading…'] };
-      offset = 0;
+      overlay = { title: `${label} · ${query}`, lines: ['Loading…'], offset: 0 };
       render();
       const controller = pagerRequest = new AbortController();
       const [executable, ...cli] = managedProject(current) ? [managedCliPath(current)] : [process.execPath, join(releaseRoot, 'bin', 'loom')];
@@ -175,17 +179,25 @@ export async function statusTui({ project, once }, { input = process.stdin, outp
         const { stdout } = await exec(executable, [...cli, ...pagerArgs(mode, query, current)], {
           cwd: current, timeout: 10_000, maxBuffer: 1024 * 1024, signal: controller.signal,
         });
-        if (!controller.signal.aborted) pager.lines = stdout.trimEnd().split(/\r?\n/).filter((line, index, rows) => line || rows.length > 1);
-        if (!controller.signal.aborted && !pager.lines.length) pager.lines = ['No results.'];
+        if (!controller.signal.aborted) overlay.lines = stdout.trimEnd() ? stdout.trimEnd().split(/\r?\n/) : ['No results.'];
       } catch (error) {
-        if (!controller.signal.aborted) pager.lines = [error.stderr?.trim() || error.message];
+        if (!controller.signal.aborted) overlay.lines = [error.stderr?.trim() || error.message];
       }
       if (pagerRequest === controller) pagerRequest = undefined;
       render();
     }
 
+    function resetPage(next = 0) {
+      page = next;
+      offset = 0;
+      selected = undefined;
+    }
+
     function keypress(text, key = {}) {
       const { name } = key;
+      const direction = scrollKeys[name];
+      const pageScroll = name === 'pageup' ? -bodyRows : name === 'pagedown' ? bodyRows : 0;
+      let reveal = false;
       if (key.ctrl && name === 'c') return exit();
       if (prompt) {
         if (name === 'escape') prompt = undefined;
@@ -193,29 +205,54 @@ export async function statusTui({ project, once }, { input = process.stdin, outp
         else if (name === 'backspace') prompt.text = Array.from(prompt.text).slice(0, -1).join('');
         else if (text && !key.ctrl && !key.meta) prompt.text = (prompt.text + safe(text)).slice(0, 500);
       } else if (name === 'q') return exit();
-      else if (name === 'escape' && pager) {
-        pagerRequest?.abort();
-        pager = undefined;
-        offset = 0;
-      } else if (name === 'escape' && !project) {
+      else if (overlay) {
+        if (name === 'escape') {
+          pagerRequest?.abort();
+          overlay = undefined;
+        } else if (pageScroll || direction) overlay.offset = Math.max(0, (overlay.offset ?? 0) + (pageScroll || direction));
+      } else if (text === '?') {
+        overlay = { title: 'Keys', modal: true, lines: [
+          '1–5 / ←→  Switch tabs', '↑↓ / j k  Select a row', 'Enter  Open details or project',
+          'Page Up/Down  Scroll', 'h  History · g  Grep · m  Memory',
+          'r / R  Refresh snapshots', 'Esc  Back · q  Quit',
+        ] };
+      } else if (name === 'r') void refresh();
+      else if (name === 'escape' && !project) {
         current = undefined;
-        offset = 0;
-      } else if (!current && ['down', 'j', 'up', 'k', 'return'].includes(name)) {
-        if (name === 'return') { current = projects[selected]; offset = 0; }
+        resetPage();
+        reveal = true;
+      } else if (!current && (direction || pageScroll || name === 'return')) {
+        if (name === 'return') {
+          current = projects[selectedProject];
+          resetPage();
+        } else selectedProject = Math.max(0, Math.min(projects.length - 1, selectedProject + (pageScroll || direction)));
+        reveal = true;
+      } else if (current && /^[1-5]$/.test(text ?? '') && !key.ctrl && !key.meta) resetPage(Number(text) - 1);
+      else if (current && ['left', 'right'].includes(name)) resetPage((page + (name === 'right' ? 1 : -1) + pages.length) % pages.length);
+      else if (name === 'return') {
+        const item = items.find(item => item.id === selected);
+        if (item && item.index >= offset && item.index < offset + bodyRows) overlay = { ...item, modal: true };
+      } else if (pageScroll || (direction && !items.length)) {
+        offset += pageScroll || direction;
+        // Keep the selected row within the new viewport when there is one.
+        const nearby = items.filter(item => item.index >= offset && item.index < offset + bodyRows);
+        if (nearby.length && !nearby.some(item => item.id === selected)) selected = nearby[0].id;
+      } else if (direction) {
+        const index = items.findIndex(item => item.id === selected);
+        const next = Math.max(0, Math.min(items.length - 1, index + direction));
+        if (next === index) offset += direction;
         else {
-          selected = Math.max(0, Math.min(projects.length - 1, selected + (['down', 'j'].includes(name) ? 1 : -1)));
-          offset = Math.max(0, selected + 3 - pageSize());
+          selected = items[next]?.id;
+          reveal = true;
         }
-      } else if (['down', 'j', 'up', 'k', 'pagedown', 'pageup'].includes(name)) {
-        offset += ({ down: 1, j: 1, up: -1, k: -1, pagedown: pageSize(), pageup: -pageSize() })[name];
-      } else if (!pager && current && ['h', 'g', 'm'].includes(name)) {
+      } else if (current && ['h', 'g', 'm'].includes(name)) {
         const [mode, label] = { h: ['history', 'History role, task or address'], g: ['grep', 'History grep'], m: ['memory', 'Memory search'] }[name];
         prompt = { mode, label, text: '' };
-      } else if (name === 'r') void refresh();
-      render();
+      }
+      render({ reveal });
     }
     for (const signal of signals) process.on(signal, exit);
-    output.on('resize', render);
+    output.on('resize', resize);
     input.on('keypress', keypress);
     input.on('end', exit);
     render();
