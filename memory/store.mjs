@@ -403,8 +403,7 @@ export function createMemoryStore({ now = Date.now, readState, commitState, evid
       if (!access.canForget(binding, current)) return forbidden();
       const mismatch = expected(expectedRevision, current);
       if (mismatch) return mismatch;
-      if (current.status === 'forgotten') return success({ item: current });
-      const item = purge(state, current);
+      const item = current.status === 'forgotten' ? current : purge(state, current);
       result = success({ item });
     } else return invalid('Unknown memory write operation');
     if (!result.ok) return result;
