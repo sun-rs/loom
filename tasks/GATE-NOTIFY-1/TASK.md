@@ -1,0 +1,12 @@
+# GATE-NOTIFY-1 — tool defects found by the pilot-2 Auditor at goal 4
+
+Base: main @ 1ea5d04b. Source: /Users/sun/Code/loom-pilot2/.project/goal4-final-report.md ("给 main 的工具问题"). Read-only on pilot-2 (history, .project, loomd state); never type into its panes, never deploy.
+
+1. **`notifications --complete` silently not recorded** (most important; violates delivery-never-silent). The Auditor ran it at goal 3 and goal 4; both returned ok, history only shows the phase-1 entry, Super never got it. Find the root cause from pilot-2 history/logs (which release, which args, which path). Fix so that a call either persists and is pushed to Super, or exits non-zero with the reason. Regression test with the exact failing argument shape.
+2. **`gate pack` reuses an old pack**: it did not pick up the newer reviewer/evidence cards, and the question and red-fact text were truncated. A pack is keyed by gate+round and contents snapshot at pack time; reusing an old one requires an explicit flag; nothing a senior must read is truncated without a path to the full original right beside it.
+3. **Leader → Auditor "merge done" message dropped as `auditor-wake-filtered`**. The filter is intended (Auditor stays quiet), but a filtered message must not vanish: the sender gets an explicit receipt reason and the text goes into the Auditor's next-wake digest (no extra wake, no extra request). Decide whether "gate finished / merged" reports should be a defined class that rides the gate channel instead.
+4. **Over-budget advice shows stale numbers** (84/3, 275681 unchanged the whole phase). Make it recompute per evaluation and show the sample time.
+5. **`$LOOM_BIN` inside sessions lacked `gate`/`escalate`**: confirm the LIVENESS-1 shim fixes this for new sessions; if old-session coverage is impossible, `loom status` Release paths must say so.
+6. **Integration worker can't run a project's full suite under the worker sandbox** (`ps`, some tmp dirs EPERM) and can't write `.project` summaries. LIVENESS-1 item 9 fixed loom's own suite only. Decide the general rule: a card-declared `integration` profile that permits what a project test suite needs (process listing, project-scoped tmp) with no network/credential widening, and evidence returned via the result/evidence card rather than direct `.project` writes. Document it in the skill.
+
+RESULT.md Chinese, `STATUS: done`, a root cause and a test for each, uncommitted for Super review. Red lines as all prior cards.
