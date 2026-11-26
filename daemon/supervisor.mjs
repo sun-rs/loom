@@ -22,7 +22,7 @@ import { gateBoundary, roleBudget } from './role-budget.mjs';
 import { leaderHandoverState } from '../handover/brief.mjs';
 import { authorizeSeniorTool, seniorToolEvents } from './senior-tools.mjs';
 import { replyForDelivery } from '../inbox/reply-file.mjs';
-import { auditorWakeFiltered, auditorWakeSource, redReasons } from './routing.mjs';
+import { auditEscalations, auditorWakeFiltered, auditorWakeSource, redReasons } from './routing.mjs';
 import { readLayout } from './herdr-layout.mjs';
 import { deliveryBoard, gateBoard } from './status-board.mjs';
 import { activeRelease, managedCliPath, releaseId, releaseRoot } from './release.mjs';
@@ -42,7 +42,6 @@ const continuationGroup = message => message.batchId ?? message.implicitBatch;
 const packetDeliveryId = (project, gate, round) => batchDeliveryId('gate-packet:' + project, round === undefined ? gate : `${gate}\0${round}`);
 const matchesGate = (message, project, gate) => message.gatePacket &&
   (message.gateId === gate && message.gateProject === project || message.id === packetDeliveryId(project, gate));
-const auditEscalations = new Set(['blocking-disagreement', 'three-failed-rounds', 'major-risk', 'overreach']);
 const terminalText = text => text.replace(/[\x00-\x08\x0b-\x1f\x7f-\x9f]/g, '');
 
 function codexHandoff(row) {

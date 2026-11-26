@@ -5,6 +5,7 @@ import { deliveryFailed, deliveryId } from '../inbox/message.mjs';
 import { activitySummary, turnActivityFacts } from '../lib/activity-digest.mjs';
 import { sanitizeEntry } from '../memory/sanitize.mjs';
 import { classifySensitive } from './memory.mjs';
+import { auditEscalations } from './routing.mjs';
 
 export const digest = value => createHash('sha256').update(JSON.stringify(value)).digest('hex');
 export const seniorExtractor = role => role === 'leader' || role === 'auditor';
@@ -35,9 +36,33 @@ function workerSummary(row, item, tools, key) {
     source: {}, heads: item.heads });
 }
 
+const deliveryRoles = new Set(['user', 'super', 'auditor', 'leader']);
+const escalationTypes = new Set(['red-escalation', 'audit-escalation', 'escalation']);
+const startupRequest = '\n\n## Startup request\n';
+
+function receivedDelivery(message, senderRoles) {
+  const source = { kind: 'delivery', id: message.id };
+  const withheld = { source, user: false, text: '[Delivery body withheld]' };
+  if (message.waveBatch || message.continuationBatch || message.replyKey || message.replyTo || message.autoReceipt ||
+      message.receipt || message.memoryReview || message.gatePacket || message.projectEvents || message.reviewerResult ||
+      message.stuckOf || message.watchResume || message.corruptedOf || message.uncertainOf ||
+      message.orgEvents && !message.orgAppendix) return withheld;
+
+  // Sender bindings carry an address. A direct user send has Super priority
+  // and no sender, while a user-launched startup carries the request wrapper.
+  const role = message.from === undefined ?
+    (message.startup || message.superPriority === true ? 'user' : undefined) : senderRoles.get(message.from?.addr);
+  if (!deliveryRoles.has(role) || message.kind !== undefined && message.kind !== role) return withheld;
+
+  if (!message.startup) return { source, user: role === 'user', text: message.text };
+  const parts = message.text.split(startupRequest);
+  return parts.length > 1 ? { source, user: role === 'user', text: parts.at(-1) } : withheld;
+}
+
 export function extractionTurns(project, rows, messages) {
   const history = historyReader(project);
   const inbox = Map.groupBy(messages, message => message.target.addr);
+  const senderRoles = new Map(rows.map(({ addr, role }) => [addr, role]));
   return rows.flatMap(row => {
     if (!row.sessionId || row.project !== project || !seniorExtractor(row.role) && row.role !== 'worker') return [];
     let items;
@@ -57,12 +82,7 @@ export function extractionTurns(project, rows, messages) {
       const deliveries = (inbox.get(row.addr) ?? []).filter(message =>
         !deliveryFailed(message) && (ids.has(message.id) || message.received &&
           message.completion && String(message.completion.nativeTurnId ?? message.completion.turnId) === String(turn.id)));
-      const received = deliveries.map(message => ({
-        source: { kind: 'delivery', id: message.id }, user: !message.from && !message.projectEvents &&
-          !message.gatePacket && !message.waveBatch && !message.memoryReview,
-        text: message.memoryReview ? 'Memory proposal review' : message.startup ?
-          message.text.split('\n\n## Startup request\n').at(-1) : message.text,
-      }));
+      const received = deliveries.map(message => receivedDelivery(message, senderRoles));
       const toolNames = [...new Set(tools.map(tool => tool.name))];
       const directUserDeliveries = new Set(deliveries.filter(message => !message.startup).map(message => message.id));
       return [{ ...identity, startedAt: timestamp(turn.startedAt) || at, received, reply: turn.reply ?? '', toolNames,
@@ -72,7 +92,12 @@ export function extractionTurns(project, rows, messages) {
 }
 
 export function extractionEvents(events) {
-  return events.filter(event => event.type === 'needs-decision' || stageBoundary(event) || event.type === 'red-escalation')
-    .map(event => ({ source: { kind: 'event', id: event.id }, type: event.type,
-      text: event.text, at: event.at, addr: event.addr }));
+  return events.flatMap(event => {
+    // Auditor escalation notices are also stored as needs-decision with an escalation reason.
+    const escalation = escalationTypes.has(event.type) ||
+      event.type === 'needs-decision' && auditEscalations.has(event.reason);
+    if (!escalation && event.type !== 'needs-decision' && !stageBoundary(event)) return [];
+    return [{ source: { kind: 'event', id: event.id }, type: event.type,
+      text: escalation ? '[Escalation evidence withheld]' : event.text, at: event.at, addr: event.addr }];
+  });
 }

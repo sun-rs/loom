@@ -213,7 +213,9 @@ export function createMemoryExtractor(project, { memory, sessions, now, report, 
         events: signals.filter(signal => signal.at >= since && signal.at <= boundary.at),
         existing: { project: library.project.map(({ meta, title, body }) => ({ id: meta.id, title, body })),
           user: library.user.map(({ id, title, body }) => ({ id, title, body })),
-          reference: library.reference.map(({ id, title, body }) => ({ id, title, body })) },
+          // Shared history records can contain the same raw worker reply as an inbox receipt.
+          reference: library.reference.map(({ id, title, body, role, source }) =>
+            role === 'worker' && source?.hist ? { id } : { id, title, body }) },
       }, secret);
       if (empty && !input.history.some(turn => turn.received.some(delivery =>
         userDeliveries.has(delivery.source.id) && delivery.text.trim()))) {
