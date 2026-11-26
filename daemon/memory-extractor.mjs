@@ -5,7 +5,8 @@ import { promisify } from 'node:util';
 import { CommandError } from '../cli/sessions.mjs';
 import { observationRules } from '../memory/prompts.mjs';
 import { extractorDay, extractorStatePath, readExtractorState } from './memory-extractor-state.mjs';
-import { extractionEvents, extractionTurns, redactExtractor, seniorExtractor, stageBoundary } from './memory-extractor-input.mjs';
+import { extractionEvents, extractionTurns, redactExtractor, seniorExtractor, stageBoundary,
+  substantiveReply } from './memory-extractor-input.mjs';
 import { candidateFields, createMemoryProposals } from './memory-proposals.mjs';
 import { runOpenCodeStage } from './memory-stage.mjs';
 import { writeState } from './io.mjs';
@@ -348,12 +349,13 @@ export function createMemoryExtractor(project, { memory, sessions, now, report, 
     for (const turn of turns) {
       if (closing) return;
       if (Object.hasOwn(state.turns, turn.key) || !seniorExtractor(turn.role) || turn.at < startedAt) continue;
+      state.turns[turn.key] = true;
       const previous = state.lastEvents ??= {};
       const related = signals.filter(event => event.at >= turn.startedAt && event.at <= turn.at &&
         (!event.addr || event.addr === turn.addr) && !Object.hasOwn(previous, event.source.id));
-      state.turns[turn.key] = true;
       for (const event of related) previous[event.source.id] = true;
       save();
+      if (!substantiveReply(turn.reply)) continue;
       const secret = await getKey();
       if (!secret) {
         report('Loom memory extractor credential unavailable');

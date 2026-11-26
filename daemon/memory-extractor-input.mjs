@@ -12,6 +12,21 @@ export const seniorExtractor = role => role === 'leader' || role === 'auditor';
 export const stageBoundary = event => ['gate-completed', 'auditor-rotation-proposed'].includes(event.type) ||
   event.type === 'project-completed' && event.phase !== undefined;
 
+const handoverAck = /^HANDOVER-ACK [a-f\d]{8}(?:-[a-f\d]{4}){3}-[a-f\d]{12}$/iu;
+const acknowledgment = /^(?:noreply|ok(?:ay)?|ack(?:nowledged)?|confirmed|received|noted|got it|(?:已)?收到|(?:已)?确认|了解|明白|好的|知悉)$/iu;
+const waiting = /^(?:(?:继续)?等待(?:门禁(?:结果)?|结果|反馈|指示|通知|后续投递)?|(?:still )?waiting(?: for (?:the )?(?:gate result|results?|feedback|instructions|next delivery))?)$/iu;
+
+export function substantiveReply(reply) {
+  const lines = reply.trim().split(/\r?\n/u).map(line => line.trim()).filter(Boolean);
+  if (handoverAck.test(lines[0]) && lines.slice(1).every(line => /^(?:HEAD|Branch|Base SHA|WIP|Rulings):/u.test(line))) {
+    return false;
+  }
+  return lines.some(line => {
+    const text = line.replace(/[.!。！…]+$/u, '').trimEnd();
+    return text && !acknowledgment.test(text) && !waiting.test(text);
+  });
+}
+
 export function redactExtractor(value, key) {
   const clean = sanitizeEntry(value, { classifySensitive(text) {
     const result = classifySensitive(text);

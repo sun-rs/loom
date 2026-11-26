@@ -4,6 +4,7 @@ import { lstatSync } from 'node:fs';
 import { join } from 'node:path';
 import { activeItems, commitProjectMemory, prepareProjectMemory } from '../memory/project.mjs';
 import { validateEntryFormat } from '../memory/format.mjs';
+import { projectReviewMemoryId } from '../memory/ledger.mjs';
 import { estimateTokens } from '../lib/token-budget.mjs';
 import { digest, redactExtractor } from './memory-extractor-input.mjs';
 
@@ -74,6 +75,7 @@ export function createMemoryProposals(project, { memory, sessions, state, save, 
   const store = memory.store;
   const stageBinding = { sessionId: 'memory-extractor', principal: 'super', role: 'super', project, cardId: null };
   const auditorBinding = { ...stageBinding, principal: 'auditor', role: 'auditor' };
+  let projectReviewsBackfilled = false;
   const projectIdExists = id => Boolean(lstatSync(join(project, '.project', 'memory', 'items', id + '.md'),
     { throwIfNoEntry: false }));
   const callerBinding = caller => {
@@ -102,8 +104,10 @@ export function createMemoryProposals(project, { memory, sessions, state, save, 
   }
 
   async function stageLibrary() {
-    return { project: activeItems(project), reference: (await visibleItems(auditorBinding))
-      .filter(item => item.layer === 'shared' && item.project === project) };
+    const items = activeItems(project);
+    const published = new Set(items.map(item => projectReviewMemoryId(project, item.path)));
+    return { project: items, reference: (await visibleItems(auditorBinding))
+      .filter(item => item.layer === 'shared' && item.project === project && !published.has(item.id)) };
   }
 
   async function queue(values, input, { stage = false, key } = {}) {
@@ -173,8 +177,10 @@ export function createMemoryProposals(project, { memory, sessions, state, save, 
 
   async function applyApproval(item) {
     const { files, binding, revisions, requestId, request } = item.application;
-    if (files) commitProjectMemory(project, files);
-    else {
+    if (files) {
+      commitProjectMemory(project, files);
+      await publishProjectReview(new Set(files.map(file => file.path)), activeItems(project));
+    } else {
       const result = revisions ? await store.withdrawReviewed(binding, revisions, requestId) : await store.write(binding, request);
       if (!result.ok) {
         delete item.application;
@@ -187,10 +193,25 @@ export function createMemoryProposals(project, { memory, sessions, state, save, 
     save();
   }
 
+  async function publishProjectReview(paths, items, backfill = false) {
+    if (!paths.size) return;
+    const result = await store.publishProjectReview(auditorBinding, paths, items, backfill);
+    if (!result.ok) throw new CommandError(result.code, 'Project memory review could not be published');
+  }
+
   async function recover() {
     for (const item of Object.values(state.proposals)) {
       if (item.application) await applyApproval(item);
     }
+    if (projectReviewsBackfilled) return;
+    const reviewed = new Set(Object.values(state.proposals)
+      .filter(item => item.scope === 'project' && item.status === 'approved' && item.action !== 'invalidate')
+      .map(item => item.action === 'add' ? item.id : item.target));
+    if (reviewed.size) {
+      const items = activeItems(project).filter(item => reviewed.has(item.meta.id));
+      await publishProjectReview(new Set(items.map(item => item.path)), items, true);
+    }
+    projectReviewsBackfilled = true;
   }
 
   async function handle(command, args, caller) {

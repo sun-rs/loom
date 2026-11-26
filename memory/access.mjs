@@ -352,11 +352,17 @@ export function createAccess({ readState, commitState, serialize, entries = [], 
         const addsLine = !withdrawal || !hasWithdrawal;
         if (addsLine && lineCount === deltaLimit) break;
         const source = provenance(binding, entry, cutoff(state, time));
+        const revision = change.revision ?? entry.revision;
+        const legacyLine = indexLine(entry, source);
+        const current = currentById.get(change.id);
+        // Older publication records omit the body. Only use it from the same revision.
+        const addition = { ...entry, body: entry.body ?? (current?.revision === revision ? current?.body : undefined) };
         let row = {
-          seq: change.seq, id: change.id, revision: change.revision ?? entry.revision,
-          operation: change.operation, line: indexLine(entry, source), ...source,
+          seq: change.seq, id: change.id, revision, operation: change.operation,
+          line: change.operation === 'add' ? formatIndexRow(addition, legacyLine, 150 - '[add] '.length) : legacyLine,
+          ...source,
         };
-        if (withdrawal) row = withdrawalRow(row, entry, currentById.get(change.id));
+        if (withdrawal) row = withdrawalRow(row, entry, current);
         const truncated = rows.length + 1 < visible.length;
         if (fits && !fits({ rows: [...rows, row], truncated })) {
           if (rows.length) break;

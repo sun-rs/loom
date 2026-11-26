@@ -3,6 +3,7 @@ import { numberedRulings } from '../handover/organization.mjs';
 
 export const rulingPath = '.project/rulings.md';
 export const eventMemoryId = identity => 'memory-event-' + createHash('sha256').update(identity).digest('hex');
+export const projectReviewMemoryId = (project, path) => eventMemoryId(JSON.stringify([project, 'project-review', path]));
 const rulingId = (project, key) => eventMemoryId(JSON.stringify([project, project, 'ruling', null, key]));
 
 export function ledgerRulings(project, text) {

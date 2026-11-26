@@ -3,7 +3,7 @@ import { isDeepStrictEqual } from 'node:util';
 import { createAccess } from './access.mjs';
 import { itemPath, renderEntry, validateEntry, validateEntryFormat } from './format.mjs';
 import { isShortMemoryId } from './index-row.mjs';
-import { eventMemoryId, isLegacyMechanicalMemory, ledgerRulings, rulingPath } from './ledger.mjs';
+import { eventMemoryId, isLegacyMechanicalMemory, ledgerRulings, projectReviewMemoryId, rulingPath } from './ledger.mjs';
 import { sanitizeEntry } from './sanitize.mjs';
 
 const day = 86_400_000;
@@ -555,6 +555,39 @@ export function createMemoryStore({ now = Date.now, readState, commitState, evid
     return { ok: true };
   }
 
+  // The approval plan owns the project files. The active store publishes a
+  // stable ID for each file so retries do not add a second memory or delta.
+  async function publishProjectReview(binding, paths, items, backfill) {
+    const state = await snapshot();
+    const before = state.seq;
+    const existing = new Map(state.entries.map(entry => [entry.id, entry]));
+    const byPath = new Map(items.map(item => [item.path, item]));
+    for (const path of paths) {
+      const id = projectReviewMemoryId(binding.project, path);
+      const prior = existing.get(id);
+      if (prior && (backfill || prior.status === 'forgotten')) continue;
+      const item = byPath.get(path);
+      if (!item) {
+        if (prior && active(prior)) {
+          updateEntry(state, { ...prior, status: 'stale', revision: prior.revision + 1, updatedAt: time() }, 'withdraw');
+        }
+        continue;
+      }
+      const draft = { kind: 'ruling', layer: 'shared', project: binding.project,
+        title: item.title, body: item.body.trim(), checkedAt: item.meta.verified + 'T00:00:00.000Z', source: { path } };
+      const fields = await prepare(draft);
+      if (!fields.ok) return fields;
+      if (prior && isDeepStrictEqual(select(prior, Object.keys(fields.entry)), fields.entry)) continue;
+      const next = version(state, binding, fields.entry, prior ?? { id, revision: 0 });
+      updateEntry(state, next, prior && active(prior) ? 'update' : 'add');
+    }
+    if (state.seq !== before) {
+      indexFiles(state);
+      await commitState(state);
+    }
+    return { ok: true };
+  }
+
   // Internal event ingestion, callable only with a history verifier supplied by the daemon.
   async function recordEvent(binding, key, entry) {
     if (typeof classifySensitive !== 'function') return invalid('Memory sensitivity classifier is required');
@@ -600,6 +633,8 @@ export function createMemoryStore({ now = Date.now, readState, commitState, evid
     write: (binding, request) => serialize(() => write(binding, request)),
     recordEvent: (binding, key, entry) => serialize(() => recordEvent(binding, key, entry)),
     syncLedger: text => serialize(() => syncLedger(text)),
+    publishProjectReview: (binding, paths, items, backfill) =>
+      serialize(() => publishProjectReview(binding, paths, items, backfill)),
     withdrawReviewed: (binding, revisions, requestId) => serialize(() => withdrawReviewed(binding, revisions, requestId)),
     recordTurn: event => serialize(() => recordTurn(event)),
     maintain: () => serialize(maintain),
