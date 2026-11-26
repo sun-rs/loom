@@ -60,13 +60,21 @@ export async function runOpenCodeStage(input, request) {
           OPENCODE_CONFIG: configPath, OPENCODE_DISABLE_CLAUDE_CODE_SKILLS: '1', OPENCODE_DISABLE_AUTOUPDATE: '1',
           OPENCODE_DISABLE_MODELS_FETCH: '1', OPENCODE_DISABLE_TELEMETRY: '1', DO_NOT_TRACK: '1', LOOM_STAGE_LOOPBACK: 'loopback' },
       }));
-    } catch { return { tokens: (await upstream)?.tokens, failure: 'stage-runner' }; }
+    } catch {
+      const result = await upstream;
+      return { inputTokens: result?.inputTokens, tokens: result?.tokens, failure: 'stage-runner' };
+    }
     const result = await upstream;
+    if (!result) return { failure: 'stage-provider' };
+    if (result.failure) return result;
+    const accounting = { inputTokens: result.inputTokens, tokens: result.tokens };
     try {
       const content = stdout.split('\n').filter(Boolean).map(JSON.parse)
         .filter(event => event.type === 'text').map(event => event.part?.text).join('');
-      return { tokens: result?.tokens, proposals: JSON.parse(content).proposals };
-    } catch { return { tokens: result?.tokens, failure: 'stage-output' }; }
+      const proposals = JSON.parse(content)?.proposals;
+      if (Array.isArray(proposals)) return { ...accounting, proposals };
+    } catch { /* Invalid child output leaves the stage eligible for retry. */ }
+    return { ...accounting, failure: 'stage-output' };
   } finally {
     server.closeAllConnections();
     await new Promise(resolve => server.close(resolve));

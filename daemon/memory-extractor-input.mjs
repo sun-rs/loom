@@ -1,8 +1,8 @@
 import { createHash } from 'node:crypto';
 import { historyReader } from '../cli/history.mjs';
 import { timestamp, turnTools } from '../cli/turns.mjs';
+import { checkEvidence } from '../evidence/checks.mjs';
 import { deliveryFailed, deliveryId } from '../inbox/message.mjs';
-import { activitySummary, turnActivityFacts } from '../lib/activity-digest.mjs';
 import { sanitizeEntry } from '../memory/sanitize.mjs';
 import { classifySensitive } from './memory.mjs';
 import { auditEscalations } from './routing.mjs';
@@ -26,14 +26,15 @@ export function redactExtractor(value, key) {
   return clean.entry;
 }
 
-function workerSummary(row, item, tools, key) {
-  const turn = { ...item.turn, reply: redactExtractor(item.turn.reply ?? '', key) };
-  const activity = turnActivityFacts({ ...item, turn, tools, cwd: row.cwd });
-  // Keep the L1 reply preview and activity counts. Tool commands, diagnostics,
-  // and prompt previews can repeat content from the worker's inputs or files.
-  return activitySummary({ index: item.index, task: redactExtractor(row.task, key), turn, tools,
-    facts: { claims: [] }, activity: { ...activity, prompt: '', errors: [], tests: [], nonZero: [] },
-    source: {}, heads: item.heads });
+function workerSummary(task, index, tools) {
+  const tests = { passed: 0, failed: 0, unknown: 0 };
+  for (const tool of tools) {
+    if (tool.tool !== 'shell') continue;
+    const check = checkEvidence({ ...tool, started: true });
+    if (check) tests[check.result]++;
+  }
+  return `${task ? task + ' ' : ''}第 ${index} 轮 · 工具 ${tools.length} · ` +
+    `测试命令 通过 ${tests.passed} 失败 ${tests.failed} 未知 ${tests.unknown}`;
 }
 
 const deliveryRoles = new Set(['user', 'super', 'auditor', 'leader']);
@@ -76,7 +77,7 @@ export function extractionTurns(project, rows, messages) {
       const identity = { key: digest([row.addr, row.sessionId, turn.id]), at, addr: row.addr, role: row.role };
       const tools = turnTools(row.cli, turn, item.rows)
         .concat(observation && !item.journalOnly ? turnTools(row.cli, turn, observation.rows) : []);
-      if (row.role === 'worker') return [{ ...identity, summarize: key => workerSummary(row, item, tools, key) }];
+      if (row.role === 'worker') return [{ ...identity, summarize: () => workerSummary(row.task, item.index, tools) }];
       const nativeIds = (turn.prompts ?? []).map(deliveryId).filter(Boolean);
       const ids = new Set(nativeIds.length ? nativeIds : [...(observation?.end?.inputIds ?? []), hook?.deliveryId].filter(Boolean));
       const deliveries = (inbox.get(row.addr) ?? []).filter(message =>

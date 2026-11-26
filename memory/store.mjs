@@ -13,6 +13,7 @@ const forbidden = () => ({ ok: false, code: 'forbidden', error: 'Memory write is
 const conflict = currentRevision => ({ ok: false, code: 'conflict', error: 'Memory revision changed', currentRevision });
 const nonempty = value => typeof value === 'string' && value.trim() !== '';
 const active = entry => entry.status === 'active';
+const receiptKey = (scope, requestId) => JSON.stringify([scope, requestId]);
 
 function select(source, fields) {
   return Object.fromEntries(fields.filter(key => source[key] !== undefined).map(key => [key, source[key]]));
@@ -394,6 +395,12 @@ export function createMemoryStore({ now = Date.now, readState, commitState, evid
     const scope = JSON.stringify([binding.sessionId, binding.principal, binding.role, binding.project, binding.cardId]);
     const prior = state.receipts.find(row => row.scope === scope && row.requestId === requestId);
     const fingerprint = requestFingerprint(request);
+    const key = receiptKey(scope, requestId);
+    if (state.expiredReceipts && Object.hasOwn(state.expiredReceipts, key)) {
+      const identical = fingerprint !== undefined && fingerprint === state.expiredReceipts[key];
+      return { ok: false, code: 'conflict', error: identical ? 'Memory request receipt has expired' :
+        'Memory request ID was already used' };
+    }
     if (prior && (fingerprint === undefined || fingerprint !== prior.fingerprint)) {
       return { ok: false, code: 'conflict', error: 'Memory request ID was already used' };
     }
@@ -456,7 +463,10 @@ export function createMemoryStore({ now = Date.now, readState, commitState, evid
         receiptsChanged = true;
       }
       const retained = at - row.committedAt < receiptTtlMs;
-      receiptsChanged ||= !retained;
+      if (!retained) {
+        (state.expiredReceipts ??= {})[receiptKey(row.scope, row.requestId)] = row.fingerprint ?? null;
+        receiptsChanged = true;
+      }
       return retained;
     });
     const cutoff = at - staleDays * day;
