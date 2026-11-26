@@ -734,6 +734,50 @@ for (const [sender, scenario, body] of [
   });
 }
 
+for (const [sender, scenario, body] of [
+  ['super', 'progress question', 'Super：现在进度如何？'],
+  ['super', 'task assignment', 'Super：请派一张测试卡检查索引。'],
+  ['user', 'progress question', '现在进度如何？'],
+  ['user', 'task assignment', '请派一张测试卡检查索引。'],
+]) {
+  test(`8f ordinary ${sender} ${scenario} is delivered without a memory reminder`, async t => {
+    const f = await fixture(t);
+    const leader = await f.spawn('leader');
+    const superAddr = sender === 'super' ? await f.spawn('super') : undefined;
+    await f.tick();
+    f.finish(leader, 'NOREPLY');
+    if (superAddr) f.finish(superAddr, 'NOREPLY');
+    await f.tick();
+    const count = f.prompts.length;
+    const delivery = await f.handle('send', { target: leader, text: body, mode: 'queue' }, superAddr);
+    await f.tick();
+    const [prompt] = f.prompts.slice(count);
+    assert.equal(prompt?.addr, leader);
+    assert.equal(deliveryId(prompt.input), delivery.id);
+    assert.ok(prompt.input.includes(body));
+    assert.doesNotMatch(prompt.input, memoryWriteReminder);
+  });
+}
+
+test('8f a Super correction and REJECT delivered to a Worker never add a memory reminder', async t => {
+  const f = await fixture(t);
+  const leader = await f.spawn('leader');
+  const superAddr = await f.spawn('super');
+  const worker = await f.spawn('worker', { task: 'G8F-RECIPIENT' }, leader);
+  await f.tick();
+  for (const addr of [leader, superAddr, worker]) f.finish(addr, 'NOREPLY');
+  await f.tick();
+  const count = f.prompts.length;
+  const body = 'REJECT G8F-RECIPIENT\n纠正：以后一律先核对发布签名。';
+  const delivery = await f.handle('send', { target: worker, text: body, mode: 'queue' }, superAddr);
+  await f.tick();
+  const [prompt] = f.prompts.slice(count);
+  assert.equal(prompt?.addr, worker);
+  assert.equal(deliveryId(prompt.input), delivery.id);
+  assert.ok(prompt.input.includes(body));
+  assert.doesNotMatch(prompt.input, memoryWriteReminder);
+});
+
 for (const verdict of ['REJECT', 'PASS', 'APPROVE', 'NOREPLY']) {
   test(`8f gate ${verdict} ${verdict === 'REJECT' ? 'appends' : 'does not append'} a memory reminder`, async t => {
     const f = await fixture(t);
