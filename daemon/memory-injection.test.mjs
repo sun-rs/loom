@@ -101,7 +101,7 @@ function fixture(t, nativeOpen) {
     state.entries = state.entries.filter(previous => previous.id !== entry.id).concat(entry);
     if (operation === null) return;
     const { id, revision } = entry;
-    const metadata = { ...entry };
+    const { body, ...metadata } = entry;
     if (operation === 'withdraw') delete metadata.title;
     state.changes.push({ seq: ++state.seq, id, revision, operation, entry: metadata });
   }
@@ -538,6 +538,49 @@ test('7b delta summarizes 105 withdrawals and delivers additions and revisions i
     replaysWithdrawals: false,
   });
 });
+
+const deltaRulings = [
+  ['R29 审计员按门禁证据裁决', '阶段边界由 Auditor 核对门禁证据。'],
+  ['R30 固定 OpenCode 模型', '统一使用 deepseek/deepseek-flash。'],
+  ['R31 一卡一 worker', ''],
+  ['R32 项目记忆由 Auditor 批准', '整理员只出提案。'],
+  ['R33 合入 main 前先验证门禁', '复核 HARDEN-PS-1 的集成结果。'],
+  ['R34 合入 pilot-2 时在隔离目录为最终候选版本保留可复现的证据，复核已知豁免及其适用范围，再确认发布清单和回归测试结果',
+    '核验隔离环境中的最终 SHA。'],
+];
+
+for (const [label, rulings] of [['one new ruling', [deltaRulings[5]]], ['six new rulings', deltaRulings]]) {
+  test('8a delta renders readable add lines for ' + label, async t => {
+    const f = fixture(t);
+    const { session } = await f.spawn('leader', 'codex', 'Review the current release procedures.');
+    await f.tick();
+    const remainder = '后续证据只在正文中提供。'.repeat(23);
+    const additions = rulings.map(([title, hook]) => {
+      const hash = createHash('sha256').update(title).digest('hex');
+      const body = hook ? title + '\nHow to apply: ' + hook + ' ' + remainder : title;
+      f.publish(item('memory-event-' + hash, f.project, { kind: 'ruling', title, body }));
+      return { id: hash.slice(0, 8), title, hook };
+    });
+
+    const delta = await f.deliver(session, 'Review newly published rulings.');
+    const lines = delta.split('\n').filter(line => line.startsWith('[add] '));
+    assert.equal(lines.length, additions.length, delta);
+    const rendered = lines.map((line, i) => {
+      const row = /^\[add\] - \[([^\]]+)\]\(([a-f\d]{8})\)(?: — (\S.*))?$/u.exec(line);
+      const [, title = '', id, hook = ''] = row ?? [];
+      const original = additions[i].title;
+      const titleMatches = [...original].length <= 60 ? title === original :
+        title.startsWith('R34 合入 pilot-2 时在隔离目录') && original.startsWith(title.replace(/…$/u, ''));
+      return { id, hook, titleFits: [...title].length <= 60,
+        titleMatches,
+        lineFits: [...line].length <= 150,
+        clean: !/memory-event-[a-f\d]{64}|See the entry for details\.|后续证据只在正文中提供/iu.test(line) };
+    });
+    assert.deepEqual(rendered, additions.map(({ id, hook }) => ({
+      id, hook, titleFits: true, titleMatches: true, lineFits: true, clean: true,
+    })), delta);
+  });
+}
 
 test('7b delta keeps forgotten and unreadable titles out of individual and grouped withdrawals', async t => {
   const f = fixture(t);

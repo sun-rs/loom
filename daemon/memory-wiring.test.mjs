@@ -69,8 +69,10 @@ async function fixture(t, { capture = false, proposals = [], ...memoryOptions } 
   const active = new Map();
   const prompts = [];
   const opens = [];
+  const launchIndexes = new Map();
   async function open(row, _, resume) {
     opens.push(row.addr);
+    launchIndexes.set(row.addr, row.memory?.indexText ?? '');
     const id = resume ?? randomUUID();
     const path = join(project, id + '.jsonl');
     writeFileSync(path, '', { flag: 'a' });
@@ -134,7 +136,7 @@ async function fixture(t, { capture = false, proposals = [], ...memoryOptions } 
     return JSON.parse(stdout);
   };
   return {
-    project, handle, write, read, cli, prompts, opens, snapshot: () => state,
+    project, handle, write, read, cli, prompts, opens, launchIndexes, snapshot: () => state,
     spawn: async (role, fields = {}, caller) => (await handle('spawn', {
       role, task: role.toUpperCase(), wave: 'W', cli: 'codex', model: 'fixture', effort: 'high',
       cwd: project, project, mode: 'headless', prompt: 'Begin fixture work', ...fields,
@@ -293,6 +295,66 @@ test('7a CLI approval materializes memory and rejection updates proposal metrics
   assert.equal(proposals[pending.id].status, 'pending');
   assert.equal(projectItem(obsolete.id), undefined);
   assert.deepEqual(metrics(), [2, 1, 2 / 3]);
+});
+
+test('8c Auditor-approved project proposals reach Leader and Auditor startup indexes and add deliveries', async t => {
+  const proposal = pendingProposal('verify-pilot-gate', 'project', 'Verify the pilot release gate');
+  const hook = 'Check proof.txt:1 before approving the release.';
+  proposal.body = 'Why: Keep gate evidence reproducible.\nHow to apply: ' + hook;
+  const f = await fixture(t, { proposals: [proposal] });
+  const roles = ['leader', 'auditor'];
+  const recipients = [];
+  for (const role of roles) recipients.push(await f.spawn(role));
+  await f.tick();
+  for (const addr of recipients) f.finish(addr, 'Ready for the release review.');
+  await f.tick();
+
+  const metrics = () => {
+    const { approvedProposals, proposalPassRate } = projectCost(f.project, projectSessions(f.project)).memoryPilot;
+    return { approvedProposals, proposalPassRate };
+  };
+  const findItem = () => activeItems(f.project).find(item => item.meta.id === proposal.id);
+  assert.equal(readExtractorState(f.project).proposals[proposal.id].status, 'pending');
+  assert.deepEqual(metrics(), { approvedProposals: 0, proposalPassRate: null });
+  assert.equal(findItem(), undefined);
+  for (const addr of recipients) assert.ok(!f.launchIndexes.get(addr)?.includes(proposal.title));
+
+  await f.cli(recipients[1], 'mem', 'proposals', 'approve', proposal.id);
+  await f.tick();
+  assert.equal(readExtractorState(f.project).proposals[proposal.id].status, 'approved');
+  assert.deepEqual(metrics(), { approvedProposals: 1, proposalPassRate: 1 });
+  assert.equal(findItem()?.title, proposal.title);
+  assert.equal(findItem()?.body.trim(), proposal.body);
+
+  const surfaces = [];
+  for (const [i, addr] of recipients.entries()) {
+    const packet = await f.handle('send', { target: addr, mode: 'queue', text: 'Check the approved release guidance.' });
+    await f.tick();
+    const delivery = f.prompts.find(prompt => prompt.addr === addr && deliveryId(prompt.input) === packet.deliveryId);
+    assert.ok(delivery, 'the business delivery reached the ' + roles[i]);
+    surfaces.push({ role: roles[i], surface: 'delta', lines: delivery.input.split('\n')
+      .filter(line => line.startsWith('[add] ') && line.includes(proposal.title)) });
+    f.finish(addr, 'Release guidance reviewed.');
+    await f.tick();
+    await f.handle('stop', { target: addr });
+    const replacement = await f.spawn(roles[i]);
+    await f.tick();
+    assert.ok(f.launchIndexes.has(replacement), 'a new ' + roles[i] + ' session launched');
+    surfaces.push({ role: roles[i], surface: 'startup', lines: f.launchIndexes.get(replacement).split('\n')
+      .filter(line => line.includes(proposal.title)) });
+  }
+
+  const rendered = surfaces.map(({ role, surface, lines }) => {
+    const [line] = lines;
+    const row = /^- \[([^\]]+)\]\(([a-f\d]{8})\) — (.+)$/u.exec(line?.replace(/^\[add\] /u, '') ?? '');
+    return { role, surface, count: lines.length, id: row?.[2], title: row?.[1], hook: row?.[3],
+      fits: Boolean(line && [...line].length <= 150),
+      clean: Boolean(line && !/memory-event-[a-f\d]{64}|See the entry for details\./iu.test(line)) };
+  });
+  const id = rendered.find(row => row.id)?.id;
+  assert.deepEqual(rendered, surfaces.map(({ role, surface }) => ({
+    role, surface, count: 1, id, title: proposal.title, hook, fits: true, clean: true,
+  })));
 });
 
 test('7a memory review rejects any second decision on an approved or rejected proposal without altering metrics', async t => {
@@ -837,6 +899,65 @@ test('7c index clips a long single-line ledger ruling and does not restart its t
     hookRestartsTitle: false,
     lineFits: true,
   }, line);
+});
+
+const boundaryRulings = [
+  [34, '合入 pilot-2 分支时仍豁免已知失败，最终 SHA 须在隔离目录中验证，验收记录见 ',
+    'daemon/hardening.test.mjs:359', '。条件不变，合入 main 一律要求全绿。'],
+  [33, '合入 main 前必须满足门禁和全量，角色身份由会话核实，修复集成后再对齐，随后复核专项修复记录，对应编号 ',
+    'HARDEN-PS-1', ' 已在 main 侧修复。集成结果单独过一次门禁。'],
+  [30, 'OpenCode 一律固定使用 deepseek/deepseek-flash。整条取代 R9 并且还取代 ',
+    'R10', '。后续统一沿用此模型。'],
+  [11, '上面提到的这些改动都应该先写测试，尤其要先写单测；修改前记录可复现的失败，确认覆盖约定行为后再由原负责人逐项',
+    '执行', '。验收时保留失败计数。'],
+];
+
+for (const [number, prefix, token, suffix] of boundaryRulings) {
+  test('8a startup index keeps complete title and hook boundaries for R' + number, async t => {
+    const f = await fixture(t, { capture: true });
+    const quote = prefix + token + suffix;
+    const rawTitle = 'R' + number + ' ' + quote;
+    f.write('.project/rulings.md', '# 裁决账本\nR' + number + '. ' + quote + '\n');
+    await f.tick();
+    const access = createAccess({ readState: f.snapshot });
+    const { rows } = await access.index({ role: 'leader', principal: 'leader', project: f.project });
+    assert.equal(rows.length, 1);
+    const [{ line }] = rows;
+    const row = /^- \[([^\]\n]+)\]\([a-f\d]{8}\) — (\S[^\n]*)$/u.exec(line);
+    assert.ok(row, line);
+    const [, title, hook] = row;
+    const shownTitle = title.replace(/…$/u, '');
+    const tokenStart = rawTitle.indexOf(token);
+    const remaining = rawTitle.slice(shownTitle.length).replace(/^[\s。；，]+/u, '');
+    const boundaries = [remaining, ...Array.from(remaining.matchAll(/[。！？；，]\s*/gu),
+      mark => remaining.slice(mark.index + mark[0].length))];
+    const hookText = hook.replace(/…$/u, '');
+    assert.deepEqual({
+      titleFits: [...title].length <= 60,
+      titleStartsAtOpening: rawTitle.startsWith(shownTitle),
+      tokenIntact: shownTitle.length <= tokenStart || shownTitle.length >= tokenStart + token.length,
+      startsAtRemainingText: boundaries.some(text => text.startsWith(hookText)),
+      hookRepeatsTitle: hook.includes(shownTitle.replace(/^R\d+ /u, '')),
+      lineFits: [...line].length <= 150,
+    }, {
+      titleFits: true, titleStartsAtOpening: true, tokenIntact: true,
+      startsAtRemainingText: true, hookRepeatsTitle: false, lineFits: true,
+    }, line);
+  });
+}
+
+test('8a startup index renders short rulings without a hook or placeholder', async t => {
+  const f = await fixture(t, { capture: true });
+  f.write('.project/rulings.md', '# 裁决账本\nR1. 测试先行。\nR7. 验收须核对证据。\n');
+  await f.tick();
+  const access = createAccess({ readState: f.snapshot });
+  const { rows } = await access.index({ role: 'auditor', principal: 'auditor', project: f.project });
+  assert.equal(rows.length, 2);
+  const expected = new Map([['R1 测试先行。', /^- \[R1 测试先行。\]\([a-f\d]{8}\)$/u],
+    ['R7 验收须核对证据。', /^- \[R7 验收须核对证据。\]\([a-f\d]{8}\)$/u]]);
+  for (const [title, pattern] of expected) {
+    assert.ok(rows.some(({ line }) => pattern.test(line)), title + '\n' + rows.map(({ line }) => line).join('\n'));
+  }
 });
 
 test('7c index puts rulings first, then higher importance and newer rulings', async () => {

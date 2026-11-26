@@ -14,9 +14,10 @@ import { projectSessions } from '../cli/project.mjs';
 import { projectStatus } from '../cli/status.mjs';
 import { deliveryId } from '../inbox/message.mjs';
 import { estimateTokens } from '../lib/token-budget.mjs';
+import { substantiveIndexRow } from '../memory/index-row.mjs';
 import { activeItems, searchMemory, writeMemory } from '../memory/project.mjs';
 import { createSupervisor } from './supervisor.mjs';
-import { readExtractorState } from './memory-extractor-state.mjs';
+import { extractorStatePath, readExtractorState } from './memory-extractor-state.mjs';
 
 const keyRef = 'loom-memory-extractor-deepseek';
 const fixtureKey = 'synthetic-test-key';
@@ -353,6 +354,86 @@ test('5e maxInputBytes: rejects a multibyte turn and accepts a small turn on the
   assert.equal(f.requests.length, 1);
   assert.match(f.requests[0].raw, /small-reply/);
   assert.doesNotMatch(f.requests[0].raw, /oversized-delivery|oversized-reply/);
+});
+
+for (const [label, reply] of [
+  ['NOREPLY', 'NOREPLY'],
+  ['NOREPLY followed by 已收到', 'NOREPLY\n\n已收到。'],
+  ['NOREPLY followed by 继续等待', 'NOREPLY\n\n继续等待门禁结果。'],
+  ['HANDOVER-ACK', 'HANDOVER-ACK 515d0bf2-78b5-4d3f-8248-20231c82ee33'],
+  ['收到', '收到'],
+  ['确认', '确认'],
+  ['OK', 'OK'],
+  ['ACK', 'ACK'],
+]) {
+  test('8b per-turn extractor skips ' + label + ' without spending quota', async t => {
+    const f = fixture(t);
+    const leader = await f.spawn('leader', 'Acknowledge receipt of this status update.');
+    await f.finish(leader, reply);
+    const { calls, tokens, today } = f.cost().memoryExtractor;
+    assert.deepEqual({ requests: f.requests.length, attempts: f.addresses.length, calls, tokens, today }, {
+      requests: 0, attempts: 0, calls: 0, tokens: 0, today: { calls: 0, chargedTokens: 0 },
+    });
+  });
+}
+
+test('8b per-turn extractor still processes substantive Leader and Auditor replies', async t => {
+  const f = fixture(t);
+  const leader = await f.spawn('leader', 'Review the architecture and retry behavior.');
+  const auditor = await f.spawn('auditor', 'Review the release gate.');
+  const replies = [
+    'Keep publication and cursor updates in one transaction so a retry can safely resume.',
+    'The retry duplicated deliveries after a crash; reserve the delivery ID before publishing.',
+    'APPROVE release gate. Retain signed manifests as evidence and withhold release if a signature is missing.',
+  ];
+  await f.finish(leader, replies[0]);
+  await f.send(leader, 'Record the retry failure and its mitigation.');
+  await f.finish(leader, replies[1]);
+  await f.finish(auditor, replies[2]);
+  assert.deepEqual(f.requests.map(request => extractorRequestInput(request).reply), replies);
+  const { calls, tokens } = f.cost().memoryExtractor;
+  assert.deepEqual({ calls, tokens }, { calls: 3, tokens: 60 });
+});
+
+test('8b per-turn extractor honors a policy call cap above the old default of 40', async t => {
+  const dailyCalls = 42;
+  const f = fixture(t, { config: { limits: { dailyCalls, dailyTokens: 600_000 } } });
+  const leader = await f.spawn('leader', 'Review the first release procedure.');
+  for (let i = 1; i <= dailyCalls; i++) {
+    if (i > 1) await f.send(leader, 'Review the next release procedure, number ' + i + '.');
+    await f.finish(leader, 'Record release procedure ' + i + ' only after verifying the signed manifest.');
+    assert.equal(f.requests.length, i, 'policy must allow request ' + i);
+  }
+  await assertStop(f, 'dailyCalls');
+  await f.send(leader, 'Review the next procedure after the daily cap.');
+  await f.finish(leader, 'Require a signed rollback plan before deploying the release.');
+  assert.equal(f.addresses.length, dailyCalls);
+  assert.equal(f.cost().memoryExtractor.today.calls, dailyCalls);
+  await assertStop(f, 'dailyCalls');
+});
+
+test('8b per-turn extractor spends up to the policy token cap and reports dailyTokens', async t => {
+  const dailyTokens = 600_000;
+  const previouslyCharged = 596_000;
+  const f = fixture(t, { config: { limits: { dailyCalls: 300, dailyTokens } },
+    usage: { input: 2976, output: 1024 } });
+  await f.tick();
+  const state = readExtractorState(f.project);
+  state.days['2026-11-26'] = { calls: 250, tokens: previouslyCharged, stageCalls: 0, stageTokens: 0,
+    charged: previouslyCharged, stopReason: null };
+  writeFileSync(extractorStatePath(f.project), JSON.stringify(state));
+  await f.restart();
+
+  const leader = await f.spawn('leader', 'Review the next release procedure.');
+  await f.finish(leader, 'Require the release manifest to be signed before deployment.');
+  assert.equal(f.requests.length, 1, 'policy allows spending above the old 100,000-token cap');
+  assert.deepEqual(f.cost().memoryExtractor.today, { calls: 251, chargedTokens: dailyTokens });
+  await assertStop(f, 'dailyTokens');
+  await f.send(leader, 'Review another release procedure.');
+  await f.finish(leader, 'Publish the rollback plan with the release announcement.');
+  assert.equal(f.addresses.length, 1);
+  assert.deepEqual(f.cost().memoryExtractor.today, { calls: 251, chargedTokens: dailyTokens });
+  await assertStop(f, 'dailyTokens');
 });
 
 for (const [limit, value, usage] of [['dailyCalls', 1, turnUsage], ['dailyTokens', 4096, { input: 4089, output: 7 }]]) {
@@ -864,6 +945,33 @@ test('6e.5 memoryPilot counts readable index rows and computes reviewed proposal
   seed([valid, { ...valid, id: 'memory-a80c1dbb-5465-4a91-961f-db442622cafc', title: '' }]);
   const ratio = f.cost().memoryPilot.indexSubstantiveRatio;
   assert.ok(Number.isFinite(ratio) && ratio >= 0 && ratio < 1, 'an empty title lowers the readable fraction');
+});
+
+test('8a readable index metrics count titled short IDs with or without a hook', async t => {
+  const f = fixture(t);
+  const entry = (prefix, fields) => ({
+    id: 'memory-event-' + prefix.repeat(64), status: 'active', kind: 'ruling',
+    project: f.project, layer: 'shared', ...fields,
+  });
+  const examples = [
+    [entry('1', { title: 'R1 测试先行。', body: '测试先行。' }), true],
+    [entry('2', { title: 'R32 Approve project proposals', body: 'Review the proposal evidence before approval.' }), true],
+    [entry('3', { title: '', body: 'Review the proposal evidence before approval.' }), false],
+    [entry('4', { title: 'R34 Verify gate evidence', body: 'See the entry for details.' }), false],
+    [entry('5', { id: '5'.repeat(64), title: '', body: '' }), false],
+    [entry('6', { title: 'R7 验收须核对证据。', body: '验收须核对证据。' }), true],
+  ];
+  const runtime = join(f.project, '.project', 'loomd');
+  mkdirSync(runtime, { recursive: true });
+  writeFileSync(join(runtime, 'memory-v1.json'), JSON.stringify({ entries: examples.map(([row]) => row) }));
+
+  assert.deepEqual({
+    readable: examples.map(([row]) => substantiveIndexRow(row)),
+    ratio: f.cost().memoryPilot.indexSubstantiveRatio,
+  }, {
+    readable: examples.map(([, readable]) => readable),
+    ratio: 3 / examples.length,
+  });
 });
 
 function r3bStageInputs(f, runner) {
