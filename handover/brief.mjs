@@ -13,7 +13,7 @@ export const maxBriefTokens = 1500;
 export function leaderHandoverState(project, { cards, pending, packets, gates }) {
   const section = (title, lines) => `## ${title}\n${lines.length ? lines.map(line => `- ${line}`).join('\n') : '无'}`;
   return [
-    '## 项目文件\n- .project/policy.json\n- .project/rulings.md',
+    '## 项目文件\n- .project/policy.json\n- .project/rulings.md\n- 项目记忆索引（如有）：.project/memory/INDEX.md',
     section('开放卡片和波次', cards.map(({ row, work, result }) =>
       `${row.task ?? row.role} · 波次 ${row.wave ?? '—'} · ${row.addr} · ${work ? '进行中' : isBlockedReply(result) ? '阻塞' : '待收结果'}`)),
     section('待处理续作', pending.pendingContinuations.map(batch =>

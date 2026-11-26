@@ -98,6 +98,22 @@ test('a native submission still reconciles when the wrapper withheld Enter', () 
   assert.equal(nativeDelivery({ id, attemptAt: 1000 }, observation).sessionId, sessionId);
 });
 
+test('a persisted holder short-write refusal surfaces the byte range after reopening the inbox', async t => {
+  const f = fixture(t);
+  const pane = f.terminal('t1', 'claude', 'idle');
+  const id = await f.submit(pane, 'queue', undefined, { phase: 'sending', attemptAt: 1100 });
+  const failure = { id, written: 1022, total: 2191, reason: 'INPUT_CHANGED' };
+  const store = inbox(f.root, {
+    inspect: async () => ({ terminal: pane, state: 'draft-held', writeEvidence: { failedPartialWrite: failure } }),
+    nativeDelivery: () => assert.fail('An explicitly failed partial write cannot be confirmed'),
+  }, () => {});
+  await store.step();
+  const delivery = receipt(f.lookup(id));
+  assert.equal(delivery.status, 'refused');
+  assert.equal(delivery.issue, 'holder-partial-write');
+  assert.deepEqual(delivery.partialWrite, { written: 1022, total: 2191, reason: 'INPUT_CHANGED' });
+});
+
 test('a Claude background Stop leaves the delivery open until the original task notification concludes', async t => {
   const f = fixture(t);
   const target = f.terminal('t1', 'claude', 'idle');

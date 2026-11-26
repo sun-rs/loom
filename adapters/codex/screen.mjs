@@ -449,6 +449,17 @@ export function hasEmptyComposer(text) {
   return after.length === 2 && /^.+ · .+$/.test(after[0]) && /^← for agents · \? for shortcuts/.test(after[1]);
 }
 
+export function hasHeldComposer(text) {
+  const rows = stripAnsiAndControl(text).split('\n').map(row => row.trim()).filter(Boolean);
+  if (/^⚠ \d+ warnings? · f2 to view$/i.test(rows.at(-1) ?? '')) rows.pop();
+  return rows.at(-2) === PROMPT_CHEVRON && /^(?:gpt-\S+|o\d\S*)\b.* [·•] \//i.test(rows.at(-1) ?? '');
+}
+
+export function matchesPastePlaceholder(draft, text) {
+  const chip = /^\[Pasted Content ([1-9]\d*) chars\]$/.exec(draft);
+  return Boolean(chip && Number(chip[1]) === Array.from(text).length);
+}
+
 export function classify(text) {
   const cleaned = stripAnsiAndControl(text);
   if (!cleaned) return 'unknown';

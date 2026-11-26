@@ -282,6 +282,8 @@ test('the board reports delivery states and the latest verified verdict across g
     { ...packet, gateRound: 2, completion: { at: 5_500, body: 'NOREPLY' } }],
     [{ type: 'gate-completed', gate: 'G1', at: 6_000 }]);
   assert.deepEqual([gate.round, gate.verdict.tag, gate.verdict.round, gate.completedAt], [2, 'PASS', 1, 6_000]);
+  assert.equal(gate.verdict.text, 'PASS\nVerified');
+  assert.equal(gate.packet, 'gate.md');
 });
 
 test('status TUI reconnects with read-only board requests and passes pager queries as data', { timeout: 5_000 }, async () => {
@@ -296,16 +298,18 @@ test('status TUI reconnects with read-only board requests and passes pager queri
   let frames = '';
   output.on('data', chunk => {
     frames += chunk;
-    if (frames.includes(' · online')) input.emit('keypress', 'q', { name: 'q' });
+    if (frames.includes('loomd new')) input.emit('keypress', 'q', { name: 'q' });
   });
   await statusTui({ project }, { input, output, interval: 5, async rpc(directory, command) {
     assert.deepEqual([directory, command], [project, 'board']);
-    if (++calls === 1) throw Object.assign(new Error('down'), { code: 'ECONNREFUSED' });
+    if (++calls === 2) throw Object.assign(new Error('down'), { code: 'ECONNREFUSED' });
     return { roles: [], workers: [], delivery: { counts: {}, oldestAgeMs: null }, gates: [],
-      notifications: { count: 0, last: [] }, pyramids: [], release: { id: 'new', root: '/release', cli: '/cli', warnings: [] } };
+      notifications: { count: 0, last: [] }, pyramids: [],
+      release: { id: calls === 1 ? 'old' : 'new', root: '/release', cli: '/cli', warnings: [] } };
   } });
-  assert.equal(calls, 2);
-  assert.match(frames, /disconnected[\s\S]*online/);
+  assert.equal(calls, 3);
+  assert.match(frames, /online[^\r\n]*loomd old[\s\S]*disconnected[^\r\n]*loomd old[\s\S]*online[^\r\n]*loomd new/);
+  assert.equal(frames.split('\x1b[2J').length - 1, 1);
   assert.equal(input.isRaw, false);
   assert.deepEqual(pagerArgs('history', 'leader', project), ['hist', '--project', project, '--role', 'leader']);
   assert.equal(pagerArgs('history', '--task-literal', project).at(-2), '--');

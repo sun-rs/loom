@@ -443,24 +443,18 @@ export function ownedSessions(project, index, report, {
 
   function resolve(target, caller) {
     const sessions = rows();
-    const callerAddr = sessions.find(row => row.pane === caller || row.addr === caller)?.addr;
-    return sessions.find(row => row.pane === target) ?? resolveTarget(sessions, target, callerAddr);
+    const actor = caller && sessions.find(row => row.pane === caller || row.addr === caller);
+    const exact = sessions.find(row => row.pane === target || row.addr === target);
+    if (exact) return exact;
+    if (!rotatingRoles.includes(target) && target !== 'super') return resolveTarget(sessions, target, actor?.addr);
+    const live = sessions.filter(row => row.role === target && row.endedAt === null && (!actor || actor.project === row.project) &&
+      !awaitingBrief(jobs.get(row.addr)) && !jobs.get(row.addr)?.stopping && routeParent(row.addr)?.addr === row.addr);
+    if (!live.length) throw new ErrorCode('not-found', `No live session matches ${target}`);
+    if (live.length > 1) throw new ErrorCode('ambiguous-target', `Multiple live sessions match ${target}: ${live.map(row => row.addr).join(', ')}`);
+    return live[0];
   }
 
-  function resolveDelivery(target, caller) {
-    if (rotatingRoles.includes(target)) {
-      const actor = rows().find(row => row.addr === caller || row.pane === caller);
-      const pending = [...jobs.values()].filter(job => job.row.role === target && awaitingBrief(job) &&
-        (!actor || job.row.project === actor.project));
-      if (pending.length === 1) {
-        const predecessor = rowFor(pending[0].handoverFrom);
-        if (predecessor) return predecessor;
-      }
-    }
-    return resolve(target, caller);
-  }
-
-  async function newJob(input, caller, checkBarrier, occupies, handoverState) {
+  async function newJob(input, caller, checkBarrier, occupies, handoverState, selfHandoff) {
     if (!roles.includes(input.role) || !hasText(input.cwd) || !validInput(input.prompt) ||
         (input.parent !== undefined && !hasText(input.parent)) ||
         (input['trust-workspace'] !== undefined && typeof input['trust-workspace'] !== 'boolean') ||
@@ -519,15 +513,19 @@ export function ownedSessions(project, index, report, {
     }
     let prompt = input.prompt;
     let handoverAck;
+    let compactHandover;
     if (predecessor) {
       const { brief } = await generateBrief({ role: input.role, project: name, projectDir: project, from: predecessor.addr,
         index, locate: false });
       if (rotatingRoles.includes(input.role)) {
         handoverAck = `HANDOVER-ACK ${randomUUID()}`;
-        const state = input.role === 'leader' ? `\n\n${handoverState(predecessor)}` : '';
-        const complete = `${brief.trimEnd()}${state}\n\n## 启动指令\n${prompt}\n\n## 交接确认\n${handoverAck}\n`;
-        const pointer = replyForDelivery(project, complete, 0);
-        prompt = `Complete the ${input.role === 'leader' ? 'Leader' : 'Auditor'} handover in this first native turn. ${pointer}. Resolve the path from ${project}. Read the full file through its final acknowledgement line, then copy that line exactly onto the first line of your final reply. Include the current SHA and relevant paths you verified. Wait for Loom to deliver queued work.`;
+        const state = input.role === 'leader' || selfHandoff ? `\n\n${handoverState(predecessor)}` : '';
+        const judgment = selfHandoff ?
+          `\n\n## 交班判断\n${selfHandoff.notePath}\n原因：${selfHandoff.reason}\n\n${selfHandoff.note.trimEnd()}` : '';
+        const complete = `${brief.trimEnd()}${state}${judgment}\n\n## 启动指令\n${prompt}\n\n## 交接确认\n${handoverAck}\n`;
+        compactHandover = mode === 'tui';
+        prompt = compactHandover ? complete :
+          `Complete the ${input.role === 'leader' ? 'Leader' : 'Auditor'} handover in this first native turn. ${replyForDelivery(project, complete, 0)}. Resolve the path from ${project}. Read the full file through its final acknowledgement line, then copy that line exactly onto the first line of your final reply. Include the current SHA and relevant paths you verified. Wait for Loom to deliver queued work.`;
       } else {
         prompt = `先读前任简报及任务指定的交接记录，再开始接管。\n\n${brief.trimEnd()}\n\n## 启动指令\n${prompt}`;
       }
@@ -535,15 +533,22 @@ export function ownedSessions(project, index, report, {
     if (row.role === 'leader' || row.role === 'auditor') {
       const guidance = row.role === 'leader' ? leaderGuidance :
         'Decide the gate verdict from the packet, fixed SHA, and integration Worker evidence. Ask for the integration Worker evidence if it is missing. Delegate investigation, tests, builds, merges and integration. When an exceptional issue requires a deep check, you alone may spawn one temporary read-only reviewer for that gate, passing its ID as --wave. Its conclusion may wake you once and counts against your gate wake budget. Other wake sources are user or Super messages, a gate packet or red escalation from Leader, succession supervision, and replies you explicitly requested.';
-      prompt = `## Loom role guidance\n${guidance} ${seniorGuidance} Do not wait on background Bash or poll loom state. ${unattended} If a result is overdue, run "$LOOM_BIN" status and check stalled deliveries and suppressed replies. Put DONE, BLOCKED, FAILED, PASS, REJECT or APPROVE on the first line of the final conclusion, before any preamble. Use NOREPLY for acknowledgements.\n\n## Startup request\n${prompt}`;
+      prompt = `## Loom role guidance\n${guidance} ${seniorGuidance} Do not wait on background Bash or poll loom state. ${unattended} If a result is overdue, run "$LOOM_BIN" status and check stalled deliveries and suppressed replies. At a rotation signal, write your judgment and in-flight card IDs to the indicated note, run "$LOOM_BIN" rotate --self, and finish the current turn. Loom starts the same profile at idle. After a failed acknowledgement, retain the role and retry once on the next notice. Put DONE, BLOCKED, FAILED, PASS, REJECT or APPROVE on the first line of the final conclusion, before any preamble. Use NOREPLY for acknowledgements.\n\n## Startup request\n${prompt}`;
       try { prompt = await projectMemoryPrompt(project) + prompt; }
       catch (error) { report(`Project memory unavailable: ${error.message}`); }
+    }
+    if (compactHandover) {
+      // Keep a fresh TUI's startup wire within a single holder chunk.
+      const pointer = replyForDelivery(project, prompt, 0);
+      prompt = `${pointer} relative to $LOOM_PROJECT. Read the entire briefing and copy its final HANDOVER-ACK line verbatim onto the first line of your final reply. Include the SHA and paths you verified, then wait for Loom deliveries.`;
     }
     if (row.role === 'worker') prompt += `\n\n${cardConventions({ ...row, integration: input.integration })}`;
     if (row.role === 'reviewer') prompt = [
       'You are a one-turn Loom reviewer. Inspect read-only and answer the one question below. Do not edit files, change repository state, run broad test suites or delegate. Send only your conclusion to the spawning role. Start it with PASS, REJECT or BLOCKED and cite the evidence.',
       prompt,
     ].join('\n\n');
+    const fast = selfHandoff?.inheritFast ? jobs.get(predecessor.addr)?.fast : selected.fast;
+    const requestedFast = selfHandoff?.inheritFast ? jobs.get(predecessor.addr)?.fastRequested : fastRequested;
     const job = { row, firstId: randomUUID(), prompt, gate, requested, deny, release: releaseId(),
       ...(actor && jobs.has(actor.addr) && { sender: targetBinding(actor) }),
       ...(row.role === 'worker' && { isolatedWorkerHome: true }),
@@ -551,11 +556,13 @@ export function ownedSessions(project, index, report, {
       ...(cli === 'claude' && mode === 'tui' && { autoTrustWorkspace: input['trust-workspace'] ??
         (trustWorkspace && defaultTrustWorkspace(project, cwd)) }),
       ...(warnings.length && { warnings }),
-      ...(fastRequested !== undefined && { fastRequested }),
-      ...(selected.fast !== undefined && { fast: selected.fast }),
+      ...(requestedFast !== undefined && { fastRequested: requestedFast }),
+      ...(fast !== undefined && { fast }),
       ...(predecessor && { handoverFrom: predecessor.addr }),
       ...(herdr && { herdr }),
       ...(handoverAck && { handoverAck }),
+      ...(selfHandoff && { selfRotationId: selfHandoff.id }),
+      ...(compactHandover && { compactHandover }),
       ...(row.role === 'worker' && { cardStart: headAt(cwd) }),
       ...(input['expect-red'] !== undefined && { expectRed: input['expect-red'] }),
       ...(deliver && { deliver, ...(input.barrier && { barrier: input.barrier }) }),
@@ -999,7 +1006,7 @@ export function ownedSessions(project, index, report, {
     return layout.adopt(entries);
   }
 
-  return { rows, rowFor, events, targetBinding, transport, requestedMode, canInterrupt, resolve, resolveDelivery, requireLive, newJob,
+  return { rows, rowFor, events, targetBinding, transport, requestedMode, canInterrupt, resolve, requireLive, newJob,
     activate, failSpawn, runtimeSelection, refresh, stop, shutdown, upgradeSessions, upgradeHolder, jobs, managedHc, sealed, lastActivity,
     routeParent, bindSuccessor, retirePredecessor, successorOf, holdsForHandover, rememberUserPrompt, pathWarnings, rememberLiveness, adoptLayout,
     finishObserved(row, exit, at) { return finish(jobs.get(row.addr), row, at, exit); } };

@@ -7,13 +7,13 @@
 |---|---|---|---|
 | Super | 用户 | 定目标、红线、裁决升级事项 | — |
 | Auditor（总审 / 用户代言人，常驻，安静） | 用户的默认对接人 | 持有项目章程与裁决账本；依据门禁包和集成 Worker 证据裁决；决定范围、预算和方法；监督 Leader 换班 | 源码调查、测试、构建、集成和合入交给执行侧 |
-| Leader（执行督导，常驻） | 执行吞吐与交付真实性 | 把裁决拆卡、派 Worker、守门禁、安排集成卡和监督 Auditor 换班 | 不读源代码或测试；不运行测试；不直接集成合入 |
+| Leader（执行督导，常驻） | 执行吞吐与交付真实性 | 把裁决拆卡、派 Worker、守门禁和安排集成卡 | 不读源代码或测试；不运行测试；不直接集成合入 |
 | Worker | 施工 | 按卡施工，三行最终回复；越过预算/事实不符/设计缺口即 BLOCKED | 不发消息、不自报统计 |
 
 ## 规则
 1. 用户消息永远插队：任何角色收到 Super 消息，排在 worker 结果之前，在下一轮最先处理。
 2. 并发：活跃写代码 worker 默认 2–3，硬上限 4；更多先拆成独立协调域。
-3. 换班交叉监督：Leader 换班由在任 Auditor 监督，Auditor 换班由在任 Leader 监督；两者不得同时换，至少错开一个任务阶段；只在任务卡边界换；新会话首轮报到中的 SHA/路径必须现查（loomd 机械核验）。
+3. Leader 和 Auditor 在安全点写交班判断，用 `loom rotate --self` 启动同配置接任者。同一项目一次只交接一个角色。在途卡片须写入交班单。新会话首轮报到中的 SHA 和路径须现查。Leader 的交班结果随 Auditor 的正常投递附送，Auditor 的交班结果通知 Super。
 4. 走偏信号由 loomd 记录，附在 Leader 下一次实际唤醒，并纳入所属门禁包。信号包括预算反复上调或实际净行数超预算、测试或编译变慢、计划文件膨胀、同类失败再次出现、事实核验和 Worker 卡死。
 5. Leader 打包固定候选的 Worker 证据。Auditor 依包裁决，遇到异常时可就同一门禁启动一次临时只读 Reviewer。审查最多 2 轮，仍阻塞升级 Super 改设计。Auditor 自查验收要求是否过重。
 6. 派卡模板：目标、可写范围、预算上限、测试行数不超过产品行数、只跑受影响的测试、停工触发器、三行回报格式。
@@ -35,7 +35,7 @@
   - Worker 在自己的沙箱运行测试并记录验收证据。候选分支集成、固定候选 SHA 的全量测试和获授权合入也由集成 Worker 按卡执行。
 - **loomd 统计各角色的调用次数和 token。** `loom cost` 和 `loom status` 显示累计调用、原始 token、新输入和输出，同时检查最近一小时的调用数和原始 token。Claude 写入缓存的输入计入新输入。某项出现倒金字塔（Auditor 高于 Leader，或 Leader 高于 worker 合计）时，loomd 每项目每小时最多提醒 Super 一次。
 - **每轮门禁包唤醒一次。** Leader 用 `loom gate pack <gate-id> --round <n> --base <ref> --candidate <ref> --question <text>` 快照同名 `--wave` 或 `--barrier` 的 Worker 证据、已有审查结论和待决问题。省略 `--round` 自动创建下一轮。只有 `--reuse` 才沿用已保存的快照和投递 ID。`.project/gates/` 的短包在每处缩略旁附完整段落路径。
-- **Leader 与 Auditor 共用换班预算。** 两个角色的 `maxContextTokens` 默认 150000，可分别设置 `rotateAt: "gate"`。Leader 或 Super 用 `loom notifications --gate-complete <gate-id>` 登记门禁完成。Leader 的最近一次原生调用输入超过预算，或配置了门禁换班且已完成门禁时，loomd 在无卡片在途、无其他换班进行时写入换班建议。每个 Leader 地址一次，Super 和 Auditor 可用 `loom status` 或 `loom notifications --history` 查看，由 Super 安排接班。
+- **Leader 与 Auditor 共用换班预算。** 两个角色的 `maxContextTokens` 默认 150000，可分别设置 `rotateAt: "gate"`。Leader 或 Super 用 `loom notifications --gate-complete <gate-id>` 登记门禁完成。上下文超预算或达到配置的门禁边界时，loomd 随该角色下一条现有投递附上换班提示。超过三次正常投递的回合或 15 分钟，或接任确认连续失败两次时，Leader 的问题升级给 Auditor，Auditor 的问题升级给 Super。
 - **Auditor 的额外门禁预算。** `roles.auditor.maxWakesPerGate` 默认 3，计两次门禁完成之间实际开始的原生轮次，含启动、用户消息、升级和追加审查结论。loomd 在每次预算评估和门禁完成时重新采样，意见附采样时间。两角色的换班共用持久化互斥约束。
 - **Leader 的交接确认。** `loom spawn leader --handover-from` 把开放卡片、波次、续作、投递、近期门禁裁决和项目文件指针存入完整的 SHA-256 回执文件。继任者的首轮原生回复带回文件末尾的确认码后，loomd 绑定路由并退休前任。在途结果随后按原投递 ID 交付。简报交付受投递 SLA 监测，停滞时通知 Super。
 - **高级角色工具守卫。** Leader 和 Auditor 启动时默认启用 `roles.<role>.toolGuard`。Loom 命令、`.project/` 读写、Git 摘要和最多 200 行的定点读取照常使用。测试、构建、Git 集成、广域读取和循环查状态优先派 Worker。必要时在原工具被拒后用 `"$LOOM_BIN" senior-tool --reason "理由" -- "命令"` 重试。loomd 认定 Worker、OAR 或投递不可用时可省略理由，按 `worker-unavailable` 登记。输出只保留末尾 40 行，最多 12 KB。每次拒绝和重试可在 `loom status` 与 `loom hist` 查看，每角色每门禁第 4 次重试提示 Super。

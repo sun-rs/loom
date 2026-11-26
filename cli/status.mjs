@@ -13,13 +13,14 @@ import { seniorToolSummary } from '../daemon/senior-tools.mjs';
 import { readLayout } from '../daemon/herdr-layout.mjs';
 
 export async function projectStatus(project) {
-  const rows = projectSessions(project);
   let live;
   let exits;
   if (managedProject(project)) {
     try { ({ sessions: live, exits } = await request(project, 'status')); }
     catch (error) { if (!daemonAbsent(error)) throw error; }
   }
+  const rotations = projectIndex(project).rotations();
+  const rows = projectSessions(project);
   const states = new Map((live ?? []).map(row => [row.addr, row]));
   const lifecycle = row => states.get(row.addr)?.state ?? (row.endedAt == null ? 'offline' : 'exited');
   const artifacts = readArtifacts(project);
@@ -93,7 +94,6 @@ export async function projectStatus(project) {
   const merges = [...new Map([...history, ...verified].filter(merge => merge.sha).map(merge => [merge.sha, merge])).values()]
     .sort((a, b) => b.at - a.at).slice(0, 5);
   const { byRole, rawTokens, missing, pyramid, memoryExtractor, memoryPilot } = projectCost(project, rows, { includeAcceptance: false });
-  const rotations = projectIndex(project).rotations();
   const activeAddresses = new Set(rows.filter(row => row.endedAt === null).map(row => row.addr));
   const rotationNotices = notifications.filter(event => event.type === 'leader-handover-failed' ||
     event.type === 'leader-rotation-proposed' && activeAddresses.has(event.addr)).slice(-6).reverse();
@@ -116,9 +116,16 @@ export async function projectStatus(project) {
       [{ addr: row.addr, role: row.role, ...exit }] : [];
   });
   const byAddress = new Map(rows.map(row => [row.addr, row]));
+  const incidents = new Map(crashed.map(exit => [exit.addr, exit]));
+  for (const rotation of rotations) {
+    if (rotation.failedAt != null && byAddress.get(rotation.successor)?.endedAt != null) {
+      incidents.set(rotation.successor, { ...incidents.get(rotation.successor), addr: rotation.successor, role: rotation.role,
+        status: 'handover-failed', since: rotation.failedAt, reason: rotation.failure });
+    }
+  }
   const deliveryAlerts = stalledDeliveries(messages).map(item =>
     ({ ...item, role: byAddress.get(item.target)?.role, since: item.stalledAt }));
-  return { ok: true, running: Boolean(live), layout: readLayout(project), stalledDeliveries: deliveryAlerts, awaitingUser, sessionHealth, exits: crashed,
+  return { ok: true, running: Boolean(live), layout: readLayout(project), stalledDeliveries: deliveryAlerts, awaitingUser, sessionHealth, exits: [...incidents.values()],
     suppressedReplies: suppressedReplies(messages).sort((a, b) => b.at - a.at),
     sessions: rows.filter(row => row.endedAt == null).map(row => {
       const authMode = row.cli === 'claude' ? artifacts.job(row.addr)?.authMode : undefined;

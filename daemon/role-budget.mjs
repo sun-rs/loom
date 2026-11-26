@@ -1,4 +1,4 @@
-import { projectCost, pyramidWindowMs } from '../cli/cost.mjs';
+import { projectCost, pyramidSampleReady, pyramidWindowMs } from '../cli/cost.mjs';
 import { historyReader } from '../cli/history.mjs';
 import { rotationLimits } from '../cli/policy.mjs';
 import { reportedContext } from '../cli/state.mjs';
@@ -18,18 +18,20 @@ export function rotationReason(policy, role, { gate, contextTokens, wakes }) {
   if (gate && policy.roles?.[role]?.rotateAt === 'gate') return 'gate';
 }
 
-export function roleBudget(project, { now, sessions, notifications, batchDeliveryId, report }) {
+export function roleBudget(project, { now, sessions, notifications, batchDeliveryId, report, signalRotation }) {
   const sampled = new Map();
   const pyramids = new Map();
-  const viewed = new Map();
+  const nativeContexts = new Map();
 
   async function context(row, { items, raw }, useLastCall) {
+    const transcript = raw.map(({ row }) => row);
+    if (row.cli === 'codex') nativeContexts.set(row.addr, reportedContext({}, [], transcript).percent);
     const nativeInput = items.findLast(item => item.turn.calls?.length)?.turn.calls.at(-1)?.inputTokens;
     if (useLastCall && Number.isFinite(nativeInput)) return nativeInput;
     const snapshot = await sessions.transport.inspect(sessions.targetBinding(row)).catch(() => undefined);
     const events = sessions.events(row.addr).filter(event => !event.agent_id && !event.isSidechain &&
       (!row.sessionId || (event.session_id ?? event.sessionId ?? event.conversationId) === row.sessionId));
-    return reportedContext(snapshot ?? {}, events, raw.map(({ row }) => row)).tokens ?? nativeInput ?? null;
+    return reportedContext(snapshot ?? {}, events, transcript).tokens ?? nativeInput ?? null;
   }
 
   async function assessAuditor(rows, reader, boundary, policy) {
@@ -55,7 +57,8 @@ export function roleBudget(project, { now, sessions, notifications, batchDeliver
 
   async function proposeLeader(name, leader, reader, events, policy, at) {
     const id = 'leader-rotation:' + batchDeliveryId(name, leader.addr);
-    if (events.some(event => event.id === id)) return;
+    const prior = events.find(event => event.id === id);
+    if (prior) return signalRotation?.(leader, prior.reason);
     const gate = events.findLast(event => gateBoundary(event) && event.at >= leader.startedAt)?.gate;
     const contextTokens = await context(leader, reader.sessionHistory(leader), true);
     const usage = { contextTokens, ...rotationLimits(policy, 'leader') };
@@ -64,7 +67,8 @@ export function roleBudget(project, { now, sessions, notifications, batchDeliver
     const why = reason === 'gate' ? `门禁 ${gate} 已完成，卡片已到安全边界。` :
       `Leader 最近调用的输入为 ${contextTokens} token，超过 ${usage.maxContextTokens}。`;
     notifications.add({ id, project: name, at, addr: leader.addr, type: 'leader-rotation-proposed',
-      gate, usage, reason, logOnly: true, text: `${why} 建议由 Super 安排 Leader 换班。` });
+      gate, usage, reason, logOnly: true, text: `${why} Leader 在下一次现有投递收到自助换班提示。` });
+    signalRotation?.(leader, reason);
   }
 
   function assessToolOutput(name, rows, reader, events, at) {
@@ -102,21 +106,25 @@ export function roleBudget(project, { now, sessions, notifications, batchDeliver
   }
 
   return {
-    pyramid(name) {
-      viewed.set(name, now());
-      return pyramids.get(name);
-    },
-    async check(name, rows, policy, { completeGate = false, safeLeader, gateRecorded = false } = {}) {
+    pyramid: name => pyramids.get(name),
+    contextPercent: addr => nativeContexts.get(addr),
+    async check(name, rows, policy, { completeGate = false, safeLeader, leader, auditor, gateRecorded = false } = {}) {
       const at = now();
       if (!completeGate && !gateRecorded && at - (sampled.get(name) ?? -Infinity) < sampleIntervalMs) return;
+      for (const row of rows) if (row.endedAt != null) nativeContexts.delete(row.addr);
       const events = notifications.list(name, false, true);
       const gate = events.findLast(gateBoundary);
       const id = 'auditor-budget:' + batchDeliveryId(name, gate?.id ?? '');
       const reader = historyReader(project);
       if (safeLeader) await proposeLeader(name, safeLeader, reader, events, policy, at);
+      else if (leader) {
+        const contextTokens = await context(leader, reader.sessionHistory(leader), true);
+        if (contextTokens > rotationLimits(policy, 'leader').maxContextTokens) signalRotation?.(leader, 'budget');
+      }
       if (gateRecorded) return;
       const usage = await assessAuditor(rows.filter(row => row.role === 'auditor'), reader, gate?.at ?? -Infinity, policy);
       const overBudget = Boolean(rotationReason(policy, 'auditor', usage));
+      if (usage.contextTokens > usage.maxContextTokens) signalRotation?.(auditor, 'budget');
       const prior = events.find(event => event.id === id);
       if (overBudget || prior) {
         const context = usage.contextTokens == null ? '未知' : `${usage.contextTokens}/${usage.maxContextTokens}`;
@@ -128,17 +136,18 @@ export function roleBudget(project, { now, sessions, notifications, batchDeliver
         else notifications.add({ id, project: name, type: budgetType, at, logOnly: true, ...sample });
       }
       if (completeGate) return overBudget ? { usage, sampledAt: at } : undefined;
-      try { assessToolOutput(name, rows, reader, events, at); }
-      catch (error) { report(`Senior tool output ${name}: ${error.message}`); }
       const lastDrift = events.findLast(event => event.type === driftType);
       const mayNotify = at - (lastDrift?.at ?? -Infinity) >= pyramidWindowMs;
-      const viewNeedsSample = at - (viewed.get(name) ?? -Infinity) <= 60_000 &&
-        at - (pyramids.get(name)?.sampledAt ?? -Infinity) >= 60_000;
-      if (mayNotify || viewNeedsSample) {
+      if (at - (pyramids.get(name)?.sampledAt ?? -Infinity) >= (mayNotify ? sampleIntervalMs : 60_000)) {
         const recent = rows.filter(row => row.endedAt == null || row.endedAt >= at - pyramidWindowMs);
         const { pyramid } = projectCost(project, recent, { now: at, includeAcceptance: false, reader, policy });
         pyramids.set(name, { ...pyramid, sampledAt: at });
-        if (mayNotify && pyramid.inversions.length) {
+        const ready = pyramidSampleReady(pyramid);
+        if (ready) {
+          try { assessToolOutput(name, rows, reader, events, at); }
+          catch (error) { report(`Senior tool output ${name}: ${error.message}`); }
+        }
+        if (ready && mayNotify && pyramid.inversions.length) {
           const details = pyramid.inversions.map(({ metric, higher, lower, actual, comparedTo }) =>
             `${higher} > ${lower}（${metric} ${actual} > ${comparedTo}）`).join('；');
           notifications.add({ id: 'pyramid:' + batchDeliveryId(name, at), type: driftType, project: name, at,

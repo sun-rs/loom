@@ -38,7 +38,7 @@ const mayReroute = message => (['queued', 'target-ended'].includes(message.phase
   message.phase === 'refused' && message.issue === 'target-exited') &&
   message.attemptAt == null && message.stopAttemptAt == null && message.mode === 'queue' &&
   (message.requestedMode === 'queue' || message.queuedForHandover === true) && !message.startup && !message.watchResume;
-const providerFailures = new Set(['request-timeout', 'runtime-exited', 'retry-exhausted', 'provider-overloaded']);
+const providerFailures = new Set(['request-timeout', 'runtime-exited', 'retry-exhausted', 'provider-overloaded', 'holder-partial-write']);
 
 export function receipt(message, at = Date.now()) {
   const { id, mode, requestedMode, createdAt, received, phase } = message;
@@ -57,6 +57,7 @@ export function receipt(message, at = Date.now()) {
     ...(message.target.tui?.transport && { transport: message.target.tui.transport }),
     ...(message.target.tui?.reason && { transportReason: message.target.tui.reason }),
     ...(message.waitingForWritable && { waitingForWritable: message.waitingForWritable }),
+    ...(message.partialWrite && { partialWrite: message.partialWrite }),
     ...(message.completion?.unconfirmed && { replyStatus: 'unconfirmed' }),
     ...(message.expectReply && message.completion?.relay && { relay: message.completion.relay }),
     ...(issue ? { issue } : {}),
@@ -130,6 +131,7 @@ export function inbox(project, transport, report = console.error, { replyLimit, 
     if (message.replyKey || message.replyTo) return suppress('automatic-reply');
     if (message.batchId || message.implicitBatch) return suppress('continuation-batch');
     if (completion.unconfirmed) return suppress('unconfirmed');
+    if (from.external && from.addr === 'super') return { relay: { status: 'notification' } };
     const conclusion = replyConclusion(completion.body);
     const fallback = conclusion.reason === 'missing-tag' && (message.gatePacket || isSeniorSender?.(from.addr));
     if (!conclusion.tag && !fallback) return suppress(conclusion.reason);
@@ -152,6 +154,12 @@ export function inbox(project, transport, report = console.error, { replyLimit, 
     if (message.phase === 'target-ended' || !(message.attemptAt || message.phase === 'stopping' && message.stopAttemptAt) ||
         (message.phase === 'corrupted' || complete) && !needsIntegrity(message) ||
         message.phase === 'refused' && providerFailures.has(message.issue)) return;
+    const partial = observation.writeEvidence?.failedPartialWrite;
+    if (message.phase === 'sending' && partial?.id === message.id) {
+      const { written, total, reason } = partial;
+      message.partialWrite = { written, total, reason };
+      return failRequest(message, 'holder-partial-write');
+    }
     const compatibleDigests = legacyAgyDigests(message);
     const native = transport.nativeDelivery(compatibleDigests ? { ...message, compatibleDigests } : message, observation);
     if (complete) integrityScanned.add(message.id);
@@ -363,7 +371,10 @@ export function inbox(project, transport, report = console.error, { replyLimit, 
         return;
       }
     } catch (error) {
-      if (providerFailures.has(error.kind)) return failRequest(message, error.kind);
+      if (providerFailures.has(error.kind)) {
+        if (error.partialWrite) message.partialWrite = error.partialWrite;
+        return failRequest(message, error.kind);
+      }
       if (error.kind === 'steer-unavailable') {
         message.mode = 'queue';
         message.barrier = message.active;
