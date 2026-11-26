@@ -58,6 +58,40 @@ function inputTokens(bytes, day) {
   return bytes + requestFramingTokens + (day?.inputShortfall ?? 0);
 }
 
+const emptyStageLibrary = { project: [], reference: [] };
+
+function stageLibraryBytes(value) {
+  // The provider embeds the input JSON in a JSON string. Exclude the outer quotes.
+  return Buffer.byteLength(JSON.stringify(JSON.stringify(value))) - 2;
+}
+
+function trimStageLibrary(library, remaining) {
+  const selected = { project: [], reference: [] };
+  let summariesOnly = false;
+  for (const field of ['project', 'reference']) {
+    const entries = selected[field];
+    for (const item of library[field]) {
+      const comma = Number(entries.length > 0);
+      if (!summariesOnly) {
+        const bytes = stageLibraryBytes(item) + comma;
+        if (bytes <= remaining) {
+          entries.push(item);
+          remaining -= bytes;
+          continue;
+        }
+        summariesOnly = true;
+      }
+      const { id, title } = item;
+      const summary = { id, title };
+      const bytes = stageLibraryBytes(summary) + comma;
+      if (bytes > remaining) return selected;
+      entries.push(summary);
+      remaining -= bytes;
+    }
+  }
+  return selected;
+}
+
 async function requestProvider(fetch, url, config, key, messages, maxTokens) {
   const anthropic = config.format === 'anthropic';
   const headers = anthropic ? { 'x-api-key': key, 'anthropic-version': '2023-06-01' } : { authorization: 'Bearer ' + key };
@@ -214,23 +248,28 @@ export function createMemoryExtractor(project, { memory, sessions, now, report, 
       report('Loom memory extractor credential unavailable');
       return false;
     }
+    const existing = { project: library.project.map(({ meta, title, body }) => ({ id: meta.id, title, body })),
+      // Shared history records can contain the same raw worker reply as an inbox receipt.
+      reference: library.reference.map(({ id, title, body, role, source }) =>
+        role === 'worker' && source?.hist ? { id } : { id, title, body }) };
+    for (const entries of Object.values(existing)) {
+      entries.sort((a, b) => a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
+    }
     const context = redactExtractor({ instructions: guidance + ' Only merge, invalidate, or correct memory. ' +
       'A user correction supported by their own words may omit target to propose a new preference. ' +
       'Use reference entries as context only.',
-      existing: { project: library.project.map(({ meta, title, body }) => ({ id: meta.id, title, body })),
-        // Shared history records can contain the same raw worker reply as an inbox receipt.
-        reference: library.reference.map(({ id, title, body, role, source }) =>
-          role === 'worker' && source?.hist ? { id } : { id, title, body }) },
+      existing,
     }, secret);
     for (const item of work) item.entry = redactExtractor(item.entry, secret);
     const limits = limitsFor(config);
+    const libraryHeadroom = Math.floor(limits.maxInputBytes / 2) - stageLibraryBytes(emptyStageLibrary);
     const size = input => requestBytes(config.model, requestMessages(input, true));
     const hasCorrectionSource = input => input.history.some(turn => turn.received.some(delivery =>
       userDeliveries.has(delivery.source.id) && delivery.text.trim()));
 
     while (offset < work.length && !closing) {
       const day = today();
-      const input = { ...context, history: [], workerSummaries: [], events: [] };
+      const input = { ...context, existing: emptyStageLibrary, history: [], workerSummaries: [], events: [] };
       const first = work[offset];
       input[first.field].push(first.entry);
       const bytes = size(input);
@@ -245,12 +284,17 @@ export function createMemoryExtractor(project, { memory, sessions, now, report, 
         continue;
       }
 
+      const remainingTokens = limits.dailyTokens - day.charged;
+      // Reserve space for the first item and at least one output token before adding library entries.
+      input.existing = trimStageLibrary(context.existing,
+        Math.min(libraryHeadroom, limits.maxInputBytes - bytes, remainingTokens - inputTokens(bytes, day) - 1));
+
       let end = offset + 1;
       while (end < work.length) {
         const { field, entry } = work[end];
         input[field].push(entry);
         const bytes = size(input);
-        if (bytes > limits.maxInputBytes || inputTokens(bytes, day) >= limits.dailyTokens - day.charged) {
+        if (bytes > limits.maxInputBytes || inputTokens(bytes, day) >= remainingTokens) {
           input[field].pop();
           break;
         }
