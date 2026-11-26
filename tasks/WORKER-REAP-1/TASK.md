@@ -28,3 +28,7 @@ Rationale: (a) an idle headless worker costs memory (~300 MB) but zero tokens; (
 - At ≥ 50% context, or after its first compaction, it finishes the current card and is then retired (closed, not offered for revive); further work in that area goes to a new worker with a short brief plus the relevant memory entries (cheaper than re-injecting a bloated context).
 - loomd computes and shows per worker: context %, compactions, "reusable / retire after this card"; the Leader's new-vs-revive rule (Addendum 2 §4) uses these thresholds (configurable `workers.reuseMaxContext`, default 0.5; `workers.reuseMaxCompactions`, default 0).
 - Metric per gate: reuses, retirements by threshold, average context at retirement.
+
+**Addendum 4 — corrects Addendum 3 (user: thresholds too aggressive; switching workers mid-task is worse than a big context):**
+- **Never replace a worker mid-card because of context or compaction.** A card runs to completion in the same worker however many compactions it takes; only failure/stuck/quota justify a mid-card switch.
+- Thresholds apply only to **reuse for the next card**: reusable while context < 70% of the window and ≤ 1 compaction so far and the next card is in the same area; otherwise retire at card end. Defaults `workers.reuseMaxContext=0.7`, `workers.reuseMaxCompactions=1`, configurable; record the metrics so we can tune from data (e.g. fix-after-REJECT success with revived vs new worker).
