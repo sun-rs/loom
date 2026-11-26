@@ -686,6 +686,53 @@ test('M1 forgetting a merge target purges the source candidate and its old recei
   }, { candidateVisible: false, targetVisible: false, persistedBodies: [], replayedBodies: [] });
 });
 
+test('Goal 4a changed proposal and merge replays conflict after forgetting merged entries', async t => {
+  for (const forgottenEntry of ['candidate', 'target']) {
+    const { store, commits, readState } = await fixture();
+    const { leader, worker } = bindings;
+    const target = saved(await store.write(leader, put('merge-target')));
+    const other = saved(await store.write(leader, put('other-target', {
+      ...fact, title: 'Alternate merge target', body: 'Escalate after the second failure.',
+    })));
+    const proposal = proposeForReview('lesson');
+    const candidate = saved(await store.write(worker, proposal));
+    const merge = {
+      op: 'merge', requestId: 'merge-candidate', id: candidate.id, cardId: worker.cardId,
+      expectedRevision: candidate.revision, targetId: target.id, targetExpectedRevision: target.revision,
+      body: `${target.body} ${candidate.body}`,
+    };
+    const merged = await store.write(leader, merge);
+    const mergedTarget = saved(merged);
+    assert.equal(merged.candidate.status, 'merged');
+    const forgotten = forgottenEntry === 'candidate' ? merged.candidate : mergedTarget;
+    assert.equal(saved(await store.write(leader, {
+      op: 'forget', requestId: 'forget', id: forgotten.id, expectedRevision: forgotten.revision,
+    })).status, 'forgotten');
+    const before = readState();
+    assert.equal(before.entries.find(entry => entry.id === candidate.id)?.status, 'forgotten');
+    const count = commits.length;
+    const oldBodies = [target.body, other.body, candidate.body, mergedTarget.body];
+    const variants = [
+      ['merge with a different target', leader, { ...merge, targetId: other.id, targetExpectedRevision: other.revision }],
+      ['merge with a different body', leader, { ...merge, body: correctedBody }],
+    ];
+    if (forgottenEntry === 'target') {
+      variants.push(['propose with a different body', worker, {
+        ...proposal, entry: { ...proposal.entry, body: correctedBody },
+      }]);
+    }
+    for (const [name, binding, request] of variants) {
+      await t.test(`forgotten ${forgottenEntry}: ${name}`, async () => {
+        const result = await store.write(binding, request);
+        assert.equal(commits.length, count);
+        assert.deepEqual(readState(), before);
+        const exposedBodies = oldBodies.filter(body => JSON.stringify(result).includes(body));
+        assert.deepEqual([result.ok, result.code, result.receipt, exposedBodies], [false, 'conflict', undefined, []]);
+      });
+    }
+  }
+});
+
 for (const forgottenEntry of ['candidate', 'target']) {
   for (const targetChoice of ['same', 'other']) {
     for (const requestIdChoice of ['original', 'new']) {
@@ -906,7 +953,9 @@ test('Goal 4c a stale supersedes revision conflicts after replacement without ex
   const before = readState();
   const count = commits.length;
   const retry = async (id, revision) => {
-    const result = await store.write(auditor, { ...replacement(id, revision), requestId: `retry-${id}` });
+    const request = { ...replacement(id, revision), requestId: `retry-${id}-${revision}` };
+    if (revision === undefined) delete request.supersedeExpectedRevisions;
+    const result = await store.write(auditor, request);
     assert.equal(commits.length, count);
     assert.deepEqual(readState(), before);
     return result;
@@ -924,6 +973,14 @@ test('Goal 4c a stale supersedes revision conflicts after replacement without ex
     assert.deepEqual(await retry(remote.id, remote.revision), unknown);
     assert.deepEqual(await retry(activeRemote.id, activeRemote.revision), unknown);
   });
+  const current = before.entries.find(entry => entry.id === remote.id).revision;
+  for (const [name, revision] of [['current', current], ['missing', undefined]]) {
+    await t.test(`foreign superseded target with ${name} revision matches an unknown ID`, async () => {
+      const unknown = await retry('unknown-ruling', revision);
+      assert.deepEqual([unknown.ok, unknown.code], [false, 'forbidden']);
+      assert.deepEqual(await retry(remote.id, revision), unknown);
+    });
+  }
 });
 
 test('Goal 3b a private ruling can supersede another private ruling', async () => {

@@ -274,21 +274,28 @@ test('U10 各读取入口使用同一角色授权，猜测未授权 ID 与未知
   }
 });
 
-test('Goal 4b/d direct access requires a history classifier for every filter', async t => {
+test('Goal 4b/d direct access requires a history classifier for every source and filter', async t => {
   const { createAccess } = await import('./access.mjs');
   const row = { id: 'history-id', project: leader.project, sessionId: 'history-session', layer: 'shared',
     body: 'Original direct history body.' };
   const history = [row];
-  const access = createAccess({ history });
-  const control = createAccess({ history, classifySensitive });
+  const sources = {
+    array: { history },
+    function: { history: () => history },
+    readState: { readState: () => ({ entries: [], changes: [], history }) },
+  };
   const filters = { id: { id: row.id }, project: { project: row.project }, sessionId: { sessionId: row.sessionId }, all: undefined };
-  for (const [filter, args] of Object.entries(filters)) {
-    await t.test(filter, async () => {
-      assert.deepEqual(ids((await control.hist(leader, args)).rows), [row.id]);
-      const result = await access.hist(leader, args);
-      assert.deepEqual([result.ok, result.code, result.rows, JSON.stringify(result).includes(row.body)],
-        [false, 'classifier-missing', [], false]);
-    });
+  for (const [source, options] of Object.entries(sources)) {
+    const access = createAccess(options);
+    const control = createAccess({ ...options, classifySensitive });
+    for (const [filter, args] of Object.entries(filters)) {
+      await t.test(`${source} by ${filter}`, async () => {
+        assert.deepEqual(ids((await control.hist(leader, args)).rows), [row.id]);
+        const result = await access.hist(leader, args);
+        assert.deepEqual([result.ok, result.code, result.rows, JSON.stringify(result).includes(row.body)],
+          [false, 'classifier-missing', [], false]);
+      });
+    }
   }
 });
 
@@ -425,11 +432,12 @@ test('Goal 4e cross-project grants survive restart and revocation and expiry dis
   const sourceProject = 'B';
   const entry = item('b-note', { project: sourceProject });
   const superBinding = session('super');
-  let state = { entries: [entry], changes: [change(1, entry)], seq: 1 };
-  const open = (time = start) => createMemoryStore({
+  const initialSnapshot = JSON.stringify({ entries: [entry], changes: [change(1, entry)], seq: 1 });
+  const commits = [];
+  const open = (time = start, snapshots = commits) => createMemoryStore({
     now: () => time, classifySensitive,
-    readState: () => structuredClone(state),
-    commitState: next => { state = structuredClone(next); },
+    readState: () => JSON.parse(snapshots.at(-1) ?? initialSnapshot),
+    commitState: next => { snapshots.push(JSON.stringify(next)); },
   }).access;
   const check = async (access, expected) => {
     assert.deepEqual({
@@ -444,20 +452,33 @@ test('Goal 4e cross-project grants survive restart and revocation and expiry dis
   };
   const access = open();
   await check(access, []);
+  const beforeGrant = commits.length;
   const result = await access.grant(superBinding, { sourceProject, recipient: leader.principal,
     reason: 'Read the dependency notes', expiresAt: stamp(start + day) });
+  const afterGrant = commits.length;
   assert.equal(result.ok, true, JSON.stringify(result));
   await check(access, [entry.id]);
+  await t.test('grant commits project state', () => {
+    assert.ok(afterGrant > beforeGrant, 'grant did not call commitState');
+  });
+  const reopenBeforeExpiry = () => open(start + day - 1);
+  const reopened = reopenBeforeExpiry();
   await t.test('active grant after restart', async () => {
-    await check(open(start + day - 1), [entry.id]);
+    await check(reopened, [entry.id]);
+  });
+  await t.test('isolated snapshot with no grants cannot read the same entry', async () => {
+    await check(open(start, []), []);
   });
   await t.test('expired grant after restart', async () => {
     await check(open(start + day), []);
   });
   await t.test('revoked grant after restart', async () => {
-    assert.equal((await access.revoke(superBinding, result.grant.id)).ok, true);
-    await check(access, []);
-    await check(open(), []);
+    const beforeRevoke = commits.length;
+    assert.equal((await reopened.revoke(superBinding, result.grant.id)).ok, true);
+    const afterRevoke = commits.length;
+    await check(reopened, []);
+    await check(reopenBeforeExpiry(), []);
+    assert.ok(afterRevoke > beforeRevoke, 'revoke did not call commitState');
   });
 });
 
