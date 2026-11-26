@@ -1,15 +1,48 @@
 import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
 import { mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { test } from 'node:test';
+import { after, before, test } from 'node:test';
 import { deliveryId } from '../inbox/message.mjs';
 import { createAccess } from '../memory/access.mjs';
 import { createIndexQuery } from '../memory/index-query.mjs';
 import { buildOarLaunch, buildResumeLaunch, buildSwitchLaunch, buildTuiLaunch } from '../memory/launch-config.mjs';
 import { codexConfiguration } from './codex-launch.mjs';
+import { openOar } from './oar.mjs';
 import { createSupervisor } from './supervisor.mjs';
+
+function setEnvironment(values) {
+  const previous = Object.fromEntries(Object.keys(values).map(key => [key, process.env[key]]));
+  for (const [key, value] of Object.entries(values)) process.env[key] = value;
+  return () => {
+    for (const [key, value] of Object.entries(previous)) {
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    }
+  };
+}
+
+let restoreEnvironment;
+let fixtureHome;
+before(() => {
+  const home = fixtureHome = mkdtempSync(join(realpathSync(tmpdir()), 'loom-memory-home-'));
+  const config = join(home, 'gitconfig');
+  writeFileSync(config, '');
+  restoreEnvironment = setEnvironment({
+    HOME: home, GIT_CONFIG_GLOBAL: config, CODEX_HOME: join(home, '.codex'),
+    CLAUDE_CONFIG_DIR: join(home, '.claude'), XDG_CONFIG_HOME: join(home, '.config'),
+    XDG_DATA_HOME: join(home, '.local/share'), XDG_STATE_HOME: join(home, '.local/state'),
+    LOOM_DESKTOP_NOTIFY: '0', GIT_CONFIG_NOSYSTEM: '1',
+    OAR_CODEX_BIN: writeStub(home, 'codex'), LOOM_CLAUDE_BIN: writeStub(home, 'claude'),
+    OAR_CODEX_SANDBOX: 'inherit', CLAUDE_CODE_DISABLE_AUTO_MEMORY: '0',
+  });
+});
+after(() => {
+  restoreEnvironment?.();
+  if (fixtureHome) rmSync(fixtureHome, { recursive: true, force: true });
+});
 
 const now = () => Date.parse('2026-11-26T12:00:00Z');
 const binding = (role, project, fields = {}) => ({
@@ -22,19 +55,23 @@ const item = (id, project, fields = {}) => ({
 });
 const rows = result => result.rows.map(row => row.id);
 
-function fixture(t) {
+function fixture(t, nativeOpen) {
   const project = mkdtempSync(join(realpathSync(tmpdir()), 'loom-memory-injection-'));
-  t.after(() => rmSync(project, { recursive: true, force: true }));
   mkdirSync(join(project, '.project'));
   writeFileSync(join(project, '.project/policy.json'), JSON.stringify({ preferred: [], deny: [] }));
   const state = { entries: [], changes: [], seq: 0 };
   const access = createAccess({ now, readState: () => state });
   const prompts = [];
   const native = new Map();
-  const d = createSupervisor(project, {
+  const daemon = () => createSupervisor(project, {
     now, report: () => {}, externalNotification: async () => {},
     // The home store seam keeps seeding separate from the loomd behavior under test.
-    sessionOptions: { memoryStore: { access }, open },
+    sessionOptions: { memoryStore: { access }, open: nativeOpen ?? open },
+  });
+  let d = daemon();
+  t.after(async () => {
+    try { await d.shutdown(); }
+    finally { rmSync(project, { recursive: true, force: true }); }
   });
   async function open(row) {
     const id = randomUUID();
@@ -82,14 +119,169 @@ function fixture(t) {
     assert.ok(added[0].includes(body), 'business body survives');
     return added[0].slice(added[0].indexOf(body) + body.length).trim();
   }
-  return { project, spawn, inputs, deliver, publish, native, tick: () => d.tick() };
+  return { project, spawn, inputs, deliver, publish, native, tick: () => d.tick(),
+    switchTo: to => d.handle('switch', { role: 'leader', to }),
+    async restart() { await d.shutdown(); d = daemon(); await d.tick(); },
+  };
 }
 
 const shared = 'MEM-SHARED';
 const ruling = 'MEM-USER-RULING';
 const preference = 'MEM-USER-PREFERENCE';
 const indexText = '背景笔记，仅供参考，使用前核验\n- ' + shared;
-const flag = (argv, name) => argv[argv.indexOf(name) + 1];
+function flag(argv, name) {
+  const index = argv.findLastIndex(arg => arg === name || arg.startsWith(name + '='));
+  if (index < 0) return;
+  return argv[index] === name ? argv[index + 1] : argv[index].slice(name.length + 1);
+}
+
+function writeStub(home, cli) {
+  const path = join(home, cli);
+  const codexNative = new URL('../tasks/PROTO-HARDEN-0/fixtures/native.mjs', import.meta.url).href;
+  writeFileSync(path, `#!${process.execPath}
+import { appendFileSync, readFileSync } from 'node:fs';
+import { createInterface } from 'node:readline';
+const cli = ${JSON.stringify(cli)};
+const argv = process.argv.slice(2);
+const flag = ${flag.toString()};
+if (argv.includes('--version') || argv.includes('--help')) {
+  if (cli === 'codex') await import(${JSON.stringify(codexNative)});
+  else console.log('2.1.331 (Claude Code)');
+  process.exit(0);
+}
+const keys = ['HOME', 'GIT_CONFIG_GLOBAL', 'GIT_CONFIG_NOSYSTEM', 'PATH', 'LOOM_BIN', 'LOOM_PROJECT', 'LOOM_ADDR',
+  'CLAUDE_CODE_DISABLE_AUTO_MEMORY', 'CLAUDE_CODE_ENTRYPOINT'];
+const env = Object.fromEntries(keys.filter(key => Object.hasOwn(process.env, key)).map(key => [key, process.env[key]]));
+const system = ['--system-prompt', '--append-system-prompt'].flatMap(name => {
+  const file = flag(argv, name + '-file');
+  return [flag(argv, name), file && readFileSync(file, 'utf8')].filter(Boolean);
+}).join('\\n\\n');
+appendFileSync(cli + '-launches.jsonl', JSON.stringify({ argv, env, system }) + '\\n');
+if (cli === 'codex') await import(${JSON.stringify(codexNative)});
+else createInterface({ input: process.stdin }).on('line', line => {
+  const { type, request_id } = JSON.parse(line);
+  if (type === 'control_request') console.log(JSON.stringify({ type: 'control_response', response: {
+    request_id, subtype: 'success', response: { applied: { effort: flag(argv, '--effort') } },
+  } }));
+});
+`, { mode: 0o700 });
+  return path;
+}
+
+// Reopening the supervisor suspends this transport and launches a new native process.
+// The supervisor still selects the role, session ID and profile for the production OAR launcher.
+function nativeFixture(t) {
+  assert.equal(process.env.HOME, fixtureHome);
+  assert.equal(process.env.OAR_CODEX_BIN, join(fixtureHome, 'codex'));
+  assert.equal(process.env.LOOM_CLAUDE_BIN, join(fixtureHome, 'claude'));
+  return fixture(t, openOar);
+}
+function nativeLaunches(f, cli) {
+  const launches = readFileSync(join(f.project, `${cli}-launches.jsonl`), 'utf8').trim().split('\n').map(JSON.parse);
+  for (const { env } of launches) {
+    assert.equal(env.HOME, process.env.HOME, 'native HOME must be the temporary test home');
+    assert.equal(env.GIT_CONFIG_GLOBAL, process.env.GIT_CONFIG_GLOBAL, 'native Git config must be temporary');
+  }
+  return launches;
+}
+
+function assertCodexOverrides(argv) {
+  const overrides = argv.flatMap((arg, index) => {
+    if (arg === '-c' || arg === '--config') return [argv[index + 1]];
+    return arg.startsWith('--config=') ? [arg.slice('--config='.length)] : [];
+  });
+  for (const key of codexKeys) {
+    assert.equal(overrides.findLast(arg => arg?.startsWith(key + '=')), key + '=false');
+  }
+}
+
+test('5d live spawn: Claude disables native memory in the child environment', async t => {
+  const f = nativeFixture(t);
+  const { session } = await f.spawn('leader', 'claude', 'Native launch probe');
+  const [launch] = nativeLaunches(f, 'claude');
+  assert.equal(flag(launch.argv, '--session-id'), session.sessionId);
+  assert.equal(launch.env.CLAUDE_CODE_ENTRYPOINT, 'loom');
+  assert.equal(launch.env.CLAUDE_CODE_DISABLE_AUTO_MEMORY, '1');
+});
+
+test('5d live resume: Codex reopens the same thread with native memory disabled', async t => {
+  const f = nativeFixture(t);
+  const { session } = await f.spawn('leader', 'codex', 'Native resume probe');
+  await f.restart();
+  const launches = nativeLaunches(f, 'codex');
+  assert.equal(launches.length, 2, 'resume starts a fresh native process');
+  const pids = readFileSync(join(f.project, 'runtime-pids.jsonl'), 'utf8').trim().split('\n').map(JSON.parse);
+  assert.deepEqual(pids.map(entry => entry.session), [session.sessionId, session.sessionId]);
+  assertCodexOverrides(launches[1].argv);
+});
+
+test('5d live switch: the successor Codex process disables native memory', async t => {
+  const f = nativeFixture(t);
+  const { session } = await f.spawn('leader', 'claude', 'Native switch probe');
+  const successor = await f.switchTo('codex/fixture/high');
+  assert.equal(successor.handoverFrom, session.addr);
+  const [launch] = nativeLaunches(f, 'codex');
+  assert.equal(launch.env.LOOM_ADDR, successor.session.addr);
+  assertCodexOverrides(launch.argv);
+});
+
+function seedHidden(f) {
+  f.publish(item('MEM-HIDDEN-PRIVATE', f.project, { layer: 'private', owner: 'super', importance: 99 }));
+  f.publish(item('MEM-HIDDEN-FOREIGN', 'other-project', { importance: 99 }));
+}
+
+for (const [budget, count, title] of [['line', 203, 'Short title'], ['UTF-8 byte', 90, '界'.repeat(145)]]) {
+  test(`5c live spawn: Claude system index filters by role and respects the ${budget} budget`, async t => {
+    const f = nativeFixture(t);
+    seedHidden(f);
+    const visible = Array.from({ length: count }, (_, i) => `MEM-NATIVE-${i}`);
+    for (const id of visible) f.publish(item(id, f.project, { title }));
+    f.publish(item(ruling, null, { layer: 'user', kind: 'ruling', importance: 99 }));
+    await f.spawn('leader', 'claude', 'Startup index probe');
+    const [{ system }] = nativeLaunches(f, 'claude');
+    assert.doesNotMatch(system, /MEM-HIDDEN-(?:PRIVATE|FOREIGN)/);
+    const lines = system.trimEnd().split('\n');
+    const start = lines.findIndex(line => line.includes('仅供参考') || line.includes(ruling));
+    assert.ok(start >= 0, 'missing memory index in the native system prompt');
+    const index = lines.slice(start).join('\n');
+    const loaded = index.match(/MEM-NATIVE-\d+/g) ?? [];
+    assert.match(index, /MEM-USER-RULING/);
+    assert.ok(loaded.length > 0 && loaded.length < count);
+    assert.equal(new Set(loaded).size, loaded.length);
+    for (const id of loaded) assert.ok(index.split('\n').includes(`- ${id} — ${title}`));
+    assert.ok(lines.length - start <= 200, 'memory index exceeds 200 lines');
+    assert.ok(Buffer.byteLength(index, 'utf8') <= 25_000, 'memory index exceeds 25 KB');
+    assert.equal(lines.at(-1), `另有 ${count - loaded.length} 条未加载`);
+  });
+}
+
+test('5c live compact: the Claude SessionStart hook outputs the authorized index', async t => {
+  const f = nativeFixture(t);
+  seedHidden(f);
+  f.publish(item(shared, f.project));
+  f.publish(item(ruling, null, { layer: 'user', kind: 'ruling' }));
+  const { session } = await f.spawn('leader', 'claude', 'Compact hook probe');
+  const [{ argv, env }] = nativeLaunches(f, 'claude');
+  const settings = JSON.parse(flag(argv, '--settings') ?? '{}');
+  const hooks = (settings.hooks?.SessionStart ?? []).filter(rule => rule.matcher === 'compact')
+    .flatMap(rule => rule.hooks ?? []).filter(hook => hook.type === 'command' && hook.command);
+  assert.ok(hooks.length > 0, 'native Claude did not receive a compact hook command');
+  const context = hooks.map(({ command, args }) => {
+    const [program, parameters] = args ? [command, args] : ['/bin/sh', ['-c', command]];
+    const result = spawnSync(program, parameters, {
+      cwd: f.project, env, encoding: 'utf8', timeout: 5000,
+      input: JSON.stringify({ hook_event_name: 'SessionStart', source: 'compact',
+        cwd: f.project, session_id: session.sessionId }),
+    });
+    assert.ifError(result.error);
+    assert.equal(result.status, 0, result.stderr);
+    const output = result.stdout.trim();
+    return output.startsWith('{') ? JSON.parse(output).hookSpecificOutput?.additionalContext ?? '' : output;
+  }).join('\n');
+  assert.match(context, /MEM-SHARED/);
+  assert.match(context, /MEM-USER-RULING/);
+  assert.doesNotMatch(context, /MEM-HIDDEN-(?:PRIVATE|FOREIGN)/);
+});
 
 for (const [provider, systemPrompt] of [
   ['claude', launch => launch.argv.includes('--append-system-prompt') && flag(launch.argv, '--append-system-prompt')],
@@ -288,8 +480,7 @@ const codexKeys = ['features.memories', 'memories.generate_memories', 'memories.
 test('5d MEM-ISO-1: daemon Codex launch carries all three overrides', t => {
   const { project } = fixture(t);
   const argv = codexConfiguration(project, { role: 'leader', cwd: project }, {}, {});
-  assert.deepEqual(argv.filter(arg => codexKeys.some(key => arg.startsWith(key + '='))),
-    codexKeys.map(key => key + '=false'));
+  assertCodexOverrides(argv);
 });
 
 for (const [mode, build] of [['TUI', buildTuiLaunch], ['OAR', buildOarLaunch],
