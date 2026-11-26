@@ -346,7 +346,8 @@ test('prints the project board while offline and sends an explicit switch profil
   const server = createServer(socket => {
     socket.once('data', body => {
       const { command, args } = JSON.parse(body);
-      socket.end(JSON.stringify({ ok: true, command, ...args }));
+      const warnings = command === 'gate-pack' ? [{ code: 'missing-reviewer-conclusion', message: 'Gate has no reviewer conclusion.' }] : undefined;
+      socket.end(JSON.stringify({ ok: true, command, ...args, warnings }));
     });
   }).listen(socketPath(f.cwd));
   t.after(() => new Promise(resolve => server.close(resolve)));
@@ -357,6 +358,15 @@ test('prints the project board while offline and sends an explicit switch profil
   assert.equal(receipt.command, 'switch');
   assert.equal(receipt.role, 'worker');
   assert.equal(receipt.to, 'codex/fixture/high/fast');
+  const call = (...args) => promisify(execFile)(process.execPath, [executable, ...args, '--project', f.cwd], { env: f.env });
+  const pack = await call('gate', 'pack', 'G1');
+  assert.equal(JSON.parse(pack.stdout).warnings[0].code, 'missing-reviewer-conclusion');
+  assert.match(pack.stderr, /Warning: Gate has no reviewer conclusion\./);
+  assert.equal(JSON.parse((await call('notifications', '--complete', 'done', '--phase', 'goal-3')).stdout).phase, 'goal-3');
+  assert.equal(JSON.parse((await call('notifications', '--needs-decision', 'choose', '--kind', 'decision')).stdout).kind, 'decision');
+  for (const args of [['--phase', 'goal-3'], ['--needs-decision', 'choose', '--kind', 'decision', '--audit-escalation', 'major-risk']]) {
+    assert.equal(f.run(2, 'notifications', ...args).error.code, 'invalid-arguments');
+  }
 });
 
 test('cost totals native usage and counts only calls after the passing result', t => {

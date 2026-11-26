@@ -31,12 +31,15 @@ export function nextController(project) {
 const source = ['adapters', 'bin', 'cli', 'daemon', 'evidence', 'handover', 'inbox', 'index', 'lib', 'memory', 'relay', 'runtimes',
   'schema', 'tui', 'watch', 'package.json', 'package-lock.json'];
 
+export const includeReleaseEntry = name => !/^\.(?:env|test-|build-)|^\.[\w-]+-test-/i.test(name) &&
+  !/^(?:SKILL\.md|skills|auth\.json|memories.*|provider-homes)$/i.test(name);
+
 export function releaseDigest(root, { legacy = false } = {}) {
   const digest = createHash('sha256');
   function visit(path) {
     const entries = readdirSync(path, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name, 'en'));
     for (const entry of entries) {
-      if (/^\.(?:env|test-|build-)|^\.[\w-]+-test-/i.test(entry.name) || /^(?:SKILL\.md|skills|auth\.json|memories.*|provider-homes)$/i.test(entry.name)) continue;
+      if (!includeReleaseEntry(entry.name)) continue;
       const child = join(path, entry.name);
       if (entry.isDirectory()) visit(child);
       else file(child);

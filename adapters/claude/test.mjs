@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, readdirSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
-import { fileURLToPath } from 'node:url';
 import { claudeIdleCompaction } from '../../cli/policy.mjs';
 import claude from './index.mjs';
 
@@ -12,7 +12,7 @@ const rows = (text) => text.trim().split('\n').map((line) => JSON.parse(line));
 const jsonl = (...records) => records.map((row) => JSON.stringify(row)).join('\n');
 
 function scratch(t) {
-  const path = mkdtempSync(fileURLToPath(new URL('./.test-', import.meta.url)));
+  const path = mkdtempSync(join(realpathSync(tmpdir()), 'loom-claude-test-'));
   t.after(() => rmSync(path, { recursive: true, force: true }));
   return path;
 }

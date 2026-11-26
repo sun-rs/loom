@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
 import { execFile } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
-import { appendFileSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { appendFileSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
@@ -21,7 +22,7 @@ const screens = {
 };
 
 function fixture(t) {
-  const root = mkdtempSync(join(import.meta.dirname, '.inbox-test-'));
+  const root = mkdtempSync(join(realpathSync(tmpdir()), 'loom-inbox-test-'));
   t.after(() => rmSync(root, { recursive: true, force: true }));
   const eventDir = join(root, '.project/relay/events');
   mkdirSync(eventDir, { recursive: true });

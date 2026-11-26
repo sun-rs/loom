@@ -2,12 +2,12 @@ import assert from 'node:assert/strict';
 import { execFile } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
 import { cpSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
-import { join, resolve } from 'node:path';
+import { basename, join, resolve } from 'node:path';
 import { test } from 'node:test';
 import { setTimeout as delay } from 'node:timers/promises';
 import { promisify } from 'node:util';
 import { platforms } from '../holder/assets.mjs';
-import { releaseDigest } from './release.mjs';
+import { includeReleaseEntry, releaseDigest } from './release.mjs';
 
 const exec = promisify(execFile);
 const root = resolve(import.meta.dirname, '..');
@@ -48,10 +48,13 @@ test('failed post-lock session verification restores the old writer and its nati
   writeFileSync(join(metadata, 'policy.json'), JSON.stringify({ deny: [], preferred: [], delivery: { coalesceMs: 0 } }));
   const fake = new URL('../tasks/PROTO-HARDEN-0/fixtures/native.mjs', import.meta.url);
   writeFileSync(codex, '#!' + process.execPath + '\nimport ' + JSON.stringify(fake.href) + ';\n', { mode: 0o700 });
+  for (const transient of ['.test-aKYwiY', '.evidence-test-scratch', '.build-staging']) {
+    assert.equal(includeReleaseEntry(transient), false);
+  }
   for (const name of ['adapters', 'bin', 'cli', 'daemon', 'evidence', 'handover', 'holder', 'inbox', 'index', 'lib',
     'memory', 'relay', 'runtimes', 'schema', 'tui', 'watch', 'package.json', 'package-lock.json']) {
     cpSync(join(root, name), join(candidate, name), { recursive: true,
-      filter: path => !/\/\.[\w-]+-test-|\/\.build-/.test(path) });
+      filter: path => includeReleaseEntry(basename(path)) });
   }
   symlinkSync(join(root, 'node_modules'), join(candidate, 'node_modules'));
   const main = join(candidate, 'daemon', 'main.mjs');

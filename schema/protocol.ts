@@ -63,7 +63,7 @@ export interface DeliveryRecord {
   readonly from?: { readonly addr: string };
   readonly text: string;
   readonly createdAt: number;
-  readonly phase: 'queued' | 'sending' | 'received' | 'stopping' | 'stopped' | 'refused';
+  readonly phase: 'queued' | 'sending' | 'received' | 'stopping' | 'stopped' | 'refused' | 'corrupted' | 'target-ended';
   readonly mode: SendMode;
   readonly requestedMode: SendMode;
   readonly issue?: string;

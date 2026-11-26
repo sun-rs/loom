@@ -239,11 +239,13 @@ test('gate pack snapshots scoped evidence into one compact file and enqueues one
   const candidate = f.git('rev-parse', 'HEAD');
   let d = f.daemon();
   t.after(() => d.shutdown());
+  f.policy({ roles: { auditor: { maxWakesPerGate: 2 } } });
   const { session: leader } = await f.spawn(d, 'leader', 'L');
   const { session: auditor } = await f.spawn(d, 'auditor', 'A');
   await d.tick();
+  f.sessions.get(leader.addr).finish('Ready for reviewer result');
   const { session: worker } = await f.spawn(d, 'worker', 'W', leader.addr, { wave: 'GATE', prompt: 'HOLD work' });
-  await f.spawn(d, 'reviewer', 'R', leader.addr, { wave: 'GATE', prompt: 'RETURN PASS fixed candidate' });
+  const { session: reviewer } = await f.spawn(d, 'reviewer', 'R', leader.addr, { wave: 'GATE', prompt: 'RETURN PASS fixed candidate' });
   await f.spawn(d, 'reviewer', 'OUTSIDE', leader.addr, { wave: 'OTHER', prompt: 'RETURN unrelated verdict' });
   await d.tick();
   f.sessions.get(worker.addr).check('npm test', 5, 0);
@@ -262,23 +264,98 @@ test('gate pack snapshots scoped evidence into one compact file and enqueues one
   assert.match(contents, /Evidence cards.*\.project\/evidence\/.*Diff --stat.*fixture\.mjs.*Test summary.*1 passed.*Reviewer verdicts.*PASS fixed candidate.*Open questions.*答.*Pointers/s);
   assert.match(contents, /Red facts.*protected-file.*fence\.md.*assertion.*case\.test\.mjs.*skip-only/s);
   assert.doesNotMatch(contents, /unrelated verdict/);
+  assert.equal(packet.warnings, undefined);
+  const leaderReply = f.read('inbox/state.json').messages.find(message => message.reviewerResult === reviewer.addr);
+  assert.equal(leaderReply.target.addr, leader.addr);
+  assert.match(leaderReply.text, /PASS fixed candidate/);
+  assert(f.prompts.some(message => message.addr === leader.addr && deliveryId(message.input) === leaderReply.id));
+  f.sessions.get(leader.addr).finish('Reviewer conclusion recorded');
   await d.shutdown();
   d = f.daemon();
   const retry = await d.handle('gate-pack', { gate: 'GATE', question: 'replacement' }, leader.addr);
   assert.equal(retry.deliveryId, packet.deliveryId);
   assert.equal(readFileSync(packet.path, 'utf8'), contents);
   for (let i = 0; i < 3; i++) await d.tick();
+  const detail = 'PASS investigated edge\n' + '证据'.repeat(500);
   const { session: deep } = await f.spawn(d, 'reviewer', 'DEEP', auditor.addr,
-    { wave: 'GATE', prompt: 'RETURN PASS investigated edge' });
+    { wave: 'GATE', prompt: 'RETURN ' + detail });
+  const { session: ack } = await f.spawn(d, 'reviewer', 'ACK', auditor.addr,
+    { wave: 'GATE', prompt: 'RETURN NOREPLY received' });
   for (let i = 0; i < 3; i++) await d.tick();
-  const reviews = f.read('loomd/notifications.json').filter(event => event.type === 'reviewer-result' && event.addr === deep.addr);
-  assert.equal(reviews.length, 1);
-  assert.match(reviews[0].text, /PASS investigated edge/);
   const auditMessages = f.read('inbox/state.json').messages.filter(message => message.target.addr === auditor.addr && !message.startup);
-  assert.deepEqual(auditMessages.map(message => message.text), [`Read gate packet ${packet.path}`]);
+  assert.equal(auditMessages.length, 2);
+  assert.equal(auditMessages[0].text, `Read gate packet ${packet.path}`);
+  assert.equal(auditMessages[1].reviewerResult, deep.addr);
+  const wire = f.prompts.find(message => deliveryId(message.input) === auditMessages[1].id).input;
+  const [, file, digest] = /Read (\.project\/replies\/([a-f0-9]{64})\.txt) \(SHA-256\)/.exec(wire);
+  const savedReply = readFileSync(join(f.project, file), 'utf8');
+  assert.ok(savedReply.endsWith(detail));
+  assert.equal(payloadDigest(savedReply), digest);
+  assert(f.read('loomd/notifications.json').some(event => event.type === 'reviewer-result' && event.addr === ack.addr && event.logOnly));
   assert.equal(f.prompts.filter(message => message.addr === auditor.addr && message.input.includes(packet.path)).length, 1);
   const related = f.read('inbox/state.json').messages.filter(message => message.replyTo === packet.deliveryId);
   assert.deepEqual(related.map(message => message.target.addr), [leader.addr]);
+  const budget = await d.handle('notifications', { gateComplete: 'GATE', history: true }, leader.addr);
+  assert.equal(budget.notifications.find(event => event.gate === 'GATE' && event.type === 'auditor-rotation-proposed').usage.wakes, 3);
+
+  await f.spawn(d, 'reviewer', 'NO-VERDICT', leader.addr, { wave: 'MISSING', prompt: 'RETURN received' });
+  for (let i = 0; i < 3; i++) await d.tick();
+  const missing = await d.handle('gate-pack', { gate: 'MISSING', candidate }, leader.addr);
+  assert.equal(missing.warnings[0].code, 'missing-reviewer-conclusion');
+  assert.match(readFileSync(missing.path, 'utf8'), /Gate has no reviewer conclusion\./);
+  assert.deepEqual((await d.handle('gate-pack', { gate: 'MISSING' }, leader.addr)).warnings, missing.warnings);
+});
+
+test('Super sees one completion per phase and a plain Auditor decision across daemon restart', async t => {
+  const f = fixture(t);
+  let d = f.daemon();
+  t.after(() => d.shutdown());
+  const { session: superSession } = await f.spawn(d, 'super', 'S');
+  const { session: auditor } = await f.spawn(d, 'auditor', 'A');
+  await assert.rejects(d.handle('notifications', { phase: 'goal-3' }, auditor.addr), { code: 'invalid-arguments' });
+  await assert.rejects(d.handle('notifications', { decision: 'mixed', kind: 'decision', auditEscalation: 'major-risk' }, auditor.addr),
+    { code: 'invalid-arguments' });
+  await d.handle('notifications', { complete: 'finished goal 3', phase: 'goal-3' }, auditor.addr);
+  await d.handle('notifications', { complete: 'finished goal 4', phase: 'goal-4' }, auditor.addr);
+  await d.handle('notifications', { decision: 'choose a default', kind: 'decision' }, auditor.addr);
+  await d.tick();
+  const push = f.read('inbox/state.json').messages.find(message => message.projectEvents?.length === 3);
+  assert.equal(push.target.addr, superSession.addr);
+  assert.match(push.text, /\[goal-3\] finished goal 3.*\[goal-4\] finished goal 4.*choose a default/s);
+  await d.shutdown();
+  d = f.daemon();
+  await d.handle('notifications', { complete: 'duplicate summary', phase: 'goal-3' }, auditor.addr);
+  const { notifications } = await d.handle('notifications', { take: true }, superSession.addr);
+  assert.deepEqual(notifications.map(({ type, phase, kind, reason, text }) => [type, phase, kind, reason, text]), [
+    ['project-completed', 'goal-3', undefined, undefined, 'finished goal 3'],
+    ['project-completed', 'goal-4', undefined, undefined, 'finished goal 4'],
+    ['needs-decision', undefined, 'decision', undefined, 'choose a default'],
+  ]);
+  assert.deepEqual((await d.handle('notifications', {}, superSession.addr)).notifications, []);
+});
+
+test('an uncertain delivery becomes terminal after its target stops and stays settled after restart', async t => {
+  const f = fixture(t);
+  let d = f.daemon();
+  t.after(() => d.shutdown());
+  const { session: leader } = await f.spawn(d, 'leader', 'L');
+  const id = randomUUID();
+  const attemptAt = Date.now();
+  publish(f.project, { id, text: 'pending proof', phase: 'sending', issue: 'uncertain', attemptAt, createdAt: attemptAt,
+    requestedMode: 'queue', mode: 'queue', target: { addr: leader.addr, backend: leader.backend, provider: leader.cli, createdAt: leader.startedAt } });
+  await d.tick();
+  assert((await d.handle('ls', {})).pendingDeliveries.some(message => message.id === id && message.deliveryStatus === 'uncertain'));
+  await d.handle('stop', { target: leader.addr });
+  assert(!(await d.handle('ls', {})).pendingDeliveries.some(message => message.id === id));
+  await d.shutdown();
+  d = f.daemon();
+  await d.tick();
+  const state = await d.handle('state', { target: leader.addr });
+  const delivery = state.deliveries.find(message => message.id === id);
+  assert.equal(delivery.phase, 'target-ended');
+  assert.equal(delivery.deliveryStatus, 'target-ended');
+  assert.equal(delivery.issue, 'target-ended');
+  assert(!(await d.handle('ls', {})).pendingDeliveries.some(message => message.id === id));
 });
 
 test('Auditor dispatch admits only user messages and one Leader gate or red escalation per gate', async t => {

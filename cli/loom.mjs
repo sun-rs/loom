@@ -45,7 +45,8 @@ const help = {
   doctor: ['loom doctor --project DIR [--fix]', 'Reports project-owned residue. --fix cleans only resources with verified ownership.'],
   notifications: [
     'loom notifications [--project DIR] [--peek|--take|--history]',
-    'loom notifications [--project DIR] [--needs-decision TEXT [--audit-escalation REASON] | --complete TEXT]',
+    'loom notifications [--project DIR] --needs-decision TEXT [--kind decision | --audit-escalation REASON]',
+    'loom notifications [--project DIR] --complete TEXT [--phase ID]',
     'loom notifications [--project DIR] --gate-complete ID',
     'Previews pending events by default. --take acknowledges them. --history includes acknowledged events.',
   ],
@@ -61,11 +62,14 @@ const commands = {
   switch: { ...projectArgs, ...strings('to') },
   doctor: { ...projectArgs, ...flags('fix') },
   notifications: { ...projectArgs, ...flags('peek', 'take', 'history'),
-    ...strings('needs-decision', 'audit-escalation', 'complete', 'gate-complete') },
+    ...strings('needs-decision', 'kind', 'audit-escalation', 'complete', 'phase', 'gate-complete') },
 };
 
-const readPendingWork = (project, addr) => pendingWork(
-  JSON.parse(readText(join(project, '.project', 'inbox', 'state.json'), '{"messages":[]}')).messages, addr);
+function readPendingWork(project, addr) {
+  const { messages } = JSON.parse(readText(join(project, '.project', 'inbox', 'state.json'), '{"messages":[]}'));
+  const ended = new Set(messages.length ? projectSessions(project).filter(row => row.endedAt != null).map(row => row.addr) : []);
+  return pendingWork(messages, addr, undefined, target => ended.has(target));
+}
 
 function invalid(message) {
   throw new CommandError('invalid-arguments', message);
@@ -251,6 +255,7 @@ export async function main(args) {
         if (!daemonAbsent(error)) throw error;
         throw new CommandError('not-ready', 'loomd is not running for this project');
       }
+      if (!escalate) for (const warning of result.warnings ?? []) console.error(`Warning: ${warning.message}`);
     } else if (command === 'switch') {
       const [role] = positionals;
       if (positionals.length !== 1 || !['leader', 'auditor', 'worker'].includes(role) || !values.to?.trim()) invalid(help.switch[0]);
@@ -303,10 +308,12 @@ export async function main(args) {
         const gateComplete = values['gate-complete'];
         const writes = [values.complete, decision, gateComplete].filter(value => value !== undefined).length;
         if ([values.peek, values.take, values.history].filter(Boolean).length > 1 ||
-            writes > 1 || auditEscalation !== undefined && decision === undefined ||
+            writes > 1 || auditEscalation !== undefined && decision === undefined || values.kind !== undefined &&
+            (decision === undefined || values.kind !== 'decision' || auditEscalation !== undefined) ||
+            values.phase !== undefined && values.complete === undefined ||
             (values.take || values.history) && writes) invalid(help.notifications[0]);
         try { result = await request(directory, command, { take: values.take, history: values.history,
-          decision, auditEscalation, gateComplete, complete: values.complete }); }
+          decision, kind: values.kind, auditEscalation, gateComplete, complete: values.complete, phase: values.phase }); }
         catch (error) {
           if (!daemonAbsent(error)) throw error;
           if (values.take || writes) {
@@ -315,14 +322,15 @@ export async function main(args) {
           result = { ok: true, notifications: readNotifications(directory).filter(event => values.history || event.takenAt == null) };
         }
       } else {
-        let work = readPendingWork(directory);
+        let work;
         if (managedProject(directory)) {
           try {
             const { pendingDeliveries, pendingContinuations } = await request(directory, 'ls');
             work = { pendingDeliveries, pendingContinuations };
           } catch (error) { if (!daemonAbsent(error)) throw error; }
         }
-        result = { ok: true, ...work, sessions: projectSessions(directory, values.project !== undefined || Boolean(process.env.LOOM_PROJECT)) };
+        result = { ok: true, ...(work ?? readPendingWork(directory)),
+          sessions: projectSessions(directory, values.project !== undefined || Boolean(process.env.LOOM_PROJECT)) };
       }
     }
     emit({ ...result, ...projectReceipt(directory) });

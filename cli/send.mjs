@@ -3,7 +3,7 @@ import { setTimeout as sleep } from 'node:timers/promises';
 import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
 import { receipt } from '../inbox/engine.mjs';
-import { messageIdPattern } from '../inbox/message.mjs';
+import { deliveryFailed, messageIdPattern } from '../inbox/message.mjs';
 import { lookup } from '../inbox/store.mjs';
 import { addressPattern } from '../inbox/tui.mjs';
 import { daemonAbsent, request } from '../daemon/rpc.mjs';
@@ -19,13 +19,13 @@ async function waitForReply(project, response) {
   let current;
   do {
     current = lookup(project, response.id);
-    if (current?.completion?.body || current?.completion?.noReply || ['refused', 'corrupted'].includes(current?.phase)) break;
+    if (current?.completion?.body || current?.completion?.noReply || deliveryFailed(current)) break;
     await sleep(250);
   } while (Date.now() < deadline);
   const result = { ...response, ...(current && { ...receipt(current), phase: current.phase }) };
   if (current?.completion?.body) return { ...result, reply: current.completion.body };
   const code = current?.phase === 'corrupted' ? 'corrupted' :
-    current?.phase === 'refused' ? 'not-ready' : current?.completion ? 'unavailable' : 'uncertain';
+    deliveryFailed(current) ? 'not-ready' : current?.completion ? 'unavailable' : 'uncertain';
   return { ...result, ok: false, error: { code, message: current?.issue ??
     (current?.completion?.unconfirmed ? 'Native final reply is unconfirmed' :
       current?.completion ? 'No native final reply' : 'Still waiting for a reply') } };

@@ -82,7 +82,7 @@ export async function bindOarTranscript(session, row) {
   return checkedTranscript(await adapters[row.cli]?.transcript.locate({ cwd: row.cwd, sessionId: session.id }), row);
 }
 
-export function trackOar(project, row, session, onError, incarnation) {
+export function trackOar(project, row, session, onError, incarnation, onExit) {
   const path = eventPath(project, row.addr);
   const rows = jsonRows(prepareJournal(path));
   let number = rows.reduce((max, event) => Math.max(max, event.turn ?? 0), 0);
@@ -118,6 +118,7 @@ export function trackOar(project, row, session, onError, incarnation) {
     }
     if (event.kind === 'exited' || event.kind === 'released' || event.kind.startsWith('compaction_')) {
       append(event, event.kind, event.kind.startsWith('compaction_') ? { outcome: event.outcome } : { suspending });
+      if (event.kind === 'exited' || event.kind === 'released') onExit?.();
     }
     if (event.kind === 'input_dropped' && event.inputId) {
       append(event, 'input-dropped', { inputId: event.inputId });

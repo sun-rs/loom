@@ -403,15 +403,15 @@ export function ownedSessions(project, index, report, {
     }
     if (row.role === 'leader' || row.role === 'auditor') {
       const guidance = row.role === 'leader' ?
-        'Coordinate work. Workers reproduce issues and run full test suites in their own sandboxes. Review their receipts and signals. Use loom gate pack for the Auditor, or loom escalate for confirmed red facts, sharing one wake per gate.' :
-        'For gate review, read only the gate packet and reviewer conclusions. Delegate deep checks to one ephemeral read-only reviewer. Wake sources are user or Super messages, a gate packet or red escalation from Leader, and succession supervision.';
+        'Coordinate work. Workers reproduce issues and run full test suites in their own sandboxes. Review their receipts and signals. Spawn an independent Reviewer on the fixed candidate with --wave set to the gate ID. Receive the conclusion before running loom gate pack. Use loom escalate for confirmed red facts, sharing one wake per gate with the packet.' :
+        'For gate review, read only the gate packet and reviewer conclusions. The Leader commissions the independent review before packing. Delegate deep checks to one ephemeral read-only reviewer. Its conclusion may wake you once and counts against your gate wake budget. Other wake sources are user or Super messages, a gate packet or red escalation from Leader, and succession supervision. Use loom notifications --needs-decision TEXT --kind decision for ordinary Super decisions.';
       prompt = `## Loom role guidance\n${guidance} Assign long-running work to a Worker or Reviewer. Do not wait on background Bash. Begin conclusions with DONE, BLOCKED, FAILED, PASS, REJECT or APPROVE. Use NOREPLY for acknowledgements.\n\n## Startup request\n${prompt}`;
       try { prompt = await projectMemoryPrompt(project) + prompt; }
       catch (error) { report(`Project memory unavailable: ${error.message}`); }
     }
     if (row.role === 'worker') prompt += `\n\n${cardConventions(row)}`;
     if (row.role === 'reviewer') prompt = [
-      'You are a one-turn Loom reviewer. Inspect read-only and answer the one question below. Do not edit files, change repository state, run broad test suites or delegate. Start your conclusion with PASS, REJECT or BLOCKED and cite the evidence.',
+      'You are a one-turn Loom reviewer. Inspect read-only and answer the one question below. Do not edit files, change repository state, run broad test suites or delegate. Send only your conclusion to the spawning role. Start it with PASS, REJECT or BLOCKED and cite the evidence.',
       prompt,
     ].join('\n\n');
     const job = { row, firstId: randomUUID(), prompt, gate, requested, deny, release: releaseId(),

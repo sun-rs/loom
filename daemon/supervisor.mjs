@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import { CommandError } from '../cli/sessions.mjs';
 import { projectIndex } from '../cli/project.mjs';
 import { inbox, pendingWork, receipt } from '../inbox/engine.mjs';
-import { conclusoryReply, isBlockedReply, messageIdPattern } from '../inbox/message.mjs';
+import { conclusoryReply, deliveryFailed, isBlockedReply, messageIdPattern } from '../inbox/message.mjs';
 import { relay } from '../relay/project.mjs';
 import { withClaudeTranscriptStops } from '../relay/sources.mjs';
 import { createWatcher } from '../watch/index.mjs';
@@ -23,6 +23,7 @@ function batchDeliveryId(batch, dest) {
   return [bytes.slice(0, 8), bytes.slice(8, 12), bytes.slice(12, 16), bytes.slice(16, 20), bytes.slice(20)].join('-');
 }
 
+const reviewerDeliveryId = job => batchDeliveryId(job.firstId, 'reviewer');
 const continuationGroup = message => message.batchId ?? message.implicitBatch;
 const packetDeliveryId = (project, gate) => batchDeliveryId('gate-packet:' + project, gate);
 const auditEscalations = new Set(['blocking-disagreement', 'three-failed-rounds', 'major-risk', 'overreach']);
@@ -63,6 +64,7 @@ export function createSupervisor(project, {
   });
   const budget = roleBudget(project, { now, sessions, notifications, batchDeliveryId, report });
   const parentFor = addr => sessions.routeParent(addr)?.addr ?? addr;
+  const targetEnded = addr => sessions.rowFor(addr)?.endedAt != null;
   const liveRole = (name, role) => sessions.rows().findLast(row =>
     row.project === name && row.role === role && row.endedAt === null && sessions.jobs.has(row.addr));
   let health = new Map();
@@ -82,8 +84,8 @@ export function createSupervisor(project, {
       const superSession = rows.findLast(row => row.role === 'super' &&
         row.project === name && row.endedAt === null && sessions.jobs.has(row.addr));
       if (superSession && !batch[0].externalOnly) {
-        const details = [...new Set(batch.map(event => event.text ??
-          `${event.type} ${event.addr ?? ''} ${event.reason ?? ''}`.trim()))];
+        const details = [...new Set(batch.map(event => event.phase !== undefined ? `[${event.phase}] ${event.text}` :
+          event.text ?? `${event.type} ${event.addr ?? ''} ${event.reason ?? ''}`.trim()))];
         const heading = `Loom 项目通知：${[...new Set(batch.map(event => event.type))].join(', ')}`;
         saved(sessions.targetBinding(superSession), [heading, ...details].join('\n\n'),
           { id, projectEvents: batch.map(event => event.id),
@@ -114,8 +116,7 @@ export function createSupervisor(project, {
   const workers = () => sessions.rows().filter(row => row.role === 'worker' && sessions.jobs.has(row.addr));
   const superseded = (worker, rows) => rows.some(row => row.project === worker.project && row.task === worker.task &&
     row.startedAt > worker.startedAt);
-  const failedDelivery = message => ['refused', 'corrupted'].includes(message?.phase);
-  const workPending = message => !failedDelivery(message) && !message?.completion?.body && !message?.completion?.noReply;
+  const workPending = message => !deliveryFailed(message) && !message?.completion?.body && !message?.completion?.noReply;
   const messagesForWorker = (row, job) => deliveries(row.addr).filter(message => message.id !== job.firstId && workPending(message));
   function occupied(row) {
     const job = sessions.jobs.get(row.addr);
@@ -157,7 +158,7 @@ export function createSupervisor(project, {
         const job = sessions.jobs.get(row.addr);
         const message = byId.get(job.firstId);
         const completion = message?.completion;
-        const settled = completion?.body || completion?.noReply || row.endedAt !== null || failedDelivery(message);
+        const settled = completion?.body || completion?.noReply || row.endedAt !== null || deliveryFailed(message);
         const unconfirmed = completion?.unconfirmed;
         const reply = settled ? {
           key: job.firstId, at: completion?.at ?? row.endedAt ?? now(),
@@ -318,7 +319,7 @@ export function createSupervisor(project, {
     const rows = new Map(sessions.rows().map(row => [row.addr, row]));
     const at = now();
     const settledAt = message => message.completion?.body || message.completion?.noReply ? message.completion.at :
-      rows.get(message.target.addr)?.endedAt ?? (failedDelivery(message) ? message.corruption?.at ?? message.refusedAt ?? at : Infinity);
+      rows.get(message.target.addr)?.endedAt ?? (deliveryFailed(message) ? message.corruption?.at ?? message.refusedAt ?? at : Infinity);
     for (const [id, group] of groups) {
       const first = group[0];
       const parent = sessions.routeParent(first.from.addr);
@@ -419,8 +420,11 @@ export function createSupervisor(project, {
     }
     if (row?.role !== 'auditor') return;
     const job = sessions.jobs.get(message.target.addr);
+    const reviewer = message.reviewerResult && sessions.jobs.get(message.reviewerResult);
+    const deepReview = message.reviewerConclusion === true && reviewer?.row.role === 'reviewer' && reviewerDeliveryId(reviewer) === message.id &&
+      sessions.routeParent(reviewer.row.parent)?.addr === row.addr;
     if (!auditorWakeSource(message, { startupId: job?.firstId,
-      handoverId: job?.handoverReportId, senderRole: sessions.rowFor(message.from?.addr)?.role })) return auditorWakeFiltered;
+      handoverId: job?.handoverReportId, senderRole: sessions.rowFor(message.from?.addr)?.role, deepReview })) return auditorWakeFiltered;
   }
 
   async function closeReviews() {
@@ -431,13 +435,13 @@ export function createSupervisor(project, {
       const first = mail.messages.find(message => message.id === job.firstId);
       const result = first?.completion;
       const expired = now() >= job.reviewDeadline;
-      if (!expired && !result && row.endedAt == null && !failedDelivery(first)) continue;
-      const id = batchDeliveryId(job.firstId, 'reviewer');
+      if (!expired && !result && row.endedAt == null && !deliveryFailed(first)) continue;
+      const id = reviewerDeliveryId(job);
       const owner = row.parent && sessions.routeParent(row.parent);
       const audit = owner?.role === 'auditor';
       const gate = audit && row.wave && mail.messages.some(message =>
         message.id === packetDeliveryId(row.project, row.wave) && message.gatePacket) ? row.wave : undefined;
-      if (mail.messages.some(message => message.id === id) ||
+      if (!audit && mail.messages.some(message => message.id === id) ||
           notifications.list(row.project, false, true).some(event => event.id === id)) continue;
       if (row.endedAt == null) {
         try { await sessions.stop(row); }
@@ -445,17 +449,20 @@ export function createSupervisor(project, {
       }
       const onTime = result && result.at <= job.reviewDeadline;
       const body = onTime && (result.body ?? result.unconfirmedBody);
+      const conclusion = body && conclusoryReply(body);
       const detail = onTime && result.body ? result.body : onTime && result.unconfirmedBody ?
         `UNCONFIRMED\n${result.unconfirmedBody}` :
         expired && (!onTime || row.endedAt >= job.reviewDeadline) ? 'TIMED OUT' :
           `FAILED ${result?.outcome?.failure ?? first?.issue ?? 'no native reply'}`;
       const text = `Loom reviewer ${row.addr}${row.task ? ' · ' + row.task : ''}\n\n${detail}`;
-      if (audit || body && !conclusoryReply(body)) {
+      const routed = owner?.endedAt === null && (conclusion || !audit && !body);
+      if (routed) {
+        saved(sessions.targetBinding(owner), text, { id, reviewerResult: row.addr, ...(audit && { reviewerConclusion: true }) });
+      }
+      if (audit || !routed && row.parent) {
         notifications.add({ id, gate, type: 'reviewer-result', project: row.project, addr: row.addr,
           at: result?.at ?? row.endedAt ?? job.reviewDeadline, text, logOnly: true });
-      } else if (row.parent) {
-        if (owner?.endedAt === null) saved(sessions.targetBinding(owner), text, { id, reviewerResult: row.addr });
-      } else {
+      } else if (!row.parent) {
         notifications.add({ id, type: 'reviewer-result', project: row.project, addr: row.addr,
           batch: id, at: result?.at ?? row.endedAt ?? job.reviewDeadline, text, externalOnly: true });
       }
@@ -530,7 +537,7 @@ export function createSupervisor(project, {
         const row = sessions.rowFor(message.target.addr);
         if (row?.role !== 'leader' || message.orgEvents || message.stuckOf) return;
         const delivered = new Set(mail.messages.filter(item =>
-          !['refused', 'corrupted'].includes(item.phase) && sessions.rowFor(item.target.addr)?.role === 'leader')
+          !deliveryFailed(item) && sessions.rowFor(item.target.addr)?.role === 'leader')
           .flatMap(item => item.orgEvents ?? []));
         const batch = leaderSignals(row.project).filter(notice => !delivered.has(notice.id));
         if (batch.length) {
@@ -545,7 +552,7 @@ export function createSupervisor(project, {
         if (job?.row.role === 'worker') return seats.has(target.addr);
         if (!job?.reviewDeadline) return true;
         const first = mail.messages.find(message => message.id === job.firstId);
-        return now() < job.reviewDeadline && !first?.completion && !failedDelivery(first);
+        return now() < job.reviewDeadline && !first?.completion && !deliveryFailed(first);
       },
     });
     await closeReviews();
@@ -619,11 +626,13 @@ export function createSupervisor(project, {
             type: 'red-escalation', reason: args.reason, text: args.evidence, logOnly: true };
           if (existing) {
             if (red) notifications.add(red);
-            return { gate, path: existing.gatePacket, ...(red && { wakeQueued: false }), ...receiptFor(existing) };
+            return { gate, path: existing.gatePacket, ...(!escalation && existing.gateWarnings && { warnings: existing.gateWarnings }),
+              ...(red && { wakeQueued: false }), ...receiptFor(existing) };
           }
           const auditor = liveRole(name, 'auditor');
           if (!auditor) throw new CommandError('not-ready', 'No live managed Auditor in this project');
           const members = rows.filter(row => row.project === name && ['worker', 'reviewer'].includes(row.role) &&
+            (row.role === 'worker' || sessions.rowFor(row.parent)?.role === 'leader') &&
             (row.wave === gate || sessions.jobs.get(row.addr)?.barrier === gate));
           const decisions = notifications.list(name).filter(event => event.type === 'needs-decision' &&
             (event.gate === gate || members.some(row => row.addr === event.addr)));
@@ -632,24 +641,28 @@ export function createSupervisor(project, {
             .findLast(event => ['gate-completed', 'auditor-rotation-proposed'].includes(event.type))?.at ?? 0;
           const signals = leaderSignals(name).filter(notice => workerAddrs.has(notice.addr) ||
             notice.type === 'auditor-budget-exceeded' && notice.at >= boundary);
-          const path = saveGatePacket(project, { ...args, id }, { members, jobs: sessions.jobs, messages: mail.messages,
+          const { path, warnings } = saveGatePacket(project, { ...args, id }, { members, jobs: sessions.jobs, messages: mail.messages,
             decisions, signalSummary: noticeLines(signals), signalCount: signals.length, red });
           const delivery = saved(sessions.targetBinding(auditor), red ?
             `Loom red escalation (${red.reason}). Read gate packet ${path}` : `Read gate packet ${path}`, {
-            id, gatePacket: path, ...(red && { redEscalation: red.reason }),
+            id, gatePacket: path, ...(warnings.length && { gateWarnings: warnings }), ...(red && { redEscalation: red.reason }),
             ...(actor && { from: sessions.targetBinding(actor), expectReply: true }),
           });
           if (red) notifications.add(red);
-          return { gate, path, ...(red && { wakeQueued: true }), ...receiptFor(delivery) };
+          return { gate, path, ...(!escalation && warnings.length && { warnings }), ...(red && { wakeQueued: true }), ...receiptFor(delivery) };
         }
         if (args.take && actor && actor.role !== 'super') {
           throw new CommandError('invalid-arguments', 'Only the Super takes project notifications');
         }
-        if (args.complete !== undefined) {
-          if (!name || !names.has(name) && name !== project || !validInput(args.complete)) {
-            throw new CommandError('invalid-arguments', 'Project name and completion summary required');
+        if (args.complete !== undefined || args.phase !== undefined) {
+          if (!name || !names.has(name) && name !== project || !validInput(args.complete) ||
+              args.phase !== undefined && (typeof args.phase !== 'string' || !gateId.test(args.phase))) {
+            throw new CommandError('invalid-arguments', 'Completion requires a project, summary and a valid phase ID if supplied');
           }
-          notifications.add({ id: `completed:${name}`, project: name, at: now(), type: 'project-completed', text: args.complete });
+          const { phase } = args;
+          const id = phase === undefined ? `completed:${name}` : 'completed-phase:' + batchDeliveryId(name, phase);
+          notifications.add({ id, project: name, at: now(), type: 'project-completed',
+            ...(phase !== undefined && { phase }), text: args.complete });
         }
         if (args.gateComplete !== undefined) {
           if (!gateWriter || typeof args.gateComplete !== 'string' || !gateId.test(args.gateComplete)) {
@@ -667,18 +680,20 @@ export function createSupervisor(project, {
                 `门禁 ${gate} 已完成。` });
           }
         }
-        if (args.decision !== undefined || args.auditEscalation !== undefined) {
-          if (!name || !validInput(args.decision) || actor?.role === 'worker' ||
-              (actor?.role === 'auditor' || args.auditEscalation !== undefined) &&
+        if (args.decision !== undefined || args.auditEscalation !== undefined || args.kind !== undefined) {
+          const plain = args.kind === 'decision';
+          if (!name || !names.has(name) && name !== project || !validInput(args.decision) || actor?.role === 'worker' ||
+              (args.kind !== undefined && (!plain || args.auditEscalation !== undefined)) ||
+              (!plain && actor?.role === 'auditor' || args.auditEscalation !== undefined) &&
               (actor?.role !== 'auditor' || !auditEscalations.has(args.auditEscalation))) {
-            throw new CommandError('invalid-arguments', 'A decision summary and an allowed Auditor escalation reason (for Auditor) are required');
+            throw new CommandError('invalid-arguments', 'A decision summary is required. Auditor must use --kind decision or an allowed --audit-escalation reason');
           }
           notifications.add({ id: randomUUID(), project: name, at: now(), type: 'needs-decision', text: args.decision,
-            addr: actor?.addr, reason: args.auditEscalation });
+            ...(plain && { kind: 'decision' }), addr: actor?.addr, reason: args.auditEscalation });
         }
         return { notifications: notifications.list(name, args.take === true, args.history === true) };
       }
-      if (command === 'ls') return pendingWork(mail.messages, undefined, parentFor);
+      if (command === 'ls') return pendingWork(mail.messages, undefined, parentFor, targetEnded);
       if (command === 'status') return { sessions: await Promise.all(sessions.rows().filter(row => row.endedAt === null)
         .map(async row => {
           const incident = health.get(row.addr);
@@ -713,7 +728,7 @@ export function createSupervisor(project, {
           ...(snapshot?.runtimeStatus && { runtimeStatus: snapshot.runtimeStatus }),
           deliveries: deliveries(row.addr).map(receiptFor), notifications: notifications.list(row.project),
           rotations: index.rotations().filter(item => item.project === row.project),
-          ...pendingWork(mail.messages, row.addr, parentFor) };
+          ...pendingWork(mail.messages, row.addr, parentFor, targetEnded) };
       }
       if (command === 'stop') {
         const closed = row.endedAt !== null ? row : await sessions.stop(row);

@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, readdirSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { test } from 'node:test';
 import { relay } from '../relay/project.mjs';
@@ -31,7 +32,7 @@ function makeCodexTurn(id, { exitCode, output, command = 'node --test', finalRep
 }
 
 function directory(t) {
-  const project = mkdtempSync(join(import.meta.dirname, '.evidence-test-'));
+  const project = mkdtempSync(join(realpathSync(tmpdir()), 'loom-evidence-test-'));
   t.after(() => rmSync(project, { recursive: true, force: true }));
   return project;
 }

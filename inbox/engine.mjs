@@ -1,20 +1,23 @@
 import { randomUUID } from 'node:crypto';
 import { openStore } from './store.mjs';
 import { refusals } from './tui.mjs';
-import { checksDeliveryIntegrity, combinedDeliveryText, conclusoryReply, payloadDigest } from './message.mjs';
+import { checksDeliveryIntegrity, combinedDeliveryText, conclusoryReply, deliveryFailed, payloadDigest } from './message.mjs';
 import { replyForDelivery } from './reply-file.mjs';
 
 const isDone = message => message.phase === 'received';
 const isUrgent = message => message.superPriority || message.mode === 'interrupt';
 const awaiting = message => ['sending', 'stopping'].includes(message.phase);
-const rejected = message => ['refused', 'corrupted'].includes(message.phase);
+const pendingReply = message => !deliveryFailed(message) && !message.completion?.body && !message.completion?.noReply;
+const mayReroute = message => (message.phase === 'queued' || message.phase === 'refused' && message.issue === 'target-exited') &&
+  message.attemptAt == null && message.stopAttemptAt == null && message.mode === 'queue' &&
+  message.requestedMode === 'queue' && !message.startup && !message.watchResume;
 const providerFailures = new Set(['request-timeout', 'runtime-exited', 'retry-exhausted', 'provider-overloaded']);
 
 export function receipt(message) {
   const { id, mode, requestedMode, createdAt, received, phase } = message;
   const issue = message.issue ?? (phase === 'sending' ? 'awaiting-native-confirmation' : undefined);
   const status = phase === 'corrupted' ? 'corrupted' : received ? { queue: 'delivered', steer: 'steered', interrupt: 'interrupted' }[mode] : 'queued';
-  const deliveryStatus = phase === 'corrupted' ? 'corrupted' : message.completion?.body ? 'answered' : received ? 'delivered' :
+  const deliveryStatus = ['corrupted', 'target-ended'].includes(phase) ? phase : message.completion?.body ? 'answered' : received ? 'delivered' :
     phase === 'refused' ? 'refused' : message.issue?.startsWith('uncertain') ? 'uncertain' : 'accepted';
   return {
     id, status, deliveryStatus, at: received?.at ?? createdAt, requestedMode, mode,
@@ -27,9 +30,9 @@ export function receipt(message) {
   };
 }
 
-export function pendingWork(messages, addr, parentFor = value => value) {
-  const pending = messages.filter(message => !rejected(message) &&
-    !message.completion?.body && !message.completion?.noReply);
+export function pendingWork(messages, addr, parentFor = value => value, targetEnded = () => false) {
+  const pending = messages.filter(message => pendingReply(message) && (!targetEnded(message.target.addr) ||
+    mayReroute(message) && !targetEnded(parentFor(message.target.addr))));
   const relevant = message => !addr || parentFor(message.target.addr) === addr || parentFor(message.from?.addr) === addr;
   const groups = Map.groupBy(messages.filter(message => message.batchId || message.implicitBatch),
     message => message.batchId ?? message.implicitBatch);
@@ -107,7 +110,7 @@ export function inbox(project, transport, report = console.error, { replyLimit, 
   function reconcile(message, observation) {
     const complete = Boolean(message.completion?.body || message.completion?.noReply);
     const corrective = legacyCorruption(message);
-    if (!(message.attemptAt || message.phase === 'stopping' && message.stopAttemptAt) ||
+    if (message.phase === 'target-ended' || !(message.attemptAt || message.phase === 'stopping' && message.stopAttemptAt) ||
         (message.phase === 'corrupted' || complete) && !needsIntegrity(message) ||
         message.phase === 'refused' && providerFailures.has(message.issue)) return;
     const compatibleDigests = legacyAgyDigests(message);
@@ -115,6 +118,7 @@ export function inbox(project, transport, report = console.error, { replyLimit, 
     if (complete) integrityScanned.add(message.id);
     if (!native) return;
     if (native.failed) {
+      if (native.failed === 'runtime-exited' && observation.state === 'finished') return;
       failRequest(message, native.failed, native.at);
       return;
     }
@@ -437,12 +441,24 @@ export function inbox(project, transport, report = console.error, { replyLimit, 
     save();
   }
 
-  async function observeTarget(all) {
+  async function observeTarget(all, at) {
     const observation = await inspect(all[0].target);
     const group = all.filter(message => !message.combinedInto);
     if (observation) {
       for (const message of group) reconcile(message, observation);
-      for (const message of group) await recoverAttempt(message, observation);
+      if (observation.state === 'finished') {
+        const pending = group.filter(pendingReply);
+        for (const message of pending) {
+          message.phase = 'target-ended';
+          message.issue = 'target-ended';
+          message.refusedAt = observation.row?.endedAt ?? at;
+          delete message.providerPendingUntil;
+          delete message.waitingForWritable;
+        }
+        if (pending.length) save();
+      } else {
+        for (const message of group) await recoverAttempt(message, observation);
+      }
     }
     for (const message of group) {
       if (awaiting(message) && message.providerPendingUntil <= Date.now()) failRequest(message, 'request-timeout');
@@ -453,26 +469,8 @@ export function inbox(project, transport, report = console.error, { replyLimit, 
 
   async function processTarget(all, observation, { canDispatch, known, at, coalesceMs, decorate } = {}) {
     const group = all.filter(message => !message.combinedInto);
-    if (!group.length || !observation) return;
+    if (!group.length || !observation || observation.state === 'finished') return;
     const { target } = group[0];
-    if (observation.state === 'finished') {
-      let changed = false;
-      for (const message of group) {
-        if (['queued', 'stopped'].includes(message.phase)) {
-          message.phase = 'refused';
-          message.refusedAt = Date.now();
-          message.issue = 'target-exited';
-          changed = true;
-        } else if (['sending', 'stopping'].includes(message.phase) && !message.issue?.endsWith('target-exited') &&
-            (!message.issue?.startsWith('uncertain') || observation.tui?.transport === 'loom-pty')) {
-          message.issue = message.phase === 'sending' ? 'uncertain-target-exited' : 'uncertain-stop-target-exited';
-          changed = true;
-        }
-      }
-      if (changed) save();
-      settleCombined(all);
-      return;
-    }
     const queued = group.filter(message => message.phase === 'queued');
     const streams = queued.filter(message => message.streamAt != null).sort((a, b) => a.streamAt - b.streamAt);
     const receiving = group.some(message => message.phase === 'sending' || isDone(message) && !message.completion);
@@ -542,9 +540,7 @@ export function inbox(project, transport, report = console.error, { replyLimit, 
     store.ingest();
     let changed = false;
     for (const message of messages) {
-      const pending = message.phase === 'queued' || message.phase === 'refused' && message.issue === 'target-exited';
-      if (!pending || message.attemptAt != null || message.stopAttemptAt != null || message.mode !== 'queue' ||
-          message.requestedMode !== 'queue' || message.startup || message.watchResume) continue;
+      if (!mayReroute(message)) continue;
       const target = routeTarget?.(message);
       if (!target || target.addr === message.target.addr) continue;
       message.originalTarget ??= message.target.addr;
@@ -569,21 +565,19 @@ export function inbox(project, transport, report = console.error, { replyLimit, 
     }
     if (messageIssue) filterMessages();
     const groups = () => Map.groupBy(messages, ({ target }) => JSON.stringify([target.addr, target.createdAt, target.pid]));
-    const active = [...groups()].filter(([, group]) =>
-      group.some(message => needsIntegrity(message) || !rejected(message) &&
-        (!isDone(message) || !(message.completion?.body || message.completion?.noReply))));
+    const active = [...groups()].filter(([, group]) => group.some(message => needsIntegrity(message) || pendingReply(message)));
     if (beforeDispatch) {
       const known = new Set(messages.map(message => message.id));
-      const observed = new Map(await Promise.all(active.map(async ([key, group]) => [key, await observeTarget(group)])));
+      const observed = new Map(await Promise.all(active.map(async ([key, group]) => [key, await observeTarget(group, now())])));
       await beforeDispatch();
       if (messageIssue) filterMessages();
       const at = now();
       await Promise.all([...groups()].filter(([key, group]) => observed.has(key) ||
         group.some(message => !known.has(message.id) && message.streamAt != null)).map(async ([key, group]) =>
-        processTarget(group, observed.has(key) ? observed.get(key) : await observeTarget(group),
+        processTarget(group, observed.has(key) ? observed.get(key) : await observeTarget(group, at),
           { canDispatch, known, at, coalesceMs, decorate })));
     } else {
-      await Promise.all(active.map(async ([, group]) => processTarget(group, await observeTarget(group),
+      await Promise.all(active.map(async ([, group]) => processTarget(group, await observeTarget(group, now()),
         { canDispatch, at: now(), coalesceMs, decorate })));
     }
   }

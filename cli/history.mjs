@@ -1,5 +1,5 @@
 import { compareClaims } from '../evidence/claims.mjs';
-import { deliveryId } from '../inbox/message.mjs';
+import { deliveryFailed, deliveryId } from '../inbox/message.mjs';
 import { agyTurnPrompt } from '../adapters/agy/lib/parse-agy.mjs';
 import { readArtifacts, sessionProject } from './artifacts.mjs';
 import { changeReader } from './changes.mjs';
@@ -315,7 +315,7 @@ export async function waveHistory(sessions, reader, project, wave, { evidence, s
       const ended = done?.at ?? at(entry?.turn.endedAt) ?? session.endedAt;
       const outcome = progress?.outcome?.toLowerCase() ?? (done?.unconfirmed ? 'unconfirmed' :
         done?.body ? (declared({ reply: done.body }) ?? 'done') :
-          done?.noReply || first?.phase === 'refused' ? 'failed' :
+          done?.noReply || deliveryFailed(first) ? 'failed' :
             declared(entry?.turn ?? {}) ?? (entry?.turn.status === 'completed' ? 'done' :
               session.endedAt !== null ? 'failed' : saved?.closed ? 'unfinished' : 'pending'));
       return { addr: session.addr, task: session.task, outcome, elapsedMs: duration(session.startedAt, ended),
@@ -349,7 +349,7 @@ export async function waveHistory(sessions, reader, project, wave, { evidence, s
     const destinations = messages.filter(message => message.waveKey === key || legacyWave(message))
       .map(message => ({ batch: message.waveBatch, kind: message.waveKind ?? null, to: message.target.addr,
         deliveryId: message.id, phase: message.phase, status: message.received ? 'delivered' :
-          message.issue?.startsWith('uncertain') ? 'uncertain' : message.phase === 'refused' ? 'failed' : 'pending' }));
+          deliveryFailed(message) ? 'failed' : message.issue?.startsWith('uncertain') ? 'uncertain' : 'pending' }));
     for (const batch of relay.outbox ?? []) {
       if (batch.waveKey !== key) continue;
       for (const target of batch.recipients ?? []) {

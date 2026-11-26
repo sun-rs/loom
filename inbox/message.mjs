@@ -3,6 +3,7 @@ import { createHash } from 'node:crypto';
 const marker = /^\[loom:([0-9a-f-]{36})\](?:\r?\n|$)/;
 export const messageIdPattern = /^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/;
 export const isBlockedReply = body => typeof body === 'string' && /^\**BLOCKED(?:\s|$)/i.test(body.trimStart().split(/\r?\n/, 1)[0]);
+export const deliveryFailed = message => ['refused', 'corrupted', 'target-ended'].includes(message?.phase);
 
 export function deliveryId(text) {
   if (typeof text !== 'string') return;

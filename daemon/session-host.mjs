@@ -1,5 +1,5 @@
 import { createHash, randomUUID } from 'node:crypto';
-import { appendFileSync, linkSync, readFileSync, unlinkSync } from 'node:fs';
+import { appendFileSync, linkSync, lstatSync, readFileSync, unlinkSync } from 'node:fs';
 import { createServer } from 'node:net';
 import { join } from 'node:path';
 import { controllerFile, releaseRoot } from './release.mjs';
@@ -14,14 +14,15 @@ const oarVersion = () => JSON.parse(readFileSync(new URL('../package.json', impo
 const refused = (message, kind = 'input-refused') => Object.assign(new Error(message), { kind });
 const controlTimeoutMs = 10_000;
 
-async function main(project, addr, incarnation, release) {
+export async function main(project, addr, incarnation, release, { ownerGraceMs = 300_000, checkIntervalMs = 2_000 } = {}) {
   if (!/^oar-/.test(addr) || !hostUUID.test(addr.slice(4)) || !hostUUID.test(incarnation)) throw new Error('Invalid host identity');
   const dir = hostDirectory(project, addr, incarnation);
+  const directory = lstatSync(dir);
   const { row } = readJSON(join(dir, 'launch.json'));
   if (row.addr !== addr || row.backend !== 'headless') throw new Error('Invalid host launch intent');
   const path = hostSocket(project, addr, incarnation);
   const identity = (await processTable([process.pid])).get(process.pid);
-  if (!identity) throw new Error('Session host identity unavailable');
+  if (!identity || identity.pgid !== identity.pid) throw new Error('Detached session host process identity unavailable');
   const binding = { incarnation, identity, project, addr, release, root: releaseRoot, oar: oarVersion() };
   const owner = join(dir, 'owner.json');
   const staging = join(dir, randomUUID() + '.owner');
@@ -38,6 +39,9 @@ async function main(project, addr, incarnation, release) {
   let listening = false;
   let endedAt;
   let closing;
+  let stopRequested = false;
+  let ownerTimer;
+  let lastOwnerAt;
   let stalled;
   let controller = readJSON(join(dir, 'controller.json'));
   let chain = Promise.resolve();
@@ -55,6 +59,10 @@ async function main(project, addr, incarnation, release) {
     try { unlinkSync(path); }
     catch (error) { if (error.code !== 'ENOENT') throw error; }
     finally { listening = false; }
+  }
+  function stateDirectoryPresent() {
+    const current = lstatSync(dir, { throwIfNoEntry: false });
+    return current?.isDirectory() && current.dev === directory.dev && current.ino === directory.ino;
   }
   function locateTranscript() {
     if (transcript || locating || !session?.nativeSessionFile || Date.now() - lastTranscriptCheck < 350) return;
@@ -76,27 +84,40 @@ async function main(project, addr, incarnation, release) {
 
   function close() {
     return closing ??= (async () => {
+      clearInterval(ownerTimer);
       await releaseSession();
       runtime?.unsubscribe();
       endedAt = Date.now();
-      writeState(join(dir, 'ended.json'), JSON.stringify({ at: endedAt, sessionId: session?.id, transcriptPath: transcript }));
-      setImmediate(() => {
-        server?.close();
-        unlinkSocket();
-      });
+      try {
+        if (stateDirectoryPresent()) writeState(join(dir, 'ended.json'),
+          JSON.stringify({ at: endedAt, sessionId: session?.id, transcriptPath: transcript }));
+      } finally {
+        setImmediate(() => { server?.close(); unlinkSocket(); });
+      }
       return { endedAt };
-    })().catch(error => { closing = undefined; throw error; });
+    })();
   }
 
   async function releaseSession() {
-    const children = await ownedHostChildren(identity);
+    const children = await ownedHostChildren(identity).catch(error => { console.error(error.message); });
     if (session) {
       locateTranscript();
       try { await disposeSession(session, 4_000); }
       catch (error) { console.error(error.message); }
     }
-    await closeHostChildren(identity, children);
+    try { await closeHostChildren(identity, children); }
+    catch (error) {
+      console.error(error.message);
+      // Enumeration failure must not keep this detached process group alive.
+      setTimeout(() => process.kill(-identity.pgid, 'SIGKILL'), 1000);
+    }
   }
+
+  const retire = () => { void close().catch(error => console.error(error.message)); };
+  for (const signal of ['SIGHUP', 'SIGTERM', 'SIGINT']) process.on(signal, () => {
+    stopRequested = true;
+    if (listening) retire();
+  });
 
   async function handle({ owner, method, params, protocol, controller: sender }) {
     if (owner !== incarnation) throw refused('Session host identity changed');
@@ -104,7 +125,10 @@ async function main(project, addr, incarnation, release) {
     if (method === 'hello') return { protocol: hostProtocol, incarnation, methods: hostMethods };
     // v1 clients can still call v2 hosts using the original envelope.
     if (protocol !== 1 && protocol !== hostProtocol) throw refused('Unsupported session host protocol');
-    if (method === 'state') return state();
+    if (method === 'state') {
+      if (controller && controller.generation === sender?.generation && controller.id === sender.id) lastOwnerAt = performance.now();
+      return state();
+    }
     if (!Number.isSafeInteger(sender?.generation) || sender.generation <= 0 || !hostUUID.test(sender?.id)) {
       throw refused('Invalid controller identity');
     }
@@ -117,6 +141,7 @@ async function main(project, addr, incarnation, release) {
     if (controller?.generation !== sender.generation || controller.id !== sender.id) {
       throw refused('Stale session host controller');
     }
+    lastOwnerAt = performance.now();
     if (method === 'claim') return state();
     if (method === 'close') return close();
     const { action, id, text: input, active } = params ?? {};
@@ -162,7 +187,11 @@ async function main(project, addr, incarnation, release) {
     for (const receipt of jsonRows(prepareJournal(journal))) receipts.set(receipt.key, receipt);
     session = await withDeadline(openOar(row, project, row.sessionId), 35_000, 'OAR host startup timed out', 'startup-timeout');
     if (row.sessionId && session.id !== row.sessionId) throw new Error('OAR resumed a different native session');
-    runtime = trackOar(project, row, session, error => console.error(error.message), incarnation);
+    let nativeExited = false;
+    runtime = trackOar(project, row, session, error => console.error(error.message), incarnation, () => {
+      nativeExited = true;
+      if (listening) setImmediate(retire);
+    });
     writeState(join(dir, 'native.json'), JSON.stringify({ sessionId: session.id, streamId: runtime.streamId }));
     server = createServer(socket => {
       socket.on('error', () => {});
@@ -185,21 +214,24 @@ async function main(project, addr, incarnation, release) {
     });
     listening = true;
     privateHostSocket(path);
-    const timer = setInterval(() => {
-      if (closing) return;
-      if (runtime.rows.some(event => ['exited', 'released'].includes(event.type) && event.streamId === runtime.streamId)) {
-        void close().then(() => clearInterval(timer), error => console.error(error.message));
-        return;
+    lastOwnerAt = performance.now();
+    ownerTimer = setInterval(() => {
+      try {
+        if (!stateDirectoryPresent() || performance.now() - lastOwnerAt >= ownerGraceMs) retire();
+      } catch (error) {
+        console.error(error.message);
+        retire();
       }
-    }, 350);
-    timer.unref();
-    for (const signal of ['SIGHUP', 'SIGTERM', 'SIGINT']) process.once(signal, () => {
-      void close().catch(error => console.error(error));
-    });
+    }, checkIntervalMs);
+    ownerTimer.unref();
+    if (stopRequested || nativeExited) retire();
   } catch (error) {
     await releaseSession().catch(error => console.error(error.message));
-    writeState(join(dir, 'failed.json'), JSON.stringify({ message: error.message }));
-    if (listening) { server.close(); unlinkSocket(); }
+    try {
+      if (stateDirectoryPresent()) writeState(join(dir, 'failed.json'), JSON.stringify({ message: error.message }));
+    } finally {
+      if (listening) { server.close(); unlinkSocket(); }
+    }
     throw error;
   }
 }

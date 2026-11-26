@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { dirname, join, relative } from 'node:path';
 import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
@@ -11,7 +12,7 @@ const fixture = name => readFileSync(join(dir, 'fixtures', name), 'utf8');
 const jsonl = rows => rows.map(row => JSON.stringify(row)).join('\n');
 
 function scratch(t) {
-  const path = realpathSync(mkdtempSync(join(dir, '.test-')));
+  const path = mkdtempSync(join(realpathSync(tmpdir()), 'loom-agy-test-'));
   t.after(() => rmSync(path, { recursive: true, force: true }));
   return path;
 }

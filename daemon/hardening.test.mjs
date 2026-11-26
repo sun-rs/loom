@@ -1,22 +1,48 @@
 import assert from 'node:assert/strict';
-import { spawn as spawnProcess, spawnSync } from 'node:child_process';
+import { execFile, spawn as spawnProcess, spawnSync } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
 import { once } from 'node:events';
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
 import { fileURLToPath } from 'node:url';
-import { test } from 'node:test';
+import { after, test } from 'node:test';
+import { promisify } from 'node:util';
 import { projectIndex } from '../cli/project.mjs';
 import { retainedRecords } from '../handover/index.mjs';
 import codex from '../adapters/codex/index.mjs';
 import { deliveryId } from '../inbox/message.mjs';
 import { addCodexStartHook } from '../runtimes/tui/codex-start.mjs';
 import { request } from './rpc.mjs';
+import { hostDirectory, hostHello, hostRequest, hostSocket } from './host-control.mjs';
+import { processTable, sameProcess } from './processes.mjs';
+import { nextController, releaseId } from './release.mjs';
 
 const fixture = path => fileURLToPath(new URL('../tasks/PROTO-HARDEN-0/fixtures/' + path, import.meta.url));
 const repository = fileURLToPath(new URL('..', import.meta.url));
+const exec = promisify(execFile);
+const fixtureProjects = new Set();
+
+function signal(pid, name) {
+  try { process.kill(pid, name); return true; }
+  catch (error) { if (error.code !== 'ESRCH') throw error; return false; }
+}
+
+after(async () => {
+  if (!fixtureProjects.size) return;
+  const { stdout } = await exec('/bin/ps', ['-axww', '-o', 'pid=,pgid=,command='], { timeout: 10_000, maxBuffer: 4 * 1024 * 1024 });
+  const leftovers = stdout.trimEnd().split('\n').flatMap(line => {
+    const [, pid, group, command] = /^\s*(\d+)\s+(\d+)\s+(.+)$/.exec(line) ?? [];
+    if (!command || ![...fixtureProjects].some(path => command.includes(` ${path} `) ||
+      command.includes(` ${path}/codex `) || command.includes(` ${path}/agy `))) return [];
+    return [{ pid: Number(pid), group: Number(group) }];
+  });
+  const ownedGroups = new Set(leftovers.filter(({ pid, group }) => pid === group).map(({ group }) => group));
+  for (const group of ownedGroups) signal(-group, 'SIGKILL');
+  for (const { pid, group } of leftovers) if (!ownedGroups.has(group)) signal(pid, 'SIGKILL');
+  assert.deepEqual(leftovers, [], 'A process from this run’s lh-* projects survived fixture cleanup');
+});
 
 test('the launch-only Codex SessionStart hook records the owned root and ignores compact or foreign input', t => {
   const f = fixtureProject(t);
@@ -54,6 +80,7 @@ async function until(read, message, wait = 18_000) {
 function fixtureProject(t, options = {}) {
   const root = process.env.LOOM_HARDEN_TEST_ROOT ?? realpathSync(tmpdir());
   const project = mkdtempSync(join(root, 'lh-'));
+  fixtureProjects.add(project);
   const read = name => JSON.parse(readFileSync(join(project, name), 'utf8'));
   const write = (name, data) => writeFileSync(join(project, name), JSON.stringify(data) + '\n');
   const lines = name => {
@@ -81,10 +108,11 @@ function fixtureProject(t, options = {}) {
     NODE_OPTIONS: '--import=' + new URL('../tasks/HOTSWAP-1/fault-host.mjs', import.meta.url).href, ...options.env });
   write('panes.json', []);
   const children = [];
+  const extraHosts = [];
   const rpc = (command, args) => request(project, command, args);
   function launch() {
     const child = spawnProcess(process.execPath, ['--import', fixture('fault.mjs'), fixture('loomd.mjs'), project], {
-      env: fixtureEnv, cwd: repository, stdio: ['ignore', 'pipe', 'pipe'],
+      env: fixtureEnv, cwd: repository, detached: true, stdio: ['ignore', 'pipe', 'pipe'],
     });
     const exit = once(child, 'exit');
     let log = '';
@@ -118,25 +146,83 @@ function fixtureProject(t, options = {}) {
     return check(message) && message;
   }, 'mail ' + id);
   t.after(async () => {
-    if (children.length) {
-      await Promise.all(projectIndex(project).query({ backend: 'headless', endedAt: null }).map(row =>
-        rpc('stop', { target: row.addr }).catch(() => {})));
-    }
-    for (const proc of children.reverse()) {
-      if (proc.child.exitCode === null && proc.child.signalCode === null) proc.child.kill('SIGTERM');
-      const result = await Promise.race([proc.exit, delay(3500, null, { ref: false })]);
-      if (!result && proc.child.exitCode === null && proc.child.signalCode === null) {
-        proc.child.kill('SIGKILL');
-        await proc.exit;
+    try {
+      if (children.some(({ child }) => child.exitCode === null && child.signalCode === null)) {
+        await Promise.all(projectIndex(project).query({ backend: 'headless', endedAt: null }).map(row =>
+          rpc('stop', { target: row.addr }).catch(() => {})));
       }
-      if (process.env.LOOM_HARDEN_TEST_ROOT) write('loomd-' + proc.child.pid + '.json', { result, log: proc.log() });
+    } finally {
+      for (const proc of children.toReversed()) {
+        signal(-proc.child.pid, 'SIGTERM');
+        const result = await Promise.race([proc.exit, delay(3500, null, { ref: false })]);
+        signal(-proc.child.pid, 'SIGKILL');
+        await proc.exit;
+        if (process.env.LOOM_HARDEN_TEST_ROOT) write('loomd-' + proc.child.pid + '.json', { result, log: proc.log() });
+      }
+      const hosts = join(project, '.project', 'loomd', 'hosts');
+      const owners = existsSync(hosts) ? readdirSync(hosts, { recursive: true, withFileTypes: true })
+        .filter(entry => entry.isFile() && entry.name === 'owner.json')
+        .map(entry => JSON.parse(readFileSync(join(entry.parentPath, entry.name), 'utf8')))
+        .filter(owner => owner.project === project && owner.identity?.pid > 1 && owner.identity.pid === owner.identity.pgid)
+        .map(owner => owner.identity).filter(identity => signal(-identity.pid, 0)) : [];
+      const live = await processTable(owners.map(({ pid }) => pid));
+      const groups = owners.filter(owner => sameProcess(owner, live.get(owner.pid))).map(({ pid }) => pid);
+      for (const pid of groups) signal(pid, 'SIGTERM');
+      const deadline = Date.now() + 3500;
+      while (groups.some(pid => signal(-pid, 0)) && Date.now() < deadline) await delay(50);
+      for (const pid of groups) signal(-pid, 'SIGKILL');
+      for (const { child, exit } of extraHosts) {
+        if (child.exitCode === null && child.signalCode === null) signal(-child.pid, 'SIGKILL');
+        await exit;
+      }
+      if (!process.env.LOOM_HARDEN_TEST_ROOT) rmSync(project, { recursive: true, force: true });
     }
-    if (!process.env.LOOM_HARDEN_TEST_ROOT) rmSync(project, { recursive: true, force: true });
   });
-  return { project, read, write, lines, mail, waveState, native, deliveries, rpc, launch, start, arm, killed, spawn, send, waitMail };
+  function launchHost(args) {
+    const child = spawnProcess(process.execPath, args, { cwd: project, env: fixtureEnv, detached: true, stdio: 'ignore' });
+    const exit = once(child, 'exit');
+    extraHosts.push({ child, exit });
+    return { child, exit };
+  }
+  return { project, read, write, lines, mail, waveState, native, deliveries, rpc, launch, start, arm, killed, spawn, send, waitMail, launchHost };
 }
 
 const perSender = process.env.LOOM_HARDEN_STRESS ? 500 : 12;
+
+for (const trigger of ['missing project state', 'expired controller lease', 'SIGTERM without a controller']) {
+  test(`a detached OAR session host exits on ${trigger}`, { timeout: 30_000 }, async t => {
+    const f = fixtureProject(t);
+    const addr = 'oar-' + randomUUID();
+    const incarnation = randomUUID();
+    const dir = hostDirectory(f.project, addr, incarnation);
+    mkdirSync(dir, { recursive: true });
+    const row = { addr, role: 'leader', project: f.project, cwd: f.project, backend: 'headless',
+      cli: 'codex', runtimeId: 'codex', model: 'fixture', effort: 'high' };
+    writeFileSync(join(dir, 'launch.json'), JSON.stringify({ row }));
+    const controller = nextController(f.project);
+    const entry = new URL('./session-host.mjs', import.meta.url).href;
+    const grace = trigger === 'expired controller lease' ? 1800 : 60_000;
+    const host = f.launchHost(['--input-type=module', '-e', `import { main } from ${JSON.stringify(entry)};
+      await main(...process.argv.slice(1), { ownerGraceMs: ${grace}, checkIntervalMs: 50 });`,
+    f.project, addr, incarnation, releaseId()]);
+    const socket = hostSocket(f.project, addr, incarnation);
+    const hello = await until(() => hostHello(socket, incarnation), 'session host ready');
+    if (trigger !== 'SIGTERM without a controller') await hostRequest(socket, incarnation, 'claim', undefined, hello.protocol, controller);
+    const native = f.lines('runtime-pids.jsonl')[0];
+    assert(signal(native.pid, 0));
+    if (trigger === 'missing project state') rmSync(dir, { recursive: true });
+    else if (trigger === 'expired controller lease') {
+      // A health probe without the controller token must not extend the lease.
+      await delay(1200);
+      await hostRequest(socket, incarnation, 'state', undefined, hello.protocol);
+    } else assert(host.child.kill('SIGTERM'));
+    assert.deepEqual(await Promise.race([host.exit, delay(13_000, null, { ref: false })]), [0, null]);
+    await until(() => !signal(native.pid, 0), 'fixture provider process reaped');
+    assert.equal(existsSync(socket), false);
+    if (trigger !== 'missing project state') assert.ok(existsSync(join(dir, 'ended.json')));
+  });
+}
+
 test(`real OAR and hc-shaped TUI prompts share durable idempotency for two concurrent senders and ${2 * perSender} messages`, { timeout: 240_000 }, async t => {
   const f = fixtureProject(t);
   await f.start();
@@ -236,7 +322,7 @@ test('an unanswered OAR control is bounded, reported stuck, and never resubmitte
   await f.rpc('stop', { target: session.addr });
 });
 
-test('SIGKILL around delivery, registry, relay and history durability boundaries', { concurrency: 3, timeout: 120_000 }, async t => {
+test('SIGKILL around delivery, registry, relay and history durability boundaries', { concurrency: 3 }, async t => {
   const stages = [];
   for (const stage of ['accepted', 'attempt', 'native-ack', 'receipt', 'completion', 'turn-start', 'input-received', 'turn-end']) {
     for (const moment of ['before', 'after']) stages.push({ kind: 'send', stage, moment });
@@ -248,7 +334,7 @@ test('SIGKILL around delivery, registry, relay and history durability boundaries
   for (const stage of ['abort-intent', 'abort-ack', 'stopped']) {
     for (const moment of ['before', 'after']) stages.push({ kind: 'interrupt', stage, moment });
   }
-  await Promise.all(stages.map(({ kind, stage, moment }) => t.test(stage + ' ' + moment, async t => {
+  await Promise.all(stages.map(({ kind, stage, moment }) => t.test(stage + ' ' + moment, { timeout: 60_000 }, async t => {
     const f = fixtureProject(t);
     const proc = await f.start();
     const leader = await f.spawn('leader', 'LEADER', kind === 'send' || kind === 'interrupt' ? {} : { mode: 'tui' });
@@ -309,7 +395,8 @@ test('real OAR child exit refuses queued work and retains accepted input and lea
   const queued = await f.send(id, 'WAITING');
   const runtime = f.lines('runtime-pids.jsonl').find(row => row.session === leader.session.sessionId);
   process.kill(runtime.pid, 'SIGKILL');
-  assert.equal((await f.waitMail(queued.id, message => message?.phase === 'refused')).issue, 'target-exited');
+  assert.equal((await f.waitMail(queued.id, message => message?.phase === 'target-ended')).issue, 'target-ended');
+  assert.equal((await f.waitMail(hold.id, message => message?.phase === 'target-ended')).received.sessionId, leader.session.sessionId);
   assert.equal(f.deliveries(queued.id).length, 0);
   assert.equal(f.deliveries(hold.id).length, 1);
   await until(async () => (await f.rpc('state', { target: id })).notifications

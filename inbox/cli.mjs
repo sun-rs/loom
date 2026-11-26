@@ -2,7 +2,7 @@ import { setTimeout as sleep } from 'node:timers/promises';
 import { parseArgs } from 'node:util';
 import { receipt } from './engine.mjs';
 import { lookup } from './store.mjs';
-import { messageIdPattern } from './message.mjs';
+import { deliveryFailed, messageIdPattern } from './message.mjs';
 import { addressPattern } from './tui.mjs';
 import { managedProject, projectDirectory } from '../cli/project.mjs';
 import { daemonAbsent, request } from '../daemon/rpc.mjs';
@@ -48,14 +48,14 @@ export async function main(args) {
         let current;
         do {
           current = lookup(managed, response.id);
-          if (current?.completion?.body || current?.completion?.noReply || current?.phase === 'refused') break;
+          if (current?.completion?.body || current?.completion?.noReply || deliveryFailed(current)) break;
           await sleep(250);
         } while (Date.now() < deadline);
         if (current?.completion?.body) {
           emit({ ...response, ...receipt(current), phase: current.phase, reply: current.completion.body });
           return 0;
         }
-        const code = current?.phase === 'refused' ? 'not-ready' : current?.completion ? 'unavailable' : 'uncertain';
+        const code = deliveryFailed(current) ? 'not-ready' : current?.completion ? 'unavailable' : 'uncertain';
         emit({ ...response, ...(current && { ...receipt(current), phase: current.phase }), ok: false,
           error: { code, message: current?.issue ?? (current?.completion?.unconfirmed ? 'Native final reply is unconfirmed' :
             current?.completion ? 'No native final reply' : 'Still waiting for a reply') } });

@@ -31,3 +31,7 @@ Auditor loom-d173a83a transcript (/Users/sun/.claude/projects/-Users-sun-Code-lo
 - A session host whose project dir/state dir is gone, or whose owner has been absent past a bound, exits on its own.
 - No full-table `ps` polling loop in the host: use a bounded interval with backoff, PID-scoped checks (`kill -0`, `ps -p`), or a process-exit notification.
 Do not kill the existing leaked processes yourself; the user decides on cleanup.
+- Observed during cleanup: the leaked hosts ignored SIGTERM (stayed alive in state Ss); only SIGKILL ended them. A session host whose owner is gone must exit on SIGTERM (after flushing its journal), and tests must not rely on SIGTERM alone. The user authorized the cleanup; 34 hosts + 12 mock children are gone.
+
+## Item 7: test isolation flake
+`daemon/upgrade.test.mjs:17` ("failed post-lock session verification restores the old writer…") failed once in a full run with `ENOENT lstat <release>/runtimes/tui/.test-aKYwiY` from `cpSync`: it copies the repo while another concurrent test creates/removes temp dirs inside the repo. Passes alone. Tests must not create temp dirs inside the source tree (use os.tmpdir), and the copy must skip/filter transient entries.

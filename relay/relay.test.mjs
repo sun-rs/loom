@@ -1,11 +1,12 @@
 import assert from 'node:assert/strict';
-import { appendFileSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { appendFileSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { test } from 'node:test';
 import { relay } from './project.mjs';
 
 function fixture(t) {
-  const project = mkdtempSync(join(import.meta.dirname, '.relay-test-'));
+  const project = mkdtempSync(join(realpathSync(tmpdir()), 'loom-relay-test-'));
   t.after(() => rmSync(project, { recursive: true, force: true }));
   const terminals = new Map();
   const calls = [];

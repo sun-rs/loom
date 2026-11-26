@@ -98,13 +98,13 @@ export function projectNotifications(project, now = Date.now) {
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   try {
     const { values } = parseArgs({ options: { project: { type: 'string' }, name: { type: 'string' },
-      take: { type: 'boolean' }, complete: { type: 'string' } } });
+      take: { type: 'boolean' }, complete: { type: 'string' }, phase: { type: 'string' } } });
     if (values.take && values.complete || values.complete !== undefined && !values.complete.trim()) {
       throw new Error('Use --take or --complete <summary>');
     }
     const directory = projectDirectory(values.project);
     const response = await request(directory, 'notifications', { project: values.name, take: values.take,
-      complete: values.complete });
+      complete: values.complete, phase: values.phase });
     console.log(JSON.stringify(response));
   } catch (error) {
     console.error(error.message);

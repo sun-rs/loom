@@ -29,7 +29,8 @@ export async function projectStatus(project) {
     key, wave: wave.id, parent: wave.parent, members: wave.members, deliver: wave.deliver ?? 'barrier',
     state: wave.closed ? 'queued' : wave.deliver === 'stream' ? 'streaming' : wave.deadline == null ? 'dispatching' : 'pending',
   }));
-  const { pendingContinuations } = pendingWork(messages);
+  const ended = new Set(rows.filter(row => row.endedAt != null).map(row => row.addr));
+  const { pendingContinuations } = pendingWork(messages, undefined, undefined, addr => ended.has(addr));
   const latest = [...new Map(rows.filter(row => row.role === 'worker')
     .map(row => [JSON.stringify([row.project, row.task]), row])).values()];
   const selected = new Set(waves.flatMap(wave => wave.members ?? []));

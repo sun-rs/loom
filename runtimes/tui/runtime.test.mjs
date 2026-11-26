@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
-import { appendFile, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { appendFile, mkdtemp, readFile, realpath, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import test from 'node:test';
@@ -17,7 +18,7 @@ import { wireText } from '../../inbox/message.mjs';
 import { providers } from '../../tui/providers.mjs';
 
 async function temp(t) {
-  const root = await mkdtemp(join(import.meta.dirname, '.test-'));
+  const root = await mkdtemp(join(await realpath(tmpdir()), 'loom-tui-test-'));
   t.after(() => rm(root, { recursive: true, force: true }));
   return root;
 }
