@@ -2,7 +2,7 @@ import { promptKind } from '../adapters/prompt-state.mjs';
 import { randomUUID } from 'node:crypto';
 import { openStore } from './store.mjs';
 import { refusals } from './tui.mjs';
-import { checksDeliveryIntegrity, combinedDeliveryText, conclusoryReply, deliveryFailed, payloadDigest } from './message.mjs';
+import { checksDeliveryIntegrity, combinedDeliveryText, deliveryFailed, payloadDigest, replyConclusion } from './message.mjs';
 import { replyForDelivery } from './reply-file.mjs';
 
 export const defaultStallMs = 120_000;
@@ -22,6 +22,13 @@ export function stalledDeliveries(messages, at = Date.now()) {
 
 export const stallText = ({ id, target, reason, ageMs }) =>
   `your message ${id} to ${target} is not received (${reason}, ${Math.floor(ageMs / 1000)}s)`;
+
+export function suppressedReplies(messages) {
+  return messages.flatMap(({ id, from, target, completion, expectReply }) => expectReply && completion?.relay?.status === 'suppressed' ?
+    [{ id, from: from?.addr, target: target.addr, at: completion.at, reason: completion.relay.reason }] : []);
+}
+
+export const suppressedReplyText = ({ id, reason }) => `reply to ${id} suppressed (${reason})`;
 
 const isDone = message => message.phase === 'received';
 const isUrgent = message => message.superPriority || message.mode === 'interrupt';
@@ -49,6 +56,7 @@ export function receipt(message, at = Date.now()) {
     ...(message.target.tui?.reason && { transportReason: message.target.tui.reason }),
     ...(message.waitingForWritable && { waitingForWritable: message.waitingForWritable }),
     ...(message.completion?.unconfirmed && { replyStatus: 'unconfirmed' }),
+    ...(message.expectReply && message.completion?.relay && { relay: message.completion.relay }),
     ...(issue ? { issue } : {}),
   };
 }
@@ -83,7 +91,7 @@ export function pendingWork(messages, addr, parentFor = value => value, targetEn
 
 // The adapter-facing transport supplies pane binding, events and native input.
 // A headless runtime can supply the same operations when it owns its event stream.
-export function inbox(project, transport, report = console.error, { replyLimit, canRelayReply } = {}) {
+export function inbox(project, transport, report = console.error, { replyLimit, isSeniorSender } = {}) {
   const store = openStore(project);
   const { messages, save } = store;
   const integrityScanned = new Set();
@@ -115,19 +123,25 @@ export function inbox(project, transport, report = console.error, { replyLimit, 
 
   function route(message, completion) {
     const { from, target } = message;
-    if (!message.expectReply || !from || !completion.body || message.replyKey || message.replyTo ||
-        message.batchId || message.implicitBatch || canRelayReply && !canRelayReply(from.addr)) return;
-    if (!conclusoryReply(completion.body, Boolean(message.gatePacket))) return;
+    const suppress = reason => ({ relay: { status: 'suppressed', reason } });
+    if (!from) return suppress('no-sender');
+    if (message.replyKey || message.replyTo) return suppress('automatic-reply');
+    if (message.batchId || message.implicitBatch) return suppress('continuation-batch');
+    if (completion.unconfirmed) return suppress('unconfirmed');
+    const conclusion = replyConclusion(completion.body);
+    const fallback = conclusion.reason === 'missing-tag' && (message.gatePacket || isSeniorSender?.(from.addr));
+    if (!conclusion.tag && !fallback) return suppress(conclusion.reason);
     if (messages.some(item => item.waveParent === from.addr && item.target.addr === target.addr &&
-        item.completion?.sessionId === completion.sessionId && item.completion?.turnId === completion.turnId)) return;
+        item.completion?.sessionId === completion.sessionId && item.completion?.turnId === completion.turnId)) return suppress('wave-result');
     const key = JSON.stringify([target.addr, target.createdAt, completion.sessionId,
       completion.turnId ?? completion.at, from.addr, from.createdAt]);
-    if (messages.some(item => item.replyKey === key)) return;
-    messages.push({
+    if (messages.some(item => item.replyKey === key)) return suppress('duplicate-turn');
+    const reply = {
       id: randomUUID(), replyKey: key, replyTo: message.id, createdAt: Date.now(), target: from, from: target,
       requestedMode: 'queue', mode: 'queue', phase: 'queued',
-      text: `Loom reply from ${target.addr} (${message.id})\n\n${completion.body}`,
-    });
+      text: `Loom reply from ${target.addr} (${message.id})\n\n${fallback ? '未带结论标签\n\n' + completion.body : conclusion.body}`,
+    };
+    return { relay: { status: 'queued', deliveryId: reply.id }, reply };
   }
 
   function reconcile(message, observation) {
@@ -190,9 +204,16 @@ export function inbox(project, transport, report = console.error, { replyLimit, 
     }
     const completion = native.completion;
     if (completion && (!message.completion || completion.body || completion.noReply)) {
-      route(message, completion);
-      message.completion = completion;
-      save();
+      const previous = message.completion;
+      const { relay, reply } = message.expectReply ? route(message, completion) : {};
+      message.completion = relay ? { ...completion, relay } : completion;
+      if (reply) messages.push(reply);
+      try { save(); } catch (error) {
+        if (reply) messages.pop();
+        if (previous) message.completion = previous;
+        else delete message.completion;
+        throw error;
+      }
     }
   }
 
@@ -669,13 +690,12 @@ export function inbox(project, transport, report = console.error, { replyLimit, 
   }
 
   function routesForTurn(addr, reply) {
-    const related = messages.filter(({ target, completion }) => target.addr === addr &&
+    const related = new Set(messages.filter(({ target, completion }) => target.addr === addr &&
       completion && completion.sessionId === reply.sessionId &&
-      (completion.at === reply.at || (reply.turnId && completion.turnId === reply.turnId)));
-    if (related.length) return [...new Set(related.flatMap(message =>
-      message.expectReply && message.from && !message.replyKey && !message.replyTo && message.completion.body &&
-        conclusoryReply(message.completion.body, Boolean(message.gatePacket)) ?
-        [message.from.addr] : []))];
+      (completion.at === reply.at || (reply.turnId && completion.turnId === reply.turnId)))
+      .map(message => message.id));
+    if (related.size) return [...new Set(messages.filter(message => related.has(message.replyTo) &&
+      message.replyKey && !deliveryFailed(message)).map(message => message.target.addr))];
   }
 
   function enqueue(message) {

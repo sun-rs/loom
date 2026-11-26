@@ -6,7 +6,7 @@ import { activeOrgNotices, readOrg } from '../daemon/org.mjs';
 import { readNotifications } from '../daemon/notifications.mjs';
 import { isBlockedReply } from '../inbox/message.mjs';
 import { managedProject, projectIndex, projectSessions } from './project.mjs';
-import { pendingWork, stalledDeliveries, stallText } from '../inbox/engine.mjs';
+import { pendingWork, stalledDeliveries, stallText, suppressedReplies, suppressedReplyText } from '../inbox/engine.mjs';
 import { isStartupBlocker } from '../tui/agent-status.mjs';
 import { auditorWakeFiltered } from '../daemon/routing.mjs';
 
@@ -108,6 +108,7 @@ export async function projectStatus(project) {
   const deliveryAlerts = stalledDeliveries(messages).map(item =>
     ({ ...item, role: byAddress.get(item.target)?.role, since: item.stalledAt }));
   return { ok: true, running: Boolean(live), stalledDeliveries: deliveryAlerts, awaitingUser, sessionHealth, exits: crashed,
+    suppressedReplies: suppressedReplies(messages).sort((a, b) => b.at - a.at),
     sessions: rows.filter(row => row.endedAt == null).map(row => {
       const authMode = row.cli === 'claude' ? artifacts.job(row.addr)?.authMode : undefined;
       return { role: row.role, addr: row.addr, cli: row.cli, task: row.task, state: lifecycle(row),
@@ -142,6 +143,7 @@ export function printStatus(result) {
   section('Quota and authentication', result.sessionHealth.filter(row => ['quota-wait', 'auth-expired'].includes(row.status)), incident, Infinity);
   section('Silent hangs', result.sessionHealth.filter(row => row.status === 'silent-hang'), incident, Infinity);
   section('Exited', result.exits, incident, Infinity);
+  section('Suppressed replies', result.suppressedReplies, suppressedReplyText, 6);
   section('Waiting polls', result.sessionHealth.filter(row => row.status === 'waiting-poll'), row =>
     `${incident(row)} · ${Math.floor(row.zeroProgressMs / 1000)}s zero progress`, Infinity);
   section('Release paths', result.sessions.flatMap(row => (row.pathWarnings ?? []).map(warning => ({ ...row, ...warning }))),

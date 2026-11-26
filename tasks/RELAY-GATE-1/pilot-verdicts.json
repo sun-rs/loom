@@ -1,0 +1,10 @@
+[
+  {
+    "id": "511b7774-91ec-0485-193b-082c669d581d",
+    "body": "合入门禁第 1 轮的材料已看完：候选上的 reviewer 结论是 REJECT，也没有全量测试全绿记录。裁决已写好，现在回给 Leader。\n\nREJECT G4-MERGE 第 1 轮（3b684d06e1c1965c166d348ac440199368bf806e）：reviewer 结论仍是 REJECT，且没有全量 npm test 全绿记录。先交只加测试的见红提交再修，原因和第 2 轮要求见 /Users/sun/Code/loom-pilot2/.project/audit-goal4-merge-r1.md。第 2 轮是最后一轮。"
+  },
+  {
+    "id": "e79b69e5-8254-3a87-e317-3c78a77aa98f",
+    "body": "测试门禁第 1 轮的材料已看完（独立 reviewer 结论是 REJECT），裁决已写好，现在回给 Leader。\n\nREJECT G4-TESTS 第 1 轮：reviewer 指出的测试缺口成立。只加测试和契约文字，要补的 5 项和第 2 轮要求见 /Users/sun/Code/loom-pilot2/.project/audit-goal4-tests-r1.md。第 2 轮是最后一轮；reviewer 结论为 REJECT 时先修好再送包。"
+  }
+]

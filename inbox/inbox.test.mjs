@@ -12,6 +12,7 @@ import { inbox, receipt } from './engine.mjs';
 import { conclusoryReply, deliveryId, payloadDigest, wireText } from './message.mjs';
 import { lookup, publish } from './store.mjs';
 import { inputPlan, nativeDelivery, tui } from './tui.mjs';
+import { oarDelivery } from '../daemon/oar.mjs';
 
 const exec = promisify(execFile);
 const tuiSamples = file => readFileSync(new URL('../tasks/TUI-REL-0/fixtures/' + file + '.txt', import.meta.url), 'utf8');
@@ -146,6 +147,66 @@ test('automatic replies require a conclusion and honour an explicit NOREPLY', ()
   assert.equal(conclusoryReply('合入批准，SHA 已核对'), false);
   assert.equal(conclusoryReply('合入批准，SHA 已核对', true), true);
   assert.equal(conclusoryReply('I am still gathering evidence.', true), false);
+  assert.equal(conclusoryReply('收到材料。\n\n**REJECT** 候选未过'), true);
+  assert.equal(conclusoryReply('Example:\n```text\nREJECT example\n```'), false);
+  assert.equal(conclusoryReply('收到材料。\n\n**NOREPLY**\n\nPASS'), false);
+});
+
+test('both pilot gate verdicts relay once via hook Stop, Claude transcript and OAR turn-end', async t => {
+  const fixtures = JSON.parse(readFileSync(new URL('../tasks/RELAY-GATE-1/pilot-verdicts.json', import.meta.url), 'utf8'));
+  for (const source of ['hook', 'transcript', 'OAR']) {
+    for (const { body, id } of fixtures) await t.test(`${source} ${id.slice(0, 8)}`, async t => {
+      const f = fixture(t);
+      const at = Date.now() - 1000;
+      const target = f.terminal('t1', source === 'transcript' ? 'claude' : 'codex', 'idle');
+      const sender = f.terminal('t2', 'codex', 'idle');
+      const request = await f.submit(target, 'queue', sender, { id, phase: 'sending', attemptAt: at,
+        expectReply: true, gatePacket: '/fixture/gate.md' });
+      let reopen = f.reopen;
+      if (source === 'OAR') {
+        const event = { type: 'turn-end', at: at + 10, sessionId: 'native', turnId: 'gate', streamId: 'stream',
+          inputIds: [request], outcome: { kind: 'completed' }, finalReply: body };
+        reopen = () => inbox(f.root, { nativeDelivery: oarDelivery,
+          inspect: async () => ({ state: 'unknown', terminal: { turn: 1 }, events: [event] }) });
+      } else if (source === 'transcript') {
+        const path = join(target.cwd, 't1.jsonl');
+        const prompt = wireText(request, 'Read gate packet');
+        const rows = [{ type: 'user', uuid: 'gate', message: { content: prompt } },
+          { type: 'assistant', uuid: 'final', message: { content: body, stop_reason: 'end_turn' } },
+          { type: 'system', subtype: 'turn_duration' }];
+        writeFileSync(path, rows.map((row, i) => JSON.stringify({ ...row, cwd: target.cwd, sessionId: 't1',
+          timestamp: new Date(at + i + 10).toISOString() }) + '\n').join(''));
+        f.event(target, 'UserPromptSubmit', 'gate-hook', { prompt, transcript_path: path, receivedAt: at + 10 });
+      } else {
+        f.event(target, 'UserPromptSubmit', 'gate', { deliveryId: request });
+        f.event(target, 'Stop', 'gate', { last_assistant_message: body });
+      }
+      await reopen().step();
+      await reopen().step();
+      const replies = reopen().messages.filter(message => message.replyTo === request);
+      assert.equal(replies.length, 1);
+      const [preface, verdict] = body.split('\n\n');
+      assert.equal(replies[0].text, `Loom reply from t1 (${request})\n\n${verdict}\n\n${preface}`);
+      assert.equal(f.lookup(request).completion.body, body);
+      if (source === 'transcript') assert.equal(f.lookup(request).completion.source, 'claude transcript turn_duration');
+    });
+  }
+});
+
+test('gate acknowledgements and explicit NOREPLY are recorded without an automatic wake', async t => {
+  const f = fixture(t);
+  const target = f.terminal('t1', 'codex', 'idle');
+  const sender = f.terminal('t2', 'codex', 'idle');
+  for (const [body, reason] of [['收到，继续等待', 'acknowledgement'], ['已收到门禁材料。', 'acknowledgement'],
+    ['**NOREPLY**', 'noreply']]) {
+    const id = await f.submit(target, 'queue', sender, { phase: 'sending', attemptAt: Date.now() - 1000,
+      expectReply: true, gatePacket: '/fixture/gate.md' });
+    f.event(target, 'UserPromptSubmit', id, { deliveryId: id });
+    f.event(target, 'Stop', id, { last_assistant_message: body });
+    await f.reopen().step();
+    assert.deepEqual(receipt(f.lookup(id)).relay, { status: 'suppressed', reason });
+    assert.equal(f.reopen().messages.some(message => message.replyTo === id), false);
+  }
 });
 
 test('a native Claude v3 marker with incomplete user text corrects a prior delivered receipt', async t => {

@@ -27,7 +27,7 @@ description: 在 Loom 中启动、指挥、复核或接手由 Super、Auditor、
 - 常驻并独立于 Leader。用户问进度或取舍时，自己读历史、证据卡和原件，简明交代结论、阻塞和待裁决事项。禁止要求 Leader 汇报或复述。Auditor 裁决范围、预算和方法，监督 Leader 换班。产品代码和派工由执行侧负责。
 - 每道门禁读 Leader 发来的一份门禁包。根据固定候选 SHA、diff 统计、证据卡、验收摘要和包内 Reviewer 结论给出裁决。允许唤醒的来源是用户或 Super 消息、每门禁一次的 Leader 门禁包或红色升级、主动发起的追加审查结论，以及换班监督。消耗倒金字塔由 loomd 提醒 Super。
 - 需要核查 diff、原始日志或数据时，只派一名临时 Reviewer。证据出现 `FAILED`、`MISMATCH`、越界、删断言或跳测时，由 Reviewer 复核原件。有效结论回送一次并计入 `maxWakesPerGate`，超长正文通过回执文件交付。`loom notifications --history` 可查询追加审查记录，确认或等待状态留在历史。
-- 把耗时工作交给 Worker 或 Reviewer，禁止用后台 Bash 等结果。结论首行用 `PASS`、`APPROVE`、`REJECT` 或 `BLOCKED`。确认收到时用 `NOREPLY`。
+- 把耗时工作交给 Worker 或 Reviewer，禁止用后台 Bash 等结果。门禁最终回复首行直接写 `PASS`、`APPROVE`、`REJECT` 或 `BLOCKED`，依据从下一段开始。确认收到时用 `NOREPLY`。
 - 每次介入给 Leader 一条可执行的结论。常规结论排队投递，只有可复现的阻断缺陷可用 `interrupt` 否决。每轮自查验收要求是否超出目标或证据所需。每项交付最多审两轮，仍阻塞时向 Super 升级改设计，用 `--audit-escalation blocking-disagreement` 附证据和影响。
 
 ## Leader · 执行督导
@@ -38,7 +38,7 @@ description: 在 Loom 中启动、指挥、复核或接手由 Super、Auditor、
 3. 波次结算、阻塞或失败、审查结论、Super 裁决、超时或 STUCK 时处理一次决定，然后结束本轮。Worker 阻塞或被退回时用 `loom send` 在原会话续作。需显式续作批次时查 `loom send --help-advanced`。
 4. 由 Worker 在自己的隔离沙箱中对固定候选 SHA 复现问题、跑全量测试和记录验收证据。Leader 用 `"$LOOM_BIN" spawn reviewer --project "$PROJECT" --cwd "$REVIEW_TREE" --wave "$GATE" "$QUESTION"` 发起独立审查，提供候选 SHA 和必要证据，只问一个可证伪的问题。Reviewer 在新会话里只读复核，限时 15–30 分钟，给出结论和证据后回收。Leader 收到结论后用 `"$LOOM_BIN" gate pack "$GATE" --project "$PROJECT" --base "$BASE" --candidate "$CANDIDATE"` 打包结论和验收证据，向 Auditor 投递一条指针。缺少 Reviewer 结论时，`gate pack` 发出告警。确认审核结论与授权后合入，再用 `loom notifications --gate-complete "$GATE"` 登记安全边界。收到 Auditor 超预算通知时，把材料合并到下一份门禁包。
 5. 在真实派工或汇报中处理 loomd 附上的信号。核实保护或越界文件、删除或削弱断言、skip/only、事实错误或沙箱逃逸尝试后，可用 `loom escalate "$GATE" --reason REASON --evidence TEXT` 升级；与门禁包共用一次唤醒。需要其他角色回送最终答复时用 `loom send --expect-reply`。Worker 波次按批次回 Leader。
-6. 把耗时验收交给 Worker 或 Reviewer，禁止用后台 Bash 等结果。结论首行用 `DONE`、`BLOCKED`、`FAILED` 等标签，确认收到时用 `NOREPLY`。
+6. 把耗时验收交给 Worker 或 Reviewer，禁止用后台 Bash 等结果。最终回复首行直接写 `DONE`、`BLOCKED`、`FAILED` 等结论标签，依据从下一段开始。确认收到时用 `NOREPLY`。
 
 ## Worker · 按卡施工
 
@@ -65,7 +65,7 @@ Worker 线统一由 OAR 托管。新增特殊 worker（例如 Claude TUI worker�
 
 - `loom status --project "$PROJECT"` 看项目总览，`loom ls` 查稳定地址，`loom state "$ADDR"` 查在途事项和换班状态。用 `loom hist "$ADDR" --evidence` 查证据卡，`loom hist --wave "$WAVE"` 查波次，`loom hist "$ADDR" --turn "$N" --level L2 --diff` 查单轮提交差异。未提交的改动查证据卡，正文未确认时按历史给出的路径和行号核查原件。
 - Leader、Auditor 和 Super 用 `loom send "$ADDR" --project "$PROJECT" "$TEXT"` 排队发信，托管会话默认以 `LOOM_ADDR` 为来源。授权叫停用 `--mode interrupt` 并说明理由。loomd 按投递 SLA 对账并升级停滞投递。
-- Leader 和 Auditor 等待结果超过预期时，运行 `"$LOOM_BIN" status` 检查置顶的停滞投递。
+- Leader 和 Auditor 等待结果超过预期时，运行 `"$LOOM_BIN" status` 检查滞留投递和未回送的回复。
 
 ## 换班与收尾
 

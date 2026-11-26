@@ -1358,6 +1358,49 @@ test('delivers a short digest pointer for a large automatic reply across restart
   assert.equal(payloadDigest(fullReply), fullDigest);
 });
 
+test('an explicit senior reply preserves untagged work and carries suppression to the next real wake', async t => {
+  const f = fixture(t);
+  const d = f.daemon();
+  t.after(d.shutdown);
+  const leader = (await f.spawn(d, 'leader', 'L')).session.addr;
+  const auditor = (await f.spawn(d, 'auditor', 'A')).session.addr;
+  await d.tick();
+  f.sessions.get(leader).finish('Startup complete');
+  await d.tick();
+
+  const ask = text => d.handle('send', { target: leader, mode: 'queue', text, expectReply: true }, auditor);
+  const verdict = await ask('HOLD verdict');
+  await d.tick();
+  f.sessions.get(leader).finish('候选仍有阻断，需补充完整测试记录。');
+  await d.tick();
+  await d.tick();
+  const automatic = f.read('inbox/state.json').messages.filter(row => row.replyTo === verdict.id);
+  assert.equal(automatic.length, 1);
+  assert.equal(automatic[0].target.addr, auditor);
+  assert.match(f.prompts.find(row => deliveryId(row.input) === automatic[0].id).input,
+    /未带结论标签\n\n候选仍有阻断，需补充完整测试记录。/);
+
+  const ack = await ask('HOLD acknowledgement');
+  await d.tick();
+  f.sessions.get(leader).finish('收到，继续等待');
+  await d.tick();
+  assert.equal(f.read('inbox/state.json').messages.some(row => row.replyTo === ack.id), false);
+  const state = await d.handle('state', { target: leader });
+  assert.deepEqual(state.deliveries.find(row => row.id === ack.id).relay, { status: 'suppressed', reason: 'acknowledgement' });
+  const { projectStatus } = await import('../cli/status.mjs');
+  const status = await projectStatus(f.project);
+  assert.deepEqual(status.suppressedReplies.map(({ id, from, reason }) => ({ id, from, reason })),
+    [{ id: ack.id, from: auditor, reason: 'acknowledgement' }]);
+  for (const text of ['next permitted wake', 'another permitted wake']) {
+    await d.handle('send', { target: auditor, mode: 'queue', text });
+    await d.tick();
+    await d.tick();
+  }
+  const notices = f.prompts.filter(row => row.addr === auditor && row.input.includes(`reply to ${ack.id} suppressed (acknowledgement)`));
+  assert.equal(notices.length, 1);
+  assert.match(notices[0].input, /next permitted wake/);
+});
+
 test('worker switch affects only new spawns and a quota failure keeps the selected CLI', async t => {
   const f = fixture(t);
   f.policy({ deny: [{ model: 'denied' }], roles: { worker: { preferred: [

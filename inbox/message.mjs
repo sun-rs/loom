@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 
 const marker = /^\[loom:([0-9a-f-]{36})\](?:\r?\n|$)/;
 export const messageIdPattern = /^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/;
-export const isBlockedReply = body => typeof body === 'string' && /^\**BLOCKED(?:\s|$)/i.test(body.trimStart().split(/\r?\n/, 1)[0]);
+export const isBlockedReply = body => replyConclusion(body).tag === 'BLOCKED';
 export const deliveryFailed = message => ['refused', 'corrupted', 'target-ended'].includes(message?.phase);
 
 export function deliveryId(text) {
@@ -16,11 +16,49 @@ export function wireText(id, message) {
   return `[loom:${id}]\n${message}`;
 }
 export const payloadDigest = text => createHash('sha256').update(text).digest('hex');
+const decision = /^(DONE|BLOCKED|FAILED|PASS(?:ED)?|FAIL|REJECT(?:ED)?|APPROVE(?:D)?|VERIFIED|LGTM|VERDICT|结论|裁决)(?=$|[\s*_:：.!！。])/i;
+const acknowledgement = /^(?:(?:已?收到|确认收到|已阅)(?:本条|门禁包|(?:门禁|审查|测试)?(?:材料|消息|回执))?|收到确认|继续等待|在等|ACK|acknowledged|received(?: (?:the )?(?:gate packet|message))?|noted|waiting)(?:[\s,，。.!！:：]+(?:received|继续等待|继续等候|等待裁决|谢谢|thanks|thank you))*[\s,，。.!！]*$/i;
+
+export function replyConclusion(text) {
+  if (typeof text !== 'string' || !text.trim()) return { reason: 'no-final-reply' };
+  const lines = text.split(/\r?\n/);
+  let found;
+  let fence;
+  const content = [];
+  for (const [index, raw] of lines.entries()) {
+    const delimiter = /^\s*(`{3,}|~{3,})/.exec(raw)?.[1];
+    if (delimiter) {
+      if (!fence) fence = delimiter;
+      else if (delimiter[0] === fence[0] && delimiter.length >= fence.length) fence = undefined;
+      continue;
+    }
+    if (fence || /^\s*>/.test(raw)) continue;
+    const line = raw.replace(/^[#*_\s+-]+/, '').trimEnd();
+    if (!line) continue;
+    if (/^NOREPLY(?=$|[\s*_:：.!])/i.test(line)) return { reason: 'noreply' };
+    content.push(line);
+    const tag = decision.exec(line)?.[1];
+    if (tag && !found) found = { tag: tag.toUpperCase(), index };
+  }
+  if (found) {
+    if (found.index === 0) return { tag: found.tag, body: text };
+    const [line] = lines.splice(found.index, 1);
+    const eol = text.includes('\r\n') ? '\r\n' : '\n';
+    while (lines.at(-1) === '' && found.index >= lines.length) lines.pop();
+    return { tag: found.tag, body: [line, '', ...lines].join(eol) };
+  }
+  if (content.length && content.every(line => acknowledgement.test(line) ||
+      /(?:无需回复(?:本条)?|不必回复|不(?:再|另)(?:回复|发消息)|no reply)(?:[。.!！])?$/i.test(line))) {
+    return { reason: 'acknowledgement' };
+  }
+  return { reason: 'missing-tag' };
+}
+
 export function conclusoryReply(text, gate = false) {
-  const first = text.trimStart().split(/\r?\n/, 1)[0].replace(/^[#*\s-]+/, '');
-  if (/^NOREPLY(?=$|[\s*:：.])/i.test(first)) return false;
-  if (/^(?:DONE|BLOCKED|FAILED|PASS(?:ED)?|FAIL|REJECT(?:ED)?|APPROVE(?:D)?|VERIFIED|LGTM|VERDICT|结论|裁决)(?=$|[\s*:：.!])/i.test(first)) return true;
-  if (!gate || /^(?:收到|已收到|在等|ack(?:nowledged)?\b|noted\b|waiting\b|no reply\b)|(?:尚无结论|复核进行中|继续等待|无需回复|不必回复|不(?:再|另)(?:回复|发消息))/i.test(first)) return false;
+  const { tag, reason } = replyConclusion(text);
+  if (tag) return true;
+  if (!gate || reason !== 'missing-tag') return false;
+  const first = text.trimStart().split(/\r?\n/, 1)[0];
   return /批准|退回|拒绝|复核通过|审核通过|可合入|暂缓合入|禁止合入|阻断|^(?:accepted|changes requested|looks good|no blockers)\b/i.test(first);
 }
 export const checksDeliveryIntegrity = target => ['claude', 'agy'].includes(target.provider) && target.tui?.transport === 'holder-v3';

@@ -4,7 +4,7 @@ import { appendFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { CommandError } from '../cli/sessions.mjs';
 import { projectIndex } from '../cli/project.mjs';
-import { defaultStallMs, inbox, pendingWork, receipt, stalledDeliveries, stallText } from '../inbox/engine.mjs';
+import { defaultStallMs, inbox, pendingWork, receipt, stalledDeliveries, stallText, suppressedReplies, suppressedReplyText } from '../inbox/engine.mjs';
 import { conclusoryReply, deliveryFailed, isBlockedReply, messageIdPattern } from '../inbox/message.mjs';
 import { relay } from '../relay/project.mjs';
 import { withClaudeTranscriptStops } from '../relay/sources.mjs';
@@ -55,7 +55,7 @@ export function createSupervisor(project, {
   };
   let policy = policyForTick();
   const mail = inbox(project, sessions.transport, report, { replyLimit: () => policy.delivery?.replyBytes,
-    canRelayReply: addr => sessions.rowFor(addr)?.role !== 'auditor' });
+    isSeniorSender: addr => ['super', 'leader', 'auditor'].includes(sessions.rowFor(addr)?.role) });
   const org = organization(project, index, sessions, mail, now, report);
   const watchJournal = join(project, '.project', 'watch', 'events.jsonl');
   const recordedLiveness = new Map(jsonRows(prepareJournal(watchJournal)).filter(event => event.liveness).map(event => [event.addr, event]));
@@ -495,6 +495,9 @@ ${details}`, {
     const deepReview = message.reviewerConclusion === true && reviewer?.row.role === 'reviewer' && reviewerDeliveryId(reviewer) === message.id &&
       sessions.routeParent(reviewer.row.parent)?.addr === row.addr;
     if (message.deliveryEscalations && message.projectEvents) return;
+    const request = message.replyKey && mail.messages.find(item => item.id === message.replyTo);
+    if (request?.expectReply && request.completion?.relay?.deliveryId === message.id &&
+        request.target.addr === message.from?.addr && parentFor(request.from?.addr) === row.addr) return;
     if (!auditorWakeSource(message, { startupId: job?.firstId,
       handoverId: job?.handoverReportId, senderRole: sessions.rowFor(message.from?.addr)?.role, deepReview })) return auditorWakeFiltered;
   }
@@ -623,22 +626,30 @@ ${details}`, {
         const lines = noticeLines(batch);
         const summary = Buffer.byteLength(lines) > 1200 ?
           clip(lines, 1200) + '\n完整记录见 loom status --json。' : lines;
-        const deliveryLines = senderStalls.map(stallText);
+        const seenSuppressions = new Set(mail.messages.filter(item => item.received && !deliveryFailed(item) &&
+          row && parentFor(item.target.addr) === row.addr).flatMap(item => item.replySuppressionNotices ?? []));
+        const senderSuppressions = suppressedReplies(mail.messages).filter(notice =>
+          row && notice.from && parentFor(notice.from) === row.addr && !seenSuppressions.has(notice.id));
+        const deliveryLines = [...senderSuppressions.map(notice => ({ text: suppressedReplyText(notice), id: notice.id })),
+          ...senderStalls.map(delivery => ({ text: stallText(delivery) }))];
         let deliveryAppendix;
+        const replySuppressionNotices = [];
         if (deliveryLines.length) {
           const visible = [];
           let bytes = 0;
-          for (const line of deliveryLines) {
-            bytes += Buffer.byteLength(line) + 1;
+          for (const { text, id } of deliveryLines) {
+            bytes += Buffer.byteLength(text) + 1;
             if (bytes > 1200) break;
-            visible.push(line);
+            visible.push(text);
+            if (id) replySuppressionNotices.push(id);
           }
-          if (visible.length < deliveryLines.length) visible.push('More stalled deliveries in loom status.');
+          if (visible.length < deliveryLines.length) visible.push('More delivery notices in loom status.');
           deliveryAppendix = visible.join('\n');
         }
-        return { ...(deliveryAppendix && { deliveryAppendix }), ...(batch.length && {
-          orgEvents: batch.map(notice => notice.id), orgAppendix: 'Loom drift and fact checks\n' + summary,
-        }) };
+        return { ...(deliveryAppendix && { deliveryAppendix }), ...(replySuppressionNotices.length && { replySuppressionNotices }),
+          ...(batch.length && {
+            orgEvents: batch.map(notice => notice.id), orgAppendix: 'Loom drift and fact checks\n' + summary,
+          }) };
       },
       canDispatch(target) {
         const job = sessions.jobs.get(target.addr);
