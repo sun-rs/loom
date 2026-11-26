@@ -196,6 +196,48 @@ test('5a · CLI search is an index, show expands, concurrent updates use CAS, in
   assert.equal((await show(f, auditor, item.id)).item, null);
   assert.deepEqual((await search(f, auditor, entry.title)).rows, []);
 });
+for (const action of ['show', 'update', 'invalidate']) {
+  const shortId = 'abc123ab';
+  const firstId = 'memory-abc123ab-1234-4123-8123-123456789abc';
+  const secondId = 'memory-abc123ab-5678-4123-8123-123456789def';
+  const run = (f, auditor, id, entry) => action === 'show'
+    ? show(f, auditor, id)
+    : mutate(f, auditor, action, id, 1, action === 'update' ? entry : undefined);
+
+  test(`6e.4 CLI mem ${action} accepts an eight-character ID prefix`, async t => {
+    const f = await fixture(t, { allocateId: () => firstId });
+    const auditor = await f.spawn('auditor');
+    const entry = draft('Short ID manifest fixture');
+    const { item } = await put(f, auditor, entry);
+    assert.equal(item.id, firstId);
+    const revision = { ...entry, body: 'Verify the digest as well as the signature.' };
+    const { item: result } = await run(f, auditor, shortId, revision);
+    assert.equal(result?.id, firstId);
+    if (action === 'show') assert.deepEqual(result, item);
+    if (action === 'update') {
+      assert.equal(result.revision, 2);
+      assert.equal((await show(f, auditor, firstId)).item.body, revision.body);
+    }
+    if (action === 'invalidate') assert.equal((await show(f, auditor, firstId)).item, null);
+  });
+
+  test(`6e.4 CLI mem ${action} reports an ambiguous eight-character ID prefix`, async t => {
+    const ids = [firstId, secondId].values();
+    const f = await fixture(t, { allocateId: () => ids.next().value });
+    const auditor = await f.spawn('auditor');
+    const entry = draft('Colliding ID manifest fixture');
+    const { item: first } = await put(f, auditor, entry);
+    const { item: second } = await put(f, auditor, draft('Colliding ID signature fixture'));
+    assert.deepEqual([first.id, second.id], [firstId, secondId]);
+    await assert.rejects(run(f, auditor, shortId, entry), error => {
+      const { message } = JSON.parse(error.stdout).error;
+      assert.match(message, /ambigu|multiple match|歧义|多个匹配/iu);
+      return true;
+    });
+    for (const item of [first, second]) assert.deepEqual((await show(f, auditor, item.id)).item, item);
+  });
+}
+
 test('5a · R18 user rulings are read-only for Auditor and Leader; R22 denies Worker search and writes', async t => {
   const f = await fixture(t);
   const superAddr = await f.spawn('super'), auditor = await f.spawn('auditor'), leader = await f.spawn('leader');
@@ -428,8 +470,8 @@ test('6e.3 rulings ledger sync preserves the dated quotes and supersession chain
   const f = await fixture(t, { capture: true });
   const decisions = [
     ['R21', '2026-11-20', '“Use the nightly release window.”'],
-    ['R27', '2026-11-24', '“Use the morning window.” 取代 R21 的发布时间。'],
-    ['R28', '2026-11-26', '“Wait for manifest sign-off before release.” 取代 R27 的发布时间。'],
+    ['R27', '2026-11-24', '“Use the morning window.” 整条取代 R21。'],
+    ['R28', '2026-11-26', '“Wait for manifest sign-off before release.” 整条取代 R27。'],
   ].map(([number, date, quote]) => [number, `（${date}）${quote}`]);
   f.write('.project/rulings.md', '# 裁决账本\n' + decisions.map(([number, body]) => `${number}. ${body}\n`).join(''));
   await f.tick();
@@ -439,17 +481,70 @@ test('6e.3 rulings ledger sync preserves the dated quotes and supersession chain
     const entry = entries.find(item => item.body.includes(body));
     assert.ok(entry, `${number} preserves its date and verbatim user quote`);
     assert.equal(entry.kind, 'ruling');
+    assert.equal(entry.layer, 'user');
     assert.equal(entry.source.path, '.project/rulings.md');
     return entry;
   });
   assert.deepEqual(revised.supersedes, [original.id]);
   assert.deepEqual(current.supersedes, [revised.id]);
   assert.equal(current.status, 'active');
+  await assertRulingIndex(f, [current]);
   const before = structuredClone(f.snapshot());
   await f.tick();
   await f.restart();
   await f.tick();
   assert.deepEqual(f.snapshot(), before);
+});
+
+async function assertRulingIndex(f, expected) {
+  const access = createAccess({ readState: f.snapshot });
+  for (const role of ['leader', 'auditor']) {
+    const { rows } = await access.index({ role, principal: role, project: f.project });
+    assert.deepEqual(rows.map(row => row.id).sort(), expected.map(entry => entry.id).sort(), role);
+  }
+}
+
+test('6e.3 partial ledger replacements keep the original rulings active and indexed', async t => {
+  const f = await fixture(t, { capture: true });
+  const original21 = 'Require signed releases and allow an occasional reviewer.';
+  const original24 = '① Keep the sandbox. ② Check provenance. ③ Allow a temporary reviewer.';
+  const replacement = '审计员负责复核。取代 R21 中的临时 reviewer 口子与 R24③。';
+  f.write('.project/rulings.md', `# 裁决账本\nR21. ${original21}\nR24. ${original24}\nR26. ${replacement}\n`);
+  await f.tick();
+  const entries = f.snapshot()?.entries ?? [];
+  assert.equal(entries.length, 3, 'sync both original rulings and the partial replacement');
+  for (const body of [original21, original24, replacement]) {
+    const entry = entries.find(item => item.body.includes(body));
+    assert.ok(entry, `preserve ledger text: ${body}`);
+    assert.equal(entry.status, 'active');
+    assert.equal(entry.layer, 'user');
+  }
+  await assertRulingIndex(f, entries);
+});
+
+test('6e.3 ledger sync keeps R27 and R28 continuations verbatim alongside the originals', async t => {
+  const f = await fixture(t, { capture: true });
+  const lines = [
+    ['R27', '. ', 'Reuse a worker for closely related work.'],
+    ['R27', ' ', '修正（用户）：Finish the current card before applying the reuse threshold.'],
+    ['R28', '. ', 'Keep the same worker through a card where possible.'],
+    ['R28', ' ', '更正（用户指出悖论）：Consider both remaining context and prior compaction.'],
+    ['R28', ' ', '补充（试点经验）：Allow reuse only within the same worktree.'],
+  ];
+  f.write('.project/rulings.md', ['# 裁决账本', ...lines.map(fields => fields.join('')), ''].join('\n'));
+  await f.tick();
+  const entries = f.snapshot()?.entries ?? [];
+  assert.equal(entries.length, lines.length, 'sync each continuation as its own ruling');
+  for (const [number, , body] of lines) {
+    const entry = entries.find(item => item.body.includes(body));
+    assert.ok(entry, `preserve the text of ${number} ${body}`);
+    assert.match(`${entry.title}\n${entry.body}`, new RegExp(`\\b${number}\\b`, 'u'));
+    assert.equal(entry.status, 'active');
+    assert.equal(entry.kind, 'ruling');
+    assert.equal(entry.layer, 'user');
+    assert.equal(entry.source.path, '.project/rulings.md');
+  }
+  await assertRulingIndex(f, entries);
 });
 
 async function staysInHistory(f, reader, addr, turnId, reply, before) {
@@ -524,7 +619,7 @@ test('6e.3 acknowledged handover stays in the briefing and hist without creating
   await staysInHistory(f, auditor, successor, turnId, /HANDOVER-ACK/, before);
 });
 
-test('6e.3 migration withdraws the 75 legacy mechanical entries once and preserves legitimate memory', async t => {
+test('6e.3 migration withdraws legacy escalations, cards, gates and handovers once and preserves legitimate memory', async t => {
   const f = await fixture(t, { now: () => initialTime });
   const at = new Date(initialTime).toISOString();
   // Seed the persisted 6b entry shape, including the original category-dependent ID.
@@ -548,6 +643,9 @@ test('6e.3 migration withdraws the 75 legacy mechanical entries once and preserv
     i % 2 ? legacy('handover', i, 'auditor handover', 'auditor', 'ruling')
       : legacy('handover', i, 'leader handover', 'leader', 'lesson'),
   ]).flat();
+  // Escalation verdicts used the same persisted category and identity as ordinary gate verdicts.
+  noise.unshift(legacy('gate', 25, 'Escalation RELEASE-RED round 1', 'auditor', 'ruling',
+    '.project/gates/RELEASE-RED.r1.legacy-delivery-25.md'));
   const ledger = { ...legacy('ruling', 0, 'R42 Verify release signatures', 'super', 'ruling', '.project/rulings.md'),
     project: null, layer: 'user' };
   const manual = { ...draft('Card evidence retention rule'), id: 'manual-lesson', revision: 1, kind: 'lesson',

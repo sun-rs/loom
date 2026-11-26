@@ -801,17 +801,28 @@ test('6e.2 per-turn DeepSeek request includes the four-type observation and empt
 test('6e.2 per-turn extractor rejects supported noise and queues a durable observation', async t => {
   let proposals = [];
   const f = fixture(t, { proposals: () => proposals });
+  mkdirSync(join(f.project, 'src', 'release'), { recursive: true });
+  writeFileSync(join(f.project, 'src', 'release', 'index.mjs'), 'export {};\n');
   const leader = await f.spawn('leader', 'Assess what to retain from this turn.');
   const source = { kind: 'delivery', id: deliveryId(f.prompts.at(-1).input) };
   const durable = 'Why: A stale signature delayed release.\nHow to apply: Verify the manifest before publishing.';
-  proposals = [...noiseFacts, ['manifest-policy', 'Verify manifest signatures', durable]].map(([id, title, body]) => ({
+  const recovery = 'Why: Manifest recovery can silently omit signatures.\n' +
+    'How to apply: Require a signature check in src/release/index.mjs on every recovery.';
+  const durableFacts = [
+    ['manifest-policy', 'Verify manifest signatures', durable],
+    ['recovery-policy', 'Verify recovered manifest signatures', recovery],
+  ];
+  proposals = [...noiseFacts, ...durableFacts].map(([id, title, body]) => ({
     id, action: 'add', scope: 'project', source, title, body,
   }));
-  await f.finish(leader, [...noiseFacts.map(([, , body]) => body), durable].join('\n'));
+  await f.finish(leader, proposals.map(({ body }) => body).join('\n'));
   assert.equal(f.requests.length, 1);
   const state = readExtractorState(f.project);
-  assert.deepEqual(Object.keys(state.proposals), ['manifest-policy'], 'only the durable observation reaches review');
-  assert.equal(state.proposals['manifest-policy'].status, 'pending');
+  for (const [id] of durableFacts) {
+    assert.equal(state.proposals[id]?.status, 'pending', `${id} reaches review`);
+  }
+  assert.deepEqual(Object.keys(state.proposals).sort(), durableFacts.map(([id]) => id).sort(),
+    'only durable observations reach review');
   proposals = [];
   await f.send(leader, 'Only a routine progress check.');
   await f.finish(leader, noiseFacts[2][2]);
@@ -923,6 +934,39 @@ test('6b R25: stored user preferences and rulings stay out of turn and stage req
   const requestFields = ({ path, method, headers, raw }) => ({ path, method, headers, raw });
   assert.deepEqual({ turn: hits(requestFields(turn)), child: hits(child), upstream: hits(requestFields(stage)) },
     { turn: [], child: [], upstream: [] });
+});
+
+test('6e.3 R25 and R23: synced ledger ruling is indexed locally and never sent to organizers', async t => {
+  const f = fixture(t);
+  const runner = fakeOpenCode(t, f.root);
+  seedLegacyStageMemory(f.project);
+  const sentinel = 'SYNCED_LEDGER_RULING_BODY_SENTINEL';
+  const body = `Require signed recovery manifests. ${sentinel}`;
+  writeFileSync(join(f.project, '.project', 'rulings.md'), `# 裁决账本\nR42. ${body}\n`);
+  const superAddr = await f.spawn('super', 'Record the user ruling.');
+  await f.finish(superAddr, 'Recorded R42 in .project/rulings.md.');
+  const leader = await f.spawn('leader', 'Review the fixture records.');
+  const auditor = await f.spawn('auditor', 'Check the local ruling index.');
+  for (const addr of [leader, auditor]) {
+    const { rows } = await f.daemon.handle('mem', { action: 'search', target: sentinel }, addr);
+    assert.equal(rows.length, 1);
+    const { item } = await f.daemon.handle('mem', { action: 'show', target: rows[0].id }, addr);
+    assert.equal(item.layer, 'user');
+    assert.equal(item.kind, 'ruling');
+    assert.ok(item.body.includes(body));
+    assert.equal(item.source.path, '.project/rulings.md');
+  }
+  await f.finish(leader, 'Review complete for the fixture records.');
+  assert.equal(f.requests.length, 1, 'the turn reached upstream');
+  await completeStageGate(f, leader, 'SYNCED-LEDGER-SCOPE');
+  assert.equal(f.requests.length, 2, 'the stage reached upstream');
+  const [turn, stage] = f.requests;
+  const requestFields = ({ path, method, headers, raw }) => ({ path, method, headers, raw });
+  for (const [channel, payload] of Object.entries({
+    turn: requestFields(turn), child: runner.exchange().input, stage: requestFields(stage),
+  })) {
+    assert.ok(!JSON.stringify(payload).includes(sentinel), `ruling source text leaked to ${channel}`);
+  }
 });
 
 test('6b stage sends worker activity without any raw worker reply lines', async t => {

@@ -300,6 +300,10 @@ for (const [provider, systemPrompt] of [
       assertMemoryWritingRules(systemPrompt(launch));
     });
   }
+  test(`6e.1 R22 ${provider} Worker startup omits memory writing rules`, async () => {
+    const launch = await buildOarLaunch({ provider, binding: binding('worker', 'A'), indexText: '', argv: [] });
+    assertNoMemoryWritingRules(systemPrompt(launch));
+  });
 }
 
 // Fingerprints of selected 12-word windows from the local Claude Code 2.1.331
@@ -341,6 +345,10 @@ function assertMemoryWritingRules(prompt) {
     'update command': /\bloom mem update\b/u,
     'invalidate command': /\bloom mem invalidate\b/u,
   })) assert.match(prompt, pattern, rule);
+}
+
+function assertNoMemoryWritingRules(prompt) {
+  assert.doesNotMatch(prompt || '', /\bloom mem (?:write|update|invalidate)\b|\bHow to apply\b/iu);
 }
 
 for (const role of ['leader', 'auditor']) {
@@ -515,6 +523,7 @@ test('5c R22: worker spawn attaches deterministic path, topic and keyword matche
     assert.equal(inputs.length, 1);
     assert.equal(deliveryId(inputs[0]), first);
     assert.ok(inputs[0].includes(card));
+    assertNoMemoryWritingRules(inputs[0]);
     return inputs[0].match(/MEM-CARD-[A-Z]+/g) ?? [];
   }
   const first = await attachments('CARD-A');
