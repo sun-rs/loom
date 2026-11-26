@@ -6,6 +6,7 @@
 |---|---|---|
 | 2026-11-25 | AML 记忆排行榜、MemoraX 与开源冠军 | [2026-11-25-aml-memorax.md](2026-11-25-aml-memorax.md) |
 | 2026-11-25 | 记忆系统：单机、跨机，以及各 CLI 原生记忆的关闭方式 | [2026-11-25-memory-systems.md](2026-11-25-memory-systems.md) |
+| 2026-11-26 | 用确定性检查替代对抗式 review | [2026-11-26-verification-over-review.md](2026-11-26-verification-over-review.md) |
 | 2026-11-26 | a11y、get-selected-text、wterm | [2026-11-26-a11y.md](2026-11-26-a11y.md) |
 | 2026-11-26 | Status TUI 产品化 | [2026-11-26-status-tui.md](2026-11-26-status-tui.md) |
 | 2026-11-26 | 账号状态与额度来源 | [2026-11-26-account-status.md](2026-11-26-account-status.md) |
