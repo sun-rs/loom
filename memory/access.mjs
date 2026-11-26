@@ -1,6 +1,10 @@
+import { randomUUID } from 'node:crypto';
+import { sanitizeEntry } from './sanitize.mjs';
+
 const kindRank = { ruling: 0, preference: 1, lesson: 2 };
 const indexSurfaces = new Set(['index', 'search', 'attachments', 'delta']);
 const deltaLimit = 30;
+const historyKeys = ['id', 'project', 'layer', 'role', 'owner', 'author', 'cardId', 'sessionId', 'asOf'];
 
 function isUserGuidance(row) {
   return row.project === null && row.layer === 'user' && ['ruling', 'preference'].includes(row.kind);
@@ -112,31 +116,56 @@ function canForget(binding, entry) {
   return canReview(binding, entry) || canRevise(binding, entry);
 }
 
-export function createAccess({ readState, entries = [], changes = [], history, now = Date.now } = {}) {
-  const grants = new Map();
+export function createAccess({ readState, commitState, serialize, entries = [], changes = [], history,
+  now = Date.now, classifySensitive, replacement } = {}) {
   const deltaScopes = new WeakMap();
-  let grantId = 0;
+  let localGrants;
+  let pending = Promise.resolve();
+
+  const grantsOf = state => localGrants ?? state?.grants ?? [];
+
+  function updateGrants(change) {
+    const success = { ok: true };
+    if (!readState && !commitState) return change(localGrants ??= []) ?? success;
+    const action = async () => {
+      const state = await readState?.();
+      const grants = [...grantsOf(state)];
+      const result = change(grants);
+      if (!result) return success;
+      if (commitState) await commitState({ ...state, grants });
+      else localGrants = grants;
+      return result;
+    };
+    if (serialize) return serialize(action);
+    const result = pending.then(action);
+    pending = result.catch(() => {});
+    return result;
+  }
 
   async function snapshot() {
     const state = await readState?.();
     return {
       entries: state?.entries ?? entries,
       changes: state?.changes ?? changes,
+      grants: grantsOf(state),
       history: state?.history,
       asOf: state?.asOf,
     };
   }
 
-  function grantExpiry(binding, row) {
+  function grantExpiry(binding, row, grants) {
     let expiry = -Infinity;
-    for (const grant of grants.values()) {
-      if (grant.recipient === binding.principal && grant.sourceProject === row.project
-        && grant.recipientProject === binding.project) expiry = Math.max(expiry, Date.parse(grant.expiresAt));
+    for (const grant of grants) {
+      if (!grant.revoked && grant.recipient === binding.principal && grant.sourceProject === row.project
+        && grant.recipientProject === binding.project) {
+        const expires = Date.parse(grant.expiresAt);
+        if (expires > expiry) expiry = expires;
+      }
     }
     return expiry;
   }
 
-  function mayRead(binding, row, surface, time, project, retry = false) {
+  function mayRead(binding, row, surface, time, grants, project, retry = false) {
     if (!binding || (project !== undefined && row.project !== project)) return false;
     if (surface !== 'history') {
       const candidate = row.kind === 'candidate' || row.layer === 'candidate';
@@ -149,7 +178,7 @@ export function createAccess({ readState, entries = [], changes = [], history, n
       return surface !== 'history' && isUserGuidance(row) && ['auditor', 'leader'].includes(binding.role);
     }
     if (binding.role !== 'super' && isCrossProject(binding, row)) {
-      if (row.layer !== 'shared' || time >= grantExpiry(binding, row)) return false;
+      if (row.layer !== 'shared' || time >= grantExpiry(binding, row, grants)) return false;
     }
     return canReadRole(binding, row, surface);
   }
@@ -161,20 +190,20 @@ export function createAccess({ readState, entries = [], changes = [], history, n
   async function readIndex(binding, surface, project) {
     const state = await snapshot();
     const time = now();
-    const visible = state.entries.filter(entry => mayRead(binding, entry, surface, time, project));
+    const visible = state.entries.filter(entry => mayRead(binding, entry, surface, time, state.grants, project));
     return { visible, asOf: cutoff(state, time) };
   }
 
-  function visibleChange(binding, change, currentById, time, retry = false) {
+  function visibleChange(binding, change, currentById, time, grants, retry = false) {
     const current = currentById.get(change.id);
     const entry = change.entry ?? current;
     const withdrawal = change.operation === 'withdraw';
     const surface = withdrawal ? 'withdraw' : 'delta';
-    if (!entry || !mayRead(binding, entry, surface, time)) return null;
+    if (!entry || !mayRead(binding, entry, surface, time, grants)) return null;
 
     // Check both the publication's original scope and the current scope.
     // A forgotten item can still publish its withdrawal.
-    if (current && !mayRead(binding, current, surface, time, undefined, retry)) return null;
+    if (current && !mayRead(binding, current, surface, time, grants, undefined, retry)) return null;
     return entry;
   }
 
@@ -201,24 +230,25 @@ export function createAccess({ readState, entries = [], changes = [], history, n
     async show(binding, id, { project } = {}) {
       const state = await snapshot();
       const time = now();
-      const entry = state.entries.find(row => mayRead(binding, row, 'show', time, project) && row.id === id);
+      const entry = state.entries.find(row => mayRead(binding, row, 'show', time, state.grants, project) && row.id === id);
       if (!entry) return { item: null, seq: null };
       // Use the visible publication watermark of the snapshot, including the rest of a maintenance batch.
       const currentById = new Map(state.entries.map(row => [row.id, row]));
       let seq = null;
       for (const change of state.changes) {
-        const publication = visibleChange(binding, change, currentById, time);
+        const publication = visibleChange(binding, change, currentById, time, state.grants);
         if ((publication && (project === undefined || publication.project === project))
-          || (change.id === id && (!change.entry || mayRead(binding, change.entry, 'show', time, project)))) {
+          || (change.id === id && (!change.entry || mayRead(binding, change.entry, 'show', time, state.grants, project)))) {
           seq = Math.max(seq ?? 0, change.seq);
         }
       }
       return { item: { ...structuredClone(entry), ...provenance(binding, entry, cutoff(state, time)) }, seq };
     },
 
-    cacheUntil(binding, item) {
-      if (!mayRead(binding, item, 'show', now())) return 0;
-      return binding.role !== 'super' && isCrossProject(binding, item) ? grantExpiry(binding, item) : null;
+    async cacheUntil(binding, item) {
+      const { grants } = await snapshot();
+      if (!mayRead(binding, item, 'show', now(), grants)) return 0;
+      return binding.role !== 'super' && isCrossProject(binding, item) ? grantExpiry(binding, item, grants) : null;
     },
 
     async attachments(binding, { keywords = [], project } = {}) {
@@ -229,12 +259,17 @@ export function createAccess({ readState, entries = [], changes = [], history, n
     },
 
     async hist(binding, { id, project, sessionId } = {}) {
+      if (typeof classifySensitive !== 'function') return { ok: false, code: 'classifier-missing', rows: [] };
       const state = await snapshot();
-      const records = typeof history === 'function' ? await history(sessionId) : history ?? state.history ?? [];
+      const records = (typeof history === 'function' ? await history(sessionId) : history ?? state.history) ?? [];
       const time = now();
-      return { rows: records.filter(row => mayRead(binding, row, 'history', time, project)
+      return { rows: records.filter(row => mayRead(binding, row, 'history', time, state.grants, project)
         && (id === undefined || row.id === id) && (sessionId === undefined || row.sessionId === sessionId))
-        .map(row => ({ ...structuredClone(row), ...provenance(binding, row, cutoff(state, time)) })) };
+        .flatMap(row => {
+          const safe = sanitizeEntry(row, { classifySensitive, replacement });
+          if (!safe.ok || historyKeys.some(key => safe.entry[key] !== row[key])) return [];
+          return [{ ...safe.entry, ...provenance(binding, row, cutoff(state, time)) }];
+        }) };
     },
 
     async delta(binding, { cursor = 0 } = {}) {
@@ -245,7 +280,7 @@ export function createAccess({ readState, entries = [], changes = [], history, n
       const visible = [];
       for (const change of state.changes) {
         if (change.seq <= baseCursor) continue;
-        const entry = visibleChange(binding, change, currentById, time);
+        const entry = visibleChange(binding, change, currentById, time, state.grants);
         if (entry) visible.push({ change, entry });
       }
       visible.sort((a, b) => a.change.seq - b.change.seq);
@@ -277,8 +312,8 @@ export function createAccess({ readState, entries = [], changes = [], history, n
       const changesBySeq = new Map(state.changes.map(change => [change.seq, change]));
       return original.every(change => {
         const latest = changesBySeq.get(change.seq);
-        return latest?.id === change.id && visibleChange(binding, change, currentById, time, true)
-          && visibleChange(binding, latest, currentById, time, true);
+        return latest?.id === change.id && visibleChange(binding, change, currentById, time, state.grants, true)
+          && visibleChange(binding, latest, currentById, time, state.grants, true);
       });
     },
 
@@ -290,16 +325,22 @@ export function createAccess({ readState, entries = [], changes = [], history, n
         || typeof expiresAt !== 'string' || !(Date.parse(expiresAt) > now())) {
         return { ok: false, code: 'invalid-grant' };
       }
-      const grant = { id: 'grant-' + ++grantId, sourceProject, recipient, reason, expiresAt,
-        recipientProject: targetProject };
-      grants.set(grant.id, grant);
-      return { ok: true, grant: { ...grant } };
+      return updateGrants(grants => {
+        const grant = { id: 'grant-' + randomUUID(), sourceProject, recipient, reason, expiresAt,
+          recipientProject: targetProject, revoked: false };
+        grants.push(grant);
+        return { ok: true, grant: { ...grant } };
+      });
     },
 
     revoke(binding, id) {
       if (binding?.role !== 'super') return { ok: false, code: 'forbidden' };
-      grants.delete(id);
-      return { ok: true };
+      return updateGrants(grants => {
+        const index = grants.findIndex(grant => grant.id === id && !grant.revoked);
+        if (index < 0) return null;
+        grants[index] = { ...grants[index], revoked: true };
+        return { ok: true };
+      });
     },
 
     canWrite,

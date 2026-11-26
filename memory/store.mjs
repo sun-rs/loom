@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { createAccess } from './access.mjs';
 import { itemPath, renderEntry, validateEntry, validateEntryFormat } from './format.mjs';
 import { sanitizeEntry } from './sanitize.mjs';
@@ -15,6 +16,14 @@ const active = entry => entry.status === 'active';
 
 function select(source, fields) {
   return Object.fromEntries(fields.filter(key => source[key] !== undefined).map(key => [key, source[key]]));
+}
+
+function requestFingerprint({ requestId, ...content }) {
+  const canonical = JSON.stringify(content, (_key, value) => {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) return value;
+    return Object.fromEntries(Object.keys(value).sort().map(key => [key, value[key]]));
+  });
+  return createHash('sha256').update(canonical).digest('hex');
 }
 
 function draftFields(entry, externalSource) {
@@ -98,21 +107,17 @@ export function createMemoryStore({ now = Date.now, readState, commitState, evid
 
   async function history(sessionId) {
     const rows = await readRaw(sessionId) ?? [];
-    return rows.flatMap(row => {
-      const data = select(row, ['id', 'project', 'layer', 'role', 'owner', 'author', 'cardId', 'title', 'body', 'asOf']);
-      const safe = sanitizeEntry({ ...data, sessionId: row.sessionId ?? sessionId }, redaction);
-      if (!safe.ok) return [];
-      // Classification may remove display text, but must not change history's authorization keys.
-      if (Object.keys(data).some(key => !['title', 'body'].includes(key) && data[key] !== safe.entry[key])
-        || safe.entry.sessionId !== (row.sessionId ?? sessionId)) return [];
-      return [safe.entry];
-    });
+    return rows.map(row => ({
+      ...select(row, ['id', 'project', 'layer', 'role', 'owner', 'author', 'cardId', 'title', 'body', 'asOf']),
+      sessionId: row.sessionId ?? sessionId,
+    }));
   }
 
-  const access = createAccess({ readState, history: readRaw ? history : undefined, now });
+  const access = createAccess({ readState, commitState, serialize, history: readRaw ? history : undefined,
+    now, ...redaction });
 
   async function snapshot() {
-    return { entries: [], changes: [], seq: 0, files: {}, receipts: [], turns: [], nextId: 0,
+    return { entries: [], changes: [], seq: 0, files: {}, receipts: [], grants: [], turns: [], nextId: 0,
       ...structuredClone(await readState?.()) };
   }
 
@@ -177,25 +182,33 @@ export function createMemoryStore({ now = Date.now, readState, commitState, evid
       return invalid('Invalid memory replacement');
     }
     const existing = new Set(current?.supersedes);
-    const added = [...new Set(requested)].filter(targetId => !existing.has(targetId));
     const targets = [];
-    for (const targetId of added) {
+    for (const targetId of new Set(requested)) {
+      const retained = existing.has(targetId);
+      const revision = supersedeExpectedRevisions != null && Object.hasOwn(supersedeExpectedRevisions, targetId)
+        ? supersedeExpectedRevisions[targetId] : undefined;
+      if (retained && revision === undefined) continue;
       const target = state.entries.find(row => row.id === targetId);
       if (!access.canWrite(binding, target)) return forbidden();
-      if (target.id === id || target.layer !== scope.layer || !['active', 'stale'].includes(target.status)) {
+      if (target.id === id || target.layer !== scope.layer) {
         return invalid('Invalid memory replacement target');
       }
-      targets.push(target);
+      if (target.status === 'superseded' && Number.isSafeInteger(revision) && revision < target.revision) {
+        return conflict(target.revision);
+      }
+      if (retained) continue;
+      if (!['active', 'stale'].includes(target.status)) {
+        return invalid('Invalid memory replacement target');
+      }
+      targets.push({ target, revision });
     }
     const mismatch = expected(expectedRevision, current);
     if (mismatch) return mismatch;
-    for (const target of targets) {
-      const revision = supersedeExpectedRevisions != null && Object.hasOwn(supersedeExpectedRevisions, target.id)
-        ? supersedeExpectedRevisions[target.id] : undefined;
+    for (const { target, revision } of targets) {
       const targetMismatch = expected(revision, target);
       if (targetMismatch) return targetMismatch;
     }
-    const supersedes = [...existing, ...added];
+    const supersedes = [...existing, ...targets.map(({ target }) => target.id)];
     const extra = current ? select(current, ['original', 'proposer', 'reviewer']) : {};
     if (requested !== undefined || current?.supersedes !== undefined) extra.supersedes = supersedes;
     const fields = await prepare(draftFields(entry, await observations(binding)));
@@ -209,7 +222,7 @@ export function createMemoryStore({ now = Date.now, readState, commitState, evid
     const item = version(state, binding, fields.entry, current, extra);
     const formatResult = validateEntryFormat(item, format);
     if (!formatResult.ok) return formatResult;
-    for (const target of targets) {
+    for (const { target } of targets) {
       const replaced = { ...target, status: 'superseded', revision: target.revision + 1,
         updatedAt: item.updatedAt, supersededBy: [...(target.supersededBy ?? []), item.id] };
       const result = validateEntryFormat(replaced, format);
@@ -274,14 +287,11 @@ export function createMemoryStore({ now = Date.now, readState, commitState, evid
     return success({ item, candidate });
   }
 
-  function replayMerge(state, binding, request, current, prior, success) {
+  function replayMerge(state, binding, request, current, success) {
     if (!access.canReview(binding, current) || !request.cardId || request.cardId !== current.cardId) return forbidden();
     if (current.status === 'forgotten') return conflict(current.revision);
-    if (prior && (prior.candidate?.id !== current.id || prior.candidate.status !== 'merged')) {
-      return conflict(current.revision);
-    }
     // The original receipt keeps the redacted merge result even when the target is revised.
-    const merged = prior ?? state.receipts.find(({ response }) => response.candidate?.id === current.id
+    const merged = state.receipts.find(({ response }) => response.candidate?.id === current.id
       && response.candidate.status === 'merged' && response.candidate.revision === current.revision)?.response;
     if (!merged || merged.item.id !== request.targetId || typeof request.body !== 'string') {
       return conflict(current.revision);
@@ -289,7 +299,6 @@ export function createMemoryStore({ now = Date.now, readState, commitState, evid
     const safe = sanitizeEntry({ body: request.body }, redaction);
     if (!safe.ok) return safe;
     if (safe.entry.body !== merged.item.body) return conflict(current.revision);
-    if (prior) return prior;
     if (request.expectedRevision !== current.revision - 1 && request.expectedRevision !== current.revision) {
       return conflict(current.revision);
     }
@@ -352,14 +361,25 @@ export function createMemoryStore({ now = Date.now, readState, commitState, evid
     if (!nonempty(binding?.sessionId) || !nonempty(binding.principal)) return forbidden();
     if (!nonempty(request?.requestId)) return invalid('Expected a memory request ID');
     const { op, id, expectedRevision, requestId } = request;
-    if (bodyWrites.has(op) && typeof classifySensitive !== 'function') return forbidden();
+    if (bodyWrites.has(op) && typeof classifySensitive !== 'function') {
+      return { ok: false, code: 'classifier-missing', error: 'Memory sensitivity classifier is required' };
+    }
+    let fingerprint;
+    try {
+      fingerprint = requestFingerprint(request);
+    } catch {
+      return invalid('Invalid memory request content');
+    }
     const state = await snapshot();
     const scope = JSON.stringify([binding.sessionId, binding.principal, binding.role, binding.project, binding.cardId]);
     const prior = state.receipts.find(row => row.scope === scope && row.requestId === requestId);
     const success = (fields, status = 'accepted') => ({ ok: true, ...fields, receipt: { requestId, status } });
     const current = state.entries.find(entry => entry.id === id);
-    if (op === 'merge' && (current?.status === 'merged' || current?.status === 'forgotten')) {
-      return replayMerge(state, binding, request, current, prior?.response, success);
+    if (prior && prior.fingerprint !== fingerprint) {
+      return { ok: false, code: 'conflict', error: 'Memory request ID was already used' };
+    }
+    if (op === 'merge' && (current?.status === 'forgotten' || (!prior && current?.status === 'merged'))) {
+      return replayMerge(state, binding, request, current, success);
     }
     if (prior) return prior.response;
     const before = state.seq;
@@ -377,7 +397,7 @@ export function createMemoryStore({ now = Date.now, readState, commitState, evid
     } else return invalid('Unknown memory write operation');
     if (!result.ok) return result;
     if (state.seq !== before) indexFiles(state);
-    state.receipts.push({ scope, requestId, response: result });
+    state.receipts.push({ scope, requestId, fingerprint, response: result });
     await commitState(state);
     return structuredClone(result);
   }
