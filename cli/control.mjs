@@ -11,12 +11,14 @@ import { providers } from './policy.mjs';
 import { daemonAbsent, request } from '../daemon/rpc.mjs';
 import { activeRelease } from '../daemon/release.mjs';
 import { roles } from '../index/index.mjs';
+import { hostGrantSpec, requestedWorkerTier } from '../lib/worker-tiers.mjs';
 
 const executable = fileURLToPath(new URL('../bin/loomd', import.meta.url));
 const invalid = message => new CommandError('invalid-arguments', message);
 const named = entries => Object.fromEntries(entries.map(key => [key, { type: 'string' }]));
-export const spawnUsage = 'loom spawn <role> --cwd DIR [--project DIR] [--task T --wave W] [--keep-warm] [--reason TEXT] [--expect-red] [--integration] [--deliver stream | --deliver barrier --barrier SET] [--cli CLI] [--mode tui|headless] [--model MODEL] [--effort EFFORT] [--parent ADDR] [--handover-from OLD_ADDR] [--trust-workspace] "<prompt>"';
+export const spawnUsage = 'loom spawn <role> --cwd DIR [--project DIR] [--task T --wave W] [--keep-warm] [--reason TEXT] [--expect-red] [--tier sandbox|integration|host | --integration] [--deliver stream | --deliver barrier --barrier SET] [--cli CLI] [--mode tui|headless] [--model MODEL] [--effort EFFORT] [--parent ADDR] [--handover-from OLD_ADDR] [--trust-workspace] "<prompt>"';
 export const spawnHelp = 'Roles: super, leader, auditor, worker. Workers require --task and --wave. Worker results stream by default with delivery.coalesceMs (45 seconds). Use --deliver barrier --barrier SET for a set that must arrive together. --parent defaults to LOOM_ADDR in managed sessions. The required .project/policy.json supplies per-role runtime defaults, roles.leader.maxActiveWorkers (default 3, maximum 4). --handover-from includes the brief on startup. A Leader or Auditor successor must acknowledge the brief in its first native turn before the predecessor retires.';
+export const grantUsage = 'loom grant <task|wave> host --reason REASON [--ttl 30m] [--uses N] [--write PATH]... [--wave] [--request] [--project DIR]';
 export const daemonUsage = 'loom daemon start|stop|status [--project DIR] [--foreground]';
 
 async function status(project) {
@@ -65,10 +67,26 @@ export async function startDaemon(project, fallback) {
   throw new Error(`loomd failed to start. See ${logFile}`);
 }
 
+export async function workerGrant(args) {
+  let parsed;
+  try {
+    parsed = parseArgs({ args, allowPositionals: true, options: {
+      ...named(['project', 'reason', 'ttl', 'uses']), write: { type: 'string', multiple: true },
+      wave: { type: 'boolean' }, request: { type: 'boolean' },
+    } });
+  } catch (error) { throw invalid(error.message); }
+  const { values, positionals: [target, tier] } = parsed;
+  if (parsed.positionals.length !== 2) throw invalid(grantUsage);
+  hostGrantSpec({ ...values, target, tier });
+  const { project: directory, ...spec } = values;
+  const project = projectDirectory(directory);
+  return request(project, 'grant', { ...spec, target, tier });
+}
+
 export async function control(command, args) {
   let values;
   let positionals;
-  const spawnOptions = ['cli', 'mode', 'model', 'effort', 'cwd', 'project', 'task', 'wave', 'handover-from', 'deliver', 'barrier'];
+  const spawnOptions = ['cli', 'mode', 'model', 'effort', 'cwd', 'project', 'task', 'wave', 'handover-from', 'deliver', 'barrier', 'tier'];
   try {
     ({ values, positionals } = parseArgs({ args, allowPositionals: true, options: command === 'spawn' ?
       { ...named([...spawnOptions, 'parent', 'reason']), 'trust-workspace': { type: 'boolean' }, 'expect-red': { type: 'boolean' },
@@ -78,11 +96,12 @@ export async function control(command, args) {
 
   if (command === 'spawn') {
     const [role, prompt] = positionals;
+    const tier = role === 'worker' ? requestedWorkerTier(values) : undefined;
     if (positionals.length !== 2 || !roles.includes(role) || !prompt.trim() || !isAbsolute(values.cwd ?? '') ||
         ['cli', 'mode', 'model', 'effort', 'task', 'wave', 'parent', 'handover-from'].some(key => values[key] !== undefined && !values[key].trim()) ||
         (role === 'worker' ? !values.task || !values.wave : values['expect-red'] !== undefined || values.integration !== undefined ||
-          values['keep-warm'] !== undefined || values.reason !== undefined) ||
-        values.integration && values.mode === 'tui' ||
+          values.tier !== undefined || values['keep-warm'] !== undefined || values.reason !== undefined) ||
+        tier && tier !== 'sandbox' && values.mode === 'tui' ||
         (values.deliver !== undefined || values.barrier !== undefined) && (role !== 'worker' ||
           !['stream', 'barrier'].includes(values.deliver) || (values.deliver === 'barrier') !== Boolean(values.barrier?.trim())) ||
         values.cli && !providers.includes(values.cli) || values.mode && !['tui', 'headless'].includes(values.mode)) {

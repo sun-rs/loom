@@ -15,7 +15,7 @@ import { bindOarTranscript, checkedTranscript, oarControl, oarDelivery, oarEnd, 
 import { managedHookPath, openCodeExport, openTui, ownedPane, refreshOpenCode } from './tui.mjs';
 import { tuiHolders } from './tui-holder.mjs';
 import { recoverCodexEnd, recoverNativeDelivery } from './recovery.mjs';
-import { claudeAuthMode, spawnProfile, enforceDeny } from '../cli/policy.mjs';
+import { claudeAuthMode, spawnProfile, enforceDeny, readPolicy } from '../cli/policy.mjs';
 import { headAt, linkTuiInputHead, observeTuiHeads, saveTuiInputHead } from './turn-heads.mjs';
 import { controlTui, wrapperFailedStart } from '../runtimes/tui/transport.mjs';
 import { controlHello, requestControl } from '../tui/pty-control.mjs';
@@ -31,6 +31,8 @@ import { visibleRoles } from './herdr-layout.mjs';
 import { idleForRelease, isReleased, isThresholdRetirement, workerIdleSince } from './worker-retention.mjs';
 import { projectSessionMemory } from './processes.mjs';
 import { workerCheckpoint, workerCheckpointMismatch, workerCheckpointText, writeWorkerHandoff } from './worker-handoff.mjs';
+import { requestedWorkerTier, storedWorkerTier } from '../lib/worker-tiers.mjs';
+import { recordHostEvidence } from '../evidence/host.mjs';
 
 const runtimeIds = { codex: 'codex', agy: 'antigravity', claude: 'claude', opencode: 'opencode' };
 const modes = new Set(['tui', 'headless']);
@@ -108,7 +110,7 @@ function defaultTrustWorkspace(project, cwd) {
 }
 
 export function ownedSessions(project, index, report, {
-  open, exportOpenCode, openPane = openTui, getPane = ownedPane, callHc = hc, controller, layout, capabilities,
+  open, exportOpenCode, openPane = openTui, getPane = ownedPane, callHc = hc, controller, layout, capabilities, hostGrants,
 } = {}) {
   const path = join(runtimeDirectory(project), 'sessions');
   mkdirSync(path, { recursive: true, mode: 0o700 });
@@ -416,6 +418,11 @@ export function ownedSessions(project, index, report, {
       catch (error) { report(`Could not remove finished session capability for ${row.addr}: ${error.code ?? 'filesystem error'}`); }
     }
     const final = row.endedAt === null ? index.update(row.addr, { endedAt: Math.max(row.startedAt, at) }) : row;
+    if (job.hostGrant && !job.hostEvidencePath) {
+      const evidence = await recordHostEvidence(project, final, job.hostGrant, events(row.addr));
+      job.hostEvidencePath = evidence.path;
+      save(job);
+    }
     try { layout?.clear(final); }
     catch (error) { report(`Herdr layout ${row.addr}: ${error.message}`); }
     if (!temporaryRole(row.role) && final.transcriptPath && !job.endRecorded) {
@@ -546,6 +553,7 @@ export function ownedSessions(project, index, report, {
         (input.integration !== undefined && (input.role !== 'worker' || typeof input.integration !== 'boolean')) ||
         (input['keep-warm'] !== undefined && (input.role !== 'worker' || typeof input['keep-warm'] !== 'boolean')) ||
         (input.reason !== undefined && (input.role !== 'worker' || !validDispatchReason(input.reason))) ||
+        (input.tier !== undefined && input.role !== 'worker') ||
         (input.cli !== undefined && !Object.hasOwn(runtimeIds, input.cli)) ||
         (input.mode !== undefined && !modes.has(input.mode)) ||
         (input.defaultMode !== undefined && !modes.has(input.defaultMode)) ||
@@ -557,6 +565,8 @@ export function ownedSessions(project, index, report, {
         (input.role === 'worker' || input.wave !== undefined) && !addressPattern.test(input.wave ?? '')) {
       throw new ErrorCode('invalid-arguments', 'spawn requires role, cwd and prompt. Workers require task and wave. Barrier delivery requires a set ID.');
     }
+    const workerTier = input.role === 'worker' ? requestedWorkerTier(input) : undefined;
+    const integration = workerTier === 'integration';
     const cwd = inProjectDirectory(project, input.cwd);
     const predecessor = input['handover-from'] && rowFor(input['handover-from']);
     if (input['handover-from'] !== undefined && (!predecessor || !jobs.has(predecessor.addr) ||
@@ -581,7 +591,10 @@ export function ownedSessions(project, index, report, {
     const { requested, selected, deny, warnings, fastRequested, trustWorkspace } = spawnProfile(project,
       input.role === 'worker' ? { ...input, workerCaller: caller ?? null } : input, addr => routeParent(addr)?.addr, occupies);
     const { cli, mode, model, effort } = selected;
-    if (input.integration && mode !== 'headless') throw new ErrorCode('invalid-arguments', 'Integration profile requires a headless worker');
+    if ((integration || workerTier === 'host') && mode !== 'headless') {
+      throw new ErrorCode('invalid-arguments', `The ${workerTier} tier requires a headless Worker`);
+    }
+    if (workerTier === 'host' && input['keep-warm']) throw new ErrorCode('invalid-arguments', 'Host grants are limited to a card and cannot keep a Worker warm');
     if (input['keep-warm'] && mode !== 'headless') throw new ErrorCode('invalid-arguments', '--keep-warm requires a headless worker');
     const addr = `${mode === 'headless' ? 'oar' : 'loom'}-${randomUUID()}`;
     const runtimeId = mode === 'tui' ? `${cli}-tui` : runtimeIds[cli];
@@ -633,16 +646,16 @@ export function ownedSessions(project, index, report, {
       let memory;
       try { memory = workerMemoryPrompt(project, card); }
       catch (error) { report(`Worker memory unavailable: ${error.message}`); }
-      prompt = [prompt, cardConventions({ ...row, integration: input.integration }),
+      prompt = [prompt, cardConventions({ ...row, integration }),
         '## Loom dispatch baseline\n' + workerCheckpointText(checkpoint), memory].filter(Boolean).join('\n\n');
     }
     const fast = selfHandoff?.inheritFast ? jobs.get(predecessor.addr)?.fast : selected.fast;
     const requestedFast = selfHandoff?.inheritFast ? jobs.get(predecessor.addr)?.fastRequested : fastRequested;
     const job = { row, firstId: randomUUID(), prompt, gate, requested, deny, release: releaseId(),
       ...(actor && jobs.has(actor.addr) && { sender: targetBinding(actor) }),
-      ...(row.role === 'worker' && { isolatedWorkerHome: true }),
+      ...(row.role === 'worker' && { isolatedWorkerHome: workerTier !== 'host', workerTier }),
       ...(input['keep-warm'] && { retention: { keepWarm: true } }),
-      ...(input.integration && { integration: true }),
+      ...(integration && { integration: true }),
       ...(cli === 'claude' && mode === 'tui' && { autoTrustWorkspace: input['trust-workspace'] ??
         (trustWorkspace && defaultTrustWorkspace(project, cwd)) }),
       ...(warnings.length && { warnings }),
@@ -659,6 +672,11 @@ export function ownedSessions(project, index, report, {
       ...(input['expect-red'] !== undefined && { expectRed: input['expect-red'] }),
       ...(deliver && { deliver, ...(input.barrier && { barrier: input.barrier }) }),
       ...(cli === 'opencode' && mode === 'tui' && { plannedNativeId: `ses_${randomUUID().replaceAll('-', '')}` }) };
+    if (workerTier === 'host') {
+      const waves = readPolicy(project, { optional: true }).roles?.worker?.tiers;
+      job.hostGrant = hostGrants.reserve(row, waves && Object.hasOwn(waves, row.wave) && waves[row.wave] === 'host');
+      job.prompt += '\n\nTrusted host grant for this card. Use absolute native CLI paths. Keep credentials, global config, CCP, Solars, rah_os, loom-next and unrelated processes or panes outside the task. Run only the authorized work and end the card with a conclusion.';
+    }
     save(job);
     jobs.set(addr, job);
     return job;
@@ -713,7 +731,8 @@ export function ownedSessions(project, index, report, {
   }
 
   async function openFixture(row, job) {
-    const session = await open(job.fast === undefined ? row : { ...row, fast: job.fast }, project, row.sessionId,
+    const session = await open({ ...row, ...(job.fast !== undefined && { fast: job.fast }),
+      ...(job.hostGrant && { hostGrant: job.hostGrant }) }, project, row.sessionId,
       capabilities?.ensureSession(row.addr).token);
     try {
       if (row.sessionId && session.id !== row.sessionId) throw new Error('OAR resumed a different native session');
@@ -731,8 +750,13 @@ export function ownedSessions(project, index, report, {
       beginRotation(job, rowFor(job.handoverFrom));
       index.bindRotation(job.row.addr, job.handoverBoundAt ?? job.row.startedAt);
     }
-    let row = rowFor(job.row.addr) ?? index.register(job.row);
-    if (row.endedAt !== null) return row;
+    let row = rowFor(job.row.addr);
+    if (row && row.endedAt !== null) return row;
+    if (storedWorkerTier(job) === 'host' && !job.stopping && !hostGrants.active(job.row, job.hostGrant?.id)) {
+      if (row) return stop(row);
+      throw new ErrorCode('host-grant-expired', 'Host launch requires an active reservation');
+    }
+    row ??= index.register(job.row);
     if (job.stopping) return stop(row);
     if (isReleased(job) && !job.retention.resuming) return row;
     if (row.backend === 'headless') {
@@ -911,7 +935,7 @@ export function ownedSessions(project, index, report, {
     openCodeProofs.set(row.addr, proof);
     try {
       const { events } = exportOpenCode ? await exportOpenCode(row) :
-        await openCodeExport(row, row.sessionId, { ...process.env, ...workerEnvironment(row) },
+        await openCodeExport(project, row, row.sessionId, { ...process.env, ...workerEnvironment(row) },
           process.env.OAR_OPENCODE_BIN ?? process.env.LOOM_OPENCODE_BIN);
       proof.events = events;
     } catch (error) { report(`${row.addr}: ${error.message}`); }
@@ -976,7 +1000,7 @@ export function ownedSessions(project, index, report, {
             }
           }
         }
-        if (row.endedAt !== null && !job.endRecorded) await finish(job, row);
+        if (row.endedAt !== null && (!job.endRecorded || job.hostGrant && !job.hostEvidencePath)) await finish(job, row);
         await retainCompaction(job, row);
       } catch (error) {
         if (!(retryAt.get(addr) > Date.now())) {
@@ -1073,6 +1097,7 @@ export function ownedSessions(project, index, report, {
   async function resume(row, mail, at, warmMs) {
     requireLive(row);
     const job = jobs.get(row.addr);
+    if (job?.hostGrant) throw new ErrorCode('host-grant-required', 'Start a new host session with a grant use');
     if (!job || row.backend !== 'headless' || row.role !== 'worker' || job.stopping || job.closed ||
         job.workerHandoff?.ready || job.firstReportCheck?.status === 'mismatch' || !row.sessionId) {
       throw new ErrorCode('not-ready', 'Expected a resumable headless worker attempt');

@@ -6,7 +6,7 @@ import { CommandError } from '../cli/sessions.mjs';
 import { projectIndex } from '../cli/project.mjs';
 import { reportedContext } from '../cli/state.mjs';
 import { defaultStallMs, inbox, pendingWork, receipt, stalledDeliveries, stallText, suppressedReplies, suppressedReplyText } from '../inbox/engine.mjs';
-import { deliveryFailed, isBlockedReply, messageIdPattern } from '../inbox/message.mjs';
+import { conclusoryReply, deliveryFailed, isBlockedReply, messageIdPattern } from '../inbox/message.mjs';
 import { relay } from '../relay/project.mjs';
 import { withClaudeTranscriptStops } from '../relay/sources.mjs';
 import { createWatcher } from '../watch/index.mjs';
@@ -34,6 +34,8 @@ import { rotationPolicy } from './rotation-policy.mjs';
 import { selfRotation } from './self-rotation.mjs';
 import { approvedWaves, handoffReason, idleForRelease, isReleased, releaseConditions, retainedState, retirementReason, retentionStatus,
   reuseStatus, workerCardId, workerContext, workerDetails, workerIdleSince, workerMetrics, workerStalledSince } from './worker-retention.mjs';
+import { hostGrantSpec, storedWorkerTier } from '../lib/worker-tiers.mjs';
+import { hostGrants, hostTrustWarning, hostWritePaths } from './host-grants.mjs';
 
 function batchDeliveryId(batch, dest) {
   const bytes = createHash('sha256').update(`${batch}\0${dest}`).digest('hex').slice(0, 32);
@@ -63,7 +65,8 @@ export function createSupervisor(project, {
   }
   const index = projectIndex(project);
   index.initialize();
-  const sessions = ownedSessions(project, index, report, sessionOptions);
+  const grants = hostGrants(project, { now, notify: (...events) => notifications.add(...events) });
+  const sessions = ownedSessions(project, index, report, { ...sessionOptions, hostGrants: grants });
   const policyForTick = () => {
     try { return readPolicy(project, { optional: true }); }
     catch { return {}; }
@@ -841,7 +844,7 @@ ${details}`, {
     const at = now();
     for (const row of rows) {
       const job = sessions.jobs.get(row.addr);
-      if (!job || row.endedAt !== null || job.stopping ||
+      if (!job || row.endedAt !== null || job.stopping || job.hostGrant ||
           !(row.role === 'worker' && (row.backend === 'headless' || job.firstReportCheck?.status === 'mismatch') ||
             job.handoverFailure)) continue;
       if (job.retention?.keepWarm && deliveries(row.addr).some(message => message.id !== job.firstId &&
@@ -936,19 +939,38 @@ ${details}`, {
     if (session.role === 'worker') failedWorkerLaunches.delete(session.project);
     let retirementIssue;
     const retired = await sessions.retirePredecessor(job).catch(error => { retirementIssue = error.message; });
-    const handoff = codexHandoff(session);
+    const handoff = job.hostGrant ? undefined : codexHandoff(session);
     notifyProfile(session.project, session.addr, job.warnings);
     return { session, deliveryId: job.firstId, requested: job.requested, ...sessions.runtimeSelection(session),
       ...(session.role === 'worker' && { dispatch: 'new', dispatchReason: args.reason ?? 'clean context',
         ...(job.checkpoint && { checkpoint: job.checkpoint }) }),
+      ...(session.role === 'worker' && { workerTier: storedWorkerTier(job) }),
       ...(job.integration && { workerProfile: 'integration' }),
+      ...(job.hostGrant && { hostGrant: job.hostGrant }),
       ...(job.deliver && { deliver: job.deliver, ...(job.barrier && { barrier: job.barrier }) }),
       ...(handoff && { handoff }), ...(job.handoverFrom && { handoverFrom: job.handoverFrom }),
       ...(retired && { retired: retired.addr }), ...(retirementIssue && { retirementIssue }) };
   }
 
+  async function reconcileHostCards() {
+    for (const job of sessions.jobs.values()) {
+      if (!job.hostGrant) continue;
+      const row = sessions.rowFor(job.row.addr);
+      const reply = deliveries(job.row.addr).find(message => {
+        const body = message.completion?.body ?? message.completion?.unconfirmedBody;
+        return body && conclusoryReply(body);
+      });
+      if (reply) grants.closeCard(job.row, job.hostGrant.id, reply.completion.at);
+      if (row?.endedAt === null && !grants.active(row, job.hostGrant.id)) {
+        await sessions.stop(row).catch(error => report(`${row.addr} host expiry: ${error.message}`));
+      }
+    }
+  }
+
   async function tick() {
     policy = policyForTick();
+    await reconcileHostCards();
+    grants.sweep();
     await sessions.refresh(mail);
     if (v2.enabled()) v2.checkProtectedRefs();
     for (const job of sessions.jobs.values()) {
@@ -970,6 +992,7 @@ ${details}`, {
       return routed.get(addr);
     }, {
       async beforeDispatch() {
+        await reconcileHostCards();
         await settleHandovers();
         await org.collect(sessions.rows());
         await rotation.advance();
@@ -1066,6 +1089,7 @@ ${details}`, {
 
       },
     });
+    await reconcileHostCards();
     await checkStartupBlockers();
     await observeSessions(policy.delivery?.stallMs ?? uncertainWindow ?? defaultStallMs);
     health = new Map((await watcher.poll()).map(row => [row.addr, row]));
@@ -1138,6 +1162,28 @@ ${details}`, {
       if (rpcActor && v2.enabled() && command === 'switch') v2.ruleChange(rpcActor, 'budget');
       if (rpcActor && v2.enabled() && command === 'senior-override') v2.ruleChange(rpcActor, 'merge');
       if (command === 'spawn') return spawnSession(args, caller);
+      if (command === 'grant') {
+        const spec = hostGrantSpec(args);
+        const { request: requestOnly, ...desired } = spec;
+        const names = new Set(sessions.rows().map(row => row.project));
+        const name = rpcActor?.project ?? (names.size === 1 ? names.values().next().value : project);
+        if (!requestOnly) {
+          if (!external && rpcActor?.role !== 'super') throw new CommandError('forbidden', 'Only authenticated Super can grant host access');
+          const grant = grants.grant(name, desired, rpcActor?.addr ?? 'external-super');
+          return { grant, warning: hostTrustWarning };
+        }
+        if (rpcActor?.role !== 'leader' || liveRole(name, 'leader')?.addr !== rpcActor.addr) {
+          throw new CommandError('forbidden', 'Use the live authenticated Leader to request a host grant');
+        }
+        desired.write = hostWritePaths(project, desired.write);
+        const id = randomUUID();
+        notifications.add({ id, type: 'needs-decision', kind: 'worker-tier-request', project: name, at: now(),
+          addr: rpcActor.addr, workerTierRequest: desired, requestOriginVerified: true,
+          text: `请求 host 权限 · ${spec.wave ? 'wave' : 'task'} ${spec.target} · ${spec.reason} · ${spec.uses} 次` +
+            (spec.ttlMs ? ` · TTL ${spec.ttlMs / 1000}s` : '') +
+            (spec.write.length ? ` · 写入路径 ${desired.write.join(', ')}` : '') + ` · ${hostTrustWarning}` });
+        return { requested: desired, notificationId: id };
+      }
       if (command === 'worker-handoff' && args.target !== undefined) return seniorWorkerHandoff(args, caller, external);
       if (command === 'worker-check' || command === 'worker-handoff') {
         const actor = caller && sessions.rows().find(row => row.addr === caller || row.pane === caller);
@@ -1187,7 +1233,8 @@ ${details}`, {
           awaitingUser: observations.get(row.addr)?.awaitingUser,
           awaitingHandover: Boolean(sessions.jobs.get(row.addr)?.handoverAck && !sessions.jobs.get(row.addr)?.handoverBound),
         }));
-        const workers = workerBoard(rows, mail.messages, sessions.jobs, observations, sessionFields).map(worker => {
+        const workers = workerBoard(rows, mail.messages, sessions.jobs, observations, sessionFields).map(entry => {
+          const worker = { ...entry, workerTier: storedWorkerTier(sessions.jobs.get(entry.addr)) };
           const details = workerStatus(sessions.rowFor(worker.addr));
           return details ? { ...worker, ...details, releasedAt: details.retention.releasedAt ?? worker.releasedAt } : worker;
         });
@@ -1390,6 +1437,7 @@ ${details}`, {
           const runtimeState = userPrompt?.kind ?? liveness?.status ?? reportedState(snapshot, incident);
           const worker = workerStatus(row, snapshot);
           return { addr: row.addr, state: runtimeState,
+            ...(row.role === 'worker' && { workerTier: storedWorkerTier(sessions.jobs.get(row.addr)) }),
             lastProgressAt: observed?.lastProgressAt ?? row.startedAt, ...(liveness && { liveness }),
             ...(worker && { ...worker, runtimeState }),
             ...((senior(row) || row.role === 'super') && { compactions: observations.get(row.addr)?.compactions ?? 0,

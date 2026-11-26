@@ -1533,6 +1533,97 @@ test('integration is a headless worker profile and Loom records the suite in the
   assert.ok(checks.some(check => check.command === 'npm test' && check.result === 'passed'));
 });
 
+test('named worker tiers preserve the existing launch profiles across providers', async t => {
+  for (const cli of ['codex', 'agy', 'claude', 'opencode']) await t.test(cli, async t => {
+    const f = fixture(t);
+    const d = f.daemon();
+    t.after(d.shutdown);
+    const { session: leader } = await f.spawn(d, 'leader', 'L');
+    const baseline = await f.spawn(d, 'worker', 'BASE', leader.addr, { cli });
+    const extended = await f.spawn(d, 'worker', 'EXTENDED', leader.addr, { cli, tier: 'integration' });
+    assert.equal(baseline.workerTier, 'sandbox');
+    assert.equal(extended.workerTier, 'integration');
+    assert.equal(extended.workerProfile, 'integration');
+    assert.equal(f.read(`loomd/sessions/${baseline.session.addr}.json`).integration, undefined);
+    assert.equal(f.read(`loomd/sessions/${extended.session.addr}.json`).integration, true);
+    const { workers } = await d.handle('board', {});
+    assert.deepEqual(workers.map(row => row.workerTier), ['sandbox', 'integration']);
+    await assert.rejects(f.spawn(d, 'worker', 'CONFLICT', leader.addr, { cli, tier: 'sandbox', integration: true }),
+      { code: 'invalid-arguments' });
+    await assert.rejects(f.spawn(d, 'worker', 'HOST', leader.addr, { cli, tier: 'host' }),
+      { code: 'host-grant-required' });
+    f.policy({ deny: [], preferred: [], roles: { worker: { tiers: { W: 'host' } } } });
+    const host = await f.spawn(d, 'worker', 'HOST', leader.addr, { cli, tier: 'host', prompt: 'HOLD for host evidence' });
+    assert.equal(host.workerTier, 'host');
+    assert.deepEqual(host.hostGrant.write, []);
+    assert.equal(f.read(`loomd/sessions/${host.session.addr}.json`).isolatedWorkerHome, false);
+    assert.ok((await d.handle('board', {})).workers.some(row => row.addr === host.session.addr && row.workerTier === 'host'));
+  });
+});
+
+test('the grant CLI routes authenticated Leader requests and reserves issuance for Super', async t => {
+  const f = fixture(t);
+  const d = f.daemon();
+  t.after(d.shutdown);
+  const { session: leader } = await f.spawn(d, 'leader', 'L');
+  const { session: superRow } = await f.spawn(d, 'super', 'S');
+  const { session: worker } = await f.spawn(d, 'worker', 'W', leader.addr);
+  const run = await cliFor(t, f, () => d, leader.addr);
+  const reason = 'Read-only account health check';
+  const write = [join(f.project, 'output-a'), join(f.project, 'output-b')];
+  const { stdout } = await run('grant', 'T-1', 'host', '--request', '--reason', reason, '--ttl', '30m',
+    '--write', write[0], '--write', write[1], '--uses', '3');
+  const { requested, notificationId } = JSON.parse(stdout);
+  assert.deepEqual(requested, { target: 'T-1', tier: 'host', reason, uses: 3, ttlMs: 1_800_000, write, wave: false });
+  const { notifications } = await d.handle('notifications', { history: true });
+  const notice = notifications.find(item => item.id === notificationId);
+  assert.deepEqual(notice.workerTierRequest, requested);
+  assert.equal(notice.requestOriginVerified, true);
+  assert.match(notice.text, /3 次/);
+  const defaultRequest = await run('grant', 'W', 'host', '--request', '--wave', '--reason', reason);
+  assert.equal(JSON.parse(defaultRequest.stdout).requested.uses, 1);
+  await assert.rejects(run('grant', 'T-1', 'host', '--reason', reason), error => JSON.parse(error.stdout).error.code === 'forbidden');
+  for (const caller of [leader.addr, worker.addr, undefined]) {
+    await assert.rejects(d.handle('grant', { target: 'T-1', tier: 'host', reason }, caller, { external: false }), { code: 'forbidden' });
+  }
+  const issued = await d.handle('grant', { target: 'T-1', tier: 'host', reason }, superRow.addr);
+  assert.equal(issued.grant.remaining, 1);
+  assert.match(issued.warning, /not fail-closed for Codex tool paths/);
+  await assert.rejects(d.handle('grant', { target: 'T-1', tier: 'host', reason, request: true }, worker.addr),
+    { code: 'forbidden' });
+  const spec = { target: 'T-1', tier: 'host', reason, request: true };
+  for (const invalid of [{ ttl: '0' }, { uses: '0' }, { uses: '-1' }, { uses: '1.5' }, { uses: '9007199254740992' },
+    { uses: null }, { write: ['relative/path'] }, { wave: true, write }]) {
+    await assert.rejects(d.handle('grant', { ...spec, ...invalid }, leader.addr), { code: 'invalid-arguments' });
+  }
+  for (const tiers of [{ '*': 'host' }, { W: 'full' }, { W: { tier: 'host', write } }]) {
+    f.policy({ deny: [], preferred: [], roles: { worker: { tiers } } });
+    await assert.rejects(f.spawn(d, 'worker', 'BADPOLICY', leader.addr), { code: 'invalid-policy' });
+  }
+});
+
+test('host grants debit before launch, expire on conclusion, and save all observed shell commands', async t => {
+  const f = fixture(t);
+  const d = f.daemon();
+  t.after(d.shutdown);
+  const spec = { target: 'PROBE', tier: 'host', reason: 'Read-only fixture', write: [join(f.project, 'output')] };
+  const { grant } = await d.handle('grant', spec);
+  const { session } = await f.spawn(d, 'worker', spec.target, undefined, { tier: 'host', prompt: 'HOLD' });
+  await assert.rejects(f.spawn(d, 'worker', spec.target, undefined, { tier: 'host' }), { code: 'host-grant-exhausted' });
+  assert.deepEqual(f.read('loomd/host-grants.json').grants[0].claims.map(claim => claim.addr), [session.addr]);
+  await d.tick();
+  f.sessions.get(session.addr).check('/usr/bin/true', 10, 0);
+  f.sessions.get(session.addr).finish('DONE PROBE');
+  await d.tick();
+  const history = (await d.handle('notifications', { history: true })).notifications.filter(event => event.grantId === grant.id);
+  assert.deepEqual(history.map(event => event.type), ['host-tier-grant', 'host-tier-used', 'host-tier-refused', 'host-tier-expired']);
+  assert.match(history[0].text, /not fail-closed for Codex tool paths/);
+  const evidence = f.read(`evidence/PROBE-host-${session.addr}.json`);
+  assert.equal(evidence.verification.host.grantId, grant.id);
+  assert.deepEqual(evidence.verification.host.commands.map(({ command, exitCode }) => [command, exitCode]), [['/usr/bin/true', 0]]);
+  await assert.rejects(f.spawn(d, 'worker', spec.target, undefined, { tier: 'host' }), { code: 'host-grant-expired' });
+});
+
 test('keeps the predecessor active and releases queued work when the first briefing turn lacks the acknowledgement', async t => {
   const f = fixture(t);
   f.policy({ workers: { idleRetainMs: 0 } });

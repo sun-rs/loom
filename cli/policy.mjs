@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { readText, writeState } from '../daemon/io.mjs';
 import { CommandError, resolveTarget } from './sessions.mjs';
 import { roles } from '../index/index.mjs';
+import { tierTarget, workerTiers } from '../lib/worker-tiers.mjs';
 import { projectIndex, runtimeDirectory } from './project.mjs';
 
 export const providers = ['codex', 'agy', 'claude', 'opencode'];
@@ -131,6 +132,11 @@ export function readPolicy(project, { optional = false } = {}) {
         if (!roles.includes(role) || !entry || typeof entry !== 'object' || Array.isArray(entry)) throw new Error(`Invalid role policy: ${role}`);
         validateProfiles(entry);
         validateGuidance(role, entry.guidance);
+        if (entry.tiers !== undefined && (role !== 'worker' || !entry.tiers || typeof entry.tiers !== 'object' ||
+            Array.isArray(entry.tiers) || Object.entries(entry.tiers).some(([wave, tier]) =>
+              !tierTarget.test(wave) || !workerTiers.includes(tier)))) {
+          throw new Error('Expected roles.worker.tiers to map exact wave names to sandbox, integration or host');
+        }
         const rotates = ['leader', 'auditor'].includes(role);
         if (entry.rotateAtCompactions !== undefined && (!['super', 'leader', 'auditor'].includes(role) ||
             !Number.isSafeInteger(entry.rotateAtCompactions) || entry.rotateAtCompactions < 1)) {

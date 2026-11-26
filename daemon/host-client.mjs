@@ -67,6 +67,7 @@ export async function attachHost(project, row, job, save, controller, { stop = f
     }
     if (stop && (start || !owner)) return { endedAt: Date.now() };
   } else if (stop) return { endedAt: Date.now() };
+  if (start && job.host && job.hostGrant) return { endedAt: Date.now() };
   if (start) {
     boundIdentity = undefined;
     if (row.cli === 'claude') job.authMode = claudeAuthMode(project, row.role);
@@ -75,6 +76,7 @@ export async function attachHost(project, row, job, save, controller, { stop = f
     mkdirSync(dir, { recursive: true, mode: 0o700 });
     writeState(join(dir, 'launch.json'), JSON.stringify({ row: { ...row, sessionId: resume,
       ...(job.integration && { integration: true }),
+      ...(job.hostGrant && { hostGrant: job.hostGrant }),
       ...(job.fast !== undefined && { fast: job.fast }),
       ...(job.authMode && { authMode: job.authMode }) } }));
     syncDirectory(join(dir, '..'));

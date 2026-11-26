@@ -186,7 +186,7 @@ export function boardView(project, { board, error } = {}, { width = 80, now = Da
       const reuse = worker.reuse === 'same-card-only' ? 'same card' : worker.reuse;
       const item = itemFor('worker:' + worker.addr, 'Worker · ' + show(worker.task), [
         ['Address', worker.addr], ['CLI / model', [worker.cli, worker.model].filter(Boolean).join(' · ')],
-        ['Wave', worker.wave], ['State', worker.state], ['Result', worker.lastResult], ['Session UUID', worker.sessionId],
+        ['Wave', worker.wave], ['State', worker.state], ['Tier', worker.workerTier], ['Result', worker.lastResult], ['Session UUID', worker.sessionId],
         ['Working directory', worker.cwd], ['Transcript path', worker.transcriptPath],
         ['Warm countdown', countdown], ['Context', context], ['Last result', worker.lastResultTag],
         ['Compactions', worker.compactions], ['Reuse', reuse === 'same card' ? 'Same card only' : reuse],
@@ -202,7 +202,8 @@ export function boardView(project, { board, error } = {}, { width = 80, now = Da
       if (state === 'idle' && Number.isFinite(worker.releaseAt)) {
         state += worker.releaseAt > now ? ` · 释放于 ${duration(worker.releaseAt - now, Math.ceil)}` : ' · 待释放';
       }
-      return { item, cells: [tableLabel(item, show(worker.task)), show(worker.wave),
+      const tier = worker.workerTier && worker.workerTier !== 'sandbox' ? `[${show(worker.workerTier)}] ` : '';
+      return { item, cells: [tableLabel(item, paint(worker.workerTier === 'host' ? 'warn' : 'text', tier) + show(worker.task)), show(worker.wave),
         paint(tones.get(worker.state) ?? 'muted', state), [show(worker.cli), worker.model && show(worker.model)].filter(Boolean).join('·'),
         shortAddress(worker.addr), showRetention ? countdown : age(worker.startedAt, now),
         ...(showRetention ? [context] : []), (worker.lastResultTag ?? worker.lastResult) ? badge(worker.lastResultTag ?? worker.lastResult, paint) : '—',

@@ -7,6 +7,8 @@ import { holderAsset } from '../holder/assets.mjs';
 import { holderClient, holderError } from '../holder/protocol.mjs';
 import { absoluteCommand } from '../runtimes/tui/transport.mjs';
 import { codexConfiguration } from './codex-launch.mjs';
+import { nativeWorkerExecutable } from './executables.mjs';
+import { recordWorkerExecutable } from './worker-executables.mjs';
 import { codexPipeSession } from './codex-pipe-session.mjs';
 import { hostDirectory, hostSocket, hostUUID } from './host-control.mjs';
 import { syncDirectory } from './io.mjs';
@@ -18,7 +20,7 @@ import { seniorToolEnvironment } from './senior-tools.mjs';
 
 export const pipeTransport = 'holder-pipes';
 export const useCodexHolder = (row, job) => row.cli === 'codex' &&
-  (job.host ? job.host.transport === pipeTransport : !job.integration && process.env.LOOM_TEST_CODEX_PIPES === '1');
+  (job.host ? job.host.transport === pipeTransport : !job.integration && !job.hostGrant && process.env.LOOM_TEST_CODEX_PIPES === '1');
 const sameBirth = (identity, live) => live && live.pid === identity?.pid &&
   live.started === identity.started && live.uid === process.getuid();
 const unknown = () => Object.assign(new Error('Codex holder liveness is unknown; preserving the existing holder binding'),
@@ -33,11 +35,14 @@ async function launch(project, row, job, dir, socket, capabilities) {
   const env = { ...process.env, ...managed, ...isolated, ...workerProviderEnvironment(row), ...seniorToolEnvironment(project, row) };
   delete env.HC_TERMINAL_ID;
   if (capabilities) env.LOOM_CAPABILITY = capabilities.ensureSession(row.addr).token;
-  const command = await absoluteCommand(process.env.LOOM_CODEX_BIN ?? process.env.OAR_CODEX_BIN ?? 'codex', 'codex');
+  const worker = row.role === 'worker';
+  const command = worker ? nativeWorkerExecutable(row.cli) :
+    await absoluteCommand(process.env.LOOM_CODEX_BIN ?? process.env.OAR_CODEX_BIN ?? 'codex', 'codex');
   const args = ['app-server', ...codexConfiguration(project, { ...row, fast: job.fast }, managed, isolated), '--listen', 'stdio://'];
   const fd = openSync(join(dir, 'holder.log'),
     constants.O_WRONLY | constants.O_CREAT | constants.O_APPEND | constants.O_NOFOLLOW, 0o600);
   try {
+    if (worker) recordWorkerExecutable(project, row, command, 'launch');
     const child = spawn(asset.path, ['--pipes', socket, dir, controllerFile(project), incarnation.replaceAll('-', ''),
       asset.digest, command, ...args], { cwd: row.cwd, detached: true, env, stdio: ['ignore', fd, fd] });
     child.unref();

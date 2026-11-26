@@ -1,12 +1,13 @@
 import { randomUUID } from 'node:crypto';
-import { constants, realpathSync } from 'node:fs';
-import { access, lstat, mkdir, mkdtemp, realpath, rm, stat } from 'node:fs/promises';
+import { realpathSync } from 'node:fs';
+import { lstat, mkdir, mkdtemp, realpath, rm } from 'node:fs/promises';
 import { basename, dirname, isAbsolute, join } from 'node:path';
 import { homedir, tmpdir } from 'node:os';
 import { performance } from 'node:perf_hooks';
 import { setTimeout as sleep } from 'node:timers/promises';
 import { prepareJournal, readText, syncDirectory } from '../../daemon/io.mjs';
 import { releaseRoot } from '../../daemon/release.mjs';
+import { missingExecutable, resolveNativeExecutable } from '../../daemon/executables.mjs';
 import { holderAsset } from '../../holder/assets.mjs';
 import { hcWrappedBackend } from '../../tui/backends.mjs';
 import { holderClient } from '../../holder/protocol.mjs';
@@ -22,14 +23,9 @@ export async function absoluteCommand(command, provider = basename(command)) {
     basename(command) === command ? [join(homedir(), '.local', 'bin'), '/opt/homebrew/bin', '/usr/local/bin', '/usr/bin']
       .map(path => join(path, command)) : [];
   for (const candidate of candidates) {
-    if (!isAbsolute(candidate)) continue;
-    try {
-      const native = await realpath(candidate);
-      if (/(?:^|[/\\])ccp(?:[/\\]|$)|claude-protected/i.test(native)) continue;
-      await access(native, constants.X_OK);
-      if ((await stat(native)).isFile()) return native;
-    } catch (error) {
-      if (!['ENOENT', 'EACCES', 'ENOTDIR'].includes(error.code)) throw error;
+    try { return resolveNativeExecutable(candidate); }
+    catch (error) {
+      if (isAbsolute(command) || override || !missingExecutable(error) && error.code !== 'protected-executable') throw error;
     }
   }
   throw Object.assign(new Error(`Native executable not found: ${command}. Set ${variable} to its absolute path.`), { code: 'ENOENT' });
@@ -48,7 +44,7 @@ export function wrapperFailedStart(binding) {
 export async function openNativeTui({
   cli, cwd, command, hcCommand = 'hc', env = {}, unset = [], name, authMode,
   stateDir, hookSink, recordBinding = () => {}, previous, recordTemporary = () => {}, boundTranscript = true,
-  controllerPath, placementLabels, capabilityPath, ...options
+  controllerPath, placementLabels, capabilityPath, recordExecutable, ...options
 }) {
   const provider = Object.hasOwn(providers, cli) && providers[cli];
   if (!provider) throw new RangeError(`Unsupported TUI: ${cli}`);
@@ -107,6 +103,7 @@ export async function openNativeTui({
   }
   const plain = async () => {
     recordBinding({ transport: 'plain-hc', reason: 'loom-pty-start-failed' });
+    recordExecutable?.(executable);
     const pane = await startPane(hcCommand, cwd, argv, { name, env, unset, provider: cli, nativeCommand: executable, placementLabels });
     return {
       id: pane.address, sessionId, hookSink, status: pane.status, warnings: pane.warnings,
@@ -130,6 +127,7 @@ export async function openNativeTui({
       const asset = holderAsset(releaseRoot);
       binding.holderRelease = { root: releaseRoot, digest: asset.digest };
       recordBinding(binding);
+      recordExecutable?.(executable);
       const pane = await startPane(hcCommand, cwd, [asset.path, '--launch', binding.socket, sessionDir,
         controllerPath, binding.incarnation.replaceAll('-', ''), asset.digest, ...argv], {
         env, unset, name, provider: cli, nativeCommand: executable, placementLabels,
@@ -162,6 +160,7 @@ export async function openNativeTui({
       throw new Error('Holder v3 socket did not become ready');
     }
     recordBinding(binding);
+    recordExecutable?.(executable);
     wrapped = await hcWrappedBackend({ command: hcCommand }).launch({
       cwd, argv, env, unset: ['LOOM_PTY_MODULES', ...unset], name, provider: cli, nativeCommand: executable,
       evidence, sessionDir, socket: binding.socket, placementLabels,
@@ -195,7 +194,7 @@ export async function openNativeTui({
               const requestedEnv = { ...env };
               delete requestedEnv.LOOM_AGY_HOOK_WORKSPACE;
               return openNativeTui({ ...options, cli, cwd, stateDir, hcCommand, env: requestedEnv, unset, authMode,
-                command: executable, name, resume, recordBinding, recordTemporary, boundTranscript, capabilityPath });
+                command: executable, name, resume, recordBinding, recordTemporary, recordExecutable, boundTranscript, capabilityPath });
             })().catch(error => { restarting = undefined; throw error; });
             return restarting;
           },
