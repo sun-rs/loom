@@ -18,9 +18,11 @@ function isWithin(root, path) {
 
 async function verifySource(source, evidence) {
   if (!source || typeof source !== 'object' || Array.isArray(source)) return false;
-  const { path, sha } = source;
-  if (path === undefined && sha === undefined) return false;
+  const { path, sha, hist } = source;
+  if (path === undefined && sha === undefined && hist === undefined) return false;
   try {
+    if (hist !== undefined && (!oneLine(hist?.addr) || !oneLine(hist?.turnId)
+        || await evidence?.hasHist?.(hist) !== true)) return false;
     if (path !== undefined) {
       if (!oneLine(path) || path !== path.trim() || isAbsolute(path) || /[\\:]/u.test(path)
         || path.split('/').includes('..') || !isAbsolute(evidence?.root ?? '')) return false;

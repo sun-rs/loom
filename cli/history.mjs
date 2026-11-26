@@ -236,7 +236,9 @@ export async function history(sessions, reader, options) {
     matched.push({ ...entry, timelineIndex: i + 1 });
   }
   if (exact && !matched.length && !outcome && !grep) throw new CommandError('not-found', `No turn ${exact}`);
-  const selected = since ? matched.slice(0, count) : matched.slice(-count);
+  // An active turn may already be journaled while the last finished answer is still the latest result.
+  const settled = options.latestSettled && matched.findLast(entry => entry.turn.endedAt != null);
+  const selected = settled ? [settled] : since ? matched.slice(0, count) : matched.slice(-count);
   const seniorLogs = new Map();
   const turns = await Promise.all(selected.map(async entry => {
     const { session, turn, rows, path, cards, tools, heads, claims, git, activity, tags } = entry;

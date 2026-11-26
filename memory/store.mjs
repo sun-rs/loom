@@ -73,12 +73,12 @@ function forgetMarker(entry, revision) {
 function purge(state, entry) {
   const tombstone = forgetMarker(entry, entry.revision + 1);
   const replacements = new Map([[entry.id, tombstone]]);
-  for (const { response } of state.receipts) {
-    const { id, status } = response.candidate ?? {};
-    if (response.item?.id !== entry.id || !['promoted', 'merged'].includes(status) || replacements.has(id)) continue;
+  const links = { ...candidateTargets(state.receipts), ...state.candidateTargets };
+  for (const [id, target] of Object.entries(links)) {
+    if (target !== entry.id || replacements.has(id)) continue;
     const candidate = state.entries.find(row => row.id === id);
-    if (!candidate || candidate.status === 'forgotten') continue;
-    const marker = status === 'merged' ? forgetMarker(candidate, candidate.revision + 1)
+    if (!candidate || !['promoted', 'merged'].includes(candidate.status)) continue;
+    const marker = candidate.status === 'merged' ? forgetMarker(candidate, candidate.revision + 1)
       : select(candidate, ['id', 'revision', 'project', 'layer', 'kind', 'status', 'author',
         'cardId', 'proposedKind', 'reviewer']);
     replacements.set(id, marker);
@@ -97,8 +97,18 @@ function purge(state, entry) {
   return tombstone;
 }
 
-export function createMemoryStore({ now = Date.now, readState, commitState, evidence,
-  estimateTokens, maxMetadataBytes, staleDays, getObservations, classifySensitive, replacement, readRaw } = {}) {
+function candidateTargets(receipts) {
+  return Object.fromEntries(receipts.flatMap(({ response }) => {
+    const candidate = response.candidate;
+    return ['promoted', 'merged'].includes(candidate?.status) && response.item?.id
+      ? [[candidate.id, response.item.id]] : [];
+  }));
+}
+
+export function createMemoryStore({ now = Date.now, readState, commitState, evidence, allocateId,
+  estimateTokens, maxMetadataBytes, staleDays, getObservations, classifySensitive, replacement, readRaw,
+  receiptTtlMs = 30 * day } = {}) {
+  if (!Number.isFinite(receiptTtlMs) || receiptTtlMs < 0) throw new RangeError('Invalid memory receipt TTL');
   const format = { evidence, estimateTokens, maxMetadataBytes };
   const redaction = { classifySensitive, replacement };
   let pending = Promise.resolve();
@@ -129,12 +139,12 @@ export function createMemoryStore({ now = Date.now, readState, commitState, evid
 
   function allocate(state) {
     let id;
-    do { id = `memory-${++state.nextId}`; }
+    do { id = allocateId?.() ?? `memory-${++state.nextId}`; }
     while (state.entries.some(entry => entry.id === id));
     return id;
   }
 
-  async function prepare(fields) {
+  async function prepare(fields, knownHist) {
     const raw = validateEntryFormat(fields, format);
     if (!raw.ok) return raw;
     const safe = sanitizeEntry(fields, redaction);
@@ -145,7 +155,14 @@ export function createMemoryStore({ now = Date.now, readState, commitState, evid
     if (safe.entry.source?.path !== fields.source?.path || safe.entry.source?.sha !== fields.source?.sha) {
       return invalid('Memory evidence could not be reliably redacted');
     }
-    const result = await validateEntry(safe.entry, format);
+    if (fields.source?.hist && (safe.entry.source?.hist?.addr !== fields.source.hist.addr ||
+        safe.entry.source?.hist?.turnId !== fields.source.hist.turnId)) {
+      return invalid('Memory history could not be reliably redacted');
+    }
+    const result = await validateEntry(safe.entry, knownHist ? { ...format, evidence: {
+      ...evidence,
+      hasHist: hist => hist.addr === knownHist.addr && hist.turnId === knownHist.turnId,
+    } } : format);
     return result.ok ? safe : result;
   }
 
@@ -215,7 +232,12 @@ export function createMemoryStore({ now = Date.now, readState, commitState, evid
     const supersedes = [...existing, ...targets.map(({ target }) => target.id)];
     const extra = current ? select(current, ['original', 'proposer', 'reviewer']) : {};
     if (requested !== undefined || current?.supersedes !== undefined) extra.supersedes = supersedes;
-    const fields = await prepare(draftFields(entry, await observations(binding)));
+    const draft = draftFields(entry, await observations(binding));
+    const hist = current?.source?.hist;
+    if (hist && draft.source && draft.source.path === current.source.path && draft.source.sha === current.source.sha) {
+      draft.source.hist = hist;
+    }
+    const fields = await prepare(draft, hist);
     if (!fields.ok) return fields;
     if (!current && !targets.length) {
       const duplicate = state.entries.find(row => (candidate ? row.status === 'pending' : active(row))
@@ -278,7 +300,8 @@ export function createMemoryStore({ now = Date.now, readState, commitState, evid
       const externalSource = [...new Map([...(target.externalSource ?? []), ...(current.externalSource ?? []),
         ...await observations(binding)]
         .map(observation => [JSON.stringify(observation), observation])).values()];
-      const fields = await prepare(draftFields({ ...target, body: request.body }, externalSource));
+      const fields = await prepare({ ...draftFields({ ...target, body: request.body }, externalSource), source: target.source },
+        target.source?.hist);
       if (!fields.ok) return fields;
       item = version(state, binding, fields.entry, target, {
         ...select(target, ['original', 'supersedes']), proposer: current.author, reviewer: binding.principal,
@@ -287,6 +310,7 @@ export function createMemoryStore({ now = Date.now, readState, commitState, evid
       if (!result.ok) return result;
       updateEntry(state, item, 'update');
     }
+    if (item !== candidate) (state.candidateTargets ??= {})[candidate.id] = item.id;
     updateEntry(state, candidate);
     return success({ item, candidate });
   }
@@ -396,7 +420,7 @@ export function createMemoryStore({ now = Date.now, readState, commitState, evid
     } else return invalid('Unknown memory write operation');
     if (!result.ok) return result;
     if (state.seq !== before) indexFiles(state);
-    state.receipts.push({ scope, requestId, fingerprint, response: result });
+    state.receipts.push({ scope, requestId, fingerprint, response: result, committedAt: now() });
     await commitState(state);
     return structuredClone(result);
   }
@@ -420,23 +444,57 @@ export function createMemoryStore({ now = Date.now, readState, commitState, evid
   }
 
   async function maintain() {
-    if (!Number.isFinite(staleDays) || staleDays <= 0) return;
     const state = await snapshot();
-    const updatedAt = time();
-    const cutoff = Date.parse(updatedAt) - staleDays * day;
-    const stale = state.entries.filter(entry => active(entry)
-      && Date.parse(entry.lastUsedAt ?? entry.effectiveAt ?? entry.updatedAt) <= cutoff);
-    if (!stale.length) return;
+    const at = now();
+    let receiptsChanged = false;
+    const links = candidateTargets(state.receipts);
+    state.receipts = state.receipts.filter(row => {
+      // Old snapshots have no commit timestamp. Give them one retention window from first upkeep.
+      if (!Number.isFinite(row.committedAt)) {
+        row.committedAt = at;
+        receiptsChanged = true;
+      }
+      const retained = at - row.committedAt < receiptTtlMs;
+      receiptsChanged ||= !retained;
+      return retained;
+    });
+    const cutoff = at - staleDays * day;
+    const stale = Number.isFinite(staleDays) && staleDays > 0 ? state.entries.filter(entry => active(entry)
+      && Date.parse(entry.lastUsedAt ?? entry.effectiveAt ?? entry.updatedAt) <= cutoff) : [];
+    if (!stale.length && !receiptsChanged) return;
+    if (Object.keys(links).length) state.candidateTargets = { ...links, ...state.candidateTargets };
+    const updatedAt = new Date(at).toISOString();
     for (const entry of stale) {
       updateEntry(state, { ...entry, status: 'stale', revision: entry.revision + 1, updatedAt }, 'withdraw');
     }
+    if (stale.length) indexFiles(state);
+    await commitState(state);
+  }
+
+  // Internal event ingestion, callable only with a history verifier supplied by the daemon.
+  async function recordEvent(binding, key, entry) {
+    if (typeof classifySensitive !== 'function') return invalid('Memory sensitivity classifier is required');
+    const allowed = access.canWrite(binding, entry) || (binding?.role === 'worker' && binding.cardId &&
+      entry.project === binding.project && entry.layer === 'shared' && entry.kind === 'lesson');
+    if (!allowed || !nonempty(key) || !entry.source?.hist) return forbidden();
+    const id = `memory-event-${createHash('sha256').update(key).digest('hex')}`;
+    const state = await snapshot();
+    if (state.entries.some(item => item.id === id)) return { ok: true };
+    const fields = await prepare({ ...draftFields(entry, await observations(binding)), source: entry.source });
+    if (!fields.ok) return fields;
+    const item = version(state, binding, fields.entry, { id, revision: 0 });
+    const result = validateEntryFormat(item, format);
+    if (!result.ok) return result;
+    updateEntry(state, item, 'add');
     indexFiles(state);
     await commitState(state);
+    return { ok: true, item };
   }
 
   return {
     access,
     write: (binding, request) => serialize(() => write(binding, request)),
+    recordEvent: (binding, key, entry) => serialize(() => recordEvent(binding, key, entry)),
     recordTurn: event => serialize(() => recordTurn(event)),
     maintain: () => serialize(maintain),
     rebuildIndex: () => serialize(async () => {

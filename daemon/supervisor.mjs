@@ -27,6 +27,7 @@ import { readLayout } from './herdr-layout.mjs';
 import { deliveryBoard, gateBoard } from './status-board.mjs';
 import { activeRelease, managedCliPath, releaseId, releaseRoot } from './release.mjs';
 import { rotatingRoles } from '../index/index.mjs';
+import { createProjectMemory } from './memory.mjs';
 
 function batchDeliveryId(batch, dest) {
   const bytes = createHash('sha256').update(`${batch}\0${dest}`).digest('hex').slice(0, 32);
@@ -50,7 +51,7 @@ function codexHandoff(row) {
 export function createSupervisor(project, {
   report = console.log, window = 900_000, sealWindow = window, partialWindow = Math.min(window, 120_000),
   uncertainWindow, blockedWindow = 60_000, sessionOptions, now = Date.now, watchOptions,
-  externalNotification = notifyExternal,
+  externalNotification = notifyExternal, memoryOptions,
 } = {}) {
   if (![window, sealWindow, partialWindow, uncertainWindow ?? defaultStallMs, blockedWindow].every(value => Number.isSafeInteger(value) && value >= 0)) {
     throw new RangeError('Invalid loomd timeout in milliseconds');
@@ -58,6 +59,7 @@ export function createSupervisor(project, {
   const index = projectIndex(project);
   index.initialize();
   const sessions = ownedSessions(project, index, report, sessionOptions);
+  const memory = createProjectMemory(project, { sessions, now, options: memoryOptions, report });
   const policyForTick = () => {
     try { return readPolicy(project, { optional: true }); }
     catch { return {}; }
@@ -766,6 +768,7 @@ ${details}`, {
         return now() < job.reviewDeadline && !first?.completion && !deliveryFailed(first);
       },
     });
+    await memory.tick(mail.messages);
     await closeReviews();
     const current = sessions.rows();
     for (const [name, rows] of Map.groupBy(current, row => row.project)) {
@@ -797,6 +800,7 @@ ${details}`, {
     },
     shutdown: sessions.shutdown,
     async handle(command, args, caller) {
+      if (command === 'mem') return memory.handle(args, caller);
       if (command === 'spawn') return spawnSession(args, caller);
       if (command === 'layout-up') {
         if (!sessionOptions?.layout) throw new CommandError('not-ready', 'Herdr layout is unavailable');

@@ -1,4 +1,17 @@
+export function stripPrivate(text) {
+  let depth = 0;
+  let start = 0;
+  let safe = '';
+  for (const tag of text.matchAll(/<\s*(\/?)\s*private\b[^>]*>/giu)) {
+    if (depth === 0) safe += text.slice(start, tag.index);
+    depth = tag[1] ? Math.max(0, depth - 1) : depth + 1;
+    start = tag.index + tag[0].length;
+  }
+  return safe + (depth === 0 ? text.slice(start) : '');
+}
+
 function redact(text, classifySensitive, replacement) {
+  text = stripPrivate(text);
   if (!classifySensitive || text === '') return text;
   const classification = classifySensitive(text);
   if (classification?.reliable !== true || !Array.isArray(classification.spans)) {
