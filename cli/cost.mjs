@@ -175,7 +175,7 @@ export function projectCost(directory, sessions, { includeAcceptance = true, now
     difference: observed !== null && handoverFileBaseline !== null ? observed - handoverFileBaseline : null,
   }, factMiss, proposalPassRate: memoryExtractor.proposalPassRate,
   approvedProposals: memoryExtractor.approvedProposals, rejectedProposals: memoryExtractor.rejectedProposals,
-  indexSubstantiveRatio };
+  diagnostics: memoryExtractor.diagnostics, indexSubstantiveRatio };
   return { byRole, rawTokens, memoryExtractor, memoryPilot, workerShare: rawTokens ? byRole.worker.rawTokens / rawTokens : null,
     estimatedCostUsd, estimatedWorkerShare: byRole.worker.estimatedCostShare,
     pricing: { estimate: true, unit: 'USD per million tokens', prices },

@@ -196,6 +196,12 @@ export function printStatus(result) {
   if (extractor) console.log('Memory extractor · ' + extractor.calls + ' turn calls · ' + extractor.tokens + ' tokens · ' +
     extractor.stageCalls + ' stage calls · ' + extractor.stageTokens + ' stage tokens' +
     (extractor.stopReason ? ' · stopped at ' + extractor.stopReason : ''));
+  if (extractor?.diagnostics) {
+    const { emptyResults, filteredCandidates, queuedProposals, filterReasons } = extractor.diagnostics;
+    const reasons = Object.entries(filterReasons).map(([reason, count]) => `${reason} ${count}`).join(', ');
+    console.log(`  ${emptyResults} empty results · ${filteredCandidates} filtered candidates` +
+      (reasons ? ` (${reasons})` : '') + ` · ${queuedProposals} queued proposals`);
+  }
   console.log('Cost · ' + result.cost.rawTokens.toLocaleString() + ' recorded tokens' +
     (result.cost.missingSessions ? ' · ' + result.cost.missingSessions + ' sessions with transcript gaps' : ''));
   for (const [role, usage] of Object.entries(result.cost.usageByRole)) {

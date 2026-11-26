@@ -13,6 +13,7 @@ const isId = value => typeof value === 'string' && idPattern.test(value);
 const text = (value, limit) => typeof value === 'string' && value.trim() && value.length <= limit && !value.includes('\0');
 const titleOK = value => text(value, 150) && !/[\x00-\x1f\x7f-\x9f\u2028\u2029]/u.test(value);
 const evidencePath = { delivery: '.project/inbox/state.json', event: '.project/loomd/notifications.json' };
+export const candidateLimit = 32;
 const sourceKey = ({ kind, id }) => JSON.stringify([kind, id]);
 const stringField = value => value === undefined || typeof value === 'string' ? value : null;
 export function candidateFields(raw) {
@@ -110,46 +111,83 @@ export function createMemoryProposals(project, { memory, sessions, state, save, 
       .filter(item => item.layer === 'shared' && item.project === project && !published.has(item.id)) };
   }
 
-  async function queue(values, input, { stage = false, key } = {}) {
-    if (!Array.isArray(values) || !values.length) return;
+  async function queue(values, input, { stage = false, key, truncated = 0 } = {}) {
+    const diagnostics = state.diagnostics;
+    if (!values.length && !truncated) {
+      diagnostics.emptyResults++;
+      return;
+    }
     const sources = new Map(input.map(row => [sourceKey(row.source), row]));
     const items = await library();
     const removals = { project: new Set(), user: new Set() };
-    for (const raw of values.slice(0, 32)) {
-      if (!raw || typeof raw !== 'object') continue;
+    function filtered(reason, count = 1) {
+      diagnostics.filteredCandidates += count;
+      diagnostics.filterReasons[reason] = (diagnostics.filterReasons[reason] ?? 0) + count;
+    }
+    const overflow = truncated + Math.max(0, values.length - candidateLimit);
+    if (overflow) filtered('candidateLimit', overflow);
+    for (const raw of values.slice(0, candidateLimit)) {
       const { action, id, scope, source, title, body, target, targets = [] } = redactExtractor(candidateFields(raw), key);
-      if (!isId(id) || Object.hasOwn(state.proposals, id) || !['project', 'user'].includes(scope) ||
+      if (!raw || typeof raw !== 'object' || !isId(id) || !['project', 'user'].includes(scope) ||
           !(stage ? ['merge', 'invalidate', 'correct'] : ['add', 'merge', 'invalidate', 'correct']).includes(action) ||
           (title !== undefined && !titleOK(title)) || (action === 'add' && !titleOK(title)) ||
           (action !== 'invalidate' && (!text(body, 4000) || body.split(/\r\n|\n|\r/u).length > 200 ||
             estimateTokens(body) > 200)) || !Array.isArray(targets) || targets.length > 32 ||
-          !targets.every(isId) || new Set(targets).size !== targets.length) continue;
-      if (action !== 'invalidate' && isNoise(title, body)) continue;
+          !targets.every(isId) || new Set(targets).size !== targets.length) {
+        filtered('validation');
+        continue;
+      }
+      if (Object.hasOwn(state.proposals, id)) {
+        filtered('duplicate');
+        continue;
+      }
+      if (action !== 'invalidate' && isNoise(title, body)) {
+        filtered('noise');
+        continue;
+      }
       const proof = sources.get(sourceKey(source));
       if (!proof || !Object.hasOwn(evidencePath, source.kind) ||
-          scope === 'user' && action !== 'invalidate' && !(proof.user && userFact(proof.text, body))) continue;
+          scope === 'user' && action !== 'invalidate' && !(proof.user && userFact(proof.text, body))) {
+        filtered('unauthorized');
+        continue;
+      }
       const byId = new Map(items[scope].map(item => [item.meta?.id ?? item.id, item]));
       const current = byId.get(target);
       const removed = targets.map(id => byId.get(id));
+      if (action === 'add' && (byId.has(id) || scope === 'project' && projectIdExists(id))) {
+        filtered('duplicate');
+        continue;
+      }
       if (target !== undefined && !current || removed.some(item => !item || item === current) ||
-          (action === 'add' && (target !== undefined || byId.has(id) || scope === 'project' && projectIdExists(id))) ||
+          action === 'add' && target !== undefined ||
           (['merge', 'correct'].includes(action) && !current &&
             !(scope === 'user' && action === 'correct' && target === undefined)) ||
           (['merge', 'invalidate'].includes(action) !== Boolean(targets.length)) ||
-          (action === 'invalidate' && (target !== undefined || title !== undefined || body !== undefined))) continue;
+          (action === 'invalidate' && (target !== undefined || title !== undefined || body !== undefined))) {
+        filtered('validation');
+        continue;
+      }
       const deletions = new Set([...removals[scope], ...targets]);
-      if (stage && deletions.size > Math.floor(byId.size / 5)) continue;
+      if (stage && deletions.size > Math.floor(byId.size / 5)) {
+        filtered('deletionLimit');
+        continue;
+      }
       const stored = { id, action, scope, source, ...(title !== undefined && { title }),
         ...(body !== undefined && { body }), ...(target !== undefined && { target }), targets,
         basis: Object.fromEntries([...targets, ...(current ? [target] : [])].map(id => [id, revision(byId.get(id))])),
         status: 'pending', createdAt: new Date(now()).toISOString() };
       if (scope === 'project') {
-        try { projectPlan(project, { ...stored, current, removed }); } catch { continue; }
+        try { projectPlan(project, { ...stored, current, removed }); } catch {
+          filtered('validation');
+          continue;
+        }
       } else if (action !== 'invalidate' && !validateEntryFormat(userDraft(stored, current)).ok) {
+        filtered('validation');
         continue;
       }
       removals[scope] = deletions;
       state.proposals[id] = stored;
+      diagnostics.queuedProposals++;
     }
   }
 

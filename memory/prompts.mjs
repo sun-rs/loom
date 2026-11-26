@@ -1,23 +1,33 @@
-const reminder = '默认不写。未来的 agent 看到这条，会因此做得更好吗？';
+export const memoryWriteReminder = '如属持久规则，考虑写入记忆。';
 const background = '背景笔记，仅供参考，使用前核验';
 export const observationRules = [
-  'Keep durable observations for future sessions: user (preferences), feedback (confirmed corrections or practices), project (lasting decisions or constraints), reference (where to verify information).',
-  'Skip code structure, Git history, facts already documented in the repository, and one-off progress or details of the current conversation.',
-  'Use separate Why: and How to apply: lines in the body to explain the reason and specify when and what to do.',
-].join(' ');
+  'Save facts that help future sessions:',
+  'user — when you learn the user’s preferences or roles.',
+  'feedback — when the user corrects or confirms a practice.',
+  'project — when you learn lasting decisions, deadlines or constraints that cannot be inferred from code.',
+  'reference — when you learn where to look up external information.',
+  'Skip code structure, Git history, facts already documented in the repository, one-off progress and current conversation details.',
+  'Use Why: for the reason and How to apply: for when and what to do. Search for duplicates before writing. Update existing entries when facts change and supersede or withdraw outdated entries.',
+].join('\n');
+
+const storageGuidance = 'For direct writes, map user to preference, project to ruling, and feedback or reference to lesson. ' +
+  'A candidate is a pending review record. Follow your role’s write permissions.';
+const writeCommands = 'Search with loom mem search and inspect matches with loom mem show. ' +
+  'Use loom mem write for new facts, loom mem update for revisions and loom mem invalidate for withdrawn guidance.';
 
 export function memoryStartupPrompt(role, indexText) {
-  const guidance = ['leader', 'auditor'].includes(role) ? [
+  const guidance = ['leader', 'auditor', 'super'].includes(role) ? [
     'Memory writing',
     observationRules,
-    'Search for duplicates with loom mem search and verify with loom mem show. Update the existing entry when the fact changes.',
-    'Use loom mem write for a new fact, loom mem update to correct outdated guidance, and loom mem invalidate when it no longer applies. Follow your role’s write permissions.',
+    storageGuidance,
+    writeCommands,
   ].join('\n') : '';
   return [guidance, indexText].filter(Boolean).join('\n\n');
 }
 const rules = [
-  reminder,
-  'ruling 记录已确认的裁决，preference 记录持久偏好，lesson 记录已验证的经验，candidate 等待审查。',
+  observationRules,
+  storageGuidance,
+  '保存能让未来的 agent 做得更好的事实。',
   '一事实一文件。已有事实变化时按原 ID 修订，错误条目用 forget 遗忘。',
   '禁止保存代码结构、Git 历史、已修复的单个 bug、单轮对话细节，以及当前 SHA、分支尖端、在途任务等实时状态。',
   '现行用户指示及项目指令优先。',
@@ -39,6 +49,9 @@ export function renderMemoryPrompt({ binding, template = '', entries = [] }) {
 }
 
 export async function handleMemoryEvent({ binding, type, explicitWrite }, { remind, write }) {
-  if (reminderEvents.has(type)) await remind?.(reminder);
+  if (reminderEvents.has(type)) {
+    await remind?.(['worker', 'reviewer'].includes(binding?.role) ? roleRules[binding.role] :
+      [memoryWriteReminder, observationRules].join('\n'));
+  }
   if (explicitWrite !== undefined) return write(binding, explicitWrite);
 }

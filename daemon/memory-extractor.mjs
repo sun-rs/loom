@@ -7,7 +7,7 @@ import { observationRules } from '../memory/prompts.mjs';
 import { extractorDay, extractorStatePath, readExtractorState } from './memory-extractor-state.mjs';
 import { extractionEvents, extractionTurns, redactExtractor, seniorExtractor, stageBoundary,
   substantiveReply } from './memory-extractor-input.mjs';
-import { candidateFields, createMemoryProposals } from './memory-proposals.mjs';
+import { candidateFields, candidateLimit, createMemoryProposals } from './memory-proposals.mjs';
 import { runOpenCodeStage } from './memory-stage.mjs';
 import { writeState } from './io.mjs';
 
@@ -191,7 +191,7 @@ export function createMemoryExtractor(project, { memory, sessions, now, report, 
     const sources = stage ? [...input.history.flatMap(turn => turn.received), ...input.events] :
       [...input.received, ...input.events];
     await serialize(async () => {
-      await proposals.queue(result.proposals, sources, { stage, key });
+      await proposals.queue(result.proposals, sources, { stage, key, truncated: result.truncated });
       onSuccess();
     });
     return true;
@@ -313,8 +313,9 @@ export function createMemoryExtractor(project, { memory, sessions, now, report, 
           await runOpenCodeStage(input, async () => {
             const result = await requestProvider(options.fetch ?? globalThis.fetch, url, config, secret,
               messages, output);
-            return { ...result, proposals: Array.isArray(result.proposals) ?
-              redactExtractor(result.proposals.slice(0, 32).map(candidateFields), secret) : [] };
+            if (!Array.isArray(result.proposals)) return result;
+            return { ...result, truncated: Math.max(0, result.proposals.length - candidateLimit),
+              proposals: redactExtractor(result.proposals.slice(0, candidateLimit).map(candidateFields), secret) };
           });
         return Array.isArray(result) ? { proposals: result } : result;
       }, { stage: true, key: secret, onSuccess: () => markProcessed(end) });

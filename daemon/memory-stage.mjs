@@ -67,7 +67,7 @@ export async function runOpenCodeStage(input, request) {
     const result = await upstream;
     if (!result) return { failure: 'stage-provider' };
     if (result.failure) return result;
-    const accounting = { inputTokens: result.inputTokens, tokens: result.tokens };
+    const accounting = { inputTokens: result.inputTokens, tokens: result.tokens, truncated: result.truncated };
     try {
       const content = stdout.split('\n').filter(Boolean).map(JSON.parse)
         .filter(event => event.type === 'text').map(event => event.part?.text).join('');

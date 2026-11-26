@@ -6,7 +6,7 @@ import { CommandError } from '../cli/sessions.mjs';
 import { projectIndex } from '../cli/project.mjs';
 import { reportedContext } from '../cli/state.mjs';
 import { defaultStallMs, inbox, pendingWork, receipt, stalledDeliveries, stallText, suppressedReplies, suppressedReplyText } from '../inbox/engine.mjs';
-import { conclusoryReply, deliveryFailed, isBlockedReply, messageIdPattern } from '../inbox/message.mjs';
+import { conclusoryReply, deliveryFailed, isBlockedReply, messageIdPattern, replyConclusion } from '../inbox/message.mjs';
 import { relay } from '../relay/project.mjs';
 import { withClaudeTranscriptStops } from '../relay/sources.mjs';
 import { createWatcher } from '../watch/index.mjs';
@@ -31,6 +31,7 @@ import { rotatingRoles } from '../index/index.mjs';
 import { createProjectMemory } from './memory.mjs';
 import { createMemoryInjection, sessionMemoryBinding } from './memory-injection.mjs';
 import { codexMemoryArgs, memoryIsolationCoverage } from '../memory/launch-config.mjs';
+import { memoryWriteReminder } from '../memory/prompts.mjs';
 import { createMemoryExtractor } from './memory-extractor.mjs';
 import { selfRotation } from './self-rotation.mjs';
 
@@ -45,6 +46,34 @@ const packetDeliveryId = (project, gate, round) => batchDeliveryId('gate-packet:
 const matchesGate = (message, project, gate) => message.gatePacket &&
   (message.gateId === gate && message.gateProject === project || message.id === packetDeliveryId(project, gate));
 const terminalText = text => text.replace(/[\x00-\x08\x0b-\x1f\x7f-\x9f]/g, '');
+
+const durableMessageSignals = [
+  /^(?:纠正|更正|勘误|裁决|决议|决定|偏好|长期规则|correction|ruling|decision|preference|standing rule)[*\s]*[:：]\s*\S/iu,
+  /^(?:我|我们)(?:已经|正式)?(?:决定|规定|纠正|更正|确认(?:此|该|这个|这一)(?:规则|做法))/u,
+  /^(?:i|we)\s+(?:(?:have|hereby)\s+)?(?:decided|ruled|confirm (?:this|the) (?:rule|practice))\b/iu,
+  /^(?:(?:以后|今后|从现在起)[，,\s]*)?我(?:更?喜欢|更?偏好|倾向于|习惯于)|^我希望[^。！？]*(?:以后|今后|一律|每次)/u,
+  /^(?:(?:from now on|going forward)[,\s]+)?i\s+(?:prefer|would prefer|would rather|always want)\b/iu,
+  /^(?:以后|今后|从现在起|自即日起)[，,\s]*(?:一律|必须|不得|禁止|始终|统一|每次|我希望)/u,
+  /^(?:from now on|going forward)[,\s]+(?:always|never|(?:we|you)\s+(?:must|will always|will never))\b/iu,
+];
+
+function durableUserMessage(text) {
+  const conclusion = replyConclusion(text);
+  if (conclusion.reason === 'noreply' || /^(?:PASS(?:ED)?|APPROVE(?:D)?)$/u.test(conclusion.tag ?? '')) return false;
+  let fence;
+  for (const raw of text.split(/\r?\n/u)) {
+    const delimiter = /^\s*(`{3,}|~{3,})/u.exec(raw)?.[1];
+    if (delimiter) {
+      if (!fence) fence = delimiter;
+      else if (delimiter[0] === fence[0] && delimiter.length >= fence.length) fence = undefined;
+      continue;
+    }
+    if (fence || /^\s*>/u.test(raw)) continue;
+    const line = raw.replace(/^[#*_\s+-]+/u, '').replace(/^(?:super|user|用户)\s*[:：]\s*/iu, '').trimEnd();
+    if (!/[?？]$/u.test(line) && durableMessageSignals.some(pattern => pattern.test(line))) return true;
+  }
+  return false;
+}
 
 function codexHandoff(row) {
   if (row.cli !== 'codex' || !row.sessionId) return;
@@ -824,6 +853,17 @@ ${details}`, {
         const digest = deferred.length && replyForDelivery(project, deferred.map(item =>
           `[${item.id}] ${item.from.addr}\n${item.text}`).join('\n\n'), policy.delivery?.replyBytes);
         if (digest) deliveryAppendix = [deliveryAppendix, `Loom Auditor next-wake digest\n${digest}`].filter(Boolean).join('\n\n');
+        if (row && (senior(row) || row.role === 'super')) {
+          const request = message.replyKey && byId.get(message.replyTo);
+          const gateRejection = request?.gatePacket && request.completion?.relay?.deliveryId === message.id &&
+            /^REJECT(?:ED)?$/u.test(replyConclusion(request.completion.body).tag ?? '');
+          const fromUser = !message.replyKey && (message.from ?
+            message.from.external && message.from.addr === 'super' || sessions.rowFor(message.from.addr)?.role === 'super' :
+            message.userDelivery === true);
+          if (gateRejection || fromUser && durableUserMessage(message.text)) {
+            deliveryAppendix = [deliveryAppendix, memoryWriteReminder].filter(Boolean).join('\n\n');
+          }
+        }
         const replySuppressionNotices = senderSuppressions.filter(notice => visibleIds.has(notice.id)).map(notice => notice.id);
         const shownRotationNotices = rotationNotices.filter(notice => visibleIds.has(notice.id)).map(notice => notice.id);
         const job = sessions.jobs.get(row?.addr);
@@ -1209,6 +1249,7 @@ ${details}`, {
       const target = sessions.targetBinding(successor);
       const userWake = actor ? actor.role === 'super' && actor.endedAt === null : !from || from.role === 'super';
       const fields = { ...(sender && { from: sender }), ...(args.expectReply && { expectReply: true }),
+        ...(!sender && { userDelivery: true }),
         ...(userWake && { superPriority: true, ...(successor.role === 'auditor' && { userWake: true }) }),
         ...(row.addr !== successor.addr && { originalTarget: row.addr }),
         ...(requestedRole && { requestedRole }),
