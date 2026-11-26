@@ -2416,7 +2416,8 @@ test('a native question holds deliveries and reaches Auditor and desktop once af
 
 async function v2Fixture(t, options) {
   let advance = 0;
-  const f = fixture(t, { now: () => Date.now() + advance });
+  const reports = [];
+  const f = fixture(t, { now: () => Date.now() + advance, report: message => reports.push(message) });
   f.policy({ rotation: { mode: 'v2', ...options } });
   const d = f.daemon();
   t.after(d.shutdown);
@@ -2444,18 +2445,37 @@ async function v2Fixture(t, options) {
   const evidence = { detail: 'Checked original source', evidence: 'proof.txt:1' };
   const answer = next => [handoverBrief(f, next).ack, ...Object.entries(f.read(`loomd/sessions/${next}.json`).rotationFacts)
     .map(([name, value]) => `${name}: ${value}`)].join('\n');
-  return { f, d, leader, auditor, superRole, note, scope, state, command, evidence, answer, elapse: ms => { advance += ms; } };
+  const verifyNote = async (row, id, verdict = 'pass') => {
+    const delivery = () => f.read('inbox/state.json').messages.find(item => item.id === state().noteReviews?.[id]?.deliveryId);
+    for (let attempts = 0; attempts < 4 && !delivery()?.received; attempts++) await d.tick();
+    const item = delivery();
+    assert.ok(item?.received, JSON.stringify({ review: state().noteReviews?.[id],
+      delivery: item && { phase: item.phase, issue: item.issue, pending: item.pendingReason, target: item.target.addr } }));
+    return command('verify-note', { target: row.addr, id, verdict, ...evidence }, row.role === 'leader' ? auditor : leader);
+  };
+  const rotate = async row => {
+    const { rotation } = await d.handle('rotate', { self: true }, row.addr);
+    await verifyNote(row, rotation.requestId);
+    return rotation;
+  };
+  return { f, d, leader, auditor, superRole, note, scope, state, command, evidence, answer, rotate, verifyNote, reports,
+    elapse: ms => { advance += ms; } };
 }
 
 test('v2 holds the predecessor read-only until the other senior verifies, then reroutes and delivers the first action', async t => {
-  const { f, d, leader, auditor, superRole, note, scope, state, command, evidence, answer } = await v2Fixture(t);
+  const { f, d, leader, auditor, superRole, note, scope, state, command, evidence, answer, verifyNote } = await v2Fixture(t);
   await scope('initial');
   const { notePath } = await note(leader);
   writeFileSync(notePath, 'Missing required headings.');
   await assert.rejects(d.handle('rotate', { self: true }, leader.addr), { code: 'rotation-note-required' });
   await note(leader);
-  await d.handle('rotate', { self: true }, leader.addr);
+  const { rotation: requested } = await d.handle('rotate', { self: true }, leader.addr);
   const queued = await d.handle('send', { target: leader.addr, mode: 'queue', text: 'HOLD resume card' }, superRole.addr);
+  await d.tick();
+  assert.deepEqual((await d.handle('state', { target: leader.addr })).rotations, []);
+  await assert.rejects(command('verify-note', { target: leader.addr, id: requested.requestId, verdict: 'pass', ...evidence }),
+    { code: 'permission-denied' });
+  await verifyNote(leader, requested.requestId);
   await d.tick();
   await d.tick();
   const next = (await d.handle('state', { target: leader.addr })).rotations[0].successor;
@@ -2484,6 +2504,17 @@ test('v2 holds the predecessor read-only until the other senior verifies, then r
       sent: f.prompts.filter(item => item.addr === next).map(item => item.input.slice(0, 370)) }));
   await assert.rejects(note(auditor), { code: 'rotation-phase-locked' });
   await scope('next');
+  await assert.rejects(note(auditor), { code: 'rotation-phase-locked' });
+  const packed = await d.handle('gate-pack', { gate: 'FIRST-DECISION' }, next);
+  const decision = Object.values(state().handovers[next].decisions).find(item => item.subject === packed.deliveryId);
+  assert.equal(decision.reviewer, auditor.addr);
+  await assert.rejects(command('verify-decision', { target: next, id: decision.id, verdict: 'pass', ...evidence }),
+    { code: 'permission-denied' });
+  // A completed full phase still leaves its unverified first decisions with the older counterpart.
+  await d.handle('notifications', { complete: 'First full phase finished', phase: 'next' }, superRole.addr);
+  await d.tick();
+  await assert.rejects(note(auditor), { code: 'rotation-phase-locked' });
+  await command('verify-decision', { target: next, id: decision.id, verdict: 'pass', ...evidence }, auditor);
   await note(auditor);
   await assert.rejects(d.handle('switch', { role: 'worker', to: '1' }, next), { code: 'permission-denied' });
   await command('rule-change', { target: next, id: 'budget', ...evidence }, auditor);
@@ -2491,10 +2522,10 @@ test('v2 holds the predecessor read-only until the other senior verifies, then r
 });
 
 test('v2 counterpart timeout escalates without a phase failure and permits a Super cancellation', async t => {
-  const { f, d, auditor, note, scope, state, elapse, command, answer } = await v2Fixture(t);
+  const { f, d, auditor, note, scope, state, elapse, command, answer, rotate } = await v2Fixture(t);
   await scope('phase-1');
   await note(auditor);
-  await d.handle('rotate', { self: true }, auditor.addr);
+  await rotate(auditor);
   await d.tick();
   await d.tick();
   const next = (await d.handle('state', { target: auditor.addr })).rotations[0].successor;
@@ -2539,6 +2570,7 @@ test('v2 independently records spot checks, verified errors, and immediate unres
   assert.equal(frozen.verdict, 'protected-ref-moved');
   const next = (await d.handle('state', { target: leader.addr })).rotations[0].successor;
   assert.ok(next);
+  assert.match(handoverBrief(f, next).brief, /## Next action\n接管生效后向 Super 报告/);
   assert.equal(state().sessions[leader.addr].holding, next);
   await assert.rejects(d.handle('spawn', { role: 'worker' }, leader.addr), { code: 'permission-denied' });
 });
@@ -2571,14 +2603,15 @@ test('v2 keeps ordinary gates outside the phase counter and consumes a fixed-SHA
   assert.equal(state().projects[leader.project].phase, 1);
   await scope('next');
   assert.equal(state().projects[leader.project].phase, 2);
-  assert.equal(state().sessions[leader.addr].reasons['phase-change'], 'next');
+  assert.equal(state().sessions[leader.addr].reasons['phase-change'], undefined);
+  assert.ok(state().sessions[leader.addr].strict.phase);
 });
 
 test('v2 MISMATCH stops a handover immediately and locks out retries in the phase', async t => {
-  const { f, d, leader, auditor, note, scope, state } = await v2Fixture(t);
+  const { f, d, leader, auditor, note, scope, state, rotate } = await v2Fixture(t);
   await scope('initial');
   await note(leader);
-  await d.handle('rotate', { self: true }, leader.addr);
+  await rotate(leader);
   await d.tick();
   await d.tick();
   const next = (await d.handle('state', { target: leader.addr })).rotations[0].successor;
@@ -2626,4 +2659,159 @@ test('v2 counts audit return streaks, user corrections and absolute live context
   await assert.rejects(d.handle('gate-pack', { gate: 'held' }, leader.addr), { code: 'permission-denied' });
   const superEvents = Object.values(state().sessions).filter(item => item.highWater).length;
   assert.equal(superEvents, 1);
+});
+
+test('v2 confirms adjacent hard-constraint omissions on real dispatch IDs and waits for a clean boundary', async t => {
+  const { f, d, leader, auditor, command, evidence, state, elapse, reports } = await v2Fixture(t);
+  const dispatch = async task => {
+    const { deliveryId } = await f.spawn(d, 'worker', task, leader.addr, { prompt: 'RETURN DONE ' + task });
+    await d.tick();
+    await d.tick();
+    return deliveryId;
+  };
+  const flag = (id, actor = auditor, verdict = 'omitted') => command('constraint', { target: leader.addr, id, verdict, ...evidence }, actor);
+  const a = await dispatch('A');
+  const b = await dispatch('B');
+  const c = await dispatch('C');
+  await assert.rejects(flag(a, leader), { code: 'permission-denied' });
+  await assert.rejects(flag(randomUUID()), { code: 'permission-denied' });
+  await flag(a);
+  await flag(a);
+  await flag(b, auditor, 'present');
+  await flag(c);
+  assert.equal(state().sessions[leader.addr].reasons['constraint-omissions'], undefined);
+  const hold = await d.handle('send', { target: leader.addr, mode: 'queue', text: 'HOLD ongoing decision' });
+  await d.tick();
+  assert.ok(f.prompts.some(item => deliveryId(item.input) === hold.id));
+  const e = await dispatch('E');
+  await flag(e);
+  await d.tick();
+  assert.equal(state().sessions[leader.addr].reasons['constraint-omissions'], e);
+  const proposed = () => d.handle('notifications', { history: true }).then(result => result.notifications
+    .filter(item => item.reason === 'constraint-omissions'));
+  assert.equal((await proposed()).length, 0);
+  f.sessions.get(leader.addr).finish('At the boundary.');
+  elapse(31_000);
+  await d.tick();
+  await d.tick();
+  assert.equal((await proposed()).length, 1, JSON.stringify({ reports, status: (await d.handle('state', { target: leader.addr })).state,
+    holds: f.read('inbox/state.json').messages.filter(item => item.target.addr === leader.addr)
+      .map(item => [item.phase, item.issue, Boolean(item.completion)]) }));
+});
+
+for (const source of ['compactions', 'runtime', 'phase']) test(`v2 ${source} switches on verification without scheduling rotation`, async t => {
+  const { f, d, leader, superRole, scope, elapse, state } = await v2Fixture(t, { ledgerTurns: 2 });
+  if (source === 'compactions') for (let i = 0; i < 3; i++) f.sessions.get(leader.addr).compact();
+  if (source === 'runtime') elapse(48 * 60 * 60_000 + 100);
+  if (source === 'phase') { await scope('integration'); await scope('regression'); }
+  const send = () => d.handle('send', { target: leader.addr, mode: 'queue', text: 'HOLD verify wake' }, superRole.addr);
+  const wake = await send();
+  await d.tick();
+  const body = f.prompts.find(item => deliveryId(item.input) === wake.id).input;
+  assert.match(body, /加严核对.*SHA.*路径.*数值.*命令/);
+  assert.doesNotMatch(body, /换班提示/);
+  assert.equal(/换班评估/.test(body), source === 'compactions');
+  assert.ok(state().sessions[leader.addr].strict[source]);
+  assert.deepEqual(state().sessions[leader.addr].reasons, {});
+  f.sessions.get(leader.addr).finish('I checked the facts.');
+  await d.tick();
+  const second = await send();
+  await d.tick();
+  const next = f.prompts.find(item => deliveryId(item.input) === second.id).input;
+  assert.match(next, /自查裁决账本是否出现漂移/);
+  assert.doesNotMatch(next, /加严核对：报告/);
+});
+
+test('v2 treats major-goal resets and ruling churn as context changes, not ordinary sub-phases', async t => {
+  const { f, d, leader, auditor, scope, state, command } = await v2Fixture(t);
+  const ledger = join(f.project, '.project/rulings.md');
+  writeFileSync(ledger, '## 1 · Initial rule\n> Use the fixture.\n');
+  await d.tick();
+  await command('scope', { goal: 'major-one' });
+  await scope('integration');
+  await scope('regression');
+  assert.deepEqual(state().sessions[leader.addr].reasons, {});
+  appendFileSync(ledger, '\n## 2 · New rule\n- 取代 1\n> A change.\n');
+  await d.tick();
+  assert.equal(state().sessions[leader.addr].reasons['ruling-churn'], undefined);
+  assert.deepEqual(state().sessions[leader.addr].overturnedRulings, { '2': '1' });
+  appendFileSync(ledger, '\n## R3 · Another rule\n- Supersedes: R2\n> Another change.\n');
+  await d.tick();
+  await d.tick();
+  assert.equal(state().sessions[leader.addr].reasons['ruling-churn'], '3');
+  assert.equal(state().sessions[auditor.addr].reasons['ruling-churn'], '3');
+  await command('scope', { goal: 'major-two' });
+  assert.equal(state().sessions[leader.addr].reasons['major-goal-change'], 'major-two');
+});
+
+test('v2 probes stale or missing Git facts, then waits for the counterpart to confirm', async t => {
+  const { f, d, leader, auditor, command, evidence, state } = await v2Fixture(t);
+  const stale = f.git('rev-parse', 'HEAD');
+  writeFileSync(join(f.project, 'proof.txt'), 'New head\n');
+  f.git('commit', '-qam', 'New head');
+  const missing = 'a'.repeat(40);
+  const { deliveryId } = await f.spawn(d, 'worker', 'PROBE', leader.addr, { prompt:
+    `HOLD\nHEAD: ${stale}\nCommit: ${missing}\nRead \`missing.txt\`.\nCreate \`src/planned.mjs\`.` });
+  const hits = (await d.handle('status', {})).rotationPolicy[0].probes.filter(item => item.subject === deliveryId);
+  assert.deepEqual(hits.map(item => item.finding.kind).sort(), ['path', 'sha', 'stale-sha']);
+  assert.ok(hits.every(item => item.status === 'candidate'));
+  assert.equal(state().sessions[leader.addr].errors, undefined);
+  const args = { target: leader.addr, id: hits[0].id, ...evidence };
+  await assert.rejects(command('error', args, leader), { code: 'permission-denied' });
+  await command('error', args, auditor);
+  await command('error', args, auditor);
+  assert.equal(state().events[hits[0].id].status, 'confirmed');
+  assert.equal(state().sessions[leader.addr].errors, 1);
+});
+
+test('v2 observes repeated causes on a worker slot without converting probe hits into facts', async t => {
+  const { f, d, leader, state } = await v2Fixture(t, { repeatedWorkerFailures: 2 });
+  for (const cause of ['temporary-failure', 'missing-fixture', 'missing-fixture']) {
+    const { session } = await f.spawn(d, 'worker', 'SAME-SLOT', leader.addr, { prompt: 'HOLD worker attempt' });
+    await d.tick();
+    f.sessions.get(session.addr).finish('FAILED SAME-SLOT', { kind: 'failed', failure: cause });
+    await d.tick();
+    await d.tick();
+  }
+  const probes = Object.values(state().events).filter(item => item.source === 'worker-slot');
+  assert.equal(probes.length, 1, JSON.stringify({ failures: state().sessions[leader.addr].workerFailures,
+    dispatches: state().sessions[leader.addr].dispatches, observed: f.read('inbox/state.json').messages
+      .filter(item => item.waveParent === leader.addr).map(item => [item.phase, item.issue, item.completion?.outcome, item.completion?.body]) }));
+  assert.deepEqual(probes[0].finding, { kind: 'repeated-worker-failure', value: 'SAME-SLOT', cause: 'missing-fixture', count: 2 });
+  assert.equal(probes[0].status, 'candidate');
+  assert.deepEqual(state().sessions[leader.addr].reasons, {});
+});
+
+test('v2 reviews the exact note before launch and invalidates approval when HEAD changes', async t => {
+  const { f, d, leader, auditor, note, verifyNote, state } = await v2Fixture(t);
+  const { notePath } = await note(leader);
+  appendFileSync(notePath, '\nRead `absent-note-source.txt`.\n');
+  const { rotation } = await d.handle('rotate', { self: true }, leader.addr);
+  await d.tick();
+  assert.equal((await d.handle('state', { target: leader.addr })).rotations.length, 0);
+  await assert.rejects(note(auditor), { code: 'rotation-phase-locked' });
+  const candidate = Object.values(state().events).find(item => item.source === 'handover-note');
+  assert.equal(candidate.finding.value, 'absent-note-source.txt');
+  await verifyNote(leader, rotation.requestId);
+  f.git('commit', '--allow-empty', '-qm', 'HEAD moved after the review');
+  await d.tick();
+  assert.equal(state().noteReviews[rotation.requestId].closed, true);
+  assert.equal((await d.handle('state', { target: leader.addr })).rotations.length, 0);
+  assert.equal(f.read('loomd/self-rotation.json')[leader.addr].noteChanged.reason, 'rotation-note-stale');
+});
+
+test('v2 releases the predecessor when a handover note review times out', async t => {
+  const { f, d, leader, note, elapse, state } = await v2Fixture(t);
+  await note(leader);
+  const { rotation } = await d.handle('rotate', { self: true }, leader.addr);
+  await d.tick();
+  assert.ok(state().noteReviews[rotation.requestId]);
+  elapse(31 * 60_000);
+  await d.tick();
+  await d.tick();
+  assert.equal(state().noteReviews[rotation.requestId].closed, true);
+  assert.equal(f.read('loomd/self-rotation.json')[leader.addr].request, undefined);
+  assert.equal((await d.handle('state', { target: 'leader' })).addr, leader.addr);
+  const history = (await d.handle('notifications', { history: true })).notifications;
+  assert.equal(history.filter(item => item.reason === 'note-verification-timeout').length, 1);
 });

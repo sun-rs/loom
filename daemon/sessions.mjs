@@ -601,7 +601,7 @@ export function ownedSessions(project, index, report, {
       if (rotatingRoles.includes(input.role)) {
         handoverAck = `HANDOVER-ACK ${randomUUID()}`;
         const state = input.role === 'leader' || selfHandoff ? `\n\n${handoverState(predecessor)}` : '';
-        const judgment = selfHandoff ?
+        const judgment = selfHandoff && !selfHandoff.urgent ?
           `\n\n## 交班判断\n${selfHandoff.notePath}\n原因：${rotationReasonText(selfHandoff.reason)}\n\n${selfHandoff.note.trimEnd()}` : '';
         const rotationInstructions = selfHandoff?.v2 ?
           '\n\n首轮只核对原件。首行写完整确认码。逐行照抄事实卡的 HEAD、Branch、Base SHA、WIP、Rulings 标签，并报告现查的值。若发现不一致，第二行写 MISMATCH，列明差异后结束。接管生效通知到达后执行 Next action。' : '';
@@ -653,7 +653,8 @@ export function ownedSessions(project, index, report, {
       ...(herdr && { herdr }),
       ...(handoverAck && { handoverAck }),
       ...(selfHandoff && { selfRotationId: selfHandoff.id }),
-      ...(selfHandoff?.v2 && { rotationV2: true, rotationPhase: selfHandoff.phase, rotationFacts: selfHandoff.expectedFacts }),
+      ...(selfHandoff?.v2 && { rotationV2: true, rotationPhase: selfHandoff.phase, rotationFacts: selfHandoff.expectedFacts,
+        ...(selfHandoff.noteReview && { rotationNoteReview: selfHandoff.noteReview }) }),
       ...(compactHandover && { compactHandover }),
       ...(row.role === 'worker' && { cardStart: headAt(cwd), card: input.prompt, checkpoint }),
       ...(input['expect-red'] !== undefined && { expectRed: input['expect-red'] }),
