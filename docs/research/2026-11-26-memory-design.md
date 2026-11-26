@@ -33,3 +33,10 @@
 
 ### 验收指标（pilot）
 每轮额外请求 = 0；换班首轮 token 相比交接文件方案下降；"事实遗漏/走偏"计数（loomd 已有 fact-miss 统计）下降；索引大小与注入增量的 token 分布；整理提案的通过率与回滚次数。
+
+## 补充：claude-mem 口碑与计费（2026-11-26，代码 v17.0.0 @ 9b3b78d + 公开页面；Reddit 未能读取）
+- **计费**：默认 provider `claude`、模型 haiku，经 Claude Agent SDK 拉起 `claude` CLI；有 `ANTHROPIC_API_KEY` 用 key，否则从钥匙串取 Claude Code OAuth 令牌、以 `CLAUDE_CODE_ENTRYPOINT=sdk-ts` 跑在**用户订阅**上（src/services/worker/ClaudeProvider.ts、src/shared/EnvManager.ts）。Codex 走订阅（app-server），Gemini/OpenRouter/OpenAI 兼容走 key；自家 cmem.ai 网关额度用完回落到用户 Anthropic 订阅。
+- **实测消耗**：#2643（2026-05，v12.1）530 个会话观察者约 6.49 亿 token；#2315 一天 7,600 万+ token 打满额度；#5023（2026-10，v15.0.1）每次工具调用的观察者回合约 10 万 token，且回落 provider 也是 claude；HackerNoon（2026-11-18，v15.18.1）召回 3/3 对 0/3，但每次请求多约 5,200 token、耗时无改善、会话总结 3 次只出 1 次。
+- **主要投诉**：①后台观察者静默吃订阅/token（无界上下文、整文件载荷、重试）；②隐私（v15.2 未经同意上传约 30 天提示记录到 cmem.ai，遥测默认开，脱敏需手动开，密钥明文）；③可靠性（进程分叉拖慢、卸载后仍运行或把原生记忆留在关闭状态、捕获时有时无）。
+- **政策**：订阅令牌用于 SDK/第三方的条款 2026 年有过收紧与放宽，后台循环插件是否算允许用途社区仍有疑问。
+- **对 loom 的约束（写入 MEM-WIRE-1）**：抽取器每次调用和每日都设硬上限（输入字节、调用数、token），超限即停并在 `loom status`/消耗统计里可见；只送单回合摘要级内容，不送整文件；失败丢弃不重放；脱敏默认开且不可关；无遥测；密钥只从钥匙串按名读取；CLI 后端只用 loom 自己的标签（`CLAUDE_CODE_ENTRYPOINT=loom`），不借别人的；关闭原生记忆只用启动级开关，停用 loom 后原生设置原样不变。
