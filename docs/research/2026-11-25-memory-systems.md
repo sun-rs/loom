@@ -63,3 +63,9 @@ agy 1.5.17 复核仅查看命令帮助和二进制内置值。登录后下发的
   - 作用域由凭据推出；
   - 用前校验所引用的内容。
 - **不采用**：后台模型提炼、全局混存、多主合并。
+
+## 补充：Claude Code 记忆由谁生成（2026-11-26，Claude Code 2.1.331 本机二进制字符串，未运行实验）
+- **主路径：工作会话自己写。** 系统提示告诉在岗 agent 记忆目录和格式，agent 判断值得记时直接用 Write 写文件并更新 `MEMORY.md` 索引。
+- **补漏：回合后抽取（`extractMemories`，`CLAUDE_CODE_POST_TURN_MEMORY`）。** 回合结束后先做一次"first look"小判断（只答 `{"write_likely": true|false}`），否才跳过；本回合主会话已直接写过记忆则跳过（`skipped_direct_write`）；用的是刚结束回合的上下文（`stashed context`），不是去读历史库。
+- **整理：`autoDream`（"Dream: Memory Consolidation"，`autoDreamEnabled`）。** 后台定期运行，取上次整理以来动过的会话（`listSessionsTouchedSince`、`readLastConsolidatedAt`，带锁），对照会话记录合并、去重、修正过时条目；规则含"不在 dream 中改 CLAUDE.md，与之矛盾时标注待核"。
+- **对 loom：** 生成以在岗角色当场写为主（loom：结论标签 `REMEMBER:` / Super 记账 / loomd 结构化事件）；回合后抽取暂不做（每回合多一次请求，与"少请求"冲突，必要时只对高级角色、先用规则预筛）；读 hist 只用于阶段边界的整理（对应 dream），产出合并/作废/更正，不作为主要生成来源。
