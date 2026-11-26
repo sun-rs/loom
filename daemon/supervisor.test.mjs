@@ -58,6 +58,7 @@ function fixture(t, options) {
           .split('\n\n## Startup request\n').at(-1);
         const body = row.role === 'reviewer' ? prompt.split('\n\n').at(-1) : prompt;
         if (!/^(?:Loom Super message\n\n)?HOLD/.test(body) &&
+            !(row.role === 'auditor' && body.startsWith('Read gate packet') && body.includes('rotation-policy spot-check')) &&
             (row.role !== 'leader' || body.includes('波次') || body.includes('续作批次') || body.endsWith('replacement')) &&
             (row.task != null || body.startsWith('RETURN '))) {
           finish(body.startsWith('RETURN ') ? body.slice(7) :
@@ -313,85 +314,73 @@ test('the board uses the latest native input and the reported or estimated model
     const { contextTokens, contextWindow, contextPercent, contextEstimated } = roles.find(item => item.role === role);
     return [contextTokens, contextWindow, contextPercent, contextEstimated];
   };
-  assert.deepEqual(context('leader'), [65_536, 524_288, 12.5, true]);
+  assert.deepEqual(context('leader'), [65_536, 512_000, 12.8, true]);
   assert.deepEqual(context('auditor'), [50_000, 200_000, 25, false]);
 });
 
-test('Auditor wakes and context have independent budgets and rotation waits for a completed gate', async t => {
-  let advance = 0;
-  const f = fixture(t, { now: () => Date.now() + advance });
+test('Auditor wake overruns notify Super once per gate without proposing a rotation', async t => {
+  let time = Date.now();
+  const f = fixture(t, { now: () => time });
+  f.policy({ roles: { auditor: { maxWakesPerGate: 1 } } });
   const d = f.daemon();
   t.after(d.shutdown);
+  const { session: superSession } = await f.spawn(d, 'super', 'S');
   const { session: leader } = await f.spawn(d, 'leader', 'L');
   const { session: auditor } = await f.spawn(d, 'auditor', 'A');
   await d.tick();
   const events = async () => (await d.handle('notifications', { history: true })).notifications;
   const budgets = async () => (await events()).filter(event => event.type === 'auditor-budget-exceeded');
-  const proposals = async () => (await events()).filter(event => event.type === 'auditor-rotation-proposed');
-  advance = 31_000;
-  for (let i = 3; i > 1; i--) await nativeCost(f, auditor, Date.now() + advance - i, 10);
+  time += 31_000;
+  await nativeCost(f, auditor, time - 2, 290_000);
+  await nativeCost(f, auditor, time - 1, 295_000);
   await d.tick();
-  assert.equal((await budgets()).length, 0);
-  await nativeCost(f, auditor, Date.now() + advance - 1, 10);
-  assert.equal((await proposals()).length, 0);
+  const [first] = await budgets();
+  assert.ok(first.usage.wakes > first.usage.maxWakesPerGate);
+  assert.equal(first.sampledAt, time);
+  assert.deepEqual(f.read('inbox/state.json').messages.filter(message => message.projectEvents?.includes(first.id))
+    .map(message => message.target.addr), [superSession.addr]);
+  time += 31_000;
+  await nativeCost(f, auditor, time - 1, 296_000);
+  await d.tick();
+  assert.equal((await budgets()).length, 1);
+  assert.equal((await budgets())[0].id, first.id);
+  assert.equal((await budgets())[0].sampledAt, time);
+  assert.ok((await budgets())[0].usage.wakes > first.usage.wakes);
   await d.handle('notifications', { gateComplete: 'G1' }, leader.addr);
-  assert.deepEqual((await budgets())[0].usage,
-    { wakes: 4, contextTokens: 10, maxWakesPerGate: 3, maxContextTokens: 150_000 });
-  assert.deepEqual((await proposals()).map(event => event.gate), ['G1']);
-  const notes = () => f.read('inbox/state.json').messages.filter(message => message.orgAppendix?.includes('请把常规材料合并'));
-  assert.equal(notes().length, 0);
-  f.sessions.get(leader.addr).finish('Initial dispatch complete');
-  await d.handle('send', { target: leader.addr, mode: 'queue', text: 'HOLD next task' });
+  assert.ok((await events()).some(event => event.type === 'gate-completed' && event.gate === 'G1'));
+  assert.equal((await events()).filter(event => event.type.endsWith('-rotation-proposed')).length, 0);
+  time += 31_000;
+  await nativeCost(f, auditor, time - 2, 299_000);
+  await nativeCost(f, auditor, time - 1, 299_000);
   await d.tick();
-  assert.deepEqual(notes().map(message => message.target.addr), [leader.addr]);
-  await d.handle('notifications', { gateComplete: 'G1' }, leader.addr);
-  f.policy({ roles: { auditor: { maxWakesPerGate: 10, maxContextTokens: 100 } } });
-  advance += 31_000;
-  await nativeCost(f, auditor, Date.now() + advance - 1, 20);
-  await d.handle('send', { target: auditor.addr, mode: 'queue', text: 'HOLD context probe' });
-  await d.tick();
-  f.sessions.get(auditor.addr).context(101);
-  advance += 31_000;
-  await d.tick();
-  assert.deepEqual((await budgets())[1].usage,
-    { wakes: 1, contextTokens: 101, maxWakesPerGate: 10, maxContextTokens: 100 });
-  assert.equal((await proposals()).length, 1);
-  await d.handle('notifications', { gateComplete: 'G2' }, leader.addr);
-  assert.deepEqual((await proposals()).map(event => event.gate), ['G1', 'G2']);
-  assert.equal(notes().length, 1);
-  f.sessions.get(leader.addr).finish('Next task complete');
-  await d.handle('send', { target: leader.addr, mode: 'queue', text: 'HOLD another task' });
-  await d.tick();
-  assert.deepEqual(notes().map(message => message.target.addr), [leader.addr, leader.addr]);
-  assert.notEqual((await d.handle('state', { target: auditor.addr })).state, 'exited');
+  assert.equal((await budgets()).length, 2);
+  assert.notEqual((await budgets())[1].id, first.id);
 });
 
-test('Auditor budget samples refresh in the same gate and recovery cancels a stale rotation proposal', async t => {
+test('an explicit window threshold waits for the native turn and in-flight card to settle', async t => {
   let time = Date.now();
   const f = fixture(t, { now: () => time });
-  f.policy({ roles: { auditor: { maxWakesPerGate: 100, maxContextTokens: 100 } } });
+  f.policy({ roles: { leader: { maxContextFraction: 0.6 } } });
   const d = f.daemon();
   t.after(d.shutdown);
-  const { session: auditor } = await f.spawn(d, 'auditor', 'A');
+  const { session: leader } = await f.spawn(d, 'leader', 'L', undefined, { prompt: 'HOLD initial turn' });
   await d.tick();
-  const sample = async tokens => {
-    time += 31_000;
-    await nativeCost(f, auditor, time - 1000, tokens);
-    await d.tick();
-    const events = f.read('loomd/notifications.json').filter(event => event.type === 'auditor-budget-exceeded');
-    assert.equal(events.length, 1);
-    assert.equal(events[0].sampledAt, time);
-    assert.equal(events[0].usage.contextTokens, tokens);
-    assert.ok(events[0].text.includes(new Date(time).toISOString()));
-    return events[0];
-  };
-  const first = await sample(501);
-  const refreshed = await sample(750);
-  assert.equal(refreshed.id, first.id);
-  assert.ok(refreshed.usage.wakes > first.usage.wakes);
-  assert.equal((await sample(50)).overBudget, false);
-  const history = await d.handle('notifications', { gateComplete: 'RECOVERED', history: true });
-  assert.equal(history.notifications.find(event => event.gate === 'RECOVERED').type, 'gate-completed');
+  time += 31_000;
+  await nativeCost(f, leader, time - 1, 180_000);
+  const proposals = async () => (await d.handle('notifications', { history: true })).notifications
+    .filter(event => event.type === 'leader-rotation-proposed');
+  await d.tick();
+  assert.deepEqual(await proposals(), []);
+  const { session: worker } = await f.spawn(d, 'worker', 'W', leader.addr, { prompt: 'HOLD worker' });
+  f.sessions.get(leader.addr).finish('Initial turn complete');
+  time += 31_000;
+  await d.tick();
+  assert.deepEqual(await proposals(), []);
+  f.sessions.get(worker.addr).finish('DONE W');
+  time += 31_000;
+  await d.tick();
+  const [event] = await proposals();
+  assert.deepEqual([event.reason, event.usage.inputTokens, event.usage.contextWindow], ['context-window', 180_000, 300_000]);
 });
 
 test('gate pack snapshots scoped evidence into one compact file and enqueues one pointer across restart', async t => {
@@ -465,7 +454,8 @@ test('gate pack snapshots scoped evidence into one compact file and enqueues one
   const related = f.read('inbox/state.json').messages.filter(message => message.replyTo === packet.deliveryId);
   assert.deepEqual(related.map(message => message.target.addr), [leader.addr]);
   const budget = await d.handle('notifications', { gateComplete: 'GATE', history: true }, leader.addr);
-  assert.equal(budget.notifications.find(event => event.gate === 'GATE' && event.type === 'auditor-rotation-proposed').usage.wakes, 3);
+  assert.equal(budget.notifications.find(event => event.type === 'auditor-budget-exceeded').usage.wakes, 3);
+  assert.ok(budget.notifications.some(event => event.gate === 'GATE' && event.type === 'gate-completed'));
   writeFileSync(join(f.project, '.project/evidence/next-round.json'), JSON.stringify({ addr: worker.addr, card: 'New round evidence' }));
   const next = await d.handle('gate-pack', { gate: 'GATE', candidate, question: 'Latest question' }, leader.addr);
   assert.equal(next.round, 2);
@@ -1390,7 +1380,7 @@ test('Leader self-rotation lists active work and reports completion on the Audit
   await d.handle('notifications', { gateComplete: 'GATE-WITH-ACTIVE-CARD' });
   const original = await d.handle('send', { target: 'leader', mode: 'queue', text: 'HOLD ordinary Leader delivery' });
   await d.tick();
-  assert.match(f.prompts.find(item => deliveryId(item.input) === original.id).input, /换班提示（gate）/);
+  assert.doesNotMatch(f.prompts.find(item => deliveryId(item.input) === original.id).input, /换班提示/);
   f.sessions.get(leader.addr).finish('Ready to hand over.');
   const { rotation: { notePath, inFlight } } = await d.handle('rotate', { self: true, prepare: true }, leader.addr);
   assert.deepEqual(inFlight.map(item => item.addr), [worker.addr]);
@@ -1744,7 +1734,7 @@ test('switches Claude Leader to agy and agy Auditor to Codex under one durable s
   await d.handle('notifications', { gateComplete: 'tests-v1' }, switched.session.addr);
   const gates = await d.handle('notifications', { gateComplete: 'tests-v1', history: true }, switched.session.addr);
   assert.deepEqual(gates.notifications.filter(event => event.gate === 'tests-v1').map(event => event.type),
-    ['auditor-rotation-proposed']);
+    ['gate-completed']);
   await assert.rejects(d.handle('switch', { role: 'auditor', to: '2' }), { code: 'rotation-in-progress' });
   await d.tick();
   const { ack } = handoverBrief(f, switched.session.addr);
@@ -2084,4 +2074,218 @@ test('a native question holds deliveries and reaches Auditor and desktop once af
   await d.tick();
   assert(f.prompts.some(row => row.input.includes('held while asking')));
   assert.deepEqual((await d.handle('ls', {})).awaitingUser, []);
+});
+
+async function v2Fixture(t, options) {
+  let advance = 0;
+  const f = fixture(t, { now: () => Date.now() + advance });
+  f.policy({ rotation: { mode: 'v2', ...options } });
+  const d = f.daemon();
+  t.after(d.shutdown);
+  f.git('init', '-qb', 'main');
+  f.git('config', 'user.name', 'Test Fixture');
+  f.git('config', 'user.email', 'fixture@example.invalid');
+  writeFileSync(join(f.project, 'proof.txt'), 'Primary source\n');
+  f.git('add', 'proof.txt');
+  f.git('commit', '-qm', 'Original source');
+  const { session: leader } = await f.spawn(d, 'leader', 'LEAD', undefined, { prompt: 'HOLD Leader startup' });
+  const { session: auditor } = await f.spawn(d, 'auditor', 'AUD');
+  const { session: superRole } = await f.spawn(d, 'super', 'SUPER');
+  await d.tick();
+  f.sessions.get(leader.addr).finish('Ready.');
+  await d.tick();
+  const note = async row => {
+    const { rotation } = await d.handle('rotate', { self: true, prepare: true }, row.addr);
+    writeFileSync(rotation.notePath, rotation.requiredFields.map(field => `## ${field}\nChecked proof.txt.` +
+      (field === 'Status' ? '\n' + Object.entries(rotation.repository).map(([name, value]) => `${name}: ${value}`).join('\n') : '')).join('\n\n'));
+    return rotation;
+  };
+  const command = (action, args = {}, actor = superRole) => d.handle('rotation-policy', { action, ...args }, actor.addr);
+  const scope = phase => command('scope', { phase });
+  const state = () => f.read('loomd/rotation-v2.json');
+  const evidence = { detail: 'Checked original source', evidence: 'proof.txt:1' };
+  const answer = next => [handoverBrief(f, next).ack, ...Object.entries(f.read(`loomd/sessions/${next}.json`).rotationFacts)
+    .map(([name, value]) => `${name}: ${value}`)].join('\n');
+  return { f, d, leader, auditor, superRole, note, scope, state, command, evidence, answer, elapse: ms => { advance += ms; } };
+}
+
+test('v2 holds the predecessor read-only until the other senior verifies, then reroutes and delivers the first action', async t => {
+  const { f, d, leader, auditor, superRole, note, scope, state, command, evidence, answer } = await v2Fixture(t);
+  await scope('initial');
+  const { notePath } = await note(leader);
+  writeFileSync(notePath, 'Missing required headings.');
+  await assert.rejects(d.handle('rotate', { self: true }, leader.addr), { code: 'rotation-note-required' });
+  await note(leader);
+  await d.handle('rotate', { self: true }, leader.addr);
+  const queued = await d.handle('send', { target: leader.addr, mode: 'queue', text: 'HOLD resume card' }, superRole.addr);
+  await d.tick();
+  await d.tick();
+  const next = (await d.handle('state', { target: leader.addr })).rotations[0].successor;
+  assert.equal(state().sessions[leader.addr].holding, next);
+  assert.equal((await d.handle('state', { target: 'leader' })).addr, leader.addr);
+  await assert.rejects(d.handle('send', { target: auditor.addr, mode: 'queue', text: 'restricted' }, leader.addr), { code: 'permission-denied' });
+  await assert.rejects(d.handle('gate-pack', { gate: 'restricted' }, leader.addr), { code: 'permission-denied' });
+  assert.match(recordSeniorToolDenial(seniorToolLog(f.project, leader.addr), f.project, leader.cwd, 'Bash',
+    { command: 'git merge candidate' }), /仅|只允许/);
+  const { brief } = handoverBrief(f, next);
+  assert.match(brief, /当前事实卡[\s\S]*HEAD: [a-f0-9]{40}/);
+  assert.match(brief, new RegExp(queued.id + ' reroute'));
+  f.sessions.get(next).finish(answer(next));
+  await d.tick();
+  assert.equal((await d.handle('state', { target: 'leader' })).addr, leader.addr);
+  await assert.rejects(command('verify', { target: next, verdict: 'pass', ...evidence }), { code: 'permission-denied' });
+  await command('verify', { target: next, verdict: 'pass', ...evidence }, auditor);
+  await d.tick();
+  await d.tick();
+  assert.equal((await d.handle('state', { target: 'leader' })).addr, next);
+  assert.equal((await d.handle('state', { target: leader.addr })).state, 'exited');
+  assert.equal(f.read('inbox/state.json').messages.find(item => item.id === queued.id).target.addr, next);
+  const activation = f.read('inbox/state.json').messages.find(item => item.target.addr === next && item.rotationVerification);
+  assert.ok(f.prompts.some(item => item.addr === next && item.input.includes('立即执行交接单中触发条件已满足的首个动作')),
+    JSON.stringify({ activation: activation && [activation.phase, activation.issue, activation.pendingReason, activation.typedAt],
+      sent: f.prompts.filter(item => item.addr === next).map(item => item.input.slice(0, 370)) }));
+  await assert.rejects(note(auditor), { code: 'rotation-phase-locked' });
+  await scope('next');
+  await note(auditor);
+  await assert.rejects(d.handle('switch', { role: 'worker', to: '1' }, next), { code: 'permission-denied' });
+  await command('rule-change', { target: next, id: 'budget', ...evidence }, auditor);
+  assert.ok(state().sessions[next].confirmations.budget);
+});
+
+test('v2 counterpart timeout escalates without a phase failure and permits a Super cancellation', async t => {
+  const { f, d, auditor, note, scope, state, elapse, command, answer } = await v2Fixture(t);
+  await scope('phase-1');
+  await note(auditor);
+  await d.handle('rotate', { self: true }, auditor.addr);
+  await d.tick();
+  await d.tick();
+  const next = (await d.handle('state', { target: auditor.addr })).rotations[0].successor;
+  f.sessions.get(next).finish(answer(next));
+  await d.tick();
+  elapse(30 * 60_000 + 10);
+  await d.tick();
+  await d.tick();
+  assert.equal((await d.handle('state', { target: 'auditor' })).addr, auditor.addr);
+  assert.ok(state().handovers[next].verificationTimedOutAt);
+  assert.equal(state().handovers[next].failed, undefined);
+  assert.equal(state().sessions[auditor.addr].holding, next);
+  assert.deepEqual(state().projects[auditor.project].failures, {});
+  assert.ok((await d.handle('notifications', { history: true })).notifications.some(item => item.reason === 'verification-timeout'));
+  await command('abort', { target: next, detail: 'Restore prior Auditor' });
+  await d.tick();
+  await d.tick();
+  assert.equal(state().handovers[next].failed.reason, 'verification-cancelled');
+  assert.equal(state().sessions[auditor.addr].holding, undefined);
+  assert.deepEqual(state().projects[auditor.project].failures, {});
+});
+
+test('v2 independently records spot checks, verified errors, and immediate unresolved protected-ref incidents', async t => {
+  const { f, d, leader, auditor, command, state, evidence } = await v2Fixture(t, { protectedRefs: ['refs/heads/main'] });
+  await assert.rejects(command('incident', { target: leader.addr, verdict: 'overreach', ...evidence }, leader), { code: 'permission-denied' });
+  await command('spot-check', { target: leader.addr, verdict: 'ok', ...evidence }, auditor);
+  await command('error', { target: leader.addr, ...evidence }, leader);
+  assert.equal(state().sessions[leader.addr].errors, 1);
+  await command('spot-check', { target: leader.addr, verdict: 'error', ...evidence, detail: 'A second fact was wrong' }, auditor);
+  assert.ok(state().sessions[leader.addr].reasons['verified-error']);
+  const status = await d.handle('status', {});
+  assert.deepEqual(status.rotationPolicy[0].spotChecks, { ok: 1, error: 1 });
+  const hold = await d.handle('send', { target: leader.addr, mode: 'queue', text: 'HOLD current Leader turn' });
+  await d.tick();
+  assert.ok(f.prompts.some(item => deliveryId(item.input) === hold.id));
+  writeFileSync(join(f.project, 'proof.txt'), 'Updated source\n');
+  f.git('add', 'proof.txt');
+  f.git('commit', '-qm', 'Unapproved movement');
+  await d.tick();
+  await d.tick();
+  const frozen = state().sessions[leader.addr].frozen;
+  assert.equal(frozen.verdict, 'protected-ref-moved');
+  const next = (await d.handle('state', { target: leader.addr })).rotations[0].successor;
+  assert.ok(next);
+  assert.equal(state().sessions[leader.addr].holding, next);
+  await assert.rejects(d.handle('spawn', { role: 'worker' }, leader.addr), { code: 'permission-denied' });
+});
+
+test('v2 keeps ordinary gates outside the phase counter and consumes a fixed-SHA authorization once', async t => {
+  const { f, d, leader, auditor, scope, state } = await v2Fixture(t, { protectedRefs: ['refs/heads/main'] });
+  await scope('initial');
+  await d.handle('notifications', { gateComplete: 'ordinary-1' }, leader.addr);
+  await d.handle('notifications', { gateComplete: 'ordinary-2' }, leader.addr);
+  assert.equal(state().projects[leader.project].phase, 1);
+  assert.equal(state().sessions[leader.addr].reasons['phase-change'], undefined);
+  f.git('switch', '-qc', 'fixture-candidate');
+  writeFileSync(join(f.project, 'proof.txt'), 'Approved update\n');
+  f.git('commit', '-qam', 'Prepared candidate');
+  const candidate = f.git('rev-parse', 'HEAD');
+  f.git('switch', '-q', 'main');
+  await assert.rejects(d.handle('notifications', { gateComplete: 'approved', candidate }, leader.addr), { code: 'permission-denied' });
+  await d.handle('gate-pack', { gate: 'approved', candidate }, leader.addr);
+  await d.tick();
+  f.sessions.get(auditor.addr).finish('APPROVE\nChecked this exact SHA.');
+  await d.tick();
+  const authorization = await d.handle('notifications', { gateComplete: 'approved', candidate }, leader.addr);
+  assert.equal(authorization.authorized, true);
+  f.git('merge', '--ff-only', 'fixture-candidate');
+  await d.tick();
+  const exact = Object.values(state().events).find(item => item.kind === 'gate-authorization');
+  assert.equal(exact.candidate, candidate);
+  assert.equal(exact.consumed, 'refs/heads/main');
+  assert.equal(state().sessions[leader.addr].frozen, undefined);
+  assert.equal(state().projects[leader.project].phase, 1);
+  await scope('next');
+  assert.equal(state().projects[leader.project].phase, 2);
+  assert.equal(state().sessions[leader.addr].reasons['phase-change'], 'next');
+});
+
+test('v2 MISMATCH stops a handover immediately and locks out retries in the phase', async t => {
+  const { f, d, leader, auditor, note, scope, state } = await v2Fixture(t);
+  await scope('initial');
+  await note(leader);
+  await d.handle('rotate', { self: true }, leader.addr);
+  await d.tick();
+  await d.tick();
+  const next = (await d.handle('state', { target: leader.addr })).rotations[0].successor;
+  f.sessions.get(next).finish(handoverBrief(f, next).ack + '\nMISMATCH\nUnexpected HEAD.');
+  await d.tick();
+  assert.equal(state().handovers[next].failed.reason, 'first-report-mismatch');
+  assert.equal((await d.handle('state', { target: 'leader' })).addr, leader.addr);
+  await assert.rejects(note(auditor), { code: 'rotation-phase-locked' });
+  assert.ok((await d.handle('notifications', { history: true })).notifications.some(item => item.reason === 'handover-failed'));
+});
+
+test('v2 attaches facts to a long-wait wake without making the wait a rotation reason', async t => {
+  const { f, d, leader, superRole, state, elapse } = await v2Fixture(t, { longIdleMs: 30_000 });
+  elapse(35_000);
+  const message = await d.handle('send', { target: leader.addr, mode: 'queue', text: 'HOLD current facts' }, superRole.addr);
+  await d.tick();
+  const prompt = f.prompts.find(item => deliveryId(item.input) === message.id)?.input;
+  assert.match(prompt, /当前事实卡[\s\S]*Branch: main/);
+  assert.doesNotMatch(prompt, /换班提示/);
+  assert.deepEqual(state().sessions[leader.addr].reasons, {});
+});
+
+test('v2 counts audit return streaks, user corrections and absolute live context independently', async t => {
+  const { f, d, auditor, leader, superRole, command, state, evidence } = await v2Fixture(t, {
+    highWaterTokens: { codex: 220_000 },
+  });
+  for (const [verdict, detail] of [['return', 'round 1'], ['pass', 'round 2'], ['return', 'round 3'],
+    ['return', 'round 4'], ['return', 'round 5']]) await command('audit', { id: 'CARD', verdict, detail }, auditor);
+  for (const detail of ['Correction one', 'Correction two', 'Correction three']) {
+    await command('correction', { target: leader.addr, detail });
+  }
+  const notices = (await d.handle('notifications', { history: true })).notifications;
+  assert.equal(notices.filter(item => item.reason === 'audit-returns').length, 1);
+  assert.equal(notices.filter(item => item.reason === 'user-corrections').length, 1);
+  assert.deepEqual(state().sessions[leader.addr].reasons, {});
+  await command('ruling', { target: auditor.addr, ...evidence });
+  assert.ok(state().sessions[auditor.addr].reasons['authority-ruling']);
+
+  f.sessions.get(leader.addr).context(221_000);
+  const wake = await d.handle('send', { target: leader.addr, mode: 'queue', text: 'HOLD absolute context' }, superRole.addr);
+  await d.tick();
+  assert.equal(state().sessions[leader.addr].highWater.tokens, 221_000);
+  assert.match(f.prompts.find(item => deliveryId(item.input) === wake.id)?.input, /绝对高水位|只读核对/);
+  assert.equal((await d.handle('state', { target: 'leader' })).addr, leader.addr);
+  await assert.rejects(d.handle('gate-pack', { gate: 'held' }, leader.addr), { code: 'permission-denied' });
+  const superEvents = Object.values(state().sessions).filter(item => item.highWater).length;
+  assert.equal(superEvents, 1);
 });

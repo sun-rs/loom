@@ -26,6 +26,7 @@ import { projectMemoryPrompt } from '../memory/project.mjs';
 import { disposeSession } from './session-close.mjs';
 import { workerEnvironment } from './worker-environment.mjs';
 import { withClaudeTranscriptStops } from '../relay/sources.mjs';
+import { rotationReasonText } from './rotation-policy.mjs';
 import { visibleRoles } from './herdr-layout.mjs';
 
 const runtimeIds = { codex: 'codex', agy: 'antigravity', claude: 'claude', opencode: 'opencode' };
@@ -107,6 +108,12 @@ export function ownedSessions(project, index, report, {
   const openCodeProofs = new Map();
   const rows = addr => index.query(addr ? { addr } : {});
   const rowFor = addr => addr ? rows(addr)[0] : undefined;
+  const liveCaller = addr => {
+    const row = rowFor(addr);
+    const job = jobs.get(addr);
+    if (job && restored.has(addr) && row?.endedAt === null && !job.stopping &&
+        !awaitingBrief(job) && routeParent(addr)?.addr === addr) return row;
+  };
   const file = addr => join(path, `${addr}.json`);
   for (const entry of readdirSync(path, { withFileTypes: true })) {
     if (!entry.isFile() || !/^(?:loom|oar)-[0-9a-f-]{36}\.json$/.test(entry.name)) continue;
@@ -115,6 +122,45 @@ export function ownedSessions(project, index, report, {
     jobs.set(job.row.addr, job);
   }
   const save = job => writeState(file(job.row.addr), JSON.stringify(job) + '\n');
+  async function legacyPeerCaller(ancestors, eligible) {
+    if (!ancestors.length) return;
+    const chain = new Map(ancestors.map(process => [process.pid, process]));
+    const matches = [];
+    for (const addr of eligible) {
+      const job = jobs.get(addr);
+      if (!job) continue;
+      const runtime = running.get(addr);
+      const host = runtime?.identity ?? job.host?.identity;
+      const pane = job.paneBinding;
+      const proof = chain.get(host?.pid ?? pane?.pid);
+      const child = job.host?.childPid ?? job.tui?.childPid;
+      if (!proof || child && chain.get(child)?.parent !== proof.pid) continue;
+      const actor = liveCaller(addr);
+      if (!actor) continue;
+      if (job.legacyPeer) {
+        if (job.legacyPeer.pid !== proof.pid || job.legacyPeer.birth !== proof.birth) continue;
+      } else if (host) {
+        if (!runtime?.hosted || runtime.endedAt != null || Math.floor(proof.startedAt / 1000) !==
+            Math.floor(Date.parse(host.started) / 1000)) continue;
+      } else {
+        // hc's original creation clock is the only persisted start evidence in
+        // old pane records. Confirm that pane before pinning the kernel birth.
+        if (!Number.isFinite(pane.createdAt) || Math.abs(pane.createdAt - proof.startedAt) > 5000) continue;
+        const terminal = await getPane(job, actor).catch(() => undefined);
+        if (terminal?.state !== 'live' || terminal.pid !== pane.pid || terminal.created_ms !== pane.createdAt) continue;
+      }
+      matches.push({ actor, job, proof });
+    }
+    if (matches.length !== 1) return;
+    const { actor, job, proof } = matches[0];
+    if (!job.legacyPeer) {
+      job.legacyPeer = { pid: proof.pid, birth: proof.birth };
+      try { save(job); }
+      catch (error) { delete job.legacyPeer; throw error; }
+    }
+    return actor;
+  }
+
   function saveLaunchPaths(job) {
     if (job.launchPaths) return;
     const { backend, cli } = job.row;
@@ -421,8 +467,16 @@ export function ownedSessions(project, index, report, {
     if (rotatingRoles.includes(row.role)) index.bindRotation(row.addr, job.handoverBoundAt);
   }
 
+  function finalizeV2(job) {
+    if (!job.rotationV2Finalized) {
+      job.rotationV2Finalized = true;
+      try { save(job); }
+      catch (error) { delete job.rotationV2Finalized; throw error; }
+    }
+  }
+
   async function retirePredecessor(job) {
-    if (!job.handoverBound) return;
+    if (!job.handoverBound || job.rotationV2 && !job.rotationV2Finalized) return;
     const old = rowFor(job.handoverFrom);
     if (job.herdr && !job.herdrPublished) {
       const row = rowFor(job.row.addr);
@@ -518,11 +572,13 @@ export function ownedSessions(project, index, report, {
         handoverAck = `HANDOVER-ACK ${randomUUID()}`;
         const state = input.role === 'leader' || selfHandoff ? `\n\n${handoverState(predecessor)}` : '';
         const judgment = selfHandoff ?
-          `\n\n## 交班判断\n${selfHandoff.notePath}\n原因：${selfHandoff.reason}\n\n${selfHandoff.note.trimEnd()}` : '';
-        const complete = `${brief.trimEnd()}${state}${judgment}\n\n## 启动指令\n${prompt}\n\n## 交接确认\n${handoverAck}\n`;
+          `\n\n## 交班判断\n${selfHandoff.notePath}\n原因：${rotationReasonText(selfHandoff.reason)}\n\n${selfHandoff.note.trimEnd()}` : '';
+        const rotationInstructions = selfHandoff?.v2 ?
+          '\n\n首轮只核对原件。首行写完整确认码。逐行照抄事实卡的 HEAD、Branch、Base SHA、WIP、Rulings 标签，并报告现查的值。若发现不一致，第二行写 MISMATCH，列明差异后结束。接管生效通知到达后执行 Next action。' : '';
+        const complete = `${brief.trimEnd()}${state}${judgment}${rotationInstructions}${selfHandoff?.facts ? '\n\n' + selfHandoff.facts : ''}\n\n## 启动指令\n${prompt}\n\n## 交接确认\n${handoverAck}\n`;
         compactHandover = mode === 'tui';
         prompt = compactHandover ? complete :
-          `Complete the ${input.role === 'leader' ? 'Leader' : 'Auditor'} handover in this first native turn. ${replyForDelivery(project, complete, 0)}. Resolve the path from ${project}. Read the full file through its final acknowledgement line, then copy that line exactly onto the first line of your final reply. Include the current SHA and relevant paths you verified. Wait for Loom to deliver queued work.`;
+          `Complete the ${input.role === 'leader' ? 'Leader' : 'Auditor'} handover in this first native turn. ${replyForDelivery(project, complete, 0)}. Resolve the path from ${project}. Read the full file through its final acknowledgement line, then copy that line exactly onto the first line of your final reply. Include the current SHA and relevant paths you verified. This first turn is for verification. Follow the report format in the briefing.`;
       } else {
         prompt = `先读前任简报及任务指定的交接记录，再开始接管。\n\n${brief.trimEnd()}\n\n## 启动指令\n${prompt}`;
       }
@@ -530,14 +586,14 @@ export function ownedSessions(project, index, report, {
     if (row.role === 'leader' || row.role === 'auditor') {
       const guidance = row.role === 'leader' ? leaderGuidance :
         'Decide the gate verdict from the packet, fixed SHA, and integration Worker evidence. Ask for the integration Worker evidence if it is missing. Delegate investigation, tests, builds, merges and integration. When an exceptional issue requires a deep check, you alone may spawn one temporary read-only reviewer for that gate, passing its ID as --wave. Its conclusion may wake you once and counts against your gate wake budget. Other wake sources are user or Super messages, a gate packet or red escalation from Leader, succession supervision, and replies you explicitly requested.';
-      prompt = `## Loom role guidance\n${guidance} ${seniorGuidance} Do not wait on background Bash or poll loom state. ${unattended} If a result is overdue, run "$LOOM_BIN" status and check stalled deliveries and suppressed replies. At a rotation signal, write your judgment and in-flight card IDs to the indicated note, run "$LOOM_BIN" rotate --self, and finish the current turn. Loom starts the same profile at idle. After a failed acknowledgement, retain the role and retry once on the next notice. Put DONE, BLOCKED, FAILED, PASS, REJECT or APPROVE on the first line of the final conclusion, before any preamble. Use NOREPLY for acknowledgements.\n\n## Startup request\n${prompt}`;
+      prompt = `## Loom role guidance\n${guidance} ${seniorGuidance} Do not wait on background Bash or poll loom state. ${unattended} If a result is overdue, run "$LOOM_BIN" status and check stalled deliveries and suppressed replies. At a rotation signal, write your judgment and in-flight card IDs to the indicated note, run "$LOOM_BIN" rotate --self, and finish the current turn. Loom starts the same profile at idle. For v2, one failed handover stops rotation for this phase and Loom informs Super. Put DONE, BLOCKED, FAILED, PASS, REJECT or APPROVE on the first line of the final conclusion, before any preamble. The handover turn starts with its exact HANDOVER-ACK. Use NOREPLY for acknowledgements.\n\n## Startup request\n${prompt}`;
       try { prompt = await projectMemoryPrompt(project) + prompt; }
       catch (error) { report(`Project memory unavailable: ${error.message}`); }
     }
     if (compactHandover) {
       // Keep a fresh TUI's startup wire within a single holder chunk.
       const pointer = replyForDelivery(project, prompt, 0);
-      prompt = `${pointer} relative to $LOOM_PROJECT. Read the entire briefing and copy its final HANDOVER-ACK line verbatim onto the first line of your final reply. Include the SHA and paths you verified, then wait for Loom deliveries.`;
+      prompt = `${pointer} relative to $LOOM_PROJECT. Read the entire briefing and copy its final HANDOVER-ACK line verbatim onto the first line of your final reply. Include the SHAs and paths you verified. Follow the briefing's report format. For v2, write MISMATCH on line two if a fact differs and finish the turn. When Loom sends 接管生效, perform the Next action.`;
     }
     if (row.role === 'worker') prompt += `\n\n${cardConventions({ ...row, integration: input.integration })}`;
     if (row.role === 'reviewer') prompt = [
@@ -555,10 +611,12 @@ export function ownedSessions(project, index, report, {
       ...(warnings.length && { warnings }),
       ...(requestedFast !== undefined && { fastRequested: requestedFast }),
       ...(fast !== undefined && { fast }),
-      ...(predecessor && { handoverFrom: predecessor.addr }),
+      ...(predecessor && { handoverFrom: predecessor.addr,
+        rotationReason: selfHandoff?.reason ?? (input.profileChoice !== undefined ? 'switch' : 'handover') }),
       ...(herdr && { herdr }),
       ...(handoverAck && { handoverAck }),
       ...(selfHandoff && { selfRotationId: selfHandoff.id }),
+      ...(selfHandoff?.v2 && { rotationV2: true, rotationPhase: selfHandoff.phase, rotationFacts: selfHandoff.expectedFacts }),
       ...(compactHandover && { compactHandover }),
       ...(row.role === 'worker' && { cardStart: headAt(cwd) }),
       ...(input['expect-red'] !== undefined && { expectRed: input['expect-red'] }),
@@ -1006,7 +1064,7 @@ export function ownedSessions(project, index, report, {
 
   return { rows, rowFor, events, targetBinding, transport, requestedMode, canInterrupt, resolve, requireLive, newJob,
     activate, failSpawn, runtimeSelection, refresh, stop, shutdown, upgradeSessions, upgradeHolder, jobs, managedHc, sealed, lastActivity,
-    routeParent, bindSuccessor, retirePredecessor, successorOf, holdsForHandover, rememberUserPrompt, pathWarnings, rememberLiveness, adoptLayout,
+    routeParent, bindSuccessor, retirePredecessor, finalizeV2, legacyPeerCaller, liveCaller, successorOf, holdsForHandover, rememberUserPrompt, pathWarnings, rememberLiveness, adoptLayout,
     runtimeContext: addr => running.get(addr)?.session.contextUsage?.()?.value,
     finishObserved(row, exit, at) { return finish(jobs.get(row.addr), row, at, exit); } };
 }

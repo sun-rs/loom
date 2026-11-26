@@ -33,11 +33,10 @@ export function notificationBoard(events, roleFor = () => undefined) {
 
 export function contextBoard(native, observed) {
   const contextTokens = native?.tokens ?? observed?.tokens ?? null;
-  const reportedWindow = observed?.contextWindow > 0 ? observed.contextWindow : native?.window;
-  const contextEstimated = !(reportedWindow > 0) && !Number.isFinite(observed?.percent) &&
-    contextTokens != null && native?.estimate > 0;
-  const contextWindow = contextEstimated ? native.estimate : reportedWindow ?? null;
-  const contextPercent = contextTokens != null && contextWindow > 0 ? 100 * contextTokens / contextWindow : observed?.percent ?? null;
+  const contextWindow = native?.contextWindow ?? observed?.contextWindow ?? null;
+  const contextEstimated = native?.windowSource === 'model-table' && contextTokens != null;
+  const contextPercent = native?.percent ?? observed?.percent ??
+    (contextTokens != null && contextWindow > 0 ? 100 * contextTokens / contextWindow : null);
   return { contextTokens, contextWindow, contextPercent, contextEstimated };
 }
 

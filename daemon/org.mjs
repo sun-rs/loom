@@ -144,7 +144,7 @@ export function organization(project, index, sessions, mail, now, report) {
         if (facts.misses.length && (settings.factMiss || ['leader', 'auditor'].includes(row.role))) {
           add('fact-miss', key, { turn: key, misses: facts.misses.slice(0, 5), count: facts.misses.length });
         }
-        if (rotation?.boundAt != null && body && (turn === handoverTurn ||
+        if (!job.rotationV2 && rotation?.boundAt != null && body && (turn === handoverTurn ||
             endedAt >= (rotation.firstReportAt ?? handoverTurn?.at ?? Infinity))) {
           const verified = !facts.misses.length && !failedReply(body) && !isBlockedReply(body) &&
             (!outcome || outcome.kind === 'completed');
@@ -160,7 +160,7 @@ export function organization(project, index, sessions, mail, now, report) {
         }
         next.seen[key] = true;
       }
-      if (row.endedAt != null && pending.has(row.addr)) {
+      if (!job.rotationV2 && row.endedAt != null && pending.has(row.addr)) {
         for (const [addr, record] of recordings.filter(([addr]) => addr === row.addr)) index.reportRotation(addr, record);
         index.failRotation(row.addr, row.endedAt, job.error ?? 'Successor exited before report verification');
       }

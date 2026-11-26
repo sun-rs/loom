@@ -5,9 +5,10 @@ import { dirname, join } from 'node:path';
 import { parseArgs } from 'node:util';
 import { projectDirectory, projectOption, runtimeDirectory, socketPath } from '../cli/project.mjs';
 import { claimProject } from '../relay/lock.mjs';
+import { preparePeerAuth } from './peer-auth.mjs';
 import { createSupervisor } from './supervisor.mjs';
 import { maxLine } from './rpc.mjs';
-import { projectLayout } from './herdr-layout.mjs';
+import { externalSuperPeer, projectLayout } from './herdr-layout.mjs';
 import { readText, syncDirectory } from './io.mjs';
 import { activeRelease, installManagedCli, nextController, releaseDigest, releaseId, releaseRoot, upgradeState } from './release.mjs';
 import { beginUpgrade, checkUpgradeAttachments, daemonProtocol, liveHandoff, planUpgrade, selfCheck, validateHandoff, validateReattachment } from './upgrade.mjs';
@@ -125,10 +126,25 @@ export async function main(args, { pollInterval = 350, ...options } = {}) {
       }) + '\n'));
 
       async function serve() {
-        const { command, args, caller, protocol } = JSON.parse(data);
+        const { command, args = {}, caller, protocol } = JSON.parse(data);
         if (protocol !== undefined && protocol !== daemonProtocol) throw new Error('Unsupported loomd protocol');
+        if (typeof command !== 'string' || !args || typeof args !== 'object' || Array.isArray(args)) {
+          throw Object.assign(new Error('Expected a loomd command and arguments'), { code: 'invalid-arguments' });
+        }
+        async function verifiedActor(superOnly = false) {
+          const peers = preparePeerAuth();
+          const proof = peers.ancestors(socket);
+          const actor = await supervisor.rotationPeer(proof);
+          const external = !actor && await externalSuperPeer(proof).catch(() => false);
+          if (!external && (!actor || superOnly && actor.role !== 'super')) {
+            throw Object.assign(new Error(peers.reason ?? 'An authenticated live role is required'), { code: 'permission-denied' });
+          }
+          return { addr: actor?.addr, external };
+        }
+        const v2 = supervisor.rotationV2();
         let result;
         if (command === 'daemon-status' || command === 'daemon-stop') {
+          if (v2 && command === 'daemon-stop') await serial(() => verifiedActor(true));
           result = { running: !closing && command === 'daemon-status', pid: process.pid,
             relay: closing ? 'stopping' : lastPollError ? 'degraded' : 'integrated',
             protocol: daemonProtocol, release: runningRelease, attachmentCheck: true,
@@ -141,10 +157,12 @@ export async function main(args, { pollInterval = 350, ...options } = {}) {
         } else if (command === 'upgrade-holder') {
           result = await serial(() => {
             if (!canDispatch()) throw Object.assign(new Error('loomd is switching releases'), { code: 'not-ready' });
+            if (v2) return verifiedActor(true).then(() => supervisor.upgradeHolder(args));
             return supervisor.upgradeHolder(args);
           });
         } else if (command === 'upgrade-plan' || command === 'upgrade-apply') {
           if (!canDispatch()) throw Object.assign(new Error('loomd is switching releases'), { code: 'not-ready' });
+          if (v2) await serial(() => verifiedActor(true));
           const plan = await planUpgrade(project, args, runningRelease, () => serial(supervisor.upgradeSessions));
           if (command === 'upgrade-plan') {
             const checked = await checkUpgradeAttachments(project, plan);
@@ -158,9 +176,14 @@ export async function main(args, { pollInterval = 350, ...options } = {}) {
             return receipt;
           });
         } else {
-          result = await serial(() => {
+          result = await serial(async () => {
             if (!canDispatch()) throw Object.assign(new Error('loomd is switching releases'), { code: 'not-ready' });
-            return supervisor.handle(command, args, caller);
+            if (!v2) return supervisor.handle(command, args, caller);
+            const read = ['ls', 'status', 'state', 'board'].includes(command) || command === 'notifications' &&
+              ![args.take, args.complete, args.gateComplete, args.decision].some(value => value != null && value !== false);
+            if (read) return supervisor.handle(command, args);
+            const { addr, external } = await verifiedActor();
+            return supervisor.handle(command, args, addr, { external });
           });
         }
         socket.end(JSON.stringify({ ok: true, ...result }) + '\n');

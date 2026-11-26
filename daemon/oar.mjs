@@ -183,6 +183,7 @@ export function trackOar(project, row, session, onError, incarnation, onExit) {
     if (event.kind === 'input_dropped' && event.inputId) {
       append(event, 'input-dropped', { inputId: event.inputId });
     }
+    if (event.kind === 'usage') append(event, 'usage', { ...(active && { turn: active.turn, turnId: active.turnId }), usage: event.usage });
     if (!active && activeEvents.has(event.kind)) {
       const turn = ++number;
       const status = session.status().value;
@@ -224,7 +225,6 @@ export function trackOar(project, row, session, onError, incarnation, onExit) {
         input: event.input, exitCode: event.exitCode, result: event.result, status: event.status,
         content: event.content?.filter(part => part.type === 'text') });
     }
-    if (event.kind === 'usage') append(event, 'usage', { turn, usage: event.usage });
     if (['text_delta', 'reasoning'].includes(event.kind) && !active.progress) {
       append(event, 'model-progress', { turn, turnId });
       active.progress = true;

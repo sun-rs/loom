@@ -1,5 +1,6 @@
 {
   "note": "Single-account operation only. Use one authorized account per provider for this project.",
+  "rotation": { "mode": "explicit" },
   "delivery": { "coalesceMs": 45000, "replyBytes": 600, "stallMs": 120000 },
   "drift": {
     "netLines": null,
@@ -27,8 +28,6 @@
     "leader": {
       "trustWorkspace": true,
       "maxActiveWorkers": 3,
-      "rotateAt": "gate",
-      "maxContextTokens": 150000,
       "toolGuard": true,
       "guidance": { "modelTier": "strong", "effort": ["medium", "high"], "preferLongPromptCacheTtl": true },
       "preferred": [
@@ -38,9 +37,7 @@
     },
     "auditor": {
       "trustWorkspace": true,
-      "rotateAt": "gate",
       "maxWakesPerGate": 3,
-      "maxContextTokens": 150000,
       "toolGuard": true,
       "guidance": { "modelTier": "strong", "vendorFamily": "different-from-workers", "preferLongPromptCacheTtl": true },
       "preferred": [

@@ -159,6 +159,7 @@ export async function attachHost(project, row, job, save, controller, { stop = f
   }
   return {
     hosted: true, incarnation, protocol: hello.protocol, release, oar: current.oar, pid: current.identity.pid,
+    identity: current.identity,
     streamId: current.streamId, pull,
     get session() { return { id: current.sessionId, status: () => ({ value: current.status }),
       effort: () => ({ value: current.effort }), model: () => ({ value: current.model }), steer: current.steer }; },

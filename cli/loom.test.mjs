@@ -8,14 +8,57 @@ import { join } from 'node:path';
 import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
+import { randomUUID } from 'node:crypto';
 import { openIndex } from '../index/index.mjs';
 import { spawnProfile } from './policy.mjs';
 import { projectIndex, socketPath } from './project.mjs';
 import { estimateTokens } from '../lib/token-budget.mjs';
 import { writeMemory } from '../memory/project.mjs';
+import { wireText } from '../inbox/message.mjs';
 
 const executable = fileURLToPath(new URL('../bin/loom', import.meta.url));
 const file = path => new URL(path, import.meta.url);
+
+test('status and cost show transcript metrics and separately measure the bound rotation briefing', t => {
+  const f = fixture(t);
+  const metadata = join(f.cwd, '.project');
+  const jobs = join(metadata, 'loomd', 'sessions');
+  mkdirSync(jobs, { recursive: true });
+  mkdirSync(join(metadata, 'inbox'));
+  const index = projectIndex(f.cwd);
+  const now = Date.now();
+  const startedAt = now - 50;
+  const previous = 'old-leader';
+  const successor = 'next-leader';
+  const transcriptPath = join(f.cwd, 'next.jsonl');
+  const row = { role: 'leader', backend: 'headless', cli: 'codex', cwd: f.cwd, project: f.cwd };
+  index.register({ ...row, addr: previous, startedAt: now - 1000, endedAt: now - 30 });
+  index.register({ ...row, addr: successor, startedAt, transcriptPath });
+  index.beginRotation({ project: f.cwd, role: 'leader', predecessor: previous, successor, startedAt });
+  index.bindRotation(successor, now - 20);
+  const delivery = randomUUID();
+  writeFileSync(join(jobs, successor + '.json'), JSON.stringify({ firstId: delivery, rotationReason: 'switch' }));
+  writeFileSync(join(metadata, 'inbox', 'state.json'), JSON.stringify({ messages: [{ id: delivery,
+    target: { addr: successor }, startup: true, completion: { nativeTurnId: 'brief', at: now - 20 } }] }));
+  const event = (dt, payload) => ({ type: 'event_msg', timestamp: new Date(now + dt).toISOString(), payload });
+  const usage = (dt, id, input_tokens, output_tokens) => ({ type: 'token_usage_record',
+    timestamp: new Date(now + dt).toISOString(), payload: { response_id: id, usage: { input_tokens, output_tokens } } });
+  const records = [event(-45, { type: 'task_started', turn_id: 'brief', model_context_window: 1000 }),
+    event(-44, { type: 'user_message', message: wireText(delivery, 'Rotation briefing') }), usage(-30, 'one', 12, 3),
+    event(-20, { type: 'task_complete', turn_id: 'brief', last_agent_message: 'Acknowledged' }),
+    event(-17, { type: 'context_compacted' }), event(-16, { type: 'task_started', turn_id: 'later' }),
+    usage(-10, 'two', 7, 1), event(-5, { type: 'task_complete', turn_id: 'later', last_agent_message: 'Done' })];
+  const transcript = records.map(record => JSON.stringify(record)).join('\n') + '\n';
+  writeFileSync(transcriptPath, transcript);
+  const status = f.run(0, 'status', '--json');
+  const metrics = status.seniorSessions.find(session => session.addr === successor);
+  assert.deepEqual([metrics.turns, metrics.transcriptBytes, metrics.runtimeMs >= 50], [2, Buffer.byteLength(transcript), true]);
+  assert.deepEqual([metrics.context.contextWindow, metrics.context.compactions, metrics.context.afterCompaction[0].percent], [1000, 1, 0.7]);
+  assert.deepEqual(status.rotationsToday.leader.map(item => [item.successor, item.reason]), [[successor, 'switch']]);
+  const result = f.run(0, 'cost');
+  assert.deepEqual(result.rotationBriefings, { measured: 1, rawTokens: 15, entries: [{ role: 'leader', reason: 'switch',
+    predecessor: previous, successor, inputTokens: 12, outputTokens: 3, rawTokens: 15 }] });
+});
 
 function fixture(t) {
   const cwd = realpathSync(mkdtempSync(join(tmpdir(), 'loom-cli-')));
