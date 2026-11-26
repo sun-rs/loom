@@ -940,6 +940,130 @@ test('6b stage catches up a daily-cap window at the next boundary exactly once',
   assert.deepEqual(stagedReplies(), [[freshReply], [freshReply]], 'the recovered history is sent only once');
 });
 
+function stageRequestsSince(f, offset) {
+  return f.requests.slice(offset).flatMap(({ raw, status }) => {
+    const { messages: [{ content }] } = JSON.parse(raw);
+    if (!content.startsWith('{')) return [];
+    const { history } = JSON.parse(content);
+    return [{ status, bytes: Buffer.byteLength(raw), replies: history.map(({ reply }) => reply) }];
+  });
+}
+
+function assertStageBatches(requests, expectedReplies, maxInputBytes) {
+  assert.deepEqual(requests.flatMap(({ replies }) => replies), expectedReplies,
+    'stage requests deliver each expected reply in chronological order exactly once');
+  for (const { status, bytes } of requests) {
+    assert.equal(status, 200);
+    assert.ok(bytes <= maxInputBytes, `stage request is ${bytes} bytes (limit ${maxInputBytes})`);
+  }
+}
+
+test('6b stage splits a single boundary over maxInputBytes and continues at the next boundary', async t => {
+  const maxInputBytes = 4200;
+  const f = fixture(t, { config: { limits: { maxInputBytes } } });
+  fakeOpenCode(t, f.root);
+  seedLegacyStageMemory(f.project);
+  const leader = await f.spawn('leader', 'Prepare the bounded stage fixture.');
+  const replies = ['First', 'Second', 'Third'].map(order => `${order} stage reply. ${'界'.repeat(490)}`);
+  assert.ok(Buffer.byteLength(replies.join('')) > maxInputBytes, 'the replies alone exceed the window limit');
+  for (const [index, reply] of replies.entries()) {
+    f.advance(1000);
+    if (index) await f.send(leader, 'Add another turn to the same stage window.');
+    await f.finish(leader, reply);
+  }
+  const { enrolledAt } = readExtractorState(f.project);
+  const firstOffset = f.requests.length;
+  await completeStageGate(f, leader, 'G6B-STAGE-BYTES');
+  const batches = stageRequestsSince(f, firstOffset);
+  assert.ok(batches.length > 1, 'the oversized window is split across multiple requests');
+  assertStageBatches(batches, replies, maxInputBytes);
+  assert.equal(readExtractorState(f.project).stageAt, enrolledAt + 3000);
+
+  f.advance(1000);
+  await f.send(leader, 'Add history for the following boundary.');
+  const freshReply = 'Fresh reply after splitting the window.';
+  await f.finish(leader, freshReply);
+  const nextOffset = f.requests.length;
+  await completeStageGate(f, leader, 'G6B-STAGE-BYTES-NEXT');
+  assertStageBatches(stageRequestsSince(f, nextOffset), [freshReply], maxInputBytes);
+  assert.equal(readExtractorState(f.project).stageAt, enrolledAt + 4000);
+});
+
+test('6b stage batches an accumulated window over maxInputBytes after consecutive upstream failures', async t => {
+  const maxInputBytes = 4200;
+  let status = 200;
+  const f = fixture(t, { config: { limits: { maxInputBytes } }, statusFor: () => status });
+  fakeOpenCode(t, f.root);
+  seedLegacyStageMemory(f.project);
+  const leader = await f.spawn('leader', 'Prepare the accumulated stage fixture.');
+  const failedReplies = ['First', 'Second'].map(order => `${order} failed-stage reply. ${'界'.repeat(180)}`);
+  for (const [index, reply] of failedReplies.entries()) {
+    f.advance(1000);
+    if (index) await f.send(leader, 'Add one turn to the pending stage window.');
+    await f.finish(leader, reply);
+
+    const offset = f.requests.length;
+    status = 503;
+    await completeStageGate(f, leader, `G6B-STAGE-BYTES-FAILURE-${index + 1}`);
+    status = 200;
+    const attempts = stageRequestsSince(f, offset);
+    assert.deepEqual(attempts.map(({ status }) => status), [503], `boundary ${index + 1} fails at upstream`);
+    assert.ok(attempts[0].replies.includes(reply), 'the failing request reaches upstream with the new turn');
+    assert.equal(readExtractorState(f.project).stageAt, undefined, 'failures leave the stage cursor unadvanced');
+  }
+  const recoveryReplies = ['Third', 'Fourth', 'Fifth'].map(order => `${order} recovery reply. ${'界'.repeat(360)}`);
+  for (const reply of recoveryReplies) {
+    f.advance(1000);
+    await f.send(leader, 'Add history before the first boundary after upstream recovery.');
+    await f.finish(leader, reply);
+  }
+  const replies = [...failedReplies, ...recoveryReplies];
+  assert.ok(Buffer.byteLength(replies.join('')) > maxInputBytes, 'the accumulated replies alone exceed the limit');
+  const { enrolledAt } = readExtractorState(f.project);
+  const recoveryOffset = f.requests.length;
+  await completeStageGate(f, leader, 'G6B-STAGE-BYTES-RECOVERY');
+  const batches = stageRequestsSince(f, recoveryOffset);
+  assert.ok(batches.length > 1, 'recovery splits the accumulated window across multiple requests');
+  assertStageBatches(batches, replies, maxInputBytes);
+  assert.equal(readExtractorState(f.project).stageAt, enrolledAt + 5000);
+
+  f.advance(1000);
+  await f.send(leader, 'Add history after the recovered stage.');
+  const freshReply = 'Fresh reply after recovery.';
+  await f.finish(leader, freshReply);
+  const nextOffset = f.requests.length;
+  await completeStageGate(f, leader, 'G6B-STAGE-BYTES-AFTER-RECOVERY');
+  assertStageBatches(stageRequestsSince(f, nextOffset), [freshReply], maxInputBytes);
+  assert.equal(readExtractorState(f.project).stageAt, enrolledAt + 6000);
+});
+
+test('6b stage warns and skips a single turn over maxInputBytes while processing later history', async t => {
+  const maxInputBytes = 4200;
+  const f = fixture(t, { config: { limits: { maxInputBytes } } });
+  fakeOpenCode(t, f.root);
+  seedLegacyStageMemory(f.project);
+  const leader = await f.spawn('leader', 'Prepare the oversized turn fixture.');
+  const oversizedReply = `Oversized stage reply. ${'界'.repeat(1500)}`;
+  assert.ok(Buffer.byteLength(JSON.stringify(oversizedReply)) > maxInputBytes, 'one reply alone exceeds the limit');
+  await f.finish(leader, oversizedReply);
+  f.advance(1000);
+  await f.send(leader, 'Add a normal turn after the oversized one.');
+  const normalReply = 'Normal reply after the oversized turn.';
+  await f.finish(leader, normalReply);
+
+  const { enrolledAt } = readExtractorState(f.project);
+  const requestOffset = f.requests.length;
+  const logOffset = f.logs.length;
+  await completeStageGate(f, leader, 'G6B-STAGE-BYTES-SKIP');
+  const requests = stageRequestsSince(f, requestOffset);
+  assert.deepEqual({
+    warned: f.logs.slice(logOffset).some(message => /maxInputBytes|oversize|byte limit/i.test(message)),
+    replies: requests.flatMap(({ replies }) => replies),
+    stageAt: readExtractorState(f.project).stageAt,
+  }, { warned: true, replies: [normalReply], stageAt: enrolledAt + 1000 });
+  assertStageBatches(requests, [normalReply], maxInputBytes);
+});
+
 for (const failure of ['upstream HTTP error', 'unavailable credential']) {
   test(`6b stage recovers a failed history window at the next boundary after ${failure}`, async t => {
     let available = true;
