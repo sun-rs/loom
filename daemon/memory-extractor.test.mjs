@@ -395,6 +395,19 @@ test('8b per-turn extractor still processes substantive Leader and Auditor repli
   assert.deepEqual({ calls, tokens }, { calls: 3, tokens: 60 });
 });
 
+for (const reply of [
+  '收到。根因是崩溃后重试重复发布了投递。',
+  '确认：重试要先占投递 ID，再发布消息。',
+  'OK, the root cause is that publication and cursor updates are in separate transactions.',
+]) {
+  test('8b per-turn extractor processes substantive reply: ' + reply, async t => {
+    const f = fixture(t);
+    const leader = await f.spawn('leader', 'Review the retry failure.');
+    await f.finish(leader, reply);
+    assert.deepEqual(f.requests.map(request => extractorRequestInput(request).reply), [reply]);
+  });
+}
+
 test('8b per-turn extractor honors a policy call cap above the old default of 40', async t => {
   const dailyCalls = 42;
   const f = fixture(t, { config: { limits: { dailyCalls, dailyTokens: 600_000 } } });
