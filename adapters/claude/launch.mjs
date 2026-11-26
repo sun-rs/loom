@@ -3,7 +3,7 @@ import { hookSettings } from './hooks.mjs';
 
 export const claudeApiEnvKeys = ['ANTHROPIC_API_KEY', 'ANTHROPIC_AUTH_TOKEN'];
 
-export function launch({ model, effort, cwd, prompt, hookSink, extraArgs = [] } = {}) {
+export function launch({ model, effort, cwd, prompt, hookSink, idleCompaction = false, extraArgs = [] } = {}) {
   if (!Array.isArray(extraArgs) || extraArgs.some(arg =>
     typeof arg !== 'string' || arg === '--' || arg === '--bare' || arg.startsWith('--bare='))) {
     throw new TypeError('extraArgs must be an array of Claude options');
@@ -12,7 +12,7 @@ export function launch({ model, effort, cwd, prompt, hookSink, extraArgs = [] } 
   const argv = ['claude', ...extraArgs, '--dangerously-skip-permissions', '--setting-sources', '', '--strict-mcp-config'];
   if (model) argv.push('--model', model);
   if (effort) argv.push('--effort', effort);
-  const settings = { skipDangerousModePermissionPrompt: true };
+  const settings = { skipDangerousModePermissionPrompt: true, idleCompaction };
   if (hookSink) Object.assign(settings, hookSettings(resolve(cwd ?? '.', hookSink)));
   argv.push('--settings', JSON.stringify(settings));
   if (prompt !== undefined && prompt !== '') argv.push('--', prompt);

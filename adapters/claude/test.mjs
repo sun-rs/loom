@@ -4,6 +4,7 @@ import { mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, symlinkSync,
 import { join } from 'node:path';
 import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
+import { claudeIdleCompaction } from '../../cli/policy.mjs';
 import claude from './index.mjs';
 
 const fixture = (name) => readFileSync(new URL(`./fixtures/${name}`, import.meta.url), 'utf8');
@@ -31,13 +32,26 @@ test('launch uses session settings and literal argv without creating files', (t)
   assert.deepEqual(argv.slice(-2), ['--', prompt]);
   const settings = JSON.parse(argv[12]);
   assert.equal(settings.skipDangerousModePermissionPrompt, true);
+  assert.equal(settings.idleCompaction, false);
   assert.deepEqual(Object.keys(settings.hooks), ['UserPromptSubmit', 'Stop', 'StopFailure', 'PreToolUse',
     'PostToolUse', 'PostToolUseFailure', 'PermissionRequest']);
   assert.equal(settings.hooks.Stop[0].hooks[0].args[1], join(cwd, 'event logs/worker\'s.jsonl'));
   assert.equal(settings.hooks.PostToolUse[0].matcher, '*');
   assert.deepEqual(readdirSync(cwd), []);
   assert.throws(() => claude.launch({ extraArgs: ['--'] }), TypeError);
-  assert.deepEqual(JSON.parse(claude.launch().argv.at(-1)), { skipDangerousModePermissionPrompt: true });
+  assert.deepEqual(JSON.parse(claude.launch().argv.at(-1)), { skipDangerousModePermissionPrompt: true, idleCompaction: false });
+});
+
+test('Claude idle compaction can be enabled per role', t => {
+  const project = scratch(t);
+  mkdirSync(join(project, '.project'));
+  const path = join(project, '.project', 'policy.json');
+  writeFileSync(path, JSON.stringify({ roles: { auditor: { claude: { idleCompaction: true } } } }));
+  const idleCompaction = claudeIdleCompaction(project, 'auditor');
+  assert.equal(JSON.parse(claude.launch({ idleCompaction }).argv.at(-1)).idleCompaction, true);
+  assert.equal(claudeIdleCompaction(project, 'leader'), false);
+  writeFileSync(path, JSON.stringify({ roles: { auditor: { claude: { idleCompaction: 'false' } } } }));
+  assert.throws(() => claudeIdleCompaction(project, 'auditor'), { code: 'invalid-policy' });
 });
 
 test('the injected hook writes native fields to its literal sink without a decision', (t) => {
@@ -107,6 +121,7 @@ for (const [name, expected] of Object.entries({
   'live-busy': 'busy',
   'live-bypass': 'picker',
   'live-idle': 'idle',
+  'live-idle-compaction': 'idle',
   'live-interrupted': 'idle',
   'live-model-picker': 'picker',
   'live-trust': 'trust-dialog',
@@ -136,6 +151,9 @@ test('only sends known menu sequences for the active matching dialog', () => {
 test('screen rejects historical prompts and ignores error strings emitted by tools', () => {
   const { classify } = claude.screen;
   assert.equal(classify('Claude Code v2.1.322\n❯ What is 2 + 2?\n⏺ 4'), 'unknown');
+  assert.equal(classify('⏺ Compacted (ctrl+o to see full summary)'), 'idle');
+  assert.equal(classify('⏺ Compacted while idle\n✻ Compacting conversation…'), 'compacting');
+  assert.equal(classify('⏺ Compacted while idle\n❯ pending draft'), 'unknown');
   assert.equal(classify('Claude Code v2.1.322\n⏺ Bash(echo error)\n  ⎿  Invalid API key\n──────────\n❯ \n──────────\n? for shortcuts'), 'idle');
   assert.equal(classify('Claude Code (example)\r\x1b[31mInvalid API key\x1b[0m\r'), 'auth-fail');
   assert.equal(classify(''), 'unknown');

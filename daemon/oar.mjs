@@ -12,7 +12,7 @@ import { captureOarTurnEnd, headAt } from './turn-heads.mjs';
 import { codexConfiguration } from './codex-launch.mjs';
 import { codexRefusal } from './codex-pipe-errors.mjs';
 import { claudeApiEnvKeys } from '../adapters/claude/launch.mjs';
-import { claudeAuthMode } from '../cli/policy.mjs';
+import { claudeAuthMode, claudeIdleCompaction } from '../cli/policy.mjs';
 import { managedEnvironment } from './release.mjs';
 import { sandboxNativeWorker, workerEnvironment, workerNativeLogin,
   workerProviderEnvironment } from './worker-environment.mjs';
@@ -59,8 +59,9 @@ export async function openOar(row, project, resume) {
       for (const key of claudeApiEnvKeys) env[key] = null;
     }
     if (login) env.CLAUDE_CODE_TMPDIR = isolated.TMPDIR;
-    launchArgs = ['--setting-sources', '', '--strict-mcp-config'];
-    if (row.fast !== undefined) launchArgs.push('--settings', JSON.stringify({ fastMode: row.fast }));
+    launchArgs = ['--setting-sources', '', '--strict-mcp-config', '--settings', JSON.stringify({
+      idleCompaction: claudeIdleCompaction(project, row.role), fastMode: row.fast,
+    })];
   }
   const probe = login ? { ...env, ...isolated, CLAUDE_CONFIG_DIR: null, GEMINI_HOME: null, ANTIGRAVITY_APP_DATA_DIR: null } : env;
   if (login && row.cli === 'agy' && !process.env.OAR_ANTIGRAVITY_BIN) {

@@ -56,7 +56,14 @@ export function nativeState(provider, { hookSink, evidenceRoot, cwd, sessionId, 
       receipts.set(event.inputId, sources);
       changedInputs.add(event.inputId);
     }
-    if (event.receiptOnly || !event.phase || state && (event.observedAt < state.observedAt || event.startup && state.phase === 'busy')) return;
+    if (event.receiptOnly || state && (event.observedAt < state.observedAt || event.startup && state.phase === 'busy')) return;
+    if (event.compactionFinished) {
+      // Compaction can run with or without a user turn. Only a real turn
+      // already in progress can keep the session busy after it finishes.
+      state = { ...event, phase: activeSince === undefined ? 'idle' : 'busy' };
+      return;
+    }
+    if (!event.phase) return;
     if (event.phase === 'busy') {
       if (state?.phase !== 'busy' || event.turnId && activeTurn && event.turnId !== activeTurn ||
           event.inputId && activeInputId && event.inputId !== activeInputId ||

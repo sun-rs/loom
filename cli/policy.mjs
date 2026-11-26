@@ -114,6 +114,11 @@ export function readPolicy(project, { optional = false } = {}) {
         if (entry.auth !== undefined && !['subscription', 'api-key'].includes(entry.auth)) {
           throw new Error(`Expected roles.${role}.auth to be subscription or api-key`);
         }
+        if (entry.claude !== undefined && (!entry.claude || typeof entry.claude !== 'object' ||
+            Array.isArray(entry.claude) || entry.claude.idleCompaction !== undefined &&
+            typeof entry.claude.idleCompaction !== 'boolean')) {
+          throw new Error(`Expected roles.${role}.claude to be an object with an optional boolean idleCompaction`);
+        }
         if (Object.hasOwn(entry, 'maxActiveWorkers') && (role !== 'leader' ||
             !Number.isInteger(entry.maxActiveWorkers) || entry.maxActiveWorkers < 1 || entry.maxActiveWorkers > hardMaxActiveWorkers)) {
           throw new Error(`Expected roles.leader.maxActiveWorkers to be an integer from 1 to ${hardMaxActiveWorkers}`);
@@ -133,6 +138,9 @@ export function readPolicy(project, { optional = false } = {}) {
 
 export const claudeAuthMode = (project, role) =>
   readPolicy(project, { optional: true }).roles?.[role]?.auth ?? 'subscription';
+
+export const claudeIdleCompaction = (project, role) =>
+  readPolicy(project, { optional: true }).roles?.[role]?.claude?.idleCompaction ?? false;
 
 export function enforceDeny(profile, deny) {
   if (deny.some(filter => matches(profile, filter))) {

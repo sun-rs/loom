@@ -1,0 +1,5 @@
+{"type":"system","subtype":"compact_boundary","level":"info","isMeta":false,"compactMetadata":{"trigger":"auto","preTokens":275692}}
+{"type":"user","isCompactSummary":true,"promptId":"compact-prompt","message":{"role":"user","content":"[loom:00000000-0000-0000-0000-000000000001]\nCompaction summary"}}
+{"type":"attachment","attachment":{"type":"deferred_tools_delta"}}
+{"type":"attachment","attachment":{"type":"environment"}}
+{"type":"system","subtype":"informational","level":"notice","isMeta":false,"content":"Compacted while idle, before the prompt cache expired · turn off with \"idleCompaction\": false in settings.json"}

@@ -8,6 +8,7 @@ import { absoluteCommand, openNativeTui } from '../runtimes/tui/transport.mjs';
 import { codexFastArgs, nativeClaude } from './executables.mjs';
 import { eventPath, readText, writeState } from './io.mjs';
 import { codexEnvironmentArgs } from '../cli/project.mjs';
+import { claudeIdleCompaction } from '../cli/policy.mjs';
 import { controllerFile, managedEnvironment } from './release.mjs';
 import { workerEnvironment, workerProviderEnvironment } from './worker-environment.mjs';
 
@@ -36,7 +37,7 @@ export async function openTui(job, row, project, recordTemporary, recordBinding,
     autoTrustWorkspace: job.autoTrustWorkspace, ...(controller && { controllerPath: controllerFile(project) }),
     stateDir: join(project, '.project', 'pty'),
     ...(row.cli === 'claude' && { command: nativeClaude(), env: { ...env, DISABLE_AUTOUPDATER: '1' },
-      authMode: job.authMode, unset: ['CLAUDE_CODE_ENTRYPOINT', 'CLAUDECODE'] }),
+      authMode: job.authMode, idleCompaction: claudeIdleCompaction(project, row.role), unset: ['CLAUDE_CODE_ENTRYPOINT', 'CLAUDECODE'] }),
     ...(row.cli === 'codex' && { extraArgs: ['--disable', 'memories', ...codexEnvironmentArgs(env), ...codexFastArgs(job.fast)] }),
   });
   try { return { terminal: await host.status(), nativeId: host.sessionId }; }

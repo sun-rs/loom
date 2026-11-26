@@ -59,7 +59,7 @@ export const providers = {
       if (row.hook_event_name === 'SessionEnd') return activity('unknown');
       if (row.is_interrupt === true) return activity('idle', { interrupted: true });
       if (row.hook_event_name === 'PreCompact') return activity('compacting');
-      if (row.hook_event_name === 'PostCompact') return activity('busy');
+      if (row.hook_event_name === 'PostCompact') return { compactionFinished: true };
       if (row.hook_event_name === 'StopFailure') {
         const { failure } = stopFailure(row);
         return activity(failure === 'rate_limited' || failure === 'quota' ? 'rate-limit' : 'error');
@@ -67,6 +67,12 @@ export const providers = {
       if (row.tool_name && row.hook_event_name === 'PermissionRequest') return activity('permission');
     },
     transcriptRow(row, expectedPayload) {
+      if (row.isCompactSummary === true || row.type === 'system' && row.subtype === 'compact_boundary') {
+        return { compactionFinished: true };
+      }
+      if (row.type === 'system' && row.subtype === 'informational' && /^Compacted while idle\b/i.test(row.content)) {
+        return activity('idle');
+      }
       if (row.type === 'user' && !row.isMeta && !row.isCompactSummary && !row.isVisibleInTranscriptOnly) {
         const message = content(row.message?.content);
         if (row.interruptedMessageId || /^\[Request interrupted by user/.test(message ?? '')) return activity('idle', { interrupted: true });

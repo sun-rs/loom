@@ -17,7 +17,7 @@ const { argv, env } = claude.launch({
 
 hc 按 `cwd` 启动 `argv`，并把 `env` 合并进已有环境。`argv[0]` 是 `claude`，启动器可以使用已解析的原生二进制路径。`extraArgs` 接收额外的 TUI 选项。需要继续已知会话时可传 `['--resume', sessionId]`。
 
-`launch` 通过本次 `--settings` 注入权限提示设置和观察型 hook。`--setting-sources ''` 关闭用户、项目和项目本地 settings 来源，`--strict-mcp-config` 只使用显式传入的 MCP 配置。`--model` 和 `--effort` 直接设置本轮启动参数。整个调用只构造 argv 和环境补丁。 [Claude Code settings](https://code.claude.com/docs/en/settings) · [权限模式](https://code.claude.com/docs/en/permission-modes)
+`launch` 通过本次 `--settings` 注入权限提示设置、观察型 hook 和 `idleCompaction: false`。项目可用 `roles.<role>.claude.idleCompaction` 覆盖该布尔值。`--setting-sources ''` 关闭用户、项目和项目本地 settings 来源，`--strict-mcp-config` 只使用显式传入的 MCP 配置。`--model` 和 `--effort` 直接设置本轮启动参数。整个调用只构造 argv 和环境补丁。 [Claude Code settings](https://code.claude.com/docs/en/settings) · [权限模式](https://code.claude.com/docs/en/permission-modes)
 
 ## 屏幕和输入
 

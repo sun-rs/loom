@@ -24,3 +24,10 @@ npm test green; RESULT.md Chinese, `STATUS: done`. Red lines as before (no crede
 
 ## Addendum (live in pilot-2, blocks delivery now)
 Auditor loom-d173a83a transcript (/Users/sun/.claude/projects/-Users-sun-Code-loom-pilot2/14725def-5d16-473c-9ff8-028392f02a77.jsonl) ends with `system compact_boundary` (trigger auto, preTokens 275692) → `user` with `isCompactSummary:true` → attachments → `system informational "Compacted while idle…"`, and no assistant turn. Delivery bde1c080 is stuck in `waitingForWritable {screen: idle, native: busy}`. The Claude native-state reader must treat a trailing compact summary/compact_boundary (and informational system lines) as idle, not as a pending user prompt. Fixture from that tail; this goes in item 1 and must be fixed before the rest so it can be hot-deployed first.
+
+## Item 6 (found 2026-11-25 18:40): leaked test session-hosts busy-poll `ps`
+34 orphaned `node loom_new/daemon/session-host.mjs <tmp>/lh-*` processes (ppid 1, up to 22 h old, from npm test runs), each with a mock `codex app-server` child, each continuously spawning `ps -axo pid=,ppid=,pgid=,uid=,lstart=,comm=`. Together they keep the machine load high and likely caused the earlier `spawnSync ps ETIMEDOUT`.
+- Tests must always reap every session host and child they start (after-hooks, process-group kill, including the SIGKILL-boundary tests); add a test-suite guard that fails if any `lh-*` host survives the suite.
+- A session host whose project dir/state dir is gone, or whose owner has been absent past a bound, exits on its own.
+- No full-table `ps` polling loop in the host: use a bounded interval with backoff, PID-scoped checks (`kill -0`, `ps -p`), or a process-exit notification.
+Do not kill the existing leaked processes yourself; the user decides on cleanup.

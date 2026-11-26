@@ -67,6 +67,7 @@ const SENTENCE_ERROR_LEAD_RE =
   /^(?:(?:your\s+)?(?:api|http|auth|authentication|request|login|session|token|oauth|account|credentials?|quota|usage|rate|claude\s+usage)\b|error\b|failed\b|unable\s+to\b|expired\b|not\s+logged\s+in\b|missing\s+api\s+key\b|invalid\b)/i;
 
 const IDLE_PLACEHOLDER_PATTERNS = [/^try\s+["'“].+["'”]\s*$/i];
+const COMPACTED_NOTICE_RE = /^(?:[⏺⎿•]\s+)?Compacted(?:\s+(?:while idle\b|(?:the\s+)?(?:conversation|context)\b|[·(])|[.!]?$)/i;
 
 function stripAnsiAndControl(text) {
   if (typeof text !== 'string' || text.length === 0) return '';
@@ -446,6 +447,8 @@ export function classify(text) {
   if (matchesBusy(entries) || hasRunningBackgroundTask(text)) return 'busy';
   if (hasEmptyComposer(text)) return 'idle';
   if (matchesTrustDialog(entries)) return 'trust-dialog';
+  const last = entries.at(-1);
+  if (!last.isToolOutput && !last.isWrappedUserPrompt && COMPACTED_NOTICE_RE.test(stripBoxEdges(last.trimmed))) return 'idle';
   return 'unknown';
 }
 

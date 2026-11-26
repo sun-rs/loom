@@ -104,7 +104,7 @@ async function setup(t, { afterPaste, firstEnter, announce, hidePart, collapsedS
     await sleep(20);
   }
   assert.equal(ready.ready, true);
-  return { terminal, writes, account, socket, bookPath, ready, incarnation, data,
+  return { terminal, writes, account, socket, bookPath, ready, incarnation, data, hook,
     appendTranscript: row => appendFile(transcriptPath, JSON.stringify({ sessionId, cwd, timestamp: new Date().toISOString(), ...row }) + '\n'),
     restartControl: async () => { await close(); close = await listenControl(socket, bind(), incarnation); } };
 }
@@ -141,6 +141,37 @@ test('Claude releases an idle composer when the bound root transcript records tu
     await sleep(20);
   }
   assert.equal(state.ready, true);
+});
+
+test('Claude idle compaction leaves the idle composer writable without creating a turn', async t => {
+  const f = await setup(t, { transcript: true });
+  const fixture = await readFile(new URL('../adapters/claude/fixtures/live-idle-compaction.jsonl', import.meta.url), 'utf8');
+  const rows = fixture.trimEnd().split('\n').map(JSON.parse);
+  const first = randomUUID();
+  assert.equal((await f.account('submit', { id: first, text: 'first' })).kind, 'confirmed');
+  const before = (await f.account('state')).native;
+  await f.hook({ hook_event_name: 'PreCompact', prompt_id: 'compact-prompt' });
+  assert.equal((await f.account('state')).native.phase, 'compacting');
+  await f.hook({ hook_event_name: 'PostCompact', prompt_id: 'compact-prompt' });
+  const during = (await f.account('state')).native;
+  assert.equal(during.phase, 'busy');
+  assert.equal(during.activeInputId, first);
+  assert.equal(during.turnSequence, before.turnSequence);
+
+  await f.appendTranscript({ type: 'system', subtype: 'turn_duration' });
+  assert.equal((await f.account('state')).native.phase, 'idle');
+  await f.hook({ hook_event_name: 'PreCompact', prompt_id: 'compact-prompt' });
+  for (const row of rows.slice(0, -1)) await f.appendTranscript(row);
+  await f.hook({ hook_event_name: 'PostCompact', prompt_id: 'compact-prompt' });
+  assert.equal((await f.account('state')).native.phase, 'idle');
+  await f.appendTranscript(rows.at(-1));
+  await f.restartControl();
+  const after = await f.account('state');
+  assert.equal(after.native.phase, 'idle');
+  assert.equal(after.native.turnSequence, before.turnSequence);
+  assert.equal((await f.account('confirmations', { id: '00000000-0000-0000-0000-000000000001' })).count, 0);
+  const second = await f.account('submit', { id: randomUUID(), text: 'after compaction', deferMs: 1000 });
+  assert.equal(second.kind, 'confirmed');
 });
 
 test('socket rejects a stale frame or a recent human draft without writing any automated bytes', async t => {
