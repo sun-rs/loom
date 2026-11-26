@@ -81,10 +81,10 @@ Worker 线统一由 OAR 托管。新增特殊 worker（例如 Claude TUI worker�
    - 当前目标和判断
    - 待定决策及主要顾虑
    - 在途卡片 ID、预计结果和待续事项
-   - 接任后的首个动作
+   - 用 `## Do now` 单列交班后立即继续的动作。每项一条，标明卡片、门禁、阶段 ID 或路径。
    - 已完成或已有证据、无需重做的工作
 
-3. 运行 `"$LOOM_BIN" rotate --self`，可附 `--reason`，然后结束当前回合。loomd 等当前回合空闲后沿用本会话的 CLI、模型、effort、模式、目录和角色标签页。简报由 loomd 汇总章程、裁决、门禁、记忆和在途投递，并嵌入前任判断。接任者读到文件末尾，把确认码原样放在第一轮最终回复的首行，附现查的 SHA 和路径，随后等待投递。
+3. 运行 `"$LOOM_BIN" rotate --self`，可附 `--reason`，然后结束当前回合。loomd 等当前回合空闲后沿用运行配置。接任者读完整简报，在首轮开始 `Do now`，把确认码原样放在最终回复首行，附现查的 SHA 和路径。三分钟仍空闲时收到一次提醒，再空闲三分钟升级。
 4. 首次交接失败时前任继续工作，在下一次现有投递收到原因。修正判断单并自行重试一次。第二次失败或超过三轮／15 分钟时，loomd 将 Leader 的问题升级给 Auditor，将 Auditor 的问题升级给 Super。成功后 Leader 的接任情况随 Auditor 的现有投递附送，Auditor 的接任情况记录到 Super 通知。Super 可用 `loom rotate --target leader|auditor` 处理例外并显式改运行配置。
 5. 阶段或目标收尾时归档结果，用 `loom notifications --project "$PROJECT" --complete "$SUMMARY" --phase "$PHASE"` 登记完成。查看回执中的推送去向。若收到 `notification-pending`，记录已保存的完成 ID，路线恢复后以原参数重试。项目收尾时用 `loom stop` 关闭会话。清理 worktree 前先把暂存、未暂存及授权范围内未跟踪的草稿归档成可恢复的补丁，记录路径。最后用 `loom doctor --project "$PROJECT"` 核对残留。
 

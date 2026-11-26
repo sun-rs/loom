@@ -21,6 +21,7 @@ import { isStartupBlocker } from '../tui/agent-status.mjs';
 import { gateId, saveGatePacket } from './gate-packet.mjs';
 import { gateBoundary, roleBudget } from './role-budget.mjs';
 import { leaderHandoverState } from '../handover/brief.mjs';
+import { startedOutstanding } from '../handover/outstanding.mjs';
 import { authorizeSeniorTool, seniorToolEvents } from './senior-tools.mjs';
 import { replyForDelivery } from '../inbox/reply-file.mjs';
 import { auditorWakeFiltered, auditorWakeSource, redReasons } from './routing.mjs';
@@ -42,6 +43,7 @@ const matchesGate = (message, project, gate) => message.gatePacket &&
   (message.gateId === gate && message.gateProject === project || message.id === packetDeliveryId(project, gate));
 const auditEscalations = new Set(['blocking-disagreement', 'three-failed-rounds', 'major-risk', 'overreach']);
 const terminalText = text => text.replace(/[\x00-\x08\x0b-\x1f\x7f-\x9f]/g, '');
+const handoverWorkWait = 3 * 60_000;
 
 function codexHandoff(row) {
   if (row.cli !== 'codex' || !row.sessionId) return;
@@ -232,6 +234,48 @@ ${details}`, {
         addr: row.addr, deliveryId: job.firstId, reason, at: now(), ...(job.selfRotationId && { logOnly: true }),
         text: `${title} ${row.addr} 交接失败（${reason}）。` });
       await sessions.failSpawn(job, new Error(reason));
+    }
+  }
+
+  async function followUpHandoverWork() {
+    for (const job of sessions.jobs.values()) {
+      if (!job.handoverItems?.length || job.handoverWorkStarted || job.handoverBoundAt == null ||
+          job.stopping || now() - job.handoverBoundAt < handoverWorkWait) continue;
+      const row = sessions.rowFor(job.row.addr);
+      if (row?.endedAt !== null || parentFor(row.addr) !== row.addr) continue;
+      const notices = notifications.list(row.project, false, true);
+      const escalationId = `handover-work:${job.firstId}`;
+      if (notices.some(event => event.id === escalationId)) continue;
+      const tools = sessions.events(row.addr).filter(event => !event.agent_id && !event.isSidechain &&
+        !event.parent_tool_use_id && !event.parentToolUseId &&
+        /^(?:PreToolUse|tool_call_started|tool_call_input|tool_use|function_call|custom_tool_call)$/
+          .test(event.hook_event_name ?? event.payload?.type ?? event.type));
+      const evidence = [
+        ...tools.map(event => JSON.stringify(event.tool_input ?? event.input ?? event.payload?.arguments ??
+          event.payload?.input ?? event.command ?? '')),
+        ...mail.messages.filter(message => message.from?.addr === row.addr).map(message => message.text),
+        ...notices.filter(event => event.addr === row.addr && ['project-completed', 'gate-completed', 'needs-decision']
+          .includes(event.type)).map(event => [event.phase, event.gate, event.text].filter(Boolean).join(' ')),
+      ];
+      const remaining = job.handoverItems.filter(item => !startedOutstanding(item, evidence));
+      if (!remaining.length) {
+        sessions.markHandoverStarted(job);
+        continue;
+      }
+      const id = batchDeliveryId(job.firstId, 'handover-do-now');
+      const nudge = mail.messages.find(message => message.id === id);
+      if (nudge && now() - (nudge.received?.at ?? nudge.createdAt) < handoverWorkWait) continue;
+      const target = sessions.targetBinding(row);
+      const view = await sessions.transport.inspect(target).catch(() => undefined);
+      if (view?.state !== 'idle' || view.active || view.userPrompt) continue;
+      const text = `交接里有待办：${clip(remaining.join(' · '), 400)}`;
+      if (!nudge) {
+        saved(target, text, { id });
+      } else {
+        notifications.add({ id: escalationId, project: row.project, addr: row.addr, at: now(),
+          type: 'needs-decision', reason: 'handover-work-unstarted', text, deliveryId: nudge.id,
+          ...(row.role === 'leader' && { auditor: true, batch: 'leader-handover-work' }) });
+      }
     }
   }
 
@@ -640,7 +684,9 @@ ${details}`, {
     if (request?.expectReply && request.completion?.relay?.deliveryId === message.id &&
         request.target.addr === message.from?.addr && parentFor(request.from?.addr) === row.addr) return;
     if (!auditorWakeSource(message, { startupId: job?.firstId,
-      handoverId: job?.handoverReportId, senderRole: sessions.rowFor(message.from?.addr)?.role, deepReview })) return auditorWakeFiltered;
+      handoverId: job?.handoverReportId,
+      handoverFollowupId: job?.handoverBound && job.handoverItems?.length && batchDeliveryId(job.firstId, 'handover-do-now'),
+      senderRole: sessions.rowFor(message.from?.addr)?.role, deepReview })) return auditorWakeFiltered;
   }
 
   async function closeReviews() {
@@ -748,6 +794,7 @@ ${details}`, {
     }, {
       async beforeDispatch() {
         await settleHandovers();
+        await followUpHandoverWork();
         await org.collect(sessions.rows());
         await rotation.advance();
         await stepRelay(now());
@@ -1010,7 +1057,7 @@ ${details}`, {
             throw new CommandError('id-conflict', `Phase ${phase} already has a different completion (${id})`);
           }
           notifications.add({ id, project: name, at: now(), type: 'project-completed',
-            ...(phase !== undefined && { phase }), text: args.complete });
+            ...(phase !== undefined && { phase }), ...(actor && { addr: actor.addr }), text: args.complete });
           notifications.retryLoggedCompletion(id);
           if (!prior?.pushRoute || prior.pushRoute === 'log') await pushNotifications();
           const completion = notifications.list(name, false, true).find(event => event.id === id);

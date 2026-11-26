@@ -1406,6 +1406,56 @@ test('failed self-rotation reports the first failure on a normal wake and escala
   await assert.rejects(d.handle('rotate', { self: true }, old.addr), { code: 'rotation-retry-exhausted' });
 });
 
+for (const [role, startsWork] of [['auditor', true], ['auditor', false], ['leader', false]]) test(`handover Do now ${role} ${startsWork ? 'settles on its phase receipt' : 'nudges once then reports inactivity'}`, async t => {
+  let advance = 0;
+  const f = fixture(t, { now: () => Date.now() + advance });
+  const d = f.daemon();
+  t.after(d.shutdown);
+  const { session: upstream } = await f.spawn(d, role === 'leader' ? 'auditor' : 'super', 'UPSTREAM');
+  const { session: old } = await f.spawn(d, role, 'OLD', undefined, { prompt: 'HOLD old turn' });
+  await d.tick();
+  f.sessions.get(old.addr).finish('Ready');
+  const { rotation: { notePath } } = await d.handle('rotate', { self: true, prepare: true }, old.addr);
+  writeFileSync(notePath, '## Do now\n- Register completion for phase `goal5`.\n\n## Background\nAccepted evidence.');
+  await d.handle('rotate', { self: true }, old.addr);
+  await d.tick();
+  await d.tick();
+  const next = (await d.handle('state', { target: old.addr })).rotations[0].successor;
+  const { brief, ack } = handoverBrief(f, next);
+  assert.match(brief, /## Do now\n- Register completion for phase `goal5`\.[\s\S]*## Background\nAccepted evidence/);
+  assert.equal(brief.match(/^## Do now$/gm).length, 1);
+  const startup = f.prompts.find(item => item.addr === next).input;
+  assert.match(startup, /Start the Do now items in this turn/);
+  if (startsWork) await d.handle('notifications', { complete: 'Goal 5 checked.', phase: 'goal5' }, next);
+  else {
+    await d.handle('notifications', { complete: 'Unrelated completion.', phase: 'goal4' }, next);
+    f.sessions.get(next).check('git rev-parse HEAD', 10, 0);
+  }
+  f.sessions.get(next).finish(ack);
+  await d.tick();
+  const nudges = () => f.read('inbox/state.json').messages.filter(message => message.target.addr === next && /^交接里有待办：/.test(message.text));
+  advance = 3 * 60_000 + 100;
+  await d.tick();
+  assert.equal(nudges().length, startsWork ? 0 : 1);
+  if (!startsWork) {
+    await d.tick();
+    assert.ok(f.prompts.some(item => deliveryId(item.input) === nudges()[0].id));
+    if (f.sessions.get(next).session.status().value.kind === 'running') f.sessions.get(next).finish('Acknowledged');
+  }
+  advance += 3 * 60_000 + 100;
+  await d.tick();
+  await d.tick();
+  const alerts = (await d.handle('notifications', { history: true })).notifications
+    .filter(event => event.reason === 'handover-work-unstarted');
+  assert.equal(alerts.length, startsWork ? 0 : 1);
+  assert.equal(nudges().length, startsWork ? 0 : 1);
+  if (!startsWork) {
+    assert.equal(alerts[0].pushRoute, upstream.addr);
+    assert.ok(f.read('inbox/state.json').messages.some(message =>
+      message.target.addr === upstream.addr && message.projectEvents?.includes(alerts[0].id)));
+  }
+});
+
 test('external Super sends to the live role and receives project notification receipts and replies', async t => {
   const f = fixture(t);
   const d = f.daemon();
