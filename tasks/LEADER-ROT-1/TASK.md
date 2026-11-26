@@ -46,3 +46,26 @@ Ten background-task results were ~10K chars each.
    - Integration/merge of candidate branches and the full-suite run on the candidate are a worker card ("integration worker"), not Leader commands.
    - The Leader never runs `npm test`, never reads source/tests, never polls `loom state` in loops. It uses `loom status`/evidence summaries that loomd pushes on its next wake.
 3. **Measure** with the same categorisation (script in the task dir), before and after on a replay, and report the expected Leader context and raw-token drop.
+
+## Item 8 (user principle, 2026-11-26): senior roles make decisions, not tool calls — enforce it mechanically
+User: "为了保障高级角色始终有清晰的意识，也就是上下文没被信息塞满，这样压缩次数少，幻觉少，那么必须让他们做决策，而不是具体的工具调用。"
+
+Evidence that the cause is our own planning, not the model:
+- The skill the pilot-2 Leader loaded (9603c9c1) told it to "执行门禁、集成和获授权的合入" and "在固定候选 SHA 的干净隔离 worktree 执行项目授权的集成验收".
+- The Auditor's verdicts demanded a full `npm test` record from the Leader (goal 3: "合入后在 pilot-2 跑一次 npm test…发我"; goal 4 merge r1: "没有全量 npm test 全绿记录").
+- Workers could not run the suite in the sandbox until LIVENESS-1.
+- A comparable hc-era agy coordinator (t37) ran 4 tests and 5 reads in 123 steps; the pilot-2 Leader ran 47 and 35 in 478 steps.
+
+1. **Rewrite the Leader and Auditor sections of skills/loom/SKILL.md, docs/ORG.md and the role prompts** as decision roles.
+   - Leader: split cards, dispatch, read worker receipts/evidence summaries, decide next, pack gates, escalate.
+   - Auditor: judge from the gate pack.
+   - Remove every instruction that makes a senior role integrate, merge, run tests or read code.
+   - Integration, merge and full-suite runs on the candidate are an integration worker card. Its evidence card is what the Auditor asks for.
+   - Fix the Auditor wording so it asks for "the integration worker's evidence", never "run npm test and send me".
+2. **Mechanical guard (PreToolUse/permission hooks, per CLI, launch-scoped).** For roles leader/auditor (policy `roles.<r>.toolGuard`, default on):
+   - Deny with a short reason ("delegate to a worker card"): test/build runners (npm/node --test/pytest/cargo/go test, make…), `git merge/rebase/cherry-pick/worktree add`, reading source/test files outside `.project/`, recursive grep over the repo, and loop polling of `loom state`.
+   - Allow: `$LOOM_BIN` commands, reading `.project/` files (gate packs, evidence, rulings, charter, reply files), `git log/diff --stat/rev-parse`, and writing `.project/` notes.
+   - Claude: PreToolUse deny. agy: the PreToolUse hook already mounted at launch. Codex/OpenCode: their launch-scoped equivalents. Super is exempt.
+   - Every denial is counted and shown in `loom status` as "senior-tool-denied".
+3. **Context hygiene signal.** loomd tracks the per-role share of context filled by tool output (the categorisation from item 7) and raises a Super-visible drift notice when a senior role's tool-output share in a window exceeds a bound. Local counters only.
+4. Measure: replay the pilot-2 Leader transcript with the guard. Report which of the 47 test runs, 35 reads and 11 git operations would have been denied, and the expected context ceiling.
