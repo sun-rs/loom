@@ -86,9 +86,24 @@ test('failed verification restores the old writer and a successful upgrade prese
   const candidate = join(dir, 'candidate');
   const cli = join(root, 'bin', 'loom');
   const codex = join(dir, 'codex');
+  const ps = join(dir, 'ps');
+  const denyLookup = join(dir, 'deny-holder-lookup');
+  const denied = join(dir, 'denied-holder-lookups');
+  writeFileSync(ps, '#!' + process.execPath + '\n' + `
+    import { execFileSync } from 'node:child_process';
+    import { appendFileSync, existsSync, readFileSync } from 'node:fs';
+    const [option, pids] = process.argv.slice(2);
+    if (option === '-p' && existsSync(${JSON.stringify(denyLookup)}) &&
+        pids.split(',').includes(readFileSync(${JSON.stringify(denyLookup)}, 'utf8'))) {
+      appendFileSync(${JSON.stringify(denied)}, 'blocked lookup\\n');
+      console.error('Fixture could not enumerate the existing holder');
+      process.exit(1);
+    }
+    execFileSync('/bin/ps', process.argv.slice(2), { stdio: 'inherit' });
+  `, { mode: 0o700 });
   const env = { HOME: dir, TMPDIR: dir, CODEX_HOME: dir, XDG_STATE_HOME: join(dir, 'state'), PATH: process.env.PATH, LOOM_CODEX_BIN: codex,
     OAR_CODEX_BIN: codex, LOOM_CLAUDE_BIN: codex, LOOM_AGY_BIN: codex, LOOM_OPENCODE_BIN: codex,
-    LOOM_DESKTOP_NOTIFY: '0', LOOM_TEST_CODEX_PIPES: '1', LOOM_EXTERNAL_SUPER: '1',
+    LOOM_DESKTOP_NOTIFY: '0', LOOM_TEST_PS: ps, LOOM_TEST_CODEX_PIPES: '1', LOOM_EXTERNAL_SUPER: '1',
     ...(process.env.LOOM_WORKER_TMP && { LOOM_WORKER_TMP: process.env.LOOM_WORKER_TMP }) };
   const run = async (...args) => {
     const result = await exec(process.execPath, [cli, ...args, '--project', project], { cwd: project, env, timeout: 25_000 })
@@ -125,17 +140,19 @@ test('failed verification restores the old writer and a successful upgrade prese
   const verify = '      validateReattachment(handoff, { sessions: attached });';
   assert(candidateCode.includes(verify));
   writeFileSync(main, candidateCode.replace(verify,
+    `      await import('node:fs').then(fs => fs.writeFileSync(${JSON.stringify(denyLookup)}, String(attached[0].pid)));\n` +
     "      attached[0] = { ...attached[0], status: 'unavailable', reason: 'fixture attachment failure' };\n" + verify));
 
   async function until(readResult, condition) {
-    const deadline = Date.now() + 10_000;
+    const deadline = Date.now() + 25_000;
     let value;
     do {
       value = await readResult();
       if (condition(value)) return value;
       await delay(100);
     } while (Date.now() < deadline);
-    assert.fail(JSON.stringify(value));
+    const log = join(metadata, 'loomd.log');
+    assert.fail(JSON.stringify(value) + (existsSync(log) ? '\n' + readFileSync(log, 'utf8').slice(-2400) : ''));
   }
   const previous = await run('daemon', 'start');
   assert.equal(previous.running, true);
@@ -187,6 +204,8 @@ test('failed verification restores the old writer and a successful upgrade prese
   const live = await until(() => run('upgrade', '--status'),
     result => result.sessions?.some(session => session.addr === addr && session.status === 'attached'));
   assert.deepEqual(live.sessions[0], original);
+  assert.match(readFileSync(denied, 'utf8'), /blocked lookup/);
+  rmSync(denyLookup);
   const follow = randomUUID();
   assert.equal((await run('send', addr, '--id', follow, 'Delivered by the recovered daemon')).ok, true);
   await answered(follow);

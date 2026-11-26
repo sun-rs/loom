@@ -237,8 +237,10 @@ export async function main(args, { pollInterval = 350, ...options } = {}) {
       if (handoff && !switching && Date.now() >= handoffCheckAt) {
         handoffCheckAt = Date.now() + 1000;
         polling = true;
-        void liveHandoff(project, handoff.id).then(live => { if (!live) void stop(); },
-          error => console.error(error.message)).finally(() => { polling = false; });
+        void liveHandoff(project, handoff.id).then(live => {
+          // The launcher can persist the outcome and exit while this probe is in flight.
+          if (!live && !canDispatch()) void stop();
+        }, error => console.error(error.message)).finally(() => { polling = false; });
       }
       return;
     }

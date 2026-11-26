@@ -87,7 +87,12 @@ export async function attachCodexHolder(project, row, job, saveJob, controller, 
   const gone = async () => Boolean(binding.identity && await inspectProcess(binding.identity) === 'dead');
   if (snapshot) {
     verify(snapshot);
-    const processes = await processTable([snapshot.pid, snapshot.childPid]);
+    const processes = await processTable([snapshot.pid, snapshot.childPid]).catch(error => {
+      // The persisted holder identity and verified socket are still usable
+      // when process enumeration itself is temporarily unavailable.
+      if (!binding.identity || !error.code?.startsWith('process-enumeration-')) throw error;
+      return new Map();
+    });
     const pid = processes.get(snapshot.pid);
     const child = processes.get(snapshot.childPid);
     if (pid && (pid.uid !== process.getuid() || binding.identity && !sameBirth(binding.identity, pid)) ||
