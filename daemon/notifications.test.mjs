@@ -38,3 +38,15 @@ test('desktop banners coalesce decision events per project across restarts and k
   await push();
   assert.deepEqual(calls.slice(2), [['P', 'project-completed']]);
 });
+
+test('a failed desktop completion stays pending until a delivery route succeeds', async t => {
+  const root = mkdtempSync(join(tmpdir(), 'loom-notices-'));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  mkdirSync(join(root, '.project', 'loomd'), { recursive: true });
+  const notices = projectNotifications(root, () => 1000);
+  notices.add({ id: 'complete', type: 'project-completed', project: 'P', at: 1000 });
+  await notices.push(async () => undefined, async () => false);
+  assert.equal(notices.list('P')[0].pushRoute, undefined);
+  await notices.push(async () => 'managed-super');
+  assert.equal(notices.list('P')[0].pushRoute, 'managed-super');
+});

@@ -48,8 +48,7 @@ export function roleBudget(project, { now, sessions, notifications, batchDeliver
         if (row === active) tokens = await context(row, history, false);
       } catch (error) { report(`Auditor budget ${row.addr}: ${error.message}`); }
     }
-    const usage = { wakes: wakes.size, contextTokens: tokens, ...rotationLimits(policy, 'auditor') };
-    if (rotationReason(policy, 'auditor', usage)) return usage;
+    return { wakes: wakes.size, contextTokens: tokens, ...rotationLimits(policy, 'auditor') };
   }
 
   async function proposeLeader(name, leader, reader, events, policy, at) {
@@ -110,17 +109,19 @@ export function roleBudget(project, { now, sessions, notifications, batchDeliver
       const reader = historyReader(project);
       if (safeLeader) await proposeLeader(name, safeLeader, reader, events, policy, at);
       if (gateRecorded) return;
-      let over = events.find(event => event.id === id);
-      if (!over) {
-        const usage = await assessAuditor(rows.filter(row => row.role === 'auditor'), reader, gate?.at ?? -Infinity, policy);
-        if (usage) {
-          const context = usage.contextTokens == null ? '未知' : `${usage.contextTokens}/${usage.maxContextTokens}`;
-          const text = `Auditor 超出预算（本门禁唤醒 ${usage.wakes}/${usage.maxWakesPerGate}，上下文 token ${context}）。请把常规材料合并成一份门禁包；下次门禁完成时将建议换班。`;
-          over = { id, project: name, type: budgetType, at, text, usage, logOnly: true };
-          notifications.add(over);
-        }
+      const usage = await assessAuditor(rows.filter(row => row.role === 'auditor'), reader, gate?.at ?? -Infinity, policy);
+      const overBudget = Boolean(rotationReason(policy, 'auditor', usage));
+      const prior = events.find(event => event.id === id);
+      if (overBudget || prior) {
+        const context = usage.contextTokens == null ? '未知' : `${usage.contextTokens}/${usage.maxContextTokens}`;
+        const stamp = new Date(at).toISOString();
+        const action = overBudget ? ' 请把常规材料合并成一份门禁包。下次门禁完成时将建议换班。' : '';
+        const text = `Auditor ${overBudget ? '超出预算' : '当前在预算内'}（采样 ${stamp}，本门禁唤醒 ${usage.wakes}/${usage.maxWakesPerGate}，上下文 token ${context}）。${action}`;
+        const sample = { text, usage, sampledAt: at, overBudget };
+        if (prior) notifications.refresh(id, sample);
+        else notifications.add({ id, project: name, type: budgetType, at, logOnly: true, ...sample });
       }
-      if (completeGate) return over?.usage;
+      if (completeGate) return overBudget ? { usage, sampledAt: at } : undefined;
       try { assessToolOutput(name, rows, reader, events, at); }
       catch (error) { report(`Senior tool output ${name}: ${error.message}`); }
       const lastDrift = events.findLast(event => event.type === driftType);

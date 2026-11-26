@@ -18,7 +18,7 @@ import { seniorToolEnvironment } from './senior-tools.mjs';
 
 export const pipeTransport = 'holder-pipes';
 export const useCodexHolder = (row, job) => row.cli === 'codex' &&
-  (job.host ? job.host.transport === pipeTransport : process.env.LOOM_TEST_CODEX_PIPES === '1');
+  (job.host ? job.host.transport === pipeTransport : !job.integration && process.env.LOOM_TEST_CODEX_PIPES === '1');
 const sameBirth = (identity, live) => live && live.pid === identity?.pid &&
   live.started === identity.started && live.uid === process.getuid();
 

@@ -110,7 +110,9 @@ export function sandboxNativeWorker(project, row, login, isolated, command) {
   const policy = ['(version 1)', '(allow default)', '(deny file-write*)', '(allow file-write* (literal "/dev/null"))',
     '(allow file-write-data (literal "/dev/ptmx") (regex #"^/dev/ttys[0-9]+$"))',
     ...(helper ? [`(allow file-write* (literal ${quote(helper)}))`] : []),
-    ...writes.map(path => `(allow file-write* (subpath ${quote(path)}))`)].join('\n');
+    ...writes.map(path => `(allow file-write* (subpath ${quote(path)}))`),
+    ...(row.integration ? [`(deny file-write* (subpath ${quote(join(project, '.project'))}) (subpath ${quote(join(row.cwd, '.project'))}))`] : []),
+  ].join('\n');
   const launch = join(dirname(isolated.HOME), 'native');
   writeState(launch, `#!/bin/sh\nexec /usr/bin/sandbox-exec -p ${shellWord(policy)} ${shellWord(command)} "$@"\n`);
   chmodSync(launch, 0o700);
@@ -185,6 +187,7 @@ export function workerCodexArgs(project, row, env) {
   const writes = [row.cwd, env.HOME, env.TMPDIR, ...workerGitWritePaths(project, row.cwd)];
   const filesystem = { ':root': 'read', ...Object.fromEntries(writes.map(path => [path, 'write'])) };
   for (const entry of ['.git', '.agents', '.codex', '.aws']) filesystem[join(row.cwd, entry)] = 'read';
+  if (row.integration) for (const root of new Set([row.cwd, project])) filesystem[join(root, '.project')] = 'read';
   const entries = Object.entries(filesystem).map(([key, value]) => `${quote(key)}=${quote(value)}`).join(',');
   const network = 'enabled=true,allow_local_binding=false,enable_socks5=false,allow_upstream_proxy=false,' +
     `proxy_url="http://127.0.0.1:0",unix_sockets={${quote(env.TMPDIR)}="allow"}`;

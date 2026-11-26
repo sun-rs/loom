@@ -4,7 +4,7 @@ import { join, relative } from 'node:path';
 import { readArtifacts } from '../cli/artifacts.mjs';
 import { CommandError } from '../cli/sessions.mjs';
 import { clip } from '../evidence/checks.mjs';
-import { readText, writeState } from './io.mjs';
+import { writeState } from './io.mjs';
 import { workerRedFacts } from './routing.mjs';
 import { conclusoryReply } from '../inbox/message.mjs';
 
@@ -23,7 +23,7 @@ function commit(project, ref) {
   return git(project, 'rev-parse', '--verify', '--end-of-options', `${ref}^{commit}`);
 }
 
-export function saveGatePacket(project, { id, gate, base: baseRef, candidate: candidateRef = 'HEAD', question },
+export function saveGatePacket(project, { id, gate, round, base: baseRef, candidate: candidateRef = 'HEAD', question },
   { members, jobs, messages, decisions, signalSummary, signalCount, red }) {
   const baseDirectory = join(project, '.project');
   const directory = join(baseDirectory, 'gates');
@@ -31,9 +31,15 @@ export function saveGatePacket(project, { id, gate, base: baseRef, candidate: ca
   try { mkdirSync(directory, { mode: 0o700 }); }
   catch (error) { if (error.code !== 'EEXIST') throw error; }
   if (realpathSync(directory) !== directory) throw new Error('Gate directory must be project-local');
-  const path = join(directory, `${gate}.${id}.md`);
-  const stored = readText(path, null);
-  if (stored !== null) return { path };
+  const path = join(directory, `${gate}.r${round}.${id}.md`);
+  const fullPath = join(directory, `${id}.full.md`);
+  const full = [];
+  function preview(title, text, limit, summary = text) {
+    if (text === summary && Buffer.byteLength(text) <= limit) return `## ${title}\n${text}`;
+    const anchor = title.toLowerCase().replace(/[^a-z0-9 -]/g, '').replaceAll(' ', '-');
+    full.push(`## ${title}\n${text}`);
+    return `## ${title}\n${clip(summary, limit)}\nFull: ${relative(project, fullPath)}#${anchor}`;
+  }
 
   const candidate = commit(project, candidateRef);
   const base = candidate && commit(project, baseRef ?? `${candidate}^`);
@@ -65,21 +71,26 @@ export function saveGatePacket(project, { id, gate, base: baseRef, candidate: ca
     const verdict = result && result.at <= (job?.reviewDeadline ?? Infinity) && (result.body ?? result.unconfirmedBody);
     const conclusion = Boolean(verdict && conclusoryReply(verdict));
     const detail = conclusion && `${result.body ? '' : 'UNCONFIRMED '}${verdict.trimStart().split('\n', 1)[0]}`;
-    return detail ? [`- ${row.addr} · ${clip(oneLine(detail), 125)}`] : [];
+    return detail ? [{ summary: `- ${row.addr} · ${oneLine(detail)}`, text: `### ${row.addr}\n${verdict}` }] : [];
   });
   const questions = [question, ...decisions.map(event => event.text)]
-    .map(oneLine).filter(Boolean).map(value => '- ' + value);
+    .filter(Boolean).map(value => '- ' + value);
+  const redEvidence = red ? [
+    ...redLines.slice(1), `- Leader confirmed ${red.reason}\n\n${red.text}`,
+  ] : redLines;
   const sections = [
-    `# Gate ${gate}\n\nBase: ${base ?? '(root)'}\nCandidate: ${candidate}`,
-    `## Evidence cards\n${cards.length} cards · .project/evidence/\n` + clip(bullet(evidence, 'No recorded cards.'), 250),
-    '## Diff --stat\n' + diff,
+    `# Gate ${gate} · Round ${round}\n\nBase: ${base ?? '(root)'}\nCandidate: ${candidate}`,
+    preview('Evidence cards', `${cards.length} cards · .project/evidence/\n${bullet(evidence, 'No recorded cards.')}`, 250),
+    preview('Diff --stat', stat || 'No changes.', 240, diff),
     `## Test summary\n${checks.length ? `${passed} passed, ${failed} failed, ${checks.length - passed - failed} inconclusive commands; ${sandboxed} ran in a sandbox.` : 'No verified test commands.'}`,
-    ...(reviews.length ? ['## Reviewer verdicts\n' + clip(reviews.join('\n'), 175)] : []),
-    '## Open questions\n' + clip(bullet(questions, 'None recorded.'), 110),
-    '## Red facts\n' + clip(bullet(redLines, 'None recorded.'), 170),
-    `## Drift and fact checks\n${signalCount} signals · \`loom status --json\`\n` + clip(signalSummary || 'None recorded.', 165),
+    ...(reviews.length ? [preview('Reviewer verdicts', reviews.map(item => item.text).join('\n\n'), 175,
+      reviews.map(item => item.summary).join('\n'))] : []),
+    preview('Open questions', bullet(questions, 'None recorded.'), 110),
+    preview('Red facts', bullet(redEvidence, 'None recorded.'), 170, bullet(redLines, 'None recorded.')),
+    preview('Drift and fact checks', `${signalCount} signals\n${signalSummary || 'None recorded.'}`, 165),
     `## Pointers\n- \`${statCommand}\`\n- Pending decisions: \`loom notifications\``,
   ];
+  if (full.length) writeState(fullPath, `# Gate ${gate} · Round ${round}\n\n${full.join('\n\n')}\n`);
   writeState(path, sections.join('\n\n') + '\n');
-  return { path };
+  return { path, ...(full.length && { fullPath }) };
 }

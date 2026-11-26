@@ -14,6 +14,7 @@ import { estimateTokens } from '../lib/token-budget.mjs';
 import { writeMemory } from '../memory/project.mjs';
 import { createSupervisor } from './supervisor.mjs';
 import { socketPath } from '../cli/project.mjs';
+import { readArtifacts } from '../cli/artifacts.mjs';
 import { recordSeniorToolDenial } from '../lib/senior-tool-guard.mjs';
 import { seniorToolLog } from './senior-tools.mjs';
 
@@ -314,6 +315,34 @@ test('Auditor wakes and context have independent budgets and rotation waits for 
   assert.notEqual((await d.handle('state', { target: auditor.addr })).state, 'exited');
 });
 
+test('Auditor budget samples refresh in the same gate and recovery cancels a stale rotation proposal', async t => {
+  let time = Date.now();
+  const f = fixture(t, { now: () => time });
+  f.policy({ roles: { auditor: { maxWakesPerGate: 100, maxContextTokens: 100 } } });
+  const d = f.daemon();
+  t.after(d.shutdown);
+  const { session: auditor } = await f.spawn(d, 'auditor', 'A');
+  await d.tick();
+  const sample = async tokens => {
+    time += 31_000;
+    await nativeCost(f, auditor, time - 1000, tokens);
+    await d.tick();
+    const events = f.read('loomd/notifications.json').filter(event => event.type === 'auditor-budget-exceeded');
+    assert.equal(events.length, 1);
+    assert.equal(events[0].sampledAt, time);
+    assert.equal(events[0].usage.contextTokens, tokens);
+    assert.ok(events[0].text.includes(new Date(time).toISOString()));
+    return events[0];
+  };
+  const first = await sample(501);
+  const refreshed = await sample(750);
+  assert.equal(refreshed.id, first.id);
+  assert.ok(refreshed.usage.wakes > first.usage.wakes);
+  assert.equal((await sample(50)).overBudget, false);
+  const history = await d.handle('notifications', { gateComplete: 'RECOVERED', history: true });
+  assert.equal(history.notifications.find(event => event.gate === 'RECOVERED').type, 'gate-completed');
+});
+
 test('gate pack snapshots scoped evidence into one compact file and enqueues one pointer across restart', async t => {
   const f = fixture(t);
   const commit = name => f.git('-c', 'user.name=Loom', '-c', 'user.email=loom@example.invalid', 'commit', '-qm', name);
@@ -347,16 +376,20 @@ test('gate pack snapshots scoped evidence into one compact file and enqueues one
   await assert.rejects(d.handle('gate-pack', { gate: '../elsewhere' }, leader.addr), { code: 'invalid-arguments' });
   await assert.rejects(d.handle('gate-pack', { gate: 'GATE' }, worker.addr), { code: 'invalid-arguments' });
   const packet = await d.handle('gate-pack', { gate: 'GATE', base, candidate, question: '答'.repeat(1900) }, leader.addr);
-  assert.equal(packet.path, join(f.project, '.project', 'gates', `GATE.${packet.deliveryId}.md`));
+  assert.equal(packet.round, 1);
+  assert.equal(packet.path, join(f.project, '.project', 'gates', `GATE.r1.${packet.deliveryId}.md`));
   const contents = readFileSync(packet.path, 'utf8');
   assert.ok(Buffer.byteLength(contents) <= 2048);
   assert.match(contents, /Evidence cards.*\.project\/evidence\/.*Diff --stat.*fixture\.mjs.*Test summary.*1 passed.*Open questions.*答.*Pointers/s);
   assert.match(contents, /Red facts.*protected-file.*fence\.md.*assertion.*case\.test\.mjs.*skip-only/s);
   assert.doesNotMatch(contents, /Reviewer verdicts|Gate has no reviewer/);
+  assert.match(contents, /Full: .*\.full\.md#open-questions/);
+  assert.ok(readFileSync(packet.fullPath, 'utf8').includes('答'.repeat(1900)));
   assert.equal(packet.warnings, undefined);
   await d.shutdown();
   d = f.daemon();
-  const retry = await d.handle('gate-pack', { gate: 'GATE', question: 'replacement' }, leader.addr);
+  await assert.rejects(d.handle('gate-pack', { gate: 'GATE', round: 1 }, leader.addr), { code: 'gate-round-exists' });
+  const retry = await d.handle('gate-pack', { gate: 'GATE', round: 1, reuse: true }, leader.addr);
   assert.equal(retry.deliveryId, packet.deliveryId);
   assert.equal(readFileSync(packet.path, 'utf8'), contents);
   for (let i = 0; i < 3; i++) await d.tick();
@@ -382,11 +415,20 @@ test('gate pack snapshots scoped evidence into one compact file and enqueues one
   assert.deepEqual(related.map(message => message.target.addr), [leader.addr]);
   const budget = await d.handle('notifications', { gateComplete: 'GATE', history: true }, leader.addr);
   assert.equal(budget.notifications.find(event => event.gate === 'GATE' && event.type === 'auditor-rotation-proposed').usage.wakes, 3);
+  writeFileSync(join(f.project, '.project/evidence/next-round.json'), JSON.stringify({ addr: worker.addr, card: 'New round evidence' }));
+  const next = await d.handle('gate-pack', { gate: 'GATE', candidate, question: 'Latest question' }, leader.addr);
+  assert.equal(next.round, 2);
+  assert.notEqual(next.deliveryId, packet.deliveryId);
+  assert.match(readFileSync(next.path, 'utf8'), /Reviewer verdicts.*PASS investigated edge.*Latest question/s);
+  const full = readFileSync(next.fullPath, 'utf8');
+  assert.ok(full.includes(detail));
+  assert.match(readFileSync(next.path, 'utf8') + full, /next-round\.json/);
+  assert.equal(readFileSync(packet.path, 'utf8'), contents);
 
   const missing = await d.handle('gate-pack', { gate: 'MISSING', candidate }, leader.addr);
   assert.equal(missing.warnings, undefined);
   assert.doesNotMatch(readFileSync(missing.path, 'utf8'), /Gate has no reviewer conclusion\./);
-  assert.equal((await d.handle('gate-pack', { gate: 'MISSING' }, leader.addr)).warnings, undefined);
+  assert.equal((await d.handle('gate-pack', { gate: 'MISSING', reuse: true }, leader.addr)).deliveryId, missing.deliveryId);
   await d.shutdown();
   d = f.daemon();
   await assert.rejects(f.spawn(d, 'reviewer', 'RESTART', auditor.addr, { wave: 'GATE' }), { code: 'reviewer-gate-limit' });
@@ -405,12 +447,12 @@ test('Super sees one completion per phase and a plain Auditor decision across da
   await d.handle('notifications', { complete: 'finished goal 4', phase: 'goal-4' }, auditor.addr);
   await d.handle('notifications', { decision: 'choose a default', kind: 'decision' }, auditor.addr);
   await d.tick();
-  const push = f.read('inbox/state.json').messages.find(message => message.projectEvents?.length === 3);
-  assert.equal(push.target.addr, superSession.addr);
-  assert.match(push.text, /\[goal-3\] finished goal 3.*\[goal-4\] finished goal 4.*choose a default/s);
+  const pushes = f.read('inbox/state.json').messages.filter(message => message.projectEvents);
+  assert.ok(pushes.every(push => push.target.addr === superSession.addr));
+  assert.match(pushes.map(push => push.text).join('\n'), /\[goal-3\] finished goal 3.*\[goal-4\] finished goal 4.*choose a default/s);
   await d.shutdown();
   d = f.daemon();
-  await d.handle('notifications', { complete: 'duplicate summary', phase: 'goal-3' }, auditor.addr);
+  await assert.rejects(d.handle('notifications', { complete: 'duplicate summary', phase: 'goal-3' }, auditor.addr), { code: 'id-conflict' });
   const { notifications } = await d.handle('notifications', { take: true }, superSession.addr);
   assert.deepEqual(notifications.map(({ type, phase, kind, reason, text }) => [type, phase, kind, reason, text]), [
     ['project-completed', 'goal-3', undefined, undefined, 'finished goal 3'],
@@ -418,6 +460,44 @@ test('Super sees one completion per phase and a plain Auditor decision across da
     ['needs-decision', undefined, 'decision', undefined, 'choose a default'],
   ]);
   assert.deepEqual((await d.handle('notifications', {}, superSession.addr)).notifications, []);
+});
+
+test('pilot goal 3 and 4 unphased CLI completions each persist and enter Super’s durable inbox', async t => {
+  const f = fixture(t);
+  const d = f.daemon();
+  t.after(d.shutdown);
+  const { session: superSession } = await f.spawn(d, 'super', 'S');
+  const { session: auditor } = await f.spawn(d, 'auditor', 'A');
+  const cli = await cliFor(t, f, () => d, auditor.addr);
+  const first = 'pilot-2 完成：记忆 v1 一阶段已合入 pilot-2(1cdbd1bf)，未合 main';
+  const goal3 = '追加目标3完成：记忆v1必修a–g已合入 pilot-2(85bd8eee)，未合 main，472 测试全过。';
+  const goal4 = '目标4完成:a–e已合入pilot-2(2c2349e3),全量582过0失败,未进main。报告 .project/goal4-final-report.md,含5项待你定。';
+  const complete = async text => JSON.parse((await cli('notifications', '--project', f.project, '--complete', text)).stdout);
+  const accepted = [];
+  for (const text of [first, goal3, goal4]) accepted.push(await complete(text));
+  const history = JSON.parse((await cli('notifications', '--project', f.project, '--history')).stdout);
+  const events = history.notifications.filter(event => event.type === 'project-completed');
+  assert.deepEqual(events.map(event => event.text), [first, goal3, goal4]);
+  assert.deepEqual(accepted.map(result => result.completion.id), events.map(event => event.id));
+  const deliveries = f.read('inbox/state.json').messages.filter(message => message.projectEvents);
+  assert.ok(events.every(event => deliveries.some(message => message.target.addr === superSession.addr && message.projectEvents.includes(event.id))));
+  assert.equal((await complete(goal4)).completion.id, accepted.at(-1).completion.id);
+});
+
+test('completion without a working Super route exits nonzero and remains retryable', async t => {
+  const f = fixture(t, { externalNotification: async () => { throw new Error('banner failed'); } });
+  const d = f.daemon();
+  t.after(d.shutdown);
+  const { session: auditor } = await f.spawn(d, 'auditor', 'A');
+  const cli = await cliFor(t, f, () => d, auditor.addr);
+  const complete = () => cli('notifications', '--project', f.project, '--complete', 'recoverable completion');
+  await assert.rejects(complete(), error => JSON.parse(error.stdout).error.code === 'notification-pending');
+  const [prior] = f.read('loomd/notifications.json').filter(event => event.type === 'project-completed');
+  assert.equal(prior.pushRoute, undefined);
+  const { session: superSession } = await f.spawn(d, 'super', 'S');
+  const recovered = JSON.parse((await complete()).stdout).completion;
+  assert.equal(recovered.id, prior.id);
+  assert.equal(recovered.pushRoute, superSession.addr);
 });
 
 test('an uncertain delivery becomes terminal after its target stops and stays settled after restart', async t => {
@@ -454,8 +534,12 @@ test('Auditor dispatch admits only user messages and one Leader gate or red esca
   const { session: auditor } = await f.spawn(d, 'auditor', 'A');
   const { session: superSession } = await f.spawn(d, 'super', 'S');
   await d.tick();
-  const invalid = await d.handle('send', { target: auditor.addr, mode: 'interrupt', text: 'Routine gate note' }, leader.addr);
+  const note = 'DONE G4-MERGE：条件全部满足，已快进合入 pilot-2。记录路径：.project/goal4-fulltest.md';
+  const invalid = await d.handle('send', { target: auditor.addr, mode: 'interrupt', text: note }, leader.addr);
   assert.equal(invalid.issue, 'auditor-wake-filtered');
+  assert.equal(invalid.reason, 'auditor-wake-filtered');
+  assert.equal(invalid.nextWakeDigest, true);
+  assert.equal(invalid.status, 'refused');
   const legacy = randomUUID();
   publish(f.project, { id: legacy, createdAt: Date.now(), requestedMode: 'queue', mode: 'queue', phase: 'queued',
     target: { addr: auditor.addr, backend: 'headless', provider: auditor.cli, createdAt: auditor.startedAt },
@@ -470,11 +554,12 @@ test('Auditor dispatch admits only user messages and one Leader gate or red esca
   await d.shutdown();
   d = f.daemon();
   assert.equal((await d.handle('escalate', args, leader.addr)).wakeQueued, false);
-  assert.equal((await d.handle('gate-pack', { gate: 'G1' }, leader.addr)).deliveryId, red.deliveryId);
+  assert.equal((await d.handle('gate-pack', { gate: 'G1', reuse: true }, leader.addr)).deliveryId, red.deliveryId);
   const gate = await d.handle('gate-pack', { gate: 'G2' }, leader.addr);
   const followup = await d.handle('escalate', { ...args, gate: 'G2', reason: 'protected-file' }, leader.addr);
   assert.equal(followup.deliveryId, gate.deliveryId);
   assert.equal(followup.wakeQueued, false);
+  assert.equal(readFileSync(join(f.project, followup.evidencePath), 'utf8'), args.evidence);
   const user = await d.handle('send', { target: auditor.addr, mode: 'queue', text: 'RETURN user decision' }, superSession.addr);
   for (let i = 0; i < 6; i++) await d.tick();
   const messages = f.read('inbox/state.json').messages;
@@ -482,11 +567,15 @@ test('Auditor dispatch admits only user messages and one Leader gate or red esca
   assert.deepEqual(new Set(f.prompts.filter(message => message.addr === auditor.addr).slice(1)
     .map(message => deliveryId(message.input))), new Set([red.deliveryId, gate.deliveryId, user.deliveryId]));
   assert.equal(f.prompts.filter(message => message.addr === auditor.addr).length, 4);
+  const digestPrompts = f.prompts.filter(message => message.addr === auditor.addr && message.input.includes(note));
+  assert.equal(digestPrompts.length, 1);
+  assert.match(digestPrompts[0].input, /Loom Auditor next-wake digest/);
   assert.equal(messages.some(message => message.replyTo === user.deliveryId), false);
   assert.equal((await d.handle('notifications', { history: true })).notifications.filter(event => event.type === 'red-escalation').length, 2);
   const { projectStatus } = await import('../cli/status.mjs');
   const status = await projectStatus(f.project);
   assert.deepEqual(status.routing.filtered.map(item => item.id), [invalid.deliveryId, legacy]);
+  assert.equal(status.routing.filtered[0].digest, 'received');
 });
 
 test('large OpenCode exports recover the consecutive-failure stuck state', async t => {
@@ -1106,6 +1195,27 @@ test('holds queued input and worker results until the Leader’s native briefing
   assert.equal(messages.find(message => message.continuationMembers?.includes(continuation.id)).target.addr, successor.addr);
   assert.equal((await d.handle('send', input)).id, input.id);
   await d.shutdown();
+});
+
+test('integration is a headless worker profile and Loom records the suite in the evidence card', async t => {
+  const f = fixture(t);
+  const d = f.daemon();
+  t.after(d.shutdown);
+  const { session: leader } = await f.spawn(d, 'leader', 'L');
+  await assert.rejects(f.spawn(d, 'auditor', 'BAD', undefined, { integration: true }), { code: 'invalid-arguments' });
+  await assert.rejects(f.spawn(d, 'worker', 'TUI', leader.addr, { mode: 'tui', integration: true }), { code: 'invalid-arguments' });
+  const { session: worker, workerProfile } = await f.spawn(d, 'worker', 'INTEGRATE', leader.addr, {
+    integration: true, prompt: 'HOLD full suite',
+  });
+  assert.equal(workerProfile, 'integration');
+  assert.equal(f.read(`loomd/sessions/${worker.addr}.json`).integration, true);
+  await d.tick();
+  assert.match(f.prompts.find(item => item.addr === worker.addr).input, /Integration profile.*\$TMPDIR.*evidence card/s);
+  f.sessions.get(worker.addr).check('npm test', 10, 0);
+  f.sessions.get(worker.addr).finish('DONE INTEGRATE\nnpm test exited 0');
+  await d.tick();
+  const checks = readArtifacts(f.project).cards(worker.addr).flatMap(card => card.data.verification.commands);
+  assert.ok(checks.some(check => check.command === 'npm test' && check.result === 'passed'));
 });
 
 test('keeps the predecessor active and releases queued work when the first briefing turn lacks the acknowledgement', async t => {

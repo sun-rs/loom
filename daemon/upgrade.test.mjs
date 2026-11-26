@@ -58,6 +58,10 @@ test('one managed CLI path follows the serving release and preserves flags acros
   await invoke('first');
   writeFileSync(upgrade, JSON.stringify({ id: 'switch', phase: 'committed' }));
   await invoke('second');
+  writeFileSync(pointer, JSON.stringify({ current: { root } }));
+  for (const command of ['gate', 'escalate']) {
+    assert.match((await exec(env.LOOM_BIN, [command, '--help'], { env, cwd: project })).stdout, new RegExp(`loom ${command} `));
+  }
 });
 
 test('failed post-lock session verification restores the old writer and its native inbox', { skip: !supported }, async t => {

@@ -1,12 +1,14 @@
 import assert from 'node:assert/strict';
-import { execFileSync, spawnSync } from 'node:child_process';
+import { execFile, execFileSync, spawn, spawnSync } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
 import { lstatSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { test } from 'node:test';
+import { promisify } from 'node:util';
 import { sandboxNativeWorker, workerCodexArgs, workerEnvironment, workerGitWritePaths } from './worker-environment.mjs';
 import { nestedSeatbeltLimited } from './sandbox-test-capability.mjs';
+import { integrationPs, integrationProcessRows } from './integration-processes.mjs';
 
 test('worker launch grants only its worktree Git metadata and private HOME, XDG and socket paths', t => {
   const project = mkdtempSync(join(realpathSync(tmpdir()), 'loom-worker-'));
@@ -54,6 +56,32 @@ test('worker launch grants only its worktree Git metadata and private HOME, XDG 
   assert.match(permission, /allow_local_binding=false/);
   git('-C', cwd, 'switch', '--detach', '-q');
   assert.deepEqual(workerGitWritePaths(project, cwd), gitWrites.slice(0, 3));
+});
+
+test('integration permits limited worktree process listings and keeps the worker network policy', async t => {
+  const cwd = mkdtempSync(join(realpathSync(tmpdir()), 'loom-integration-'));
+  t.after(() => rmSync(cwd, { recursive: true, force: true }));
+  const row = { role: 'worker', addr: `oar-${randomUUID()}`, cwd };
+  const env = workerEnvironment(row);
+  t.after(() => rmSync(dirname(env.HOME), { recursive: true, force: true }));
+  assert.equal(await integrationPs(row, env), undefined);
+  const profile = { ...row, integration: true };
+  const bridge = await integrationPs(profile, env, process.env.PATH);
+  t.after(bridge.close);
+  const child = spawn(process.execPath, ['-e', 'setTimeout(() => {}, 10000)', 'private-fixture-argument']);
+  t.after(() => child.kill());
+  const run = (...args) => promisify(execFile)(bridge.env.LOOM_TEST_PS, args, { cwd, env: { ...process.env, ...env, ...bridge.env } });
+  const { stdout } = await run('-p', String(child.pid), '-o', 'pid=,command=');
+  assert.match(stdout, new RegExp(`^${child.pid} .*node`));
+  assert.doesNotMatch(stdout, /private-fixture-argument/);
+  await assert.rejects(run('-p', String(process.ppid), '-o', 'pid='), { code: 1 });
+  await assert.rejects(run('-E'), { code: 2 });
+  const baseline = workerCodexArgs(cwd, row, env)[3];
+  const integration = workerCodexArgs(cwd, profile, env)[3];
+  assert.equal(baseline.split('network=')[1], integration.split('network=')[1]);
+  assert.ok(integration.includes(`"${join(cwd, '.project')}"="read"`));
+  assert.deepEqual(integrationProcessRows(new Map([[2, { pid: 2, ppid: 1, uid: 501 }],
+    [3, { pid: 3, ppid: 2, uid: 501 }], [4, { pid: 4, ppid: 2, uid: 502 }]]), 1, 501).map(row => row.pid), [2, 3]);
 });
 
 test('macOS native workers can write their worktree and state without making the login home writable',

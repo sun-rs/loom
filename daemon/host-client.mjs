@@ -57,6 +57,7 @@ export async function attachHost(project, row, job, save, controller, { stop = f
     const dir = hostDirectory(project, addr, job.host.incarnation);
     mkdirSync(dir, { recursive: true, mode: 0o700 });
     writeState(join(dir, 'launch.json'), JSON.stringify({ row: { ...row, sessionId: resume,
+      ...(job.integration && { integration: true }),
       ...(job.fast !== undefined && { fast: job.fast }),
       ...(job.authMode && { authMode: job.authMode }) } }));
     syncDirectory(join(dir, '..'));

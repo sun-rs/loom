@@ -45,6 +45,7 @@ const cardConventions = row => [
   'Invoke Loom commands through "$LOOM_BIN", the absolute executable path.',
   unattended,
   'Keep Git hooks enabled. Git --no-verify, core.hooksPath overrides, and equivalent bypasses are forbidden.',
+  ...(row.integration ? ['Integration profile: use the private $TMPDIR for temporary test artifacts and `ps` on PATH or $LOOM_TEST_PS for process listing. Run the card’s full-suite command directly and leave its exit status visible. Report the candidate SHA, command, exit code and totals in the result so Loom can record the evidence card. Put any full log in the card worktree or its private temporary directory. Do not write project .project summaries.'] : []),
   'Use relevant fragments of large files and output. Avoid rereading whole files already read. After the final acceptance passes, give the final reply immediately. Skip extra status/diff checks, rereads and reruns unless the card requires them.',
   `Final reply line 1: DONE ${row.task}, BLOCKED ${row.task} or FAILED ${row.task}.`,
   'Line 2: a one-line conclusion with the deliverable or the blocking decision. Line 3: Leftovers & deviations: none, or list the specific items.',
@@ -123,12 +124,16 @@ export function ownedSessions(project, index, report, {
     const job = jobs.get(row.addr);
     if (!job) return [];
     const launch = job.launchPaths;
-    if (launch) return launch.hook && within(launch.release, launch.hook) && launch.release !== releaseRoot
-      ? [{ kind: 'hook', path: launch.hook, reason: 'Hook is pinned to an older Loom release' }] : [];
+    if (launch) return [
+      ...(launch.cli && launch.cli !== managedCliPath(project) ? [{ kind: 'cli', path: launch.cli,
+        reason: 'LOOM_BIN is pinned. Existing sessions cannot pick up new commands such as gate/escalate through upgrades. Use a successor.' }] : []),
+      ...(launch.hook && launch.release && within(launch.release, launch.hook) && launch.release !== releaseRoot ?
+        [{ kind: 'hook', path: launch.hook, reason: 'Hook is pinned to an older Loom release' }] : []),
+    ];
     const upgrade = upgradeState(project);
     if (upgrade?.phase !== 'committed' || row.startedAt >= upgrade.finishedAt) return [];
     const shimBorn = row.cli === 'claude' && statSync(join(runtimeDirectory(project), 'hook.mjs'), { throwIfNoEntry: false })?.birthtimeMs;
-    return [{ kind: 'cli', reason: 'Session predates the serving release and uses a legacy CLI path' },
+    return [{ kind: 'cli', reason: 'Session uses a legacy CLI path. Existing LOOM_BIN cannot pick up gate/escalate through upgrades. Use a successor.' },
       ...(row.backend === 'tui' && !(shimBorn && shimBorn <= row.startedAt) ? [
         { kind: 'hook', reason: 'Session predates the serving release and uses a legacy hook path' },
       ] : [])];
@@ -430,6 +435,7 @@ export function ownedSessions(project, index, report, {
         (input.parent !== undefined && !hasText(input.parent)) ||
         (input['trust-workspace'] !== undefined && typeof input['trust-workspace'] !== 'boolean') ||
         (input['expect-red'] !== undefined && (input.role !== 'worker' || typeof input['expect-red'] !== 'boolean')) ||
+        (input.integration !== undefined && (input.role !== 'worker' || typeof input.integration !== 'boolean')) ||
         (input.cli !== undefined && !Object.hasOwn(runtimeIds, input.cli)) ||
         (input.mode !== undefined && !modes.has(input.mode)) ||
         (input.defaultMode !== undefined && !modes.has(input.defaultMode)) ||
@@ -471,6 +477,7 @@ export function ownedSessions(project, index, report, {
     const { requested, selected, deny, maxDurationMs, warnings, fastRequested, trustWorkspace } = spawnProfile(project,
       input.role === 'worker' ? { ...input, workerCaller: caller ?? null } : input, addr => routeParent(addr)?.addr, occupies);
     const { cli, mode, model, effort } = selected;
+    if (input.integration && mode !== 'headless') throw new ErrorCode('invalid-arguments', 'Integration profile requires a headless worker');
     const addr = `${mode === 'headless' ? 'oar' : 'loom'}-${randomUUID()}`;
     const runtimeId = mode === 'tui' ? `${cli}-tui` : runtimeIds[cli];
     const row = { addr, role: input.role, project: name, task: input.task, wave: input.wave,
@@ -497,7 +504,7 @@ export function ownedSessions(project, index, report, {
       try { prompt = await projectMemoryPrompt(project) + prompt; }
       catch (error) { report(`Project memory unavailable: ${error.message}`); }
     }
-    if (row.role === 'worker') prompt += `\n\n${cardConventions(row)}`;
+    if (row.role === 'worker') prompt += `\n\n${cardConventions({ ...row, integration: input.integration })}`;
     if (row.role === 'reviewer') prompt = [
       'You are a one-turn Loom reviewer. Inspect read-only and answer the one question below. Do not edit files, change repository state, run broad test suites or delegate. Send only your conclusion to the spawning role. Start it with PASS, REJECT or BLOCKED and cite the evidence.',
       prompt,
@@ -505,6 +512,7 @@ export function ownedSessions(project, index, report, {
     const job = { row, firstId: randomUUID(), prompt, gate, requested, deny, release: releaseId(),
       ...(actor && jobs.has(actor.addr) && { sender: targetBinding(actor) }),
       ...(row.role === 'worker' && { isolatedWorkerHome: true }),
+      ...(input.integration && { integration: true }),
       ...(cli === 'claude' && mode === 'tui' && { autoTrustWorkspace: input['trust-workspace'] ??
         (trustWorkspace && defaultTrustWorkspace(project, cwd)) }),
       ...(warnings.length && { warnings }),

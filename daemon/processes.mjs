@@ -14,6 +14,7 @@ const fields = 'pid=,ppid=,pgid=,uid=,lstart=,comm=';
 let macPs;
 
 export function processCommand() {
+  if (process.env.LOOM_TEST_PS) return process.env.LOOM_TEST_PS;
   if (process.platform !== 'darwin') return '/bin/ps';
   if (macPs) return macPs;
   const probe = spawnSync('/bin/ps', ['-p', String(process.pid), '-o', 'pid='], { timeout: 2000 });

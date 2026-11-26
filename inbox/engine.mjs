@@ -43,7 +43,8 @@ const providerFailures = new Set(['request-timeout', 'runtime-exited', 'retry-ex
 export function receipt(message, at = Date.now()) {
   const { id, mode, requestedMode, createdAt, received, phase } = message;
   const issue = message.issue ?? (phase === 'sending' ? 'awaiting-native-confirmation' : undefined);
-  const status = phase === 'corrupted' ? 'corrupted' : received ? { queue: 'delivered', steer: 'steered', interrupt: 'interrupted' }[mode] : 'queued';
+  const status = ['corrupted', 'refused', 'target-ended'].includes(phase) ? phase :
+    received ? { queue: 'delivered', steer: 'steered', interrupt: 'interrupted' }[mode] : 'queued';
   const deliveryStatus = deliveryFailed(message) ? phase : stalledDelivery(message) ? 'stalled' :
     message.completion?.body ? 'answered' : received ? 'delivered' :
       message.issue?.startsWith('uncertain') ? 'uncertain' : 'accepted';

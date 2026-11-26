@@ -21,6 +21,7 @@ import { gateId, saveGatePacket } from './gate-packet.mjs';
 import { gateBoundary, roleBudget } from './role-budget.mjs';
 import { leaderHandoverState } from '../handover/brief.mjs';
 import { authorizeSeniorTool, seniorToolEvents } from './senior-tools.mjs';
+import { replyForDelivery } from '../inbox/reply-file.mjs';
 import { auditorWakeFiltered, auditorWakeSource, redReasons } from './routing.mjs';
 
 function batchDeliveryId(batch, dest) {
@@ -30,7 +31,9 @@ function batchDeliveryId(batch, dest) {
 
 const reviewerDeliveryId = job => batchDeliveryId(job.firstId, 'reviewer');
 const continuationGroup = message => message.batchId ?? message.implicitBatch;
-const packetDeliveryId = (project, gate) => batchDeliveryId('gate-packet:' + project, gate);
+const packetDeliveryId = (project, gate, round) => batchDeliveryId('gate-packet:' + project, round === undefined ? gate : `${gate}\0${round}`);
+const matchesGate = (message, project, gate) => message.gatePacket &&
+  (message.gateId === gate && message.gateProject === project || message.id === packetDeliveryId(project, gate));
 const auditEscalations = new Set(['blocking-disagreement', 'three-failed-rounds', 'major-risk', 'overreach']);
 const terminalText = text => text.replace(/[\x00-\x08\x0b-\x1f\x7f-\x9f]/g, '');
 
@@ -63,7 +66,8 @@ export function createSupervisor(project, {
   const recordedLiveness = new Map(jsonRows(prepareJournal(watchJournal)).filter(event => event.liveness).map(event => [event.addr, event]));
   const notifications = projectNotifications(project, now);
   const deliveries = addr => mail.messages.filter(message => message.target.addr === addr);
-  const receiptFor = message => ({ ...receipt(message, now()), deliveryId: message.id, phase: message.phase });
+  const receiptFor = message => ({ ...receipt(message, now()), deliveryId: message.id, phase: message.phase,
+    ...(message.issue === auditorWakeFiltered && { reason: auditorWakeFiltered, nextWakeDigest: Boolean(message.from) }) });
   const saved = (target, text, fields = {}) => mail.enqueue({
     id: randomUUID(), createdAt: now(), target, text, requestedMode: 'queue', mode: 'queue', phase: 'queued', ...fields,
   });
@@ -80,7 +84,7 @@ export function createSupervisor(project, {
   const failedWorkerLaunches = new Map();
   const desktop = externalNotification !== notifyExternal || desktopEnabled() ? async (name, batch) => {
     try { await externalNotification(name, batch); }
-    catch (error) { report(`macOS project notification: ${error.message}`); }
+    catch (error) { report(`macOS project notification: ${error.message}`); return false; }
   } : undefined;
 
   async function pushNotifications() {
@@ -520,8 +524,22 @@ ${details}`, {
 
   function leaderSignals(name) {
     return [...org.notices().filter(notice => notice.project === name), ...notifications.list(name, false, true)
-      .filter(event => event.type === 'auditor-budget-exceeded' ||
+      .filter(event => event.type === 'auditor-budget-exceeded' && event.overBudget !== false ||
         event.type === 'stuck' && sessions.rowFor(event.addr)?.role === 'worker')];
+  }
+
+  function auditorDigest(row) {
+    if (row?.role !== 'auditor') return [];
+    const targets = new Map();
+    const relevant = mail.messages.filter(item => {
+      if (!item.auditorDigestIds && item.issue !== auditorWakeFiltered) return false;
+      const addr = item.target.addr;
+      if (!targets.has(addr)) targets.set(addr, parentFor(addr));
+      return targets.get(addr) === row.addr;
+    });
+    const seen = new Set(relevant.filter(message => message.payloadFrozen && !deliveryFailed(message))
+      .flatMap(message => message.auditorDigestIds ?? []));
+    return relevant.filter(message => message.issue === auditorWakeFiltered && message.from && !seen.has(message.id));
   }
 
   function noticeLines(batch) {
@@ -570,8 +588,7 @@ ${details}`, {
       const id = reviewerDeliveryId(job);
       const owner = row.parent && sessions.routeParent(row.parent);
       const audit = owner?.role === 'auditor';
-      const gate = audit && row.wave && mail.messages.some(message =>
-        message.id === packetDeliveryId(row.project, row.wave) && message.gatePacket) ? row.wave : undefined;
+      const gate = audit && row.wave && mail.messages.some(message => matchesGate(message, row.project, row.wave)) ? row.wave : undefined;
       if (!audit && mail.messages.some(message => message.id === id) ||
           notifications.list(row.project, false, true).some(event => event.id === id)) continue;
       if (row.endedAt == null) {
@@ -631,6 +648,7 @@ ${details}`, {
     const handoff = codexHandoff(session);
     notifyProfile(session.project, session.addr, job.warnings);
     return { session, deliveryId: job.firstId, requested: job.requested, ...sessions.runtimeSelection(session),
+      ...(job.integration && { workerProfile: 'integration' }),
       ...(job.deliver && { deliver: job.deliver, ...(job.barrier && { barrier: job.barrier }) }),
       ...(handoff && { handoff }), ...(job.handoverFrom && { handoverFrom: job.handoverFrom }),
       ...(retired && { retired: retired.addr }), ...(retirementIssue && { retirementIssue }) };
@@ -706,7 +724,12 @@ ${details}`, {
           if (visible.length < deliveryLines.length) visible.push('More delivery notices in loom status.');
           deliveryAppendix = visible.join('\n');
         }
+        const deferred = auditorDigest(row);
+        const digest = deferred.length && replyForDelivery(project, deferred.map(item =>
+          `[${item.id}] ${item.from.addr}\n${item.text}`).join('\n\n'), policy.delivery?.replyBytes);
+        if (digest) deliveryAppendix = [deliveryAppendix, `Loom Auditor next-wake digest\n${digest}`].filter(Boolean).join('\n\n');
         return { ...(deliveryAppendix && { deliveryAppendix }), ...(replySuppressionNotices.length && { replySuppressionNotices }),
+          ...(deferred.length && { auditorDigestIds: deferred.map(item => item.id) }),
           ...(batch.length && {
             orgEvents: batch.map(notice => notice.id), orgAppendix: 'Loom drift and fact checks\n' + summary,
           }) };
@@ -802,7 +825,9 @@ ${details}`, {
         if (command !== 'notifications') {
           const escalation = command === 'escalate';
           if (!gateWriter || typeof args.gate !== 'string' || !gateId.test(args.gate) ||
-              ['base', 'candidate', 'question'].some(key => args[key] !== undefined && !validInput(args[key]))) {
+              args.round !== undefined && (!Number.isSafeInteger(args.round) || args.round < 1) ||
+              args.reuse !== undefined && typeof args.reuse !== 'boolean' ||
+              ['base', 'candidate', 'question'].some(key => args[key] !== undefined && (args.reuse || !validInput(args[key])))) {
             throw new CommandError('invalid-arguments', 'A Leader or Super must supply a gate ID in this project');
           }
           if (escalation && (actor?.role !== 'leader' || !redReasons.has(args.reason) ||
@@ -810,14 +835,22 @@ ${details}`, {
             throw new CommandError('invalid-arguments', 'Escalation requires the live Leader, a red reason and up to 2048 bytes of evidence');
           }
           const { gate } = args;
-          const id = packetDeliveryId(name, gate);
-          const existing = mail.messages.find(message => message.id === id);
-          const red = escalation && { id: `red:${id}`, gate, project: name, addr: actor.addr, at: now(),
-            type: 'red-escalation', reason: args.reason, text: args.evidence, logOnly: true };
+          const rounds = mail.messages.filter(message => matchesGate(message, name, gate));
+          const latest = Math.max(0, ...rounds.map(message => message.gateRound ?? 1));
+          const round = args.round ?? (args.reuse || escalation && latest ? latest : latest + 1);
+          const existing = rounds.find(message => (message.gateRound ?? 1) === round);
+          if (args.reuse && !existing) throw new CommandError('not-found', `No saved packet for ${gate} round ${round || '(latest)'}`);
+          if (existing && !args.reuse && !escalation) {
+            throw new CommandError('gate-round-exists', `Gate ${gate} round ${round} already exists. Use --reuse or pack a new round.`);
+          }
+          const id = existing?.id ?? packetDeliveryId(name, gate, round);
+          const red = escalation && { id: `red:${batchDeliveryId(id, `${args.reason}\0${args.evidence}`)}`,
+            gate, round, project: name, addr: actor.addr, at: now(), type: 'red-escalation', reason: args.reason,
+            text: args.evidence, evidencePath: replyForDelivery(project, args.evidence, 0).split(' ')[1], logOnly: true };
           if (existing) {
             if (red) notifications.add(red);
-            return { gate, path: existing.gatePacket,
-              ...(red && { wakeQueued: false }), ...receiptFor(existing) };
+            return { gate, round, reused: true, path: existing.gatePacket, ...(existing.gateFullPath && { fullPath: existing.gateFullPath }),
+              ...(red && { wakeQueued: false, evidencePath: red.evidencePath }), ...receiptFor(existing) };
           }
           const auditor = liveRole(name, 'auditor');
           if (!auditor) throw new CommandError('not-ready', 'No live managed Auditor in this project');
@@ -830,15 +863,17 @@ ${details}`, {
             .findLast(gateBoundary)?.at ?? 0;
           const signals = leaderSignals(name).filter(notice => workerAddrs.has(notice.addr) ||
             notice.type === 'auditor-budget-exceeded' && notice.at >= boundary);
-          const { path } = saveGatePacket(project, { ...args, id }, { members, jobs: sessions.jobs, messages: mail.messages,
+          const { path, fullPath } = saveGatePacket(project, { ...args, id, round }, { members, jobs: sessions.jobs, messages: mail.messages,
             decisions, signalSummary: noticeLines(signals), signalCount: signals.length, red });
           const delivery = saved(sessions.targetBinding(auditor), red ?
             `Loom red escalation (${red.reason}). Read gate packet ${path}` : `Read gate packet ${path}`, {
-            id, gatePacket: path, ...(red && { redEscalation: red.reason }),
+            id, gatePacket: path, gateId: gate, gateProject: name, gateRound: round, ...(fullPath && { gateFullPath: fullPath }),
+            ...(red && { redEscalation: red.reason }),
             ...(actor && { from: sessions.targetBinding(actor), expectReply: true }),
           });
           if (red) notifications.add(red);
-          return { gate, path, ...(red && { wakeQueued: true }), ...receiptFor(delivery) };
+          return { gate, round, path, ...(fullPath && { fullPath }),
+            ...(red && { wakeQueued: true, evidencePath: red.evidencePath }), ...receiptFor(delivery) };
         }
         if (args.take && actor && actor.role !== 'super') {
           throw new CommandError('invalid-arguments', 'Only the Super takes project notifications');
@@ -849,9 +884,24 @@ ${details}`, {
             throw new CommandError('invalid-arguments', 'Completion requires a project, summary and a valid phase ID if supplied');
           }
           const { phase } = args;
-          const id = phase === undefined ? `completed:${name}` : 'completed-phase:' + batchDeliveryId(name, phase);
+          const history = notifications.list(name, false, true);
+          const id = phase === undefined ? history.find(event => event.type === 'project-completed' &&
+            event.phase === undefined && event.text === args.complete)?.id ?? 'completed:' + batchDeliveryId(name, args.complete) :
+            'completed-phase:' + batchDeliveryId(name, phase);
+          const prior = history.find(event => event.id === id);
+          if (prior && prior.text !== args.complete) {
+            throw new CommandError('id-conflict', `Phase ${phase} already has a different completion (${id})`);
+          }
           notifications.add({ id, project: name, at: now(), type: 'project-completed',
             ...(phase !== undefined && { phase }), text: args.complete });
+          notifications.retryLoggedCompletion(id);
+          if (!prior?.pushRoute || prior.pushRoute === 'log') await pushNotifications();
+          const completion = notifications.list(name, false, true).find(event => event.id === id);
+          if (!completion.pushRoute || completion.pushRoute === 'log') {
+            const reason = desktop ? 'no managed Super and desktop notification failed or is throttled' : 'no managed Super or desktop notification route';
+            throw new CommandError('notification-pending', `Completion ${id} is persisted at .project/loomd/notifications.json but has not been pushed: ${reason}`);
+          }
+          return { completion };
         }
         if (args.gateComplete !== undefined) {
           if (!gateWriter || typeof args.gateComplete !== 'string' || !gateId.test(args.gateComplete)) {
@@ -861,11 +911,11 @@ ${details}`, {
           const id = 'gate:' + batchDeliveryId(name, gate);
           if (!notifications.list(name, false, true).some(event => event.id === id)) {
             const currentPolicy = policyForTick();
-            const usage = await budget.check(name, rows.filter(row => row.project === name), currentPolicy, { completeGate: true });
-            const proposal = usage || currentPolicy.roles?.auditor?.rotateAt === 'gate';
+            const sample = await budget.check(name, rows.filter(row => row.project === name), currentPolicy, { completeGate: true });
+            const proposal = sample || currentPolicy.roles?.auditor?.rotateAt === 'gate';
             notifications.add({ id, gate, project: name, at: now(), type: proposal ? 'auditor-rotation-proposed' : 'gate-completed',
-              ...(actor && { addr: actor.addr }), ...(usage && { usage }), logOnly: !proposal,
-              text: proposal ? `门禁 ${gate} 已完成。${usage ? 'Auditor 已超出预算。' : ''}建议由 Leader 监督 Auditor 换班；已有换班须先结算。` :
+              ...(actor && { addr: actor.addr }), ...sample, logOnly: !proposal,
+              text: proposal ? `门禁 ${gate} 已完成。${sample ? `Auditor 已超出预算（采样 ${new Date(sample.sampledAt).toISOString()}）。` : ''}建议由 Leader 监督 Auditor 换班；已有换班须先结算。` :
                 `门禁 ${gate} 已完成。` });
             const scoped = rows.filter(row => row.project === name);
             await budget.check(name, scoped, currentPolicy, { gateRecorded: true, safeLeader: safeLeader(name, scoped) });

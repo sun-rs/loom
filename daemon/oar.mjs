@@ -18,6 +18,7 @@ import { claudeApiEnvKeys } from '../adapters/claude/launch.mjs';
 import { allowNativeQuestions, claudeAuthMode, claudeIdleCompaction } from '../cli/policy.mjs';
 import { managedEnvironment } from './release.mjs';
 import { seniorToolEnvironment } from './senior-tools.mjs';
+import { integrationPs } from './integration-processes.mjs';
 import { sandboxNativeWorker, workerEnvironment, workerNativeLogin,
   workerProviderEnvironment } from './worker-environment.mjs';
 
@@ -52,6 +53,7 @@ export async function openOar(row, project, resume) {
     ...managed, ...isolated, ...workerProviderEnvironment(row), ...login, ...guard };
   let launchArgs;
   let agyWorkspace;
+  let integration;
   const questions = allowNativeQuestions(project, row.role);
   if (row.cli === 'opencode' && (!questions || guard.LOOM_SENIOR_TOOL_LOG)) {
     const existing = JSON.parse(env.OPENCODE_CONFIG_CONTENT ?? process.env.OPENCODE_CONFIG_CONTENT ?? '{}');
@@ -96,20 +98,29 @@ export async function openOar(row, project, resume) {
     let installation = await runtime.installation({ env: probe });
     if (installation.kind !== 'available') throw new Error(`${row.cli} unavailable: ${installation.reason ?? installation.kind}`);
     if (login) installation = { ...installation, command: sandboxNativeWorker(project, row, login, isolated, installation.command) };
+    integration = await integrationPs(row, isolated, managed.PATH);
+    if (integration) {
+      Object.assign(env, integration.env);
+      if (row.cli === 'codex') launchArgs = codexConfiguration(project, row, { ...managed, ...integration.env }, isolated);
+    }
     const { cwd, model, effort } = row;
     const session = await runtime.session(installation, { cwd, model, effort, env, launchArgs,
       ...(row.cli === 'claude' && !questions && { disallowedTools: ['AskUserQuestion'] }),
       ...(row.cli === 'codex' && { endTurnProcessesOnAbort: true }), ...(resume ? { resume } : {}) });
-    if (agyWorkspace) {
+    if (agyWorkspace || integration) {
       const dispose = session.dispose.bind(session);
       session.dispose = async () => {
         try { return await dispose(); }
-        finally { rmSync(agyWorkspace, { recursive: true, force: true }); }
+        finally {
+          if (agyWorkspace) rmSync(agyWorkspace, { recursive: true, force: true });
+          integration?.close();
+        }
       };
     }
     return session;
   } catch (error) {
     if (agyWorkspace) rmSync(agyWorkspace, { recursive: true, force: true });
+    integration?.close();
     throw error;
   }
 }

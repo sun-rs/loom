@@ -4,7 +4,7 @@ import { projectCost } from './cost.mjs';
 import { request, daemonAbsent } from '../daemon/rpc.mjs';
 import { activeOrgNotices, readOrg } from '../daemon/org.mjs';
 import { readNotifications } from '../daemon/notifications.mjs';
-import { isBlockedReply } from '../inbox/message.mjs';
+import { deliveryFailed, isBlockedReply } from '../inbox/message.mjs';
 import { managedProject, projectIndex, projectSessions } from './project.mjs';
 import { pendingWork, stalledDeliveries, stallText, suppressedReplies, suppressedReplyText } from '../inbox/engine.mjs';
 import { isStartupBlocker } from '../tui/agent-status.mjs';
@@ -73,8 +73,11 @@ export async function projectStatus(project) {
       event.type === 'auditor-budget-exceeded' || event.type === 'stuck' && workers.has(event.addr) ?
         [{ ...event, audience: 'leader' }] : ['red-escalation', 'senior-override-budget', 'senior-tool-output-share'].includes(event.type) ? [event] : []),
   ].sort((a, b) => b.at - a.at);
+  const digestReceived = new Set(messages.filter(message => message.received && !deliveryFailed(message))
+    .flatMap(message => message.auditorDigestIds ?? []));
   const filtered = messages.filter(message => message.issue === auditorWakeFiltered).map(message => ({
     id: message.id, target: message.target.addr, from: message.from?.addr, at: message.refusedAt ?? message.createdAt,
+    ...(message.from && { digest: digestReceived.has(message.id) ? 'received' : 'next-wake' }),
   }));
   const git = spawnSync('git', ['--no-pager', 'log', '--first-parent', '--merges', '-5', '--format=%H%x09%ct%x09%s'],
     { cwd: project, encoding: 'utf8', timeout: 5000, stdio: ['ignore', 'pipe', 'ignore'] });

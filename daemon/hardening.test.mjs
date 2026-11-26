@@ -423,7 +423,7 @@ test('real OAR child exit refuses queued work and retains accepted input and lea
   assert.equal(f.deliveries(hold.id).length, 1);
   await until(async () => (await f.rpc('state', { target: id })).notifications
     .some(event => event.type === 'leader-exited'), 'leader exit published');
-  await f.rpc('notifications', { complete: 'controlled run complete' });
+  await assert.rejects(f.rpc('notifications', { complete: 'controlled run complete' }), { code: 'notification-pending' });
   const taken = await f.rpc('notifications', { take: true });
   assert.deepEqual(taken.notifications.map(event => event.type).sort(), ['leader-exited', 'project-completed']);
   assert.deepEqual((await f.rpc('notifications', { take: true })).notifications, []);

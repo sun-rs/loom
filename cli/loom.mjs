@@ -33,8 +33,8 @@ const help = {
   memory: ['loom memory search <query> [--project DIR] [--json]'],
   status: ['loom status --project DIR [--json]'],
   cost: ['loom cost [--project DIR]', 'Reports role usage, the rolling consumption pyramid, estimated USD costs and per-turn acceptance timing.'],
-  gate: ['loom gate pack <gate-id> [--project DIR] [--base REF] [--candidate REF] [--question TEXT]'],
-  escalate: ['loom escalate <gate-id> --reason REASON --evidence TEXT [--project DIR] [--base REF] [--candidate REF]',
+  gate: ['loom gate pack <gate-id> [--round N] [--reuse] [--project DIR] [--base REF] [--candidate REF] [--question TEXT]'],
+  escalate: ['loom escalate <gate-id> --reason REASON --evidence TEXT [--round N] [--project DIR] [--base REF] [--candidate REF]',
     'Leader only. Reasons: protected-file, assertion, skip-only, confirmed-fact-miss, sandbox-escape.'],
   stop: ['loom stop <target> [--project DIR]'],
   send: [sendUsage, sendHelp],
@@ -58,8 +58,8 @@ const commands = {
     ...flags('json', 'diff', 'evidence', 'only-failed', 'with-calls') },
   state: projectArgs, stop: projectArgs, ls: projectArgs, cost: projectArgs,
   status: { ...projectArgs, ...flags('json') },
-  gate: { ...projectArgs, ...strings('base', 'candidate', 'question') },
-  escalate: { ...projectArgs, ...strings('base', 'candidate', 'reason', 'evidence') },
+  gate: { ...projectArgs, ...strings('base', 'candidate', 'question', 'round'), ...flags('reuse') },
+  escalate: { ...projectArgs, ...strings('base', 'candidate', 'reason', 'evidence', 'round') },
   memory: { ...projectArgs, ...flags('json') },
   switch: { ...projectArgs, ...strings('to') },
   doctor: { ...projectArgs, ...flags('fix', 'prompts') },
@@ -249,11 +249,14 @@ export async function main(args) {
     } else if (command === 'gate' || command === 'escalate') {
       const escalate = command === 'escalate';
       const gate = positionals[escalate ? 0 : 1];
+      const round = positiveNumber(values.round);
       if (escalate ? positionals.length !== 1 || !values.reason || !values.evidence :
         positionals.length !== 2 || positionals[0] !== 'pack') invalid(help[command][0]);
+      if (values.round !== undefined && round === undefined || values.reuse &&
+          [values.base, values.candidate, values.question].some(value => value !== undefined)) invalid(help[command][0]);
       try { result = await request(directory, escalate ? 'escalate' : 'gate-pack', {
         gate, base: values.base, candidate: values.candidate, question: values.question, reason: values.reason,
-        evidence: values.evidence,
+        evidence: values.evidence, round, reuse: values.reuse,
       }); }
       catch (error) {
         if (!daemonAbsent(error)) throw error;

@@ -34,6 +34,7 @@ export function projectNotifications(project, now = Date.now) {
   const path = logPath(project);
   const events = readNotifications(project);
   const ids = new Set(events.map(event => event.id));
+  const desktopRetry = new Map();
   function save() { writeState(path, JSON.stringify(events) + '\n'); }
   function mark(batch, route) {
     for (const event of batch) { event.pushedAt = now(); event.pushRoute = route; }
@@ -49,6 +50,21 @@ export function projectNotifications(project, now = Date.now) {
       events.push(...fresh);
       try { save(); } catch (error) { events.length -= fresh.length; throw error; }
       for (const event of fresh) ids.add(event.id);
+    },
+    retryLoggedCompletion(id) {
+      const event = events.find(item => item.id === id && item.type === 'project-completed' && item.pushRoute === 'log');
+      if (!event) return;
+      const { pushedAt, pushRoute } = event;
+      delete event.pushedAt;
+      delete event.pushRoute;
+      try { save(); } catch (error) { Object.assign(event, { pushedAt, pushRoute }); throw error; }
+    },
+    refresh(id, fields) {
+      const i = events.findIndex(event => event.id === id);
+      if (i < 0) return;
+      const old = events[i];
+      events[i] = { ...old, ...fields };
+      try { save(); } catch (error) { events[i] = old; throw error; }
     },
     list(project, take = false, history = false) {
       const pending = events.filter(event => (history || event.takenAt == null) && (!project || project === event.project));
@@ -87,15 +103,21 @@ export function projectNotifications(project, now = Date.now) {
         if (route) mark(batch, route);
         else unrouted.push(...batch);
       }
-      const ledgerOnly = unrouted.filter(event => !desktop || !desktopTypes.has(event.type));
+      const ledgerOnly = unrouted.filter(event => event.type !== 'project-completed' && (!desktop || !desktopTypes.has(event.type)));
       if (ledgerOnly.length) mark(ledgerOnly, 'log');
       if (!desktop) return;
       const eligible = [...unrouted.filter(event => desktopTypes.has(event.type)), ...events.filter(event =>
         event.desktopAlso && event.pushedAt != null && event.pushRoute !== 'external' && event.desktopAt == null)];
       for (const [name, batch] of Map.groupBy(eligible, event => event.project)) {
         if (events.some(event => event.project === name &&
-            now() - (event.desktopAt ?? (event.pushRoute === 'external' ? event.pushedAt : -Infinity)) < desktopIntervalMs)) continue;
-        // Keep one durable notice when both the Auditor and desktop receive it.
+            now() - (event.desktopAt ?? (event.pushRoute === 'external' ? event.pushedAt : -Infinity)) < desktopIntervalMs) ||
+            now() < (desktopRetry.get(name) ?? 0)) continue;
+        if (await desktop(name, batch) === false) {
+          desktopRetry.set(name, now() + 30_000);
+          continue;
+        }
+        desktopRetry.delete(name);
+        // A banner failure must leave the completion eligible for retry.
         const routed = batch.filter(event => event.pushedAt != null);
         for (const event of routed) event.desktopAt = now();
         try { mark(batch.filter(event => event.pushedAt == null), 'external'); }
@@ -103,7 +125,6 @@ export function projectNotifications(project, now = Date.now) {
           for (const event of routed) delete event.desktopAt;
           throw error;
         }
-        await desktop(name, batch);
       }
     },
   };
