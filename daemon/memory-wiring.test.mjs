@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { execFile } from 'node:child_process';
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { once } from 'node:events';
 import { appendFileSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { createServer } from 'node:net';
@@ -11,6 +11,8 @@ import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
 import { socketPath } from '../cli/project.mjs';
 import { deliveryId } from '../inbox/message.mjs';
+import { createAccess } from '../memory/access.mjs';
+import { itemPath, renderEntry } from '../memory/format.mjs';
 import { createMemoryStore } from '../memory/store.mjs';
 import { createSupervisor } from './supervisor.mjs';
 
@@ -412,20 +414,57 @@ test('5b · Super-recorded user ruling produces one sourced ruling across ticks'
   const superAddr = await f.spawn('super');
   const text = 'rulingfact Require a signed release manifest.';
   await f.tick();
-  const turnId = f.finish(superAddr, 'Recorded R42 in .project/rulings.md.');
+  f.finish(superAddr, 'Recorded R42 in .project/rulings.md.');
   f.write('.project/rulings.md', '# 裁决账本\nR42. ' + text + '\n');
   await f.tick();
   await f.tick();
   check(1, 1);
-  const item = await generated(f, superAddr, 'rulingfact', superAddr, turnId, /Require a signed release manifest/);
-  assert.equal(item.kind, 'ruling');
+  const entries = f.snapshot().entries.filter(item => item.kind === 'ruling' && item.body.includes(text));
+  assert.equal(entries.length, 1);
+  assert.equal(entries[0].source.path, '.project/rulings.md');
 });
+
+test('6e.3 rulings ledger sync preserves the dated quotes and supersession chain across restarts', async t => {
+  const f = await fixture(t, { capture: true });
+  const decisions = [
+    ['R21', '2026-11-20', '“Use the nightly release window.”'],
+    ['R27', '2026-11-24', '“Use the morning window.” 取代 R21 的发布时间。'],
+    ['R28', '2026-11-26', '“Wait for manifest sign-off before release.” 取代 R27 的发布时间。'],
+  ].map(([number, date, quote]) => [number, `（${date}）${quote}`]);
+  f.write('.project/rulings.md', '# 裁决账本\n' + decisions.map(([number, body]) => `${number}. ${body}\n`).join(''));
+  await f.tick();
+  const entries = f.snapshot()?.entries ?? [];
+  assert.equal(entries.length, decisions.length, 'sync the ledger without a Super turn citing it');
+  const [original, revised, current] = decisions.map(([number, body]) => {
+    const entry = entries.find(item => item.body.includes(body));
+    assert.ok(entry, `${number} preserves its date and verbatim user quote`);
+    assert.equal(entry.kind, 'ruling');
+    assert.equal(entry.source.path, '.project/rulings.md');
+    return entry;
+  });
+  assert.deepEqual(revised.supersedes, [original.id]);
+  assert.deepEqual(current.supersedes, [revised.id]);
+  assert.equal(current.status, 'active');
+  const before = structuredClone(f.snapshot());
+  await f.tick();
+  await f.restart();
+  await f.tick();
+  assert.deepEqual(f.snapshot(), before);
+});
+
+async function staysInHistory(f, reader, addr, turnId, reply, before) {
+  const history = await f.cli(reader, 'hist', addr, '--level', 'L2');
+  const turn = history.turns.find(row => row.id === turnId);
+  assert.ok(turn, 'the source turn remains available in hist');
+  assert.match(JSON.stringify(turn), reply);
+  assert.deepEqual(f.snapshot()?.entries ?? [], before, 'completed event leaves the memory entries unchanged');
+}
 
 for (const [action, gate, reply, expected] of [
   ['gate-pack', 'gatefact', 'APPROVE gatefact\nCondition: Preserve the signed manifest.', /APPROVE[\s\S]*Preserve the signed manifest/],
   ['escalate', 'redfact', 'RESOLVED redfact\nConfirm the protected file was restored.', /RESOLVED[\s\S]*protected file was restored/],
 ]) {
-  test('5b · ' + action + ' captures the Auditor conclusion with its hist source', async t => {
+  test(`6e.3 ${action} keeps the Auditor conclusion in hist without creating memory`, async t => {
     const f = await fixture(t, { capture: true });
     await exec('/usr/bin/git', ['init', '-q'], { cwd: f.project });
     await exec('/usr/bin/git', ['-c', 'user.name=Loom', '-c', 'user.email=loom@example.invalid',
@@ -438,29 +477,31 @@ for (const [action, gate, reply, expected] of [
       { reason: 'protected-file', evidence: 'The protected file was touched.' }) }, leader);
     await f.tick();
     assert.equal(deliveryId(f.prompts.at(-1).input), packet.deliveryId);
+    const before = f.snapshot()?.entries ?? [];
     const turnId = f.finish(auditor, reply);
     await f.tick();
     await f.handle('notifications', { gateComplete: gate }, leader);
     await f.tick();
     check(2, 3);
-    await generated(f, auditor, gate, auditor, turnId, expected);
+    await staysInHistory(f, auditor, auditor, turnId, expected, before);
   });
 }
 
-test('5b · completed card yields one structured result tied to the Worker hist turn', async t => {
+test('6e.3 completed card result stays in hist without creating memory', async t => {
   const f = await fixture(t, { capture: true });
   const check = noModel(t, f);
   const leader = await f.spawn('leader'), auditor = await f.spawn('auditor');
   const worker = await f.spawn('worker', { task: 'cardfact' }, leader);
   await f.tick();
+  const before = f.snapshot()?.entries ?? [];
   const turnId = f.finish(worker, 'DONE cardfact\nManifest verification passed.\nLeftovers & deviations: none');
   await f.tick();
   await f.tick();
   check(3, 3);
-  await generated(f, auditor, 'cardfact', worker, turnId, /DONE[\s\S]*Manifest verification passed/);
+  await staysInHistory(f, auditor, worker, turnId, /DONE[\s\S]*Manifest verification passed/, before);
 });
 
-test('5b · acknowledged handover records the transition and the successor hist turn', async t => {
+test('6e.3 acknowledged handover stays in the briefing and hist without creating memory', async t => {
   const f = await fixture(t, { capture: true });
   const check = noModel(t, f);
   const leader = await f.spawn('leader'), auditor = await f.spawn('auditor');
@@ -469,14 +510,76 @@ test('5b · acknowledged handover records the transition and the successor hist 
   await f.tick();
   const input = f.prompts.find(prompt => prompt.addr === successor).input;
   const [, path] = /Read (\.project\/replies\/[a-f0-9]{64}\.txt)/.exec(input);
-  const ack = f.read(path).trimEnd().split('\n').at(-1);
+  const briefing = f.read(path);
+  assert.match(briefing, /handoverfact/);
+  const ack = briefing.trimEnd().split('\n').at(-1);
   assert.match(ack, /^HANDOVER-ACK /);
   await f.tick();
   f.finish(leader, 'Ready to retire.');
+  const before = f.snapshot()?.entries ?? [];
   const turnId = f.finish(successor, ack);
   await f.tick();
   assert.equal((await f.handle('state', { target: leader })).state, 'exited');
   check(3, 3);
-  const { body } = await generated(f, auditor, 'handoverfact', successor, turnId, /handoverfact/);
-  assert.ok(body.includes(leader) && body.includes(successor));
+  await staysInHistory(f, auditor, successor, turnId, /HANDOVER-ACK/, before);
+});
+
+test('6e.3 migration withdraws the 75 legacy mechanical entries once and preserves legitimate memory', async t => {
+  const f = await fixture(t, { now: () => initialTime });
+  const at = new Date(initialTime).toISOString();
+  // Seed the persisted 6b entry shape, including the original category-dependent ID.
+  const legacy = (category, index, title, role, kind, sourcePath) => {
+    const addr = role + '-legacy';
+    const turnId = 'legacy-turn-' + index;
+    const key = category === 'gate' ? 'legacy-delivery-' + index : category === 'ruling' ? '42' : turnId;
+    const hash = createHash('sha256').update(JSON.stringify([
+      f.project, f.project, category, category === 'ruling' ? null : addr, key,
+    ])).digest('hex');
+    return {
+      ...draft(title), id: 'memory-event-' + hash, revision: 1, status: 'active',
+      role, author: role === 'worker' ? addr : role, kind, project: f.project,
+      cardId: role === 'worker' ? 'FIXTURE-' + index : null, effectiveAt: at, updatedAt: at, usage: 0,
+      source: { hist: { addr, turnId }, ...(sourcePath && { path: sourcePath }) },
+    };
+  };
+  const noise = Array.from({ length: 25 }, (_, i) => [
+    legacy('card', i, 'Card FIXTURE-' + i, 'worker', 'lesson'),
+    legacy('gate', i, `Gate G${i} round 2`, 'auditor', 'ruling', `.project/gates/G${i}.r2.legacy-delivery-${i}.md`),
+    i % 2 ? legacy('handover', i, 'auditor handover', 'auditor', 'ruling')
+      : legacy('handover', i, 'leader handover', 'leader', 'lesson'),
+  ]).flat();
+  const ledger = { ...legacy('ruling', 0, 'R42 Verify release signatures', 'super', 'ruling', '.project/rulings.md'),
+    project: null, layer: 'user' };
+  const manual = { ...draft('Card evidence retention rule'), id: 'manual-lesson', revision: 1, kind: 'lesson',
+    role: 'leader', author: 'leader', project: f.project, status: 'active', effectiveAt: at, updatedAt: at, usage: 0 };
+  const reviewed = { ...manual, title: 'Capture release approvals', id: 'reviewed-lesson', original: 'reviewed-candidate',
+    proposer: 'worker-legacy', reviewer: 'auditor' };
+  const preserved = [ledger, manual, reviewed];
+  const entries = [...noise, ...preserved];
+  const files = Object.fromEntries(entries.map(entry => [itemPath(entry.id), renderEntry(entry)]));
+  files['memory/INDEX.md'] = entries.map(entry => `- ${itemPath(entry.id)} — ${entry.title}\n`).join('');
+  const changes = entries.map(({ body, source, ...entry }, i) =>
+    ({ seq: i + 1, id: entry.id, revision: entry.revision, operation: 'add', entry }));
+  const path = '.project/loomd/memory-v1.json';
+  mkdirSync(join(f.project, '.project', 'loomd'), { recursive: true });
+  f.write(path, JSON.stringify({ entries, files, changes, seq: changes.length, receipts: [], grants: [], turns: [], nextId: 0 }));
+  await f.restart();
+  await f.tick();
+  const migrated = JSON.parse(f.read(path));
+  const byId = new Map(migrated.entries.map(entry => [entry.id, entry]));
+  const withdrawn = new Set(migrated.changes.filter(change => change.operation === 'withdraw').map(change => change.id));
+  for (const entry of noise) {
+    assert.ok(byId.has(entry.id) && byId.get(entry.id).status !== 'active', `retired with a marker: ${entry.title}`);
+    assert.ok(withdrawn.has(entry.id), `withdrawal is recorded: ${entry.title}`);
+  }
+  for (const entry of preserved) assert.deepEqual(byId.get(entry.id), entry);
+  const access = createAccess({ readState: () => JSON.parse(f.read(path)), now: () => initialTime });
+  for (const role of ['leader', 'auditor']) {
+    const { rows } = await access.index({ role, principal: role, project: f.project });
+    assert.deepEqual(rows.map(row => row.id).sort(), preserved.map(entry => entry.id).sort());
+  }
+  await f.tick();
+  await f.restart();
+  await f.tick();
+  assert.deepEqual(JSON.parse(f.read(path)), migrated, 'migration is reentrant and does not duplicate withdrawals');
 });

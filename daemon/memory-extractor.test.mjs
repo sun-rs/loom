@@ -763,11 +763,136 @@ function extractorRequestInput({ raw }) {
   return JSON.parse(content.slice(content.indexOf('\n') + 1));
 }
 
+// Observation filtering and the empty response convention are informed by
+// claude-mem v17's observer/skip guidance (Apache-2.0).
+function assertExtractionGuidance(instructions) {
+  assert.ok(typeof instructions === 'string' && instructions.trim(), 'the upstream request includes instructions');
+  for (const [rule, pattern] of Object.entries({
+    user: /\buser\b/iu,
+    feedback: /\bfeedback\b/iu,
+    project: /\bproject\b/iu,
+    reference: /\breference\b/iu,
+    'exclude Git history': /git history|git\s*历史/iu,
+    'exclude code structure': /code(?:base)? (?:structure|layout)|代码结构/iu,
+    'exclude existing repository content': /already (?:documented|in the (?:repo|repository))|(?:仓库|项目)(?:中|里)?(?:已有|已记录|已记载)/iu,
+    'exclude ephemeral details': /ephemeral|temporary|one[- ]off|current (?:turn|conversation)|一次性|临时|当前(?:轮|对话)/iu,
+    'return an empty proposal array': /\[\s*\]|empty (?:proposal|array)|空(?:数组|提案)/iu,
+  })) assert.match(instructions, pattern, rule);
+}
+
+const noiseFacts = [
+  ['commit-log', 'Git history', 'Commit a1b2c3d renamed the manifest helper.'],
+  ['source-tree', 'Code structure', 'The release helper lives in src/release/index.mjs, as documented in the repository.'],
+  ['progress-note', 'Current progress', 'The current command is waiting for its output.'],
+];
+
+test('6e.2 per-turn DeepSeek request includes the four-type observation and empty-output rules', async t => {
+  const f = fixture(t);
+  const leader = await f.spawn('leader', 'Review release fixture observations.');
+  await f.finish(leader, 'Verify the manifest because a stale signature delayed the last release.');
+  assert.equal(f.requests.length, 1);
+  const [message] = JSON.parse(f.requests[0].raw).messages;
+  const boundary = message.content.lastIndexOf('\n');
+  assert.match(message.content.slice(boundary), /stale signature/);
+  assert.deepEqual(readExtractorState(f.project).proposals, {}, 'empty output leaves the proposal queue empty');
+  assertExtractionGuidance(message.content.slice(0, boundary));
+});
+
+test('6e.2 per-turn extractor rejects supported noise and queues a durable observation', async t => {
+  let proposals = [];
+  const f = fixture(t, { proposals: () => proposals });
+  const leader = await f.spawn('leader', 'Assess what to retain from this turn.');
+  const source = { kind: 'delivery', id: deliveryId(f.prompts.at(-1).input) };
+  const durable = 'Why: A stale signature delayed release.\nHow to apply: Verify the manifest before publishing.';
+  proposals = [...noiseFacts, ['manifest-policy', 'Verify manifest signatures', durable]].map(([id, title, body]) => ({
+    id, action: 'add', scope: 'project', source, title, body,
+  }));
+  await f.finish(leader, [...noiseFacts.map(([, , body]) => body), durable].join('\n'));
+  assert.equal(f.requests.length, 1);
+  const state = readExtractorState(f.project);
+  assert.deepEqual(Object.keys(state.proposals), ['manifest-policy'], 'only the durable observation reaches review');
+  assert.equal(state.proposals['manifest-policy'].status, 'pending');
+  proposals = [];
+  await f.send(leader, 'Only a routine progress check.');
+  await f.finish(leader, noiseFacts[2][2]);
+  assert.equal(f.requests.length, 2);
+  assert.deepEqual(readExtractorState(f.project).proposals, state.proposals, 'an empty result adds no proposal');
+});
+
+test('6e.5 memoryPilot counts readable index rows and computes reviewed proposal acceptance', async t => {
+  let proposals = [];
+  const f = fixture(t, { proposals: () => proposals });
+  const auditor = await f.spawn('auditor', 'Review fixture memory.');
+  const leader = await f.spawn('leader', 'Review durable release procedure.');
+  const source = { kind: 'delivery', id: deliveryId(f.prompts.at(-1).input) };
+  proposals = [
+    ['approved-fixture', 'Verify signed releases', 'Why: Releases require traceability.\nHow to apply: Check the signed manifest.'],
+    ['rejected-fixture', 'Record approval owner', 'Why: Approvals need an owner.\nHow to apply: Record the approver before release.'],
+    ['pending-fixture', 'Archive approved manifests', 'Why: Audits need evidence.\nHow to apply: Archive the manifest after sign-off.'],
+  ].map(([id, title, body]) => ({ id, action: 'add', scope: 'project', source, title, body }));
+  await f.finish(leader, proposals.map(({ body }) => body).join('\n'));
+  await f.daemon.handle('memory-review', { id: 'approved-fixture', decision: 'approve' }, auditor);
+  await f.daemon.handle('memory-review', { id: 'rejected-fixture', decision: 'reject' }, auditor);
+  const memoryPath = join(f.project, '.project', 'loomd', 'memory-v1.json');
+  const at = '2026-11-26T12:00:00.000Z';
+  const valid = {
+    id: 'memory-240509da-af5b-4221-984d-0e40c41ef570', title: 'Release approval',
+    body: 'Wait for manifest sign-off before publishing.', kind: 'ruling', layer: 'shared',
+    project: f.project, role: 'auditor', author: 'auditor', revision: 1,
+    status: 'active', checkedAt: at, updatedAt: at, effectiveAt: at, source: { path: 'fixture.txt' },
+  };
+  const seed = entries => writeFileSync(memoryPath, JSON.stringify({ entries, changes: [], seq: 0, files: {},
+    receipts: [], grants: [], turns: [], nextId: 0 }));
+  seed([valid]);
+  const pilot = f.cost().memoryPilot;
+  for (const field of ['extraMainRoleRequestsPerTurn', 'firstTurnTokens', 'factMiss', 'proposalPassRate']) {
+    assert.ok(Object.hasOwn(pilot, field), `preserves ${field}`);
+  }
+  assert.equal(pilot.proposalPassRate, 0.5, 'one acceptance out of two reviewed proposals, with one pending');
+  assert.equal(pilot.indexSubstantiveRatio, 1, 'a compliant summary gives a fully readable index');
+  seed([valid, { ...valid, id: 'memory-a80c1dbb-5465-4a91-961f-db442622cafc', title: '' }]);
+  const ratio = f.cost().memoryPilot.indexSubstantiveRatio;
+  assert.ok(Number.isFinite(ratio) && ratio >= 0 && ratio < 1, 'an empty title lowers the readable fraction');
+});
+
 function r3bStageInputs(f, runner) {
   const { raw, status } = f.requests.at(-1);
   assert.equal(status, 200);
   return { child: runner.exchange().input, upstream: JSON.parse(JSON.parse(raw).messages[0].content) };
 }
+
+test('6e.2 stage upstream receives observation rules and queues nothing for an empty result', async t => {
+  const f = fixture(t);
+  const runner = fakeOpenCode(t, f.root);
+  seedLegacyStageMemory(f.project);
+  const leader = await f.spawn('leader', 'Observe only the fixture progress check.');
+  await f.finish(leader, noiseFacts[2][2]);
+  await completeStageGate(f, leader, 'G6E-STAGE-GUIDANCE');
+  assert.equal(f.requests.length, 2);
+  const { child, upstream } = r3bStageInputs(f, runner);
+  assert.equal(upstream.instructions, child.instructions, 'the stage passes the same rules to the upstream model');
+  assert.deepEqual(readExtractorState(f.project).proposals, {});
+  assertExtractionGuidance(upstream.instructions);
+});
+
+test('6e.2 stage organizer rejects supported noise even when it names an existing memory', async t => {
+  let proposed = [];
+  const f = fixture(t, { proposals: count => count === 2 ? proposed : [] });
+  const runner = fakeOpenCode(t, f.root);
+  seedLegacyStageMemory(f.project);
+  const leader = await f.spawn('leader', 'Review the release notes for any lasting corrections.');
+  const source = { kind: 'delivery', id: deliveryId(f.prompts.at(-1).input) };
+  const durable = 'Why: The archive needs verifiable signatures.\nHow to apply: Save the signed manifest during each release.';
+  proposed = [...noiseFacts, ['correct-fixture', 'Archive release manifests', durable]].map(([id, title, body]) => ({
+    id, action: 'correct', scope: 'project', source, title, body, target: 'stage-existing',
+  }));
+  await f.finish(leader, [...noiseFacts.map(([, , body]) => body), durable].join('\n'));
+  await completeStageGate(f, leader, 'G6E-STAGE-FILTER');
+  assert.equal(f.requests.length, 2);
+  const { upstream } = r3bStageInputs(f, runner);
+  assert.ok(upstream.existing.project.some(({ id }) => id === 'stage-existing'));
+  assert.deepEqual(Object.keys(readExtractorState(f.project).proposals), ['correct-fixture']);
+});
 
 test('6b R25: stored user preferences and rulings stay out of turn and stage requests', async t => {
   const f = fixture(t);

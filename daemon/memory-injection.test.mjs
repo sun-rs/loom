@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -244,11 +244,11 @@ for (const [budget, count, title] of [['line', 203, 'Short title'], ['UTF-8 byte
     const start = lines.findIndex(line => line.includes('仅供参考') || line.includes(ruling));
     assert.ok(start >= 0, 'missing memory index in the native system prompt');
     const index = lines.slice(start).join('\n');
-    const loaded = index.match(/MEM-NATIVE-\d+/g) ?? [];
+    const marker = [...title].slice(0, 12).join('');
+    const loaded = index.split('\n').filter(line => line.startsWith('- ') && line.includes(marker));
     assert.match(index, /MEM-USER-RULING/);
     assert.ok(loaded.length > 0 && loaded.length < count);
     assert.equal(new Set(loaded).size, loaded.length);
-    for (const id of loaded) assert.ok(index.split('\n').includes(`- ${id} — ${title}`));
     assert.ok(lines.length - start <= 200, 'memory index exceeds 200 lines');
     assert.ok(Buffer.byteLength(index, 'utf8') <= 25_000, 'memory index exceeds 25 KB');
     assert.equal(lines.at(-1), `另有 ${count - loaded.length} 条未加载`);
@@ -293,6 +293,65 @@ for (const [provider, systemPrompt] of [
   test(`5c ${provider}: startup index goes in the native system instructions`, async () => {
     const launch = await buildOarLaunch({ provider, binding: binding('leader', 'A'), indexText, argv: [] });
     assert.ok(systemPrompt(launch)?.includes?.(indexText), `${provider} did not receive the index at launch`);
+  });
+  for (const role of ['leader', 'auditor']) {
+    test(`6e.1 ${provider} ${role} startup system instructions teach memory writing`, async () => {
+      const launch = await buildOarLaunch({ provider, binding: binding(role, 'A'), indexText: '', argv: [] });
+      assertMemoryWritingRules(systemPrompt(launch));
+    });
+  }
+}
+
+// Fingerprints of selected 12-word windows from the local Claude Code 2.1.331
+// references. The test carries no source excerpts or dependency on local files.
+const proprietaryWindows = new Set([
+  '3f05cdd9dad75bffeaf637f187098f9de810e262ff5a744ec43efc2a8f32cdbf',
+  '1d26f8794a638eab28d7b24c558acb6917e7b95da662597865c902dbc96d0c16',
+  '98fb92328b78d245de25d12c363f1b58d986ff7084a642461a0356badbc46ef4',
+  '75e03b1d507b0e18a1d744e232cf15cec1c14fa2270d9e948f4379a29fe58c5a',
+  '1768e42e147d19615231ed17ff7d30a91c89bac48595894fb4a4f89adf1be722',
+  '6a69f79f576e03621bbd49220c650884e87767d6beaade978b09547e459b2e9c',
+  '67b32204e932252748840ae30872664e95780e9a022b90ec39856cbee8a0eef6',
+  '3523ce4346612a1e64c27c984f2c54fb7d9024732d1f8b45a1a8dbd089401477',
+]);
+
+function assertMemoryWritingRules(prompt) {
+  assert.ok(typeof prompt === 'string' && prompt.trim(), 'startup carries memory writing instructions even with an empty index');
+  const words = prompt.toLowerCase().match(/[a-z]+/g) ?? [];
+  for (let i = 0; i + 12 <= words.length; i++) {
+    const fingerprint = createHash('sha256').update(words.slice(i, i + 12).join(' ')).digest('hex');
+    assert.ok(!proprietaryWindows.has(fingerprint), 'startup repeats a proprietary source passage');
+  }
+  for (const [rule, pattern] of Object.entries({
+    'write for future sessions': /durable|persistent|future sessions?|长期|后续会话|跨会话/iu,
+    'user memory': /\buser\b/iu,
+    'feedback memory': /\bfeedback\b/iu,
+    'project memory': /\bproject\b/iu,
+    'reference memory': /\breference\b/iu,
+    'exclude code structure': /code(?:base)? (?:structure|layout)|代码结构/iu,
+    'exclude Git history': /git history|git\s*历史/iu,
+    'exclude existing repository content': /already (?:documented|in the (?:repo|repository))|(?:仓库|项目)(?:中|里)?(?:已有|已记录|已记载)/iu,
+    'exclude current-conversation details': /current (?:turn|conversation)|single[- ]turn|当前(?:轮|对话)|单轮/iu,
+    'check for duplicates before writing': /deduplicat|duplicate|查重|重复条目/iu,
+    'revise the existing entry': /update (?:the )?existing|revise (?:the )?existing|更新(?:原|现有|已有)|优先(?:修订|更新)/iu,
+    'correct outdated memory': /stale|outdated|obsolete|过时|失效/iu,
+    'explain why': /\bWhy\b/u,
+    'explain how to apply it': /\bHow to apply\b/iu,
+    'write command': /\bloom mem write\b/u,
+    'update command': /\bloom mem update\b/u,
+    'invalidate command': /\bloom mem invalidate\b/u,
+  })) assert.match(prompt, pattern, rule);
+}
+
+for (const role of ['leader', 'auditor']) {
+  test(`6e.1 agy ${role} first briefing teaches memory writing`, async t => {
+    const f = fixture(t);
+    const { session, deliveryId: first } = await f.spawn(role, 'agy', 'First briefing');
+    await f.tick();
+    const inputs = f.inputs(session);
+    assert.equal(inputs.length, 1);
+    assert.equal(deliveryId(inputs[0]), first);
+    assertMemoryWritingRules(inputs[0]);
   });
 }
 
@@ -427,8 +486,8 @@ for (const cli of ['codex', 'opencode', 'agy']) {
     emit('compaction_ended', { outcome: { kind: 'completed' } });
     await f.tick();
     assert.equal(f.inputs(session).length, 2, 'compaction never opens a turn');
-    assert.match(await f.deliver(session, 'After compaction.'), /MEM-BEFORE-COMPACT[^\n]*Current snapshot marker/);
-    assert.doesNotMatch(await f.deliver(session, 'One more ordinary delivery.'), /MEM-BEFORE-COMPACT/);
+    assert.match(await f.deliver(session, 'After compaction.'), /Current snapshot marker/);
+    assert.doesNotMatch(await f.deliver(session, 'One more ordinary delivery.'), /Current snapshot marker/);
   });
 }
 
@@ -463,6 +522,45 @@ test('5c R22: worker spawn attaches deterministic path, topic and keyword matche
   for (const entry of [...excluded, ...matches].reverse()) f.publish(entry);
   assert.deepEqual(await attachments('CARD-B'), first, 'storage order does not change attachment order');
 });
+
+for (const [role, wide] of [['leader', false], ['auditor', true]]) {
+  test(`6e.4 ${role} startup renders readable, ruling-first short-ID rows within both budgets`, async t => {
+    const f = nativeFixture(t);
+    const hashId = label => 'memory-event-' + createHash('sha256').update(label).digest('hex');
+    const count = 220;
+    for (let i = 0; i < count; i++) {
+      f.publish(item(hashId('fixture-' + i), f.project, {
+        title: 'Release checklist ' + i, importance: 10,
+        body: wide ? '验'.repeat(122) + '。' : 'Verify the manifest before publishing.',
+      }));
+    }
+    f.publish(item(hashId('ruling'), null, {
+      layer: 'user', kind: 'ruling', importance: 0, title: 'Require approval', body: 'Wait for manifest sign-off.',
+    }));
+    f.publish(item(hashId('blank'), f.project, { title: '   ', importance: 99 }));
+    await f.spawn(role, 'claude', 'Startup format probe');
+    const [{ system }] = nativeLaunches(f, 'claude');
+    const lines = system.trimEnd().split('\n');
+    const start = lines.findIndex(line => /^- (?:\[|memory-event-)/u.test(line));
+    assert.ok(start >= 0, 'startup contains a memory index');
+    const index = lines.slice(start);
+    const entries = index.filter(line => line.startsWith('- '));
+    assert.ok(entries.length > 1 && entries.length < count + 2, 'loads and caps the seeded entries');
+    assert.ok(index.length <= 200);
+    assert.ok(Buffer.byteLength(index.join('\n'), 'utf8') <= 25_000);
+    const links = [];
+    for (const line of entries) {
+      const row = /^- \[([^\]\n]+)\]\(([a-z0-9]{8})\) — (\S.*)$/iu.exec(line);
+      assert.ok(row?.[1].trim(), `expected title, eight-character ID and hook: ${line}`);
+      assert.ok([...line].length <= 150);
+      assert.doesNotMatch(line, /[a-f0-9]{64}/iu);
+      links.push(row[2]);
+    }
+    assert.equal(new Set(links).size, links.length, 'short IDs still distinguish entries');
+    assert.match(entries[0], /^- \[Require approval\].* — Wait for manifest sign-off\./u);
+    assert.ok(entries.slice(1).some(line => /Release checklist \d+.* — (?:Verify the manifest|验)/u.test(line)));
+  });
+}
 
 test('5c R22: a worker can show an attachment and cannot search or directly maintain entries', async () => {
   const attached = item('MEM-ATTACHED', 'A', { keywords: ['takeover'] });
