@@ -258,7 +258,8 @@ test('live legacy rights, Worker TTL and Status TUI survive an authenticated hot
   await exec('/usr/bin/git', ['init', '-q'], { cwd: project, env });
   await exec('/usr/bin/git', ['-c', 'user.name=Loom Fixture', '-c', 'user.email=loom@invalid', 'commit', '--allow-empty', '-qm', 'Fixture candidate'],
     { cwd: project, env });
-  const ttl = 16_000;
+  // Keep enough time for the upgrade and peer-auth probes under parallel test load.
+  const ttl = 45_000;
   writeFileSync(join(project, '.git/info/exclude'), '/.native/\n/runtime-pids.jsonl\n/native-deliveries.jsonl\n/*.operation*\n/*.result*\n');
   writeFileSync(join(project, '.project', 'policy.json'),
     JSON.stringify({ deny: [], preferred: [], delivery: { coalesceMs: 0 }, workers: { warmMs: { codex: ttl } } }));
@@ -318,7 +319,7 @@ test('live legacy rights, Worker TTL and Status TUI survive an authenticated hot
       if (existsSync(result)) return read(result);
       await delay(80);
     } while (Date.now() < deadline);
-    assert.fail('The fixture did not answer a legacy session call');
+    assert.fail(`The fixture did not answer the legacy session call ${args[0]}`);
   }
   const initial = new Map();
   for (const addr of [leader, auditor, worker]) {
@@ -378,11 +379,11 @@ test('live legacy rights, Worker TTL and Status TUI survive an authenticated hot
   assert.equal(attached.retention.idleSince, ready.retention.idleSince);
   assert.ok(attached.retention.remainingMs < ready.retention.remainingMs);
   const operations = [
+    [worker, ['worker-check']],
+    [worker, ['send', leader, 'Worker proof']],
     [leader, ['gate', 'pack', 'G1']],
     [leader, ['escalate', 'G1', '--reason', 'protected-file', '--evidence', 'fixture evidence']],
     [auditor, ['notifications', '--needs-decision', 'Auditor proof', '--kind', 'decision']],
-    [worker, ['worker-check']],
-    [worker, ['send', leader, 'Worker proof']],
   ];
   for (const [addr, args] of operations) {
     const proof = await nativeCall(addr, args);
