@@ -701,6 +701,103 @@ function noModel(t, f) {
     assert.equal(f.prompts.length, prompted);
   };
 }
+
+const memoryWriteReminder = /如属持久规则，考虑写入记忆/u;
+
+for (const [sender, scenario, body] of [
+  ['super', 'correction', '纠正：以后每次发布前都要核对清单签名。'],
+  ['super', 'ruling', '裁决：回滚必须由值班负责人批准，此规则长期有效。'],
+  ['user', 'preference', '以后我希望每次风险汇报都先写结论。'],
+]) {
+  test(`8f ${sender} ${scenario} appends the memory reminder to the same native delivery`, async t => {
+    const f = await fixture(t);
+    const check = noModel(t, f);
+    const leader = await f.spawn('leader');
+    const superAddr = sender === 'super' ? await f.spawn('super') : undefined;
+    await f.tick();
+    f.finish(leader, 'NOREPLY');
+    if (superAddr) f.finish(superAddr, 'NOREPLY');
+    await f.tick();
+    const count = f.prompts.length;
+    const delivery = await f.handle('send', { target: leader, text: body, mode: 'queue' }, superAddr);
+    await f.tick();
+    const [prompt] = f.prompts.slice(count);
+    assert.equal(prompt?.addr, leader);
+    assert.equal(deliveryId(prompt.input), delivery.id);
+    const bodyAt = prompt.input.indexOf(body);
+    assert.ok(bodyAt >= 0, 'the original delivery body is intact');
+    f.finish(leader, 'NOREPLY');
+    await f.tick();
+    check(superAddr ? 2 : 1, count + 1);
+    assert.equal(projectCost(f.project, projectSessions(f.project)).memoryPilot.extraMainRoleRequestsPerTurn, 0);
+    assert.match(prompt.input.slice(bodyAt + body.length), memoryWriteReminder);
+  });
+}
+
+for (const verdict of ['REJECT', 'PASS', 'APPROVE', 'NOREPLY']) {
+  test(`8f gate ${verdict} ${verdict === 'REJECT' ? 'appends' : 'does not append'} a memory reminder`, async t => {
+    const f = await fixture(t);
+    const check = noModel(t, f);
+    await exec('/usr/bin/git', ['init', '-q'], { cwd: f.project });
+    await exec('/usr/bin/git', ['-c', 'user.name=Loom', '-c', 'user.email=loom@example.invalid',
+      'commit', '--allow-empty', '-qm', 'Gate candidate'], { cwd: f.project });
+    const leader = await f.spawn('leader');
+    const auditor = await f.spawn('auditor');
+    await f.tick();
+    f.finish(leader, 'NOREPLY');
+    f.finish(auditor, 'NOREPLY');
+    const packet = await f.handle('gate-pack', { gate: 'G8F-REMINDER' }, leader);
+    await f.tick();
+    assert.equal(deliveryId(f.prompts.at(-1).input), packet.deliveryId);
+
+    const count = f.prompts.length;
+    const body = verdict === 'NOREPLY' ? verdict : `${verdict} G8F-REMINDER\n签名清单必须与发布包一致。`;
+    f.finish(auditor, body);
+    await f.tick();
+    await f.tick();
+    const inbox = JSON.parse(f.read('.project/inbox/state.json')).messages;
+    const relay = inbox.find(message => message.id === packet.deliveryId)?.completion?.relay;
+    if (verdict === 'NOREPLY') {
+      assert.deepEqual(relay, { status: 'suppressed', reason: 'noreply' });
+      check(2, count);
+      return;
+    }
+
+    assert.equal(relay?.status, 'queued');
+    const [prompt] = f.prompts.slice(count);
+    assert.equal(prompt?.addr, leader);
+    assert.equal(deliveryId(prompt.input), relay.deliveryId);
+    const bodyAt = prompt.input.indexOf(body);
+    assert.ok(bodyAt >= 0, 'the gate verdict is intact in its relayed delivery');
+    f.finish(leader, 'NOREPLY');
+    await f.tick();
+    check(2, count + 1);
+    assert.equal(projectCost(f.project, projectSessions(f.project)).memoryPilot.extraMainRoleRequestsPerTurn, 0);
+    if (verdict === 'REJECT') assert.match(prompt.input.slice(bodyAt + body.length), memoryWriteReminder);
+    else assert.doesNotMatch(prompt.input, memoryWriteReminder);
+  });
+}
+
+test('8f ordinary Worker DONE is delivered without a memory reminder', async t => {
+  const f = await fixture(t);
+  const check = noModel(t, f);
+  const leader = await f.spawn('leader');
+  const worker = await f.spawn('worker', { task: 'G8F-DONE' }, leader);
+  await f.tick();
+  f.finish(leader, 'NOREPLY');
+  const count = f.prompts.length;
+  f.finish(worker, 'DONE G8F-DONE\nThe fixture verification finished successfully.');
+  await f.tick();
+  await f.tick();
+  const [prompt] = f.prompts.slice(count);
+  assert.equal(prompt?.addr, leader);
+  assert.match(prompt.input, /DONE G8F-DONE[\s\S]*fixture verification finished/u);
+  assert.doesNotMatch(prompt.input, memoryWriteReminder);
+  f.finish(leader, 'NOREPLY');
+  await f.tick();
+  check(2, count + 1);
+});
+
 async function generated(f, reader, query, addr, turnId, content) {
   const history = await f.cli(reader, 'hist', addr, '--level', 'L2');
   assert.ok(history.turns.some(turn => turn.id === turnId), 'the source turn is available through hist');

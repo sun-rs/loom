@@ -62,7 +62,7 @@ test('U01 fixed role prompts and memory write decisions', async t => {
   const write = t.mock.fn((binding, request) => store.write(binding, request));
   const examples = kinds.map(kind => ({ ...fact, kind, id: `example-${kind}`, title: `Example ${kind}` }));
   const rules = [
-    /默认不写/u, /未来的 agent.{0,30}做得更好/iu,
+    /未来的 agent.{0,30}做得更好/iu,
     /一文件一事实|一事实一文件/u, /原\s*ID\s*修订/iu, /忘|forget/iu,
     /背景笔记，仅供参考，使用前核验/u,
   ];
@@ -91,7 +91,9 @@ test('U01 fixed role prompts and memory write decisions', async t => {
         assert.equal(remind.mock.callCount(), count);
       } else {
         assert.equal(remind.mock.callCount(), count + 1);
-        assert.match(remind.mock.calls[count].arguments[0], /默认不写/u);
+        const [reminder] = remind.mock.calls[count].arguments;
+        assert.match(reminder, /\S/u);
+        assert.doesNotMatch(reminder, /默认不写/u);
       }
     }
   }

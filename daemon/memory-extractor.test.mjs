@@ -8,6 +8,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { Duplex } from 'node:stream';
 import { test } from 'node:test';
+import { fileURLToPath } from 'node:url';
 import { inspect } from 'node:util';
 import { projectCost } from '../cli/cost.mjs';
 import { projectSessions } from '../cli/project.mjs';
@@ -16,6 +17,7 @@ import { deliveryId } from '../inbox/message.mjs';
 import { estimateTokens } from '../lib/token-budget.mjs';
 import { substantiveIndexRow } from '../memory/index-row.mjs';
 import { activeItems, searchMemory, writeMemory } from '../memory/project.mjs';
+import { memoryStartupPrompt, observationRules, renderMemoryPrompt } from '../memory/prompts.mjs';
 import { createSupervisor } from './supervisor.mjs';
 import { extractorStatePath, readExtractorState } from './memory-extractor-state.mjs';
 
@@ -24,6 +26,7 @@ const fixtureKey = 'synthetic-test-key';
 const baseURL = 'http://127.0.0.1/fixture/v1';
 const model = 'fixture-extractor';
 const turnUsage = { input: 13, output: 7 };
+const LOOM_BIN = fileURLToPath(new URL('../bin/loom', import.meta.url));
 
 function fakeProvider(t, { statusFor = () => 200, usage = turnUsage, proposals = () => [], networkError,
   beforeResponse } = {}) {
@@ -854,7 +857,7 @@ test('5f pilot cost measures model overhead, extractor usage, rotation, fact mis
 
 function extractorRequestInput({ raw }) {
   const content = JSON.parse(raw).messages[0].content;
-  return JSON.parse(content.slice(content.indexOf('\n') + 1));
+  return JSON.parse(content.slice(content.lastIndexOf('\n') + 1));
 }
 
 // Observation filtering and the empty response convention are informed by
@@ -874,6 +877,43 @@ function assertExtractionGuidance(instructions) {
   })) assert.match(instructions, pattern, rule);
 }
 
+function assertDurableWritingRules(instructions) {
+  const missing = Object.entries({
+    'user preferences or roles': /\buser\b[^。\n]{0,160}(?:preferences?[^。\n]{0,45}roles?|roles?[^。\n]{0,45}preferences?|偏好[^。\n]{0,30}角色|角色[^。\n]{0,30}偏好)/iu,
+    'user corrections and confirmed practices': /\bfeedback\b[^。\n]{0,160}(?:correct\w*[^。\n]{0,70}confirm\w*|confirm\w*[^。\n]{0,70}correct\w*|纠正[^。\n]{0,50}确认|确认[^。\n]{0,50}纠正)/iu,
+    'project decisions': /\bproject\b[^。\n]{0,160}(?:decisions?|决定|决策|裁决)/iu,
+    'project deadlines': /\bproject\b[^。\n]{0,160}(?:deadlines?|期限|截止)/iu,
+    'project constraints': /\bproject\b[^。\n]{0,160}(?:constraints?|约束|限制)/iu,
+    'facts not inferable from code': /(?:cannot|can't|not)[^。\n]{0,45}(?:infer|deduc|deriv|obvious)[^。\n]{0,45}(?:code|repo)|(?:不可|不能|无法)[^。\n]{0,20}(?:代码|仓库)[^。\n]{0,20}(?:推|得知)/iu,
+    'where to look up external information': /\breference\b[^。\n]{0,160}(?:external|outside|外部)[^。\n]{0,75}|\breference\b[^。\n]{0,80}(?:where to|在哪|何处)[^。\n]{0,70}(?:verify|look|find|查)/iu,
+    'skip material already in Git or code': /(?:skip|exclude|do not (?:save|store)|禁止保存|不该存|不要存)[^。\n]{0,160}(?:git\s*历史|git history)/iu,
+    Why: /\bWhy\b/u,
+    'How to apply': /\bHow to apply\b/u,
+    'look for duplicates before writing': /search for duplicates|check for duplicates|deduplicat|查重/iu,
+    'update an outdated entry': /update[^。\n]{0,70}(?:existing|outdated)|(?:更新|修订)[^。\n]{0,25}(?:原|已有|现有|过时)|(?:原\s*ID|过时条目)[^。\n]{0,25}(?:更新|修订)/iu,
+  }).filter(([, pattern]) => !pattern.test(instructions)).map(([rule]) => rule);
+  for (const type of ['user', 'feedback', 'project', 'reference']) {
+    if (!new RegExp(`\\b${type}\\b`, 'iu').test(instructions)) missing.push(`type ${type}`);
+  }
+  if (/默认不写/u.test(instructions)) missing.push('remove the default-no-write instruction');
+  if (/\bruling\s+记录[^。\n]*\bpreference\s+记录[^。\n]*\blesson\s+记录[^。\n]*\bcandidate\b/iu.test(instructions) ||
+      /\bruling\s*[/|、,]\s*preference\s*[/|、,]\s*lesson\s*[/|、,]\s*candidate\b/iu.test(instructions)) {
+    missing.push('remove the competing writing taxonomy');
+  }
+  assert.deepEqual(missing, [], 'durable memory writing rules');
+}
+
+for (const [surface, instructions] of [
+  ['Leader startup', memoryStartupPrompt('leader', '')],
+  ['Auditor startup', memoryStartupPrompt('auditor', '')],
+  ['rendered writing prompt', renderMemoryPrompt({ binding: { role: 'leader' } })],
+  ['exported observation rules', observationRules],
+]) {
+  test(`8f ${surface} teaches the unified durable memory writing rules`, () => {
+    assertDurableWritingRules(instructions);
+  });
+}
+
 const noiseFacts = [
   ['commit-log', 'Git history', 'Commit a1b2c3d renamed the manifest helper.'],
   ['source-tree', 'Code structure', 'The release helper lives in src/release/index.mjs, as documented in the repository.'],
@@ -890,6 +930,7 @@ test('6e.2 per-turn DeepSeek request includes the four-type observation and empt
   assert.match(message.content.slice(boundary), /stale signature/);
   assert.deepEqual(readExtractorState(f.project).proposals, {}, 'empty output leaves the proposal queue empty');
   assertExtractionGuidance(message.content.slice(0, boundary));
+  assertDurableWritingRules(message.content.slice(0, boundary));
 });
 
 test('6e.2 per-turn extractor rejects supported noise and queues a durable observation', async t => {
@@ -922,6 +963,73 @@ test('6e.2 per-turn extractor rejects supported noise and queues a durable obser
   await f.finish(leader, noiseFacts[2][2]);
   assert.equal(f.requests.length, 2);
   assert.deepEqual(readExtractorState(f.project).proposals, state.proposals, 'an empty result adds no proposal');
+});
+
+function releaseProposal(id, source, overrides = {}) {
+  return { id, action: 'add', scope: 'project', source, title: 'Verify the release manifest',
+    body: 'Why: A stale signature delayed release.\nHow to apply: Verify the manifest before publishing.',
+    ...overrides };
+}
+
+test('8f empty and mixed extractor turns accumulate diagnostics in cost and status across restart', async t => {
+  let proposals = [];
+  const f = fixture(t, { proposals: () => proposals });
+  async function snapshots() {
+    const cost = JSON.parse(execFileSync(LOOM_BIN, ['cost', '--project', f.project], { encoding: 'utf8' }));
+    const status = await f.status();
+    return {
+      cost: cost.memoryExtractor.diagnostics,
+      costPilot: cost.memoryPilot.diagnostics,
+      status: status.memoryExtractor.diagnostics,
+      statusPilot: status.memoryPilot.diagnostics,
+    };
+  }
+  const leader = await f.spawn('leader', 'Review whether this release introduced a new policy.');
+  await f.finish(leader, 'The review identified no lasting guidance.');
+  const afterEmpty = await snapshots();
+
+  const delivery = await f.send(leader, 'Correction: verify the signed manifest before publishing each release.');
+  const source = { kind: 'delivery', id: delivery.id };
+  proposals = [releaseProposal('manifest-evidence', source), releaseProposal('invalid-manifest-evidence', source, { body: '' })];
+  await f.finish(leader, 'Verify the signed manifest before every release because stale signatures can block publication.');
+  assert.equal(f.requests.length, 2);
+  assert.deepEqual(Object.values(readExtractorState(f.project).proposals).map(({ id, status }) => [id, status]),
+    [['manifest-evidence', 'pending']]);
+  const afterMixed = await snapshots();
+
+  f.advance(1000);
+  await f.restart();
+  const afterRestart = await snapshots();
+  assert.equal(f.requests.length, 2, 'restart does not replay either extractor turn');
+  assert.equal(readExtractorState(f.project).proposals['manifest-evidence']?.status, 'pending');
+
+  const empty = { emptyResults: 1, filteredCandidates: 0, queuedProposals: 0, filterReasons: {} };
+  const mixed = { emptyResults: 1, filteredCandidates: 1, queuedProposals: 1, filterReasons: { validation: 1 } };
+  const expected = summary => ({ cost: summary, costPilot: summary, status: summary, statusPilot: summary });
+  assert.deepEqual({ afterEmpty, afterMixed, afterRestart }, {
+    afterEmpty: expected(empty), afterMixed: expected(mixed), afterRestart: expected(mixed),
+  });
+});
+
+test('8f extractor attributes duplicates, noise, and unauthorized candidates to distinct filter reasons', async t => {
+  let proposals = [];
+  const f = fixture(t, { proposals: () => proposals });
+  const leader = await f.spawn('leader', 'Review the durable manifest procedure.');
+  const source = { kind: 'delivery', id: deliveryId(f.prompts.at(-1).input) };
+  const retained = releaseProposal('manifest-procedure', source);
+  proposals = [
+    retained, { ...retained },
+    releaseProposal('progress-report', source, { title: 'Current progress', body: 'The current command is waiting.' }),
+    releaseProposal('inferred-user-preference', source, { scope: 'user', body: 'The user prefers unsigned manifests.' }),
+  ];
+  await f.finish(leader, retained.body);
+  assert.equal(f.requests.length, 1);
+  assert.deepEqual(Object.values(readExtractorState(f.project).proposals).map(({ id, status }) => [id, status]),
+    [[retained.id, 'pending']]);
+  assert.deepEqual(f.cost().memoryExtractor.diagnostics, {
+    emptyResults: 0, filteredCandidates: 3, queuedProposals: 1,
+    filterReasons: { duplicate: 1, noise: 1, unauthorized: 1 },
+  });
 });
 
 test('6e.5 memoryPilot counts readable index rows and computes reviewed proposal acceptance', async t => {
@@ -1005,6 +1113,7 @@ test('6e.2 stage upstream receives observation rules and queues nothing for an e
   assert.equal(upstream.instructions, child.instructions, 'the stage passes the same rules to the upstream model');
   assert.deepEqual(readExtractorState(f.project).proposals, {});
   assertExtractionGuidance(upstream.instructions);
+  assertDurableWritingRules(upstream.instructions);
 });
 
 test('6e.2 stage organizer rejects supported noise even when it names an existing memory', async t => {
