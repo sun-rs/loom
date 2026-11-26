@@ -76,11 +76,32 @@ export function sameProcess(record, live) {
     record.started === live.started && record.executable === live.executable);
 }
 
+export function processLiveness(identity, observed, signal = process.kill) {
+  if (!Number.isSafeInteger(identity?.pid) || identity.pid <= 1 || !identity.started) return 'unknown';
+  if (observed?.pid === identity.pid && observed.started) {
+    if (identity.started !== observed.started ||
+        (identity.uid ?? process.getuid()) !== observed.uid) return 'dead';
+    if (!identity.executable || identity.executable === observed.executable) return 'alive';
+  }
+  try { signal(identity.pid, 0); }
+  catch (error) { if (error.code === 'ESRCH') return 'dead'; }
+  return 'unknown';
+}
+
+export async function inspectProcess(identity) {
+  let observed;
+  try { observed = (await processTable([identity?.pid])).get(identity?.pid); }
+  catch (error) {
+    if (!error.code?.startsWith('process-enumeration-')) throw error;
+  }
+  return processLiveness(identity, observed);
+}
+
 export async function rememberOarProcesses(project, before) {
   const path = oarProcessPath(project);
   const previous = readText(path, '[]');
   const live = await processTable();
-  const retained = JSON.parse(previous).filter(row => sameProcess(row, live.get(row.pid)));
+  const retained = JSON.parse(previous).filter(row => processLiveness(row, live.get(row.pid)) !== 'dead');
   const candidates = new Map(retained.map(row => [row.pid, row]));
   if (before) {
     for (const row of live.values()) {

@@ -4,7 +4,7 @@ import { once } from 'node:events';
 import { mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { createServer } from 'node:net';
 import { tmpdir } from 'node:os';
-import { delimiter, join } from 'node:path';
+import { join } from 'node:path';
 import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
@@ -22,7 +22,7 @@ function fixture(t) {
   t.after(() => rmSync(cwd, { recursive: true, force: true }));
   const path = join(cwd, 'index.sqlite');
   const index = openIndex(path);
-  const env = { ...process.env, HC_TERMINAL_ID: '', LOOM_PROJECT: '', LOOM_ADDR: '', LOOM_INDEX_PATH: path, PATH: `${cwd}${delimiter}${process.env.PATH}` };
+  const env = { ...process.env, HC_TERMINAL_ID: '', LOOM_PROJECT: '', LOOM_ADDR: '', LOOM_INDEX_PATH: path };
   const cli = (...args) => spawnSync(executable, args, { cwd, env, encoding: 'utf8' });
   const run = (code, ...args) => {
     const result = cli(...args);
@@ -228,6 +228,7 @@ test('classifies hc read JSON and reports the headless stub, exits and read erro
   const f = fixture(t);
   const screen = readFileSync(file('../adapters/codex/fixtures/live/trust.txt'), 'utf8');
   f.env.LOOM_TEST_SCREEN = JSON.stringify({ text: screen });
+  f.env.LOOM_HC_BIN = join(f.cwd, 'hc');
   writeFileSync(join(f.cwd, 'hc'), '#!/bin/sh\n[ "$*" = "read --json -- t1" ] || exit 8\nprintf "%s\\n" "$LOOM_TEST_SCREEN"\n', { mode: 0o700 });
   f.register('t1');
   f.register('t2', { backend: 'headless' });

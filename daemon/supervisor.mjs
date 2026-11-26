@@ -353,6 +353,11 @@ ${details}`, {
         report(`${row.addr} liveness: ${error.message}`);
       });
       const incident = result?.health;
+      if (result?.authWarning) {
+        const { account, text } = result.authWarning;
+        notifications.add({ id: `agy-auth-warning:${account}`, type: 'session-liveness', project: row.project,
+          addr: row.addr, role: row.role, at: now(), reason: 'auth-warning', summary: text, text, batch: 'auth-warning' });
+      }
       if ((senior(row) || row.role === 'super') && ['quota-wait', 'auth-expired', 'silent-hang'].includes(incident?.status)) {
         const { status, since, retryAt, reason } = incident;
         const retry = retryAt == null ? '' : ` · retry ${new Date(retryAt).toISOString()}`;

@@ -24,6 +24,17 @@ const survey = /^How['’]s the CLI experience so far\? Help us improve: \[1\] G
 const ruleRow = new RegExp(`^${RULE}$`);
 const settingsError = /^failed to (?:load|read|save|write) settings\b/i;
 const interactiveStatus = /[─↑↓⏎]|\b(?:esc|enter|select|cancel|confirm|navigate|for shortcuts)\b|^(?:error|warning|failed|unable)\b/i;
+const signInTitle = '⚠ Sign-in update needed';
+const signInBody = 'Your sign-in is missing permissions that are now required, so some requests may fail. Run /logout to sign in again.';
+const signInBlock = new RegExp(`^[ \\t]*${signInTitle}[ \\t]*\\n[ \\t]*(?:⎿[ \\t]*)?${
+  signInBody.replaceAll('.', '\\.').replaceAll(' ', '\\s+')}[ \\t]*$`, 'mu');
+
+export function signInWarning(text) {
+  const frame = stripAnsiAndControl(text);
+  if (!signInBlock.test(frame)) return;
+  const account = /Antigravity CLI [\d.]+[^\n]*\n[^\n]*?([\w.!+%-]+@[\w.-]+)\s+\([^\n()]+\)/i.exec(frame)?.[1];
+  return { text: `${signInTitle}\n  ⎿  ${signInBody}`, ...(account && { account: account.toLowerCase() }) };
+}
 
 function rowsOf(text, keepBlanks = false) {
   const rows = stripAnsiAndControl(text).trimEnd().split('\n').map(line => line.trim())
@@ -90,6 +101,7 @@ export function matchesPastePlaceholder(draft, text) {
 }
 
 export function classify(text) {
+  text = stripAnsiAndControl(text).replace(signInBlock, '');
   const rows = rowsOf(text);
   const tail = rows.join('\n');
   const footer = rows.at(-1) ?? '';

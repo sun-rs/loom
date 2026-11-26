@@ -524,14 +524,19 @@ export function inbox(project, transport, report = console.error, { replyLimit, 
   function sweep(group, observation, at, stallMs) {
     let changed = false;
     const byId = new Map(group.map(message => [message.id, message]));
-    const busy = !observation?.userPrompt && !promptKind(observation?.state) &&
-      (['busy', 'compacting'].includes(observation?.state) ||
+    const awaitingUser = observation?.userPrompt || promptKind(observation?.state);
+    const busy = !awaitingUser &&
+      (observation?.active || ['busy', 'compacting'].includes(observation?.state) ||
       ['busy', 'compacting', 'background-in-progress'].includes(observation?.writeEvidence?.native));
     for (const message of group.filter(awaitingDelivery)) {
       const carrier = byId.get(message.combinedInto) ?? message;
       const reason = !observation && message.pendingReason || pendingReason(carrier, observation);
       if (message.pendingReason !== reason) { message.pendingReason = reason; changed = true; }
-      if (message.stalledAt == null && deliveryAge(message, at) >= (busy ? 3 * stallMs : stallMs)) {
+      // A Stop hook may land just before dispatch. Preserve the SLA earned
+      // while this input was blocked behind the native turn, even on restart.
+      if (busy && !message.waitedForBusy) { message.waitedForBusy = true; changed = true; }
+      const limit = !awaitingUser && message.waitedForBusy ? 3 * stallMs : stallMs;
+      if (message.stalledAt == null && deliveryAge(message, at) >= limit) {
         message.stalledAt = at;
         changed = true;
       }

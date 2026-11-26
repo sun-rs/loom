@@ -1,6 +1,17 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { processTable } from './processes.mjs';
+import { processLiveness, processTable } from './processes.mjs';
+
+test('a missing ps row or EPERM leaves liveness unknown; ESRCH and PID reuse establish death', () => {
+  const owner = { pid: 123, started: 'original', uid: process.getuid(), executable: '/test/node' };
+  const error = code => () => { throw Object.assign(new Error(code), { code }); };
+  assert.equal(processLiveness(owner, undefined, () => true), 'unknown');
+  assert.equal(processLiveness(owner, undefined, error('EPERM')), 'unknown');
+  assert.equal(processLiveness(owner, undefined, error('ESRCH')), 'dead');
+  assert.equal(processLiveness(owner, { ...owner, started: 'reused' }), 'dead');
+  assert.equal(processLiveness(owner, owner), 'alive');
+  assert.equal(processLiveness({ pid: owner.pid }, undefined, error('ESRCH')), 'unknown');
+});
 
 test('targeted process lookup retries ETIMEDOUT without falling back to a full system scan', async () => {
   let attempts = 0;

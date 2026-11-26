@@ -1,4 +1,6 @@
 import { lstat } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
+import { classify as classifyAgy, signInWarning } from '../adapters/agy/screen.mjs';
 import { jsonlTail } from '../runtimes/tui/read-jsonl.mjs';
 import { stopFailure } from '../runtimes/tui/failure.mjs';
 import { processTable } from '../daemon/processes.mjs';
@@ -119,10 +121,11 @@ export function createLiveness({ now = Date.now, hangMs = 45_000 } = {}) {
       if (!entry) {
         entry = { hookAt: row.startedAt, counterAt: 0, realAt: 0, progressAt: durable?.lastProgressAt ?? row.startedAt,
           counts: new Map(), read: jsonlTail(), hooks: 0, screenFailure: durable?.screenFailure,
-          health: durable?.health, initializedAt: at };
+          health: durable?.health, agyAccount: durable?.agyAccount, initializedAt: at };
         entries.set(row.addr, entry);
       }
-      if (!snapshot) return { lastProgressAt: entry.progressAt, health: entry.health, screenFailure: entry.screenFailure };
+      if (!snapshot) return { lastProgressAt: entry.progressAt, health: entry.health, screenFailure: entry.screenFailure,
+        ...(entry.agyAccount && { agyAccount: entry.agyAccount }) };
       const rows = snapshot.events ?? [];
       if (rows.length < entry.hooks) entry.hooks = 0;
       readRows(entry, rows.slice(entry.hooks), row, at, false);
@@ -137,20 +140,28 @@ export function createLiveness({ now = Date.now, hangMs = 45_000 } = {}) {
         }
       }
       const screen = snapshot.livenessScreen;
+      let authWarning;
       if (typeof screen?.text === 'string') {
         const stable = screenProgress(screen.text);
         if (entry.stable && stable !== entry.stable) entry.screenAt = at;
         if (stable === entry.stable && screen.text !== entry.raw && screen.kind === 'busy') entry.animationAt = at;
         entry.stable = stable;
         entry.raw = screen.text;
-        const failure = classifyFailure(screen.kind);
+        const warning = row.cli === 'agy' && signInWarning(screen.text);
+        if (warning) {
+          if (warning.account) entry.agyAccount = createHash('sha256').update(warning.account).digest('hex');
+          authWarning = { text: warning.text, account: entry.agyAccount ?? createHash('sha256')
+            .update(process.env.ANTIGRAVITY_APP_DATA_DIR ?? process.env.GEMINI_HOME ?? 'default').digest('hex') };
+        }
+        const failure = classifyFailure(warning && screen.kind === 'auth-fail' ? classifyAgy(screen.text) : screen.kind);
         const prior = entry.screenFailure;
         if (failure) {
           const sameIncident = prior?.status === failure && (prior.visible !== false || entry.realAt <= prior.since);
           const since = sameIncident ? prior.since : at;
           entry.screenFailure = { status: failure, since, visible: true, ...(failure === 'quota-wait' &&
             { retryAt: (sameIncident && prior.retryAt) || parseResetAt(screen.text, at) }) };
-        } else if (prior?.visible !== false && prior) entry.screenFailure = { ...prior, visible: false };
+        } else if (warning && prior?.status === 'auth-expired') entry.screenFailure = undefined;
+        else if (prior?.visible !== false && prior) entry.screenFailure = { ...prior, visible: false };
       }
       const waiting = entry.poll && entry.poll.since >= entry.counterAt &&
         (snapshot.active || screen?.kind === 'busy' || snapshot.state === 'busy');
@@ -180,7 +191,8 @@ export function createLiveness({ now = Date.now, hangMs = 45_000 } = {}) {
           (health.status === 'auth-expired' && osc.kind === 'auth' ||
            health.status === 'silent-hang' && osc.state === 'working')) health.corroboratedBy = 'hc-osc7501';
       entry.health = health;
-      return { lastProgressAt: entry.progressAt, health, screenFailure: entry.screenFailure };
+      return { lastProgressAt: entry.progressAt, health, screenFailure: entry.screenFailure,
+        ...(authWarning && { authWarning }), ...(entry.agyAccount && { agyAccount: entry.agyAccount }) };
     },
   };
 }
