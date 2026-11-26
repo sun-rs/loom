@@ -22,3 +22,9 @@ Rationale: (a) an idle headless worker costs memory (~300 MB) but zero tokens; (
 4. **Skill rule for new vs revive** (put in the loom skill, Leader section, ≤8 lines): revive when the fix is in the same files/scope and the worker's context is < 60% and the gate round is recent; start new when the worker's context is large, the defect came from that worker's own reasoning (fresh eyes), or the scope changed. State the choice and reason in the dispatch receipt (one line).
 5. Status/Leader digest shows per worker: state, warm countdown, context %, last result tag — so the Leader decides from data it already receives (no polling).
 6. Metrics per gate: revives vs new spawns, cold-revive token cost, sessions closed/offlined by TTL.
+
+**Addendum 3 — worker lifespan (user 2026-11-26):** "不能一个任务就废弃，也不能压缩 n 次还在用". Lifespan is measured by context, not by task count:
+- A worker may be reused (kept warm or revived) for follow-up or closely related cards in the same area while its context is < 50% of the model window and it has had **zero compactions**.
+- At ≥ 50% context, or after its first compaction, it finishes the current card and is then retired (closed, not offered for revive); further work in that area goes to a new worker with a short brief plus the relevant memory entries (cheaper than re-injecting a bloated context).
+- loomd computes and shows per worker: context %, compactions, "reusable / retire after this card"; the Leader's new-vs-revive rule (Addendum 2 §4) uses these thresholds (configurable `workers.reuseMaxContext`, default 0.5; `workers.reuseMaxCompactions`, default 0).
+- Metric per gate: reuses, retirements by threshold, average context at retirement.
