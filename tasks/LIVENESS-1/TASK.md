@@ -35,3 +35,6 @@ Base: main after PROMPT-STATE-1. Do not commit. Principle: no extra model reques
 6. **Per-CLI-version smoke.** A `loom doctor --prompts` (or test script) that checks, for each installed CLI version, that the question-tool ban from PROMPT-STATE-1 item 4 still holds and that the recognisers still match. Run it in `loom upgrade --check` when a CLI version changed since the last run, and warn.
 7. `loom status` top section, ordered by severity: stalled deliveries, awaiting-user/approval/choice, quota-wait/auth-expired, silent-hang, exited. Each shows role, since, and the one-line reason.
 npm test green; RESULT.md Chinese, `STATUS: done`. Red lines as before; live checks in isolated HOME only.
+
+## Item 8 (found deploying 46c7e0ab to pilot-2)
+`loom upgrade --project P --to R` exited 1 while the upgrade record was still `switching`. Seconds later the upgrade was `committed` with the new loomd serving. The CLI must not report failure for an upgrade that then commits. Wait for a terminal phase (committed / rolled-back / failed) within a bound, or exit with a distinct "still switching, check --status" code and message. Add a regression test.
