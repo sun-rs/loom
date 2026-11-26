@@ -174,9 +174,10 @@ export function createMemoryExtractor(project, { memory, sessions, now, report, 
       state.stageAt = boundary.at;
       for (const turn of history) staged[turn.key] = true;
       save();
+      const library = await proposals.stageLibrary();
+      if (!library.project.length && !library.user.length) continue;
       const secret = await getKey();
       if (!secret) continue;
-      const library = await proposals.stageLibrary();
       const input = redactExtractor({ instructions: guidance + ' Only merge, invalidate, or correct existing memory. ' +
         'Use reference entries as context only.',
         history, events: signals.filter(signal => signal.at >= since && signal.at <= boundary.at),
