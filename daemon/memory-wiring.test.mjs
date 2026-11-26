@@ -9,11 +9,14 @@ import { join } from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
-import { socketPath } from '../cli/project.mjs';
+import { projectCost } from '../cli/cost.mjs';
+import { projectSessions, socketPath } from '../cli/project.mjs';
 import { deliveryId } from '../inbox/message.mjs';
 import { createAccess } from '../memory/access.mjs';
 import { itemPath, renderEntry } from '../memory/format.mjs';
+import { activeItems } from '../memory/project.mjs';
 import { createMemoryStore } from '../memory/store.mjs';
+import { extractorStatePath, readExtractorState } from './memory-extractor-state.mjs';
 import { createSupervisor } from './supervisor.mjs';
 
 // Pin the client to the same checkout as the supervisor under test.
@@ -49,13 +52,19 @@ const classifySensitive = text => ({
   spans: [...text.matchAll(new RegExp(syntheticSecret, 'g'))]
     .map(({ index }) => ({ start: index, end: index + syntheticSecret.length })),
 });
-async function fixture(t, { capture = false, ...memoryOptions } = {}) {
+async function fixture(t, { capture = false, proposals = [], ...memoryOptions } = {}) {
   const project = mkdtempSync(join(realpathSync(tmpdir()), 'lmw-'));
   const write = (path, body) => writeFileSync(join(project, path), body);
   const read = path => readFileSync(join(project, path), 'utf8');
   mkdirSync(join(project, '.project'));
   write('.project/policy.json', JSON.stringify({ preferred: [], deny: [], delivery: { coalesceMs: 0 } }));
   write('proof.txt', 'Signed manifest fixture\n');
+  if (proposals.length) {
+    mkdirSync(join(project, '.project', 'loomd'));
+    writeFileSync(extractorStatePath(project), JSON.stringify({ ...readExtractorState(project),
+      proposals: Object.fromEntries(proposals.map(proposal => [proposal.id, proposal])),
+    }));
+  }
   let state;
   const active = new Map();
   const prompts = [];
@@ -196,6 +205,96 @@ test('5a · CLI search is an index, show expands, concurrent updates use CAS, in
   assert.equal((await show(f, auditor, item.id)).item, null);
   assert.deepEqual((await search(f, auditor, entry.title)).rows, []);
 });
+const pendingProposal = (id, scope, title) => ({
+  id, scope, title, action: 'add', status: 'pending', targets: [], basis: {},
+  body: `Why: ${title} preserves release evidence.\nHow to apply: Record the signed manifest at ${id}.`,
+  source: { kind: 'delivery', id: 'fixture-delivery' }, createdAt: new Date(initialTime).toISOString(),
+});
+
+test('7a CLI proposals list shows pending project and user proposals with identifying details', async t => {
+  const project = pendingProposal('a8429abc-project', 'project', 'Retain signed release manifests');
+  const user = pendingProposal('b8429abc-user', 'user', 'Prefer dated release reports');
+  const reviewed = { ...pendingProposal('c8429abc-reviewed', 'project', 'Retired manifest format'), status: 'rejected' };
+  const f = await fixture(t, { proposals: [project, user, reviewed] });
+  const auditor = await f.spawn('auditor');
+  const superAddr = await f.spawn('super');
+  for (const [caller, expected] of [[superAddr, [project, user]], [auditor, [project]]]) {
+    const result = await f.cli(caller, 'mem', 'proposals', 'list');
+    const rows = result.proposals ?? result.rows;
+    assert.ok(Array.isArray(rows), 'list returns proposal records');
+    assert.equal(rows.length, expected.length, 'only visible pending proposals are listed');
+    for (const { id, scope, title, body } of expected) {
+      const shortId = id.slice(0, 8);
+      const row = rows.find(row => [id, shortId].includes(row.id) || row.shortId === shortId);
+      assert.ok(row, `proposal ${id} is identifiable`);
+      assert.equal(row.scope, scope);
+      assert.equal(row.status, 'pending');
+      assert.ok(row.title === title || (row.summary && body.includes(row.summary)), `proposal ${id} has a title or summary`);
+    }
+  }
+});
+
+for (const action of ['approve', 'reject']) {
+  test(`7a CLI proposals ${action} enforces the R32 role and scope matrix`, async t => {
+    const permissions = { super: ['project', 'user'], auditor: ['project'], leader: [], worker: [] };
+    const cases = Object.entries(permissions).flatMap(([role, allowed]) => ['project', 'user'].map(scope => ({
+      role, allow: allowed.includes(scope), proposal: pendingProposal(`${role}-${scope}`, scope, `Release notes for ${role} ${scope}`),
+    })));
+    const f = await fixture(t, { proposals: cases.map(({ proposal }) => proposal) });
+    const callers = {};
+    for (const role of Object.keys(permissions)) {
+      callers[role] = await f.spawn(role, {}, role === 'worker' ? callers.leader : undefined);
+    }
+    const outcomes = [];
+    for (const { role, proposal: { id } } of cases) {
+      let result = 'ok';
+      try { await f.cli(callers[role], 'mem', 'proposals', action, id); }
+      catch (error) { result = JSON.parse(error.stdout).error.code; }
+      const status = readExtractorState(f.project).proposals[id].status;
+      outcomes.push([id, result, status]);
+    }
+    const reviewedStatus = action === 'approve' ? 'approved' : 'rejected';
+    assert.deepEqual(outcomes, cases.map(({ proposal: { id }, allow }) =>
+      [id, allow ? 'ok' : 'forbidden', allow ? reviewedStatus : 'pending']));
+  });
+}
+
+test('7a CLI approval materializes memory and rejection updates proposal metrics', async t => {
+  const project = pendingProposal('signed-releases', 'project', 'Verify signed releases');
+  const user = pendingProposal('dated-reports', 'user', 'Prefer dated reports');
+  const obsolete = pendingProposal('old-report-format', 'project', 'Keep legacy report formats');
+  const pending = pendingProposal('pending-manifest', 'project', 'Archive approved manifests');
+  const f = await fixture(t, { proposals: [project, user, obsolete, pending] });
+  const auditor = await f.spawn('auditor');
+  const superAddr = await f.spawn('super');
+  const metrics = () => {
+    const { approvedProposals, rejectedProposals, proposalPassRate } = projectCost(f.project, projectSessions(f.project)).memoryPilot;
+    return [approvedProposals, rejectedProposals, proposalPassRate];
+  };
+  const projectItem = id => activeItems(f.project).find(item => item.meta.id === id);
+  assert.deepEqual(metrics(), [0, 0, null]);
+  assert.equal(projectItem(project.id), undefined);
+
+  await f.cli(auditor, 'mem', 'proposals', 'approve', project.id);
+  assert.equal(projectItem(project.id)?.body.trim(), project.body);
+  assert.deepEqual(metrics(), [1, 0, 1]);
+
+  await f.cli(superAddr, 'mem', 'proposals', 'approve', user.id);
+  const { rows } = await f.handle('memory-index', { scope: 'user' }, superAddr);
+  const entry = rows.find(row => row.line.includes(user.title));
+  assert.ok(entry, 'approved proposal is visible in user memory');
+  const shown = await f.handle('memory-show', { id: entry.id }, superAddr);
+  assert.equal(shown.item?.body.trim(), user.body);
+  assert.deepEqual(metrics(), [2, 0, 1]);
+
+  await f.cli(auditor, 'mem', 'proposals', 'reject', obsolete.id, '--reason', 'The report format is obsolete.');
+  const { proposals } = readExtractorState(f.project);
+  assert.equal(proposals[obsolete.id].status, 'rejected');
+  assert.equal(proposals[pending.id].status, 'pending');
+  assert.equal(projectItem(obsolete.id), undefined);
+  assert.deepEqual(metrics(), [2, 1, 2 / 3]);
+});
+
 for (const action of ['show', 'update', 'invalidate']) {
   const shortId = 'abc123ab';
   const firstId = 'memory-abc123ab-1234-4123-8123-123456789abc';
@@ -633,6 +732,73 @@ test('6e.3 ledger sync keeps R27 and R28 continuations verbatim alongside the or
     assert.equal(entry.source.path, '.project/rulings.md');
   }
   await assertRulingIndex(f, entries);
+});
+
+test('7c ledger removes every wholly superseded ruling and its continuations from the index', async t => {
+  const f = await fixture(t, { capture: true });
+  const originals = [
+    ['R12.', '（2026-11-25）保留调研日期。'],
+    ['R19.', '（2026-11-26）审计员复核时可临时指派 reviewer。'],
+    ['R20.', '（2026-11-26）按旧口径转发 worker 回执。'],
+    ['R21.', '（2026-11-26）门禁每次复核旧报告。'],
+    ['R26.', '（2026-11-26）按旧流程确定深查角色。'],
+    ['R27.', '（2026-11-26）按旧阈值复用 worker。'],
+    ['R27', '修正（用户）：先做完当前卡。'],
+    ['R28.', '（2026-11-26）按旧阈值判断换班。'],
+    ['R28', '更正（用户指出悖论）：结合剩余窗口与已压缩次数。'],
+    ['R28', '补充（试点经验）：只在同一工作树复用。'],
+  ];
+  const current = [
+    ['R29.', '（2026-11-27）组织与审核现行规则。整条取代 R19 整条取代 R20 整条取代 R21 整条取代 R26'],
+    ['R30.', '（2026-11-27）OpenCode 使用规定模型。'],
+    ['R31.', '（2026-11-27）一卡一 worker 做到底。整条取代 R27 整条取代 R28'],
+    ['R32.', '（2026-11-27）按记忆作用域审核提案。'],
+    ['R33.', '（2026-11-27）合并结果单独过门禁。'],
+  ];
+  async function sync(lines) {
+    f.write('.project/rulings.md', ['# 裁决账本', ...lines.map(fields => fields.join(' ')), ''].join('\n'));
+    await f.tick();
+    const entries = f.snapshot().entries;
+    return new Map(lines.map(([label, body]) => {
+      const entry = entries.find(item => item.body.includes(body));
+      assert.ok(entry, `synced ${label} ${body}`);
+      return [entry.id, `${label} ${body}`];
+    }));
+  }
+  const before = await sync(originals);
+  const access = createAccess({ readState: f.snapshot });
+  const index = async role => (await access.index({ role, principal: role, project: f.project })).rows.map(row => row.id);
+  for (const role of ['leader', 'auditor']) assert.deepEqual(new Set(await index(role)), new Set(before.keys()), role);
+
+  const all = await sync([...originals, ...current]);
+  const expected = [originals[0], ...current].map(fields => fields.join(' ')).sort();
+  for (const role of ['leader', 'auditor']) {
+    const active = (await index(role)).map(id => all.get(id)).sort();
+    const supersededParents = originals.filter(([label]) => label.endsWith('.') && label !== 'R12.');
+    for (const fields of supersededParents) assert.ok(!active.includes(fields.join(' ')), `retired ${fields[0]} for ${role}`);
+    assert.deepEqual(active, expected, `${role} sees current rulings and no superseded continuations`);
+  }
+});
+
+test('7c index puts rulings first, then higher importance and newer rulings', async () => {
+  const ruling = (hash, number, date, importance = 4, kind = 'ruling') => ({
+    id: `memory-event-${hash.repeat(64)}`, project: 'A', layer: 'shared', status: 'active', revision: 1,
+    title: kind === 'ruling' ? `R${number} Release policy ${number}` : 'Release checklist',
+    body: 'Verify the signed manifest.', kind, importance,
+    checkedAt: date, effectiveAt: date, updatedAt: date,
+  });
+  const old = ruling('0', 12, '2026-11-25T00:00:00Z');
+  const newest = ruling('f', 33, '2026-11-27T12:00:00Z');
+  const recent = ['e', 'd', 'c', 'b'].map((hash, i) => ruling(hash, 29 + i, '2026-11-27T00:00:00Z'));
+  const lessImportant = ruling('1', 11, '2026-11-27T12:00:00Z', 1);
+  const lesson = ruling('2', null, '2026-11-27T12:00:00Z', 99, 'lesson');
+  const access = createAccess({ entries: [lesson, ...recent, old, lessImportant, newest] });
+  const { rows } = await access.index({ role: 'leader', principal: 'leader', project: 'A' });
+  const ids = rows.map(row => row.id);
+  assert.equal(ids.length, 8);
+  assert.deepEqual(ids.slice(-3), [old.id, lessImportant.id, lesson.id], 'importance and ruling precedence hold');
+  assert.equal(ids[0], newest.id, 'newest ruling wins at equal importance');
+  assert.deepEqual(new Set(ids.slice(1, 5)), new Set(recent.map(row => row.id)), 'R29–R32 precede older rulings');
 });
 
 async function staysInHistory(f, reader, addr, turnId, reply, before) {

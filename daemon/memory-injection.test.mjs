@@ -470,6 +470,37 @@ for (const [budget, title] of [['30 entries', 'Fixture'], ['3,000 characters', '
   });
 }
 
+for (const count of [1, 5, 30]) {
+  test(`7b delta renders ${count} superseded memories in one readable withdrawal line`, async t => {
+    const f = fixture(t);
+    const makeId = key => 'memory-event-' + createHash('sha256').update(key).digest('hex');
+    const entries = Array.from({ length: count }, (_, i) => item(makeId(`superseded-${i}`), f.project, {
+      title: `Release window ${String(i + 1).padStart(2, '0')}`,
+    }));
+    for (const entry of entries) f.publish(entry);
+    const { session } = await f.spawn('leader', 'codex', 'Review the release windows.');
+    await f.tick();
+    assert.equal(f.inputs(session).length, 1, 'startup took the cursor before the withdrawals');
+
+    for (const entry of entries) {
+      f.publish({ ...entry, revision: 2, status: 'superseded', supersededBy: [makeId('current-window')] }, 'withdraw');
+    }
+    const delta = await f.deliver(session, 'Check which release windows have changed.');
+    const withdrawals = delta.split('\n').filter(line => /withdraw|撤回/iu.test(line));
+    assert.equal(withdrawals.length, 1, `one withdrawal line for the entire delivery: ${delta}`);
+    const [line] = withdrawals;
+    assert.doesNotMatch(delta, /memory-event-[a-f\d]{64}/iu, 'full event IDs never appear in the withdrawal notice');
+    assert.match(line, /supersed|replac|取代|替换|替代/iu, 'the reason is readable');
+    assert.ok(entries.some(({ id, title }) => line.includes(title) &&
+      new RegExp(`\\b${id.slice('memory-event-'.length, 'memory-event-'.length + 8)}\\b`, 'iu').test(line)),
+    'the notice identifies a real withdrawn memory by its title and short ID');
+    if (count > 1) assert.match(line, new RegExp(`\\b${count}\\b`, 'u'), 'the summary includes the withdrawal count');
+
+    const next = await f.deliver(session, 'Continue with the active release window.');
+    assert.doesNotMatch(next, /withdraw|撤回/iu, 'confirmed delivery advances past every summarized withdrawal');
+  });
+}
+
 test('5c Claude registers a SessionStart hook scoped to compact', async () => {
   const launch = await buildTuiLaunch({ provider: 'claude', binding: binding('leader', 'A'), indexText });
   const settings = JSON.parse(launch.argv.includes('--settings') ? flag(launch.argv, '--settings') : '{}');
@@ -568,6 +599,29 @@ for (const [role, wide] of [['leader', false], ['auditor', true]]) {
     assert.equal(new Set(links).size, links.length, 'short IDs still distinguish entries');
     assert.match(entries[0], /^- \[Require approval\].* — Wait for manifest sign-off\./u);
     assert.ok(entries.slice(1).some(line => /Release checklist \d+.* — (?:Verify the manifest|验)/u.test(line)));
+  });
+}
+
+for (const [name, title, body, check] of [
+  ['caps the title at 60 characters', '发布前核对签名清单记录'.repeat(9), 'Record the manifest digest.', label => {
+    assert.ok(Array.from(label).length <= 60, `title has ${Array.from(label).length} characters`);
+  }],
+  ['uses supplemental text when the body opens by repeating the title', 'Verify release signatures',
+    'Verify release signatures. Compare the manifest digest with the published checksum.', (label, hook) => {
+      assert.equal(label, 'Verify release signatures');
+      assert.ok(!hook.toLowerCase().includes(label.toLowerCase()), 'the hook does not repeat the title');
+      assert.match(hook, /manifest digest|published checksum/iu, 'the hook carries a distinct detail from the body');
+    }],
+]) {
+  test(`7c startup index ${name}`, async t => {
+    const f = nativeFixture(t);
+    const id = 'memory-event-' + createHash('sha256').update(name).digest('hex');
+    f.publish(item(id, f.project, { kind: 'ruling', title, body }));
+    await f.spawn('leader', 'claude', 'Review the release index.');
+    const [{ system }] = nativeLaunches(f, 'claude');
+    const row = /^- \[([^\]\n]+)\]\([a-f0-9]{8}\) — (\S[^\n]*)$/imu.exec(system);
+    assert.ok(row, 'startup renders the entry as a title, short ID and hook');
+    check(row[1], row[2]);
   });
 }
 
