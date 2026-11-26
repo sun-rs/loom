@@ -13,6 +13,7 @@ import { projectCost } from '../cli/cost.mjs';
 import { projectSessions } from '../cli/project.mjs';
 import { projectStatus } from '../cli/status.mjs';
 import { deliveryId } from '../inbox/message.mjs';
+import { estimateTokens } from '../lib/token-budget.mjs';
 import { searchMemory, writeMemory } from '../memory/project.mjs';
 import { createSupervisor } from './supervisor.mjs';
 import { readExtractorState } from './memory-extractor-state.mjs';
@@ -34,16 +35,17 @@ function fakeProvider(t, { statusFor = () => 200, usage = turnUsage, proposals =
     const auth = req.headers.authorization ?? req.headers['x-api-key'];
     const attempt = { path: req.url, method: req.method, headers: req.headers, raw, status };
     requests.push(attempt);
+    const counts = typeof usage === 'function' ? usage(JSON.parse(raw), requests.length) : usage;
     const content = JSON.stringify({ proposals: proposals(requests.length) });
     const anthropic = req.url.endsWith('/messages');
     const envelope = anthropic ? {
       id: 'msg-fixture', type: 'message', role: 'assistant', model, stop_reason: 'end_turn',
       content: [{ type: 'text', text: content }],
-      usage: { input_tokens: usage.input, output_tokens: usage.output },
+      usage: { input_tokens: counts.input, output_tokens: counts.output },
     } : {
       id: 'chatcmpl-fixture', object: 'chat.completion', model,
       choices: [{ index: 0, message: { role: 'assistant', content }, finish_reason: 'stop' }],
-      usage: { prompt_tokens: usage.input, completion_tokens: usage.output, total_tokens: usage.input + usage.output },
+      usage: { prompt_tokens: counts.input, completion_tokens: counts.output, total_tokens: counts.input + counts.output },
     };
     attempt.responseBody = JSON.stringify(status === 200 ? envelope : { error: { message: `Provider rejected ${auth}` } });
     res.writeHead(status, { 'content-type': 'application/json' });
@@ -100,7 +102,7 @@ function treeFiles(root, prefix = '') {
   }) ?? [];
 }
 
-function fixture(t, { config = {}, runStage, ...providerOptions } = {}) {
+function fixture(t, { config = {}, runStage, fixtureCredential = () => fixtureKey, ...providerOptions } = {}) {
   const root = mkdtempSync(join(realpathSync(tmpdir()), 'lme-'));
   const project = join(root, 'project');
   const home = join(root, 'home');
@@ -186,7 +188,7 @@ function fixture(t, { config = {}, runStage, ...providerOptions } = {}) {
     memoryExtractorOptions: { fetch: provider.fetch, runStage, readKeychain(service, account) {
       keyReads.push([service, account]);
       assert.deepEqual([service, account], [keyRef, 'loom']);
-      return fixtureKey;
+      return fixtureCredential();
     } },
   });
   daemon = start();
@@ -492,7 +494,7 @@ test('5e OpenCode receives L1 only at gate and phase and routes valid staged pro
   const receipt = await f.send(leader, 'The user prefers blue fixtures.');
   assert.match(f.prompts.at(-1).input, /The user prefers blue fixtures/);
   await f.finish(leader, 'Preference recorded for review.');
-  const worker = await f.spawn('worker', 'stage-worker', leader);
+  const worker = await f.spawn('worker', 'stage-worker', leader, { task: 'STAGE-HISTORY' });
   await f.finish(worker, 'DONE FIXTURE stage-history', { tools: true });
   const source = { kind: 'delivery', id: receipt.id };
   const items = Array.from({ length: 10 }, (_, index) => 'item-' + index);
@@ -513,7 +515,7 @@ test('5e OpenCode receives L1 only at gate and phase and routes valid staged pro
   await f.daemon.handle('notifications', { gateComplete: 'G1' }, leader);
   await f.tick();
   assert.equal(calls.length, 1, 'gate completion invokes the injected headless stage runner');
-  assert.match(JSON.stringify(calls[0]), /stage-history/);
+  assert.ok(calls[0].workerSummaries.some(({ addr, summary }) => addr === worker && summary.includes('STAGE-HISTORY')));
   assert.match(JSON.stringify(calls[0]), /Existing project memory/);
   assert.doesNotMatch(JSON.stringify(calls[0]), /tool-(?:output|argument)-sentinel|file-content-sentinel/);
   const packet = await f.daemon.handle('gate-pack', { gate: 'G2' }, leader);
@@ -535,7 +537,7 @@ test('5e OpenCode receives L1 only at gate and phase and routes valid staged pro
   await f.tick();
   assert.equal(calls.length, 2, 'phase completion also invokes stage cleanup');
   assert.match(JSON.stringify(calls[1]), /phase-history/);
-  assert.doesNotMatch(JSON.stringify(calls[1]), /stage-history/, 'stage history advances after a boundary');
+  assert.ok(calls[1].workerSummaries.every(({ addr }) => addr !== worker), 'stage history advances after a boundary');
   assert.doesNotMatch(JSON.stringify(calls[1]), /tool-(?:output|argument)-sentinel|file-content-sentinel/);
 });
 
@@ -635,10 +637,10 @@ test('R23 stage child and upstream history exclude worker file contents', async 
   assert.deepEqual(leaked, { child: [], upstream: [] });
 });
 
-test('stage with an empty library preserves a targetless user correction until proposed', async t => {
+test('stage with an empty library preserves a targetless user correction after a failed attempt', async t => {
   const calls = [];
   const f = fixture(t, { runStage: async input => { calls.push(input); return candidates; } });
-  let candidates = [];
+  let candidates = { failure: 'stage-provider' };
   const leader = await f.spawn('leader', 'Prepare to record a correction.');
   await f.finish(leader, 'Ready.');
   const body = 'I prefer compact fixture reports.';
@@ -670,7 +672,7 @@ test('stage runs with only v1 shared project memory', async t => {
       checkedAt: '2026-11-26T12:00:00.000Z', source: { path: 'fixture.txt' } } }, auditor);
   await f.finish(leader, 'Shared memory is ready for stage.');
   await completeStageGate(f, leader, 'SHARED-ONLY');
-  assert.deepEqual(calls.map(({ existing }) => existing), [{ project: [], user: [],
+  assert.deepEqual(calls.map(({ existing: { project, reference } }) => ({ project, reference })), [{ project: [],
     reference: [{ id: item.id, title: item.title, body: item.body }] }]);
 });
 
@@ -759,6 +761,156 @@ function r3bStageInputs(f, runner) {
   const { raw, status } = f.requests.at(-1);
   assert.equal(status, 200);
   return { child: runner.exchange().input, upstream: JSON.parse(JSON.parse(raw).messages[0].content) };
+}
+
+test('6b R25: stored user preferences and rulings stay out of turn and stage requests', async t => {
+  const f = fixture(t);
+  const runner = fakeOpenCode(t, f.root);
+  seedLegacyStageMemory(f.project);
+  const leader = await f.spawn('leader', 'Review the fixture records.');
+  const superAddr = await f.spawn('super', 'Record the user fixture entries.');
+  for (const kind of ['preference', 'ruling']) {
+    const body = `G6B_USER_${kind.toUpperCase()}_BODY`;
+    const { item } = await f.daemon.handle('mem', { action: 'write', requestId: `g6b-user-${kind}`,
+      expectedRevision: null, entry: { layer: 'user', project: null, kind, title: `Fixture ${kind}`, body,
+        checkedAt: '2026-11-26T12:00:00.000Z', source: { path: 'fixture.txt' } } }, superAddr);
+    const { item: stored } = await f.daemon.handle('mem', { action: 'show', target: item.id }, superAddr);
+    assert.deepEqual({ layer: stored.layer, kind: stored.kind, body: stored.body }, { layer: 'user', kind, body });
+  }
+  await f.finish(leader, 'Review complete for the fixture records.');
+  assert.equal(f.requests.length, 1, 'the ordinary turn reached upstream');
+  const [turn] = f.requests;
+  assert.equal(extractorRequestInput(turn).reply, 'Review complete for the fixture records.');
+  await completeStageGate(f, leader, 'G6B-USER-SCOPE');
+  assert.equal(f.requests.length, 2, 'the stage reached upstream');
+  const { child, upstream } = r3bStageInputs(f, runner);
+  for (const input of [child, upstream]) {
+    assert.ok(input.existing.project.some(({ id, body }) => id === 'stage-existing' && body.trim() === 'Keep fixture records.'));
+  }
+  const stage = f.requests.at(-1);
+  const hits = payload => JSON.stringify(payload).match(/G6B_USER_(?:PREFERENCE|RULING)_BODY/g) ?? [];
+  const requestFields = ({ path, method, headers, raw }) => ({ path, method, headers, raw });
+  assert.deepEqual({ turn: hits(requestFields(turn)), child: hits(child), upstream: hits(requestFields(stage)) },
+    { turn: [], child: [], upstream: [] });
+});
+
+test('6b stage sends worker activity without the head of the reply', async t => {
+  const f = fixture(t);
+  const runner = fakeOpenCode(t, f.root);
+  seedLegacyStageMemory(f.project);
+  const leader = await f.spawn('leader', 'Prepare the worker activity fixture.');
+  await f.finish(leader, 'Ready to review the worker activity.');
+  const worker = await f.spawn('worker', 'Read the fixture record.', leader, { task: 'G6B-WORKER-ACTIVITY' });
+  const sentinel = 'WORKER_HEAD_RAW_SENTINEL_G6B';
+  await f.finish(worker, `${sentinel}\nDONE FIXTURE`, { tools: true });
+  await completeStageGate(f, leader, 'G6B-WORKER-PRIVACY');
+  assert.equal(f.requests.length, 2, 'the stage reached upstream after the Leader turn');
+  const { child, upstream } = r3bStageInputs(f, runner);
+  for (const [channel, input] of Object.entries({ child, upstream })) {
+    const [activity] = input.workerSummaries.filter(({ addr }) => addr === worker);
+    assert.ok(activity, `${channel} includes the worker turn`);
+    assert.match(activity.summary, /G6B-WORKER-ACTIVITY/);
+    assert.match(activity.summary, /工具 [1-9]\d*\b/, `${channel} preserves a positive tool count`);
+  }
+  const { path, method, headers, raw } = f.requests.at(-1);
+  assert.deepEqual({ child: JSON.stringify(child).includes(sentinel),
+    upstream: JSON.stringify({ path, method, headers, raw }).includes(sentinel) }, { child: false, upstream: false });
+});
+
+test('6b reserves the provider input estimate and maximum output within the remaining daily tokens', async t => {
+  const dailyTokens = 2100;
+  // This provider adds a fixed chat template before tokenizing the messages.
+  const inputTokens = ({ messages }) => estimateTokens(JSON.stringify(messages)) + 1000;
+  const usage = (request, number) => ({ input: inputTokens(request), output: number === 1 ? 7 : request.max_tokens });
+  const f = fixture(t, { config: { limits: { dailyTokens } }, usage });
+  const leader = await f.spawn('leader', 'Prepare the budget fixture.');
+  await f.finish(leader, 'First budgeted turn.');
+  assert.equal(f.requests.length, 1);
+  const first = usage(JSON.parse(f.requests[0].raw), 1);
+  const remaining = dailyTokens - first.input - first.output;
+  assert.ok(remaining > 0 && remaining < 1024, 'the first settlement leaves less than a full output allowance');
+  await f.send(leader, 'Check the remaining token budget.');
+  await f.finish(leader, 'Second budgeted turn.');
+
+  const second = f.requests[1] && JSON.parse(f.requests[1].raw);
+  const required = second ? inputTokens(second) + second.max_tokens : 0;
+  const [day] = Object.values(readExtractorState(f.project).days);
+  const violations = [];
+  if (required > remaining) violations.push(`sent a request for ${required} tokens with ${remaining} remaining`);
+  if (day.charged > dailyTokens) violations.push(`charged ${day.charged} tokens against a cap of ${dailyTokens}`);
+  if (day.tokens > dailyTokens) violations.push(`settled ${day.tokens} tokens against a cap of ${dailyTokens}`);
+  assert.deepEqual(violations, []);
+});
+
+for (const failure of ['upstream HTTP error', 'unavailable credential']) {
+  test(`6b stage recovers a failed history window at the next boundary after ${failure}`, async t => {
+    let available = true;
+    const f = fixture(t, { statusFor: () => !available && failure === 'upstream HTTP error' ? 503 : 200,
+      fixtureCredential: () => !available && failure === 'unavailable credential' ? null : fixtureKey });
+    const runner = fakeOpenCode(t, f.root);
+    seedLegacyStageMemory(f.project);
+    const leader = await f.spawn('leader', 'Prepare the retry fixture.');
+    const priorReply = 'History from the first stage window.';
+    await f.finish(leader, priorReply);
+    assert.equal(f.requests.length, 1);
+
+    available = false;
+    await completeStageGate(f, leader, 'G6B-STAGE-FAILURE');
+    if (failure === 'upstream HTTP error') {
+      assert.equal(f.requests.length, 2);
+      assert.equal(f.requests.at(-1).status, 503);
+      assert.match(f.requests.at(-1).raw, /History from the first stage window/);
+    } else {
+      assert.equal(f.requests.length, 1);
+      assert.ok(f.keyReads.length > 1, 'the boundary attempted to read the credential');
+    }
+
+    available = true;
+    const count = f.requests.length;
+    await f.restart();
+    assert.equal(f.requests.length, count, 'restart without a new boundary does not resend the window');
+    f.advance(1000);
+    await f.send(leader, 'Prepare the next stage window.');
+    const nextReply = 'History from the next stage window.';
+    await f.finish(leader, nextReply);
+    assert.equal(f.requests.length, count + 1, 'only the per-turn request runs before the next boundary');
+    await completeStageGate(f, leader, 'G6B-STAGE-RECOVERY');
+    assert.equal(f.requests.length, count + 2);
+    const stagedReplies = Object.fromEntries(Object.entries(r3bStageInputs(f, runner))
+      .map(([channel, { history }]) => [channel, history.map(({ reply }) => reply)]));
+    assert.deepEqual(stagedReplies, { child: [priorReply, nextReply], upstream: [priorReply, nextReply] });
+  });
+}
+
+for (const queued of [false, true]) {
+  test(`6b stage never resends a successful window ${queued ? 'after queueing a correction' : 'with an empty library and no correction'}`, async t => {
+    const stages = [];
+    let proposals = [];
+    const f = fixture(t, { runStage: async input => { stages.push(input); return proposals; } });
+    const leader = await f.spawn('leader', 'Prepare the stage replay fixture.');
+    await f.finish(leader, 'Ready for the first round.');
+    const body = 'I prefer compact fixture reports.';
+    const { id } = await f.send(leader, body);
+    const oldReply = 'First stage window acknowledged.';
+    await f.finish(leader, oldReply);
+    if (queued) proposals = [{ id: 'g6b-replay-correction', action: 'correct', scope: 'user', body,
+      source: { kind: 'delivery', id } }];
+    await completeStageGate(f, leader, 'G6B-STAGE-ONCE');
+    assert.equal(stages.length, 1);
+    assert.ok(stages[0].history.some(({ reply }) => reply === oldReply));
+    const items = Object.values(readExtractorState(f.project).proposals);
+    assert.deepEqual(items.map(({ id, status }) => [id, status]), queued ? [['g6b-replay-correction', 'pending']] : []);
+
+    proposals = [];
+    await f.restart();
+    assert.equal(stages.length, 1, 'restart alone does not resend completed history');
+    f.advance(1000);
+    await f.send(leader, 'I prefer fixture reports with dates.');
+    const newReply = 'Second stage window acknowledged.';
+    await f.finish(leader, newReply);
+    await completeStageGate(f, leader, 'G6B-STAGE-NEXT');
+    assert.deepEqual(stages.slice(1).map(({ history }) => history.map(({ reply }) => reply)), [[newReply]]);
+  });
 }
 
 test('R3B extractor only forwards inbox bodies from allowlisted sources', async t => {
@@ -851,11 +1003,8 @@ test('R3B extractor only forwards inbox bodies from allowlisted sources', async 
       assert.ok(turn, `${channel} stage contains the completed inbox turn`);
       checkReceived(turn.received, delivery, `${channel} stage`);
     }
-    for (const sentinel of [batchSentinel, receiptSentinel]) {
-      assert.ok(workerSummaries.some(({ addr, summary }) => addr === worker &&
-        summary.split('\n').some(line => line.startsWith('回复 ') && line.includes(sentinel))),
-      `${channel} stage keeps the short worker reply in its L1 preview`);
-    }
+    assert.equal(workerSummaries.filter(({ addr }) => addr === worker).length, 2,
+      `${channel} stage retains both worker activity summaries`);
     leaks[`${channel} stage outside L1`] = denied.filter(sentinel => JSON.stringify({ history, ...rest }).includes(sentinel));
     const withoutWorkerPreviews = workerSummaries.map(({ addr, summary, ...metadata }) => ({ addr, ...metadata,
       summary: addr === worker ? summary.split('\n').filter(line => !line.startsWith('回复 ')).join('\n') : summary }));
