@@ -749,3 +749,155 @@ test('5f pilot cost measures model overhead, extractor usage, rotation, fact mis
   assert.equal(cost.memoryPilot.factMiss, 1);
   assert.equal(cost.memoryPilot.proposalPassRate, null, 'no reviewed proposals yields an unobserved rate');
 });
+
+function extractorRequestInput({ raw }) {
+  const content = JSON.parse(raw).messages[0].content;
+  return JSON.parse(content.slice(content.indexOf('\n') + 1));
+}
+
+function r3bStageInputs(f, runner) {
+  const { raw, status } = f.requests.at(-1);
+  assert.equal(status, 200);
+  return { child: runner.exchange().input, upstream: JSON.parse(JSON.parse(raw).messages[0].content) };
+}
+
+test('R3B extractor only forwards inbox bodies from allowlisted sources', async t => {
+  const f = fixture(t);
+  // Inbox attempts use wall time. Keep the synthetic native events after those attempts.
+  f.advance(Math.max(0, Date.now() - Date.UTC(2026, 10, 26, 12)) + 60_000);
+  f.initGit();
+  const runner = fakeOpenCode(t, f.root);
+  seedLegacyStageMemory(f.project);
+  const leader = await f.spawn('leader', 'Prepare inbox review.');
+  const auditor = await f.spawn('auditor', 'Prepare to request a worker receipt.');
+  const superAddr = await f.spawn('super', 'Prepare user oversight.');
+  await f.finish(leader, 'Leader ready.');
+  await f.finish(auditor, 'Auditor ready.');
+  const worker = await f.spawn('worker', 'Run the inbox fixture.', leader, { deliver: 'stream' });
+  const reviewer = await f.spawn('reviewer', 'Review the inbox fixture.', auditor, { task: 'INBOX-REVIEW' });
+  const inbox = () => JSON.parse(f.read('.project/inbox/state.json')).messages;
+  const deliveries = [];
+
+  async function finishDelivery(addr, id, sentinel, allowed = false) {
+    const prompt = f.prompts.find(entry => entry.addr === addr && deliveryId(entry.input) === id);
+    assert.ok(prompt?.input.includes(sentinel), `${sentinel} reached the native turn for ${id}`);
+    const count = f.requests.length;
+    const reply = `Inbox fixture turn ${deliveries.length + 1} complete.`;
+    await f.finish(addr, reply);
+    assert.equal(inbox().find(message => message.id === id)?.completion?.body, reply);
+    assert.equal(f.requests.length, count + 1, 'completion reached the per-turn provider');
+    const request = f.requests.at(-1);
+    const input = extractorRequestInput(request);
+    assert.equal(input.reply, reply);
+    deliveries.push({ id, sentinel, allowed, input, reply, raw: request.raw });
+  }
+
+  async function sendToLeader(caller, sentinel, allowed) {
+    const text = allowed ? `${sentinel} ${fixtureKey}` : sentinel;
+    const { id } = await f.daemon.handle('send', { target: leader, mode: 'queue', text }, caller);
+    await f.tick();
+    await finishDelivery(leader, id, text, allowed);
+  }
+
+  await sendToLeader(worker, 'SHORT_WORKER_MSG_SENTINEL_R3B', false);
+  await sendToLeader(reviewer, 'SHORT_REVIEWER_MSG_SENTINEL_R3B', false);
+
+  const batchSentinel = 'SHORT_BATCH_SENTINEL_R3B';
+  await f.finish(worker, `DONE FIXTURE\n${batchSentinel}`);
+  const batch = inbox().find(message => message.waveBatch && message.target.addr === leader);
+  assert.ok(batch?.text.includes(batchSentinel), 'wave batch keeps the short worker reply');
+  await finishDelivery(leader, batch.id, batchSentinel);
+
+  const { id: requestId } = await f.daemon.handle('send', {
+    target: worker, mode: 'queue', text: 'Confirm the worker fixture.', expectReply: true,
+  }, auditor);
+  await f.tick();
+  const receiptSentinel = 'SHORT_RECEIPT_SENTINEL_R3B';
+  await f.finish(worker, `DONE FIXTURE\n${receiptSentinel}`);
+  const receipt = inbox().find(message => message.replyTo === requestId && message.target.addr === auditor);
+  assert.ok(receipt?.replyKey && receipt.text.includes(receiptSentinel), 'automatic receipt keeps the short reply');
+  await finishDelivery(auditor, receipt.id, receiptSentinel);
+
+  await sendToLeader(undefined, 'USER_MSG_SENTINEL_R3B', true);
+  await sendToLeader(superAddr, 'SUPER_MSG_SENTINEL_R3B', true);
+  await sendToLeader(auditor, 'AUDITOR_MSG_SENTINEL_R3B', true);
+  await sendToLeader(leader, 'LEADER_MSG_SENTINEL_R3B', true);
+
+  const count = f.requests.length;
+  await completeStageGate(f, leader, 'INBOX-ALLOWLIST');
+  assert.equal(f.requests.length, count + 1, 'stage reached the upstream provider');
+  const stages = r3bStageInputs(f, runner);
+  const texts = new Set();
+  const leaks = {};
+  const denied = deliveries.filter(({ allowed }) => !allowed).map(({ sentinel }) => sentinel);
+  function checkReceived(received, delivery, channel) {
+    const body = received.find(({ source }) => source.id === delivery.id)?.text;
+    if (delivery.allowed) {
+      assert.equal(body, delivery.sentinel.replace(fixtureKey, '[REDACTED]'), `${channel} preserves the allowlisted body`);
+    } else {
+      assert.ok(typeof body === 'string' && body.trim(), `${channel} retains a placeholder for ${delivery.id}`);
+      texts.add(body);
+    }
+  }
+  for (const delivery of deliveries) {
+    checkReceived(delivery.input.received, delivery, 'per-turn');
+    leaks[`per-turn received ${delivery.reply}`] = denied.filter(sentinel =>
+      JSON.stringify(delivery.input.received).includes(sentinel));
+    leaks[`per-turn request ${delivery.reply}`] = denied.filter(sentinel => delivery.raw.includes(sentinel));
+  }
+  for (const [channel, { workerSummaries, history, ...rest }] of Object.entries(stages)) {
+    for (const delivery of deliveries) {
+      const turn = history.find(({ reply }) => reply === delivery.reply);
+      assert.ok(turn, `${channel} stage contains the completed inbox turn`);
+      checkReceived(turn.received, delivery, `${channel} stage`);
+    }
+    for (const sentinel of [batchSentinel, receiptSentinel]) {
+      assert.ok(workerSummaries.some(({ addr, summary }) => addr === worker &&
+        summary.split('\n').some(line => line.startsWith('回复 ') && line.includes(sentinel))),
+      `${channel} stage keeps the short worker reply in its L1 preview`);
+    }
+    leaks[`${channel} stage outside L1`] = denied.filter(sentinel => JSON.stringify({ history, ...rest }).includes(sentinel));
+    const withoutWorkerPreviews = workerSummaries.map(({ addr, summary, ...metadata }) => ({ addr, ...metadata,
+      summary: addr === worker ? summary.split('\n').filter(line => !line.startsWith('回复 ')).join('\n') : summary }));
+    leaks[`${channel} stage inside other L1 fields`] = denied.filter(sentinel =>
+      JSON.stringify(withoutWorkerPreviews).includes(sentinel));
+    leaks[`${channel} stage ordinary messages in L1`] = denied.filter(sentinel =>
+      ![batchSentinel, receiptSentinel].includes(sentinel) && JSON.stringify(workerSummaries).includes(sentinel));
+  }
+  assert.deepEqual({ leaks: Object.fromEntries(Object.entries(leaks).filter(([, hits]) => hits.length)),
+    placeholderCount: texts.size }, { leaks: {}, placeholderCount: 1 });
+});
+
+test('R3B extractor excludes raw red escalation evidence from outbound requests', async t => {
+  const f = fixture(t);
+  f.initGit();
+  const runner = fakeOpenCode(t, f.root);
+  seedLegacyStageMemory(f.project);
+  const leader = await f.spawn('leader', 'Start the escalation fixture.');
+  await f.spawn('auditor', 'Prepare to receive the escalation.');
+  const evidence = 'RED_ESCALATION_EVIDENCE_SENTINEL_R3B';
+  const escalation = await f.daemon.handle('escalate', { gate: 'RED-EVIDENCE', reason: 'confirmed-fact-miss', evidence }, leader);
+  assert.equal(readFileSync(join(f.project, escalation.evidencePath), 'utf8'), evidence);
+  const notices = JSON.parse(f.read('.project/loomd/notifications.json'));
+  const red = notices.find(event => event.type === 'red-escalation' && event.addr === leader);
+  assert.equal(red?.text, evidence, 'the escalation persisted the raw evidence during the open Leader turn');
+
+  const reply = 'Escalation fixture complete.';
+  await f.finish(leader, reply);
+  assert.equal(f.requests.length, 1);
+  const turnRequest = f.requests[0];
+  const turn = extractorRequestInput(turnRequest);
+  assert.equal(turn.reply, reply);
+  await completeStageGate(f, leader, 'RED-EVIDENCE');
+  assert.equal(f.requests.length, 2);
+  const stages = r3bStageInputs(f, runner);
+  for (const [channel, input] of Object.entries(stages)) {
+    const history = input.history.find(entry => entry.reply === reply);
+    assert.ok(history && history.startedAt <= red.at && red.at <= history.at,
+      `${channel} stage contains the turn whose time window includes the escalation`);
+  }
+  const outbound = { 'per-turn events': JSON.stringify(turn.events), 'per-turn request': turnRequest.raw,
+    'stage child events': JSON.stringify(stages.child.events), 'stage child input': JSON.stringify(stages.child),
+    'stage upstream events': JSON.stringify(stages.upstream.events), 'stage upstream request': f.requests[1].raw };
+  assert.deepEqual(Object.keys(outbound).filter(channel => outbound[channel].includes(evidence)), []);
+});
