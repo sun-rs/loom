@@ -149,6 +149,13 @@ test('loomd trusts launch capabilities over caller, sender, and role hints', { t
   const issued = await wire(project, 'grant', hostGrant, { capability: external });
   assert.equal(issued.grant.remaining, 1);
   assert.match(issued.warning, /not fail-closed for Codex tool paths/);
+  const unconfinedGrant = { ...hostGrant, target: 'HOST-UNCONFINED', unconfined: true };
+  await denied('grant', unconfinedGrant, { caller: 'super' });
+  await denied('grant', unconfinedGrant, { caller: 'super', capability: leader.token });
+  await denied('grant', unconfinedGrant, { caller: worker.addr, capability: worker.token });
+  const issuedUnconfined = await wire(project, 'grant', unconfinedGrant, { capability: external });
+  assert.equal(issuedUnconfined.grant.unconfined, true);
+  assert.match(issuedUnconfined.warning, /unconfined/i);
   await denied('accounts-refresh', {}, { caller: 'super' });
   await denied('accounts-refresh', {}, { capability: leader.token });
   await denied('accounts-refresh', {}, { capability: worker.token });

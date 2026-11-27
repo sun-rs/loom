@@ -182,9 +182,11 @@ async function cliFor(t, f, daemon, caller) {
   t.after(() => new Promise(resolve => server.close(resolve)));
   await once(server, 'listening');
   const loom = new URL('../bin/loom', import.meta.url);
-  return (...args) => promisify(execFile)(process.execPath, [loom.pathname, ...args], {
-    env: { ...process.env, LOOM_PROJECT: f.project, LOOM_ADDR: caller, LOOM_CAPABILITY: capability, HC_TERMINAL_ID: '' },
+  const runAs = (asCaller, ...args) => promisify(execFile)(process.execPath, [loom.pathname, ...args], {
+    env: { ...process.env, LOOM_PROJECT: f.project, LOOM_ADDR: asCaller ?? '',
+      LOOM_CAPABILITY: asCaller ? capabilities.ensureSession(asCaller).token : '', HC_TERMINAL_ID: '' },
   });
+  return Object.assign((...args) => runAs(caller, ...args), { as: runAs });
 }
 
 test('senior overrides cap output, keep reasons, and permit emergency retries past the gate budget', async t => {
@@ -1781,6 +1783,66 @@ test('host grants debit before launch, expire on conclusion, and save all observ
   assert.equal(evidence.verification.host.grantId, grant.id);
   assert.deepEqual(evidence.verification.host.commands.map(({ command, exitCode }) => [command, exitCode]), [['/usr/bin/true', 0]]);
   await assert.rejects(f.spawn(d, 'worker', spec.target, undefined, { tier: 'host' }), { code: 'host-grant-expired' });
+});
+
+test('unconfined host grants require Super and surface unconfined in receipts, notices, status and board', async t => {
+  const f = fixture(t);
+  const d = f.daemon();
+  t.after(d.shutdown);
+  const { session: leader } = await f.spawn(d, 'leader', 'L');
+  const { session: superRow } = await f.spawn(d, 'super', 'S');
+  const { session: worker } = await f.spawn(d, 'worker', 'W', leader.addr);
+  const cli = await cliFor(t, f, () => d, leader.addr);
+  const reason = 'Run nested srt and PTY isolation check';
+  const req = JSON.parse((await cli('grant', 'CELL-1', 'host', '--request', '--unconfined', '--reason', reason)).stdout);
+  assert.equal(req.requested.unconfined, true);
+  assert.match((await d.handle('notifications', { history: true })).notifications.find(n => n.id === req.notificationId).text, /host \(unconfined\)/);
+  await assert.rejects(cli('grant', 'CELL-1', 'host', '--unconfined', '--reason', reason),
+    error => JSON.parse(error.stdout).error.code === 'forbidden');
+  for (const caller of [leader.addr, worker.addr, undefined]) {
+    await assert.rejects(d.handle('grant', { target: 'CELL-1', tier: 'host', reason, unconfined: true }, caller, { external: false }),
+      { code: 'forbidden' });
+  }
+  await assert.rejects(cli.as(superRow.addr, 'grant', 'CELL-1', 'host', '--unconfined'),
+    error => JSON.parse(error.stdout).error.code === 'invalid-arguments');
+  await assert.rejects(d.handle('grant', { target: 'CELL-1', tier: 'host', reason, unconfined: 'yes' }, superRow.addr),
+    { code: 'invalid-arguments' });
+  const { stdout } = await cli.as(superRow.addr, 'grant', 'CELL-1', 'host', '--unconfined', '--reason', reason);
+  const issued = JSON.parse(stdout);
+  assert.equal(issued.grant.unconfined, true);
+  assert.equal(issued.grant.remaining, 1);
+  assert.match(issued.warning, /unconfined/i);
+  const spawned = await f.spawn(d, 'worker', 'CELL-1', leader.addr, { cli: 'agy', tier: 'host', prompt: 'HOLD' });
+  assert.equal(spawned.workerTier, 'host');
+  assert.equal(spawned.unconfined, true);
+  assert.equal(spawned.hostGrant.unconfined, true);
+  const state = await d.handle('state', { target: spawned.session.addr });
+  assert.equal(state.workerTier, 'host');
+  assert.equal(state.unconfined, true);
+  const board = await d.handle('board', {});
+  assert.ok(board.workers.some(row => row.addr === spawned.session.addr && row.workerTier === 'host' && row.unconfined === true));
+  const statusRpc = await d.handle('status', {});
+  assert.ok(statusRpc.sessions.some(row => row.addr === spawned.session.addr && row.workerTier === 'host' && row.unconfined === true));
+  const { projectStatus, printStatus } = await import('../cli/status.mjs');
+  const status = await projectStatus(f.project);
+  assert.ok(status.sessions.some(row => row.addr === spawned.session.addr && row.workerTier === 'host' && row.unconfined === true));
+  const lines = [];
+  const origLog = console.log;
+  console.log = (...args) => lines.push(args.join(' '));
+  try { printStatus({ ...status, project: f.project }); } finally { console.log = origLog; }
+  assert.match(lines.join('\n'), /Elevated workers · .*host\/unconfined · CELL-1/);
+  await assert.rejects(f.spawn(d, 'worker', 'CELL-1', leader.addr, { cli: 'agy', tier: 'host' }), { code: 'host-grant-exhausted' });
+  await d.tick();
+  f.sessions.get(spawned.session.addr).finish('DONE CELL-1');
+  await d.tick();
+  const history = (await d.handle('notifications', { history: true })).notifications.filter(event => event.grantId === issued.grant.id);
+  assert.deepEqual(history.map(event => event.type), ['host-tier-grant', 'host-tier-used', 'host-tier-refused', 'host-tier-expired']);
+  for (const event of history) {
+    assert.equal(event.unconfined, true);
+    assert.match(event.text, /Host \(unconfined\)/);
+  }
+  const evidence = f.read(`evidence/CELL-1-host-${spawned.session.addr}.json`);
+  assert.equal(evidence.verification.host.unconfined, true);
 });
 
 test('keeps the predecessor active and releases queued work when the first briefing turn lacks the acknowledgement', async t => {

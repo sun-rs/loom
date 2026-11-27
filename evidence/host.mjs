@@ -12,6 +12,8 @@ export async function recordHostEvidence(project, row, grant, events) {
   const executables = jsonRows(readText(workerExecutableLog(project, row.addr)));
   return forTurn({ project, cwd: null, task: row.task, turn: `host-${row.addr}`, provider: row.cli,
     addr: row.addr, endedAt: row.endedAt, gitObservation: { status: 'host-session-audit' },
-    hostAudit: { grantId: grant.id, expiresAt: grant.expiresAt, commands, executables,
-      coverage: 'Provider-event and hook coverage. Not fail-closed for Codex tool paths.' } });
+    hostAudit: { grantId: grant.id, expiresAt: grant.expiresAt, ...(grant.unconfined && { unconfined: true }), commands, executables,
+      coverage: grant.unconfined ?
+        'Unconfined host grant: no Loom outer Seatbelt write boundary. Provider-event and hook coverage only; not fail-closed.' :
+        'Provider-event and hook coverage. Not fail-closed for Codex tool paths.' } });
 }
