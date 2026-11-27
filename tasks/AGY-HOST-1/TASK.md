@@ -16,3 +16,9 @@ pilot-cell 实况：host worker oar-624e4897 以 host-grant-exhausted 启动失�
 
 ## 追加 2（Super）：Claude headless 报 Not logged in
 pilot-cell @812270f0：`--cli claude --model sonnet --tier host` 的 headless worker（oar-15ed61b4、oar-586dbfcb）0 秒返回 `Not logged in · Please run /login`，0 工具调用。同机 Claude TUI 是已登录的。只读材料：/Users/sun/Code/loom-pilot-cell/.project/notes/decision-host-worker-cli.md 与对应 sessions/*.json。疑点：headless 启动环境里的 HOME / CLAUDE_CONFIG_DIR / 钥匙串可达性（pilot-cell 的 CELL-SCHED-1 提交曾"在所有绑定的 Claude 启动路径上剥掉 CLAUDE_SECURESTORAGE_CONFIG_DIR"，该改动尚未进 main，但请对照）。要求：找根因、写 RED、修复；不读凭据、不读钥匙串内容，只看启动参数与环境变量名。
+
+## 追加 3（Super）：host 档 codex 仍在 Codex 自带 Seatbelt 里
+pilot-cell @b0c0b28e：`--cli codex --tier host` 的 worker（oar-b9ebbb5b）内运行 `srt`（sandbox-exec）报 EPERM，PTY 分配也 EPERM（证据 /Users/sun/Code/loom-pilot-cell/tasks/CELL-ISO-1/T0-RESULT.md，只读）。host 档的定义是受信宿主执行，应以 Codex 的无沙箱模式启动（等价 `--sandbox danger-full-access` 或对应 launch-scoped 配置，不改全局配置），由 grant 机制计次与审计兜底。
+- RED：host 档 codex 启动 argv/配置里不得带 workspace-write/read-only 沙箱；在 host worker 内 `/usr/bin/sandbox-exec -p '(version 1)(allow default)' /usr/bin/true` 与 PTY 分配可用（夹具或真机二选一，真机需 Super 授权）。
+- integration/sandbox 档保持原样不变。
+- 三个 CLI（codex、claude、agy）host 档的启动行为在 RESULT.md 列一张表：沙箱状态、登录态来源、argv 关键项。
