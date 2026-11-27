@@ -798,5 +798,54 @@ export function inbox(project, transport, report = console.error, { replyLimit, 
     }
   }
 
-  return { step, observe, routesForTurn, enqueue, refuseQueued, handoverMessages, messages };
+  function replayForResume(addr, target, { firstId, confirmedIds = new Set(), hadNativeTurns = false } = {}) {
+    const affected = messages.filter(message => message.target?.addr === addr);
+    if (!affected.length) return { replayed: [], deduplicated: [] };
+    const before = affected.map(message => structuredClone(message));
+    const replayed = [];
+    const deduplicated = [];
+    let changed = false;
+    const clearFields = [
+      'active', 'barrier', 'issue', 'refusedAt', 'attemptAt', 'typedAt', 'stopAttemptAt', 'stopKeySent',
+      'stoppedAt', 'hostAttempt', 'hostStopAttempt', 'nativeAttempt', 'providerPendingUntil',
+      'waitingForWritable', 'pendingReason', 'stalledAt',
+    ];
+    for (const message of affected) {
+      if (message.received) continue;
+      if (confirmedIds.has(message.id)) {
+        message.received = { at: message.attemptAt ?? Date.now(), sessionId: target.sessionId ?? null, recovered: true };
+        message.phase = 'received';
+        for (const field of ['issue', 'refusedAt', 'pendingReason', 'waitingForWritable']) delete message[field];
+        deduplicated.push(message.id);
+        changed = true;
+        continue;
+      }
+      if (message.id === firstId && hadNativeTurns) {
+        deduplicated.push(message.id);
+        continue;
+      }
+      const replayable = ['queued', 'target-ended', 'sending', 'stopping', 'stopped'].includes(message.phase) ||
+        message.phase === 'refused' && message.issue === 'target-exited';
+      if (!replayable) continue;
+      message.target = target;
+      if (!message.combinedInto) {
+        message.phase = 'queued';
+        for (const field of clearFields) delete message[field];
+        replayed.push(message.id);
+      }
+      changed = true;
+    }
+    if (changed) {
+      try { save(); } catch (error) {
+        for (const [i, message] of affected.entries()) {
+          for (const field of Object.keys(message)) delete message[field];
+          Object.assign(message, before[i]);
+        }
+        throw error;
+      }
+    }
+    return { replayed, deduplicated };
+  }
+
+  return { step, observe, routesForTurn, enqueue, refuseQueued, handoverMessages, replayForResume, messages };
 }
