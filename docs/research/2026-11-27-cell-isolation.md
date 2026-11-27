@@ -17,3 +17,8 @@
 - **T4 溢出**：托管沙箱只跑 headless 一次性任务，用 API key，不放订阅登录态。
 
 **待实验**：①srt 包住四家 TUI 时 PTY/颜色/鼠标是否正常，与 CLI 自带沙箱叠加是否冲突；②Claude 在 srt/独立 OS 用户下 Keychain 是否弹框、SSH 下 Keychain 锁定时的回落；③Apple `container`、Lima virtiofs 上 worktree `git status`/`npm install` 耗时对比原生；④单台 Mac mini（如 32 GB）T0 与 T2 的会话密度；⑤setup-token 功能缺口对 loom 的影响；⑥Codex device-auth 可用性；⑦VM 内 holder 在宿主 loomd 热升级与快照恢复后能否存活/重连；⑧agy/Gemini 凭据位置与 Windows 现状；⑨Docker Sandboxes 官方文档与许可。
+
+## 修订（2026-11-27，用户评审）
+- **Mac 上的 Linux 虚拟机/容器不能做开发 cell。** Apple silicon 上的 OrbStack、Apple `container`、Lima 跑的都是 arm64 Linux；x86 只能经 Rosetta 转译或仿真。生产环境只会是 x86 Linux 或 macOS，在 arm64 Linux 里写出、测过的代码两边都不算数（原生依赖、二进制、性能、系统调用差异都可能不同）。因此 T2 取消。
+- **修订后的分层**：Mac 目标 → 原生 macOS + 每 worker 沙箱 + 出网白名单（T0）；x86 Linux 目标 → 真实 x86 Linux 机器（裸机或 x86 云主机）上的 T0，需要更强隔离时在同架构上加 rootless Podman / Firecracker（T1）；Windows 待定；托管沙箱（T4）只跑 x86 Linux 的一次性无头任务。原则：**cell 的 OS 与架构必须等于生产目标**。
+- **顺序**：先完成文件 + 网络隔离的 T0 cell，账号额度调度冻结，之后以 Magpie 开源实现为蓝本重做（切换策略、Codex 等切账号后原地重连）。
