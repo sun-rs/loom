@@ -17,6 +17,7 @@ import { inspectProcess, processLiveness, processTable } from './processes.mjs';
 import { controllerFile, managedEnvironment, releaseRoot } from './release.mjs';
 import { workerEnvironment, workerProviderEnvironment } from './worker-environment.mjs';
 import { seniorToolEnvironment } from './senior-tools.mjs';
+import { codexDeveloperArgs } from '../memory/launch-config.mjs';
 
 export const pipeTransport = 'holder-pipes';
 export const useCodexHolder = (row, job) => row.cli === 'codex' &&
@@ -26,7 +27,7 @@ const sameBirth = (identity, live) => live && live.pid === identity?.pid &&
 const unknown = () => Object.assign(new Error('Codex holder liveness is unknown; preserving the existing holder binding'),
   { code: 'liveness-unknown' });
 
-async function launch(project, row, job, dir, socket, capabilities) {
+async function launch(project, row, job, dir, socket, capabilities, memory) {
   const { incarnation, holderRelease } = job.host;
   const asset = holderAsset(holderRelease.root);
   if (asset.digest !== holderRelease.digest) throw holderError('HOLDER_BUILD');
@@ -38,7 +39,8 @@ async function launch(project, row, job, dir, socket, capabilities) {
   const worker = row.role === 'worker';
   const command = worker ? nativeWorkerExecutable(row.cli) :
     await absoluteCommand(process.env.LOOM_CODEX_BIN ?? process.env.OAR_CODEX_BIN ?? 'codex', 'codex');
-  const args = ['app-server', ...codexConfiguration(project, { ...row, fast: job.fast }, managed, isolated), '--listen', 'stdio://'];
+  const args = ['app-server', ...codexConfiguration(project, { ...row, fast: job.fast }, managed, isolated),
+    ...codexDeveloperArgs(memory?.indexText), '--listen', 'stdio://'];
   const fd = openSync(join(dir, 'holder.log'),
     constants.O_WRONLY | constants.O_CREAT | constants.O_APPEND | constants.O_NOFOLLOW, 0o600);
   try {
@@ -51,7 +53,7 @@ async function launch(project, row, job, dir, socket, capabilities) {
   } finally { closeSync(fd); }
 }
 
-export async function attachCodexHolder(project, row, job, saveJob, controller, { stop = false, capabilities } = {}) {
+export async function attachCodexHolder(project, row, job, saveJob, controller, { stop = false, capabilities, memory } = {}) {
   const save = () => saveJob(job);
   if (!job.host) {
     if (stop) return { endedAt: Date.now() };
@@ -72,7 +74,7 @@ export async function attachCodexHolder(project, row, job, saveJob, controller, 
   let snapshot = await hello();
   if (!snapshot && !binding.identity && !lstatSync(socket, { throwIfNoEntry: false })) {
     if (stop) return { endedAt: Date.now() };
-    const candidate = await launch(project, row, job, dir, socket, capabilities);
+    const candidate = await launch(project, row, job, dir, socket, capabilities, memory);
     const limit = performance.now() + 8000;
     do {
       if (candidate.exitCode != null || candidate.signalCode) throw holderError('HOLDER_START', 'Codex holder exited during launch');

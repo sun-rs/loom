@@ -49,7 +49,7 @@ export const workerMetricsLabel = ({ gate, newSpawns, revives, coldRevives, cold
       `post-REJECT approved/decided · new ${fixAfterReject.new.approved}/${fixAfterReject.new.decided} · revived ${fixAfterReject.revived.approved}/${fixAfterReject.revived.decided}`]
     .filter(Boolean).join(' · ');
 
-export async function projectStatus(project) {
+export async function projectStatus(project, { now = Date.now() } = {}) {
   let live;
   let exits;
   let rotationPolicy;
@@ -64,10 +64,9 @@ export async function projectStatus(project) {
   const states = new Map((live ?? []).map(row => [row.addr, row]));
   const artifacts = readArtifacts(project);
   const jobs = new Map(rows.map(row => [row.addr, artifacts.job(row.addr)]));
-  const at = Date.now();
   let policy = {};
   try { policy = readPolicy(project, { optional: true }); } catch {}
-  const retentionFor = row => states.get(row.addr)?.retention ?? retentionStatus(jobs.get(row.addr), at, workerWarmMs(policy, row.cli));
+  const retentionFor = row => states.get(row.addr)?.retention ?? retentionStatus(jobs.get(row.addr), now, workerWarmMs(policy, row.cli));
   const lifecycle = row => {
     const retention = retentionFor(row);
     return states.get(row.addr)?.state ?? (retention ? retainedState(retention, false, row.endedAt != null) :
@@ -173,11 +172,11 @@ export async function projectStatus(project) {
   const merges = [...new Map([...history, ...verified].filter(merge => merge.sha).map(merge => [merge.sha, merge])).values()]
     .sort((a, b) => b.at - a.at).slice(0, 5);
   const reader = historyReader(project);
-  const { byRole, rawTokens, missing, pyramid } = projectCost(project, rows, { includeAcceptance: false, reader });
+  const { byRole, rawTokens, missing, pyramid, memoryExtractor, memoryPilot } =
+    projectCost(project, rows, { includeAcceptance: false, now, reader });
   const activeAddresses = new Set(rows.filter(row => row.endedAt === null).map(row => row.addr));
   const rotationNotices = notifications.filter(event => event.type === 'leader-handover-failed' ||
     ['leader-rotation-proposed', 'auditor-rotation-proposed'].includes(event.type) && activeAddresses.has(event.addr)).slice(-6).reverse();
-  const now = Date.now();
   const startOfDay = new Date(now).setHours(0, 0, 0, 0);
   const rotationDetails = rotations.map(rotation => ({ ...rotation,
     reason: artifacts.job(rotation.successor)?.rotationReason ??
@@ -205,7 +204,7 @@ export async function projectStatus(project) {
   const sessionHealth = rows.flatMap(row => {
     const health = states.get(row.addr)?.liveness ?? (!live && row.endedAt == null && jobs.get(row.addr)?.liveness?.health);
     return health ? [{ addr: row.addr, role: row.role, ...health,
-      ...(health.status === 'waiting-poll' && { zeroProgressMs: health.zeroProgressMs ?? Math.max(0, Date.now() - health.since) }) }] : [];
+      ...(health.status === 'waiting-poll' && { zeroProgressMs: health.zeroProgressMs ?? Math.max(0, now - health.since) }) }] : [];
   });
   const crashed = exits ?? rows.flatMap(row => {
     const exit = row.endedAt != null && jobs.get(row.addr)?.exit;
@@ -242,12 +241,13 @@ export async function projectStatus(project) {
         ...(states.get(row.addr)?.userPrompt && { userPrompt: states.get(row.addr).userPrompt }),
         ...(states.get(row.addr)?.lastProgressAt != null && { lastProgressAt: states.get(row.addr).lastProgressAt }),
         ...(states.get(row.addr)?.pathWarnings && { pathWarnings: states.get(row.addr).pathWarnings }),
+        ...(states.get(row.addr)?.memoryIsolation && { memoryIsolation: states.get(row.addr).memoryIsolation }),
         ...(states.get(row.addr)?.hookGap && { hookGap: states.get(row.addr).hookGap }),
         ...(rotating.has(row.addr) && { awaitingVerifiedReport: true }),
         ...(awaitingAck.has(row.addr) && { awaitingHandoverAck: true }) };
     }),
     waves, pendingContinuations, cards: cards.filter(card => card.active || ['blocked', 'result-undelivered'].includes(card.state)),
-    blocked, notices, auditFindings, merges, ...(rotationPolicy && { rotationPolicy }), rotations: rotationDetails, rotationsToday, seniorSessions, rotationNotices, seniorTools, routing: { filtered },
+    blocked, notices, auditFindings, merges, ...(rotationPolicy && { rotationPolicy }), rotations: rotationDetails, rotationsToday, seniorSessions, rotationNotices, seniorTools, memoryExtractor, memoryPilot, routing: { filtered },
     memory: memory ?? null, workerMetrics: metrics ?? workerMetrics(rows, addr => jobs.get(addr), artifacts.journal, messages),
     cost: { rawTokens, byRole: Object.fromEntries(Object.entries(byRole).map(([role, value]) => [role, value.rawTokens])),
       usageByRole: byRole, pyramid, missingSessions: missing.length },
@@ -319,6 +319,8 @@ export function printStatus(result) {
   section('Worker metrics by gate', result.workerMetrics, workerMetricsLabel, 8);
   section('Hook gaps', result.sessions.filter(row => row.hookGap),
     row => [row.role, row.addr, 'hook-gap', row.hookGap.source].join(' '), Infinity);
+  section('Native memory isolation', result.sessions.filter(row => row.memoryIsolation && row.memoryIsolation !== 'covered'),
+    row => [row.role, row.cli, row.addr, row.memoryIsolation].join(' · '), Infinity);
   section('Waves and cards', [...result.waves, ...result.pendingContinuations, ...result.cards], row => row.members ?
     [row.wave, row.state, row.members.length + ' cards'].join(' ') : row.batch ?
       ['continuation', row.batch, row.pending.length + ' pending'].join(' ') : [row.task, row.wave, row.state].join(' '), 6);
@@ -331,6 +333,16 @@ export function printStatus(result) {
       `${category} ${counts.reviewOnly} (${counts.open} open)`).join(' · '), 6);
   if (result.routing.filtered.length) console.log(`Auditor routing · ${result.routing.filtered.length} filtered deliveries in --json`);
   section('Last merges', result.merges, row => [row.sha.slice(0, 12), row.subject].join(' '), 3);
+  const extractor = result.memoryExtractor;
+  if (extractor) console.log('Memory extractor · ' + extractor.calls + ' turn calls · ' + extractor.tokens + ' tokens · ' +
+    extractor.stageCalls + ' stage calls · ' + extractor.stageTokens + ' stage tokens' +
+    (extractor.stopReason ? ' · stopped at ' + extractor.stopReason : ''));
+  if (extractor?.diagnostics) {
+    const { emptyResults, filteredCandidates, queuedProposals, filterReasons } = extractor.diagnostics;
+    const reasons = Object.entries(filterReasons).map(([reason, count]) => `${reason} ${count}`).join(', ');
+    console.log(`  ${emptyResults} empty results · ${filteredCandidates} filtered candidates` +
+      (reasons ? ` (${reasons})` : '') + ` · ${queuedProposals} queued proposals`);
+  }
   console.log('Cost · ' + result.cost.rawTokens.toLocaleString() + ' recorded tokens' +
     (result.cost.missingSessions ? ' · ' + result.cost.missingSessions + ' sessions with transcript gaps' : ''));
   section('Session memory', result.memory ?? [], row => `${basename(row.project)} · ${memoryLabel(row)}`, Infinity);

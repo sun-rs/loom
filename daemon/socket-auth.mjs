@@ -93,13 +93,21 @@ export function socketCapabilities(project, env = process.env) {
 
 const readCommands = new Set(['hello', 'daemon-status', 'upgrade-status', 'board', 'status', 'ls', 'state', 'session-memory']);
 const superCommands = new Set(['daemon-stop', 'upgrade-plan', 'upgrade-apply', 'upgrade-holder', 'layout-up', 'layout-adopt', 'switch']);
-export const mayUseLegacyCaller = command => !readCommands.has(command) || command === 'state';
+const memoryCommands = new Set(['mem', 'memory-proposals', 'memory-review', 'memory-index', 'memory-show']);
+export const mayUseLegacyCaller = command => !memoryCommands.has(command) &&
+  (!readCommands.has(command) || command === 'state');
 
 export function authorizeSocketCommand(command, args, actor) {
   const role = actor?.role;
   let allowed;
   if (readCommands.has(command)) return;
   if (superCommands.has(command)) allowed = role === 'super';
+  else if (memoryCommands.has(command) && actor?.external) allowed = false;
+  else if (command === 'mem') {
+    allowed = ['leader', 'auditor', 'super'].includes(role) || role === 'worker' && args.action === 'show';
+  } else if (command === 'memory-proposals' || command === 'memory-review') {
+    allowed = role === 'auditor' || role === 'super';
+  } else if (command === 'memory-index' || command === 'memory-show') allowed = role === 'super';
   else if (command === 'accounts-refresh') allowed = role === 'super' || role === 'worker';
   else if (command === 'grant') allowed = role === (args.request === true ? 'leader' : 'super');
   else if (command === 'spawn') {

@@ -15,6 +15,7 @@ import { requestControl } from '../../tui/pty-control.mjs';
 import { providers } from '../../tui/providers.mjs';
 import { startPane } from './hc.mjs';
 import { claudeApiEnvKeys } from '../../adapters/claude/launch.mjs';
+import { codexDeveloperArgs, memoryLaunch } from '../../memory/launch-config.mjs';
 
 export async function absoluteCommand(command, provider = basename(command)) {
   const variable = `LOOM_${provider.toUpperCase()}_BIN`;
@@ -44,7 +45,7 @@ export function wrapperFailedStart(binding) {
 export async function openNativeTui({
   cli, cwd, command, hcCommand = 'hc', env = {}, unset = [], name, authMode,
   stateDir, hookSink, recordBinding = () => {}, previous, recordTemporary = () => {}, boundTranscript = true,
-  controllerPath, placementLabels, capabilityPath, recordExecutable, ...options
+  controllerPath, placementLabels, capabilityPath, recordExecutable, memory, ...options
 }) {
   const provider = Object.hasOwn(providers, cli) && providers[cli];
   if (!provider) throw new RangeError(`Unsupported TUI: ${cli}`);
@@ -59,10 +60,20 @@ export async function openNativeTui({
   const accountStatusline = options.accountStatusline;
   const versionedClaude = cli === 'claude' && /\/claude\/versions\/(\d+\.\d+\.\d+)$/.exec(executable)?.[1];
   const { argv, env: launchEnv, sessionId, promptSink } = await provider.start({
-    ...options, cwd, hookSink, boundTranscript,
+    ...options, cwd, hookSink, boundTranscript, captureCompaction: Boolean(memory),
     ...(accountStatusline && { accountStatusline: { ...accountStatusline,
       cliVersion: accountStatusline.cliVersion ?? (versionedClaude || undefined) } }),
   });
+  if (memory) {
+    const settings = cli === 'claude' ? argv.indexOf('--settings') : -1;
+    const config = memoryLaunch(cli, { ...memory, openCodeNative: true, openCodeConfig: launchEnv.OPENCODE_CONFIG_CONTENT,
+      claudeSettings: settings < 0 ? undefined : JSON.parse(argv[settings + 1]) });
+    if (settings >= 0) argv[settings + 1] = JSON.stringify(config.claudeSettings);
+    const separator = argv.indexOf('--');
+    argv.splice(cli === 'codex' ? 1 : separator < 0 ? argv.length : separator, 0, ...config.argv,
+      ...(cli === 'codex' ? codexDeveloperArgs(memory.indexText) : []));
+    Object.assign(launchEnv, config.env);
+  }
   argv[0] = executable;
   // hc retains its command arguments. Read the capability inside the native
   // process wrapper so the bearer value appears only in the session env.

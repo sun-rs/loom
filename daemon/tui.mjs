@@ -44,7 +44,7 @@ export function hookRunner(project, cli) {
   return path;
 }
 
-export async function openTui(job, row, project, recordTemporary, recordBinding, controller, capabilityPath, statusline = {}) {
+export async function openTui(job, row, project, recordTemporary, recordBinding, controller, capabilityPath, statusline = {}, memory) {
   const worker = row.role === 'worker';
   const command = worker ? nativeWorkerExecutable(row.cli) : row.cli === 'claude' ? nativeClaude() : undefined;
   const hookSink = eventPath(project, row.addr);
@@ -63,7 +63,7 @@ export async function openTui(job, row, project, recordTemporary, recordBinding,
     cliVersion: statusline.cliVersion,
   };
   const host = await openNativeTui({
-    ...row, ...(accountStatusline && { accountStatusline, statusLine: statusline.statusLine }), command, fast: job.fast, hookSink,
+    ...row, memory, ...(accountStatusline && { accountStatusline, statusLine: statusline.statusLine }), command, fast: job.fast, hookSink,
     ...(worker && { recordExecutable: path => recordWorkerExecutable(project, row, path, 'launch') }), ...(runner && { hookRunner: runner }), name, env,
     ...(job.herdr && { hcCommand: job.herdr.hcCommand, placementLabels: job.herdr.labels }),
     sessionId: job.plannedNativeId, recordTemporary, recordBinding, previous: job.tui, unset: guardUnset, capabilityPath,

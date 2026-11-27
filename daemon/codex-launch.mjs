@@ -5,6 +5,7 @@ import { codexHookArgs } from '../adapters/codex/launch.mjs';
 import { codexEnvironmentArgs } from '../cli/project.mjs';
 import { codexFastArgs } from './executables.mjs';
 import { workerCodexArgs } from './worker-environment.mjs';
+import { codexMemoryArgs } from '../memory/launch-config.mjs';
 
 export function codexConfiguration(project, row, managed, isolated) {
   const host = Boolean(row.hostGrant);
@@ -12,7 +13,7 @@ export function codexConfiguration(project, row, managed, isolated) {
   if (process.env.CODEX_HOME && /(?:provider-homes|(?:^|\/)memories|(?:^|\/)\.env)/.test(process.env.CODEX_HOME)) {
     throw new Error('Unsupported CODEX_HOME for loom');
   }
-  return ['-c', 'features.memories=false', '-c',
+  return [...codexMemoryArgs(), '-c',
     `features.default_mode_request_user_input=${allowNativeQuestions(project, row.role)}`, ...codexFastArgs(row.fast),
     ...(host ? ['-c', 'sandbox_mode="danger-full-access"', '-c', 'approval_policy="never"', '-c',
       `sqlite_home=${JSON.stringify(isolated.CODEX_SQLITE_HOME)}`, '-c', `log_dir=${JSON.stringify(isolated.TMPDIR)}`,

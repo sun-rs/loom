@@ -32,6 +32,7 @@ function validMeta(meta, id) {
       typeof meta.source !== 'string' || !oneLine.test(meta.source) ||
       !date(meta.verified) || meta.expires !== undefined && !date(meta.expires) ||
       meta.supersededBy !== undefined && (typeof meta.supersededBy !== 'string' || !itemId.test(meta.supersededBy)) ||
+      meta.invalidatedBy !== undefined && (typeof meta.invalidatedBy !== 'string' || !itemId.test(meta.invalidatedBy)) ||
       meta.keywords !== undefined && (typeof meta.keywords !== 'string' || !oneLine.test(meta.keywords))) return false;
   return !isAbsolute(meta.source) && sourcePath.test(meta.source) && meta.source === meta.source.trim() &&
     !meta.source.split('/').includes('..') && !isCredentialPath(meta.source);
@@ -68,7 +69,7 @@ function verified(project, { meta, title, body }) {
     { pathBoundary: root }).misses.length;
 }
 
-function activeItems(project) {
+export function activeItems(project) {
   const dir = directories(project);
   if (!dir) return [];
   const now = today();
@@ -76,7 +77,8 @@ function activeItems(project) {
   for (const entry of readdirSync(dir, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name, 'en'))) {
     if (!entry.isFile() || !entry.name.endsWith('.md')) continue;
     const item = parseItem(readText(join(dir, entry.name)), entry.name.slice(0, -3));
-    if (item && !item.meta.supersededBy && !(item.meta.expires < now) && verified(project, item)) items.push(item);
+    if (item && !item.meta.supersededBy && !item.meta.invalidatedBy &&
+        !(item.meta.expires < now) && verified(project, item)) items.push(item);
   }
   return items;
 }
@@ -87,14 +89,22 @@ export function syncMemoryIndex(project) {
   return lines;
 }
 
-export function writeMemory(project, { title, body, ...meta }) {
+export function prepareProjectMemory(project, { title, body, ...meta }) {
   const text = `---\n${JSON.stringify(meta)}\n---\n# ${title}\n\n${body}\n`;
   const item = typeof title === 'string' && oneLine.test(title) && typeof body === 'string' && parseItem(text, meta.id);
   if (!item) throw new Error('Invalid project memory item or item exceeds 200 tokens');
   if (!verified(project, item)) throw new Error('Project memory facts could not be verified');
+  return { path: item.path, text };
+}
+
+export function commitProjectMemory(project, items) {
   if (!directories(project, true)) throw new Error('Expected real project memory directories');
-  writeState(join(project, item.path), text);
+  for (const { path, text } of items) writeState(join(project, path), text);
   syncMemoryIndex(project);
+}
+
+export function writeMemory(project, item) {
+  commitProjectMemory(project, [prepareProjectMemory(project, item)]);
 }
 
 export function searchMemory(project, query) {

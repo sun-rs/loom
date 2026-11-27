@@ -15,12 +15,12 @@ if (payload.hook_event_name === 'PreToolUse') {
     hookEventName: 'PreToolUse', permissionDecision: 'deny', permissionDecisionReason: denial,
   } }));
 }
-const startup = payload.hook_event_name === 'SessionStart' && payload.source !== 'compact' &&
+const startup = payload.hook_event_name === 'SessionStart' &&
   typeof payload.session_id === 'string' && payload.session_id;
 if (sink && !payload.isSidechain && !payload.agent_id && (startup || normalize(payload))) {
   // Keep native identifiers for the caller to correlate events and deduplicate replays.
   // Follow relay/hooks.mjs and omit prompt text, tool arguments, and outputs.
-  const fields = ['hook_event_name', 'session_id', 'turn_id', 'transcript_path', 'cwd',
+  const fields = ['hook_event_name', 'session_id', 'turn_id', 'transcript_path', 'cwd', 'source',
     'tool_name', 'tool_use_id', 'last_assistant_message'];
   const row = { receivedAt: Date.now(), deliveryId: deliveryId(payload.prompt), is_interrupt: payload.is_interrupt };
   for (const field of fields) {

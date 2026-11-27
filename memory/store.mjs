@@ -1,6 +1,9 @@
 import { createHash } from 'node:crypto';
+import { isDeepStrictEqual } from 'node:util';
 import { createAccess } from './access.mjs';
 import { itemPath, renderEntry, validateEntry, validateEntryFormat } from './format.mjs';
+import { isShortMemoryId } from './index-row.mjs';
+import { eventMemoryId, isLegacyMechanicalMemory, ledgerRulings, projectReviewMemoryId, rulingPath } from './ledger.mjs';
 import { sanitizeEntry } from './sanitize.mjs';
 
 const day = 86_400_000;
@@ -13,6 +16,7 @@ const forbidden = () => ({ ok: false, code: 'forbidden', error: 'Memory write is
 const conflict = currentRevision => ({ ok: false, code: 'conflict', error: 'Memory revision changed', currentRevision });
 const nonempty = value => typeof value === 'string' && value.trim() !== '';
 const active = entry => entry.status === 'active';
+const receiptKey = (scope, requestId) => JSON.stringify([scope, requestId]);
 
 function select(source, fields) {
   return Object.fromEntries(fields.filter(key => source[key] !== undefined).map(key => [key, source[key]]));
@@ -31,7 +35,8 @@ function requestFingerprint({ requestId, ...content }) {
 }
 
 function draftFields(entry, externalSource) {
-  const fields = select(entry, ['kind', 'layer', 'project', 'proposedKind', 'title', 'body', 'keywords', 'importance', 'checkedAt']);
+  const fields = select(entry, ['kind', 'layer', 'project', 'proposedKind', 'title', 'body',
+    'keywords', 'paths', 'topics', 'importance', 'checkedAt']);
   const { source } = entry;
   return { ...fields, source: source && typeof source === 'object' && !Array.isArray(source)
     ? select(source, ['path', 'sha']) : source, externalSource };
@@ -39,9 +44,9 @@ function draftFields(entry, externalSource) {
 
 function sameFact(a, b) {
   const key = ({ kind, layer, project, owner, author, cardId, proposedKind, title, body,
-    keywords = [], importance = 0, source, externalSource = [] }) => JSON.stringify([
+    keywords = [], paths = [], topics = [], importance = 0, source, externalSource = [] }) => JSON.stringify([
     kind, layer, project, owner, kind === 'candidate' ? [author, cardId, proposedKind] : null,
-    title, body, keywords, importance, source?.path, source?.sha, externalSource,
+    title, body, keywords, paths, topics, importance, source?.path, source?.sha, externalSource,
   ]);
   return key(a) === key(b);
 }
@@ -73,12 +78,12 @@ function forgetMarker(entry, revision) {
 function purge(state, entry) {
   const tombstone = forgetMarker(entry, entry.revision + 1);
   const replacements = new Map([[entry.id, tombstone]]);
-  for (const { response } of state.receipts) {
-    const { id, status } = response.candidate ?? {};
-    if (response.item?.id !== entry.id || !['promoted', 'merged'].includes(status) || replacements.has(id)) continue;
+  const links = { ...candidateTargets(state.receipts), ...state.candidateTargets };
+  for (const [id, target] of Object.entries(links)) {
+    if (target !== entry.id || replacements.has(id)) continue;
     const candidate = state.entries.find(row => row.id === id);
-    if (!candidate || candidate.status === 'forgotten') continue;
-    const marker = status === 'merged' ? forgetMarker(candidate, candidate.revision + 1)
+    if (!candidate || !['promoted', 'merged'].includes(candidate.status)) continue;
+    const marker = candidate.status === 'merged' ? forgetMarker(candidate, candidate.revision + 1)
       : select(candidate, ['id', 'revision', 'project', 'layer', 'kind', 'status', 'author',
         'cardId', 'proposedKind', 'reviewer']);
     replacements.set(id, marker);
@@ -97,8 +102,18 @@ function purge(state, entry) {
   return tombstone;
 }
 
-export function createMemoryStore({ now = Date.now, readState, commitState, evidence,
-  estimateTokens, maxMetadataBytes, staleDays, getObservations, classifySensitive, replacement, readRaw } = {}) {
+function candidateTargets(receipts) {
+  return Object.fromEntries(receipts.flatMap(({ response }) => {
+    const candidate = response.candidate;
+    return ['promoted', 'merged'].includes(candidate?.status) && response.item?.id
+      ? [[candidate.id, response.item.id]] : [];
+  }));
+}
+
+export function createMemoryStore({ now = Date.now, readState, commitState, evidence, allocateId,
+  estimateTokens, maxMetadataBytes, staleDays, getObservations, classifySensitive, replacement, readRaw,
+  receiptTtlMs = 30 * day, eventProject } = {}) {
+  if (!Number.isFinite(receiptTtlMs) || receiptTtlMs < 0) throw new RangeError('Invalid memory receipt TTL');
   const format = { evidence, estimateTokens, maxMetadataBytes };
   const redaction = { classifySensitive, replacement };
   let pending = Promise.resolve();
@@ -129,13 +144,13 @@ export function createMemoryStore({ now = Date.now, readState, commitState, evid
 
   function allocate(state) {
     let id;
-    do { id = `memory-${++state.nextId}`; }
+    do { id = allocateId?.() ?? `memory-${++state.nextId}`; }
     while (state.entries.some(entry => entry.id === id));
     return id;
   }
 
-  async function prepare(fields) {
-    const raw = validateEntryFormat(fields, format);
+  async function prepare(fields, knownHist, validation = format) {
+    const raw = validateEntryFormat(fields, validation);
     if (!raw.ok) return raw;
     const safe = sanitizeEntry(fields, redaction);
     if (!safe.ok) return safe;
@@ -145,7 +160,14 @@ export function createMemoryStore({ now = Date.now, readState, commitState, evid
     if (safe.entry.source?.path !== fields.source?.path || safe.entry.source?.sha !== fields.source?.sha) {
       return invalid('Memory evidence could not be reliably redacted');
     }
-    const result = await validateEntry(safe.entry, format);
+    if (fields.source?.hist && (safe.entry.source?.hist?.addr !== fields.source.hist.addr ||
+        safe.entry.source?.hist?.turnId !== fields.source.hist.turnId)) {
+      return invalid('Memory history could not be reliably redacted');
+    }
+    const result = await validateEntry(safe.entry, knownHist ? { ...validation, evidence: {
+      ...evidence,
+      hasHist: hist => hist.addr === knownHist.addr && hist.turnId === knownHist.turnId,
+    } } : validation);
     return result.ok ? safe : result;
   }
 
@@ -215,7 +237,12 @@ export function createMemoryStore({ now = Date.now, readState, commitState, evid
     const supersedes = [...existing, ...targets.map(({ target }) => target.id)];
     const extra = current ? select(current, ['original', 'proposer', 'reviewer']) : {};
     if (requested !== undefined || current?.supersedes !== undefined) extra.supersedes = supersedes;
-    const fields = await prepare(draftFields(entry, await observations(binding)));
+    const draft = draftFields(entry, await observations(binding));
+    const hist = current?.source?.hist;
+    if (hist && draft.source && draft.source.path === current.source.path && draft.source.sha === current.source.sha) {
+      draft.source.hist = hist;
+    }
+    const fields = await prepare(draft, hist);
     if (!fields.ok) return fields;
     if (!current && !targets.length) {
       const duplicate = state.entries.find(row => (candidate ? row.status === 'pending' : active(row))
@@ -278,7 +305,8 @@ export function createMemoryStore({ now = Date.now, readState, commitState, evid
       const externalSource = [...new Map([...(target.externalSource ?? []), ...(current.externalSource ?? []),
         ...await observations(binding)]
         .map(observation => [JSON.stringify(observation), observation])).values()];
-      const fields = await prepare(draftFields({ ...target, body: request.body }, externalSource));
+      const fields = await prepare({ ...draftFields({ ...target, body: request.body }, externalSource), source: target.source },
+        target.source?.hist);
       if (!fields.ok) return fields;
       item = version(state, binding, fields.entry, target, {
         ...select(target, ['original', 'supersedes']), proposer: current.author, reviewer: binding.principal,
@@ -287,6 +315,7 @@ export function createMemoryStore({ now = Date.now, readState, commitState, evid
       if (!result.ok) return result;
       updateEntry(state, item, 'update');
     }
+    if (item !== candidate) (state.candidateTargets ??= {})[candidate.id] = item.id;
     updateEntry(state, candidate);
     return success({ item, candidate });
   }
@@ -369,6 +398,12 @@ export function createMemoryStore({ now = Date.now, readState, commitState, evid
     const scope = JSON.stringify([binding.sessionId, binding.principal, binding.role, binding.project, binding.cardId]);
     const prior = state.receipts.find(row => row.scope === scope && row.requestId === requestId);
     const fingerprint = requestFingerprint(request);
+    const key = receiptKey(scope, requestId);
+    if (state.expiredReceipts && Object.hasOwn(state.expiredReceipts, key)) {
+      const identical = fingerprint !== undefined && fingerprint === state.expiredReceipts[key];
+      return { ok: false, code: 'conflict', error: identical ? 'Memory request receipt has expired' :
+        'Memory request ID was already used' };
+    }
     if (prior && (fingerprint === undefined || fingerprint !== prior.fingerprint)) {
       return { ok: false, code: 'conflict', error: 'Memory request ID was already used' };
     }
@@ -377,14 +412,21 @@ export function createMemoryStore({ now = Date.now, readState, commitState, evid
     }
     if (fingerprint === undefined) return invalid('Invalid memory request content');
     const success = (fields, status = 'accepted') => ({ ok: true, ...fields, receipt: { requestId, status } });
-    const current = state.entries.find(entry => entry.id === id);
+    let current = state.entries.find(entry => entry.id === id);
     const forgottenMerge = op === 'merge' && current?.status === 'forgotten';
     if (prior && !forgottenMerge) return prior.response;
+    let resolved = request;
+    if (isShortMemoryId(id) && (op === 'put' || op === 'forget')) {
+      const match = access.resolveShortId(binding, state, id);
+      if (!match.item) return { ok: false, code: match.code, error: match.error };
+      current = match.item;
+      resolved = { ...request, id: current.id };
+    }
     const before = state.seq;
     let result;
     if (forgottenMerge || (op === 'merge' && current?.status === 'merged')) {
       result = replayMerge(state, binding, request, current, success);
-    } else if (op === 'put' || op === 'propose') result = await put(state, binding, request, current, success);
+    } else if (op === 'put' || op === 'propose') result = await put(state, binding, resolved, current, success);
     else if (decisions.has(op)) result = await review(state, binding, request, current, success);
     else if (op === 'import_rulings') result = await importRulings(state, binding, request, success);
     else if (op === 'forget') {
@@ -396,7 +438,7 @@ export function createMemoryStore({ now = Date.now, readState, commitState, evid
     } else return invalid('Unknown memory write operation');
     if (!result.ok) return result;
     if (state.seq !== before) indexFiles(state);
-    state.receipts.push({ scope, requestId, fingerprint, response: result });
+    state.receipts.push({ scope, requestId, fingerprint, response: result, committedAt: now() });
     await commitState(state);
     return structuredClone(result);
   }
@@ -409,7 +451,10 @@ export function createMemoryStore({ now = Date.now, readState, commitState, evid
     const ids = new Set([...text.matchAll(/\[memory:([\w-]+)\]/gu)].map(match => match[1]));
     const usedAt = time();
     for (const id of ids) {
-      const { item } = await access.show(binding, id);
+      const { item } = await access.show(binding, id).catch(error => {
+        if (error.code === 'not-found' || error.code === 'ambiguous') return {};
+        throw error;
+      });
       if (item && active(item)) {
         const entry = state.entries.find(row => row.id === item.id);
         updateEntry(state, { ...entry, usage: (entry.usage ?? 0) + 1, lastUsedAt: usedAt });
@@ -420,23 +465,189 @@ export function createMemoryStore({ now = Date.now, readState, commitState, evid
   }
 
   async function maintain() {
-    if (!Number.isFinite(staleDays) || staleDays <= 0) return;
     const state = await snapshot();
+    const at = now();
+    let receiptsChanged = false;
+    const links = candidateTargets(state.receipts);
+    state.receipts = state.receipts.filter(row => {
+      // Old snapshots have no commit timestamp. Give them one retention window from first upkeep.
+      if (!Number.isFinite(row.committedAt)) {
+        row.committedAt = at;
+        receiptsChanged = true;
+      }
+      const retained = at - row.committedAt < receiptTtlMs;
+      if (!retained) {
+        (state.expiredReceipts ??= {})[receiptKey(row.scope, row.requestId)] = row.fingerprint ?? null;
+        receiptsChanged = true;
+      }
+      return retained;
+    });
+    const cutoff = at - staleDays * day;
+    const stale = Number.isFinite(staleDays) && staleDays > 0 ? state.entries.filter(entry => active(entry)
+      && entry.source?.path !== rulingPath
+      && Date.parse(entry.lastUsedAt ?? entry.effectiveAt ?? entry.updatedAt) <= cutoff) : [];
+    const migrated = eventProject ? state.entries.filter(entry => ['active', 'stale'].includes(entry.status) &&
+      entry.withdrawnBy !== 'legacy-mechanical-memory' && isLegacyMechanicalMemory(eventProject, entry)) : [];
+    if (!stale.length && !migrated.length && !receiptsChanged) return;
+    if (Object.keys(links).length) state.candidateTargets = { ...links, ...state.candidateTargets };
+    const updatedAt = new Date(at).toISOString();
+    const retired = new Set(migrated);
+    for (const entry of new Set([...stale, ...migrated])) {
+      updateEntry(state, { ...entry, status: 'stale', revision: entry.revision + 1, updatedAt,
+        ...(retired.has(entry) && { withdrawnBy: 'legacy-mechanical-memory' }) }, 'withdraw');
+    }
+    if (stale.length || migrated.length) indexFiles(state);
+    await commitState(state);
+  }
+
+  async function syncLedger(text) {
+    if (!eventProject || typeof classifySensitive !== 'function') return invalid('Memory ledger is unavailable');
+    if (typeof text !== 'string' || !text.trim()) return { ok: true };
+    const parsed = ledgerRulings(eventProject, text);
+    if (!parsed.length) return { ok: true };
+    const state = await snapshot();
+    const current = new Map(state.entries.map(item => [item.id, item]));
+    const ledger = new Map(parsed.map(item => [item.id, item]));
+    const incoming = new Map();
     const updatedAt = time();
-    const cutoff = Date.parse(updatedAt) - staleDays * day;
-    const stale = state.entries.filter(entry => active(entry)
-      && Date.parse(entry.lastUsedAt ?? entry.effectiveAt ?? entry.updatedAt) <= cutoff);
-    if (!stale.length) return;
-    for (const entry of stale) {
-      updateEntry(state, { ...entry, status: 'stale', revision: entry.revision + 1, updatedAt }, 'withdraw');
+    // Ledger entries preserve the source quote, including rulings longer than a manual note.
+    const validation = { ...format, estimateTokens: () => 0 };
+    const before = state.seq;
+    let changed = false;
+    const replacementsFor = id => [
+      ...(current.get(id)?.supersededBy ?? []).filter(replacement => !ledger.has(replacement) ||
+        current.get(replacement)?.status === 'forgotten'),
+      ...(incoming.get(id) ?? []),
+    ];
+    for (const { id, supersedes } of parsed) {
+      if (current.get(id)?.status === 'forgotten') continue;
+      for (const target of supersedes) {
+        if (!incoming.has(target)) incoming.set(target, []);
+        incoming.get(target).push(id);
+      }
+    }
+    for (const { id, title, body, supersedes, continuationOf } of parsed) {
+      const prior = current.get(id);
+      if (prior?.status === 'forgotten') continue;
+      if (prior && (prior.kind !== 'ruling' || prior.layer !== 'user' || prior.source?.path !== rulingPath)) {
+        return invalid('Memory ledger ID is in use');
+      }
+      const date = /\b\d{4}-\d{2}-\d{2}\b/u.exec(body)?.[0];
+      const draft = { title, body, kind: 'ruling', layer: 'user', project: null,
+        checkedAt: Number.isFinite(Date.parse(date)) ? date + 'T00:00:00.000Z' : prior?.checkedAt ?? updatedAt,
+        source: prior?.source ?? { path: rulingPath } };
+      const fields = await prepare(draft, prior?.source?.hist, validation);
+      if (!fields.ok) return fields;
+      const replacedBy = [...new Set([...replacementsFor(id), ...replacementsFor(continuationOf)])];
+      const next = { ...(prior ?? version(state, { principal: 'super', role: 'super' }, fields.entry, { id, revision: 0 })),
+        ...fields.entry, status: replacedBy.length ? 'superseded' : prior?.status === 'stale' ? 'stale' : 'active' };
+      if (supersedes.length || prior?.supersedes) next.supersedes = supersedes;
+      if (replacedBy.length || prior?.supersededBy) next.supersededBy = replacedBy;
+      if (continuationOf) next.continuationOf = continuationOf;
+      if (isDeepStrictEqual(prior, next)) continue;
+      const item = { ...next, revision: (prior?.revision ?? 0) + 1, updatedAt };
+      const result = validateEntryFormat(item, validation);
+      if (!result.ok) return result;
+      updateEntry(state, item, active(item) ? (prior && active(prior) ? 'update' : 'add') :
+        prior && active(prior) ? 'withdraw' : null);
+      changed = true;
+    }
+    for (const prior of current.values()) {
+      if (prior.status !== 'active' || ledger.has(prior.id)) continue;
+      if (prior.kind !== 'ruling' || prior.layer !== 'user' || prior.source?.path !== rulingPath ||
+          !prior.id.startsWith('memory-event-')) continue;
+      const item = { ...prior, status: 'stale', revision: prior.revision + 1, updatedAt };
+      const result = validateEntryFormat(item, validation);
+      if (!result.ok) return result;
+      updateEntry(state, item, 'withdraw');
+      changed = true;
+    }
+    if (state.seq !== before) indexFiles(state);
+    if (changed) await commitState(state);
+    return { ok: true };
+  }
+
+  // The approval plan owns the project files. The active store publishes a
+  // stable ID for each file so retries do not add a second memory or delta.
+  async function publishProjectReview(binding, paths, items, backfill) {
+    const state = await snapshot();
+    const before = state.seq;
+    const existing = new Map(state.entries.map(entry => [entry.id, entry]));
+    const byPath = new Map(items.map(item => [item.path, item]));
+    for (const path of paths) {
+      const id = projectReviewMemoryId(binding.project, path);
+      const prior = existing.get(id);
+      if (prior && (backfill || prior.status === 'forgotten')) continue;
+      const item = byPath.get(path);
+      if (!item) {
+        if (prior && active(prior)) {
+          updateEntry(state, { ...prior, status: 'stale', revision: prior.revision + 1, updatedAt: time() }, 'withdraw');
+        }
+        continue;
+      }
+      const draft = { kind: 'ruling', layer: 'shared', project: binding.project,
+        title: item.title, body: item.body.trim(), checkedAt: item.meta.verified + 'T00:00:00.000Z', source: { path } };
+      const fields = await prepare(draft);
+      if (!fields.ok) return fields;
+      if (prior && isDeepStrictEqual(select(prior, Object.keys(fields.entry)), fields.entry)) continue;
+      const next = version(state, binding, fields.entry, prior ?? { id, revision: 0 });
+      updateEntry(state, next, prior && active(prior) ? 'update' : 'add');
+    }
+    if (state.seq !== before) {
+      indexFiles(state);
+      await commitState(state);
+    }
+    return { ok: true };
+  }
+
+  // Internal event ingestion, callable only with a history verifier supplied by the daemon.
+  async function recordEvent(binding, key, entry) {
+    if (typeof classifySensitive !== 'function') return invalid('Memory sensitivity classifier is required');
+    const allowed = access.canWrite(binding, entry) || (binding?.role === 'worker' && binding.cardId &&
+      entry.project === binding.project && entry.layer === 'shared' && entry.kind === 'lesson');
+    if (!allowed || !nonempty(key) || !entry.source?.hist) return forbidden();
+    const id = eventMemoryId(key);
+    const state = await snapshot();
+    if (state.entries.some(item => item.id === id)) return { ok: true };
+    const fields = await prepare({ ...draftFields(entry, await observations(binding)), source: entry.source });
+    if (!fields.ok) return fields;
+    const item = version(state, binding, fields.entry, { id, revision: 0 });
+    const result = validateEntryFormat(item, format);
+    if (!result.ok) return result;
+    updateEntry(state, item, 'add');
+    indexFiles(state);
+    await commitState(state);
+    return { ok: true, item };
+  }
+
+  async function withdrawReviewed(binding, revisions, requestId) {
+    const state = await snapshot();
+    const targets = Object.entries(revisions).map(([id, revision]) => ({
+      revision, entry: state.entries.find(item => item.id === id),
+    }));
+    if (binding.role !== 'super' || !targets.length ||
+        targets.some(({ entry }) => entry?.layer !== 'user' || !access.canWrite(binding, entry))) return forbidden();
+    if (targets.every(({ entry }) => entry.withdrawnBy === requestId)) return { ok: true };
+    for (const { entry, revision } of targets) {
+      if (entry.revision !== revision || entry.status !== 'active') return conflict(entry.revision);
+    }
+    for (const { entry } of targets) {
+      updateEntry(state, { ...entry, revision: entry.revision + 1, status: 'stale',
+        updatedAt: time(), withdrawnBy: requestId }, 'withdraw');
     }
     indexFiles(state);
     await commitState(state);
+    return { ok: true };
   }
 
   return {
     access,
     write: (binding, request) => serialize(() => write(binding, request)),
+    recordEvent: (binding, key, entry) => serialize(() => recordEvent(binding, key, entry)),
+    syncLedger: text => serialize(() => syncLedger(text)),
+    publishProjectReview: (binding, paths, items, backfill) =>
+      serialize(() => publishProjectReview(binding, paths, items, backfill)),
+    withdrawReviewed: (binding, revisions, requestId) => serialize(() => withdrawReviewed(binding, revisions, requestId)),
     recordTurn: event => serialize(() => recordTurn(event)),
     maintain: () => serialize(maintain),
     rebuildIndex: () => serialize(async () => {

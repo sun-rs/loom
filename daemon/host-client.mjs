@@ -19,7 +19,7 @@ async function connect(path, incarnation) {
   catch (error) { if (!hostAbsent(error)) throw error; }
 }
 
-export async function attachHost(project, row, job, save, controller, { stop = false, capabilities, authorizeLaunch } = {}) {
+export async function attachHost(project, row, job, save, controller, { stop = false, capabilities, authorizeLaunch, memory } = {}) {
   const addr = row.addr;
   const journal = eventPath(project, addr);
   let resume = row.sessionId;
@@ -80,6 +80,7 @@ export async function attachHost(project, row, job, save, controller, { stop = f
     const hostGrant = job.pendingHostGrant ?? job.hostGrant;
     mkdirSync(dir, { recursive: true, mode: 0o700 });
     writeState(join(dir, 'launch.json'), JSON.stringify({ row: { ...row, sessionId: resume,
+      ...(memory && { memory }),
       ...(job.integration && { integration: true }),
       ...(hostGrant && { hostGrant }),
       ...(job.fast !== undefined && { fast: job.fast }),

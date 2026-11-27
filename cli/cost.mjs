@@ -1,11 +1,16 @@
+import { join } from 'node:path';
 import { checkEvidence } from '../evidence/checks.mjs';
 import { codexCommands } from '../evidence/transcript.mjs';
 import { roles } from '../index/index.mjs';
 import { historyReader } from './history.mjs';
+import { projectIndex, runtimeDirectory } from './project.mjs';
+import { extractorMetrics } from '../daemon/memory-extractor-state.mjs';
+import { readOrg } from '../daemon/org.mjs';
+import { readText } from '../daemon/io.mjs';
+import { substantiveIndexRow } from '../memory/index-row.mjs';
 import { readPolicy } from './policy.mjs';
 import { timestamp, turnTools } from './turns.mjs';
 import { readArtifacts } from './artifacts.mjs';
-import { projectIndex } from './project.mjs';
 import { deliveryId } from '../inbox/message.mjs';
 import { agyTurnPrompt } from '../adapters/agy/lib/parse-agy.mjs';
 
@@ -132,6 +137,8 @@ export function projectCost(directory, sessions, { includeAcceptance = true, now
   const workerTurns = [];
   const missing = [];
   const seen = new Set();
+  const successors = new Set(projectIndex(directory).rotations().map(rotation => rotation.successor));
+  const firstTurns = [];
   let leaderWakes = 0;
 
   for (const session of sessions) {
@@ -152,6 +159,10 @@ export function projectCost(directory, sessions, { includeAcceptance = true, now
     // A shared native transcript accounts for its native turns once. A
     // journal-only turn is specific to this Loom address.
     const turns = duplicate ? items.filter(item => item.journalOnly) : items;
+    if (successors.has(session.addr)) {
+      const first = turns.find(item => item.turn.status === 'completed')?.turn.usage;
+      if (first?.calls > 0) firstTurns.push({ addr: session.addr, tokens: (first.inputTokens ?? 0) + (first.outputTokens ?? 0) });
+    }
     role.turns += turns.length;
     if (session.role === 'leader') leaderWakes += Math.max(0, turns.length - 1);
 
@@ -174,7 +185,24 @@ export function projectCost(directory, sessions, { includeAcceptance = true, now
   for (const totals of Object.values(byRole)) {
     totals.estimatedCostShare = estimatedCostUsd ? totals.estimatedCostUsd / estimatedCostUsd : null;
   }
-  return { byRole, rawTokens, workerShare: rawTokens ? byRole.worker.rawTokens / rawTokens : null,
+  const memoryExtractor = extractorMetrics(directory, now);
+  const factMiss = Object.values(readOrg(directory).notices)
+    .filter(notice => notice.type === 'fact-miss').reduce((sum, notice) => sum + (notice.count ?? 0), 0);
+  const observed = firstTurns.length ? firstTurns.reduce((sum, item) => sum + item.tokens, 0) / firstTurns.length : null;
+  const baseline = policy.memory?.pilot?.handoverFileBaseline;
+  const handoverFileBaseline = Number.isFinite(baseline) && baseline >= 0 ? baseline : null;
+  const memory = JSON.parse(readText(join(runtimeDirectory(directory), 'memory-v1.json'), 'null'));
+  const indexEntries = (memory?.entries ?? []).filter(entry => entry.status === 'active' &&
+    (entry.layer === 'shared' && entry.project === directory ||
+      entry.layer === 'user' && entry.project === null && ['preference', 'ruling'].includes(entry.kind)));
+  const indexSubstantiveRatio = indexEntries.length ? indexEntries.filter(substantiveIndexRow).length / indexEntries.length : null;
+  const memoryPilot = { extraMainRoleRequestsPerTurn: 0, firstTurnTokens: {
+    observed, handoverFileBaseline, samples: firstTurns,
+    difference: observed !== null && handoverFileBaseline !== null ? observed - handoverFileBaseline : null,
+  }, factMiss, proposalPassRate: memoryExtractor.proposalPassRate,
+  approvedProposals: memoryExtractor.approvedProposals, rejectedProposals: memoryExtractor.rejectedProposals,
+  diagnostics: memoryExtractor.diagnostics, indexSubstantiveRatio };
+  return { byRole, rawTokens, memoryExtractor, memoryPilot, workerShare: rawTokens ? byRole.worker.rawTokens / rawTokens : null,
     estimatedCostUsd, estimatedWorkerShare: byRole.worker.estimatedCostShare,
     pricing: { estimate: true, unit: 'USD per million tokens', prices },
     leaderWakes, workerTurns, missing, pyramid: pyramid(rolling, since, now),

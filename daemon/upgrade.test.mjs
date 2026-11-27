@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
-import { execFile, mkdtempSync } from '../fixtures/test-process.mjs';
+import { execFile, mkdtempSync, spawn } from '../fixtures/test-process.mjs';
+import { anchorUpgradeProcesses } from '../fixtures/upgrade-spawn.mjs';
 import { createHash, randomUUID } from 'node:crypto';
+import { once } from 'node:events';
 import { cpSync, existsSync, mkdirSync, readFileSync, realpathSync, renameSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { basename, join, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -111,9 +113,11 @@ test('failed verification restores the old writer and a successful upgrade prese
       process.exit(1);
     }
     const result = spawnSync(${JSON.stringify(backendPs)}, process.argv.slice(2), { stdio: 'inherit' });
+    if (result.error) throw result.error;
     process.exit(result.status ?? 1);
   `, { mode: 0o700 });
-  const env = { HOME: dir, TMPDIR: dir, CODEX_HOME: dir, XDG_STATE_HOME: join(dir, 'state'), PATH: process.env.PATH, LOOM_CODEX_BIN: codex,
+  const anchor = process.env.LOOM_TEST_PS ? await anchorUpgradeProcesses(t, dir, project, root, candidate) : {};
+  const env = { ...anchor, HOME: dir, TMPDIR: dir, CODEX_HOME: dir, XDG_STATE_HOME: join(dir, 'state'), PATH: process.env.PATH, LOOM_CODEX_BIN: codex,
     OAR_CODEX_BIN: codex, LOOM_CLAUDE_BIN: codex, LOOM_AGY_BIN: codex, LOOM_OPENCODE_BIN: codex,
     LOOM_DESKTOP_NOTIFY: '0', LOOM_TEST_PS: ps, LOOM_TEST_CODEX_PIPES: '1', LOOM_EXTERNAL_SUPER: '1',
     ...(process.env.LOOM_WORKER_TMP && { LOOM_WORKER_TMP: process.env.LOOM_WORKER_TMP }) };
@@ -125,6 +129,7 @@ test('failed verification restores the old writer and a successful upgrade prese
       });
     return JSON.parse(result.stdout);
   };
+  let foreground, foregroundExited;
   t.after(async () => {
     const status = await run('daemon', 'status').catch(() => null);
     if (status?.running && status.project === project) {
@@ -132,6 +137,8 @@ test('failed verification restores the old writer and a successful upgrade prese
       for (const session of rows?.sessions ?? []) await run('stop', session.addr).catch(() => {});
       await run('daemon', 'stop').catch(() => {});
     }
+    if (foreground?.exitCode === null && foreground.signalCode === null) foreground.kill('SIGTERM');
+    await foregroundExited;
     rmSync(dir, { recursive: true, force: true });
   });
 
@@ -166,10 +173,14 @@ test('failed verification restores the old writer and a successful upgrade prese
     const log = join(metadata, 'loomd.log');
     assert.fail(JSON.stringify(value) + (existsSync(log) ? '\n' + readFileSync(log, 'utf8').slice(-2400) : ''));
   }
-  const previous = await run('daemon', 'start');
+  foreground = spawn(process.execPath, [cli, 'daemon', 'start', '--foreground', '--project', project],
+    { cwd: project, env, stdio: 'ignore' });
+  foregroundExited = once(foreground, 'exit');
+  const previous = await until(() => run('daemon', 'status'), result => result.running);
   assert.equal(previous.running, true);
   const opened = await run('spawn', 'super', '--cwd', project, '--cli', 'codex', '--mode', 'headless',
     '--model', 'fixture', '--effort', 'high', 'Startup fixture prompt');
+  assert.equal(opened.ok, true, JSON.stringify(opened.error));
   const { addr } = opened.session;
   const authDir = join(env.XDG_STATE_HOME, 'loom', 'socket-auth', createHash('sha256').update(project).digest('hex'));
   const external = clientCapability(project, env);
