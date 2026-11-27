@@ -875,10 +875,16 @@ export function ownedSessions(project, index, report, {
     if (job.handoverFrom && rotatingRoles.includes(job.row.role)) index.failRotation(job.row.addr, Date.now(), error.message);
   }
 
-  function failHandover(job, reason, at) {
-    job.handoverFailure = { reason, at };
-    save(job);
+  async function closeFailedHandover(job, row) {
+    const { reason, at } = job.handoverFailure;
     index.failRotation(job.row.addr, at, reason);
+    if (row?.endedAt === null) return stop(row);
+  }
+
+  async function failHandover(job, reason, at) {
+    job.handoverFailure ??= { reason, at };
+    save(job);
+    await closeFailedHandover(job, rowFor(job.row.addr)).catch(error => report(`${job.row.addr} handover cleanup: ${error.message}`));
   }
 
   function holdsForHandover(message) {
@@ -983,6 +989,10 @@ export function ownedSessions(project, index, report, {
       const addr = job.row.addr;
       try {
         let row = rowFor(addr);
+        if (row?.endedAt === null && job.handoverFailure && !job.handoverBound) {
+          if (!(retryAt.get(addr) > Date.now())) await closeFailedHandover(job, row);
+          continue;
+        }
         if (row?.role === 'reviewer' && row.endedAt === null) {
           await stop(row);
           continue;

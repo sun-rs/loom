@@ -18,6 +18,7 @@ function undimmedText(line, cols, cell, trimRight, caret) {
 
 const prompts = { claude: '❯', codex: '›', agy: '>', opencode: '┃' };
 const rule = /^\s*─{8,}\s*$/;
+const ruleTail = /^─+$/;
 const codexFooter = /^\s*(?:gpt-\S+|o\d\S*).* [·•] /i;
 const codexKeys = /^\s*← for agents · \? for shortcuts\b/i;
 const agyTask = /^\s*●\s+\[\d{1,2}:\d{2}:\d{2}\]\s+\S/;
@@ -54,12 +55,13 @@ export function readGrid(terminal, provider, extractDraft) {
     while (first >= 0 && (lines[first]?.isWrapped || openCodeRow.test(raw[first]))) first--;
     first++;
   } else {
-    let bottom = raw.findLastIndex(row => rule.test(row));
+    const ruleStart = (row, index) => rule.test(row) && (provider !== 'agy' || !lines[index]?.isWrapped);
+    let bottom = raw.findLastIndex(ruleStart);
     // Agy adds a second rule below task notifications. The input is above them.
     if (provider === 'agy' && agyTask.test(raw[bottom - 1] ?? '')) {
-      bottom = raw.findLastIndex((row, index) => index < bottom && rule.test(row));
+      bottom = raw.findLastIndex((row, index) => index < bottom && ruleStart(row, index));
     }
-    const top = raw.findLastIndex((row, index) => index < bottom && rule.test(row) &&
+    const top = raw.findLastIndex((row, index) => index < bottom && ruleStart(row, index) &&
       (provider === 'agy' ? /^>(?:\s|$)/.test(raw[index + 1] ?? '') : raw[index + 1]?.trimStart().startsWith(prompt)));
     if (top < 0) return { text, cursor };
     first = top + 1;
@@ -95,21 +97,28 @@ export function readGrid(terminal, provider, extractDraft) {
   }
   // agy renders the initial edit-mode suggestion in ANSI bright black at the
   // start of the live composer. Typed text does not carry this combination.
-  if (provider === 'agy' && cursor.y === first && cursor.x === 2 &&
-      firstCell?.isFgPalette() && firstCell.getFgColor() === 8 &&
-      agySuggestion.test(draft)) {
-    draft = '';
+  const agyStock = provider === 'agy' && cursor.y === first && cursor.x === 2 &&
+    firstCell?.isFgPalette() && firstCell.getFgColor() === 8 && agySuggestion.test(draft);
+  if (agyStock) draft = '';
+  // Some agy welcome paints end at the lower rule, without shortcut or
+  // model text. Require the cursor and palette proof of the stock suggestion.
+  let agyStartupComposer = false;
+  if (agyStock && buffer.type === 'normal' && raw.slice(0, first).some(row => /\bAntigravity CLI \d+\.\d+\.\d+\b/.test(row))) {
+    let after = last + 2;
+    while (lines[after]?.isWrapped && ruleTail.test(raw[after])) after++;
+    agyStartupComposer = raw.slice(after).every(row => !row.trim());
   }
   const stock = provider === 'claude' ? /^\s*❯\s+Try ["“].+["”]\s*$/ :
     /^\s*>\s+/;
-  const recognizedStock = stock.test(raw[first]) && (provider !== 'agy' || agySuggestion.test(raw[first].replace(stock, '')));
+  const recognizedStock = agyStock || stock.test(raw[first]) && (provider !== 'agy' || agySuggestion.test(raw[first].replace(stock, '')));
   const composerText = ['agy', 'claude'].includes(provider) && draft === '' && recognizedStock
-    ? raw.map((line, index) => index === first ? prompt : line).join('\n') : text;
+    ? [...raw.slice(0, first), prompt, ...raw.slice((agyStock ? last : first) + 1)].join('\n') : text;
   const outsideComposer = [...raw.slice(0, first), ...raw.slice(last + 1)].join('\n');
   const vacantText = [...raw.slice(0, first), prompt, ...raw.slice(last + 1)].join('\n');
   const clip = provider === 'agy' && /^↑ ([1-9]\d*) more lines?\n/.exec(draft);
   const scrolledDraft = clip && cursor.y === last && { hiddenRows: Number(clip[1]), tail: draft.slice(clip[0].length) };
   const atDraftEnd = cursor.y === last &&
     !lines[last]?.translateToString(true, cursor.x, terminal.cols).trim();
-  return { text, composerText, cursor, draft, outsideComposer, vacantText, scrolledDraft, atDraftEnd };
+  return { text, composerText, cursor, draft, outsideComposer, vacantText, scrolledDraft, atDraftEnd,
+    ...(agyStartupComposer && { agyStartupComposer }) };
 }

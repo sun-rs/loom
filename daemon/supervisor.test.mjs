@@ -1527,6 +1527,64 @@ test('failed self-rotation reports the first failure on a normal wake and escala
   await assert.rejects(d.handle('rotate', { self: true }, old.addr), { code: 'rotation-retry-exhausted' });
 });
 
+test('an overdue agy TUI handover closes only its successor pane and retries persisted cleanup', async t => {
+  let advance = 0;
+  const panes = new Map(), kills = [], sends = [];
+  const f = fixture(t, { now: () => Date.now() + advance, sessionOptions: {
+    async openPane(_job, row) {
+      const pid = 20 + panes.size;
+      const terminal = { address: `t${pid}`, cwd: row.cwd, pid, created_ms: Date.now(),
+        state: 'live', status: { state: 'idle' }, status_ms: Date.now() };
+      panes.set(row.addr, terminal);
+      return { terminal };
+    },
+    async getPane(_job, row) { return panes.get(row.addr); },
+    async callHc(command, address) {
+      const term = [...panes.values()].find(pane => pane.address === address);
+      if (command === 'get') return term;
+      if (command === 'read') return { how: 'screen', complete: true, text: '──────────\n>\n──────────\n? for shortcuts' };
+      if (command === 'send') { sends.push(address); return; }
+      assert.equal(command, 'kill');
+      kills.push(address);
+      if (kills.length === 1) throw new Error('fixture hc temporarily unavailable');
+      Object.assign(term, { state: 'finished', finished_ms: Date.now() });
+    },
+  } });
+  let d = f.daemon();
+  t.after(() => d.shutdown());
+  const { session: old } = await f.spawn(d, 'leader', 'OLD', undefined, { cli: 'agy', mode: 'tui' });
+  const events = join(f.project, '.project', 'relay', 'events');
+  mkdirSync(events, { recursive: true });
+  appendFileSync(join(events, `${old.addr}.jsonl`), JSON.stringify({ cwd: f.project, receivedAt: Date.now(),
+    conversationId: randomUUID(), hook_event_name: 'SessionStart' }) + '\n');
+  await d.tick();
+  const { rotation: { notePath } } = await d.handle('rotate', { self: true, prepare: true }, old.addr);
+  writeFileSync(notePath, 'Continue verification at the next project boundary.');
+  await d.handle('rotate', { self: true }, old.addr);
+  await d.tick();
+  const next = (await d.handle('state', { target: old.addr })).rotations[0].successor;
+  const nextPane = panes.get(next);
+  advance = 15 * 60_000;
+  await d.tick();
+  assert.deepEqual(kills, [nextPane.address]);
+  assert.ok(!sends.includes(nextPane.address));
+  assert.equal((await d.handle('state', { target: 'leader' })).addr, old.addr);
+  await d.shutdown();
+  // Releases before this fix could persist the failure without marking the job stopping.
+  const jobPath = `loomd/sessions/${next}.json`;
+  const job = f.read(jobPath);
+  assert.equal(job.handoverFailure.reason, 'self-rotation-overdue');
+  delete job.stopping;
+  writeFileSync(join(f.project, '.project', jobPath), JSON.stringify(job));
+  d = f.daemon();
+  await d.tick();
+  await d.tick();
+  assert.deepEqual(kills, [nextPane.address, nextPane.address]);
+  assert.equal(nextPane.state, 'finished');
+  assert.equal((await d.handle('state', { target: next })).state, 'closed');
+  assert.equal((await d.handle('state', { target: 'leader' })).addr, old.addr);
+});
+
 for (const [role, startsWork] of [['auditor', true], ['auditor', false], ['leader', false]]) test(`handover Do now ${role} ${startsWork ? 'settles on its phase receipt' : 'nudges once then reports inactivity'}`, async t => {
   let advance = 0;
   const f = fixture(t, { now: () => Date.now() + advance });
@@ -1727,7 +1785,6 @@ test('host grants debit before launch, expire on conclusion, and save all observ
 
 test('keeps the predecessor active and releases queued work when the first briefing turn lacks the acknowledgement', async t => {
   const f = fixture(t);
-  f.policy({ workers: { idleRetainMs: 0 } });
   const d = f.daemon();
   t.after(d.shutdown);
   const { session: old } = await f.spawn(d, 'leader', 'OLD');
@@ -1738,7 +1795,7 @@ test('keeps the predecessor active and releases queued work when the first brief
   await d.tick();
   f.sessions.get(next.addr).finish('I received part of the brief');
   await d.tick();
-  assert.equal((await d.handle('state', { target: next.addr })).state, 'idle-warm');
+  assert.equal((await d.handle('state', { target: next.addr })).state, 'closed');
   assert.equal(f.prompts.find(item => deliveryId(item.input) === queued.id).addr, old.addr);
   assert.ok((await d.handle('notifications', { history: true })).notifications.some(event =>
     event.type === 'leader-handover-failed' && event.reason === 'first-turn-missing-acknowledgement'));
@@ -1746,9 +1803,6 @@ test('keeps the predecessor active and releases queued work when the first brief
   const { exits } = await projectStatus(f.project);
   assert.equal(exits.find(item => item.addr === next.addr)?.reason, 'first-turn-missing-acknowledgement');
   assert.ok(!exits.some(item => item.addr === old.addr));
-  await d.handle('notifications', { take: true });
-  await d.tick();
-  assert.equal((await d.handle('state', { target: next.addr })).state, 'closed');
   await f.spawn(d, 'leader', 'RETRY', undefined, { 'handover-from': old.addr });
 });
 

@@ -298,7 +298,7 @@ ${details}`, {
     await sessions.retirePredecessor(job).catch(error => report(`handover retirement: ${error.message}`));
   }
 
-  function failHandover(job, reason) {
+  async function failHandover(job, reason) {
     const row = sessions.rowFor(job.row.addr);
     const type = `${row.role}-handover-failed`;
     const title = row.role === 'leader' ? 'Leader' : 'Auditor';
@@ -306,7 +306,7 @@ ${details}`, {
     notifications.add({ id: `${type}:${job.firstId}`, project: row.project, type,
       addr: row.addr, deliveryId: job.firstId, reason, at, ...(job.selfRotationId && { logOnly: true }),
       text: `${title} ${row.addr} 交接失败（${reason}）。` });
-    sessions.failHandover(job, reason, at);
+    await sessions.failHandover(job, reason, at);
   }
 
   async function settleHandovers() {
@@ -345,7 +345,7 @@ ${details}`, {
       const reason = job.error ?? (row.endedAt !== null ? 'successor-exited' : deliveryFailed(message) ? message.issue :
         done && !done.unconfirmed && (done.body || done.noReply) ? 'first-turn-missing-acknowledgement' : undefined);
       if (!reason) continue;
-      failHandover(job, reason);
+      await failHandover(job, reason);
     }
   }
 
@@ -802,7 +802,7 @@ ${details}`, {
     if (row?.role === 'reviewer' || message.reviewerResult) return 'role-retired';
     const targetJob = sessions.jobs.get(row?.addr);
     if (targetJob?.firstReportCheck?.status === 'mismatch') return 'worker-first-report-mismatch';
-    if (!message.startup && targetJob?.handoverFailure) return 'handover-failed';
+    if (targetJob?.handoverFailure) return 'handover-failed';
     if (row?.role === 'leader') {
       const stuck = message.stuckOf && mail.messages.find(item => item.id === message.stuckOf);
       if (message.orgEvents && !message.orgAppendix || stuck && sessions.rowFor(stuck.target.addr)?.role === 'worker' ||
@@ -916,14 +916,11 @@ ${details}`, {
     const conditions = releaseConditions(mail.messages);
     const rows = sessions.rows();
     const approvals = approvedWaves(mail.messages, rows);
-    const acknowledged = new Set(mail.messages.filter(message => message.received && !deliveryFailed(message))
-      .flatMap(message => [...message.projectEvents ?? [], ...message.rotationNotices ?? []]));
     const at = now();
     for (const row of rows) {
       const job = sessions.jobs.get(row.addr);
       if (!job || row.endedAt !== null || job.stopping || job.hostGrant ||
-          !(row.role === 'worker' && (row.backend === 'headless' || job.firstReportCheck?.status === 'mismatch') ||
-            job.handoverFailure)) continue;
+          row.role !== 'worker' || row.backend !== 'headless' && job.firstReportCheck?.status !== 'mismatch') continue;
       if (job.retention?.keepWarm && deliveries(row.addr).some(message => message.id !== job.firstId &&
           message.received && !deliveryFailed(message))) sessions.setRetention(job, { keepWarm: undefined });
       const approved = row.role === 'worker' && [row.wave, job.barrier].filter(Boolean)
@@ -933,11 +930,7 @@ ${details}`, {
       const handoff = job.workerHandoff?.ready;
       const closingReason = mismatch ? 'first-report-mismatch' : handoff ? 'worker-handoff' : approved && 'gate-approved';
       if (isReleased(job) && (!closingReason || job.retention.resuming)) continue;
-      const events = job.handoverFailure ? notifications.list(row.project, false, true) : [];
-      const failureId = `${row.role}-handover-failed:${job.firstId}`;
       const resultDelivered = mismatch ? conditions.workerSummaryDelivered(row.addr) :
-        job.handoverFailure ? acknowledged.has(failureId) ||
-        acknowledged.has(job.selfRotationId) || events.some(event => event.id === failureId && event.takenAt != null) :
         conditions.workerResult(row, job, { allowBlocked: handoff });
       const eligible = Boolean(resultDelivered && !conditions.pending(row.addr));
       if (!eligible) {
@@ -967,7 +960,6 @@ ${details}`, {
         } else if (idle && !job.retention.keep && !job.retention.keepWarm && at - idleSince >= retainMs(row)) {
           if (row.backend === 'headless' && row.sessionId) {
             await sessions.release(row, view, at, 'ttl', finalContext);
-            if (row.role !== 'worker') await sessions.stop(row);
           }
           else if (row.backend === 'tui') await sessions.stop(row);
         }
