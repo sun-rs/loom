@@ -17,6 +17,7 @@ import { itemPath, renderEntry } from '../memory/format.mjs';
 import { activeItems } from '../memory/project.mjs';
 import { createMemoryStore } from '../memory/store.mjs';
 import { extractorStatePath, readExtractorState } from './memory-extractor-state.mjs';
+import { authorizeSocketCommand, socketCapabilities } from './socket-auth.mjs';
 import { createSupervisor } from './supervisor.mjs';
 
 // Pin the client to the same checkout as the supervisor under test.
@@ -110,17 +111,22 @@ async function fixture(t, { capture = false, proposals = [], ...memoryOptions } 
       },
     };
   }
+  const capabilities = socketCapabilities(project);
   const start = () => createSupervisor(project, {
-    report: () => {}, externalNotification: async () => {}, sessionOptions: { open },
+    report: () => {}, externalNotification: async () => {}, sessionOptions: { open, capabilities },
     memoryOptions: { classifySensitive, ...memoryOptions, ...(capture && {
       readState: () => state, commitState: next => { state = structuredClone(next); },
     }) },
   });
   let daemon = start();
-  const handle = (command, args, caller) => daemon.handle(command, args, caller);
+  const handle = (command, args, caller, context) => daemon.handle(command, args, caller, context);
   const server = createServer(socket => socket.once('data', async data => {
-    const { command, args, caller } = JSON.parse(data);
-    try { socket.end(JSON.stringify({ ok: true, ...await handle(command, args, caller) })); }
+    const { command, args, capability } = JSON.parse(data);
+    try {
+      const actor = capabilities.identify(capability, daemon.liveCaller);
+      authorizeSocketCommand(command, args, actor);
+      socket.end(JSON.stringify({ ok: true, ...await handle(command, args, actor?.addr) }));
+    }
     catch (error) { socket.end(JSON.stringify({ ok: false, error: { code: error.code, message: error.message } })); }
   })).listen(socketPath(project));
   t.after(async () => {
@@ -131,7 +137,8 @@ async function fixture(t, { capture = false, proposals = [], ...memoryOptions } 
   await once(server, 'listening');
   const cli = async (caller, ...args) => {
     const { stdout } = await exec(LOOM_BIN, [...args, '--project', project, '--json'], {
-      cwd: project, timeout: 5000, env: { ...process.env, LOOM_ADDR: caller ?? '', HC_TERMINAL_ID: '' },
+      cwd: project, timeout: 5000, env: { ...process.env, LOOM_ADDR: caller ?? '', HC_TERMINAL_ID: '',
+        LOOM_PROJECT: project, ...(caller && { LOOM_CAPABILITY: capabilities.ensureSession(caller).token }) },
     });
     return JSON.parse(stdout);
   };
@@ -143,7 +150,11 @@ async function fixture(t, { capture = false, proposals = [], ...memoryOptions } 
     }, caller)).session.addr,
     finish: (addr, reply, commentary) => active.get(addr)(reply, commentary),
     tick: () => daemon.tick(),
-    async restart() { await daemon.shutdown(); daemon = start(); },
+    async restart() {
+      await daemon.shutdown();
+      daemon = start();
+      await daemon.reattach([]);
+    },
   };
 }
 // The CLI and entry shapes follow memory/CONTRACT.md.
@@ -328,7 +339,8 @@ test('8c Auditor-approved project proposals reach Leader and Auditor startup ind
 
   const surfaces = [];
   for (const [i, addr] of recipients.entries()) {
-    const packet = await f.handle('send', { target: addr, mode: 'queue', text: 'Check the approved release guidance.' });
+    const packet = await f.handle('send', { target: addr, mode: 'queue', text: 'Check the approved release guidance.' },
+      undefined, { external: true });
     await f.tick();
     const delivery = f.prompts.find(prompt => prompt.addr === addr && deliveryId(prompt.input) === packet.deliveryId);
     assert.ok(delivery, 'the business delivery reached the ' + roles[i]);
@@ -719,7 +731,7 @@ for (const [sender, scenario, body] of [
     if (superAddr) f.finish(superAddr, 'NOREPLY');
     await f.tick();
     const count = f.prompts.length;
-    const delivery = await f.handle('send', { target: leader, text: body, mode: 'queue' }, superAddr);
+    const delivery = await f.handle('send', { target: leader, text: body, mode: 'queue' }, superAddr, { external: sender === 'user' });
     await f.tick();
     const [prompt] = f.prompts.slice(count);
     assert.equal(prompt?.addr, leader);
@@ -749,7 +761,7 @@ for (const [sender, scenario, body] of [
     if (superAddr) f.finish(superAddr, 'NOREPLY');
     await f.tick();
     const count = f.prompts.length;
-    const delivery = await f.handle('send', { target: leader, text: body, mode: 'queue' }, superAddr);
+    const delivery = await f.handle('send', { target: leader, text: body, mode: 'queue' }, superAddr, { external: sender === 'user' });
     await f.tick();
     const [prompt] = f.prompts.slice(count);
     assert.equal(prompt?.addr, leader);

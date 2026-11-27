@@ -88,7 +88,8 @@ export async function holderTerminal(binding, controller, provider, expectedPid,
           let emptyComposer;
           if (provider === 'agy') {
             const before = readGrid(grid, provider);
-            emptyComposer = before.draft === '' && providers.agy.screen.hasEmptyComposer(before.composerText ?? before.text);
+            emptyComposer = before.draft === '' && (before.agyStartupComposer ||
+              providers.agy.screen.hasEmptyComposer(before.composerText ?? before.text));
           }
           recentWrites.push({ id: event.data.toString('hex', 0, 16), count: event.data.readUInt32BE(16), human: editing, rows: size.rows, bufferSequence,
             seq: event.seq, output: event.offset, boundary: pasteBoundary, emptyComposer });

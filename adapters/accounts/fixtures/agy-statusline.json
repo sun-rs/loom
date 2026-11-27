@@ -1,0 +1,20 @@
+{
+  "session_id": "agy-sess-1",
+  "plan_tier": "google_ai_ultra",
+  "quotas": [
+    {
+      "id": "gemini-5h",
+      "display_name": "Gemini 5h",
+      "window": "5h",
+      "used_percentage": 25.6,
+      "reset_time": "2026-11-26T17:02:03Z"
+    },
+    {
+      "id": "gemini-weekly",
+      "display_name": "Gemini Weekly",
+      "window": "weekly",
+      "used_percentage": 13.6,
+      "reset_time": "2026-12-03T07:02:03Z"
+    }
+  ]
+}

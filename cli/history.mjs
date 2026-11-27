@@ -8,6 +8,7 @@ import { nativeRanges, timestamp, transcriptRows, turnTools } from './turns.mjs'
 import { managedWaveKey } from '../relay/project.mjs';
 import { oarTurnEndHead } from '../daemon/turn-heads.mjs';
 import { seniorToolEvents } from '../daemon/senior-tools.mjs';
+import { workerCardId } from '../daemon/worker-retention.mjs';
 
 const at = value => Number.isFinite(timestamp(value)) ? timestamp(value) : null;
 const iso = time => at(time) === null ? null : new Date(at(time)).toISOString();
@@ -48,6 +49,7 @@ function matchingCards(session, turns, artifacts) {
   const observations = [...journalTurns(journal).values()];
   const hooks = artifacts?.turnHeads(session.addr) ?? [];
   const messages = artifacts?.messages().filter(message => message.target?.addr === session.addr) ?? [];
+  const firstId = session.role === 'worker' ? artifacts?.job(session.addr)?.firstId : undefined;
   const completions = messages.flatMap(message => message.completion ? [message.completion] : []);
   const interrupts = messages.filter(message => message.requestedMode === 'interrupt' && message.stoppedAt != null);
   const used = new Set();
@@ -97,10 +99,11 @@ function matchingCards(session, turns, artifacts) {
   return entries.map(entry => {
     const { turn, observation, completion, hook } = entry;
     const cards = artifacts ? cardsFor(artifacts.cards(session.addr), turn, observation, completion) : [];
+    const nextCard = observation?.end && firstId && workerCardId(messages, firstId, observation.end) !== firstId;
     return { ...entry, turn: !turn.reply && completion?.body ? { ...turn, reply: completion.body } : turn,
       cards, journalPath: journal?.path, heads: {
       start: observation?.start.observedAt ? { head: observation.start.head, observedAt: observation.start.observedAt } : hook?.start ?? null,
-      end: oarTurnEndHead(artifacts?.project, session, observation?.start, observation?.end) ?? hook?.end ?? null,
+      end: oarTurnEndHead(artifacts?.project, session, observation?.start, observation?.end, { nextCard }) ?? hook?.end ?? null,
     } };
   });
 }
@@ -138,10 +141,12 @@ export function historyReader(directory) {
     let path;
     let parsed = { turns: [] };
     let raw = [];
+    let transcriptBytes = null;
     let missing;
     try {
       path = transcriptFor(session);
       const text = readTranscript(path);
+      transcriptBytes = Buffer.byteLength(text);
       parsed = transcript.parse(text);
       raw = transcriptRows(text);
     } catch (error) { missing = error; }
@@ -159,7 +164,7 @@ export function historyReader(directory) {
       });
     }
     for (const [i, item] of items.entries()) item.index = i + 1;
-    const result = { path, items, missing, project, raw };
+    const result = { path, items, missing, project, parsed, raw, transcriptBytes };
     read.set(session.addr, result);
     return result;
   }
@@ -198,7 +203,7 @@ function matchesKeyword(entry, kw) {
 }
 
 export async function history(sessions, reader, options) {
-  const { level, count, since, exact, exactAddr, timeline, outcome, grep, tool, command, tail, showDiff, evidence, withCalls, onlyFailed } = options;
+  const { level, count, since, before, page, exact, exactAddr, timeline, outcome, grep, tool, command, tail, showDiff, evidence, withCalls, onlyFailed } = options;
   const entries = [];
   const missing = [];
   const seen = new Set();
@@ -227,8 +232,15 @@ export async function history(sessions, reader, options) {
     from = entries.findIndex(({ session, index }) => session.addr === since.addr && index === since.index);
     if (from < 0) throw new CommandError('not-found', `No turn ${since.index} at ${since.addr}`);
   } else if (since?.index !== undefined) from = since.index - 1;
+  let until = entries.length;
+  if (before?.addr !== undefined) {
+    until = entries.findIndex(({ session, index }) => session.addr === before.addr && index === before.index);
+    if (until < 0) throw new CommandError('not-found', `No turn ${before.index} at ${before.addr}`);
+  }
   const matched = [];
   for (const [i, item] of entries.entries()) {
+    if (i >= until) break;
+    if (before && before.addr === undefined && (timeline ? i + 1 : item.index) >= before.index) continue;
     if (i < from || since?.at !== undefined && (item.at === null || item.at < since.at) ||
         exact && (exactAddr ? item.session.addr !== exactAddr || item.index !== exact : timeline ? i + 1 !== exact : item.index !== exact)) continue;
     const entry = enrich(item);
@@ -236,9 +248,18 @@ export async function history(sessions, reader, options) {
     matched.push({ ...entry, timelineIndex: i + 1 });
   }
   if (exact && !matched.length && !outcome && !grep) throw new CommandError('not-found', `No turn ${exact}`);
+  const forward = since && !page && !before;
+  const end = forward ? Math.min(count, matched.length) : Math.max(0, matched.length - (page ? (page - 1) * count : 0));
+  const start = forward ? 0 : Math.max(0, end - count);
   // An active turn may already be journaled while the last finished answer is still the latest result.
   const settled = options.latestSettled && matched.findLast(entry => entry.turn.endedAt != null);
-  const selected = settled ? [settled] : since ? matched.slice(0, count) : matched.slice(-count);
+  const selected = settled ? [settled] : matched.slice(start, end);
+  const first = selected[0];
+  const nextBefore = (settled ? matched.indexOf(settled) : start) > 0 && first ? (timeline ? `turn:${first.session.addr}#${first.index}` : String(first.index)) : undefined;
+  const pagination = (before || page || nextBefore) && {
+    page: page ?? 1, ...(Number.isFinite(count) && { pageSize: count }), hasOlder: Boolean(nextBefore),
+    ...(nextBefore && { nextBefore }),
+  };
   const seniorLogs = new Map();
   const turns = await Promise.all(selected.map(async entry => {
     const { session, turn, rows, path, cards, tools, heads, claims, git, activity, tags } = entry;
@@ -281,7 +302,7 @@ export async function history(sessions, reader, options) {
       status: activity.lifecycle, ...extra };
 
   }));
-  return { turns, ...(missing.length ? { missing } : {}) };
+  return { turns, ...(pagination && { pagination }), ...(missing.length ? { missing } : {}) };
 }
 
 export async function waveHistory(sessions, reader, project, wave, { evidence, showDiff }) {

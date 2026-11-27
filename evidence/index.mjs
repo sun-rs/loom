@@ -7,6 +7,7 @@ import { collectGit, isCredentialPath } from './git.mjs';
 import { compareClaims } from './claims.mjs';
 import { checkEvidence, sandboxDenialCounts } from './checks.mjs';
 import { checkFacts } from './facts.mjs';
+import { verificationDetails, verificationSummary } from './verification.mjs';
 import { clipTokens } from '../lib/token-budget.mjs';
 
 const safeKey = /^[A-Za-z0-9][A-Za-z0-9_.-]*$/;
@@ -51,7 +52,7 @@ async function writeOnce(path, data) {
   } finally { await rm(temp, { force: true }); }
 }
 
-function cardFor({ claims, git, verification, facts }) {
+function cardFor({ claims, git, verification, facts, checks }) {
   const mismatches = claims.filter(claim => claim.status === 'MISMATCH');
   const uncertain = claims.filter(claim => claim.status === 'UNVERIFIED');
   const headline = `证据 ${mismatches.length ? `MISMATCH ${mismatches.length}` : '卡'}` +
@@ -76,7 +77,7 @@ function cardFor({ claims, git, verification, facts }) {
   const misses = facts?.misses ?? [];
   const factLine = misses.length && `fact-miss ${misses.length} · ${misses.slice(0, 3).map(fact => fact.value).join(' · ')}`;
   const denials = verification.sandboxDenials ? `沙箱拒绝 ${verification.sandboxDenials}` : '';
-  return clipTokens([headline, factLine, denials, changes, verify, results].filter(Boolean).join('\n'), 299);
+  return clipTokens([headline, factLine, denials, changes, verify, verificationSummary(checks), results].filter(Boolean).join('\n'), 299);
 }
 
 export async function evidenceConfig(project) {
@@ -129,16 +130,21 @@ export async function forTurn(options) {
         return check ? [check] : [];
       }) });
     }
+    if (options.hostAudit) verification.host = options.hostAudit;
     const reply = finalReply === undefined ? nativeReply : finalReply;
     verification.expectRed = (options.expectRed ?? settings.expectRed) === true;
     const claims = compareClaims(reply, git, verification, failed);
     const facts = options.facts ?? (cwd && reply ? checkFacts(reply, cwd, project, git) : { checked: 0, misses: [] });
     const data = { version: 1, task, turn, addr, provider: provider ?? null, endedAt, capturedAt, git, verification, claims, facts };
+    data.checks = verificationDetails(project, path, data, settings);
     data.card = cardFor(data);
     await writeOnce(path, JSON.stringify(data, null, 2) + '\n');
   }
   const data = JSON.parse(previous ?? await readFile(path, { encoding: 'utf8', flag: constants.O_RDONLY | constants.O_NOFOLLOW }));
-  await writeOnce(textPath, data.card + '\n');
+  const host = data.verification.host;
+  const hostLog = host ? ['', 'Host command log', host.coverage,
+    ...host.executables.map(entry => JSON.stringify(entry)), ...host.commands.map(entry => JSON.stringify(entry))].join('\n') : '';
+  await writeOnce(textPath, data.card + '\n' + (hostLog && hostLog + '\n'));
   return { path, textPath, card: data.card, data };
 }
 

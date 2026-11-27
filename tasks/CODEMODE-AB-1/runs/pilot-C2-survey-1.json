@@ -1,0 +1,38 @@
+{
+  "kind": "benchmark-run",
+  "arm": "C2",
+  "task": "survey",
+  "repetition": 1,
+  "base": "0ca39c54b8eed922a7127fd022b99b1ffb84be0a",
+  "vendor": "claude",
+  "version": "2.1.331",
+  "model": "claude-sonnet-5-5",
+  "startedAt": "2026-11-26T13:34:40.447Z",
+  "finishedAt": "2026-11-26T13:35:15.367Z",
+  "wallMs": 34920,
+  "modelRequests": 6,
+  "inputTokens": 289217,
+  "cachedTokens": 230720,
+  "cacheWriteTokens": 58485,
+  "outputTokens": 4097,
+  "peakContextTokens": 58487,
+  "toolCalls": 8,
+  "replCalls": 0,
+  "scriptCalls": 2,
+  "nativeWallMs": 34888,
+  "humanInterventions": 0,
+  "codeModeConsent": "not-applicable",
+  "scriptAudit": {
+    "checked": 6,
+    "outsideWorkingCopy": 0
+  },
+  "outcome": "completed",
+  "checker": {
+    "passed": true,
+    "rows": 22
+  },
+  "consentFiles": [],
+  "workspaceTrustSetup": true,
+  "codeModeBanner": false,
+  "changedGlobalConfigFiles": []
+}

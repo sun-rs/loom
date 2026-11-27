@@ -47,8 +47,6 @@ function canReadRole(binding, row, surface) {
       return (surface === 'show' || surface === 'attachments') && row.layer === 'shared'
         && binding.attachments?.includes(row.id)
         && (!isCrossProject(binding, row) || hasDependency(binding, row, false));
-    case 'reviewer':
-      return binding.authorizedIds?.[history ? 'history' : 'memory']?.includes(row.id);
     default:
       return false;
   }
@@ -209,7 +207,7 @@ export function createAccess({ readState, commitState, serialize, entries = [], 
       if (surface === 'withdraw' && candidate) return false;
       if (surface === 'attachments' && row.layer !== 'shared') return false;
     }
-    if (binding.role !== 'super' && row.project == null && binding.role !== 'reviewer') {
+    if (binding.role !== 'super' && row.project == null) {
       return surface !== 'history' && isUserGuidance(row) && ['auditor', 'leader'].includes(binding.role);
     }
     if (binding.role !== 'super' && isCrossProject(binding, row)) {

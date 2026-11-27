@@ -73,7 +73,7 @@ export async function observeRelayTurn(project, worker, reply, input = {}, index
         projected = { turnId: end.nativeTurnId ?? end.turnId, turnStatus: end.outcome?.kind, turnIndex: end.turn,
           tools: turnTools('opencode', {}, rows), executions };
         const start = rows.find(({ row }) => row.type === 'turn-start')?.row;
-        const head = oarTurnEndHead(project, { cwd, task: worker.id }, start, end);
+        const head = oarTurnEndHead(project, { cwd, task: worker.id }, start, end, { nextCard: input.nextCard });
         gitObservation = { ...(head?.git ?? gitObservation), ...(end.head && { head: end.head }) };
       }
     } else {

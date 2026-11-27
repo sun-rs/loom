@@ -121,6 +121,9 @@ export function theme(depth = 1) {
 }
 
 export const row = (text = '', ...items) => ({ text, items });
+export const hitRegions = (line, width) => line?.hits ?? (line?.items.length === 1 ? [{ from: 1, to: width, item: line.items[0] }] : []);
+const shiftHits = (line, width, offset) => hitRegions(line, width).filter(hit => hit.from <= width)
+  .map(({ from, to, item }) => ({ from: from + offset, to: Math.min(to, width) + offset, item }));
 
 export function box(title, rows, width, paint) {
   if (width < 5) return [row(truncate(title, width)), ...rows.map(line => ({ ...line, text: truncate(line.text, width) }))];
@@ -128,7 +131,8 @@ export function box(title, rows, width, paint) {
   const border = text => paint('accentDark', text);
   return [
     row(border('╭─') + paint('accent', label) + border('─'.repeat(width - 3 - widthOf(label)) + '╮')),
-    ...rows.map(line => ({ ...line, text: border('│ ') + pad(line.text, width - 4) + border(' │') })),
+    ...rows.map(line => ({ ...line, text: border('│ ') + pad(line.text, width - 4) + border(' │'),
+      ...(line.hits && { hits: shiftHits(line, width - 4, 2) }) })),
     row(border('╰' + '─'.repeat(width - 2) + '╯')),
   ];
 }
@@ -141,28 +145,40 @@ export function columns(width, left, right) {
   const leftWidth = Math.floor((width - gap) / 2);
   const a = left(leftWidth);
   const b = right(width - gap - leftWidth);
-  return Array.from({ length: Math.max(a.length, b.length) }, (_, i) =>
-    row(b[i] ? pad(a[i]?.text ?? '', leftWidth) + ' '.repeat(gap) + b[i].text : a[i].text,
-      ...(a[i]?.items ?? []), ...(b[i]?.items ?? [])));
+  return Array.from({ length: Math.max(a.length, b.length) }, (_, i) => ({
+    ...row(b[i] ? pad(a[i]?.text ?? '', leftWidth) + ' '.repeat(gap) + b[i].text : a[i].text,
+      ...(a[i]?.items ?? []), ...(b[i]?.items ?? [])),
+    hits: [...shiftHits(a[i], leftWidth, 0), ...shiftHits(b[i], width - leftWidth - gap, leftWidth + gap)],
+  }));
 }
 
 export function table(width, columns, entries, paint) {
-  // Drop columns from the end only on terminals too narrow for their headings.
-  const visible = columns.slice();
-  const gap = width < 55 ? ' ' : '  ';
-  while (visible.length > 1 && visible.reduce((sum, column) => sum + widthOf(column.title) + gap.length, -gap.length) > width) visible.pop();
-  const widths = visible.map(column => widthOf(column.title));
-  let extra = Math.max(0, width - widths.reduce((sum, size) => sum + size, gap.length * (widths.length - 1)));
-  for (let i = 1; i < widths.length; i++) {
-    const added = Math.min(extra, visible[i].width - widths[i]);
-    widths[i] += added;
+  const gap = width < Math.max(55, columns.length * 12) ? ' ' : '  ';
+  const visible = columns.map(({ title, min = 0, priority = 1 }, index) => {
+    const floor = Math.max(min, widthOf(title));
+    const content = entries.reduce((max, { cells }) => Math.max(max, widthOf(cells[index])), floor);
+    return { index, priority, size: floor, content };
+  });
+  const totalWidth = () => visible.reduce((sum, column) => sum + column.size + gap.length, -gap.length);
+  // Keep the row label and favor identifiers when a terminal cannot fit every column.
+  while (visible.length > 1 && totalWidth() > width) {
+    let drop = 1;
+    for (let i = 2; i < visible.length; i++) if (visible[i].priority <= visible[drop].priority) drop = i;
+    visible.splice(drop, 1);
+  }
+  visible[0].size = Math.min(visible[0].size, width);
+  let extra = Math.max(0, width - totalWidth());
+  for (const column of visible.toSorted((a, b) => b.priority - a.priority)) {
+    const added = Math.min(extra, column.content - column.size);
+    column.size += added;
     extra -= added;
   }
-  widths[0] += extra;
-  const line = cells => cells.slice(0, widths.length).map((cell, i) =>
-    i === widths.length - 1 ? truncate(cell, widths[i]) : pad(cell, widths[i])).join(gap);
-  return [row(paint('muted', line(visible.map(column => column.title)))),
-    ...entries.map(({ cells, item }) => row(line(cells), item))];
+  const line = cells => visible.map(({ index, size }, i) =>
+    i === visible.length - 1 ? truncate(cells[index], size) : pad(cells[index], size)).join(gap);
+  return [row(paint('muted', line(columns.map(column => column.title)))),
+    ...entries.flatMap(({ cells, item, below }) => [row(line(cells), item), ...(below ? [{
+      ...row(truncate(paint('muted', '  ' + below), width)), hits: [{ from: 1, to: width, item }],
+    }] : [])])];
 }
 
 export function meter(percent, size, paint, { pace, tone = 'accent' } = {}) {

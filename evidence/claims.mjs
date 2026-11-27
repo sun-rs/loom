@@ -48,6 +48,7 @@ export function latestChecks(commands) {
 }
 
 const finding = (status, reason) => ({ status, reason });
+export const unrecordedVerification = '本轮未记录验证执行';
 
 function compare(claim, git, verification, checks, failed) {
   if (claim.kind === 'done') {
@@ -73,13 +74,13 @@ function compare(claim, git, verification, checks, failed) {
   if (checks.some(check => check.counts.skipped > 0 || check.selective) ||
     git.tests?.some(test => test.changes?.addedSkip || test.changes?.addedOnly)) return finding('MISMATCH', '存在跳测或仅跑部分测试');
   if (verification.status !== 'ok') return finding('UNVERIFIED', '缺少该轮执行记录');
-  if (!checks.length) return finding('MISMATCH', '本轮未记录验证执行');
+  if (!checks.length) return finding('MISMATCH', unrecordedVerification);
   if (checks.every(check => check.result === 'passed' && check.counts.passed !== 0)) return finding('MATCH', '已记录的验证通过');
   return finding('UNVERIFIED', '无法归属测试退出状态');
 }
 
 export function compareClaims(text, git, verification, failed = false) {
-  const checks = latestChecks(verification.commands);
+  const checks = latestChecks(verification.commands.filter(command => command.runner !== 'loom-lint'));
   return claimsIn(text, checks).map(claim => {
     let scoped = checks;
     if (claim.commands) scoped = checks.filter(check => claim.commands.includes(shellBody(check.command).trim()));

@@ -18,20 +18,42 @@ async function capture(width) {
   return output;
 }
 
-for (const width of [80, 100, 140]) {
+const pageText = (page, width, options = {}) => boardLines(project, { board }, { page, now, width, ...options }).join('\n');
+
+for (const width of [80, 120, 200]) {
   test(`--once plain text snapshot at ${width} columns`, async t => {
     const output = await capture(width);
-    assert.doesNotMatch(output, /\x1b|pyramid inverted|Tool output share warning|herdr-tab-|aaaaaaaa-bbbb/i);
-    assert.match(output, /warming up/);
-    assert.match(output, /Claude\/GPT 周/);
-    assert.match(output, /▕[█░]*│[█░]*▏.*59% used.*~ on pace/);
-    assert.match(output, /66% used.*↑ ahead/);
-    assert.match(output, /stale · data 3h03m old/);
-    assert.match(output, /⟲3 reset credits/);
-    assert.equal(output.split('\n').some(line => widthOf(line) > width), false);
+    const workers = pageText(1, width);
+    const gates = pageText(2, width);
+    const notices = pageText(3, width);
+    const cost = pageText(4, width);
+    assert.doesNotMatch(output, /\x1b|herdr-tab-|aaaaaaaa-bbbb|索引|gate-cell-smoke|Claude\/GPT 周|refused 11/i);
+    assert.match(output, /Health · 3 项待处理/);
+    assert.match(output, /Workers · 2 active · 1 idle · 1 released/);
+    assert.match(output, /38%.*1234abcd/);
+    assert.match(output, /≈52%/);
+    assert.match(workers, /W2-TUI-17.*bead0002/);
+    assert.match(workers, /释放于 8m.*claude·sonnet.*DONE/);
+    assert.doesNotMatch(workers, /已释放任务|Ended fixture|oar-bead/);
+    assert.match(gates, /gate-cell-smoke-042 +2 +\[PASS\][^\n]*\n[^\n]*回归用例通过/);
+    assert.match(gates, /gate-cell-smoke-042 +1 +\[REJECT\]/);
+    assert.match(gates, /gate-cell-rollout-043 +2 +Pending +Auditor/);
+    assert.doesNotMatch(gates, /received/);
+    assert.match(notices, /1m ago +Decision +需要决定[\s\S]*2m ago +Info +投递回复 +Auditor +Read[\s\S]*7m ago +Alert +投递停滞/);
+    assert.match(notices, /×3/);
+    assert.match(notices, /4 routine delivery receipts/);
+    assert.doesNotMatch(notices, /Pyramid inverted|Tool output share warning/i);
+    assert.match(cost, /warming up/);
+    assert.match(cost, /Claude\/GPT 周/);
+    assert.match(cost, /▕[█░]*│[█░]*▏.*59% used.*~ on pace/);
+    assert.match(cost, /66% used.*↑ ahead/);
+    assert.match(cost, /stale · data 3h03m old/);
+    assert.match(cost, /⟲3 reset credits/);
+    const pages = [output, workers, gates, notices, cost];
+    assert.equal(pages.every(page => page.split('\n').every(line => widthOf(line) <= width)), true);
     const roleTitles = output.split('\n').find(line => line.includes(' Leader '));
     assert.equal(roleTitles.includes(' Auditor '), width >= 100);
-    t.assert.snapshot(output);
+    t.assert.snapshot(pages.join('\n\n'));
   });
 }
 
@@ -65,7 +87,7 @@ test('account data shows unknowns and protects the account label', () => {
   const text = accountRows(document, 80, now, theme()).map(line => line.text).join('\n');
   assert.equal(text.includes(unmasked), false);
   assert.match(text, /used % unknown.*reset unknown.*R refresh/);
-  assert.match(boardLines(project, { board: { ...board, accounts: undefined } }, { now }).join('\n'),
+  assert.match(boardLines(project, { board: { ...board, accounts: undefined } }, { now, page: 4 }).join('\n'),
     /Waiting for loom accounts snapshots/);
 });
 
@@ -73,10 +95,32 @@ test('both cost signals appear after all three roles cross the sample floor', ()
   const ready = structuredClone(board);
   ready.pyramids[0].byRole.leader.modelCalls = 3;
   ready.pyramids[0].byRole.worker.modelCalls = 3;
-  const output = boardLines(project, { board: ready }, { now, width: 100 }).join('\n');
-  assert.match(output, /consumption-pyramid/);
-  assert.match(output, /senior-tool-output-share/);
+  const output = boardLines(project, { board: ready }, { page: 3, now, width: 100 }).join('\n');
+  assert.match(output, /成本金字塔/);
+  assert.match(output, /工具输出占比/);
   assert.doesNotMatch(output, /warming up/);
+});
+
+test('the Notices tab also filters routine receipts from older board snapshots', () => {
+  const legacy = { ...board, notifications: { count: 2, last: [
+    { type: 'super-delivery-receipt', at: now, text: 'Legacy routine receipt' },
+    { type: 'super-delivery-receipt', reason: 'refused', at: now - 60_000, text: 'Delivery refused' },
+  ] } };
+  const output = boardLines(project, { board: legacy }, { now, page: 3 }).join('\n');
+  assert.match(output, /Super notices · 2/);
+  assert.match(output, /1m ago +Alert +投递失败.*Delivery refused/);
+  assert.doesNotMatch(output, /Legacy routine receipt/);
+});
+
+test('worker view shows warm retention, context, verdict and per-gate metrics', () => {
+  const sample = { ...board, workers: [{ ...board.workers[0], state: 'idle-warm', contextPercent: 37, lastResultTag: 'DONE',
+    retention: { remainingMs: 93_000 } }, { ...board.workers[1], state: 'closed', retention: {} }],
+  workerMetrics: [{ gate: 'TEST', newSpawns: 2, revives: 1, closed: 1, ttl: 1, coldRevives: 1,
+    coldRevivesMeasured: 1, coldReviveTokens: 150 }] };
+  const workers = boardLines(project, { board: sample }, { page: 1, now, width: 100, showEnded: true }).join('\n');
+  assert.match(workers, /idle-warm.*93s.*37%.*DONE/);
+  assert.match(workers, /closed/);
+  assert.match(workers, /TEST · new 2 · revived 1 · closed 1 · TTL offline 1 · cold 150 tokens/);
 });
 
 test('interactive tabs and keyboard selection open details with the full values', { timeout: 2000 }, async t => {
@@ -96,7 +140,7 @@ test('interactive tabs and keyboard selection open details with the full values'
     input.emit('keypress', text, { name });
     return stripVTControlCharacters(frames);
   };
-  const closed = statusTui({ project }, { input, output, rpc: async () => board, now: () => now, env: { NO_COLOR: '' } });
+  const closed = statusTui({ project }, { input, output, rpc: async () => ({ ...board, attention: [] }), now: () => now, env: { NO_COLOR: '' } });
   t.after(() => { input.end(); });
   await ready;
   assert.doesNotMatch(frames, /\x1b\[\d+(?:;\d+)*m/);
@@ -106,15 +150,87 @@ test('interactive tabs and keyboard selection open details with the full values'
   assert.match(emitted, /\/fixture\/织布工程\/leader\/fixture.jsonl/);
   key('escape');
   assert.match(key('3', '3'), /\[3 Gates\]/);
+  key('down');
   assert.match(key('return'), /完整门禁裁决第二行。/);
+  assert.match(stripVTControlCharacters(frames), /gate-042.full.md/);
   key('escape');
   assert.match(key('2', '2'), /\[2 Workers\]/);
   key('down');
   emitted = key('return');
-  assert.match(emitted, /bead0002-worker/);
+  assert.match(emitted, /oar-bead0002-0000-4000-8000-000000000002/);
   key('escape');
-  assert.match(key(undefined, '?'), /1–5 \/ ←→.*Switch tabs/);
+  assert.match(key(undefined, '?'), /1–5 \/ ←→ or click.*Switch tabs/);
   key('q');
   await closed;
+  assert.equal(input.isRaw, false);
+  assert.match(frames, /\x1b\[\?1000l\x1b\[\?1006l/);
+});
+
+
+test('Board empty state and worker history expose the right scope', () => {
+  const healthy = { ...board, attention: [] };
+  const summary = boardLines(project, { board: healthy }, { now, width: 80 }).join('\n');
+  assert.match(summary, /一切正常/);
+  assert.doesNotMatch(summary, /refused 11/);
+  const workers = pageText(1, 80, { showEnded: true });
+  assert.match(workers, /released.*BLOCKED/);
+  assert.match(workers, /ended.*FAILED/);
+});
+
+test('fragmented mouse reports select tabs and rows, open details and scroll', { timeout: 3000 }, async t => {
+  const input = new PassThrough();
+  const output = new PassThrough();
+  Object.assign(input, { isTTY: true, isRaw: false, setRawMode(mode) { this.isRaw = mode; } });
+  Object.assign(output, { isTTY: true, columns: 120, rows: 24 });
+  const extended = { ...board, workers: [...board.workers, ...Array.from({ length: 30 }, (_, i) => ({
+    task: 'Wheel worker ' + String(i + 1).padStart(2, '0'), addr: 'extra-worker-' + i, state: 'busy',
+    wave: 'W2-TUI-17', cli: 'codex', model: 'sol', startedAt: now - 1000,
+  }))] };
+  let frames = '';
+  let connected;
+  const ready = new Promise(resolve => { connected = resolve; });
+  output.on('data', chunk => {
+    frames += chunk;
+    if (frames.includes('online')) connected();
+  });
+  const closed = statusTui({ project }, { input, output, rpc: async () => extended, now: () => now, env: { NO_COLOR: '' } });
+  t.after(() => { input.end(); });
+  await ready;
+  assert.match(frames, /\x1b\[\?1006h\x1b\[\?1000h/);
+  const yOf = (page, value) => boardLines(project, { board: extended }, { page, now, width: 120 })
+    .findIndex(line => line.includes(value)) + 1;
+  const click = (x, y, code = 0, suffix = 'M') => input.write(`\x1b[<${code};${x};${y}${suffix}`);
+
+  frames = '';
+  const areas = yOf(0, 'Workers · 32 active');
+  assert.ok(areas > 0 && areas < 24);
+  input.write('\x1b');
+  input.write(`[<0;5;${areas}M`);
+  assert.match(frames, /\[2 Workers\]/);
+  const y = yOf(1, 'bead0002');
+  frames = '';
+  click(10, y);
+  assert.match(frames, /› /);
+  assert.doesNotMatch(frames, /oar-bead0002/);
+  click(10, y, 0, 'm');
+  assert.doesNotMatch(frames, /oar-bead0002/);
+  click(10, y);
+  assert.match(frames, /oar-bead0002-0000-4000-8000-000000000002/);
+  input.write('\x1b');
+  await new Promise(resolve => setTimeout(resolve, 60));
+  frames = '';
+  click(10, y, 65);
+  assert.match(frames, /Wheel worker (?:1[4-9]|2\d)/);
+
+  frames = '';
+  click(26, 4);
+  assert.match(frames, /\[3 Gates\]/);
+  const verdict = yOf(2, '回归用例通过');
+  click(12, verdict);
+  input.write('\r');
+  assert.match(frames, /完整门禁裁决第二行。/);
+  input.write('q');
+  await closed;
+  assert.match(frames, /\x1b\[\?1000l\x1b\[\?1006l/);
   assert.equal(input.isRaw, false);
 });

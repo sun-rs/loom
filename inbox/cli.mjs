@@ -67,7 +67,7 @@ export async function main(args) {
     return fail('unsupported', 'TUI delivery requires a daemon-managed loom-pty session', 1);
   } catch (error) {
     if (daemonAbsent(error) && error.syscall === 'connect') return fail('not-ready', 'loomd is not running for this project', 1);
-    if (['invalid-arguments', 'not-found', 'ambiguous-target', 'not-ready', 'uncertain', 'unsupported', 'id-conflict', 'batch-closed'].includes(error.code)) {
+    if (['invalid-arguments', 'not-found', 'ambiguous-target', 'not-ready', 'uncertain', 'unsupported', 'id-conflict', 'batch-closed', 'forbidden'].includes(error.code)) {
       return fail(error.code, error.message, error.code === 'invalid-arguments' ? 2 : ['not-found', 'ambiguous-target'].includes(error.code) ? 3 : 1);
     }
     if (error.kind === 'not_found' || error.kind === 'ambiguous-target') {

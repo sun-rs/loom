@@ -1,0 +1,636 @@
+[
+  {
+    "key": "C0-diagnosis-1",
+    "inputs": 4,
+    "refs": {},
+    "targetTests": {
+      "red": 0,
+      "green": 0,
+      "shellFailure": 1
+    },
+    "replNative": 0,
+    "scriptResults": [
+      {
+        "name": "Bash",
+        "flags": [],
+        "status": "permission denied",
+        "count": 1
+      }
+    ]
+  },
+  {
+    "key": "C0-diagnosis-2",
+    "inputs": 4,
+    "refs": {},
+    "targetTests": {
+      "red": 0,
+      "green": 0,
+      "shellFailure": 1
+    },
+    "replNative": 0,
+    "scriptResults": [
+      {
+        "name": "Bash",
+        "flags": [],
+        "status": "permission denied",
+        "count": 1
+      }
+    ]
+  },
+  {
+    "key": "C0-survey-1",
+    "inputs": 4,
+    "refs": {
+      "runtime": 1
+    },
+    "targetTests": {
+      "red": 0,
+      "green": 0,
+      "shellFailure": 0
+    },
+    "replNative": 0,
+    "scriptResults": []
+  },
+  {
+    "key": "C0-survey-2",
+    "inputs": 3,
+    "refs": {
+      "runtime": 2
+    },
+    "targetTests": {
+      "red": 0,
+      "green": 0,
+      "shellFailure": 0
+    },
+    "replNative": 0,
+    "scriptResults": []
+  },
+  {
+    "key": "C1-diagnosis-1",
+    "inputs": 7,
+    "refs": {},
+    "targetTests": {
+      "red": 0,
+      "green": 0,
+      "shellFailure": 1
+    },
+    "replNative": 3,
+    "scriptResults": [
+      {
+        "name": "Bash",
+        "flags": [],
+        "status": "permission denied",
+        "count": 1
+      },
+      {
+        "name": "Poll",
+        "flags": [],
+        "status": "permission denied",
+        "count": 1
+      }
+    ]
+  },
+  {
+    "key": "C1-diagnosis-2",
+    "inputs": 7,
+    "refs": {},
+    "targetTests": {
+      "red": 0,
+      "green": 0,
+      "shellFailure": 1
+    },
+    "replNative": 3,
+    "scriptResults": [
+      {
+        "name": "Bash",
+        "flags": [],
+        "status": "permission denied",
+        "count": 1
+      },
+      {
+        "name": "Poll",
+        "flags": [],
+        "status": "permission denied",
+        "count": 1
+      }
+    ]
+  },
+  {
+    "key": "C1-survey-1",
+    "inputs": 9,
+    "refs": {
+      "runtime": 2
+    },
+    "targetTests": {
+      "red": 0,
+      "green": 0,
+      "shellFailure": 0
+    },
+    "replNative": 3,
+    "scriptResults": []
+  },
+  {
+    "key": "C1-survey-2",
+    "inputs": 4,
+    "refs": {
+      "runtime": 2
+    },
+    "targetTests": {
+      "red": 0,
+      "green": 0,
+      "shellFailure": 0
+    },
+    "replNative": 2,
+    "scriptResults": []
+  },
+  {
+    "key": "X0-diagnosis-1",
+    "inputs": 11,
+    "refs": {
+      "ancestor-guide": 1,
+      "runtime": 7
+    },
+    "targetTests": {
+      "red": 1,
+      "green": 1,
+      "shellFailure": 1
+    },
+    "replNative": 0,
+    "scriptResults": [
+      {
+        "name": "command",
+        "flags": [
+          "ancestor-guide"
+        ],
+        "status": "missing",
+        "count": 1
+      },
+      {
+        "name": "command",
+        "flags": [
+          "runtime"
+        ],
+        "status": "success",
+        "count": 1
+      },
+      {
+        "name": "command",
+        "flags": [
+          "runtime"
+        ],
+        "status": "missing",
+        "count": 1
+      },
+      {
+        "name": "command",
+        "flags": [],
+        "status": "permission denied",
+        "count": 5
+      },
+      {
+        "name": "command",
+        "flags": [
+          "runtime"
+        ],
+        "status": "permission denied",
+        "count": 1
+      },
+      {
+        "name": "command",
+        "flags": [
+          "runtime"
+        ],
+        "status": "failed",
+        "count": 1
+      }
+    ]
+  },
+  {
+    "key": "X0-diagnosis-2",
+    "inputs": 11,
+    "refs": {
+      "own-temp": 5,
+      "ancestor-guide": 1,
+      "runtime": 7
+    },
+    "targetTests": {
+      "red": 2,
+      "green": 1,
+      "shellFailure": 0
+    },
+    "replNative": 0,
+    "scriptResults": [
+      {
+        "name": "command",
+        "flags": [
+          "runtime"
+        ],
+        "status": "success",
+        "count": 1
+      },
+      {
+        "name": "command",
+        "flags": [
+          "own-temp",
+          "runtime"
+        ],
+        "status": "success",
+        "count": 1
+      },
+      {
+        "name": "command",
+        "flags": [
+          "ancestor-guide"
+        ],
+        "status": "permission denied",
+        "count": 1
+      },
+      {
+        "name": "command",
+        "flags": [
+          "runtime"
+        ],
+        "status": "permission denied",
+        "count": 1
+      },
+      {
+        "name": "command",
+        "flags": [],
+        "status": "permission denied",
+        "count": 2
+      },
+      {
+        "name": "command",
+        "flags": [
+          "runtime"
+        ],
+        "status": "missing",
+        "count": 1
+      },
+      {
+        "name": "command",
+        "flags": [
+          "own-temp",
+          "runtime"
+        ],
+        "status": "failed",
+        "count": 2
+      },
+      {
+        "name": "command",
+        "flags": [
+          "own-temp"
+        ],
+        "status": "success",
+        "count": 1
+      },
+      {
+        "name": "command",
+        "flags": [
+          "own-temp"
+        ],
+        "status": "permission denied",
+        "count": 1
+      }
+    ]
+  },
+  {
+    "key": "X0-survey-1",
+    "inputs": 10,
+    "refs": {
+      "home": 1,
+      "runtime": 8,
+      "own-temp": 1
+    },
+    "targetTests": {
+      "red": 0,
+      "green": 0,
+      "shellFailure": 0
+    },
+    "replNative": 0,
+    "scriptResults": [
+      {
+        "name": "command",
+        "flags": [],
+        "status": "permission denied",
+        "count": 2
+      },
+      {
+        "name": "command",
+        "flags": [
+          "own-temp"
+        ],
+        "status": "permission denied",
+        "count": 1
+      },
+      {
+        "name": "command",
+        "flags": [
+          "runtime"
+        ],
+        "status": "failed",
+        "count": 1
+      },
+      {
+        "name": "command",
+        "flags": [
+          "runtime"
+        ],
+        "status": "success",
+        "count": 3
+      },
+      {
+        "name": "command",
+        "flags": [
+          "runtime"
+        ],
+        "status": "permission denied",
+        "count": 1
+      }
+    ]
+  },
+  {
+    "key": "X0-survey-2",
+    "inputs": 10,
+    "refs": {
+      "home": 1,
+      "runtime": 8,
+      "own-temp": 2
+    },
+    "targetTests": {
+      "red": 0,
+      "green": 0,
+      "shellFailure": 0
+    },
+    "replNative": 0,
+    "scriptResults": [
+      {
+        "name": "command",
+        "flags": [],
+        "status": "permission denied",
+        "count": 2
+      },
+      {
+        "name": "command",
+        "flags": [
+          "own-temp"
+        ],
+        "status": "success",
+        "count": 1
+      },
+      {
+        "name": "command",
+        "flags": [
+          "runtime"
+        ],
+        "status": "success",
+        "count": 2
+      },
+      {
+        "name": "command",
+        "flags": [
+          "own-temp"
+        ],
+        "status": "failed",
+        "count": 1
+      },
+      {
+        "name": "command",
+        "flags": [
+          "runtime"
+        ],
+        "status": "permission denied",
+        "count": 1
+      }
+    ]
+  },
+  {
+    "key": "X2-diagnosis-1",
+    "inputs": 11,
+    "refs": {
+      "own-temp": 1,
+      "runtime": 8,
+      "home": 1
+    },
+    "targetTests": {
+      "red": 2,
+      "green": 1,
+      "shellFailure": 1
+    },
+    "replNative": 0,
+    "scriptResults": [
+      {
+        "name": "command",
+        "flags": [
+          "own-temp",
+          "runtime"
+        ],
+        "status": "permission denied",
+        "count": 1
+      },
+      {
+        "name": "command",
+        "flags": [
+          "runtime"
+        ],
+        "status": "permission denied",
+        "count": 3
+      },
+      {
+        "name": "command",
+        "flags": [],
+        "status": "permission denied",
+        "count": 1
+      },
+      {
+        "name": "command",
+        "flags": [
+          "runtime"
+        ],
+        "status": "missing",
+        "count": 1
+      },
+      {
+        "name": "command",
+        "flags": [
+          "runtime"
+        ],
+        "status": "success",
+        "count": 1
+      },
+      {
+        "name": "command",
+        "flags": [
+          "runtime"
+        ],
+        "status": "failed",
+        "count": 2
+      }
+    ]
+  },
+  {
+    "key": "X2-diagnosis-2",
+    "inputs": 8,
+    "refs": {
+      "runtime": 6,
+      "ancestor-guide": 1,
+      "own-temp": 1
+    },
+    "targetTests": {
+      "red": 2,
+      "green": 1,
+      "shellFailure": 2
+    },
+    "replNative": 0,
+    "scriptResults": [
+      {
+        "name": "command",
+        "flags": [
+          "runtime"
+        ],
+        "status": "missing",
+        "count": 2
+      },
+      {
+        "name": "command",
+        "flags": [],
+        "status": "permission denied",
+        "count": 4
+      },
+      {
+        "name": "command",
+        "flags": [
+          "ancestor-guide"
+        ],
+        "status": "success",
+        "count": 1
+      },
+      {
+        "name": "command",
+        "flags": [
+          "runtime"
+        ],
+        "status": "success",
+        "count": 1
+      },
+      {
+        "name": "command",
+        "flags": [
+          "runtime"
+        ],
+        "status": "permission denied",
+        "count": 2
+      },
+      {
+        "name": "command",
+        "flags": [
+          "runtime"
+        ],
+        "status": "failed",
+        "count": 2
+      },
+      {
+        "name": "command",
+        "flags": [
+          "own-temp"
+        ],
+        "status": "success",
+        "count": 1
+      }
+    ]
+  },
+  {
+    "key": "X2-survey-1",
+    "inputs": 8,
+    "refs": {
+      "runtime": 8,
+      "own-temp": 1,
+      "ancestor-guide": 1
+    },
+    "targetTests": {
+      "red": 0,
+      "green": 0,
+      "shellFailure": 0
+    },
+    "replNative": 0,
+    "scriptResults": [
+      {
+        "name": "command",
+        "flags": [
+          "own-temp",
+          "ancestor-guide"
+        ],
+        "status": "success",
+        "count": 1
+      },
+      {
+        "name": "command",
+        "flags": [
+          "runtime"
+        ],
+        "status": "success",
+        "count": 3
+      },
+      {
+        "name": "command",
+        "flags": [],
+        "status": "permission denied",
+        "count": 3
+      },
+      {
+        "name": "command",
+        "flags": [
+          "runtime"
+        ],
+        "status": "permission denied",
+        "count": 1
+      }
+    ]
+  },
+  {
+    "key": "X2-survey-2",
+    "inputs": 6,
+    "refs": {
+      "ancestor-guide": 1,
+      "runtime": 5
+    },
+    "targetTests": {
+      "red": 0,
+      "green": 0,
+      "shellFailure": 0
+    },
+    "replNative": 0,
+    "scriptResults": [
+      {
+        "name": "command",
+        "flags": [
+          "ancestor-guide"
+        ],
+        "status": "success",
+        "count": 1
+      },
+      {
+        "name": "command",
+        "flags": [],
+        "status": "permission denied",
+        "count": 1
+      },
+      {
+        "name": "command",
+        "flags": [
+          "runtime"
+        ],
+        "status": "success",
+        "count": 2
+      },
+      {
+        "name": "command",
+        "flags": [
+          "runtime"
+        ],
+        "status": "permission denied",
+        "count": 1
+      }
+    ]
+  }
+]

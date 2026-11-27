@@ -2,8 +2,9 @@ import { promptKind } from '../adapters/prompt-state.mjs';
 import { randomUUID } from 'node:crypto';
 import { openStore } from './store.mjs';
 import { refusals } from './tui.mjs';
-import { checksDeliveryIntegrity, combinedDeliveryText, deliveryFailed, payloadDigest, replyConclusion } from './message.mjs';
+import { checksDeliveryIntegrity, combinedDeliveryText, deliveryFailed, payloadDigest, replyConclusion, wireText } from './message.mjs';
 import { replyForDelivery } from './reply-file.mjs';
+import { defaultReplyBytes } from '../cli/policy.mjs';
 
 export const defaultStallMs = 120_000;
 const awaitingDelivery = message => !message.received && !deliveryFailed(message);
@@ -31,6 +32,7 @@ export function suppressedReplies(messages) {
 export const suppressedReplyText = ({ id, reason }) => `reply to ${id} suppressed (${reason})`;
 
 const isDone = message => message.phase === 'received';
+const targetScope = ({ target }) => JSON.stringify([target.addr, target.createdAt, target.pid]);
 const isUrgent = message => message.superPriority || message.mode === 'interrupt';
 const awaiting = message => ['sending', 'stopping'].includes(message.phase);
 const pendingReply = message => !deliveryFailed(message) && !message.completion?.body && !message.completion?.noReply;
@@ -324,23 +326,35 @@ export function inbox(project, transport, report = console.error, { replyLimit, 
 
   async function send(message, observation, waves, urgent, decorate) {
     const pendingPhase = message.phase;
-    const { deliveryAppendix, ...extras } = message.payloadFrozen ? {} : await decorate?.(message) ?? {};
+    const { deliveryAppendix, resultContext, ...extras } = message.payloadFrozen ? {} : await decorate?.(message, waves) ?? {};
     const waveSeparator = waves.length && message.target.provider === 'agy' && !message.combinedWaves ?
       '\n--- Loom result ---\n' : message.waveSeparator;
     const decorated = { ...message, ...extras, waveSeparator };
     const combined = combinedDeliveryText(decorated, waves);
-    const automatic = message.replyKey || message.waveBatch || message.continuationBatch || message.reviewerResult || message.projectEvents;
+    const automatic = message.replyKey || message.waveBatch || message.continuationBatch || message.projectEvents;
     let text = combined;
-    if (automatic) text = replyForDelivery(project, combined, replyLimit?.(), {
-      attachFile: Boolean(message.reviewerResult),
-    });
-    else if (waves.length && message.wireBody === undefined) {
+    if (automatic) {
+      const limit = replyLimit?.() ?? defaultReplyBytes;
+      const options = { attachFile: Boolean(message.reviewerResult) };
+      const overflow = Buffer.byteLength(combined) > limit;
+      text = replyForDelivery(project, resultContext && overflow ? resultContext + '\n\n' + combined : combined, limit, options);
+      if (resultContext) {
+        const [heading, ...lines] = resultContext.split('\n');
+        let preview = heading;
+        for (const line of lines) {
+          if (Buffer.byteLength(wireText(message.id, preview + '\n' + line + '\n\n' + text)) > limit) break;
+          preview += '\n' + line;
+        }
+        if (preview !== heading) text += '\n\n' + preview;
+      }
+    } else if (waves.length && message.wireBody === undefined) {
       const batch = waves.map(wave => wave.text).join('\n\n');
       const brief = replyForDelivery(project, batch, replyLimit?.());
       if (brief !== batch) text = combinedDeliveryText(decorated, [{ text: brief }]);
     }
     if (!message.payloadFrozen) {
       text = replyForDelivery(project, text, 16_000);
+      if (!automatic && resultContext) text += '\n\n' + resultContext;
       if (deliveryAppendix) text += '\n\n' + deliveryAppendix;
     }
     Object.assign(message, extras);
@@ -524,14 +538,19 @@ export function inbox(project, transport, report = console.error, { replyLimit, 
   function sweep(group, observation, at, stallMs) {
     let changed = false;
     const byId = new Map(group.map(message => [message.id, message]));
-    const busy = !observation?.userPrompt && !promptKind(observation?.state) &&
-      (['busy', 'compacting'].includes(observation?.state) ||
+    const awaitingUser = observation?.userPrompt || promptKind(observation?.state);
+    const busy = !awaitingUser &&
+      (observation?.active || ['busy', 'compacting'].includes(observation?.state) ||
       ['busy', 'compacting', 'background-in-progress'].includes(observation?.writeEvidence?.native));
     for (const message of group.filter(awaitingDelivery)) {
       const carrier = byId.get(message.combinedInto) ?? message;
       const reason = !observation && message.pendingReason || pendingReason(carrier, observation);
       if (message.pendingReason !== reason) { message.pendingReason = reason; changed = true; }
-      if (message.stalledAt == null && deliveryAge(message, at) >= (busy ? 3 * stallMs : stallMs)) {
+      // A Stop hook may land just before dispatch. Preserve the SLA earned
+      // while this input was blocked behind the native turn, even on restart.
+      if (busy && !message.waitedForBusy) { message.waitedForBusy = true; changed = true; }
+      const limit = !awaitingUser && message.waitedForBusy ? 3 * stallMs : stallMs;
+      if (message.stalledAt == null && deliveryAge(message, at) >= limit) {
         message.stalledAt = at;
         changed = true;
       }
@@ -693,7 +712,7 @@ export function inbox(project, transport, report = console.error, { replyLimit, 
       if (filtered) save();
     }
     if (messageIssue) filterMessages();
-    const groups = () => Map.groupBy(messages, ({ target }) => JSON.stringify([target.addr, target.createdAt, target.pid]));
+    const groups = () => Map.groupBy(messages, targetScope);
     const active = [...groups()].filter(([, group]) => group.some(message => needsIntegrity(message) || pendingReply(message)));
     if (beforeDispatch) {
       const known = new Set(messages.map(message => message.id));
@@ -710,6 +729,13 @@ export function inbox(project, transport, report = console.error, { replyLimit, 
       await Promise.all(active.map(async ([, group]) => processTarget(group, await observeTarget(group, now(), stallMs, canDispatchMessage),
         { canDispatch, canDispatchMessage, at: now(), coalesceMs, decorate })));
     }
+  }
+
+  async function observe(targets, at, stallMs) {
+    store.ingest();
+    const groups = Map.groupBy(messages.filter(message => targets.has(message.target.addr)), targetScope);
+    await Promise.all([...groups.values()].filter(group => group.some(message => needsIntegrity(message) || pendingReply(message)))
+      .map(group => observeTarget(group, at, stallMs)));
   }
 
   function routesForTurn(addr, reply) {
@@ -729,6 +755,34 @@ export function inbox(project, transport, report = console.error, { replyLimit, 
     return message;
   }
 
+  function handoverMessages(predecessor, successor, apply = false) {
+    const affected = messages.filter(message => !message.startup && message.target.addr === predecessor &&
+      (pendingReply(message) || mayReroute(message)));
+    const plan = affected.map(message => ({ id: message.id, action: mayReroute(message) ? 'reroute' : 'void' }));
+    if (!apply || !affected.length) return plan;
+    const before = affected.map(message => ({ ...message }));
+    for (const [i, message] of affected.entries()) {
+      message.originalTarget ??= predecessor;
+      if (plan[i].action === 'reroute') {
+        message.target = successor;
+        message.phase = 'queued';
+        for (const field of ['active', 'barrier', 'issue', 'refusedAt', 'waitingForWritable']) delete message[field];
+      } else {
+        message.phase = 'refused';
+        message.issue = 'handover-void';
+        message.refusedAt = Date.now();
+      }
+    }
+    try { save(); } catch (error) {
+      for (const [i, message] of affected.entries()) {
+        for (const field of Object.keys(message)) delete message[field];
+        Object.assign(message, before[i]);
+      }
+      throw error;
+    }
+    return plan;
+  }
+
   function refuseQueued(message, issue) {
     if (message.phase !== 'queued') return;
     message.phase = 'refused';
@@ -744,5 +798,5 @@ export function inbox(project, transport, report = console.error, { replyLimit, 
     }
   }
 
-  return { step, routesForTurn, enqueue, refuseQueued, messages };
+  return { step, observe, routesForTurn, enqueue, refuseQueued, handoverMessages, messages };
 }

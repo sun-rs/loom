@@ -1,0 +1,156 @@
+{
+  "base": "0ca39c54b8eed922a7127fd022b99b1ffb84be0a",
+  "survey": {
+    "table": [
+      [
+        "cost",
+        "cli/loom.mjs",
+        "yes"
+      ],
+      [
+        "daemon",
+        "cli/control.mjs",
+        "no"
+      ],
+      [
+        "doctor",
+        "cli/loom.mjs",
+        "no"
+      ],
+      [
+        "escalate",
+        "cli/loom.mjs",
+        "no"
+      ],
+      [
+        "gate",
+        "cli/loom.mjs",
+        "yes"
+      ],
+      [
+        "handover",
+        "handover/cli.mjs",
+        "no"
+      ],
+      [
+        "hist",
+        "cli/loom.mjs",
+        "yes"
+      ],
+      [
+        "layout",
+        "cli/loom.mjs",
+        "no"
+      ],
+      [
+        "ls",
+        "cli/loom.mjs",
+        "yes"
+      ],
+      [
+        "memory",
+        "cli/loom.mjs",
+        "yes"
+      ],
+      [
+        "notifications",
+        "cli/loom.mjs",
+        "yes"
+      ],
+      [
+        "send",
+        "cli/send.mjs",
+        "no"
+      ],
+      [
+        "senior-tool",
+        "cli/senior-tool.mjs",
+        "no"
+      ],
+      [
+        "spawn",
+        "cli/control.mjs",
+        "no"
+      ],
+      [
+        "state",
+        "cli/loom.mjs",
+        "yes"
+      ],
+      [
+        "status",
+        "cli/loom.mjs",
+        "yes"
+      ],
+      [
+        "stop",
+        "cli/loom.mjs",
+        "no"
+      ],
+      [
+        "super",
+        "cli/loom.mjs",
+        "no"
+      ],
+      [
+        "switch",
+        "cli/loom.mjs",
+        "no"
+      ],
+      [
+        "tui",
+        "cli/loom.mjs",
+        "no"
+      ],
+      [
+        "up",
+        "cli/loom.mjs",
+        "no"
+      ],
+      [
+        "upgrade",
+        "cli/upgrade.mjs",
+        "no"
+      ]
+    ],
+    "result": {
+      "passed": true,
+      "rows": 22
+    }
+  },
+  "rename": {
+    "files": [
+      "cli/loom.mjs",
+      "cli/loom.test.mjs",
+      "daemon/sessions.mjs",
+      "docs/ORG.md",
+      "docs/PROTOCOL-v2.md",
+      "skills/loom/SKILL.md"
+    ],
+    "result": {
+      "passed": true,
+      "changedFiles": 6,
+      "tests": {
+        "exit": 0,
+        "passed": 14,
+        "failed": 0
+      }
+    }
+  },
+  "diagnosis": {
+    "red": {
+      "exit": 1,
+      "passed": 0,
+      "failed": 1
+    },
+    "green": {
+      "passed": true,
+      "changedFiles": 0,
+      "tests": {
+        "exit": 0,
+        "passed": 1,
+        "failed": 0
+      }
+    }
+  }
+}

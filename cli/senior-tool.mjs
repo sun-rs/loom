@@ -1,24 +1,36 @@
 import { spawn } from 'node:child_process';
 import { parseArgs } from 'node:util';
+import { denialIdPattern } from '../lib/senior-command.mjs';
 import { request } from '../daemon/rpc.mjs';
 import { projectDirectory } from './project.mjs';
 import { CommandError } from './sessions.mjs';
 
-export const seniorToolUsage = 'loom senior-tool [--project DIR] [--reason REASON] -- "command"';
+export const seniorToolUsage = [
+  'loom senior-tool --retry DENY-ID --reason REASON [--project DIR]',
+  'loom senior-tool [--project DIR] [--reason REASON] -- "command"',
+].join('\n');
 const tailLines = 40;
 const tailBytes = 12_000;
 
 export async function runSeniorTool(args) {
   const separator = args.indexOf('--');
-  if (separator < 0 || args.length !== separator + 2 || !args.at(-1)?.trim()) {
+  let values;
+  try {
+    ({ values } = parseArgs({ args: separator < 0 ? args : args.slice(0, separator),
+      options: { project: { type: 'string' }, reason: { type: 'string' }, retry: { type: 'string' } } }));
+  } catch (error) {
+    throw new CommandError('invalid-arguments', error.message);
+  }
+  const command = separator < 0 ? undefined : args[separator + 1];
+  const retryId = values.retry;
+  if (retryId !== undefined ? separator >= 0 || !denialIdPattern.test(retryId) :
+      separator < 0 || args.length !== separator + 2 || !command?.trim()) {
     throw new CommandError('invalid-arguments', seniorToolUsage);
   }
-  const { values } = parseArgs({ args: args.slice(0, separator), options: { project: { type: 'string' }, reason: { type: 'string' } } });
   const project = projectDirectory(values.project);
-  const command = args.at(-1);
   const reason = values.reason ?? process.env.LOOM_SENIOR_OVERRIDE;
-  const authorized = await request(project, 'senior-override', { command, reason });
-  const child = spawn('/bin/sh', ['-c', command], { cwd: authorized.cwd, stdio: ['ignore', 'pipe', 'pipe'] });
+  const authorized = await request(project, 'senior-override', { command, retryId, reason });
+  const child = spawn('/bin/sh', ['-c', authorized.command ?? command], { cwd: authorized.cwd, stdio: ['ignore', 'pipe', 'pipe'] });
   let tail = Buffer.alloc(0);
   let clipped = false;
   for (const stream of [child.stdout, child.stderr]) stream.on('data', chunk => {

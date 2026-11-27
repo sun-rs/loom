@@ -181,7 +181,7 @@ export function relay(project, targets, window, call, report = console.log, inbo
           const { managed: _, ...row } = worker;
           const result = { ...row, ...reply, outcome, path: join(archive, `${worker.id}-${hash}.md`),
             ...(managed ? { waveKey: waveKey(worker) } : { inboxRecipients: inboxRoutes(worker.addr, reply) }) };
-          if (withEvidence) {
+          if (withEvidence && evidenceInput !== false) {
             try {
               const { captureRelayTurn } = await import('../evidence/relay.mjs');
               const { card, data } = await captureRelayTurn(project, worker, reply, hash, evidenceInput, index);

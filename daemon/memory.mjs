@@ -66,7 +66,7 @@ export function createProjectMemory(project, { sessions, now, options, report })
   }
 
   async function handle(args, caller) {
-    const row = caller && sessions.rows().find(session => session.addr === caller || session.pane === caller);
+    const row = caller && sessions.rowFor(caller);
     const binding = bindingFor(row);
     if (!binding || row.endedAt !== null || binding.role === 'worker' && args?.action !== 'show') {
       throw new CommandError('forbidden', 'Memory access is forbidden');

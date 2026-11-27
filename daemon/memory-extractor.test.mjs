@@ -6,6 +6,7 @@ import { appendFileSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, real
 import { createServer, request, Server } from 'node:http';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { DatabaseSync } from 'node:sqlite';
 import { Duplex } from 'node:stream';
 import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
@@ -14,6 +15,7 @@ import { projectCost } from '../cli/cost.mjs';
 import { projectSessions } from '../cli/project.mjs';
 import { projectStatus } from '../cli/status.mjs';
 import { deliveryId } from '../inbox/message.mjs';
+import { publish } from '../inbox/store.mjs';
 import { estimateTokens } from '../lib/token-budget.mjs';
 import { substantiveIndexRow } from '../memory/index-row.mjs';
 import { activeItems, searchMemory, writeMemory } from '../memory/project.mjs';
@@ -221,7 +223,7 @@ function fixture(t, { config = {}, runStage, fixtureCredential = () => fixtureKe
     return turnId;
   }
   async function send(addr, text) {
-    const receipt = await daemon.handle('send', { target: addr, text, mode: 'queue' });
+    const receipt = await daemon.handle('send', { target: addr, text, mode: 'queue' }, undefined, { external: true });
     await tick();
     return receipt;
   }
@@ -236,7 +238,7 @@ function fixture(t, { config = {}, runStage, fixtureCredential = () => fixtureKe
     tick, restart, spawn, finish, finishTurn, send, read, initGit,
     advance: (ms = 86_400_000) => { clock += ms; },
     cost: () => projectCost(project, projectSessions(project), { now: clock }),
-    status: () => projectStatus(project) };
+    status: () => projectStatus(project, { now: clock }) };
 }
 
 function assertNoFixtureKey(label, value) {
@@ -1595,8 +1597,21 @@ test('R3B extractor only forwards inbox bodies from allowlisted sources', async 
   const superAddr = await f.spawn('super', 'Prepare user oversight.');
   await f.finish(leader, 'Leader ready.');
   await f.finish(auditor, 'Auditor ready.');
-  const worker = await f.spawn('worker', 'Run the inbox fixture.', leader, { deliver: 'stream' });
-  const reviewer = await f.spawn('reviewer', 'Review the inbox fixture.', auditor, { task: 'INBOX-REVIEW' });
+  await assert.rejects(f.spawn('reviewer', 'Review the inbox fixture.', auditor, { task: 'INBOX-REVIEW' }),
+    { code: 'invalid-arguments' });
+  const reviewer = randomUUID();
+  {
+    using db = new DatabaseSync(join(f.project, '.project/index.sqlite'));
+    db.prepare('INSERT INTO sessions (addr, project, role, backend, endedAt) VALUES (?, ?, ?, ?, ?)')
+      .run(reviewer, f.project, 'reviewer', 'headless', Date.now());
+  }
+  const reviewerText = 'SHORT_REVIEWER_MSG_SENTINEL_R3B';
+  const reviewerDelivery = randomUUID();
+  const state = JSON.parse(f.read('.project/inbox/state.json'));
+  publish(f.project, { id: reviewerDelivery, text: reviewerText, from: { addr: reviewer },
+    target: state.messages.find(message => message.target.addr === leader).target,
+    createdAt: Date.now(), requestedMode: 'queue', mode: 'queue', phase: 'queued' });
+  await f.tick();
   const inbox = () => JSON.parse(f.read('.project/inbox/state.json')).messages;
   const deliveries = [];
 
@@ -1616,13 +1631,14 @@ test('R3B extractor only forwards inbox bodies from allowlisted sources', async 
 
   async function sendToLeader(caller, sentinel, allowed) {
     const text = allowed ? `${sentinel} ${fixtureKey}` : sentinel;
-    const { id } = await f.daemon.handle('send', { target: leader, mode: 'queue', text }, caller);
+    const { id } = await f.daemon.handle('send', { target: leader, mode: 'queue', text }, caller, { external: !caller });
     await f.tick();
     await finishDelivery(leader, id, text, allowed);
   }
 
+  await finishDelivery(leader, reviewerDelivery, reviewerText);
+  const worker = await f.spawn('worker', 'Run the inbox fixture.', leader, { deliver: 'stream' });
   await sendToLeader(worker, 'SHORT_WORKER_MSG_SENTINEL_R3B', false);
-  await sendToLeader(reviewer, 'SHORT_REVIEWER_MSG_SENTINEL_R3B', false);
 
   const batchSentinel = 'SHORT_BATCH_SENTINEL_R3B';
   await f.finish(worker, `DONE FIXTURE\n${batchSentinel}`);

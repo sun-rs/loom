@@ -1,5 +1,6 @@
 import { chmodSync, mkdirSync } from 'node:fs';
-import { createConnection, createServer } from 'node:net';
+import { createServer } from 'node:net';
+import { connectUnix } from '../lib/unix-socket.mjs';
 import { delimiter, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { randomUUID } from 'node:crypto';
@@ -44,7 +45,7 @@ function parse(args) {
 
 export async function integrationPs(row, env, managedPath) {
   if (row.role !== 'worker' || !row.integration) return;
-  const socketPath = join(env.TMPDIR, `ps-${randomUUID().slice(0, 8)}.sock`);
+  const socketPath = join(env.TMPDIR, `p${randomUUID().slice(0, 8)}`);
   const bin = join(env.TMPDIR, 'integration-bin');
   mkdirSync(bin, { recursive: true, mode: 0o700 });
   const ps = join(bin, 'ps');
@@ -79,7 +80,7 @@ export async function integrationPs(row, env, managedPath) {
 
 async function client(path, argv) {
   const result = await new Promise((resolve, reject) => {
-    const socket = createConnection(path);
+    const socket = connectUnix(path);
     let body = '';
     socket.setEncoding('utf8');
     socket.setTimeout(10_000, () => socket.destroy(new Error('Integration ps timed out')));

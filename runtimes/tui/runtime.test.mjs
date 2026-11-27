@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
-import { spawnSync } from 'node:child_process';
+import { spawnSync, mkdtemp } from '../../fixtures/test-process.mjs';
 import { randomUUID } from 'node:crypto';
-import { appendFile, mkdtemp, readFile, realpath, rm, writeFile } from 'node:fs/promises';
+import { appendFile, readFile, realpath, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -280,4 +280,31 @@ console.log(readFileSync(out, 'utf8'));
   assert.deepEqual(session.binding, { transport: 'plain-hc', reason: 'loom-pty-start-failed' });
   assert.equal((await session.readState()).ready, false);
   assert.equal(session.submit, undefined);
+});
+
+test('TUI launch loads the capability inside the pane without passing it to hc in argv', async t => {
+  const root = await temp(t);
+  const fakeHc = join(root, 'hc');
+  const native = join(root, 'claude');
+  const keyFile = join(root, 'synthetic-capability');
+  const proof = join(root, 'launch.json');
+  await writeFile(keyFile, 'fixture-bearer-value\n', { mode: 0o600 });
+  await writeFile(native, `#!${process.execPath}
+process.exitCode = process.argv.includes('--version') || process.env.LOOM_CAPABILITY === 'fixture-bearer-value' ? 0 : 99;
+`, { mode: 0o700 });
+  await writeFile(fakeHc, `#!${process.execPath}
+import { spawnSync } from 'node:child_process';
+import { writeFileSync } from 'node:fs';
+const [command, ...args] = process.argv.slice(2);
+const name = ${JSON.stringify('loom-auth-fixture')};
+if (command === 'run') {
+  const [executable, ...argv] = args.slice(args.indexOf('--') + 1);
+  writeFileSync(${JSON.stringify(proof)}, JSON.stringify({ status: spawnSync(executable, argv).status,
+    exposed: args.some(value => value.includes('fixture-bearer-value')) }));
+}
+console.log(JSON.stringify({ address: 't1', name, state: 'live' }));
+`, { mode: 0o700 });
+  await openNativeTui({ cli: 'claude', cwd: root, command: native, hcCommand: fakeHc, stateDir: root,
+    name: 'loom-auth-fixture', capabilityPath: keyFile, previous: { transport: 'plain-hc' } });
+  assert.deepEqual(JSON.parse(await readFile(proof, 'utf8')), { status: 0, exposed: false });
 });

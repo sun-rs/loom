@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
-import { execFile, execFileSync, spawn, spawnSync } from 'node:child_process';
+import { execFile, execFileSync, spawn, spawnSync, mkdtempSync } from '../fixtures/test-process.mjs';
 import { randomUUID } from 'node:crypto';
-import { lstatSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { lstatSync, mkdirSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
+import { homedir, tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { test } from 'node:test';
 import { promisify } from 'node:util';
@@ -58,11 +58,22 @@ test('worker launch grants only its worktree Git metadata and private HOME, XDG 
   assert.deepEqual(workerGitWritePaths(project, cwd), gitWrites.slice(0, 3));
 });
 
+function fixtureWorkerEnvironment(row, directory) {
+  const previous = process.env.LOOM_WORKER_TMP;
+  try {
+    process.env.LOOM_WORKER_TMP = directory;
+    return workerEnvironment(row);
+  } finally {
+    if (previous === undefined) delete process.env.LOOM_WORKER_TMP;
+    else process.env.LOOM_WORKER_TMP = previous;
+  }
+}
+
 test('integration permits limited worktree process listings and keeps the worker network policy', async t => {
-  const cwd = mkdtempSync(join(realpathSync(tmpdir()), 'loom-integration-'));
+  const cwd = mkdtempSync(join(realpathSync(tmpdir()), 'i-'));
   t.after(() => rmSync(cwd, { recursive: true, force: true }));
   const row = { role: 'worker', addr: `oar-${randomUUID()}`, cwd };
-  const env = workerEnvironment(row);
+  const env = fixtureWorkerEnvironment(row, cwd);
   t.after(() => rmSync(dirname(env.HOME), { recursive: true, force: true }));
   assert.equal(await integrationPs(row, env), undefined);
   const profile = { ...row, integration: true };
@@ -79,6 +90,10 @@ test('integration permits limited worktree process listings and keeps the worker
   const baseline = workerCodexArgs(cwd, row, env)[3];
   const integration = workerCodexArgs(cwd, profile, env)[3];
   assert.equal(baseline.split('network=')[1], integration.split('network=')[1]);
+  for (const profileArgs of [baseline, integration]) {
+    assert.ok(profileArgs.includes(`"${join(homedir(), '.codex', 'auth.json')}"="deny"`));
+    assert.ok(profileArgs.includes(`"${join(cwd, '.env')}"="deny"`));
+  }
   assert.ok(integration.includes(`"${join(cwd, '.project')}"="read"`));
   assert.deepEqual(integrationProcessRows(new Map([[2, { pid: 2, ppid: 1, uid: 501 }],
     [3, { pid: 3, ppid: 2, uid: 501 }], [4, { pid: 4, ppid: 2, uid: 502 }]]), 1, 501).map(row => row.pid), [2, 3]);
@@ -93,7 +108,7 @@ test('macOS native workers can write their worktree and state without making the
     const data = join(login.HOME, '.gemini', 'antigravity-cli');
     for (const path of [cwd, join(data, 'brain'), join(data, 'bin')]) mkdirSync(path, { recursive: true });
     const row = { role: 'worker', cli: 'agy', addr: `oar-${randomUUID()}`, cwd };
-    const env = workerEnvironment(row);
+    const env = fixtureWorkerEnvironment(row, project);
     t.after(() => rmSync(dirname(env.HOME), { recursive: true, force: true }));
     const launch = sandboxNativeWorker(project, row, login, env, '/bin/sh');
     execFileSync(launch, ['-c', [
@@ -127,7 +142,7 @@ test('restricted worker runs zsh heredocs and commits with hooks without the sha
     const login = { HOME: join(project, 'login') };
     mkdirSync(login.HOME);
     const row = { role: 'worker', cli: 'claude', addr: `oar-${randomUUID()}`, cwd };
-    const env = workerEnvironment(row);
+    const env = fixtureWorkerEnvironment(row, project);
     t.after(() => rmSync(dirname(env.HOME), { recursive: true, force: true }));
     const launch = sandboxNativeWorker(project, row, login, env, '/bin/zsh');
     const result = spawnSync(launch, ['-fc', [

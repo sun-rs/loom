@@ -2,13 +2,15 @@ import { closeSync, constants, fstatSync, mkdirSync, openSync, readFileSync, wri
 import { dirname } from 'node:path';
 import { normalize } from './hooks.mjs';
 import { deliveryId } from '../../inbox/message.mjs';
+import { hostToolDenial } from '../../lib/host-tool-guard.mjs';
 import { recordSeniorToolDenial } from '../../lib/senior-tool-guard.mjs';
 
 const [sink] = process.argv.slice(2);
 const payload = JSON.parse(readFileSync(0, 'utf8'));
 const { LOOM_SENIOR_TOOL_LOG: guardLog, LOOM_SENIOR_TOOL_PROJECT: project } = process.env;
 if (payload.hook_event_name === 'PreToolUse') {
-  const denial = recordSeniorToolDenial(guardLog, project, payload.cwd, payload.tool_name, payload.tool_input);
+  const denial = hostToolDenial(payload.tool_name, payload.tool_input) ??
+    recordSeniorToolDenial(guardLog, project, payload.cwd, payload.tool_name, payload.tool_input);
   if (denial) process.stdout.write(JSON.stringify({ hookSpecificOutput: {
     hookEventName: 'PreToolUse', permissionDecision: 'deny', permissionDecisionReason: denial,
   } }));

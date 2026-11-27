@@ -62,50 +62,69 @@ function codeLine(line) {
   return code.replace(/'[^'\n]*'|"[^"\n]*"|`[^`\n]*`/g, '').split(/\s(?:\/\/|#)/, 1)[0];
 }
 
-export function testChanges(lines, untracked = false) {
-  const edits = untracked ? [] : assertionEdits(lines);
-  const counts = { removedAssertions: edits.filter(edit => edit.kind === 'deleted').length,
-    rewrittenAssertions: edits.filter(edit => edit.kind === 'modified').length, addedSkip: 0, addedOnly: 0 };
-  let hunk = untracked;
-  for (const line of lines.split('\n')) {
-    if (!untracked && line.startsWith('diff --git ')) hunk = false;
-    if (!untracked && line.startsWith('@@ ')) hunk = true;
-    if (!hunk) continue;
-    if (untracked || line.startsWith('+')) {
-      const code = codeLine(untracked ? line : line.slice(1));
-      counts.addedSkip += Number(skip.test(code));
-      counts.addedOnly += Number(only.test(code));
-    }
-  }
-  return counts;
-}
+const testDeclaration = /\b(?:test|it|describe|suite)(?:\.(?:skip|only|todo))*\s*\(|\b(?:test_\w+\s*\(|func\s+Test\w+\s*\()/;
+const assertMethod = code => /\bassert\.(\w+)\s*\(/.exec(code)?.[1];
+const weakerAssertion = (before, after) => {
+  const old = assertMethod(before), next = assertMethod(after);
+  return next === 'ok' && ['equal', 'strictEqual', 'deepEqual', 'deepStrictEqual', 'match'].includes(old) ||
+    old === 'strictEqual' && next === 'equal' || old === 'deepStrictEqual' && next === 'deepEqual';
+};
 
-// An assertion removed and replaced within the same hunk also appears here.
-export function assertionEdits(patch) {
-  const edits = [];
-  let oldLine, removed, added;
-  const finish = () => {
-    for (const [i, edit] of (removed ?? []).entries()) {
-      edits.push({ ...edit, kind: i < added ? 'modified' : 'deleted' });
+export function testEditDetails(patch, untracked = false) {
+  const assertions = [], directives = [], deletedTests = [];
+  let oldLine, newLine = untracked ? 1 : undefined;
+  let oldAssertions = [], newAssertions = [];
+  const removedTests = [], addedTests = new Set();
+  function finish() {
+    for (const [i, edit] of oldAssertions.entries()) {
+      const replacement = newAssertions[i];
+      assertions.push(replacement ? { ...edit, kind: 'modified', replacement,
+        weakened: weakerAssertion(edit.text, replacement.text) } : { ...edit, kind: 'deleted' });
     }
-  };
+    oldAssertions = [];
+    newAssertions = [];
+  }
+  const testKey = text => text.trim().replace(/\.(?:skip|only|todo)\b/g, '');
   for (const line of patch.split('\n')) {
-    const hunk = /^@@ -(\d+)(?:,\d+)? \+\d+(?:,\d+)? @@/.exec(line);
-    if (hunk || line.startsWith('diff --git ')) {
+    const hunk = untracked ? null : /^@@ -(\d+)(?:,\d+)? \+(\d+)(?:,\d+)? @@/.exec(line);
+    if (hunk || !untracked && line.startsWith('diff --git ')) {
       finish();
       oldLine = hunk ? Number(hunk[1]) : undefined;
-      removed = [];
-      added = 0;
+      newLine = hunk ? Number(hunk[2]) : undefined;
     } else if (oldLine !== undefined && line.startsWith('-')) {
-      if (assertion.test(codeLine(line.slice(1)))) removed.push({ line: oldLine, text: line.slice(1) });
+      const text = line.slice(1), code = codeLine(text), location = { line: oldLine++, text };
+      if (assertion.test(code)) oldAssertions.push(location);
+      if (testDeclaration.test(code)) removedTests.push(location);
+    } else if (newLine !== undefined && (untracked || line.startsWith('+'))) {
+      const text = untracked ? line : line.slice(1), code = codeLine(text), location = { line: newLine++, text };
+      if (assertion.test(code)) newAssertions.push(location);
+      if (testDeclaration.test(code)) addedTests.add(testKey(text));
+      if (skip.test(code)) directives.push({ ...location, kind: 'skip' });
+      if (only.test(code)) directives.push({ ...location, kind: 'only' });
+    } else if (oldLine !== undefined && line.startsWith(' ')) {
       oldLine++;
-    } else if (oldLine !== undefined && line.startsWith('+')) {
-      added += Number(assertion.test(codeLine(line.slice(1))));
+      newLine++;
     }
   }
   finish();
-  return edits;
+  deletedTests.push(...removedTests.filter(test => !addedTests.has(testKey(test.text))));
+  return { assertions, directives, deletedTests };
 }
+
+function testCounts({ assertions, directives }) {
+  return { removedAssertions: assertions.filter(edit => edit.kind === 'deleted').length,
+    rewrittenAssertions: assertions.filter(edit => edit.kind === 'modified').length,
+    addedSkip: directives.filter(edit => edit.kind === 'skip').length,
+    addedOnly: directives.filter(edit => edit.kind === 'only').length };
+}
+
+export const testChanges = (patch, untracked = false) => testCounts(testEditDetails(patch, untracked));
+function testEvidence(patch, untracked = false) {
+  if (patch === null) return { changes: null };
+  const details = testEditDetails(patch, untracked);
+  return { changes: testCounts(details), ...details };
+}
+export const assertionEdits = patch => testEditDetails(patch).assertions;
 
 export function assertionCounts(test) {
   if (Array.isArray(test.assertions)) return {
@@ -128,8 +147,7 @@ export function inspectFiles(files, { protectedPaths = [], testPaths: extra = []
     if (allowedPaths.length) scopeHits.push(...paths.filter(path => !allowedPaths.some(glob => matchesGlob(path, glob))));
     if (!paths.some(path => [...testPaths, ...extra].some(glob => matchesGlob(path, glob)))) continue;
     const patch = file.added === null ? null : patchFor(file);
-    tests.push({ ...file, changes: patch === null ? null : testChanges(patch),
-      assertions: patch === null ? [] : assertionEdits(patch) });
+    tests.push({ ...file, ...testEvidence(patch) });
   }
   return { protectedHits, scopeHits: [...new Set(scopeHits)], scopeConfigured: allowedPaths.length > 0, tests };
 }
@@ -198,11 +216,11 @@ export async function collectGit(cwd, { baseCommit, protectedPaths = [], extraTe
           file.added = Number(content.length > 0 && !content.endsWith('\n'));
           for (let line = content.indexOf('\n'); line >= 0; line = content.indexOf('\n', line + 1)) file.added++;
         }
-        if (isTest) tests.push({ ...file, changes: content === null ? null : testChanges(content, true) });
+        if (isTest) tests.push({ ...file, ...testEvidence(content, true) });
       } else if (isTest) {
         const patch = file.added === null ? null : await diff(root, base, ['--unified=0', '--output-indicator-new=+',
           '--output-indicator-old=-'], paths.map(literalPath));
-        tests.push({ ...file, changes: patch === null ? null : testChanges(patch) });
+        tests.push({ ...file, ...testEvidence(patch) });
       }
     }
     const totals = files.reduce((sum, file) => ({

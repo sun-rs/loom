@@ -6,6 +6,10 @@
 |---|---|---|
 | 2026-11-25 | AML 记忆排行榜、MemoraX 与开源冠军 | [2026-11-25-aml-memorax.md](2026-11-25-aml-memorax.md) |
 | 2026-11-25 | 记忆系统：单机、跨机，以及各 CLI 原生记忆的关闭方式 | [2026-11-25-memory-systems.md](2026-11-25-memory-systems.md) |
+| 2026-11-27 | cell 隔离与部署选型 | [2026-11-27-cell-isolation.md](2026-11-27-cell-isolation.md) |
+| 2026-11-26 | skill 拆分 | [2026-11-26-skill-split.md](2026-11-26-skill-split.md) |
+| 2026-11-26 | 长期角色换班时机 | [2026-11-26-senior-rotation.md](2026-11-26-senior-rotation.md) |
+| 2026-11-26 | worker 寿命：前辈经验与 pilot 实测 | [2026-11-26-worker-lifespan.md](2026-11-26-worker-lifespan.md) |
 | 2026-11-26 | 用确定性检查替代对抗式 review | [2026-11-26-verification-over-review.md](2026-11-26-verification-over-review.md) |
 | 2026-11-26 | a11y、get-selected-text、wterm | [2026-11-26-a11y.md](2026-11-26-a11y.md) |
 | 2026-11-26 | Status TUI 产品化 | [2026-11-26-status-tui.md](2026-11-26-status-tui.md) |
@@ -22,3 +26,4 @@
 | 2026-11-24 | L1 机械摘要评估 | [tasks/L1-EVAL-0/RESULT.md](../../tasks/L1-EVAL-0/RESULT.md) |
 | 2026-11-24 | 热升级初查：hc、Herdr、Orca | [tasks/HOTSWAP-0/RESULT.md](../../tasks/HOTSWAP-0/RESULT.md) |
 | 2026-11-24 | Orca TUI 调度体系复刻 | [tasks/TUI-ORCA-1/RESULT.md](../../tasks/TUI-ORCA-1/RESULT.md) |
+- [2026-11-27 cell 容器与沙箱项目调研](2026-11-27-cell-container-projects.md) — srt/bwrap/Seatbelt/Podman/sbx/apple container/Claude-Cage 等，含维护证据

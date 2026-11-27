@@ -8,7 +8,7 @@ import { relay } from '../relay/project.mjs';
 import { estimateTokens } from '../lib/token-budget.mjs';
 import { checkEvidence } from './checks.mjs';
 import { compareClaims } from './claims.mjs';
-import { diffFiles, testChanges } from './git.mjs';
+import { diffFiles, testChanges, testEditDetails } from './git.mjs';
 import { evidence } from './index.mjs';
 import { agyCommands, collectVerification } from './transcript.mjs';
 import { workerRedFacts } from '../daemon/routing.mjs';
@@ -254,4 +254,64 @@ test('attaches one optional card to an OAR turn-end without modifying the archiv
   assert.match(delivered[0].text, /DONE A\n全绿\n证据 MISMATCH 1/);
   assert.equal(readFileSync(join(project, '.project/replies/A.md'), 'utf8'), finalReply);
   assert.equal(readdirSync(join(project, '.project/evidence')).length, 2);
+});
+
+test('invariant [retry] evidence links real RED and GREEN and lists changed tests and missing invariants', async t => {
+  const project = directory(t);
+  const patch = [
+    '@@ -2,3 +2,3 @@',
+    '-test("retired case", original);',
+    '-assert.deepStrictEqual(actual, expected);',
+    '-test("still present", stable);',
+    '+test.skip("still present", stable);',
+    '+assert.ok(actual);',
+    '+test.only("new selective case", current);',
+  ].join('\n');
+  const edits = testEditDetails(patch);
+  assert.equal(edits.assertions[0].weakened, true);
+  assert.equal(edits.assertions[0].replacement.line, 3);
+  assert.deepEqual(edits.directives.map(item => item.kind), ['skip', 'only']);
+  assert.deepEqual(edits.deletedTests.map(item => item.text), ['test("retired case", original);']);
+
+  const testPath = 'retry/commands.test.mjs';
+  const files = [{ path: 'inbox/engine.mjs', status: 'M' }, { path: testPath, status: 'M' },
+    { path: 'retry/deleted.test.mjs', status: 'D' }];
+  const options = { project, cwd: null, task: 'FIX', addr: 'oar-fixture', provider: 'codex', expectRed: true,
+    gitObservation: { status: 'ok', files, protectedHits: [], tests: [{ ...files[1], ...edits }, { ...files[2] }] } };
+  const command = 'npm test';
+  const first = await evidence.forTurn({ ...options, turn: 1, endedAt: 10, nativeTurnId: 'red',
+    transcript: jsonl(makeCodexTurn('red', { command, exitCode: 1, finalReply: 'BLOCKED expected test failure',
+      output: 'Loom lint passed (16 files).\nnot ok 1 - invariant [retry] terminal attempts retain the fingerprint\n# tests 1\n# pass 0\n# fail 1' })) });
+  assert.deepEqual(first.data.checks.redProof,
+    { status: 'red-observed', red: '.project/evidence/FIX-1.json#/verification/commands/0' });
+  assert.equal(first.data.checks.lint.result, 'passed');
+
+  const second = await evidence.forTurn({ ...options, turn: 2, endedAt: 20, nativeTurnId: 'green',
+    transcript: jsonl(makeCodexTurn('green', { command, exitCode: 0, finalReply: 'DONE fixed',
+      output: 'Loom lint passed (16 files).\n✔ invariant [retry] terminal attempts retain the fingerprint (1.2ms)\n# tests 1\n# pass 1\n# fail 0' })) });
+  assert.deepEqual(second.data.checks.redProof, { status: 'red-green',
+    red: '.project/evidence/FIX-1.json#/verification/commands/0',
+    green: '.project/evidence/FIX-2.json#/verification/commands/0' });
+  assert.deepEqual(second.data.checks.invariants.checks, [{ category: 'retry',
+    name: 'terminal attempts retain the fingerprint', result: 'passed', evidence: '#/verification/commands/0' }]);
+  assert.deepEqual(second.data.checks.invariants.gaps, ['persistence', 'idempotency']);
+  assert.equal(second.data.checks.testDiff[1].deletedFile, true);
+  assert.match(second.card, /RED ↗ \.project\/evidence\/FIX-1\.json/);
+  assert.equal(compareClaims('All tests passed', {}, { status: 'ok', commands: [
+    checkEvidence({ command: 'npm run lint', exitCode: 0, output: 'Loom lint passed (16 files).' }),
+  ] })[0].status, 'MISMATCH');
+});
+
+test('red proof requires an observed failed test and skips do not prove invariants', async t => {
+  const project = directory(t);
+  const { data } = await evidence.forTurn({
+    project, cwd: null, task: 'FAULT', turn: 1, provider: 'codex', expectRed: true,
+    nativeTurnId: 'unproven',
+    transcript: jsonl(makeCodexTurn('unproven', { exitCode: 1, output: 'command failed before the runner\n',
+      finalReply: 'BLOCKED runtime error' })),
+  });
+  assert.deepEqual(data.checks.redProof, { status: 'missing' });
+  const skipped = checkEvidence({ command: 'node --test', exitCode: 0,
+    output: 'ok 1 - invariant [persistence] state is atomic # SKIP\n# skipped 1' });
+  assert.equal(skipped.invariants, undefined);
 });

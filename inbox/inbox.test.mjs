@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
-import { execFile } from 'node:child_process';
+import { execFile, mkdtempSync } from '../fixtures/test-process.mjs';
 import { randomUUID } from 'node:crypto';
-import { appendFileSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
+import { appendFileSync, mkdirSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
@@ -800,3 +800,37 @@ test('a busy target gets a longer fixed SLA and still stalls without hook change
   assert.equal(pending.ageMs, 360_000);
   assert.equal(pending.reason, 'waiting-writable');
 });
+
+for (const [age, afterStop] of [[122_426, 611], [159_381, 169]]) {
+  test(`agy delivery at ${age} ms keeps the busy SLA after Stop and restart`, async t => {
+    const { root } = fixture(t);
+    const id = randomUUID();
+    const target = { addr: 'leader', provider: 'agy' };
+    const at = Date.now();
+    let time = at;
+    let state = 'unknown';
+    let active = { turnId: 'native-before-stop' };
+    let sends = 0;
+    const transport = {
+      inspect: async () => ({ state, active, terminal: { turn: 1 } }),
+      nativeDelivery: () => undefined,
+      send: () => { sends++; },
+    };
+    let mail = inbox(root, transport);
+    mail.enqueue({ id, target, phase: 'queued', mode: 'queue', requestedMode: 'queue', createdAt: at, text: 'next' });
+    const tick = () => mail.step(undefined, { now: () => time });
+    time += age - afterStop - 1_000;
+    await tick();
+    assert.equal(sends, 0);
+    active = undefined;
+    time = at + age;
+    mail = inbox(root, transport);
+    await tick();
+    assert.equal(receipt(lookup(root, id), time).deliveryStatus, 'accepted');
+    state = 'idle';
+    time += 1_000;
+    await tick();
+    assert.equal(sends, 1);
+    assert.equal(lookup(root, id).stalledAt, undefined);
+  });
+}

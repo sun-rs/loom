@@ -1,16 +1,21 @@
+import { accountTime, parseClaudeRateLimitEvent } from '../adapters/accounts/passive.mjs';
 import { approval, choice, codexPrompt, promptDetails } from '../adapters/prompt-state.mjs';
-import { appendFileSync, constants, lstatSync, realpathSync, rmSync, statSync } from 'node:fs';
+import { appendFileSync, constants, lstatSync, realpathSync, rmSync } from 'node:fs';
 import { randomUUID } from 'node:crypto';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { appRequestKind, antigravityRuntime, claudeRuntime, codexRuntime, createRuntimeRegistry, opencodeRuntime } from '@botiverse/oar';
 import agy from '../adapters/agy/index.mjs';
+import { preflightAgyAcp } from '../adapters/agy/acp.mjs';
+import { stageAgyHooks } from '../adapters/agy/launch.mjs';
 import claude from '../adapters/claude/index.mjs';
 import codex from '../adapters/codex/index.mjs';
 import { openCodeQuestionDeny, promptObserver } from '../adapters/opencode/index.mjs';
 import { deliveryId, wireText } from '../inbox/message.mjs';
 import { eventPath, jsonRows, prepareJournal } from './io.mjs';
-import { nativeClaude } from './executables.mjs';
+import { nativeClaude, nativeWorkerExecutable, resolveNativeExecutable, workerBinaryKeys } from './executables.mjs';
+import { recordWorkerExecutable } from './worker-executables.mjs';
+import { hostWorkerEnvironment, hostWriteBoundary } from './host-worker.mjs';
 import { captureOarTurnEnd, headAt } from './turn-heads.mjs';
 import { codexConfiguration } from './codex-launch.mjs';
 import { codexRefusal } from './codex-pipe-errors.mjs';
@@ -28,6 +33,7 @@ const adapters = { codex, agy, claude };
 const rateFailure = new Set(['rate_limited', 'quota']);
 const acpProviders = new Set(['agy', 'opencode']);
 const activeEvents = new Set(['turn_active', 'user_message', 'text_delta', 'reasoning', 'tool_call_started', 'turn_ended']);
+const installationVersions = new WeakMap();
 const safeId = /^[0-9a-f-]{36}$/;
 
 export function checkedTranscript(path, row) {
@@ -44,66 +50,75 @@ export function checkedTranscript(path, row) {
   catch (error) { if (error.code !== 'ENOENT') throw error; return null; }
 }
 
-export async function openOar(row, project, resume) {
+export async function openOar(row, project, resume, beforeLaunch) {
   const runtime = registry.require(row.runtimeId);
+  const executable = row.role === 'worker' ? nativeWorkerExecutable(row.cli) : undefined;
   const managed = managedEnvironment(project, row.addr);
-  const isolated = workerEnvironment(row);
-  const login = workerNativeLogin(row);
+  const host = Boolean(row.hostGrant);
+  const isolated = host ? hostWorkerEnvironment(project, row) : workerEnvironment(row);
+  const login = host ? undefined : workerNativeLogin(row);
   const guard = seniorToolEnvironment(project, row);
   const env = { HC_TERMINAL_ID: null, LOOM_SENIOR_TOOL_LOG: null, LOOM_SENIOR_TOOL_PROJECT: null,
-    ...managed, ...isolated, ...workerProviderEnvironment(row), ...login, ...guard };
+    ...managed, ...isolated, ...workerProviderEnvironment(row), ...login, ...guard,
+    ...(executable && { [workerBinaryKeys[row.cli]]: executable }) };
   let launchArgs;
   let agyWorkspace;
   let integration;
   const questions = allowNativeQuestions(project, row.role);
-  if (row.cli === 'opencode' && (!questions || guard.LOOM_SENIOR_TOOL_LOG)) {
+  if (row.cli === 'opencode' && (host || !questions || guard.LOOM_SENIOR_TOOL_LOG)) {
     const existing = JSON.parse(env.OPENCODE_CONFIG_CONTENT ?? process.env.OPENCODE_CONFIG_CONTENT ?? '{}');
     const permissions = Array.isArray(existing.permissions) ? existing.permissions : [];
     env.OPENCODE_CONFIG_CONTENT = JSON.stringify({ ...existing,
       ...(!questions && { permissions: [...permissions, openCodeQuestionDeny] }),
-      ...(guard.LOOM_SENIOR_TOOL_LOG && { plugins: [...new Set([...(existing.plugins ?? []), promptObserver])] }),
+      ...(host || guard.LOOM_SENIOR_TOOL_LOG ? { plugins: [...new Set([...(existing.plugins ?? []), promptObserver])] } : {}),
     });
   }
   if (row.cli === 'codex') {
     launchArgs = codexConfiguration(project, row, managed, isolated);
   } else if (row.cli === 'agy') {
-    Object.assign(env, { AGY_CLI_DISABLE_AUTO_UPDATE: 'true', GEMINI_HOME: login?.GEMINI_HOME ?? null });
+    Object.assign(env, { AGY_CLI_DISABLE_AUTO_UPDATE: 'true', GEMINI_HOME: host ? process.env.GEMINI_HOME ?? null : login?.GEMINI_HOME ?? null });
     // The macOS worker already inherits Seatbelt. agy's inner sandbox tries
     // to generate profiles in the real login home before running a command.
-    launchArgs = [login ? '--sandbox=false' : '--sandbox', '--log-file', login ? join(isolated.TMPDIR, 'agy.log') :
+    launchArgs = [host || login ? '--sandbox=false' : '--sandbox', '--log-file', host || login ? join(isolated.TMPDIR, 'agy.log') :
       eventPath(project, row.addr).replace(/\.jsonl$/, '.agy.log')];
-    if (guard.LOOM_SENIOR_TOOL_LOG) {
-      const spec = agy.launch({ cwd: row.cwd, hookSink: eventPath(project, row.addr), allowNativeQuestions: questions });
-      agyWorkspace = spec.env.LOOM_AGY_HOOK_WORKSPACE;
-      launchArgs.push(...spec.argv.slice(spec.argv.indexOf('--add-dir')));
-    }
   } else if (row.cli === 'claude') {
-    Object.assign(env, { OAR_CLAUDE_BIN: nativeClaude(), CLAUDE_CODE_ENTRYPOINT: 'loom', DISABLE_AUTOUPDATER: '1' });
+    Object.assign(env, { OAR_CLAUDE_BIN: executable ?? nativeClaude(), CLAUDE_CODE_ENTRYPOINT: 'loom', DISABLE_AUTOUPDATER: '1' });
+    // Even an explicit ~/.claude selects a separate Keychain namespace. The
+    // resolved directory in isolated still supplies the host write boundary.
+    if (host) env.CLAUDE_CONFIG_DIR = process.env.CLAUDE_CONFIG_DIR ?? null;
     if (row.authMode === 'subscription' || claudeAuthMode(project, row.role) !== 'api-key') {
       for (const key of claudeApiEnvKeys) env[key] = null;
     }
-    if (login) env.CLAUDE_CODE_TMPDIR = isolated.TMPDIR;
+    if (host || login) env.CLAUDE_CODE_TMPDIR = isolated.TMPDIR;
     const { env: memoryEnv, claudeSettings } = memoryLaunch(row.cli, { ...row.memory, claudeSettings: {
       idleCompaction: claudeIdleCompaction(project, row.role), fastMode: row.fast,
-      ...(guard.LOOM_SENIOR_TOOL_LOG && { hooks: { PreToolUse: [{ matcher: '*', hooks: [{
+      ...(host || guard.LOOM_SENIOR_TOOL_LOG ? { hooks: { PreToolUse: [{ matcher: '*', hooks: [{
         type: 'command', command: process.execPath, args: [fileURLToPath(new URL('../runtimes/tui/capture-hook.mjs', import.meta.url))], timeout: 5,
-      }] }] } }),
+      }] }] } } : {}),
     } });
     Object.assign(env, memoryEnv);
     launchArgs = [...claudeMemoryArgs(), '--setting-sources', '', '--strict-mcp-config', '--settings', JSON.stringify(claudeSettings)];
   }
   const probe = login ? { ...env, ...isolated, CLAUDE_CONFIG_DIR: null, GEMINI_HOME: null, ANTIGRAVITY_APP_DATA_DIR: null } : env;
-  if (login && row.cli === 'agy' && !process.env.OAR_ANTIGRAVITY_BIN) {
-    const installed = join(login.HOME, '.local', 'bin', 'agy');
-    if (statSync(installed, { throwIfNoEntry: false })?.isFile()) probe.OAR_ANTIGRAVITY_BIN = installed;
-  }
   try {
+    if (row.cli === 'agy' && (host || guard.LOOM_SENIOR_TOOL_LOG)) {
+      agyWorkspace = stageAgyHooks({ cwd: row.cwd, hookSink: host ? join(isolated.TMPDIR, 'agy-hooks.jsonl') : eventPath(project, row.addr),
+        allowNativeQuestions: questions });
+      launchArgs.push('--add-dir', agyWorkspace);
+    }
+    if (executable) recordWorkerExecutable(project, row, executable, 'probe');
     let installation = await runtime.installation({ env: probe });
     if (installation.kind !== 'available') throw new Error(`${row.cli} unavailable: ${installation.reason ?? installation.kind}`);
     if (row.cli === 'opencode') Object.assign(env, memoryLaunch(row.cli, {
       ...row.memory, openCodeConfig: env.OPENCODE_CONFIG_CONTENT ?? process.env.OPENCODE_CONFIG_CONTENT,
       openCodeNative: !/^(?:opencode\s+)?v?1\./u.test(installation.version ?? ''),
     }).env);
+    if (executable) {
+      if (resolveNativeExecutable(installation.command) !== executable) throw new Error('Worker installation changed during probe');
+      installation = { ...installation, command: executable };
+    }
+    if (row.cli === 'agy') await preflightAgyAcp(installation.command, row.cwd, { ...probe, GEMINI_HOME: env.GEMINI_HOME }, launchArgs);
+    if (host) installation = { ...installation, command: hostWriteBoundary(project, row, isolated, installation.command) };
     if (login) installation = { ...installation, command: sandboxNativeWorker(project, row, login, isolated, installation.command) };
     integration = await integrationPs(row, isolated, managed.PATH);
     if (integration) {
@@ -112,10 +127,13 @@ export async function openOar(row, project, resume) {
     }
     const { cwd, model, effort } = row;
     if (row.cli === 'codex') launchArgs.push(...codexDeveloperArgs(row.memory?.indexText));
+    await beforeLaunch?.();
+    if (executable) recordWorkerExecutable(project, row, executable, 'launch');
     const session = await runtime.session(installation, { cwd, model, effort, env, launchArgs,
       ...(row.cli === 'claude' && row.memory?.indexText && { appendSystemPrompt: row.memory.indexText }),
       ...(row.cli === 'claude' && !questions && { disallowedTools: ['AskUserQuestion'] }),
       ...(row.cli === 'codex' && { endTurnProcessesOnAbort: true }), ...(resume ? { resume } : {}) });
+    installationVersions.set(session, installation.version);
     if (agyWorkspace || integration) {
       const dispose = session.dispose.bind(session);
       session.dispose = async () => {
@@ -140,7 +158,7 @@ export async function bindOarTranscript(session, row) {
   return checkedTranscript(await adapters[row.cli]?.transcript.locate({ cwd: row.cwd, sessionId: session.id }), row);
 }
 
-export function trackOar(project, row, session, onError, incarnation, onExit) {
+export function trackOar(project, row, session, onError, incarnation, onExit, accounts = {}) {
   const path = eventPath(project, row.addr);
   const rows = jsonRows(prepareJournal(path));
   let number = rows.reduce((max, event) => Math.max(max, event.turn ?? 0), 0);
@@ -154,6 +172,32 @@ export function trackOar(project, row, session, onError, incarnation, onExit) {
   failure = failure?.type === 'stuck' ? failure.reason : undefined;
   let suspending = false;
   const prompts = new Map();
+  const cliVersion = installationVersions.get(session) ?? session.cliVersion;
+  const accountBinding = { ...accounts.binding, cliVersion, sessionId: session.id, generation: incarnation ?? streamId };
+  let accountIncident;
+  let unsubscribeRaw;
+  let readingRaw = true;
+
+  function stopRaw() {
+    readingRaw = false;
+    unsubscribeRaw?.();
+    unsubscribeRaw = undefined;
+  }
+
+  function onRaw(frame) {
+    if (!readingRaw || frame.kind !== 'frame' || frame.sessionId !== session.id ||
+        !Array.isArray(frame.agentPath) || frame.agentPath.length) return;
+    const diagnostics = [];
+    const native = frame.body?.native;
+    const observations = parseClaudeRateLimitEvent(native, { ...accountBinding, sequence: frame.seq,
+      observedAt: frame.receivedAt, isReplay: true, observeAccountDiagnostics: batch => diagnostics.push(...batch) });
+    if (incarnation && (observations.length || diagnostics.length)) {
+      append(frame, 'account-evidence', { observations, diagnostics });
+    } else {
+      if (observations.length) accounts.observeAccounts?.(observations);
+      if (diagnostics.length) accounts.observeAccountDiagnostics?.(diagnostics);
+    }
+  }
 
   const append = (event, type, fields = {}) => {
     if (seq !== event.seq) { seq = event.seq; ordinal = 0; }
@@ -187,11 +231,12 @@ export function trackOar(project, row, session, onError, incarnation, onExit) {
     if (event.kind === 'exited' || event.kind === 'released' || event.kind.startsWith('compaction_')) {
       append(event, event.kind, event.kind.startsWith('compaction_') ? { outcome: event.outcome } :
         { suspending, ...(event.kind === 'exited' && { exitCode: event.exitCode ?? event.code }) });
-      if (event.kind === 'exited' || event.kind === 'released') onExit?.();
+      if (event.kind === 'exited' || event.kind === 'released') { stopRaw(); onExit?.(); }
     }
     if (event.kind === 'input_dropped' && event.inputId) {
       append(event, 'input-dropped', { inputId: event.inputId });
     }
+    if (event.kind === 'usage') append(event, 'usage', { ...(active && { turn: active.turn, turnId: active.turnId }), usage: event.usage });
     if (!active && activeEvents.has(event.kind)) {
       const turn = ++number;
       const status = session.status().value;
@@ -233,7 +278,6 @@ export function trackOar(project, row, session, onError, incarnation, onExit) {
         input: event.input, exitCode: event.exitCode, result: event.result, status: event.status,
         content: event.content?.filter(part => part.type === 'text') });
     }
-    if (event.kind === 'usage') append(event, 'usage', { turn, usage: event.usage });
     if (['text_delta', 'reasoning'].includes(event.kind) && !active.progress) {
       append(event, 'model-progress', { turn, turnId });
       active.progress = true;
@@ -241,6 +285,29 @@ export function trackOar(project, row, session, onError, incarnation, onExit) {
     if (event.kind !== 'turn_ended') return;
     const outcome = event.outcome;
     const reason = rateFailure.has(outcome.failure) ? 'rate-limit' : outcome.failure === 'auth' ? 'auth' : undefined;
+    if (reason || accountIncident && outcome.kind === 'completed') {
+      const observed_at = accountTime(event.receivedAt);
+      const bucket = /^seven_day(?:_(?:opus|sonnet|haiku|fable))?$|^five_hour$/.test(outcome.rateLimitType) ?
+        outcome.rateLimitType : undefined;
+      const next = reason && { status: reason === 'auth' ? 'auth-expired' : 'quota-wait',
+        observed_at, resets_at: accountTime(outcome.resetsAt), ...(row.cli === 'claude' && bucket && { limit_id: 'claude', bucket }) };
+      const incidents = [
+        ...(accountIncident && (!next || accountIncident.status !== next.status || accountIncident.bucket !== next.bucket) ?
+          [{ ...accountIncident, cleared_at: observed_at }] : []),
+        ...(next ? [next] : []),
+      ];
+      accountIncident = next;
+      if (incarnation) {
+        try { for (const incident of incidents) append(event, 'account-incident', { incident }); }
+        catch { onError(new Error('Could not collect OAR account incident')); }
+      } else if (accountBinding.accountRef && incidents.length) {
+        try {
+          accounts.observeAccountIncidents?.(incidents.map(incident => ({
+            cli: row.cli, account_ref: accountBinding.accountRef, session_id: row.addr, ...incident,
+          })));
+        } catch { onError(new Error('Could not collect OAR account incident')); }
+      }
+    }
     if (reason && failure !== reason) append(event, 'stuck', { reason, turn });
     if (!reason && failure) append(event, 'recovered', { reason: failure, turn });
     failure = reason;
@@ -257,19 +324,27 @@ export function trackOar(project, row, session, onError, incarnation, onExit) {
   }
 
   let error;
-  append({ seq: -1, receivedAt: Date.now() }, 'stream-opened');
+  append({ seq: -1, receivedAt: Date.now() }, 'stream-opened',
+    typeof cliVersion === 'string' && /^v?\d+\.\d+\.\d+(?:[-+][a-z0-9.-]+)?$/i.test(cliVersion) ? { cliVersion } : {});
   const unsubscribe = session.events(event => {
     if (error) return;
     try { onEvent(event); }
     catch (failure) { error ??= failure; onError(failure); }
   }, { cursor: { sessionId: session.id, afterSeq: session.records().at(-1)?.seq ?? -1 } });
+  if (row.cli === 'claude' && (incarnation || accounts.observeAccounts || accounts.observeAccountDiagnostics) && session.rawEvents) {
+    unsubscribeRaw = session.rawEvents(frame => {
+      try { onRaw(frame); }
+      catch { onError(new Error('Could not collect Claude account evidence')); }
+    }, { sessionId: session.id, afterSeq: -1 });
+    if (!readingRaw) stopRaw();
+  }
   function clearInactive() {
     if (!active) return;
     const { turn, turnId, sinceSeq } = active;
     append({ seq, receivedAt: Date.now() }, 'turn-unconfirmed', { turn, turnId, sinceSeq });
     active = pending = undefined;
   }
-  return { session, provider: row.cli, streamId, rows, active: () => active, userPrompt: () => prompts.values().next().value, clearInactive, unsubscribe,
+  return { session, provider: row.cli, streamId, rows, active: () => active, userPrompt: () => prompts.values().next().value, clearInactive, unsubscribe: () => { stopRaw(); unsubscribe(); },
     sampleInputHead: () => { nextHead = headAt(row.cwd); },
     noteAbort: () => {
       const turn = active;
@@ -281,6 +356,7 @@ export function trackOar(project, row, session, onError, incarnation, onExit) {
 
 export function oarSnapshot(runtime, events, ended) {
   const status = runtime?.session.status().value;
+  const contextUsage = runtime?.session.contextUsage?.()?.value;
   const userPrompt = !ended && !status?.released && runtime?.userPrompt?.();
   const state = ended || status?.released ? 'finished' : userPrompt?.kind ?? (!status ? 'unknown' :
     status.kind === 'running' ? 'busy' : 'idle');
@@ -291,7 +367,8 @@ export function oarSnapshot(runtime, events, ended) {
     since: current?.since ?? status.lastEventAt,
   } : undefined;
   return { state, terminal: { turn: current?.turn ?? events.findLast(event => event.type === 'turn-end')?.turn ?? 0 },
-    active, events, ...(userPrompt && { userPrompt }), strictEnd: true, runtimeStatus: status, streamId: runtime?.streamId };
+    active, events, ...(userPrompt && { userPrompt }), strictEnd: true,
+    runtimeStatus: status && (contextUsage ? { ...status, contextUsage } : status), streamId: runtime?.streamId };
 }
 
 export function oarEnd(frame, observation) {

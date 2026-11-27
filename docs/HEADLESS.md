@@ -36,3 +36,20 @@ Worker 宿主在下次派工时随发布更新。loomd 升级接回原宿主，�
 | OpenCode | DeepSeek Flash，高峰 | 0.30 | 0.30 | 0.006 | 1.20 |
 
 非 Claude 的缓存写入按各参考档的新输入价格估算。此视图省略缓存存储时长及服务费。[OpenAI](https://developers.openai.com/api/docs/models/gpt-5.4) · [Google](https://ai.google.dev/gemini-api/docs/pricing) · [Anthropic](https://platform.claude.com/docs/en/about-claude/pricing) · [DeepSeek](https://api-docs.deepseek.com/quick_start/pricing/)
+# 无头会话的空闲保留
+
+`.project/policy.json` 的 `workers.warmMs.<cli>` 按 CLI 设置缓存窗口，默认 600000 毫秒。旧的 `workers.idleRetainMs` 仍提供通用默认值。预期一次续作的派工可加 `--keep-warm`，续作获原生回执后清除保留。Leader 可用 `loom release <task>` 提前释放。自动释放及门禁关闭均要求 Worker 空闲、最终结果获原生投递回执，且没有在途投递或续作。临时 Reviewer 和交接失败的继任会话也在结论送达并空闲到期后清理。只有日志渠道时，`loom notifications --take` 记录实际领取。
+
+Status 和 Leader 摘要显示 `working`、`idle-warm`、`offline`、`closed`，以及缓存窗口倒计时、上下文比例和结果标签。向离线任务排队发信或执行 `loom assign --resume-attempt <task>` 会用原 UUID 恢复无头 Worker。Auditor 原生回复 `APPROVE` 后，loomd 关闭相关波次或 barrier 的会话。显式 `loom stop` 也会关闭 Worker。历史、证据及工作树随原任务保留。
+
+派工回执记录新建、恢复或续作及其理由。按门禁统计新建、恢复、关闭和 TTL 下线次数。冷恢复的 token 数使用缓存窗口到期后原生续作首个用量样本，缺少用量时显示覆盖数。Status 和 Cost 的 RSS 对项目中已核验的会话进程树求和，共用物理页按各进程的 RSS 计入。
+
+`workers.reuseMaxContext` 默认 0.6，`workers.reuseMaxCompactions` 默认 1。Leader 确认紧邻小卡属于同领域和同工作树后，用 `loom send --next-card` 复用原 Worker。loomd 要求已用上下文 ≤60%、累计压缩 ≤1，并用原生证据核对上一卡无已核实事实错误或越权。续卡沿用项目级 Git 保护规则，Leader 核对续卡自己的可写范围。卡内续作和 R1/R2 不改接口的局部返工继续交给原 Worker。换领域、方向被否、R3、造假或越权时另开修复卡，附精确的 RED 复现。
+
+`workers.handoffMinCompactions` 默认 1，`workers.handoffMinRemaining` 默认 0.15。已达到压缩次数且压缩后的新读数显示剩余窗口再次低于下限时，在步骤边界交接。loomd 提供草稿，Worker 用 `loom worker-handoff` 补齐在做工作及验收结果。交接单包含任务、分支、SHA、WIP 和生效裁决。定稿和原生结果送达后关闭旧 Worker。常驻角色默认首次压缩后在卡片边界换班，按角色使用 `rotateAtCompactions` 配置。
+
+活动轮次连续 10 分钟无进展时，状态显示 `no-progress`。Leader、Auditor 或 Super 可用 `loom worker-handoff <task|addr>` 获取交接草稿。确认造假或越权时，用 `loom worker-handoff <task|addr> --reason fabrication|overreach --evidence TEXT` 记录证据并生成草稿。草稿保留原 Worker 的运行和原生记录，由 Leader 决定何时停止及派接手人。
+
+新 Worker 启动时收到卡片约定、裁决摘录和相关项目记忆。loomd 派工前核对分支、基线 SHA、WIP 行数和裁决摘要，Worker 修改前通过 `loom worker-check` 复核并在首报确认。发现不一致时停止并报告 BLOCKED。
+
+状态与 Leader 摘要同时显示上下文比例、压缩次数和复用判断。看板按门禁统计实际复用、阈值退役及退役时的平均已测量上下文比例。另列 `REJECT` 后有新建或恢复 Worker 开始工作的回合数，以及后续门禁已裁决和获批准的回合数。同一回合采用两种方式时，两组都计入。

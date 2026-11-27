@@ -71,9 +71,9 @@
 
 ## 整理提案的 daemon 接口
 
-请求通过项目 daemon 的协议 1 发送 `{ protocol: 1, command, args, caller }`。在进程内测试中调用 `supervisor.handle(command, args, caller)`。调用者必须是该项目当前托管会话的地址或 pane。角色和项目取自会话绑定。下表为进程内返回值，RPC 成功时另附 `ok: true`。
+请求通过项目 daemon 的协议 1 发送 `{ protocol: 1, command, args, capability }`。在进程内测试中调用 `supervisor.handle(command, args, caller)`，其中 `caller` 是认证后的托管会话地址。下表为进程内返回值，RPC 成功时另附 `ok: true`。
 
-当前 daemon RPC 仅信任同一系统用户下请求方自报的调用者身份。此角色校验不构成安全边界。基于会话凭证的强鉴权由 `main` 实现，合入 `main` 前必须解决。
+记忆 RPC 使用 SOCK-AUTH-1 会话凭证认证。daemon 验证凭证及会话当前状态，从已登记会话取得角色，再按项目、条目可见性和操作类型授权。记忆 RPC 要求有效的托管会话凭证。
 
 | `command` | `args` | 返回值与权限 |
 | --- | --- | --- |

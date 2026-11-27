@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
-import { execFile, spawn as spawnProcess, spawnSync } from 'node:child_process';
-import { randomUUID } from 'node:crypto';
+import { execFile, execFileSync, spawn as spawnProcess, spawnSync, mkdtempSync } from '../fixtures/test-process.mjs';
+import { createHash, randomUUID } from 'node:crypto';
 import { once } from 'node:events';
-import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync, readFileSync, realpathSync, renameSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
@@ -15,6 +15,7 @@ import codex from '../adapters/codex/index.mjs';
 import { deliveryId } from '../inbox/message.mjs';
 import { addCodexStartHook } from '../runtimes/tui/codex-start.mjs';
 import { request } from './rpc.mjs';
+import { clientCapability } from './socket-auth.mjs';
 import { hostDirectory, hostHello, hostRequest, hostSocket } from './host-control.mjs';
 import { processCommand, processTable, sameProcess } from './processes.mjs';
 import { nextController, releaseId } from './release.mjs';
@@ -97,6 +98,8 @@ async function until(read, message, wait = 18_000) {
 function fixtureProject(t, options = {}) {
   const root = process.env.LOOM_HARDEN_TEST_ROOT ?? realpathSync(tmpdir());
   const project = mkdtempSync(join(root, 'lh-'));
+  const home = mkdtempSync(join(root, 'lh-home-'));
+  const authState = mkdtempSync(join(root, 'lh-state-'));
   fixtureProjects.add(project);
   const read = name => JSON.parse(readFileSync(join(project, name), 'utf8'));
   const write = (name, data) => writeFileSync(join(project, name), JSON.stringify(data) + '\n');
@@ -109,24 +112,29 @@ function fixtureProject(t, options = {}) {
   const native = () => lines('native-deliveries.jsonl');
   const deliveries = id => native().filter(row => deliveryId(row.text) === id);
   const fixtureEnv = Object.fromEntries(Object.entries(process.env).filter(([key]) =>
-    !['HC_TERMINAL_ID', 'LOOM_ADDR', 'LOOM_WAVE_WINDOW_MS', 'LOOM_WAVE_SEAL_MS', 'LOOM_WAVE_PARTIAL_MS',
-      'LOOM_UNCERTAIN_MS', 'LOOM_BLOCKED_COALESCE_MS'].includes(key)));
+    ['PATH', 'TMPDIR', 'LOOM_TEST_PS', 'LOOM_TEST_PS_BACKEND', 'LOOM_TEST_FIXTURE_ROOT', 'LOOM_WORKER_TMP',
+      'GIT_CONFIG_GLOBAL', 'GIT_CONFIG_NOSYSTEM'].includes(key)));
   const codex = join(project, 'codex');
   const agy = join(project, 'agy');
   for (const cli of [codex, agy]) writeFileSync(cli, '#!' + process.execPath + '\nimport(' +
     JSON.stringify(new URL('../tasks/PROTO-HARDEN-0/fixtures/native.mjs', import.meta.url).href) + ');\n', { mode: 0o700 });
-  for (const dir of ['codex-local', 'xdg-state', 'xdg-config', 'xdg-data']) mkdirSync(join(project, dir));
+  for (const dir of ['codex-local', 'xdg-config', 'xdg-data']) mkdirSync(join(project, dir));
   mkdirSync(join(project, '.project'));
   write('.project/policy.json', { preferred: [], deny: [], delivery: { coalesceMs: 0 } });
-  Object.assign(fixtureEnv, { LOOM_CODEX_BIN: codex, LOOM_AGY_BIN: agy,
+  Object.assign(fixtureEnv, { HOME: home, GIT_CONFIG_GLOBAL: '/dev/null', GIT_CONFIG_NOSYSTEM: '1',
+    LOOM_CODEX_BIN: codex, LOOM_AGY_BIN: agy,
     OAR_CODEX_BIN: codex, OAR_ANTIGRAVITY_BIN: agy, CODEX_HOME: join(project, 'codex-local'),
-    XDG_STATE_HOME: join(project, 'xdg-state'), XDG_CONFIG_HOME: join(project, 'xdg-config'),
+    XDG_STATE_HOME: authState, XDG_CONFIG_HOME: join(project, 'xdg-config'),
     XDG_DATA_HOME: join(project, 'xdg-data'), LOOM_FAULT_PROJECT: project, LOOM_DESKTOP_NOTIFY: '0',
-    NODE_OPTIONS: '--import=' + new URL('../tasks/HOTSWAP-1/fault-host.mjs', import.meta.url).href, ...options.env });
+    NODE_OPTIONS: [process.env.NODE_OPTIONS, '--import=' + new URL('../tasks/HOTSWAP-1/fault-host.mjs', import.meta.url).href]
+      .filter(Boolean).join(' '), ...options.env });
   write('panes.json', []);
   const children = [];
   const extraHosts = [];
-  const rpc = (command, args) => request(project, command, args);
+  const authDir = join(authState, 'loom', 'socket-auth', createHash('sha256').update(project).digest('hex'));
+  const rpc = (command, args) => request(project, command, args, { capability: command === 'send' && args.from ?
+    readFileSync(join(authDir, args.from), 'utf8').trim() :
+    clientCapability(project, { XDG_STATE_HOME: authState, LOOM_EXTERNAL_SUPER: '1' }) });
   function launch() {
     const child = spawnProcess(process.execPath, ['--import', fixture('fault.mjs'), fixture('loomd.mjs'), project], {
       env: fixtureEnv, cwd: repository, detached: true, stdio: ['ignore', 'pipe', 'pipe'],
@@ -196,7 +204,9 @@ function fixtureProject(t, options = {}) {
         if (child.exitCode === null && child.signalCode === null) signal(-child.pid, 'SIGKILL');
         await exit;
       }
+      rmSync(authState, { recursive: true, force: true });
       if (!process.env.LOOM_HARDEN_TEST_ROOT) rmSync(project, { recursive: true, force: true });
+      rmSync(home, { recursive: true, force: true });
     }
   });
   function launchHost(args) {
@@ -280,6 +290,24 @@ test(`real OAR and hc-shaped TUI prompts share durable idempotency for two concu
   f.write('verified-concurrency.json', { accepted: 2 * perSender, delivered: 2 * perSender, answered: 2 * perSender, duplicates: 0, fifo: true });
 });
 
+test('Worker native provider probes and launches record a canonical CLI path', { timeout: 25_000 }, async t => {
+  const f = fixtureProject(t);
+  const executable = join(f.project, 'codex');
+  const binary = join(f.project, 'codex-native');
+  renameSync(executable, binary);
+  symlinkSync(binary, executable);
+  await f.start();
+  const leader = await f.spawn('leader', 'LEADER');
+  const worker = await f.spawn('worker', 'CLI-PATH', { parent: leader.session.addr });
+  await f.waitMail(worker.deliveryId);
+  const journal = f.lines(`.project/loomd/sessions/${worker.session.addr}.executables.jsonl`);
+  assert.deepEqual(journal.map(({ at, ...entry }) => entry), [
+    { cli: 'codex', path: binary, operation: 'probe' },
+    { cli: 'codex', path: binary, operation: 'launch' },
+  ]);
+  assert.ok(journal.every(entry => Number.isSafeInteger(entry.at)));
+});
+
 test('real ACP text chunks without a final boundary produce an UNCONFIRMED wave wakeup',
   { timeout: 25_000, skip: nestedSeatbeltLimited }, async t => {
   const f = fixtureProject(t);
@@ -293,6 +321,98 @@ test('real ACP text chunks without a final boundary produce an UNCONFIRMED wave 
   const message = await until(() => f.mail().find(message => message.waveBatch && message.completion?.body), 'ACP wave wakeup');
   assert.match(message.text, /UNCONFIRMED.*未确认正文/s);
   assert.equal(f.deliveries(message.id).length, 1);
+});
+
+test('Codex host launches without Seatbelt and keeps the host tool guard', { timeout: 25_000, skip: nestedSeatbeltLimited }, async t => {
+  const f = fixtureProject(t);
+  f.write('codex-host-probes.json', true);
+  await f.start();
+  const { grant } = await f.rpc('grant', { target: 'host', tier: 'host', reason: 'Fixture' });
+  const { session } = await f.spawn('worker', 'host', { tier: 'host' });
+  for (const tier of ['integration', 'sandbox']) await f.spawn('worker', tier, { tier });
+  const [host, ...restricted] = f.lines('codex-host-launches.jsonl');
+  assert.deepEqual(host, { sandbox: ['sandbox_mode="danger-full-access"'], wrapped: false,
+    sandboxExec: 'ok', pty: 'ok', guard: true, hooks: true });
+  assert.equal(restricted.length, 2);
+  for (const launch of restricted) {
+    assert.deepEqual(launch.sandbox, []);
+    assert.match(launch.profile, /^default_permissions="loom-worker-/);
+  }
+  const [entry] = f.read('.project/loomd/host-grants.json').grants;
+  assert.equal(entry.id, grant.id);
+  assert.deepEqual(entry.claims.map(claim => claim.addr), [session.addr]);
+});
+
+test('headless agy tiers launch with the recorded 1.5.18 ACP flags',
+  { timeout: 25_000, skip: nestedSeatbeltLimited }, async t => {
+  const f = fixtureProject(t);
+  await f.start();
+  await f.rpc('grant', { target: 'host', tier: 'host', reason: 'Fixture' });
+  for (const tier of ['host', 'integration', 'sandbox']) {
+    const { session } = await f.spawn('worker', tier, { cli: 'agy', tier });
+    assert.ok(session.sessionId);
+  }
+  const [host, integration, sandbox] = f.lines('agy-acp-argv.jsonl');
+  assert.ok(host.includes('--add-dir'));
+  assert.ok(integration.includes('--log-file') && sandbox.includes('--log-file'));
+});
+
+test('invariant [idempotency] agy preflight leaves the host grant available for a successful retry',
+  { timeout: 25_000, skip: nestedSeatbeltLimited }, async t => {
+  const f = fixtureProject(t);
+  const task = 'ACP-PREFLIGHT';
+  const spawn = () => f.spawn('worker', task, { cli: 'agy', tier: 'host' });
+  const claims = () => f.read('.project/loomd/host-grants.json').grants[0].claims;
+  await f.start();
+  await f.rpc('grant', { target: task, tier: 'host', reason: 'Fixture' });
+  f.write('agy-omit-acp-flag.json', '--sandbox');
+  await assert.rejects(spawn(), /agy ACP preflight.*--sandbox/);
+  assert.deepEqual(claims(), []);
+  assert.deepEqual(f.lines('agy-acp-argv.jsonl'), []);
+  rmSync(join(f.project, 'agy-omit-acp-flag.json'));
+  const { session } = await spawn();
+  assert.deepEqual(claims().map(claim => claim.addr), [session.addr]);
+  await assert.rejects(spawn(), { code: 'host-grant-exhausted' });
+});
+
+test('invariant [persistence] a failed native host startup releases its reservation and cannot use a replacement grant',
+  { timeout: 25_000, skip: nestedSeatbeltLimited }, async t => {
+  const f = fixtureProject(t);
+  const task = 'ACP-FAILED-START';
+  const spawn = () => f.spawn('worker', task, { cli: 'agy', tier: 'host' });
+  const grant = () => f.rpc('grant', { target: task, tier: 'host', reason: 'Fixture' });
+  const ledger = () => f.read('.project/loomd/host-grants.json').grants;
+  const first = await f.start();
+  await grant();
+  f.write('agy-fail-start.json', true);
+  await assert.rejects(spawn(), /fixture rejected ACP startup/);
+  assert.deepEqual(ledger()[0].claims, []);
+  assert.deepEqual(ledger()[0].reservations, []);
+  const index = projectIndex(f.project);
+  const [failed] = index.query({ task });
+  assert.ok(failed.endedAt);
+  assert.equal(f.lines('agy-acp-argv.jsonl').length, 1);
+  rmSync(join(f.project, 'agy-fail-start.json'));
+  const { grant: replacement } = await grant();
+  assert.equal(replacement.remaining, 1);
+  signal(-first.child.pid, 'SIGTERM');
+  await first.exit;
+  // Replay an error record whose index and grant-binding cleanup was interrupted.
+  const jobFile = `.project/loomd/sessions/${failed.addr}.json`;
+  const { id, expiresAt, write } = replacement;
+  const stale = f.read(jobFile);
+  delete stale.stopping;
+  delete stale.host;
+  stale.pendingHostGrant = { id, expiresAt, write };
+  f.write(jobFile, stale);
+  index.update(failed.addr, { endedAt: null });
+  await f.start();
+  await until(() => index.query({ addr: failed.addr })[0].endedAt, 'failed host recovery did not close the job');
+  assert.deepEqual(ledger()[1].claims, []);
+  const { session } = await spawn();
+  assert.notEqual(session.addr, failed.addr);
+  assert.deepEqual(ledger()[1].claims.map(claim => claim.addr), [session.addr]);
+  assert.equal(f.lines('agy-acp-argv.jsonl').length, 2);
 });
 
 test('definitive Codex native refusals do not escalate as uncertain', { timeout: 25_000 }, async t => {
@@ -404,6 +524,50 @@ test('SIGKILL around delivery, registry, relay and history durability boundaries
       assert.equal(f.deliveries(id).length, 1);
     }
   })));
+});
+
+test('a detached host with a live socket keeps its incarnation and receipts when ps omits its PID', { timeout: 35_000 }, async t => {
+  const outer = mkdtempSync(join(realpathSync(tmpdir()), 'ps-miss-'));
+  const ps = join(outer, 'ps');
+  const omitted = join(outer, 'omitted');
+  writeFileSync(ps, `#!${process.execPath}
+const fs = require('node:fs');
+const { spawnSync } = require('node:child_process');
+const index = process.argv.indexOf('-p');
+if (index >= 0 && fs.existsSync(${JSON.stringify(omitted)}) &&
+    process.argv[index + 1].split(',').includes(fs.readFileSync(${JSON.stringify(omitted)}, 'utf8'))) process.exit(1);
+const result = spawnSync(${JSON.stringify(processCommand())}, process.argv.slice(2), { stdio: 'inherit' });
+process.exit(result.status ?? 1);
+`, { mode: 0o700 });
+  const f = fixtureProject(t, { env: { LOOM_TEST_PS: ps } });
+  t.after(() => rmSync(outer, { recursive: true, force: true }));
+  const initial = await f.start();
+  const { session, deliveryId: startup } = await f.spawn('leader', 'PS-MISS');
+  await f.waitMail(startup);
+  const binding = () => f.read(`.project/loomd/sessions/${session.addr}.json`).host;
+  const original = binding();
+  const owner = f.read(`.project/loomd/hosts/${session.addr}/${original.incarnation}/owner.json`);
+  writeFileSync(omitted, String(owner.identity.pid));
+  initial.child.kill('SIGKILL');
+  await initial.exit;
+  const reattached = await f.start();
+  const sent = await f.send(session.addr, 'RETURN DONE PS-MISS');
+  assert.equal((await f.waitMail(sent.id)).completion.sessionId, session.sessionId);
+  assert.deepEqual(binding(), original);
+  assert.equal(f.deliveries(startup).length, 1);
+  const socket = hostSocket(f.project, session.addr, original.incarnation);
+  reattached.child.kill('SIGKILL');
+  await reattached.exit;
+  renameSync(socket, socket + '.hidden');
+  try {
+    await f.start();
+    const observed = await until(async () => {
+      const state = await f.rpc('state', { target: session.addr });
+      return state.reason === 'liveness-unknown' && state;
+    }, 'missing socket and ps row leave the host protected');
+    assert.equal(observed.state, 'stuck');
+    assert.deepEqual(binding(), original);
+  } finally { renameSync(socket + '.hidden', socket); }
 });
 
 test('real OAR child exit refuses queued work and retains accepted input and leader-exited notification', { timeout: 30_000 }, async t => {

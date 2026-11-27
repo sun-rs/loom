@@ -1,29 +1,72 @@
 import assert from 'node:assert/strict';
-import { execFile, spawnSync } from 'node:child_process';
+import { execFile, spawnSync, mkdtempSync } from '../fixtures/test-process.mjs';
 import { once } from 'node:events';
-import { mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { createServer } from 'node:net';
 import { tmpdir } from 'node:os';
-import { delimiter, join } from 'node:path';
+import { join } from 'node:path';
 import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
+import { randomUUID } from 'node:crypto';
 import { openIndex } from '../index/index.mjs';
-import { spawnProfile } from './policy.mjs';
+import { readPolicy, spawnProfile } from './policy.mjs';
 import { projectIndex, socketPath } from './project.mjs';
 import { estimateTokens } from '../lib/token-budget.mjs';
 import { writeMemory } from '../memory/project.mjs';
+import { wireText } from '../inbox/message.mjs';
 
 const executable = fileURLToPath(new URL('../bin/loom', import.meta.url));
 const file = path => new URL(path, import.meta.url);
+
+test('status and cost show transcript metrics and separately measure the bound rotation briefing', t => {
+  const f = fixture(t);
+  const metadata = join(f.cwd, '.project');
+  const jobs = join(metadata, 'loomd', 'sessions');
+  mkdirSync(jobs, { recursive: true });
+  mkdirSync(join(metadata, 'inbox'));
+  const index = projectIndex(f.cwd);
+  const now = Date.now();
+  const startedAt = now - 50;
+  const previous = 'old-leader';
+  const successor = 'next-leader';
+  const transcriptPath = join(f.cwd, 'next.jsonl');
+  const row = { role: 'leader', backend: 'headless', cli: 'codex', cwd: f.cwd, project: f.cwd };
+  index.register({ ...row, addr: previous, startedAt: now - 1000, endedAt: now - 30 });
+  index.register({ ...row, addr: successor, startedAt, transcriptPath });
+  index.beginRotation({ project: f.cwd, role: 'leader', predecessor: previous, successor, startedAt });
+  index.bindRotation(successor, now - 20);
+  const delivery = randomUUID();
+  writeFileSync(join(jobs, successor + '.json'), JSON.stringify({ firstId: delivery, rotationReason: 'switch' }));
+  writeFileSync(join(metadata, 'inbox', 'state.json'), JSON.stringify({ messages: [{ id: delivery,
+    target: { addr: successor }, startup: true, completion: { nativeTurnId: 'brief', at: now - 20 } }] }));
+  const event = (dt, payload) => ({ type: 'event_msg', timestamp: new Date(now + dt).toISOString(), payload });
+  const usage = (dt, id, input_tokens, output_tokens) => ({ type: 'token_usage_record',
+    timestamp: new Date(now + dt).toISOString(), payload: { response_id: id, usage: { input_tokens, output_tokens } } });
+  const records = [event(-45, { type: 'task_started', turn_id: 'brief', model_context_window: 1000 }),
+    event(-44, { type: 'user_message', message: wireText(delivery, 'Rotation briefing') }), usage(-30, 'one', 12, 3),
+    event(-20, { type: 'task_complete', turn_id: 'brief', last_agent_message: 'Acknowledged' }),
+    event(-17, { type: 'context_compacted' }), event(-16, { type: 'task_started', turn_id: 'later' }),
+    usage(-10, 'two', 7, 1), event(-5, { type: 'task_complete', turn_id: 'later', last_agent_message: 'Done' })];
+  const transcript = records.map(record => JSON.stringify(record)).join('\n') + '\n';
+  writeFileSync(transcriptPath, transcript);
+  const status = f.run(0, 'status', '--json');
+  const metrics = status.seniorSessions.find(session => session.addr === successor);
+  assert.deepEqual([metrics.turns, metrics.transcriptBytes, metrics.runtimeMs >= 50], [2, Buffer.byteLength(transcript), true]);
+  assert.deepEqual([metrics.context.contextWindow, metrics.context.compactions, metrics.context.afterCompaction[0].percent], [1000, 1, 0.7]);
+  assert.deepEqual(status.rotationsToday.leader.map(item => [item.successor, item.reason]), [[successor, 'switch']]);
+  const result = f.run(0, 'cost');
+  assert.deepEqual(result.rotationBriefings, { measured: 1, rawTokens: 15, entries: [{ role: 'leader', reason: 'switch',
+    predecessor: previous, successor, inputTokens: 12, outputTokens: 3, rawTokens: 15 }] });
+});
 
 function fixture(t) {
   const cwd = realpathSync(mkdtempSync(join(tmpdir(), 'loom-cli-')));
   t.after(() => rmSync(cwd, { recursive: true, force: true }));
   const path = join(cwd, 'index.sqlite');
   const index = openIndex(path);
-  const env = { ...process.env, HC_TERMINAL_ID: '', LOOM_PROJECT: '', LOOM_ADDR: '', LOOM_INDEX_PATH: path, PATH: `${cwd}${delimiter}${process.env.PATH}` };
-  const cli = (...args) => spawnSync(executable, args, { cwd, env, encoding: 'utf8' });
+  const env = { ...process.env, HC_TERMINAL_ID: '', LOOM_PROJECT: '', LOOM_ADDR: '', LOOM_INDEX_PATH: path };
+  const cli = (...args) => spawnSync(process.execPath, [executable, ...args], { cwd, env, encoding: 'utf8' });
   const run = (code, ...args) => {
     const result = cli(...args);
     assert.equal(result.status, code, result.stderr || result.stdout);
@@ -175,12 +218,50 @@ test('8f1d01d6 binds agy journal ends and Git evidence even when native turn IDs
     JSON.stringify({ streamId: 'old-stream', turnId: 'runtime-span', turn: 1, ...row })).join('\n') + '\n');
   writeFileSync(path, native.map((row, step_index) =>
     JSON.stringify({ ...row, step_index, created_at: new Date(1000 + step_index * 200).toISOString() })).join('\n') + '\n');
-  f.register(addr, { cli: 'agy', backend: 'headless', role: 'reviewer', transcriptPath: path });
+  f.register(addr, { cli: 'agy', backend: 'headless', role: 'auditor', transcriptPath: path });
   const result = f.run(0, 'hist', addr, '--level', 'L2', '--diff', '--json');
   assert.equal(result.turns.length, 1);
   assert.equal(result.turns[0].tools.length, 1);
   assert.equal(result.turns[0].tools[0].status, 'completed');
   assert.equal(result.turns[0].diff.turn.status, 'ok');
+});
+
+test('history pages through older L1 summaries and accepts stable cross-session cursors', t => {
+  const f = fixture(t);
+  function transcript(addr, offset, count, parent) {
+    const transcriptPath = join(f.cwd, addr + '.jsonl');
+    const rows = Array.from({ length: count }, (_, i) => {
+      const turn_id = addr + '-' + (i + 1);
+      const timestamp = new Date(Date.UTC(2026, 10, 24, 0, offset + i)).toISOString();
+      return [{ type: 'task_started', turn_id }, { type: 'task_complete', turn_id, last_agent_message: 'DONE ' + turn_id }]
+        .map(payload => JSON.stringify({ type: 'event_msg', timestamp, payload }));
+    });
+    writeFileSync(transcriptPath, rows.flat().join('\n') + '\n');
+    f.register(addr, { role: parent ? 'leader' : 'worker', transcriptPath, parent });
+  }
+  transcript('t-worker', 0, 13);
+  transcript('t-l1', 0, 7, 't-parent');
+  transcript('t-l2', 7, 6, 't-l1');
+  const read = (...args) => f.run(0, 'hist', ...args, '--json');
+  const turns = (...args) => read(...args).turns.map(turn => turn.index);
+  const latest = read('t-worker');
+  assert.deepEqual(latest.turns.map(turn => turn.index), [9, 10, 11, 12, 13]);
+  assert.equal(latest.pagination.nextBefore, '9');
+  assert.deepEqual(turns('t-worker', '--page', '2'), [4, 5, 6, 7, 8]);
+  assert.deepEqual(turns('t-worker', '--before', latest.pagination.nextBefore), [4, 5, 6, 7, 8]);
+  assert.deepEqual(turns('t-worker', '--page', '3'), [1, 2, 3]);
+  assert.deepEqual(turns('t-worker', '--page', '4'), []);
+  assert.deepEqual(turns('t-worker', '--page', '2', '--turns', '3'), [8, 9, 10]);
+  assert.deepEqual(turns('t-worker', '--all'), Array.from({ length: 13 }, (_, i) => i + 1));
+  const rolePage = read('--role', 'leader');
+  assert.equal(rolePage.pagination.nextBefore, 'turn:t-l2#2');
+  const older = read('--role', 'leader', '--before', rolePage.pagination.nextBefore).turns;
+  assert.deepEqual(older.map(turn => [turn.addr, turn.index]),
+    [['t-l1', 4], ['t-l1', 5], ['t-l1', 6], ['t-l1', 7], ['t-l2', 1]]);
+  assert.equal(f.run(2, 'hist', 't-worker', '--all', '--level', 'L2').error.code, 'invalid-arguments');
+  assert.equal(f.run(2, 'hist', 't-worker', '--page', '0').error.code, 'invalid-arguments');
+  assert.equal(f.run(2, 'hist', 't-worker', '--page', '2', '--turn', '2').error.code, 'invalid-arguments');
+  assert.equal(f.run(2, 'hist', 't-worker', '--before', 'yesterday').error.code, 'invalid-arguments');
 });
 
 test('queries parent chains and role timelines by time and turn across sessions', t => {
@@ -228,6 +309,7 @@ test('classifies hc read JSON and reports the headless stub, exits and read erro
   const f = fixture(t);
   const screen = readFileSync(file('../adapters/codex/fixtures/live/trust.txt'), 'utf8');
   f.env.LOOM_TEST_SCREEN = JSON.stringify({ text: screen });
+  f.env.LOOM_HC_BIN = join(f.cwd, 'hc');
   writeFileSync(join(f.cwd, 'hc'), '#!/bin/sh\n[ "$*" = "read --json -- t1" ] || exit 8\nprintf "%s\\n" "$LOOM_TEST_SCREEN"\n', { mode: 0o700 });
   f.register('t1');
   f.register('t2', { backend: 'headless' });
@@ -268,7 +350,6 @@ test('validates the policy example and rejects malformed capacity, drift, fast a
     { roles: { worker: { maxActiveWorkers: 3 } } },
     { drift: { slowCommandFactor: 1 } },
     { delivery: { coalesceMs: -1 } },
-    { roles: { reviewer: { maxDurationMs: 0 } } },
     { roles: { leader: { auth: 'yes' } } },
     { roles: { worker: { preferred: [{ cli: 'codex', model: 'fixture', effort: 'high', fast: 'true' }] } } },
     { roles: { auditor: { guidance: { vendorFamily: 'same' } } } },
@@ -277,6 +358,23 @@ test('validates the policy example and rejects malformed capacity, drift, fast a
     writeFileSync(path, JSON.stringify({ ...example, ...invalid }));
     assert.throws(() => select('worker'), { code: 'invalid-policy' });
   }
+});
+
+test('legacy roles.reviewer is ignored with a migration warning', t => {
+  const f = fixture(t);
+  const metadata = join(f.cwd, '.project');
+  mkdirSync(metadata);
+  const path = join(metadata, 'policy.json');
+  const original = { roles: { reviewer: { maxDurationMs: 0, preferred: 'obsolete' }, leader: { maxActiveWorkers: 2 } } };
+  writeFileSync(path, JSON.stringify(original));
+  const warnings = [];
+  const load = () => readPolicy(f.cwd, { warn: warning => warnings.push(warning) });
+  assert.deepEqual(load().roles, { leader: { maxActiveWorkers: 2 } });
+  load();
+  assert.equal(warnings.length, 1);
+  assert.match(warnings[0], /Remove roles\.reviewer/);
+  assert.deepEqual(JSON.parse(readFileSync(path, 'utf8')), original);
+  assert.equal(f.run(2, 'spawn', 'reviewer', '--cwd', f.cwd, '--wave', 'W', 'Check evidence').error.code, 'invalid-arguments');
 });
 
 test('worker admission counts live sessions by parent and project across waves', async t => {
@@ -297,11 +395,13 @@ test('worker admission counts live sessions by parent and project across waves',
 
   const server = createServer(socket => {
     socket.once('data', body => {
-      const { args, caller } = JSON.parse(body);
+      const { args, caller, capability } = JSON.parse(body);
       try {
-        assert.equal(args.workerCaller, caller);
+        assert.equal(caller, undefined);
+        assert.equal(args.workerCaller, undefined);
+        assert.equal(capability, 'fixture-leader');
         if (args.task === 'second') assert.deepEqual([args.deliver, args.barrier, args['expect-red']], ['barrier', 'W', true]);
-        spawnProfile(cwd, args);
+        spawnProfile(cwd, { ...args, workerCaller: 'lead' });
         const session = register(args.task, 'worker', { parent: 'lead', wave: args.wave });
         socket.end(JSON.stringify({ ok: true, session }));
       } catch (error) {
@@ -316,7 +416,9 @@ test('worker admission counts live sessions by parent and project across waves',
     const args = [executable, 'spawn', 'worker', '--cwd', cwd, '--project', cwd, '--task', task,
       '--wave', task, '--cli', 'codex', '--model', 'fixture', '--effort', 'medium', ...parent, 'start'];
     try {
-      const { stdout } = await promisify(execFile)(process.execPath, args, { env: { ...env, HC_TERMINAL_ID: 'lead-pane' } });
+      const { stdout } = await promisify(execFile)(process.execPath, args, {
+        env: { ...env, LOOM_PROJECT: cwd, LOOM_CAPABILITY: 'fixture-leader' },
+      });
       return JSON.parse(stdout);
     } catch (error) {
       assert.equal(error.code, 1, error.stderr);

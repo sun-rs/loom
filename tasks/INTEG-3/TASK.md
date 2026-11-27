@@ -1,0 +1,2 @@
+# INTEG-3 — integrate ROT-TUNE-2 and TOOLGUARD-2 onto main (f733e616 or newer)
+Same procedure as INTEG-2: new worktree /Users/sun/Code/repos/loom-integ3, branch integ/main-3 from main; commit ROT-TUNE-2 (/Users/sun/Code/repos/loom-rottune2, infra/rot-tune-2) and TOOLGUARD-2 (/Users/sun/Code/repos/loom-toolguard2, infra/toolguard-2) in their worktrees, merge, resolve conflicts keeping behaviour and tests, npm run lint, npm test twice, git diff --check, upgrade rehearsal. Don't push or move main. RESULT.md Chinese, STATUS: done.

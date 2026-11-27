@@ -1,0 +1,25 @@
+{
+  "date": "2026-11-26T16:03:40.984Z",
+  "version": "2.1.331",
+  "model": "claude-sonnet-5-5",
+  "auth": {
+    "signedIn": true,
+    "directSubscription": true,
+    "routingOverrides": []
+  },
+  "nativeConsent": false,
+  "code": "enabled-banner",
+  "accepted": false,
+  "noTaskSubmitted": true,
+  "observations": [
+    "workspace-trust",
+    "moved-workspace-selection",
+    "ephemeral-workspace-confirmed"
+  ],
+  "visibleChoices": [
+    "No, exit",
+    "❯ Yes, I trust this folder"
+  ],
+  "changedBeforeConsent": [],
+  "changedFiles": []
+}

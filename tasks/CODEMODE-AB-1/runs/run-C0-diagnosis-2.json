@@ -1,0 +1,43 @@
+{
+  "kind": "benchmark-run",
+  "arm": "C0",
+  "task": "diagnosis",
+  "repetition": 2,
+  "base": "0ca39c54b8eed922a7127fd022b99b1ffb84be0a",
+  "vendor": "claude",
+  "version": "2.1.331",
+  "model": "claude-sonnet-5-5",
+  "startedAt": "2026-11-26T16:12:02.952Z",
+  "finishedAt": "2026-11-26T16:12:20.611Z",
+  "wallMs": 17659,
+  "modelRequests": 5,
+  "inputTokens": 186988,
+  "cachedTokens": 175044,
+  "cacheWriteTokens": 11934,
+  "outputTokens": 1621,
+  "peakContextTokens": 39725,
+  "toolCalls": 6,
+  "replCalls": 0,
+  "scriptCalls": 0,
+  "nativeWallMs": 17738,
+  "humanInterventions": 0,
+  "codeModeConsent": "not-applicable",
+  "scriptAudit": {
+    "checked": 4,
+    "outsideWorkingCopy": 0
+  },
+  "outcome": "completed",
+  "checker": {
+    "passed": true,
+    "changedFiles": 0,
+    "tests": {
+      "exit": 0,
+      "passed": 1,
+      "failed": 0
+    }
+  },
+  "consentFiles": [],
+  "workspaceTrustSetup": true,
+  "codeModeBanner": false,
+  "changedGlobalConfigFiles": []
+}

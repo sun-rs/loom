@@ -10,6 +10,9 @@ import { readText } from '../daemon/io.mjs';
 import { substantiveIndexRow } from '../memory/index-row.mjs';
 import { readPolicy } from './policy.mjs';
 import { timestamp, turnTools } from './turns.mjs';
+import { readArtifacts } from './artifacts.mjs';
+import { deliveryId } from '../inbox/message.mjs';
+import { agyTurnPrompt } from '../adapters/agy/lib/parse-agy.mjs';
 
 const usageFields = ['inputTokens', 'cachedInputTokens', 'cacheWriteInputTokens', 'outputTokens', 'reasoningOutputTokens'];
 const referencePrices = {
@@ -100,6 +103,29 @@ function afterAcceptance({ session, turn, rows, journalOnly }) {
   };
 }
 
+function rotationBriefings(directory, sessions, reader) {
+  const rows = new Map(sessions.map(row => [row.addr, row]));
+  const artifacts = readArtifacts(directory);
+  const entries = projectIndex(directory).rotations().flatMap(rotation => {
+    const row = rows.get(rotation.successor);
+    if (!row) return [];
+    const job = artifacts.job(row.addr);
+    const id = job?.handoverReportId ?? job?.firstId;
+    const done = id && artifacts.messages().find(message => message.id === id)?.completion;
+    const item = id && reader.sessionHistory(row).items.find(({ turn, hook, observation, completion }) =>
+      hook?.deliveryId === id || observation?.end?.inputIds?.includes(id) ||
+      (turn.prompts ?? [agyTurnPrompt.get(turn)]).some(prompt => deliveryId(prompt) === id) ||
+      done && completion && completion.turnId === done.turnId && completion.streamId === done.streamId && completion.at === done.at);
+    const usage = item?.turn.usage;
+    const measured = usage?.calls > 0 && Number.isFinite(usage.inputTokens) && Number.isFinite(usage.outputTokens);
+    return [{ role: row.role, predecessor: rotation.predecessor, successor: row.addr, reason: job?.rotationReason ?? null,
+      inputTokens: measured ? usage.inputTokens : null, outputTokens: measured ? usage.outputTokens : null,
+      rawTokens: measured ? usage.inputTokens + usage.outputTokens : null }];
+  });
+  return { entries, measured: entries.filter(entry => entry.rawTokens !== null).length,
+    rawTokens: entries.reduce((sum, entry) => sum + (entry.rawTokens ?? 0), 0) };
+}
+
 export function projectCost(directory, sessions, { includeAcceptance = true, now = Date.now(),
   reader = historyReader(directory), policy = readPolicy(directory, { optional: true }) } = {}) {
   const overrides = policy.cost?.prices ?? {};
@@ -116,7 +142,7 @@ export function projectCost(directory, sessions, { includeAcceptance = true, now
   let leaderWakes = 0;
 
   for (const session of sessions) {
-    const name = session.role ?? 'unassigned';
+    const name = roles.includes(session.role) ? session.role : 'unassigned';
     const role = byRole[name];
     role.sessions++;
     let history;
@@ -179,5 +205,6 @@ export function projectCost(directory, sessions, { includeAcceptance = true, now
   return { byRole, rawTokens, memoryExtractor, memoryPilot, workerShare: rawTokens ? byRole.worker.rawTokens / rawTokens : null,
     estimatedCostUsd, estimatedWorkerShare: byRole.worker.estimatedCostShare,
     pricing: { estimate: true, unit: 'USD per million tokens', prices },
-    leaderWakes, workerTurns, missing, pyramid: pyramid(rolling, since, now) };
+    leaderWakes, workerTurns, missing, pyramid: pyramid(rolling, since, now),
+    ...(includeAcceptance && { rotationBriefings: rotationBriefings(directory, sessions, reader) }) };
 }

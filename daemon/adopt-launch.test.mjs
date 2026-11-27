@@ -1,11 +1,12 @@
 import assert from 'node:assert/strict';
-import { execFile, spawn } from 'node:child_process';
+import { execFile, spawn, mkdtemp } from '../fixtures/test-process.mjs';
 import { once } from 'node:events';
-import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, realpath, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
 import { promisify } from 'node:util';
+import { nestedSeatbeltLimited } from './sandbox-test-capability.mjs';
 import { disposeSession } from './session-close.mjs';
 
 const exec = promisify(execFile);
@@ -72,6 +73,36 @@ try {
     { headless: false, hasKey: true, hasToken: true, bare: false },
     { headless: true, hasKey: true, hasToken: true, bare: false },
   ]);
+});
+
+test('Claude headless host keeps the native login namespace', { skip: nestedSeatbeltLimited }, async t => {
+  const project = await mkdtemp(join(await realpath(tmpdir()), 'loom-claude-host-'));
+  t.after(() => rm(project, { recursive: true, force: true }));
+  const claude = join(project, 'claude');
+  const seen = join(project, 'seen.json');
+  await writeFile(claude, `#!${process.execPath}
+import { writeFileSync } from 'node:fs';
+if (process.argv.includes('--version')) { console.log('2.1.331 (Claude Code)'); process.exit(0); }
+const { HOME, CLAUDE_CONFIG_DIR, CLAUDE_SECURESTORAGE_CONFIG_DIR } = process.env;
+writeFileSync(${JSON.stringify(seen)}, JSON.stringify({ nativeHome: HOME === ${JSON.stringify(project)},
+  config: CLAUDE_CONFIG_DIR === undefined ? 'unset' : CLAUDE_CONFIG_DIR === ${JSON.stringify(join(project, 'custom'))} ? 'custom' : 'other',
+  storage: CLAUDE_SECURESTORAGE_CONFIG_DIR !== undefined, headless: process.argv.includes('-p') }));
+process.exit(23);
+`, { mode: 0o700 });
+  const script = `import { openOar } from ${JSON.stringify(new URL('./oar.mjs', import.meta.url).href)};
+const [cwd] = process.argv.slice(1);
+try {
+  const session = await openOar({ addr: 'oar-00000000-0000-4000-8000-000000000002', cli: 'claude', role: 'worker',
+    runtimeId: 'claude', cwd, hostGrant: { expiresAt: Date.now() + 30000, write: [] } }, cwd);
+  await session.dispose();
+} catch (error) { if (!/exited|closed/i.test(error.message)) throw error; }`;
+  for (const custom of [false, true]) {
+    await exec(process.execPath, ['--input-type=module', '-e', script, project], { cwd: project, timeout: 10_000,
+      env: { HOME: project, TMPDIR: project, PATH: '/usr/bin:/bin', LOOM_CLAUDE_BIN: claude, LOOM_WORKER_TMP: project,
+        ...(custom && { CLAUDE_CONFIG_DIR: join(project, 'custom'), CLAUDE_SECURESTORAGE_CONFIG_DIR: join(project, 'storage') }) } });
+    assert.deepEqual(JSON.parse(await readFile(seen, 'utf8')),
+      { nativeHome: true, config: custom ? 'custom' : 'unset', storage: custom, headless: true });
+  }
 });
 
 test('a stuck OAR dispose is bounded and preserves late settlement', async () => {

@@ -5,13 +5,15 @@ import { promisify } from 'node:util';
 import { projectMessages } from '../adapters/opencode/index.mjs';
 import { hc, hcAt } from '../inbox/tui.mjs';
 import { absoluteCommand, openNativeTui } from '../runtimes/tui/transport.mjs';
-import { codexFastArgs, nativeClaude } from './executables.mjs';
+import { codexFastArgs, nativeClaude, nativeWorkerExecutable } from './executables.mjs';
+import { recordWorkerExecutable } from './worker-executables.mjs';
 import { eventPath, readText, writeState } from './io.mjs';
 import { codexEnvironmentArgs, runtimeDirectory } from '../cli/project.mjs';
 import { allowNativeQuestions, claudeIdleCompaction } from '../cli/policy.mjs';
 import { controllerFile, managedEnvironment, releaseRoot } from './release.mjs';
 import { workerEnvironment, workerProviderEnvironment } from './worker-environment.mjs';
 import { seniorToolEnvironment } from './senior-tools.mjs';
+import { statuslinePath } from './account-collection.mjs';
 
 const exec = promisify(execFile);
 export const paneName = addr => `loom-${addr.replace(/^loom-/, '').replaceAll('-', '').slice(0, 22)}`;
@@ -42,7 +44,9 @@ export function hookRunner(project, cli) {
   return path;
 }
 
-export async function openTui(job, row, project, recordTemporary, recordBinding, controller, memory = {}) {
+export async function openTui(job, row, project, recordTemporary, recordBinding, controller, capabilityPath, statusline = {}, memory) {
+  const worker = row.role === 'worker';
+  const command = worker ? nativeWorkerExecutable(row.cli) : row.cli === 'claude' ? nativeClaude() : undefined;
   const hookSink = eventPath(project, row.addr);
   const runner = row.cli !== 'opencode' && hookRunner(project, row.cli);
   const env = { ...managedEnvironment(project, row.addr),
@@ -50,32 +54,52 @@ export async function openTui(job, row, project, recordTemporary, recordBinding,
     ...seniorToolEnvironment(project, row),
     ...(job.isolatedWorkerHome && { ...workerEnvironment(row), ...workerProviderEnvironment(row) }) };
   const name = job.herdr?.hcName ?? paneName(row.addr);
-  const guardUnset = env.LOOM_SENIOR_TOOL_LOG ? [] : ['LOOM_SENIOR_TOOL_LOG', 'LOOM_SENIOR_TOOL_PROJECT'];
+  const guardUnset = ['LOOM_CAPABILITY', 'LOOM_EXTERNAL_SUPER',
+    ...(env.LOOM_SENIOR_TOOL_LOG ? [] : ['LOOM_SENIOR_TOOL_LOG', 'LOOM_SENIOR_TOOL_PROJECT'])];
+  const accountStatusline = job.accountStatusline && {
+    sinkPath: statuslinePath(project, job.accountStatusline.generation),
+    generation: job.accountStatusline.generation,
+    sessionId: row.addr,
+    cliVersion: statusline.cliVersion,
+  };
   const host = await openNativeTui({
-    ...row, fast: job.fast, memory, hookSink, ...(runner && { hookRunner: runner }), name, env,
+    ...row, memory, ...(accountStatusline && { accountStatusline, statusLine: statusline.statusLine }), command, fast: job.fast, hookSink,
+    ...(worker && { recordExecutable: path => recordWorkerExecutable(project, row, path, 'launch') }), ...(runner && { hookRunner: runner }), name, env,
     ...(job.herdr && { hcCommand: job.herdr.hcCommand, placementLabels: job.herdr.labels }),
-    sessionId: job.plannedNativeId, recordTemporary, recordBinding, previous: job.tui, unset: guardUnset,
+    sessionId: job.plannedNativeId, recordTemporary, recordBinding, previous: job.tui, unset: guardUnset, capabilityPath,
     allowNativeQuestions: allowNativeQuestions(project, row.role), toolGuard: Boolean(env.LOOM_SENIOR_TOOL_LOG),
     autoTrustWorkspace: job.autoTrustWorkspace, ...(controller && { controllerPath: controllerFile(project) }),
     stateDir: join(project, '.project', 'pty'),
-    ...(row.cli === 'claude' && { command: nativeClaude(), env: { ...env, DISABLE_AUTOUPDATER: '1' },
-      authMode: job.authMode, idleCompaction: claudeIdleCompaction(project, row.role), unset: [...guardUnset, 'CLAUDECODE'] }),
-    ...(row.cli === 'codex' && { extraArgs: [...codexEnvironmentArgs(env), ...codexFastArgs(job.fast)] }),
+    ...(row.cli === 'claude' && { env: { ...env, DISABLE_AUTOUPDATER: '1' },
+      ...(['leader', 'auditor'].includes(row.role) && { contextStatusPath: hookSink.replace(/\.jsonl$/, '.context.json') }),
+      authMode: job.authMode, idleCompaction: claudeIdleCompaction(project, row.role), unset: [...guardUnset, 'CLAUDE_CODE_ENTRYPOINT', 'CLAUDECODE'] }),
+    ...(row.cli === 'codex' && { extraArgs: ['--disable', 'memories', ...codexEnvironmentArgs(env), ...codexFastArgs(job.fast)] }),
   });
-  try { return { terminal: await host.status(), nativeId: host.sessionId }; }
+  try {
+    const terminal = await host.status();
+    const version = terminal.labels?.['loom-tui-version'];
+    if (accountStatusline && terminal.labels?.['loom-tui-provider'] === row.cli &&
+        typeof version === 'string' && /^v?\d+\.\d+\.\d+(?:[-+][a-z0-9.-]+)?$/i.test(version)) {
+      try { writeState(accountStatusline.sinkPath + '.version', version); }
+      catch { /* Version evidence is optional to the managed pane. */ }
+    }
+    return { terminal, nativeId: host.sessionId };
+  }
   catch (error) { await host.close(); throw error; }
 }
 
-export async function openCodeExport(row, sessionId, env, command = 'opencode') {
+export async function openCodeExport(project, row, sessionId, env, command = 'opencode') {
   let data;
   try {
-    const executable = await absoluteCommand(command, 'opencode');
+    const worker = row.role === 'worker';
+    const executable = worker ? nativeWorkerExecutable(row.cli) : await absoluteCommand(command, 'opencode');
+    if (worker) recordWorkerExecutable(project, row, executable, 'export');
     const { stdout } = await exec(executable, ['session', 'export', sessionId, '--standalone'],
       { cwd: row.cwd, env, timeout: 5000, maxBuffer: 32 * 1024 * 1024 });
     data = JSON.parse(stdout);
   } catch (error) {
     const reason = error.code === 'ERR_CHILD_PROCESS_STDIO_MAXBUFFER' ? 'size-limit' : error.killed ? 'timeout' :
-      error.code === 'ENOENT' ? 'executable-unavailable' : error instanceof SyntaxError ? 'invalid-json' : 'command-failed';
+      error.code === 'protected-executable' ? error.code : error.code === 'ENOENT' ? 'executable-unavailable' : error instanceof SyntaxError ? 'invalid-json' : 'command-failed';
     throw Object.assign(new Error(`OpenCode session export failed (${reason})`), { kind: reason });
   }
   const events = data && projectMessages(data, sessionId, row.cwd);
@@ -84,7 +108,7 @@ export async function openCodeExport(row, sessionId, env, command = 'opencode') 
 }
 
 export async function refreshOpenCode(job, row, project) {
-  const { events, empty } = await openCodeExport(row, job.plannedNativeId,
+  const { events, empty } = await openCodeExport(project, row, job.plannedNativeId,
     job.isolatedWorkerHome ? { ...process.env, ...workerEnvironment(row) } : undefined);
   const path = eventPath(project, row.addr);
   if (empty && job.paneBinding) {

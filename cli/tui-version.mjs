@@ -7,7 +7,7 @@ const exec = promisify(execFile);
 export async function withTuiVersionWarnings(result, session) {
   if (session?.backend !== 'tui' || !Object.hasOwn(verifiedTuiVersions, session.cli) || !session.pane) return result;
   try {
-    const { stdout } = await exec('hc', ['get', '--json', '--', session.pane], { timeout: 1_500, maxBuffer: 256 * 1024 });
+    const { stdout } = await exec(process.env.LOOM_HC_BIN ?? 'hc', ['get', '--json', '--', session.pane], { timeout: 1_500, maxBuffer: 256 * 1024 });
     const { address, labels } = JSON.parse(stdout);
     if (address !== session.pane || labels?.['loom-tui-provider'] !== session.cli) return result;
     const warnings = versionWarnings(labels);

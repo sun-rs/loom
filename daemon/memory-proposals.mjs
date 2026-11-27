@@ -80,7 +80,7 @@ export function createMemoryProposals(project, { memory, sessions, state, save, 
   const projectIdExists = id => Boolean(lstatSync(join(project, '.project', 'memory', 'items', id + '.md'),
     { throwIfNoEntry: false }));
   const callerBinding = caller => {
-    const row = caller && sessions.rows().find(session => session.addr === caller || session.pane === caller);
+    const row = caller && sessions.rowFor(caller);
     if (!row || row.endedAt !== null || row.project !== project) {
       throw new CommandError('forbidden', 'Memory proposal access is forbidden');
     }

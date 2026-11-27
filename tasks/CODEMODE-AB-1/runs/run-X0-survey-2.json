@@ -1,0 +1,40 @@
+{
+  "kind": "benchmark-run",
+  "arm": "X0",
+  "task": "survey",
+  "repetition": 2,
+  "base": "0ca39c54b8eed922a7127fd022b99b1ffb84be0a",
+  "vendor": "codex",
+  "version": "0.172.0",
+  "model": "gpt-6.2-sol",
+  "startedAt": "2026-11-26T16:08:09.561Z",
+  "finishedAt": "2026-11-26T16:09:38.439Z",
+  "wallMs": 88878,
+  "modelRequests": 11,
+  "inputTokens": 340156,
+  "cachedTokens": 297216,
+  "cacheWriteTokens": 0,
+  "outputTokens": 2596,
+  "peakContextTokens": 41465,
+  "toolCalls": 26,
+  "replCalls": 10,
+  "scriptCalls": 26,
+  "nativeWallMs": 90631,
+  "humanInterventions": 0,
+  "codeModeConsent": "not-applicable",
+  "scriptAudit": {
+    "checked": 26,
+    "outsideWorkingCopy": 3
+  },
+  "outcome": "completed",
+  "checker": {
+    "passed": true,
+    "rows": 22
+  },
+  "consentFiles": [],
+  "workspaceTrustSetup": false,
+  "codeModeBanner": false,
+  "changedGlobalConfigFiles": [
+    ".claude.json"
+  ]
+}

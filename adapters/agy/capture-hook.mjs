@@ -3,6 +3,7 @@ import { closeSync, constants, fstatSync, openSync, readFileSync, writeSync } fr
 import { agyPrompt, agyQuestionDenial, getAntigravityNoOpStdout, normalize } from './hooks.mjs';
 import { locateHookTranscript, replyForStop } from './transcript.mjs';
 import { deliveryId } from '../../inbox/message.mjs';
+import { hostToolDenial } from '../../lib/host-tool-guard.mjs';
 import { recordSeniorToolDenial } from '../../lib/senior-tool-guard.mjs';
 
 const [sink, cwd, hookEventName, binding = sink + '.agy-session', sessionId, questionPolicy] = process.argv.slice(2);
@@ -53,7 +54,8 @@ function capture() {
   const call = payload.toolCall ?? payload.tool_call;
   const { LOOM_SENIOR_TOOL_LOG: guardLog, LOOM_SENIOR_TOOL_PROJECT: project } = process.env;
   if (hookEventName === 'PreToolUse' && call && (!sessionId || event.sessionId === sessionId)) {
-    const reason = recordSeniorToolDenial(guardLog, project, payload.cwd ?? cwd, call.name, call.args ?? call.arguments ?? call.input);
+    const input = call.args ?? call.arguments ?? call.input;
+    const reason = hostToolDenial(call.name, input) ?? recordSeniorToolDenial(guardLog, project, payload.cwd ?? cwd, call.name, input);
     if (reason) guardDenial = JSON.stringify({ decision: 'deny', reason });
   }
   if (!acceptsAgyHook(payload, event, cwd, binding, sessionId, hookEventName)) return;
