@@ -8,6 +8,7 @@ export const observationRules = [
   'reference — when you learn where to look up external information.',
   'Skip code structure, Git history, facts already documented in the repository, one-off progress and current conversation details.',
   'Use Why: for the reason and How to apply: for when and what to do. Search for duplicates before writing. Update existing entries when facts change and supersede or withdraw outdated entries.',
+  '用户纠正/确认工作流程（feedback）存为 `lesson`，项目级红线/期限/决策（project）存为 `ruling`。',
 ].join('\n');
 
 const storageGuidance = 'For direct writes, map user to preference, project to ruling, and feedback or reference to lesson. ' +
