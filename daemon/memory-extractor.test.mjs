@@ -1777,3 +1777,37 @@ test('T100 per-turn extractor runs on NOREPLY turns when received includes a Sup
   await f.finish(leader, 'NOREPLY');
   assert.equal(f.requests.length, baseline + 2, 'NOREPLY turn with only worker/non-user message must still be skipped');
 });
+
+test('T103 isNoise filters real repo directories without extensions and allows arbitrary non-repo external pointers without keyword allowlists', async t => {
+  let proposals = [];
+  const f = fixture(t, { proposals: () => proposals });
+  mkdirSync(join(f.project, 'daemon', 'subpkg'), { recursive: true });
+  mkdirSync(join(f.project, 'docs', 'architecture'), { recursive: true });
+  writeFileSync(join(f.project, 'daemon', 'memory-extractor.mjs'), 'export const extractor = () => true;\n');
+  const leader = await f.spawn('leader', 'Record external pointers and ignore repo layout details.');
+  const source = { kind: 'delivery', id: deliveryId(f.prompts.at(-1).input) };
+  const externalPointers = [
+    ['ref-metabase', 'Release KPI dashboard', 'Release metrics dashboard lives in metabase/prod-release-kpi.'],
+    ['ref-notion', 'Sev1 incident playbook', 'Incident playbooks can be found in notion/eng-ops/sev1-checklist.'],
+  ];
+  const repoNoise = [
+    ['repo-dir-daemon', 'Scheduler module directory', 'The scheduler modules live in daemon/subpkg.'],
+    ['repo-dir-docs', 'Architecture docs directory', 'Design notes are located in docs/architecture.'],
+    ['repo-file-no-line', 'Extractor implementation file', 'Extractor logic is located in daemon/memory-extractor.mjs.'],
+  ];
+  proposals = [...externalPointers, ...repoNoise].map(([id, title, body]) => ({
+    id, action: 'add', scope: 'project', source, title, body,
+  }));
+  await f.finish(leader, proposals.map(({ body }) => body).join('\n'));
+  assert.equal(f.requests.length, 1);
+  const state = readExtractorState(f.project);
+  assert.deepEqual(Object.keys(state.proposals).sort(), externalPointers.map(([id]) => id).sort(),
+    'arbitrary non-repo external pointers must pass without keyword allowlists while real repo directories/files are filtered');
+  for (const [id] of externalPointers) {
+    assert.equal(state.proposals[id]?.status, 'pending', `${id} must be queued for review`);
+  }
+  for (const [id] of repoNoise) {
+    assert.equal(state.proposals[id], undefined, `${id} pointing to real repo path must be filtered as noise`);
+  }
+  assert.deepEqual(f.cost().memoryExtractor.diagnostics.filterReasons, { noise: 3 });
+});

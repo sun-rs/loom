@@ -2096,3 +2096,76 @@ test('T100 project-completed with phase resets Auditor wake budget and excludes 
   assert.doesNotMatch(packetBody, /Auditor 超出预算|auditor-budget-exceeded/,
     'prior phase budget alert must not pollute a new phase gate packet');
 });
+
+test('T103 Auditor wake budget re-alerts in a new cycle after rotation, phase completion, and explicit gate-complete using only new-cycle wakes', async t => {
+  let time = Date.now();
+  const f = fixture(t, { now: () => time });
+  f.policy({ roles: { auditor: { maxWakesPerGate: 3, maxContextTokens: 150_000 } } });
+  const d = f.daemon();
+  t.after(d.shutdown);
+  const { session: leader } = await f.spawn(d, 'leader', 'L');
+  const { session: first } = await f.spawn(d, 'auditor', 'A1', undefined, {
+    cli: 'codex', model: 'same-model', effort: 'low', prompt: 'HOLD startup',
+  });
+  await d.tick();
+  const budgets = async () => (await d.handle('notifications', { history: true })).notifications
+    .filter(event => event.type === 'auditor-budget-exceeded');
+
+  // Predecessor exceeds wake budget, then rotates to successor.
+  time += 5_000;
+  for (let i = 1; i <= 4; i++) await nativeCost(f, first, time + i * 100, 10);
+  const { rotation: { notePath } } = await d.handle('rotate', { self: true, prepare: true }, first.addr);
+  writeFileSync(notePath, 'Hand off active review cleanly.');
+  await d.handle('rotate', { self: true, reason: 'shift handoff' }, first.addr);
+  f.sessions.get(first.addr).finish('Ready to hand over.');
+  await d.tick();
+  await d.tick();
+  const nextAddr = (await d.handle('state', { target: first.addr })).rotations[0].successor;
+  const { ack } = handoverBrief(f, nextAddr);
+  f.sessions.get(nextAddr).finish(ack);
+  await d.tick();
+
+  // Cycle 1 (after auditor-rotation-completed): 1 wake stays silent; 4 wakes triggers alert counting only new cycle.
+  const nextRow = f.read(`loomd/sessions/${nextAddr}.json`).row;
+  time += 31_000;
+  await nativeCost(f, nextRow, time - 1_000, 10);
+  await d.tick();
+  assert.equal((await budgets()).length, 0, '1 wake after rotation must not alert');
+
+  time += 31_000;
+  for (let i = 3; i >= 1; i--) await nativeCost(f, nextRow, time - i * 100, 10);
+  await d.tick();
+  const afterRotation = await budgets();
+  assert.equal(afterRotation.length, 1, 'exceeding limit in new cycle after rotation must alert');
+  assert.equal(afterRotation[0].usage.wakes, 4, 'usage.wakes must count only new-cycle wakes after rotation');
+
+  // Cycle 2 (after project-completed with phase): 1 wake stays silent; 4 wakes triggers a fresh alert with wakes=4.
+  time += 1_000;
+  await d.handle('notifications', { complete: 'finished phase 1', phase: 'phase-c3' }, nextAddr);
+  time += 31_000;
+  await nativeCost(f, nextRow, time - 1_000, 10);
+  await d.tick();
+  assert.equal((await budgets()).length, 1, '1 wake after project-completed(phase) must not alert');
+
+  time += 31_000;
+  for (let i = 3; i >= 1; i--) await nativeCost(f, nextRow, time - i * 100, 10);
+  await d.tick();
+  const afterPhase = await budgets();
+  assert.equal(afterPhase.length, 2, 'exceeding limit in new cycle after phase completion must alert');
+  assert.equal(afterPhase[1].usage.wakes, 4, 'usage.wakes must count only new-cycle wakes after phase completion');
+
+  // Cycle 3 (after explicit --gate-complete): 1 wake stays silent; 4 wakes triggers a fresh alert with wakes=4.
+  time += 1_000;
+  await d.handle('notifications', { gateComplete: 'G-C3-RESET' }, leader.addr);
+  time += 31_000;
+  await nativeCost(f, nextRow, time - 1_000, 10);
+  await d.tick();
+  assert.equal((await budgets()).length, 2, '1 wake after explicit --gate-complete must not alert');
+
+  time += 31_000;
+  for (let i = 3; i >= 1; i--) await nativeCost(f, nextRow, time - i * 100, 10);
+  await d.tick();
+  const afterGateComplete = await budgets();
+  assert.equal(afterGateComplete.length, 3, 'exceeding limit in new cycle after --gate-complete must alert');
+  assert.equal(afterGateComplete[2].usage.wakes, 4, 'usage.wakes must count only new-cycle wakes after --gate-complete');
+});
