@@ -1,4 +1,5 @@
 import { parseArgs } from 'node:util';
+import { memoryCommand } from './memory.mjs';
 import { roles } from '../index/index.mjs';
 import { daemonAbsent, request } from '../daemon/rpc.mjs';
 import { control, daemonUsage, grantUsage, spawnHelp, spawnUsage, startDaemon, workerGrant } from './control.mjs';
@@ -36,6 +37,16 @@ const help = {
   ],
   state: ['loom state <target> [--project DIR]'],
   memory: ['loom memory search <query> [--project DIR] [--json]'],
+  mem: [
+    'loom mem search <query> [--project DIR] [--json]',
+    'loom mem show <id> [--project DIR] [--json]',
+    'loom mem write --entry <json> --request-id <id> --expected-revision null [--project DIR] [--json]',
+    'loom mem update <id> --entry <json> --request-id <id> --expected-revision <revision> [--project DIR] [--json]',
+    'loom mem invalidate <id> --request-id <id> --expected-revision <revision> [--project DIR] [--json]',
+    'loom mem proposals list [--project DIR] [--json]',
+    'loom mem proposals approve <id> [--project DIR] [--json]',
+    'loom mem proposals reject <id> [--reason TEXT] [--project DIR] [--json]',
+  ],
   status: ['loom status --project DIR [--json]'],
   accounts: ['loom accounts [--project DIR] [--json] [--refresh]'],
   up: ['loom up [--project DIR]'],
@@ -97,6 +108,7 @@ const commands = {
   gate: { ...projectArgs, ...strings('base', 'candidate', 'question', 'round'), ...flags('reuse') },
   escalate: { ...projectArgs, ...strings('base', 'candidate', 'reason', 'evidence', 'round') },
   memory: { ...projectArgs, ...flags('json') },
+  mem: { ...projectArgs, ...strings('entry', 'request-id', 'expected-revision', 'reason'), ...flags('json') },
   'rotation-policy': { ...projectArgs, ...strings('target', 'id', 'detail', 'evidence', 'verdict', 'phase', 'goal', 'version', 'supersedes') },
   switch: { ...projectArgs, ...strings('to') },
   rotate: { ...projectArgs, ...flags('self', 'prepare', 'passive'), ...strings('target', 'reason', 'cli', 'model', 'effort') },
@@ -208,7 +220,9 @@ async function hist(values, positionals, directory) {
   const count = all ? Infinity : positiveNumber(values.turns) ??
     (!before && !page && (outcome || grep || since) ? Infinity : defaultCount);
   const options = { level, count, since, before, page, exact, outcome, grep: grep?.toLowerCase(), tool, command,
-    tail: positiveNumber(values.tail) ?? 20, showDiff, evidence, onlyFailed, withCalls };
+    tail: positiveNumber(values.tail) ?? 20, showDiff, evidence, onlyFailed, withCalls,
+    latestSettled: level === 'L2' && !all && !before && !page && values.turns === undefined &&
+      !exact && !since && !outcome && !grep && !toolFilters };
   if (role || grep && !positionals.length) {
     const matches = role ? sessions.filter(row => row.role === role) : sessions;
     if (role && !matches.length) throw new CommandError('not-found', `No ${role} sessions in ${directory}`);
@@ -225,6 +239,7 @@ function parse(command, args) {
   try {
     return parseArgs({ args, options: commands[command], allowPositionals: true });
   } catch (error) {
+    if (command === 'mem') invalid('Invalid loom mem arguments. See loom mem --help.');
     invalid(error.message);
   }
 }
@@ -328,6 +343,13 @@ export async function main(args) {
     if (command === 'senior-tool') return await runSeniorTool(rest);
     const { values, positionals } = parse(command, rest);
     if (command === 'doctor' && ((!values.prompts && values.project === undefined) || values.prompts && values.fix)) invalid(help.doctor[0]);
+    if (command === 'mem') {
+      let directory;
+      try { directory = projectDirectory(values.project); }
+      catch { invalid('Expected an accessible absolute project directory'); }
+      emit(await memoryCommand(directory, positionals, values));
+      return 0;
+    }
     const directory = projectDirectory(values.project);
     let result;
     if (command === 'lint') {

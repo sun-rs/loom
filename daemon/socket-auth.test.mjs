@@ -136,7 +136,15 @@ test('loomd trusts launch capabilities over caller, sender, and role hints', { t
     for (const command of ['approve', 'memory-approve', 'memory-write']) {
       await denied(command, { role: 'auditor', binding: { role: 'auditor' } }, { ...identity, caller: auditor.addr }, 'invalid-arguments');
     }
+    await denied('mem', { action: 'write', role: 'auditor' }, { ...identity, caller: auditor.addr });
+    await denied('memory-proposals', { decision: 'list', role: 'auditor' }, { ...identity, caller: auditor.addr });
   }
+  const memoryRead = await wire(project, 'mem', { action: 'search', target: 'SOCK-AUTH fixture' }, { capability: leader.token });
+  assert.equal(memoryRead.ok, true, JSON.stringify(memoryRead));
+  assert.deepEqual(memoryRead.rows, []);
+  const proposals = await wire(project, 'memory-proposals', { decision: 'list' }, { capability: auditor.token });
+  assert.equal(proposals.ok, true, JSON.stringify(proposals));
+  await denied('mem', { action: 'search', target: 'SOCK-AUTH fixture' }, { capability: external });
   for (const command of ['daemon-stop', 'upgrade-plan', 'upgrade-apply', 'upgrade-holder', 'layout-up', 'layout-adopt', 'switch']) {
     await denied(command, {}, { caller: 'super' });
   }

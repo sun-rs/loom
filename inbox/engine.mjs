@@ -690,6 +690,10 @@ export function inbox(project, transport, report = console.error, { replyLimit, 
       message.originalTarget ??= message.target.addr;
       message.target = target;
       message.phase = 'queued';
+      if (message.memoryRecipient && message.memoryRecipient !== target.addr) {
+        for (const key of ['wireBody', 'payloadFrozen', 'payloadDigest', 'memoryRecipient',
+          'memoryAccess', 'memoryCursor', 'memoryCompaction']) delete message[key];
+      }
       for (const key of ['active', 'barrier', 'issue', 'refusedAt', 'waitingForWritable']) delete message[key];
       changed = true;
     }

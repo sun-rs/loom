@@ -1995,7 +1995,7 @@ test('puts Super first and includes a newly settled wave in the same turn despit
   await d.tick();
   await d.tick();
   assert.match(f.prompts.filter(row => row.addr === leader)[1].input, /external Super first\n\n--- Loom wave results ---\n\n波次 W.*DONE PRIORITY/s);
-  assert.match(f.prompts.filter(row => row.addr === leader)[2].input, /managed Super second$/);
+  assert.match(f.prompts.filter(row => row.addr === leader)[2].input, /^\[loom:[0-9a-f-]{36}\]\nmanaged Super second(?=$|\n)(?:\n\n背景笔记，仅供参考，使用前核验(?:\n\[(?:add|update|withdraw)\] - memory-(?:event-[0-9a-f]{64}|\d+|[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12})(?: — [^\r\n\u2028\u2029]+)?(?: \[[^\]\r\n\u2028\u2029]+ @ [^\]\r\n\u2028\u2029]+\])?)+(?:\n增量已截断，剩余变更将在后续投递。)?)?$/);
   f.sessions.get(leader).finish('second Super answer');
   await d.tick();
   assert.match(f.prompts.filter(row => row.addr === leader)[3].input, /ordinary worker mail$/);
@@ -3181,4 +3181,162 @@ test('v2 releases the predecessor when a handover note review times out', async 
   assert.equal((await d.handle('state', { target: 'leader' })).addr, leader.addr);
   const history = (await d.handle('notifications', { history: true })).notifications;
   assert.equal(history.filter(item => item.reason === 'note-verification-timeout').length, 1);
+});
+
+test('T100 Auditor rotation resets wake budget without inheriting prior auditor turns', async t => {
+  let time = Date.now();
+  const f = fixture(t, { now: () => time });
+  f.policy({ roles: { auditor: { maxWakesPerGate: 3, maxContextTokens: 150_000 } } });
+  const d = f.daemon();
+  t.after(d.shutdown);
+  const { session: first } = await f.spawn(d, 'auditor', 'A1', undefined, {
+    cli: 'codex', model: 'same-model', effort: 'low', prompt: 'HOLD startup',
+  });
+  await d.tick();
+  time += 5_000;
+  for (let i = 1; i <= 4; i++) await nativeCost(f, first, time + i * 100, 10);
+  const { rotation: { notePath } } = await d.handle('rotate', { self: true, prepare: true }, first.addr);
+  writeFileSync(notePath, 'Hand off active review without carrying over historical wakes.');
+  await d.handle('rotate', { self: true, reason: 'shift handoff' }, first.addr);
+  f.sessions.get(first.addr).finish('Ready to hand over.');
+  await d.tick();
+  await d.tick();
+  const nextAddr = (await d.handle('state', { target: first.addr })).rotations[0].successor;
+  const { ack } = handoverBrief(f, nextAddr);
+  f.sessions.get(nextAddr).finish(ack);
+  await d.tick();
+  const history = (await d.handle('notifications', { history: true })).notifications;
+  assert.ok(history.some(event => event.type === 'auditor-rotation-completed' && event.addr === nextAddr));
+  assert.equal(history.filter(event => event.type === 'gate-completed').length, 0);
+
+  const nextRow = f.read(`loomd/sessions/${nextAddr}.json`).row;
+  time += 31_000;
+  await nativeCost(f, nextRow, time - 1_000, 10);
+  await d.tick();
+  const budgets = (await d.handle('notifications', { history: true })).notifications
+    .filter(event => event.type === 'auditor-budget-exceeded');
+  assert.equal(budgets.length, 0, 'successor Auditor with 1 wake must not inherit retired Auditor turns');
+});
+
+test('T100 project-completed with phase resets Auditor wake budget and excludes prior alerts from new gate packets', async t => {
+  let time = Date.now();
+  const f = fixture(t, { now: () => time });
+  const commit = name => f.git('-c', 'user.name=Loom', '-c', 'user.email=loom@example.invalid', 'commit', '-qm', name);
+  f.git('init', '-q');
+  writeFileSync(join(f.project, 'phase.mjs'), 'export const phase = 1;\n');
+  f.git('add', 'phase.mjs');
+  commit('phase-1-base');
+  const base = f.git('rev-parse', 'HEAD');
+  writeFileSync(join(f.project, 'phase.mjs'), 'export const phase = 2;\n');
+  f.git('add', 'phase.mjs');
+  commit('phase-2-candidate');
+  const candidate = f.git('rev-parse', 'HEAD');
+
+  f.policy({ roles: { auditor: { maxWakesPerGate: 3, maxContextTokens: 150_000 } } });
+  const d = f.daemon();
+  t.after(d.shutdown);
+  await f.spawn(d, 'super', 'S');
+  const { session: leader } = await f.spawn(d, 'leader', 'L');
+  const { session: auditor } = await f.spawn(d, 'auditor', 'A');
+  await d.tick();
+  const budgets = async () => (await d.handle('notifications', { history: true })).notifications
+    .filter(event => event.type === 'auditor-budget-exceeded');
+
+  time += 31_000;
+  for (let i = 3; i >= 1; i--) await nativeCost(f, auditor, time - i * 100, 10);
+  await d.tick();
+  const phase1Budgets = await budgets();
+  assert.equal(phase1Budgets.length, 1);
+  assert.equal(phase1Budgets[0].usage.wakes, 4);
+
+  time += 1_000;
+  const phaseCompleteAt = time;
+  await d.handle('notifications', { complete: 'finished phase 1', phase: 'phase-1' }, auditor.addr);
+
+  time += 31_000;
+  await nativeCost(f, auditor, time - 1_000, 10);
+  await d.tick();
+  const phase2Budgets = await budgets();
+  assert.equal(phase2Budgets.filter(event => (event.sampledAt ?? event.at) >= phaseCompleteAt).length, 0,
+    'a single wake after project-completed(phase) must not trigger or refresh auditor-budget-exceeded');
+  assert.equal(phase2Budgets[0].usage.wakes, 4, 'prior phase budget alert must not accumulate new phase wakes');
+
+  const packet = await d.handle('gate-pack', { gate: 'PHASE-2', base, candidate, question: 'Verify phase 2.' }, leader.addr);
+  const packetBody = readFileSync(packet.path, 'utf8');
+  assert.doesNotMatch(packetBody, /Auditor 超出预算|auditor-budget-exceeded/,
+    'prior phase budget alert must not pollute a new phase gate packet');
+});
+
+test('T103 Auditor wake budget re-alerts in a new cycle after rotation, phase completion, and explicit gate-complete using only new-cycle wakes', async t => {
+  let time = Date.now();
+  const f = fixture(t, { now: () => time });
+  f.policy({ roles: { auditor: { maxWakesPerGate: 3, maxContextTokens: 150_000 } } });
+  const d = f.daemon();
+  t.after(d.shutdown);
+  await f.spawn(d, 'super', 'S');
+  const { session: leader } = await f.spawn(d, 'leader', 'L');
+  const { session: first } = await f.spawn(d, 'auditor', 'A1', undefined, {
+    cli: 'codex', model: 'same-model', effort: 'low', prompt: 'HOLD startup',
+  });
+  await d.tick();
+  const budgets = async () => (await d.handle('notifications', { history: true })).notifications
+    .filter(event => event.type === 'auditor-budget-exceeded');
+
+  // Predecessor exceeds wake budget, then rotates to successor.
+  time += 5_000;
+  for (let i = 1; i <= 4; i++) await nativeCost(f, first, time + i * 100, 10);
+  const { rotation: { notePath } } = await d.handle('rotate', { self: true, prepare: true }, first.addr);
+  writeFileSync(notePath, 'Hand off active review cleanly.');
+  await d.handle('rotate', { self: true, reason: 'shift handoff' }, first.addr);
+  f.sessions.get(first.addr).finish('Ready to hand over.');
+  await d.tick();
+  await d.tick();
+  const nextAddr = (await d.handle('state', { target: first.addr })).rotations[0].successor;
+  const { ack } = handoverBrief(f, nextAddr);
+  f.sessions.get(nextAddr).finish(ack);
+  await d.tick();
+
+  // Cycle 1 (after auditor-rotation-completed): 1 wake stays silent; 4 wakes triggers alert counting only new cycle.
+  const nextRow = f.read(`loomd/sessions/${nextAddr}.json`).row;
+  time += 31_000;
+  await nativeCost(f, nextRow, time - 1_000, 10);
+  await d.tick();
+  assert.equal((await budgets()).length, 0, '1 wake after rotation must not alert');
+
+  time += 31_000;
+  for (let i = 3; i >= 1; i--) await nativeCost(f, nextRow, time - i * 100, 10);
+  await d.tick();
+  const afterRotation = await budgets();
+  assert.equal(afterRotation.length, 1, 'exceeding limit in new cycle after rotation must alert');
+  assert.equal(afterRotation[0].usage.wakes, 4, 'usage.wakes must count only new-cycle wakes after rotation');
+
+  // Cycle 2 (after project-completed with phase): 1 wake stays silent; 4 wakes triggers a fresh alert with wakes=4.
+  time += 1_000;
+  await d.handle('notifications', { complete: 'finished phase 1', phase: 'phase-c3' }, nextAddr);
+  time += 31_000;
+  await nativeCost(f, nextRow, time - 1_000, 10);
+  await d.tick();
+  assert.equal((await budgets()).length, 1, '1 wake after project-completed(phase) must not alert');
+
+  time += 31_000;
+  for (let i = 3; i >= 1; i--) await nativeCost(f, nextRow, time - i * 100, 10);
+  await d.tick();
+  const afterPhase = await budgets();
+  assert.equal(afterPhase.length, 2, 'exceeding limit in new cycle after phase completion must alert');
+  assert.equal(afterPhase[1].usage.wakes, 4, 'usage.wakes must count only new-cycle wakes after phase completion');
+
+  // Cycle 3 (after explicit --gate-complete): 1 wake stays silent; 4 wakes triggers a fresh alert with wakes=4.
+  time += 1_000;
+  await d.handle('notifications', { gateComplete: 'G-C3-RESET' }, leader.addr);
+  time += 31_000;
+  await nativeCost(f, nextRow, time - 1_000, 10);
+  await d.tick();
+  assert.equal((await budgets()).length, 2, '1 wake after explicit --gate-complete must not alert');
+
+  time += 31_000;
+  for (let i = 3; i >= 1; i--) await nativeCost(f, nextRow, time - i * 100, 10);
+  await d.tick();
+  const afterGateComplete = await budgets();
+  assert.equal(afterGateComplete.length, 3, 'exceeding limit in new cycle after --gate-complete must alert');
+  assert.equal(afterGateComplete[2].usage.wakes, 4, 'usage.wakes must count only new-cycle wakes after --gate-complete');
 });

@@ -45,7 +45,7 @@ function parse(args) {
 
 export async function integrationPs(row, env, managedPath) {
   if (row.role !== 'worker' || !row.integration) return;
-  const socketPath = join(env.TMPDIR, `ps-${randomUUID().slice(0, 8)}.sock`);
+  const socketPath = join(env.TMPDIR, `p${randomUUID().slice(0, 8)}`);
   const bin = join(env.TMPDIR, 'integration-bin');
   mkdirSync(bin, { recursive: true, mode: 0o700 });
   const ps = join(bin, 'ps');

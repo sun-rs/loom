@@ -1,8 +1,17 @@
 const notice = '背景笔记，仅供参考，使用前核验';
 
-function renderSuffix(batch) {
+export function renderMemoryDelta(batch) {
   if (!batch.rows.length) return '';
-  const lines = batch.rows.map(({ operation, line }) => '[' + operation + '] ' + line);
+  const withdrawals = batch.rows.filter(row => row.operation === 'withdraw');
+  const example = withdrawals.find(row => row.withdrawalTitle) ?? withdrawals[0];
+  const lines = [];
+  for (const row of batch.rows) {
+    if (row.operation !== 'withdraw') lines.push(`[${row.operation}] ${row.line}`);
+    else if (row === withdrawals[0]) {
+      const summary = withdrawals.length > 1 ? `${withdrawals.length} memories withdrawn. Example: ` : '';
+      lines.push(`[withdraw] ${summary}${example.line}`);
+    }
+  }
   if (batch.truncated) lines.push('增量已截断，剩余变更将在后续投递。');
   return '\n\n' + [notice, ...lines].join('\n');
 }
@@ -34,7 +43,7 @@ export function createDeltaDelivery({
 
   async function createBatch(deliveryId, body, originalDeliveryId) {
     const range = await access.delta(currentBinding(), { cursor });
-    const suffix = { ...range, text: renderSuffix(range) };
+    const suffix = { ...range, text: renderMemoryDelta(range) };
     const delivery = { deliveryId, prefix, body, suffix, text: prefix + body + suffix.text };
     if (originalDeliveryId !== undefined) delivery.originalDeliveryId = originalDeliveryId;
     const batch = { delivery, range, status: 'pending' };

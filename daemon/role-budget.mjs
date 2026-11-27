@@ -12,6 +12,8 @@ const budgetType = 'auditor-budget-exceeded';
 const outputType = 'senior-tool-output-share';
 export const gateBoundary = event => event.type === 'gate-completed' ||
   event.type === 'auditor-rotation-proposed' && event.id?.startsWith('gate:');
+export const auditorBudgetBoundary = event => gateBoundary(event) ||
+  event.type === 'auditor-rotation-completed' || event.type === 'project-completed';
 
 export function rotationReason(policy, role, { gate, inputTokens, contextWindow, percent, compactions }) {
   const config = policy.roles?.[role] ?? {};
@@ -35,7 +37,8 @@ export function roleBudget(project, { now, sessions, notifications, batchDeliver
 
   function assessAuditor(rows, reader, boundary) {
     const wakes = new Set();
-    for (const row of rows) {
+    const active = rows.findLast(row => row.endedAt === null && sessions.jobs.has(row.addr));
+    for (const row of active ? [active] : rows) {
       if (row.endedAt != null && row.endedAt <= boundary) continue;
       try {
         const history = reader.sessionHistory(row);
@@ -128,7 +131,8 @@ export function roleBudget(project, { now, sessions, notifications, batchDeliver
       for (const row of rows) if (row.endedAt != null) nativeContexts.delete(row.addr);
       const events = notifications.list(name, false, true);
       const gate = events.findLast(gateBoundary);
-      const id = 'auditor-budget:' + batchDeliveryId(name, gate?.id ?? '');
+      const boundaryEvent = events.findLast(auditorBudgetBoundary);
+      const id = 'auditor-budget:' + batchDeliveryId(name, boundaryEvent?.id ?? '');
       const reader = historyReader(project);
       if (!completeGate) for (const row of [leader, auditor]) await assessRotation(name, row, reader, gate, policy, at, safe);
       if (newBoundary) boundaries.set(name, boundaryKey);
@@ -137,13 +141,13 @@ export function roleBudget(project, { now, sessions, notifications, batchDeliver
       if (prior) {
         if (completeGate && !prior.gate) notifications.refresh(id, { gate: completeGate });
       } else {
-        const wakes = assessAuditor(rows.filter(row => row.role === 'auditor'), reader, gate?.at ?? -Infinity);
+        const wakes = assessAuditor(rows.filter(row => row.role === 'auditor'), reader, boundaryEvent?.at ?? -Infinity);
         const maxWakesPerGate = policy.roles?.auditor?.maxWakesPerGate ?? 3;
         if (wakes > maxWakesPerGate) {
           const stamp = new Date(at).toISOString();
           notifications.add({ id, project: name, type: budgetType, at, role: 'auditor', addr: auditor?.addr,
             ...(completeGate && { gate: completeGate }), ...(gate && { afterGate: gate.gate }),
-            text: `Auditor 本门禁唤醒 ${wakes}/${maxWakesPerGate}（采样 ${stamp}）。请检查派工节奏与门禁包，合并常规审查材料。`,
+            text: `Auditor 当前周期唤醒 ${wakes}/${maxWakesPerGate}（采样 ${stamp}）。请检查派工节奏与门禁包，合并常规审查材料。`,
             usage: { wakes, maxWakesPerGate }, sampledAt: at, overBudget: true });
         }
       }

@@ -7,7 +7,7 @@ import { accountService } from './account-service.mjs';
 import { projectIndex } from '../cli/project.mjs';
 import { reportedContext } from '../cli/state.mjs';
 import { defaultStallMs, inbox, pendingWork, receipt, stalledDeliveries, stallText, suppressedReplies, suppressedReplyText } from '../inbox/engine.mjs';
-import { conclusoryReply, deliveryFailed, isBlockedReply, messageIdPattern } from '../inbox/message.mjs';
+import { conclusoryReply, deliveryFailed, isBlockedReply, messageIdPattern, replyConclusion } from '../inbox/message.mjs';
 import { relay } from '../relay/project.mjs';
 import { withClaudeTranscriptStops } from '../relay/sources.mjs';
 import { createWatcher } from '../watch/index.mjs';
@@ -23,17 +23,22 @@ import { defaultCoalesceMs, readPolicy, setWorkerProfile, workerHandoffLimits,
 import { isStartupBlocker } from '../tui/agent-status.mjs';
 import { recordAuditFinding, requireAuditRegressions } from './audit-findings.mjs';
 import { gateId, saveGatePacket } from './gate-packet.mjs';
-import { gateBoundary, roleBudget } from './role-budget.mjs';
+import { auditorBudgetBoundary, gateBoundary, roleBudget } from './role-budget.mjs';
 import { leaderHandoverState } from '../handover/brief.mjs';
 import { startedOutstanding } from '../handover/outstanding.mjs';
 import { denialIdPattern } from '../lib/senior-command.mjs';
 import { authorizeSeniorTool, seniorToolEvents } from './senior-tools.mjs';
 import { replyForDelivery } from '../inbox/reply-file.mjs';
-import { auditorWakeFiltered, auditorWakeSource, redReasons } from './routing.mjs';
+import { auditEscalations, auditorWakeFiltered, auditorWakeSource, redReasons } from './routing.mjs';
 import { readLayout } from './herdr-layout.mjs';
 import { attentionBoard, contextBoard, deliveryBoard, gateBoard, notificationBoard, workerBoard } from './status-board.mjs';
 import { activeRelease, managedCliPath, releaseId, releaseRoot } from './release.mjs';
 import { rotatingRoles } from '../index/index.mjs';
+import { createProjectMemory } from './memory.mjs';
+import { createMemoryInjection, sessionMemoryBinding } from './memory-injection.mjs';
+import { codexMemoryArgs, memoryIsolationCoverage } from '../memory/launch-config.mjs';
+import { memoryWriteReminder } from '../memory/prompts.mjs';
+import { createMemoryExtractor } from './memory-extractor.mjs';
 import { rotationPolicy } from './rotation-policy.mjs';
 import { selfRotation } from './self-rotation.mjs';
 import { approvedWaves, handoffReason, idleForRelease, isReleased, releaseConditions, retainedState, retirementReason, retentionStatus,
@@ -50,30 +55,60 @@ const continuationGroup = message => message.batchId ?? message.implicitBatch;
 const packetDeliveryId = (project, gate, round) => batchDeliveryId('gate-packet:' + project, round === undefined ? gate : `${gate}\0${round}`);
 const matchesGate = (message, project, gate) => message.gatePacket &&
   (message.gateId === gate && message.gateProject === project || message.id === packetDeliveryId(project, gate));
-const auditEscalations = new Set(['blocking-disagreement', 'three-failed-rounds', 'major-risk', 'overreach']);
 const terminalText = text => text.replace(/[\x00-\x08\x0b-\x1f\x7f-\x9f]/g, '');
 const handoverWorkWait = 3 * 60_000;
 
+const durableMessageSignals = [
+  /^(?:纠正|更正|勘误|裁决|决议|决定|偏好|长期规则|correction|ruling|decision|preference|standing rule)[*\s]*[:：]\s*\S/iu,
+  /^(?:我|我们)(?:已经|正式)?(?:决定|规定|纠正|更正|确认(?:此|该|这个|这一)(?:规则|做法))/u,
+  /^(?:i|we)\s+(?:(?:have|hereby)\s+)?(?:decided|ruled|confirm (?:this|the) (?:rule|practice))\b/iu,
+  /^(?:(?:以后|今后|从现在起)[，,\s]*)?我(?:更?喜欢|更?偏好|倾向于|习惯于)|^我希望[^。！？]*(?:以后|今后|一律|每次)/u,
+  /^(?:(?:from now on|going forward)[,\s]+)?i\s+(?:prefer|would prefer|would rather|always want)\b/iu,
+  /^(?:以后|今后|从现在起|自即日起)[，,\s]*(?:一律|必须|不得|禁止|始终|统一|每次|我希望)/u,
+  /^(?:from now on|going forward)[,\s]+(?:always|never|(?:we|you)\s+(?:must|will always|will never))\b/iu,
+];
+
+function durableUserMessage(text) {
+  const conclusion = replyConclusion(text);
+  if (conclusion.reason === 'noreply' || /^(?:PASS(?:ED)?|APPROVE(?:D)?)$/u.test(conclusion.tag ?? '')) return false;
+  let fence;
+  for (const raw of text.split(/\r?\n/u)) {
+    const delimiter = /^\s*(`{3,}|~{3,})/u.exec(raw)?.[1];
+    if (delimiter) {
+      if (!fence) fence = delimiter;
+      else if (delimiter[0] === fence[0] && delimiter.length >= fence.length) fence = undefined;
+      continue;
+    }
+    if (fence || /^\s*>/u.test(raw)) continue;
+    const line = raw.replace(/^[#*_\s+-]+/u, '').replace(/^(?:super|user|用户)\s*[:：]\s*/iu, '').trimEnd();
+    if (!/[?？]$/u.test(line) && durableMessageSignals.some(pattern => pattern.test(line))) return true;
+  }
+  return false;
+}
+
 function codexHandoff(row) {
   if (row.cli !== 'codex' || !row.sessionId) return;
-  return { cwd: row.cwd, argv: ['codex', '--no-daemon', '--disable', 'memories', '-c',
+  return { cwd: row.cwd, argv: ['codex', '--no-daemon', ...codexMemoryArgs(), '-c',
     'check_for_update_on_startup=false', '-c', `projects.${JSON.stringify(row.cwd)}.trust_level="trusted"`, 'resume', row.sessionId] };
 }
 
 export function createSupervisor(project, {
   report = console.log, window = 900_000, sealWindow = window, partialWindow = Math.min(window, 120_000),
   uncertainWindow, blockedWindow = 60_000, sessionOptions, now = Date.now, watchOptions,
-  externalNotification = notifyExternal, accountOptions = {},
+  externalNotification = notifyExternal, accountOptions = {}, memoryOptions, memoryExtractorOptions,
 } = {}) {
   if (![window, sealWindow, partialWindow, uncertainWindow ?? defaultStallMs, blockedWindow].every(value => Number.isSafeInteger(value) && value >= 0)) {
     throw new RangeError('Invalid loomd timeout in milliseconds');
   }
   const index = projectIndex(project);
   index.initialize();
+  let injection;
   const grants = hostGrants(project, { now, notify: (...events) => notifications.add(...events) });
   const accounts = accountService(project, { now, report, notifications: { add: (...items) => notifications.add(...items) },
     rows: () => sessions.rows(), options: accountOptions, accountBinding: accountOptions.bindSession ?? sessionOptions?.accountBinding });
-  const sessions = ownedSessions(project, index, report, { ...sessionOptions, hostGrants: grants, ...accounts.collectors });
+  const sessions = ownedSessions(project, index, report, { ...sessionOptions, hostGrants: grants, ...accounts.collectors, memoryInjection: () => injection });
+  const memory = createProjectMemory(project, { sessions, now, options: memoryOptions, report });
+  injection = createMemoryInjection(project, sessionOptions?.memoryStore?.access ?? memory.access);
   const policyForTick = () => {
     try { return readPolicy(project, { optional: true }); }
     catch { return {}; }
@@ -92,6 +127,19 @@ export function createSupervisor(project, {
     ...(message.issue === auditorWakeFiltered && { reason: auditorWakeFiltered, nextWakeDigest: Boolean(message.from) }) });
   const saved = (target, text, fields = {}) => mail.enqueue({
     id: randomUUID(), createdAt: now(), target, text, requestedMode: 'queue', mode: 'queue', phase: 'queued', ...fields,
+  });
+  const extractor = createMemoryExtractor(project, { memory, sessions, now, report,
+    options: memoryExtractorOptions, events: () => notifications.list(undefined, false, true),
+    enqueueReview(id, text, routedTo) {
+      const reviewer = liveRole(project, 'super');
+      if (!reviewer || reviewer.addr === routedTo) return reviewer?.addr;
+      const deliveryId = batchDeliveryId('memory-proposal:' + id, reviewer.addr);
+      if (!mail.messages.some(message => message.id === deliveryId)) {
+        saved(sessions.targetBinding(reviewer), 'User memory proposal for Super review\n' + text,
+          { id: deliveryId, memoryReview: true, superPriority: true });
+      }
+      return reviewer.addr;
+    },
   });
   const rotation = selfRotation(project, { sessions, index, mail, notifications, now, spawn: spawnSession, failHandover, inFlight: rotationWork, report,
     v2: () => v2, cleanBoundary: name => rotationBoundary(name, sessions.rows().filter(row => row.project === name)) });
@@ -985,6 +1033,7 @@ ${details}`, {
           !(actor.role === 'leader' && sessions.rowFor(args['handover-from'])?.project === actor.project))) {
       throw new CommandError('invalid-arguments', 'Auditor startup requires Super or a Leader supervising succession');
     }
+    await memory.prepareLibrary();
     const old = sessions.rowFor(args['handover-from']);
     const safety = old && v2.checkStart(old, selfHandoff);
     const checkedHandoff = safety ? { ...selfHandoff, phase: safety.phase, expectedFacts: v2.repositoryFacts(old),
@@ -1046,6 +1095,7 @@ ${details}`, {
 
   async function tick() {
     policy = policyForTick();
+    await memory.prepareLibrary();
     await reconcileHostCards();
     grants.sweep();
     await sessions.refresh(mail);
@@ -1156,12 +1206,30 @@ ${details}`, {
         const digest = deferred.length && replyForDelivery(project, deferred.map(item =>
           `[${item.id}] ${item.from.addr}\n${item.text}`).join('\n\n'), policy.delivery?.replyBytes);
         if (digest) deliveryAppendix = [deliveryAppendix, `Loom Auditor next-wake digest\n${digest}`].filter(Boolean).join('\n\n');
+        if (row && (senior(row) || row.role === 'super')) {
+          const request = message.replyKey && byId.get(message.replyTo);
+          const gateRejection = request?.gatePacket && request.completion?.relay?.deliveryId === message.id &&
+            /^REJECT(?:ED)?$/u.test(replyConclusion(request.completion.body).tag ?? '');
+          const fromUser = !message.replyKey && (message.from ?
+            message.from.external && message.from.addr === 'super' || sessions.rowFor(message.from.addr)?.role === 'super' :
+            message.userDelivery === true);
+          if (gateRejection || fromUser && durableUserMessage(message.text)) {
+            deliveryAppendix = [deliveryAppendix, memoryWriteReminder].filter(Boolean).join('\n\n');
+          }
+        }
         const replySuppressionNotices = senderSuppressions.filter(notice => visibleIds.has(notice.id)).map(notice => notice.id);
         const shownRotationNotices = rotationNotices.filter(notice => visibleIds.has(notice.id))
           .flatMap(notice => [notice.id, ...notice.aliases ?? []]);
+        const job = sessions.jobs.get(row?.addr);
+        const { text: memoryText, ...memoryReceipt } = job ?
+          await injection.decorate(job, sessionMemoryBinding(row, job), message, mail.messages,
+            row.cli === 'claude' ? [] : sessions.events(row.addr)) : {};
+        if (memoryText) deliveryAppendix = [deliveryAppendix, memoryText].filter(Boolean).join('\n\n');
         return { ...(deliveryAppendix && { deliveryAppendix }), ...(workerDigest && { resultContext: workerDigest }),
           ...(replySuppressionNotices.length && { replySuppressionNotices }),
           ...(shownRotationNotices.length && { rotationNotices: shownRotationNotices }),
+          ...memoryReceipt,
+          ...(memoryText && { memoryRecipient: row.addr }),
           ...(deferred.length && { auditorDigestIds: deferred.map(item => item.id) }),
           ...(batch.length && {
             orgEvents: batch.map(notice => notice.id), orgAppendix: 'Loom drift and fact checks\n' + summary,
@@ -1173,6 +1241,15 @@ ${details}`, {
 
       },
     });
+    await memory.recordExplicit();
+    for (const row of sessions.rows()) {
+      const job = sessions.jobs.get(row.addr);
+      if (job && row.endedAt === null && row.cli === 'claude') {
+        await injection.refreshCompactIndex(job, sessionMemoryBinding(row, job));
+      }
+    }
+    const extraction = extractor.tick(policy, mail.messages);
+    if (memoryExtractorOptions) await extraction;
     await reconcileHostCards();
     await checkStartupBlockers();
     await observeSessions(policy.delivery?.stallMs ?? uncertainWindow ?? defaultStallMs);
@@ -1232,6 +1309,7 @@ ${details}`, {
       return attached;
     },
     async shutdown() {
+      await extractor.shutdown();
       await accounts.close();
       await sessions.shutdown();
     },
@@ -1250,6 +1328,10 @@ ${details}`, {
       }
       if (rpcActor && v2.enabled() && command === 'switch') v2.ruleChange(rpcActor, 'budget');
       if (rpcActor && v2.enabled() && command === 'senior-override') v2.ruleChange(rpcActor, 'merge');
+      if (command === 'mem') return memory.handle(args, rpcActor?.addr);
+      if (['memory-proposals', 'memory-review', 'memory-index', 'memory-show'].includes(command)) {
+        return extractor.handle(command, args, rpcActor?.addr);
+      }
       if (command === 'spawn') return spawnSession(args, caller);
       if (command === 'accounts-refresh') {
         const job = rpcActor?.role === 'worker' && sessions.jobs.get(rpcActor.addr);
@@ -1449,11 +1531,12 @@ ${details}`, {
             (event.gate === gate || members.some(row => row.addr === event.addr)));
           const workerAddrs = new Set(members.filter(row => row.role === 'worker').map(row => row.addr));
           const boundary = notifications.list(name, false, true)
-            .findLast(gateBoundary)?.at ?? 0;
+            .findLast(auditorBudgetBoundary)?.at ?? 0;
           const signals = leaderSignals(name).filter(notice => workerAddrs.has(notice.addr) ||
             notice.type === 'auditor-budget-exceeded' && notice.at >= boundary);
           const { path, fullPath, candidate, base } = saveGatePacket(project, { ...args, id, round }, { members,
-            decisions, signalSummary: noticeLines(signals), signalCount: signals.length, red });
+            decisions, signalSummary: noticeLines(signals), signalCount: signals.length, red,
+            memoryProposals: name === project ? extractor.gateText() : '' });
           const delivery = saved(sessions.targetBinding(auditor), red ?
             `Loom red escalation (${red.reason}). Read gate packet ${path}` :
             `Read gate packet ${path}${v2.enabled() ? `\n在签收时用 "$LOOM_BIN" rotation-policy spot-check --target leader --id ${id} --verdict ok|error --detail TEXT --evidence FILE[:LINE] 登记抽查。` : ''}`, {
@@ -1555,6 +1638,7 @@ ${details}`, {
           const job = sessions.jobs.get(row.addr);
           return { addr: row.addr, state: runtimeState,
             ...(row.role === 'worker' && { workerTier: storedWorkerTier(job), ...(storedHostUnconfined(job) && { unconfined: true }) }),
+            ...(sessions.jobs.has(row.addr) && { memoryIsolation: memoryIsolationCoverage(row.cli) }),
             lastProgressAt: observed?.lastProgressAt ?? row.startedAt, ...(liveness && { liveness }),
             ...(worker && { ...worker, runtimeState }),
             ...((senior(row) || row.role === 'super') && { compactions: observations.get(row.addr)?.compactions ?? 0,
@@ -1734,6 +1818,7 @@ ${details}`, {
       const target = sessions.targetBinding(successor);
       const userWake = external || actor?.role === 'super' && actor.endedAt === null;
       const fields = { ...(sender && { from: sender }), ...(args.expectReply && { expectReply: true }),
+        ...(!sender && userWake && { userDelivery: true }),
         ...(userWake && { superPriority: true, ...(successor.role === 'auditor' && { userWake: true }) }),
         ...(row.addr !== successor.addr && { originalTarget: row.addr }),
         ...(requestedRole && { requestedRole }),

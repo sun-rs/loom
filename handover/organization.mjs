@@ -45,14 +45,20 @@ export function charterLines(text) {
 
 const references = text => new Set(text.toLowerCase().match(/[a-z0-9]+(?:[._/-][a-z0-9_-]+)+/g) ?? []);
 
-export function rulingLines(text, context) {
+export function numberedRulings(text, { continuations = false } = {}) {
   const entries = [];
   let current;
   for (const line of text.split(/\r?\n/)) {
     const title = heading.exec(line)?.[1];
-    const ledger = /^ {0,3}R(\d+)\.\s+(\S.*)$/i.exec(line);
+    const ledger = /^ {0,3}R(\d+)(?:[.．][ \t]*|[ \t]+(?=(?:修正|更正|补充)))(\S.*)$/iu.exec(line);
+    const continuation = /^ {0,3}R\d+[ \t]+(修正|更正|补充)/iu.exec(line)?.[1];
     if (ledger) {
-      current = { number: ledger[1], title: 'R' + ledger[1], quote: ['> ' + ledger[2].replace(/[\x00-\x08\x0b-\x1f\x7f-\x9f]/g, '')] };
+      if (continuation && !continuations) {
+        current = undefined;
+        continue;
+      }
+      current = { number: ledger[1], title: 'R' + ledger[1], quote: ['> ' + ledger[2].replace(/[\x00-\x08\x0b-\x1f\x7f-\x9f]/g, '')],
+        ...(continuation && { continuation }) };
       entries.push(current);
     } else if (title !== undefined) {
       const number = /^(?:(?:裁决|ruling)\s*)?#?(\d+)(?=\s|[.·、:：)]|$)/i.exec(title)?.[1];
@@ -62,10 +68,14 @@ export function rulingLines(text, context) {
       current.quote.push(line.replace(/[\x00-\x08\x0b-\x1f\x7f-\x9f]/g, ''));
     }
   }
+  return entries.filter(entry => entry.quote.some(line => !/^ {0,3}>\s*$/.test(line)));
+}
+
+export function rulingLines(text, context) {
   const active = references(context);
   const cited = new Set([...context.matchAll(/(?:裁决|\bruling)\s*#?(\d+)|\bR(\d+)\b/gi)]
     .map(match => match[1] ?? match[2]));
-  const ranked = entries.filter(entry => entry.quote.some(line => !/^ {0,3}>\s*$/.test(line))).toReversed().map(entry => ({
+  const ranked = numberedRulings(text).toReversed().map(entry => ({
     ...entry, score: 10 * Number(cited.has(entry.number)) +
       [...references(entry.title + '\n' + entry.quote.join('\n'))].filter(ref => active.has(ref)).length,
   })).sort((a, b) => b.score - a.score);

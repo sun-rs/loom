@@ -1,6 +1,7 @@
 import { assertionCounts } from '../evidence/git.mjs';
 
 export const redReasons = new Set(['protected-file', 'assertion', 'skip-only', 'confirmed-fact-miss', 'sandbox-escape']);
+export const auditEscalations = new Set(['blocking-disagreement', 'three-failed-rounds', 'major-risk', 'overreach']);
 export const auditorWakeFiltered = 'auditor-wake-filtered';
 
 // A restored queue can predate ROUTING-1. Recognize its user and succession

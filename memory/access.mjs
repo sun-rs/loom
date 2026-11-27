@@ -1,10 +1,15 @@
 import { randomUUID } from 'node:crypto';
+import { matchesGlob } from 'node:path';
 import { sanitizeEntry } from './sanitize.mjs';
+import { formatIndexRow, isShortMemoryId, resolveShortMemoryId, shortMemoryId } from './index-row.mjs';
+import { rulingPath } from './ledger.mjs';
 
 const kindRank = { ruling: 0, preference: 1, lesson: 2 };
 const indexSurfaces = new Set(['index', 'search', 'attachments', 'delta']);
 const deltaLimit = 30;
 const historyKeys = ['id', 'project', 'layer', 'role', 'owner', 'author', 'cardId', 'sessionId', 'asOf'];
+const rulingNumber = entry => Number(/^R(\d+)\b/iu.exec(entry.title ?? '')?.[1] ?? 0);
+const recency = entry => [entry.checkedAt, entry.effectiveAt, entry.updatedAt].map(Date.parse).find(Number.isFinite) ?? 0;
 
 function isUserGuidance(row) {
   return row.project === null && row.layer === 'user' && ['ruling', 'preference'].includes(row.kind);
@@ -47,11 +52,29 @@ function canReadRole(binding, row, surface) {
   }
 }
 
-function compareEntries(a, b) {
-  return (b.importance ?? 0) - (a.importance ?? 0)
+function compareEntries(a, b, rulingDate = recency) {
+  return Number(b.kind === 'ruling') - Number(a.kind === 'ruling')
+    || (b.importance ?? 0) - (a.importance ?? 0)
     || (kindRank[a.kind] ?? 3) - (kindRank[b.kind] ?? 3)
+    || (a.kind === 'ruling' && b.kind === 'ruling' &&
+      (rulingDate(b) - rulingDate(a) || rulingNumber(b) - rulingNumber(a)))
     || (b.usage ?? 0) - (a.usage ?? 0)
     || (a.id < b.id ? -1 : Number(a.id > b.id));
+}
+
+function indexOrder(entries) {
+  const ledger = entries.filter(entry => entry.kind === 'ruling' && entry.source?.path === rulingPath)
+    .sort((a, b) => rulingNumber(a) - rulingNumber(b));
+  const dates = new Map();
+  let previousDate = 0;
+  for (const entry of ledger) {
+    // Undated rulings inherit the ledger's chronology instead of the time of import.
+    const date = Date.parse(/\b\d{4}-\d{2}-\d{2}\b/u.exec(entry.body ?? '')?.[0]);
+    if (Number.isFinite(date)) previousDate = date;
+    dates.set(entry.id, previousDate);
+  }
+  const rulingDate = entry => dates.get(entry.id) ?? recency(entry);
+  return (a, b) => compareEntries(a, b, rulingDate);
 }
 
 function provenance(binding, row, asOf) {
@@ -66,15 +89,27 @@ function indexLine(entry, source) {
   return '- ' + entry.id + label + origin;
 }
 
-function indexRow(binding, entry, asOf) {
+function indexRow(binding, entry, asOf, compact = false) {
   const source = provenance(binding, entry, asOf);
   return {
     id: entry.id,
     revision: entry.revision,
-    line: indexLine(entry, source),
+    line: compact ? formatIndexRow(entry, indexLine(entry, source)) : indexLine(entry, source),
     usage: entry.usage ?? 0,
     ...source,
   };
+}
+
+function withdrawalRow(row, entry, current) {
+  const forgotten = entry.status === 'forgotten' || current?.status === 'forgotten';
+  const id = shortMemoryId(row.id) ?? row.id.replace(/\b[a-f\d]{64}\b/giu, hash => hash.slice(0, 8));
+  const title = forgotten ? '' : (entry.title ?? (current?.revision === row.revision ? current.title : ''))
+    ?.replace(/\s+/gu, ' ').replace(/\b[a-f\d]{64}\b/giu, hash => hash.slice(0, 8)).trim();
+  const reason = forgotten ? 'Memory was forgotten.' : ({
+    superseded: 'Memory was superseded.', stale: 'Memory is no longer current.',
+  })[entry.status] ?? 'Memory is no longer active.';
+  const label = title && Array.from(title).slice(0, 150).join('');
+  return { ...row, line: `${label ? `${label} (${id})` : id} — ${reason}`, withdrawalTitle: Boolean(label) };
 }
 
 function canWrite(binding, entry) {
@@ -206,16 +241,24 @@ export function createAccess({ readState, commitState, serialize, entries = [], 
   }
 
   return {
+    resolveShortId(binding, state, id, project) {
+      const time = now();
+      const grants = grantsOf(state);
+      const visible = row => mayRead(binding, row, 'show', time, grants, project);
+      const exact = state.entries.find(row => row.id === id && visible(row));
+      return exact ? { item: exact } : resolveShortMemoryId(state.entries, id, visible);
+    },
     async index(binding, { project } = {}) {
       const { visible, asOf } = await readIndex(binding, 'index', project);
-      return { rows: visible.sort(compareEntries).map(entry => indexRow(binding, entry, asOf)) };
+      return { rows: visible.sort(indexOrder(visible)).map(entry => indexRow(binding, entry, asOf, true)) };
     },
 
     async search(binding, { query = '', limit = 50, cursor = 0, project } = {}) {
       const { visible, asOf } = await readIndex(binding, 'search', project);
       const needle = query.trim().toLowerCase();
-      const matches = visible.filter(entry => !needle || [entry.title, ...(entry.keywords ?? [])]
-        .some(value => value?.toLowerCase().includes(needle))).sort(compareEntries);
+      const matches = visible.filter(entry => !needle || [entry.title, ...(entry.keywords ?? []),
+        ...(entry.layer === 'user' && entry.kind === 'ruling' && entry.source?.path === rulingPath ? [entry.body] : [])]
+        .some(value => value?.toLowerCase().includes(needle))).sort(indexOrder(visible));
       const offset = Number.isSafeInteger(cursor) && cursor >= 0 ? cursor : 0;
       const size = Number.isSafeInteger(limit) && limit > 0 ? limit : 50;
       const end = offset + size;
@@ -228,7 +271,13 @@ export function createAccess({ readState, commitState, serialize, entries = [], 
     async show(binding, id, { project } = {}) {
       const state = await snapshot();
       const time = now();
-      const entry = state.entries.find(row => mayRead(binding, row, 'show', time, state.grants, project) && row.id === id);
+      const visible = row => mayRead(binding, row, 'show', time, state.grants, project);
+      let entry = state.entries.find(row => row.id === id && visible(row));
+      if (!entry && isShortMemoryId(id)) {
+        const result = resolveShortMemoryId(state.entries, id, visible);
+        if (!result.item) throw Object.assign(new Error(result.error), { code: result.code });
+        entry = result.item;
+      }
       if (!entry) return { item: null, seq: null };
       // Use the visible publication watermark of the snapshot, including the rest of a maintenance batch.
       const currentById = new Map(state.entries.map(row => [row.id, row]));
@@ -236,7 +285,7 @@ export function createAccess({ readState, commitState, serialize, entries = [], 
       for (const change of state.changes) {
         const publication = visibleChange(binding, change, currentById, time, state.grants);
         if ((publication && (project === undefined || publication.project === project))
-          || (change.id === id && (!change.entry || mayRead(binding, change.entry, 'show', time, state.grants, project)))) {
+          || (change.id === entry.id && (!change.entry || mayRead(binding, change.entry, 'show', time, state.grants, project)))) {
           seq = Math.max(seq ?? 0, change.seq);
         }
       }
@@ -249,10 +298,14 @@ export function createAccess({ readState, commitState, serialize, entries = [], 
       return binding.role !== 'super' && isCrossProject(binding, item) ? grantExpiry(binding, item, grants) : null;
     },
 
-    async attachments(binding, { keywords = [], project } = {}) {
+    async attachments(binding, { keywords = [], topics = [], paths = [], project, attached = false } = {}) {
       const { visible, asOf } = await readIndex(binding, 'attachments', project);
-      const needles = new Set(keywords.map(keyword => keyword.trim().toLowerCase()).filter(Boolean));
-      return { rows: visible.filter(entry => entry.keywords?.some(keyword => needles.has(keyword.toLowerCase())))
+      const terms = new Set([...keywords, ...topics].map(term => term.trim().toLowerCase()).filter(Boolean));
+      const matches = entry => [...(entry.keywords ?? []), ...(entry.topics ?? [])]
+        .some(term => terms.has(term.toLowerCase())) || entry.paths?.some(pattern =>
+        paths.some(path => path === pattern || path.startsWith(pattern.replace(/\/$/u, '') + '/') ||
+          matchesGlob(path, pattern) || matchesGlob(path.replace(/\/$/u, '') + '/', pattern)));
+      return { rows: visible.filter(attached ? entry => binding.attachments?.includes(entry.id) : matches)
         .sort(compareEntries).map(entry => indexRow(binding, entry, asOf)) };
     },
 
@@ -270,7 +323,12 @@ export function createAccess({ readState, commitState, serialize, entries = [], 
         }) };
     },
 
-    async delta(binding, { cursor = 0 } = {}) {
+    async publicationCursor() {
+      const { changes } = await snapshot();
+      return changes.reduce((cursor, change) => Math.max(cursor, change.seq), 0);
+    },
+
+    async delta(binding, { cursor = 0, fits } = {}) {
       const state = await snapshot();
       const time = now();
       const currentById = new Map(state.entries.map(entry => [entry.id, entry]));
@@ -282,20 +340,45 @@ export function createAccess({ readState, commitState, serialize, entries = [], 
         if (entry) visible.push({ change, entry });
       }
       visible.sort((a, b) => a.change.seq - b.change.seq);
-      const batch = visible.slice(0, deltaLimit);
-      const rows = batch.map(({ change, entry }) => {
+      const batch = [];
+      const rows = [];
+      let lineCount = 0;
+      let hasWithdrawal = false;
+      for (const publication of visible) {
+        const { change, entry } = publication;
+        const withdrawal = change.operation === 'withdraw';
+        const addsLine = !withdrawal || !hasWithdrawal;
+        if (addsLine && lineCount === deltaLimit) break;
         const source = provenance(binding, entry, cutoff(state, time));
-        return {
-          seq: change.seq, id: change.id, revision: change.revision ?? entry.revision,
-          operation: change.operation, line: indexLine(entry, source), ...source,
+        const revision = change.revision ?? entry.revision;
+        const legacyLine = indexLine(entry, source);
+        const current = currentById.get(change.id);
+        // Older publication records omit the body. Only use it from the same revision.
+        const addition = { ...entry, body: entry.body ?? (current?.revision === revision ? current?.body : undefined) };
+        let row = {
+          seq: change.seq, id: change.id, revision, operation: change.operation,
+          line: change.operation === 'add' ? formatIndexRow(addition, legacyLine, 150 - '[add] '.length) : legacyLine,
+          ...source,
         };
-      });
+        if (withdrawal) row = withdrawalRow(row, entry, current);
+        const truncated = rows.length + 1 < visible.length;
+        if (fits && !fits({ rows: [...rows, row], truncated })) {
+          if (rows.length) break;
+          row = withdrawal ? withdrawalRow(row, { ...entry, title: '' }, currentById.get(change.id)) :
+            { ...row, line: '- ' + row.id };
+          if (!fits({ rows: [row], truncated })) break;
+        }
+        rows.push(row);
+        batch.push(publication);
+        if (addsLine) lineCount++;
+        if (withdrawal) hasWithdrawal = true;
+      }
       const result = {
-        rows, baseCursor, endCursor: rows.at(-1)?.seq ?? baseCursor, truncated: visible.length > deltaLimit,
+        rows, baseCursor, endCursor: rows.at(-1)?.seq ?? baseCursor, truncated: visible.length > rows.length,
       };
-      deltaScopes.set(result, batch.map(({ change, entry }) => {
+      deltaScopes.set(result, batch.map(({ change, entry }, index) => {
         const { id, project, layer, status, kind, owner, author } = entry;
-        return { seq: change.seq, id: change.id, operation: change.operation,
+        return { seq: change.seq, id: change.id, operation: change.operation, withdrawalTitle: rows[index].withdrawalTitle,
           entry: { id, project, layer, status, kind, owner, author } };
       }));
       return result;
@@ -310,8 +393,24 @@ export function createAccess({ readState, commitState, serialize, entries = [], 
       const changesBySeq = new Map(state.changes.map(change => [change.seq, change]));
       return original.every(change => {
         const latest = changesBySeq.get(change.seq);
-        return latest?.id === change.id && visibleChange(binding, change, currentById, time, state.grants, true)
+        return latest?.id === change.id &&
+          !(change.withdrawalTitle && (latest.entry?.status === 'forgotten' || currentById.get(change.id)?.status === 'forgotten')) &&
+          visibleChange(binding, change, currentById, time, state.grants, true)
           && visibleChange(binding, latest, currentById, time, state.grants, true);
+      });
+    },
+
+    async canRetryPublications(binding, rows) {
+      const state = await snapshot();
+      const time = now();
+      const currentById = new Map(state.entries.map(entry => [entry.id, entry]));
+      const changesBySeq = new Map(state.changes.map(change => [change.seq, change]));
+      return rows.every(({ seq, id, revision, operation, withdrawalTitle }) => {
+        const change = changesBySeq.get(seq);
+        return change?.id === id && change.operation === operation &&
+          (change.revision ?? change.entry?.revision) === revision &&
+          !(withdrawalTitle && (change.entry?.status === 'forgotten' || currentById.get(id)?.status === 'forgotten')) &&
+          Boolean(visibleChange(binding, change, currentById, time, state.grants, true));
       });
     },
 

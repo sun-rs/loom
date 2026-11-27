@@ -251,9 +251,11 @@ export async function history(sessions, reader, options) {
   const forward = since && !page && !before;
   const end = forward ? Math.min(count, matched.length) : Math.max(0, matched.length - (page ? (page - 1) * count : 0));
   const start = forward ? 0 : Math.max(0, end - count);
-  const selected = matched.slice(start, end);
+  // An active turn may already be journaled while the last finished answer is still the latest result.
+  const settled = options.latestSettled && matched.findLast(entry => entry.turn.endedAt != null);
+  const selected = settled ? [settled] : matched.slice(start, end);
   const first = selected[0];
-  const nextBefore = start > 0 && first ? (timeline ? `turn:${first.session.addr}#${first.index}` : String(first.index)) : undefined;
+  const nextBefore = (settled ? matched.indexOf(settled) : start) > 0 && first ? (timeline ? `turn:${first.session.addr}#${first.index}` : String(first.index)) : undefined;
   const pagination = (before || page || nextBefore) && {
     page: page ?? 1, ...(Number.isFinite(count) && { pageSize: count }), hasOlder: Boolean(nextBefore),
     ...(nextBefore && { nextBefore }),

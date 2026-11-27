@@ -28,3 +28,6 @@
 | 2026-11-24 | Orca TUI 调度体系复刻 | [tasks/TUI-ORCA-1/RESULT.md](../../tasks/TUI-ORCA-1/RESULT.md) |
 - [2026-11-27 cell 容器与沙箱项目调研](2026-11-27-cell-container-projects.md) — srt/bwrap/Seatbelt/Podman/sbx/apple container/Claude-Cage 等，含维护证据
 - [2026-11-27 cell 底层 PK：Podman / Docker / srt / blackwall](2026-11-27-cell-substrate-pk.md) — 含“容器包 srt”核查与组合判定
+- [2026-11-27 启动与恢复流程设计（草案）](2026-11-27-lifecycle-design.md) — L1 全局只管 Super，Super 决定项目恢复；待用户决定 Super 由什么管理
+- [2026-11-27 Orca bot 会话连续性](2026-11-27-orca-bot-session-continuity.md) — 默认新开+带上限播种，原生续接默认关、只提供给用户选
+- [2026-11-27 Claude 出网硬保证](2026-11-27-claude-egress-guarantee.md) — Mac 上用 Seatbelt 只放行 127.0.0.1:17891 是最便宜的内核级保证；pf 需专用用户、VPN 进程规则会 fail-open

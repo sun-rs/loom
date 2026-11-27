@@ -24,6 +24,7 @@ import { attachHost } from './host-client.mjs';
 import { attachCodexHolder, pipeTransport, useCodexHolder } from './codex-holder.mjs';
 import { managedCliPath, releaseId, releaseRoot, upgradeState } from './release.mjs';
 import { projectMemoryPrompt, workerMemoryPrompt } from '../memory/project.mjs';
+import { sessionMemoryBinding } from './memory-injection.mjs';
 import { disposeSession } from './session-close.mjs';
 import { workerEnvironment } from './worker-environment.mjs';
 import { withClaudeTranscriptStops } from '../relay/sources.mjs';
@@ -128,7 +129,7 @@ function defaultTrustWorkspace(project, cwd) {
 }
 
 export function ownedSessions(project, index, report, {
-  open, exportOpenCode, openPane = openTui, getPane = ownedPane, callHc = hc, controller, layout, capabilities, hostGrants,
+  open, exportOpenCode, openPane = openTui, getPane = ownedPane, callHc = hc, controller, layout, capabilities, hostGrants, memoryInjection,
   observeAccounts, observeAccountDiagnostics, observeAccountIncidents, accountBinding, accountStatusline,
 } = {}) {
   const path = join(runtimeDirectory(project), 'sessions');
@@ -144,6 +145,8 @@ export function ownedSessions(project, index, report, {
   const openCodeProofs = new Map();
   const rows = addr => index.query(addr ? { addr } : {});
   const rowFor = addr => addr ? rows(addr)[0] : undefined;
+  const validateMemory = message => memoryInjection?.()?.requireVisible(
+    sessionMemoryBinding(rowFor(message.target.addr), jobs.get(message.target.addr)), message);
   const liveCaller = addr => {
     const row = rowFor(addr);
     const job = jobs.get(addr);
@@ -345,6 +348,7 @@ export function ownedSessions(project, index, report, {
     },
     plan: (provider, mode) => local.plan(provider, mode),
     async send(message, observation) {
+      if (message.memoryAccess) await validateMemory(message);
       if (message.target.backend !== 'headless') {
         try { saveTuiInputHead(project, rowFor(message.target.addr), message); }
         catch (error) { report(error.message); }
@@ -356,6 +360,7 @@ export function ownedSessions(project, index, report, {
       return { streamId: runtime.streamId, requestId: result.requestId, seq: result.seq, deadlineAt: result.deadlineAt };
     },
     async retryMissingTurn(message, observation) {
+      if (message.memoryAccess) await validateMemory(message);
       return local.retryMissingTurn(message, observation);
     },
     async interrupt(message, _keys, observation) {
@@ -704,6 +709,7 @@ export function ownedSessions(project, index, report, {
       ...(input['expect-red'] !== undefined && { expectRed: input['expect-red'] }),
       ...(deliver && { deliver, ...(input.barrier && { barrier: input.barrier }) }),
       ...(cli === 'opencode' && mode === 'tui' && { plannedNativeId: `ses_${randomUUID().replaceAll('-', '')}` }) };
+    await memoryInjection?.()?.prepare(job, input.prompt, sessionMemoryBinding(actor, jobs.get(actor?.addr)));
     if (workerTier === 'host') {
       job.pendingHostGrant = hostGrants.prepare(row, policyAllowsHost(row));
       job.prompt += `\n\nTrusted host grant${job.pendingHostGrant.unconfined ? ' (unconfined, no outer Seatbelt)' : ''} for this card. Use absolute native CLI paths. Keep credentials, global config, CCP, Solars, rah_os, loom-next and unrelated processes or panes outside the task. Run only the authorized work and end the card with a conclusion.`;
@@ -777,8 +783,9 @@ export function ownedSessions(project, index, report, {
       throw new ErrorCode('not-ready', 'Codex attachment retry budget exhausted');
     }
     try {
+      const launch = options?.stop ? undefined : await memoryInjection?.()?.launch(job, sessionMemoryBinding(row, job));
       const runtime = await (pipe ? attachCodexHolder : attachHost)(project, row, job, save, controller, {
-        ...options, capabilities, authorizeLaunch: () => authorizeHostLaunch(job),
+        ...options, capabilities, memory: launch, authorizeLaunch: () => authorizeHostLaunch(job),
       });
       unknownLiveness.delete(row.addr);
       return runtime;
@@ -790,9 +797,10 @@ export function ownedSessions(project, index, report, {
   }
 
   async function openFixture(row, job) {
+    const memory = await memoryInjection?.()?.launch(job, sessionMemoryBinding(row, job));
     authorizeHostLaunch(job);
     const hostGrant = job.pendingHostGrant ?? job.hostGrant;
-    const session = await open({ ...row, ...(job.fast !== undefined && { fast: job.fast }),
+    const session = await open({ ...row, memory, ...(job.fast !== undefined && { fast: job.fast }),
       ...(hostGrant && { hostGrant }) }, project, row.sessionId,
       capabilities?.ensureSession(row.addr).token);
     try {
@@ -869,6 +877,7 @@ export function ownedSessions(project, index, report, {
           job.authMode = claudeAuthMode(project, row.role);
           save(job);
         }
+        const launch = await memoryInjection?.()?.launch(job, sessionMemoryBinding(row, job));
         reserveStatusline(job, row);
         const opened = await openPane(job, row, project, temporary => {
           job.temporary = temporary;
@@ -877,7 +886,7 @@ export function ownedSessions(project, index, report, {
           job.tui = binding;
           save(job);
         }, controller, capabilities?.ensureSession(row.addr).path,
-          job.accountStatusline ? accountStatusline?.(row) : undefined);
+          job.accountStatusline ? accountStatusline?.(row) : undefined, launch);
         terminal = opened.terminal;
         nativeId = opened.nativeId;
       }
