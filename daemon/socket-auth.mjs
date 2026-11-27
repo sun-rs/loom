@@ -92,7 +92,7 @@ export function socketCapabilities(project, env = process.env) {
 }
 
 const readCommands = new Set(['hello', 'daemon-status', 'upgrade-status', 'board', 'status', 'ls', 'state', 'session-memory']);
-const superCommands = new Set(['daemon-stop', 'upgrade-plan', 'upgrade-apply', 'upgrade-holder', 'layout-up', 'layout-adopt', 'switch']);
+const superCommands = new Set(['daemon-stop', 'upgrade-plan', 'upgrade-apply', 'upgrade-holder', 'layout-up', 'layout-adopt', 'switch', 'recover', 'resume']);
 const memoryCommands = new Set(['mem', 'memory-proposals', 'memory-review', 'memory-index', 'memory-show']);
 export const mayUseLegacyCaller = command => !memoryCommands.has(command) &&
   (!readCommands.has(command) || command === 'state');

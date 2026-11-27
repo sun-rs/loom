@@ -45,6 +45,8 @@ import { approvedWaves, handoffReason, idleForRelease, isReleased, releaseCondit
   reuseStatus, workerCardId, workerContext, workerDetails, workerIdleSince, workerMetrics, workerStalledSince } from './worker-retention.mjs';
 import { hostGrantSpec, storedHostUnconfined, storedWorkerTier } from '../lib/worker-tiers.mjs';
 import { hostGrantWarning, hostGrants, hostWritePaths } from './host-grants.mjs';
+import { superHandoffReminder } from './global-registry.mjs';
+import { recoverProject } from './recover.mjs';
 
 function batchDeliveryId(batch, dest) {
   const bytes = createHash('sha256').update(`${batch}\0${dest}`).digest('hex').slice(0, 32);
@@ -1322,7 +1324,13 @@ ${details}`, {
     async handle(command, args, caller, { external = false } = {}) {
       const rpcActor = caller && sessions.liveCaller(caller);
       if (v2.enabled() && (rpcActor || external)) v2.checkProtectedRefs();
-      if (command === 'rotation-policy') return v2.admin(args, rpcActor, external);
+      if (command === 'rotation-policy') {
+        const result = v2.admin(args, rpcActor, external);
+        if ((external || rpcActor?.role === 'super') && ['ruling', 'rule-change'].includes(args.action)) {
+          return { ...result, handoffReminder: superHandoffReminder() };
+        }
+        return result;
+      }
       const read = ['ls', 'status', 'state', 'board'].includes(command) ||
         command === 'audit-findings' && [args.id, args.category, args.evidence, args.regression].every(value => value === undefined) ||
         command === 'notifications' && ![args.take, args.complete, args.gateComplete, args.decision].some(value => value != null && value !== false);
@@ -1336,6 +1344,11 @@ ${details}`, {
         return extractor.handle(command, args, rpcActor?.addr);
       }
       if (command === 'spawn') return spawnSession(args, caller);
+      if (command === 'resume') return sessions.resumeSession(args.target, args, mail);
+      if (command === 'recover') {
+        const liveStatus = await this.handle('status', {}, caller, { external });
+        return recoverProject(project, { liveStatus, ccpBridge: sessionOptions?.ccpBridge });
+      }
       if (command === 'accounts-refresh') {
         const job = rpcActor?.role === 'worker' && sessions.jobs.get(rpcActor.addr);
         if (!external && rpcActor?.role !== 'super' && !(job?.hostGrant && grants.active(rpcActor, job.hostGrant.id))) {
@@ -1351,7 +1364,7 @@ ${details}`, {
         if (!requestOnly) {
           if (!external && rpcActor?.role !== 'super') throw new CommandError('forbidden', 'Only authenticated Super can grant host access');
           const grant = grants.grant(name, desired, rpcActor?.addr ?? 'external-super');
-          return { grant, warning: hostGrantWarning(grant) };
+          return { grant, warning: hostGrantWarning(grant), handoffReminder: superHandoffReminder() };
         }
         if (rpcActor?.role !== 'leader' || liveRole(name, 'leader')?.addr !== rpcActor.addr) {
           throw new CommandError('forbidden', 'Use the live authenticated Leader to request a host grant');
@@ -1625,7 +1638,9 @@ ${details}`, {
           notifications.add({ id: randomUUID(), project: name, at: now(), type: 'needs-decision', text: args.decision,
             ...(plain && { kind: 'decision' }), addr: actor?.addr, reason: args.auditEscalation });
         }
-        return { notifications: notifications.list(name, args.take === true, args.history === true) };
+        const listed = notifications.list(name, args.take === true, args.history === true);
+        const tookDecision = args.take === true && listed.some(event => event.type === 'needs-decision');
+        return { notifications: listed, ...(tookDecision && { handoffReminder: superHandoffReminder() }) };
       }
       if (command === 'status' || command === 'ls') {
         const rows = sessions.rows();
@@ -1758,7 +1773,7 @@ ${details}`, {
         }
         const closed = row.endedAt !== null ? row : row.role === 'worker' && retentionFor(row) ?
           await sessions.closeWorker(row, 'cancelled', now()) : await sessions.stop(row);
-        return { addr: row.addr, endedAt: closed.endedAt };
+        return { addr: row.addr, endedAt: closed.endedAt, ...(row.role === 'super' && { handoffReminder: superHandoffReminder() }) };
       }
       if (command !== 'send') throw new CommandError('invalid-arguments', 'Unknown loomd request');
       if (!validInput(args.text) || !validDispatchReason(args.reason) || !['queue', 'steer', 'interrupt'].includes(args.mode) ||
@@ -1864,7 +1879,9 @@ ${details}`, {
         const card = args.nextCard ? message.id : currentCard(successor, targetJob);
         v2.recordDispatch(actor, successor, message, args.text, card === targetJob.firstId ? successor.task : card);
       }
-      return { addr: row.addr, ...receiptFor(message) };
+      const superRuling = userWake && (durableUserMessage(args.text) ||
+        notifications.list(successor.project).some(event => event.type === 'needs-decision'));
+      return { addr: row.addr, ...receiptFor(message), ...(superRuling && { handoffReminder: superHandoffReminder() }) };
     },
   };
 }

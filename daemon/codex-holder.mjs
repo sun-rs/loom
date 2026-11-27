@@ -33,7 +33,8 @@ async function launch(project, row, job, dir, socket, capabilities, memory) {
   if (asset.digest !== holderRelease.digest) throw holderError('HOLDER_BUILD');
   const managed = managedEnvironment(project, row.addr);
   const isolated = workerEnvironment(row);
-  const env = { ...process.env, ...managed, ...isolated, ...workerProviderEnvironment(row), ...seniorToolEnvironment(project, row) };
+  const env = { ...process.env, ...managed, ...isolated, ...workerProviderEnvironment(row),
+    ...(job.accountDir && { CODEX_HOME: job.accountDir }), ...seniorToolEnvironment(project, row) };
   delete env.HC_TERMINAL_ID;
   if (capabilities) env.LOOM_CAPABILITY = capabilities.ensureSession(row.addr).token;
   const worker = row.role === 'worker';

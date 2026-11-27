@@ -57,8 +57,12 @@ export async function openOar(row, project, resume, beforeLaunch) {
   const isolated = host ? hostWorkerEnvironment(project, row) : workerEnvironment(row);
   const login = host ? undefined : workerNativeLogin(row);
   const guard = seniorToolEnvironment(project, row);
+  const accountEnv = row.accountDir ? (
+    row.cli === 'codex' ? { CODEX_HOME: row.accountDir } :
+    row.cli === 'agy' ? { ANTIGRAVITY_APP_DATA_DIR: row.accountDir } : {}
+  ) : {};
   const env = { HC_TERMINAL_ID: null, LOOM_SENIOR_TOOL_LOG: null, LOOM_SENIOR_TOOL_PROJECT: null,
-    ...managed, ...isolated, ...workerProviderEnvironment(row), ...login, ...guard,
+    ...managed, ...isolated, ...workerProviderEnvironment(row), ...accountEnv, ...login, ...guard,
     ...(executable && { [workerBinaryKeys[row.cli]]: executable }) };
   let launchArgs;
   let agyWorkspace;

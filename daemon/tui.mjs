@@ -1,6 +1,7 @@
 import { execFile } from 'node:child_process';
 import { readFileSync, realpathSync } from 'node:fs';
-import { join } from 'node:path';
+import { homedir } from 'node:os';
+import { join, resolve } from 'node:path';
 import { promisify } from 'node:util';
 import { projectMessages } from '../adapters/opencode/index.mjs';
 import { hc, hcAt } from '../inbox/tui.mjs';
@@ -16,10 +17,14 @@ import { seniorToolEnvironment } from './senior-tools.mjs';
 import { statuslinePath } from './account-collection.mjs';
 
 const exec = promisify(execFile);
-export const paneName = addr => `loom-${addr.replace(/^loom-/, '').replaceAll('-', '').slice(0, 22)}`;
+export const paneName = (addr, resumes) => {
+  const base = `loom-${addr.replace(/^loom-/, '').replaceAll('-', '').slice(0, 22)}`;
+  return resumes ? `${base.slice(0, 19)}-r${resumes}` : base;
+};
 
 export async function ownedPane(job, row) {
-  const name = job.herdr?.hcName ?? paneName(row.addr);
+  const resumeIndex = job.resumeGeneration ?? 0;
+  const name = job.herdr?.hcName ?? paneName(row.addr, resumeIndex);
   const call = job.herdr ? hcAt.bind(null, job.herdr.hcCommand) : hc;
   const terminal = await call('get', row.pane ?? name).catch(error => {
     if (error.kind !== 'not_found') throw error;
@@ -49,11 +54,20 @@ export async function openTui(job, row, project, recordTemporary, recordBinding,
   const command = worker ? nativeWorkerExecutable(row.cli) : row.cli === 'claude' ? nativeClaude() : undefined;
   const hookSink = eventPath(project, row.addr);
   const runner = !['opencode', 'claude'].includes(row.cli) && hookRunner(project, row.cli);
+  const defaultClaudeAccountDir = resolve(process.env.HOME || homedir(), '.claude');
+  const accountEnv = job.accountDir ? (
+    row.cli === 'codex' ? { CODEX_HOME: job.accountDir } :
+    row.cli === 'agy' ? { ANTIGRAVITY_APP_DATA_DIR: job.accountDir } :
+    row.cli === 'claude' && (process.env.CLAUDE_CONFIG_DIR || resolve(job.accountDir) !== defaultClaudeAccountDir)
+      ? { CLAUDE_CONFIG_DIR: job.accountDir } : {}
+  ) : {};
   const env = { ...managedEnvironment(project, row.addr),
     ...(runner && { LOOM_HOOK_RELEASE: releaseRoot }),
     ...seniorToolEnvironment(project, row),
+    ...accountEnv,
     ...(job.isolatedWorkerHome && { ...workerEnvironment(row), ...workerProviderEnvironment(row) }) };
-  const name = job.herdr?.hcName ?? paneName(row.addr);
+  const resumeIndex = job.resumeGeneration ?? 0;
+  const name = job.herdr?.hcName ?? paneName(row.addr, resumeIndex);
   const guardUnset = ['LOOM_CAPABILITY', 'LOOM_EXTERNAL_SUPER',
     ...(env.LOOM_SENIOR_TOOL_LOG ? [] : ['LOOM_SENIOR_TOOL_LOG', 'LOOM_SENIOR_TOOL_PROJECT'])];
   const accountStatusline = job.accountStatusline && {
@@ -66,12 +80,12 @@ export async function openTui(job, row, project, recordTemporary, recordBinding,
     ...row, memory, ...(accountStatusline && { accountStatusline, statusLine: statusline.statusLine }), command, fast: job.fast, hookSink,
     ...(worker && { recordExecutable: path => recordWorkerExecutable(project, row, path, 'launch') }), ...(runner && { hookRunner: runner }), name, env,
     ...(job.herdr && { hcCommand: job.herdr.hcCommand, placementLabels: job.herdr.labels }),
-    sessionId: job.plannedNativeId, recordTemporary, recordBinding, previous: job.tui, unset: guardUnset, capabilityPath,
+    sessionId: job.plannedNativeId, ...(job.resumeNativeId && { resume: job.resumeNativeId }), recordTemporary, recordBinding, previous: job.tui, unset: guardUnset, capabilityPath,
     allowNativeQuestions: allowNativeQuestions(project, row.role), toolGuard: Boolean(env.LOOM_SENIOR_TOOL_LOG),
     autoTrustWorkspace: job.autoTrustWorkspace, ...(controller && { controllerPath: controllerFile(project) }),
     stateDir: join(project, '.project', 'pty'),
     ...(row.cli === 'claude' && { env: { ...env, DISABLE_AUTOUPDATER: '1' },
-      authMode: job.authMode, resume: job.resumeNativeId, unset: [...guardUnset, 'CLAUDE_CODE_ENTRYPOINT', 'CLAUDECODE'] }),
+      authMode: job.authMode, unset: [...guardUnset, 'CLAUDE_CODE_ENTRYPOINT', 'CLAUDECODE'] }),
     ...(row.cli === 'codex' && { extraArgs: ['--disable', 'memories', ...codexEnvironmentArgs(env), ...codexFastArgs(job.fast)] }),
   });
   try {

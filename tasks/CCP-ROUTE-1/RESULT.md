@@ -210,4 +210,20 @@ LOOM_EXTERNAL_SUPER=1 loom spawn auditor \
 2. **历史实验归档脚本**：`tasks/CODEMODE-AB-1/launch.mjs` 已改为 CCP 入口，但同目录下已完成的历史基准脚本 `live.mjs` / `activation.mjs` 仍含旧版内联 hooks `--settings`（非生产路径，未动历史实验逻辑；若未来重跑该基准需同步改为读记录）。
 3. **无 PreToolUse 事前拦截的风险**：见第 6 节；若 Super 需要对 Claude 高级角色或 host worker 恢复事前工具阻断，需后续与 CCP 侧协商白名单方案（本任务严格未碰 CCP）。
 
+---
+
+## 9. 合并 `main`（`960a2363`，含 RESUME-1 与 GUARD-ARGV-1）冲突处理说明
+
+合并 `main` 时解决 4 处冲突并补齐回归断言，所有自动合并文件（含 `daemon/oar.mjs`、`daemon/socket-auth.mjs`、`daemon/supervisor.mjs`、`skills/loom/SKILL.md`）均已核查兼容：
+
+1. **`daemon/claude-ccp.mjs`（AA 冲突）**：以 CCP-ROUTE-1 实现为准（导出 `nativeClaudeVersionsPattern`、严格拒绝控制字符与指向 `versions/*` 的 `LOOM_CLAUDE_CCP_BIN`、安全捕获 `defaultCcpClaudeEntry` 异常），同时保持 `createClaudeCcpBridge()` 默认 `ready: false` / 抛出 `not-ready` 契约，完整满足 RESUME-1 全部测试（`daemon/global-registry.test.mjs`、`daemon/lifecycle-resume.test.mjs`、`daemon/super-up.test.mjs`）。
+2. **`daemon/sessions.mjs`（3 处冲突）**：
+   - 合并 `../inbox/message.mjs` 的 `deliveryId` 与 `messageIdPattern`/`wireText` 导入，去重 `validateCcpClaudeEntry`（已在下方与 `createClaudeCcpBridge`、`defaultCcpClaudeEntry` 一并导入）；
+   - `job` 构造同时保留 RESUME-1 的 `accountDir: resolveAccountDir(cli)` 与 CCP-ROUTE-1 的可选首条消息（`...(prompt !== undefined && { firstId, prompt })`）及 `...(resumeSession && { resumeNativeId: resumeSession })`；
+   - `activate` 首条消息入队条件合并为 `!job.resumingExplicit && job.prompt && job.firstId && !mail.messages.some(...)`，兼顾 `loom resume` 与无 prompt 的 `loom spawn --resume-session`。
+3. **`daemon/tui.mjs`（内容冲突）**：保留 Claude 不注册 `hookRunner`（`!['opencode', 'claude'].includes(row.cli)`）与 RESUME-1 的 `accountEnv` 传递；同时对 Claude 仅在已显式配置 `CLAUDE_CONFIG_DIR` 或 `job.accountDir` 非默认 `~/.claude` 时注入 `CLAUDE_CONFIG_DIR`，避免向默认 `~/.claude` 强设环境变量导致 macOS Keychain 命名空间切换，并去除重复的 `resume` 字段传递。
+4. **`lib/host-tool-guard.mjs`（内容冲突）**：完整保留两侧改动——采用 GUARD-ARGV-1 的 `shellExecutables(command)` 仅检查可执行位置 `argv[0]`（支持字符串与数组命令，避免把普通参数中的 CLI 名称或路径误判为执行），并在可执行位置上套用 CCP 规则：拦截 `nativeClaudeVersionsPattern`（禁止直接执行 `~/.local/share/claude/versions/*`），对 `claude` 调用 `resolveClaudeExecutable(candidate, { env })`，其余 CLI 保持 `resolveNativeExecutable`。同步在 `daemon/claude-ccp.test.mjs` 补充组合断言（参数位允许、字符串与数组执行位均拒）。
+
+**合并后验收**：`npm ci` 通过，`npm run lint` 通过（360 files），全量 `npm test` **1114/1114 通过，0 失败**。
+
 STATUS: DONE

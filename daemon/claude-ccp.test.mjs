@@ -117,13 +117,16 @@ test('Claude executable resolution requires CCP entry, forbids realpath/native f
   // Non-Claude native resolution still rejects CCP paths.
   assert.throws(() => resolveNativeExecutable(entry), { code: 'protected-executable' });
 
-  // Host tool guard requires CCP entry for Claude and refuses native version binary.
+  // Host tool guard requires CCP entry for Claude in executable position (string or argv array),
+  // refuses native version binary when executed, and allows non-executable arguments (GUARD-ARGV-1).
   const guardEnv = {
     HOME: home, LOOM_HOST_GUARD: '1', LOOM_HOST_EXPIRES: String(Date.now() + 60_000),
     LOOM_HOST_PROJECT: home, LOOM_HOST_ADDR: `oar-${randomUUID()}`,
   };
   assert.equal(hostToolDenial('Bash', { command: `${entry} --version` }, guardEnv), undefined);
+  assert.equal(hostToolDenial('Bash', { command: `printf %s '${native}'` }, guardEnv), undefined);
   assert.match(hostToolDenial('Bash', { command: `${native} --version` }, guardEnv), /CCP/i);
+  assert.match(hostToolDenial('Bash', { command: [native, '--version'] }, guardEnv), /CCP/i);
 });
 
 test('loom spawn auditor --resume-session resumes via CCP with --resume, no hooks, and rejects non-CCP', async t => {

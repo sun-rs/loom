@@ -18,6 +18,11 @@ description: 在 Loom 中启动、指挥、复核或接手由 Super、Auditor、
 - **Auditor** 负责维护 `.project/charter.md` 和 `.project/rulings.md`。章程写目标、非目标、红线和验收，账本按编号逐字记录用户裁决。新裁决另起编号并标明取代关系。参照 [章程模板](../../examples/charter.md) 和 [裁决模板](../../examples/rulings.md)。
 - Leader、Auditor 和 Worker 的会话无人值守。禁止交互式询问用户，原生提问工具仅向与用户直接对话的 Super 开放。需要裁决时，写文件记录事实、选项和建议，运行 `"$LOOM_BIN" notifications --needs-decision "$SUMMARY" --kind decision`，并在摘要带上文件路径。处理可独立完成的工作，等待裁决时以 `BLOCKED <决定点>` 结束本轮。答复以普通投递返回。托管 Super 由收件箱按批唤醒，外部 Super 收本机通知。`loom notifications --project "$PROJECT"` 预览，`--take` 领取，`--history` 回看。
 - Super 巡检通知时也处理 `blocked-escalation`（工作阻塞升级）和 `delivery-uncertain`（投递缺少原生确认）。
+- **中断/重启后的恢复步骤**：
+  1. 用户运行 `loom up` 拉起 Super（上次异常且有会话 ID 时在 `loom up --resume` 续接或 `loom up --fresh` 新开并注入实况间选择；正常结束一律新开）。
+  2. Super 先读 `~/.loom/super/live.md` 与 `~/.loom/super/handoff.md`，运行 `loom recover --all-projects`（只读）盘点各项目应在而不在的会话。
+  3. 逐项目按需执行 `loom project up DIR`，再按 Auditor → Leader → 未收口 worker 错峰执行 `loom resume <addr>`（不支持原生续接时按提示用交接单新开；Claude 经 CCP 接口）。
+  4. 每次裁决后与会话结束前更新 `~/.loom/super/handoff.md`（≤60 行：在途项目、待决事项、最近裁决）。
 - 项目记忆 v0 保存在 `.project/memory/items/<id>.md`，该目录是 [v1 设计](../../docs/MEMORY.md)的导入来源。每条 ≤200 tokens。用两行 `---` 包裹单行 JSON，必填 `id/scope/owner/source/verified`（`scope` 为 `project`），可选 `expires/supersededBy/keywords`，随后写 `# 标题`、空行和正文。Leader 写入已证实的坑、环境条件和入口，Auditor 裁决争议。首轮注入重建 `.project/memory/INDEX.md`，可用 `"$LOOM_BIN" memory search <query> --project "$PROJECT"` 查询。
   - `id` 与 `owner` 仅使用小写字母、数字、`-` 和 `_`。`verified` 和 `expires` 使用 `YYYY-MM-DD`，`source` 使用项目内相对路径或 Git SHA，`keywords` 为单个字符串（非数组）。
   - 标题和正文避免计数斜杠写法（如 `37/37`）及项目外路径。写完运行 `"$LOOM_BIN" memory search <query> --project "$PROJECT"`，确认结果包含该条目。
