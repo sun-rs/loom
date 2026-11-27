@@ -2,6 +2,7 @@ import { appendFileSync, existsSync, mkdirSync, readFileSync, unlinkSync, writeF
 import { createInterface } from 'node:readline';
 import { randomUUID } from 'node:crypto';
 import { basename, dirname, join } from 'node:path';
+import { spawnSync } from '../../../fixtures/test-process.mjs';
 
 const cli = basename(process.argv[1]).startsWith('agy') ? 'agy' : 'codex';
 const argv = process.argv.slice(2);
@@ -126,6 +127,19 @@ function acp({ method, id, params }) {
     if (existsSync('agy-fail-start.json')) {
       console.error('fixture rejected ACP startup');
       process.exit(24);
+    }
+    if (existsSync('agy-host-probes.json')) {
+      const launcher = join(dirname(process.env.TMPDIR), 'host-native');
+      const wrapped = existsSync(launcher);
+      const probe = spawnSync('/bin/sh', ['-c', '/usr/bin/sandbox-exec -p "(version 1)(allow default)" /usr/bin/true'],
+        { stdio: 'ignore' });
+      log('agy-host-launches.jsonl', {
+        wrapped,
+        sandboxExecInWrapper: wrapped && readFileSync(launcher, 'utf8').includes('/usr/bin/sandbox-exec'),
+        sandboxExecStatus: probe.status,
+        guard: process.env.LOOM_HOST_GUARD === '1',
+        unconfinedEnv: process.env.LOOM_HOST_UNCONFINED === '1',
+      });
     }
     open(params.sessionId);
     return reply(id, { sessionId: session, configOptions });

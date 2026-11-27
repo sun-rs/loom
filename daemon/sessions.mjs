@@ -690,7 +690,7 @@ export function ownedSessions(project, index, report, {
       ...(cli === 'opencode' && mode === 'tui' && { plannedNativeId: `ses_${randomUUID().replaceAll('-', '')}` }) };
     if (workerTier === 'host') {
       job.pendingHostGrant = hostGrants.prepare(row, policyAllowsHost(row));
-      job.prompt += '\n\nTrusted host grant for this card. Use absolute native CLI paths. Keep credentials, global config, CCP, Solars, rah_os, loom-next and unrelated processes or panes outside the task. Run only the authorized work and end the card with a conclusion.';
+      job.prompt += `\n\nTrusted host grant${job.pendingHostGrant.unconfined ? ' (unconfined, no outer Seatbelt)' : ''} for this card. Use absolute native CLI paths. Keep credentials, global config, CCP, Solars, rah_os, loom-next and unrelated processes or panes outside the task. Run only the authorized work and end the card with a conclusion.`;
     }
     save(job);
     jobs.set(addr, job);

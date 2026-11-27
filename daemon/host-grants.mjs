@@ -8,6 +8,8 @@ import { readText, writeState } from './io.mjs';
 
 const defaultTtl = 30 * 60_000;
 export const hostTrustWarning = 'Trusted host tier. Codex runs without a kernel write boundary. Best-effort hooks are not fail-closed for Codex tool paths.';
+export const hostUnconfinedWarning = 'Trusted host tier (unconfined). Loom outer Seatbelt write boundary is disabled for all CLIs. Best-effort hooks are not fail-closed.';
+export const hostGrantWarning = grant => grant?.unconfined ? hostUnconfinedWarning : hostTrustWarning;
 const restrictedPath = /(?:^|[/\\])(?:ccp|solars|rah_os|\.?loom-next|\.ssh|\.aws|\.codex|\.claude|\.gemini)(?:[/\\]|$)|claude-protected/i;
 
 export function hostWritePaths(project, paths) {
@@ -38,7 +40,7 @@ export function hostGrants(project, { now = Date.now, notify }) {
   const usable = (grant, row) => grant && matches(grant, row) && !grant.closedAt && grant.expiresAt > now() &&
     !Object.hasOwn(grant.closedTasks, row.task);
 
-  function issue(state, name, { target, wave, reason, ttlMs, uses, write }, issuedBy) {
+  function issue(state, name, { target, wave, reason, ttlMs, uses, write, unconfined }, issuedBy) {
     const issuedAt = now();
     const expiresAt = issuedAt + (ttlMs ?? defaultTtl);
     if (!Number.isSafeInteger(expiresAt) || !Number.isFinite(new Date(expiresAt).getTime())) throw new CommandError('invalid-arguments', 'Host grant expiry is outside the supported range');
@@ -48,7 +50,7 @@ export function hostGrants(project, { now = Date.now, notify }) {
       previous.closeReason = 'replaced';
     }
     const grant = { id: randomUUID(), project: name, target, wave, reason, tier: 'host', issuedBy, issuedAt, expiresAt,
-      uses, write: hostWritePaths(project, write), claims: [], closedTasks: {} };
+      uses, write: hostWritePaths(project, write), ...(unconfined && { unconfined: true }), claims: [], closedTasks: {} };
     state.grants.push(grant);
     save(state);
     return grant;
@@ -56,20 +58,23 @@ export function hostGrants(project, { now = Date.now, notify }) {
 
   function publish(grant) {
     const scope = `${grant.wave ? 'wave' : 'task'} ${grant.target}`;
+    const label = grant.unconfined ? 'Host (unconfined)' : 'Host';
+    const warning = hostGrantWarning(grant);
     const event = (suffix, type, at, text, fields = {}) => ({ id: `${grant.id}:${suffix}`, type, grantId: grant.id,
-      project: grant.project, at, text, ...fields });
+      project: grant.project, at, text, ...(grant.unconfined && { unconfined: true }), ...fields });
     notify(event('granted', 'host-tier-grant', grant.issuedAt,
-      `Host grant for ${scope} · ${grant.uses} use(s) · expires ${new Date(grant.expiresAt).toISOString()} · ${grant.reason}. ${hostTrustWarning}`,
+      `${label} grant for ${scope} · ${grant.uses} use(s) · expires ${new Date(grant.expiresAt).toISOString()} · ${grant.reason}. ${warning}`,
       { grant: { ...publicGrant(grant), remaining: grant.uses } }), ...grant.claims.map(({ addr, at, task }, i) => event(addr, 'host-tier-used', at,
-      `Host use for ${task} · ${grant.uses - i - 1} of ${grant.uses} remaining`, { addr })),
+      `${label} use for ${task} · ${grant.uses - i - 1} of ${grant.uses} remaining`, { addr })),
     ...(grant.wave ? Object.entries(grant.closedTasks) : []).map(([task, at]) => event(`closed-${task}`, 'host-tier-expired', at,
-      `Host access expired for task ${task} · card ended`)),
-    ...(grant.closedAt ? [event('expired', 'host-tier-expired', grant.closedAt, `Host grant for ${scope} expired · ${grant.closeReason}`)] : []));
+      `${label} access expired for task ${task} · card ended`)),
+    ...(grant.closedAt ? [event('expired', 'host-tier-expired', grant.closedAt, `${label} grant for ${scope} expired · ${grant.closeReason}`)] : []));
   }
 
   function unavailable(grant, row, code, reason) {
+    const label = grant.unconfined ? 'Host (unconfined)' : 'Host';
     notify({ id: `${grant.id}:refused:${code}:${row.task}`, type: 'host-tier-refused', project: row.project,
-      grantId: grant.id, at: now(), text: `Host launch refused for ${row.task} · ${reason}` });
+      grantId: grant.id, ...(grant.unconfined && { unconfined: true }), at: now(), text: `${label} launch refused for ${row.task} · ${reason}` });
     throw new CommandError(code, reason);
   }
 
@@ -86,7 +91,7 @@ export function hostGrants(project, { now = Date.now, notify }) {
     return grant;
   }
 
-  const binding = ({ id, expiresAt, write }) => ({ id, expiresAt, write });
+  const binding = ({ id, expiresAt, write, unconfined }) => ({ id, expiresAt, write, ...(unconfined && { unconfined: true }) });
   return {
     grant(name, spec, issuedBy) {
       const state = read();

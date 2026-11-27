@@ -105,6 +105,50 @@ try {
   }
 });
 
+test('Claude headless host uses Seatbelt by default and bypasses sandbox-exec under unconfined grant',
+  { skip: process.platform !== 'darwin' || nestedSeatbeltLimited }, async t => {
+  const project = await mkdtemp(join(await realpath(tmpdir()), 'loom-claude-unconfined-'));
+  t.after(() => rm(project, { recursive: true, force: true }));
+  const claude = join(project, 'claude');
+  const seen = join(project, 'seen.json');
+  await writeFile(claude, `#!${process.execPath}
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { spawnSync } from 'node:child_process';
+if (process.argv.includes('--version')) { console.log('2.1.331 (Claude Code)'); process.exit(0); }
+const launcher = join(dirname(process.env.TMPDIR), 'host-native');
+const wrapped = existsSync(launcher);
+const probe = spawnSync('/usr/bin/sandbox-exec', ['-p', '(version 1)(allow default)', '/usr/bin/true'], { stdio: 'ignore' });
+writeFileSync(${JSON.stringify(seen)}, JSON.stringify({
+  wrapped,
+  sandboxExecInWrapper: wrapped && readFileSync(launcher, 'utf8').includes('/usr/bin/sandbox-exec'),
+  sandboxExecStatus: probe.status,
+  unconfinedEnv: process.env.LOOM_HOST_UNCONFINED === '1',
+  guard: process.env.LOOM_HOST_GUARD === '1',
+}));
+process.exit(23);
+`, { mode: 0o700 });
+  const script = `import { openOar } from ${JSON.stringify(new URL('./oar.mjs', import.meta.url).href)};
+const [cwd, addr, mode] = process.argv.slice(1);
+const hostGrant = { expiresAt: Date.now() + 30000, write: [], ...(mode === 'unconfined' && { unconfined: true }) };
+try {
+  const session = await openOar({ addr, cli: 'claude', role: 'worker', runtimeId: 'claude', cwd, hostGrant }, cwd);
+  await session.dispose();
+} catch (error) { if (!/exited|closed/i.test(error.message)) throw error; }`;
+  for (const [mode, addr, expected] of [
+    ['default', 'oar-11111111-0000-4000-8000-000000000011',
+      { wrapped: true, sandboxExecInWrapper: true, sandboxExecStatus: 71, unconfinedEnv: false, guard: true }],
+    ['unconfined', 'oar-22222222-0000-4000-8000-000000000012',
+      { wrapped: false, sandboxExecInWrapper: false, sandboxExecStatus: 0, unconfinedEnv: true, guard: true }],
+  ]) {
+    await exec(process.execPath, ['--input-type=module', '-e', script, project, addr, mode], {
+      cwd: project, timeout: 10_000,
+      env: { HOME: project, TMPDIR: project, PATH: '/usr/bin:/bin', LOOM_CLAUDE_BIN: claude, LOOM_WORKER_TMP: project },
+    });
+    assert.deepEqual(JSON.parse(await readFile(seen, 'utf8')), expected, mode);
+  }
+});
+
 test('a stuck OAR dispose is bounded and preserves late settlement', async () => {
   const pending = Promise.withResolvers();
   await assert.rejects(disposeSession({ dispose: () => pending.promise }, 15), { code: 'close-timeout' });

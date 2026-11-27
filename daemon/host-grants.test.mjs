@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { mkdtempSync, spawnSync } from '../fixtures/test-process.mjs';
 import { randomUUID } from 'node:crypto';
-import { mkdirSync, realpathSync, rmSync, symlinkSync } from 'node:fs';
+import { mkdirSync, readFileSync, realpathSync, rmSync, symlinkSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
@@ -74,4 +74,53 @@ test('macOS Claude host boundary allows named paths and blocks ungranted writes'
   assert.equal(spawnSync(launcher, [join(project, 'worktree')]).status, 0);
   assert.notEqual(spawnSync(launcher, [join(outside, 'ungranted')]).status, 0);
   assert.notEqual(spawnSync(launcher, [join(project, '.project', 'ungranted')]).status, 0);
+});
+
+test('unconfined host grants bypass Loom Seatbelt for agy and claude while default grants keep it',
+  { skip: process.platform !== 'darwin' || nestedSeatbeltLimited }, t => {
+  const project = fixture(t);
+  const temporary = fixture(t);
+  for (const cli of ['agy', 'claude']) {
+    const confinedTmp = join(temporary, `${cli}-confined`, 't');
+    const unconfinedTmp = join(temporary, `${cli}-unconfined`, 't');
+    mkdirSync(confinedTmp, { recursive: true });
+    mkdirSync(unconfinedTmp, { recursive: true });
+    const confinedRow = { cli, addr: `oar-${randomUUID()}`, cwd: project, hostGrant: { write: [] } };
+    const unconfinedRow = { cli, addr: `oar-${randomUUID()}`, cwd: project, hostGrant: { write: [], unconfined: true } };
+    const confinedLauncher = hostWriteBoundary(project, confinedRow, { TMPDIR: confinedTmp }, process.execPath);
+    const unconfinedLauncher = hostWriteBoundary(project, unconfinedRow, { TMPDIR: unconfinedTmp }, process.execPath);
+    assert.notEqual(confinedLauncher, process.execPath);
+    assert.match(readFileSync(confinedLauncher, 'utf8'), /exec \/usr\/bin\/sandbox-exec -p /);
+    assert.equal(unconfinedLauncher, process.execPath);
+  }
+  const codexTmp = join(temporary, 'codex-default', 't');
+  mkdirSync(codexTmp, { recursive: true });
+  assert.equal(hostWriteBoundary(project, { cli: 'codex', addr: `oar-${randomUUID()}`, cwd: project, hostGrant: { write: [] } },
+    { TMPDIR: codexTmp }, process.execPath), process.execPath);
+});
+
+test('invariant [persistence] unconfined host grant persists unconfined flag and audit notices', t => {
+  const project = fixture(t);
+  let time = Date.now();
+  const events = new Map();
+  const open = () => hostGrants(project, { now: () => time, notify: (...incoming) => {
+    for (const event of incoming) events.set(event.id, event);
+  } });
+  const row = { project, task: 'CELL-SRT', wave: 'W', addr: 'first' };
+  const second = { ...row, addr: 'second' };
+  const grant = open().grant(project, { target: row.task, reason: 'Nested srt test', ttlMs: 2000, uses: 1, wave: false, write: [], unconfined: true }, 'super');
+  assert.equal(grant.unconfined, true);
+  assert.equal(open().prepare(row, false).unconfined, true);
+  open().reserve(row, false, grant.id);
+  assert.equal(open().claim(row, false, grant.id).unconfined, true);
+  assert.throws(() => open().reserve(second, false, grant.id), { code: 'host-grant-exhausted' });
+  time += 2001;
+  open().sweep();
+  const notices = [...events.values()];
+  for (const type of ['host-tier-grant', 'host-tier-used', 'host-tier-refused', 'host-tier-expired']) {
+    const notice = notices.find(event => event.type === type);
+    assert.ok(notice, `missing ${type}`);
+    assert.equal(notice.unconfined, true);
+    assert.match(notice.text, /unconfined/i);
+  }
 });

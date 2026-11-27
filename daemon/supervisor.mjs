@@ -38,8 +38,8 @@ import { rotationPolicy } from './rotation-policy.mjs';
 import { selfRotation } from './self-rotation.mjs';
 import { approvedWaves, handoffReason, idleForRelease, isReleased, releaseConditions, retainedState, retirementReason, retentionStatus,
   reuseStatus, workerCardId, workerContext, workerDetails, workerIdleSince, workerMetrics, workerStalledSince } from './worker-retention.mjs';
-import { hostGrantSpec, storedWorkerTier } from '../lib/worker-tiers.mjs';
-import { hostGrants, hostTrustWarning, hostWritePaths } from './host-grants.mjs';
+import { hostGrantSpec, storedHostUnconfined, storedWorkerTier } from '../lib/worker-tiers.mjs';
+import { hostGrantWarning, hostGrants, hostWritePaths } from './host-grants.mjs';
 
 function batchDeliveryId(batch, dest) {
   const bytes = createHash('sha256').update(`${batch}\0${dest}`).digest('hex').slice(0, 32);
@@ -1023,6 +1023,7 @@ ${details}`, {
       ...(session.role === 'worker' && { workerTier: storedWorkerTier(job) }),
       ...(job.integration && { workerProfile: 'integration' }),
       ...(job.hostGrant && { hostGrant: job.hostGrant }),
+      ...(storedHostUnconfined(job) && { unconfined: true }),
       ...(job.deliver && { deliver: job.deliver, ...(job.barrier && { barrier: job.barrier }) }),
       ...(handoff && { handoff }), ...(job.handoverFrom && { handoverFrom: job.handoverFrom }),
       ...(retired && { retired: retired.addr }), ...(retirementIssue && { retirementIssue }) };
@@ -1265,7 +1266,7 @@ ${details}`, {
         if (!requestOnly) {
           if (!external && rpcActor?.role !== 'super') throw new CommandError('forbidden', 'Only authenticated Super can grant host access');
           const grant = grants.grant(name, desired, rpcActor?.addr ?? 'external-super');
-          return { grant, warning: hostTrustWarning };
+          return { grant, warning: hostGrantWarning(grant) };
         }
         if (rpcActor?.role !== 'leader' || liveRole(name, 'leader')?.addr !== rpcActor.addr) {
           throw new CommandError('forbidden', 'Use the live authenticated Leader to request a host grant');
@@ -1274,9 +1275,9 @@ ${details}`, {
         const id = randomUUID();
         notifications.add({ id, type: 'needs-decision', kind: 'worker-tier-request', project: name, at: now(),
           addr: rpcActor.addr, workerTierRequest: desired, requestOriginVerified: true,
-          text: `请求 host 权限 · ${spec.wave ? 'wave' : 'task'} ${spec.target} · ${spec.reason} · ${spec.uses} 次` +
+          text: `请求 host${spec.unconfined ? ' (unconfined)' : ''} 权限 · ${spec.wave ? 'wave' : 'task'} ${spec.target} · ${spec.reason} · ${spec.uses} 次` +
             (spec.ttlMs ? ` · TTL ${spec.ttlMs / 1000}s` : '') +
-            (spec.write.length ? ` · 写入路径 ${desired.write.join(', ')}` : '') + ` · ${hostTrustWarning}` });
+            (spec.write.length ? ` · 写入路径 ${desired.write.join(', ')}` : '') + ` · ${hostGrantWarning(spec)}` });
         return { requested: desired, notificationId: id };
       }
       if (command === 'worker-handoff' && args.target !== undefined) return seniorWorkerHandoff(args, caller, external);
@@ -1329,7 +1330,8 @@ ${details}`, {
           awaitingHandover: Boolean(sessions.jobs.get(row.addr)?.handoverAck && !sessions.jobs.get(row.addr)?.handoverBound),
         }));
         const workers = workerBoard(rows, mail.messages, sessions.jobs, observations, sessionFields).map(entry => {
-          const worker = { ...entry, workerTier: storedWorkerTier(sessions.jobs.get(entry.addr)) };
+          const job = sessions.jobs.get(entry.addr);
+          const worker = { ...entry, workerTier: storedWorkerTier(job), ...(storedHostUnconfined(job) && { unconfined: true }) };
           const details = workerStatus(sessions.rowFor(worker.addr));
           return details ? { ...worker, ...details, releasedAt: details.retention.releasedAt ?? worker.releasedAt } : worker;
         });
@@ -1549,8 +1551,9 @@ ${details}`, {
           const pathWarnings = sessions.pathWarnings(row);
           const runtimeState = userPrompt?.kind ?? liveness?.status ?? reportedState(snapshot, incident);
           const worker = workerStatus(row, snapshot);
+          const job = sessions.jobs.get(row.addr);
           return { addr: row.addr, state: runtimeState,
-            ...(row.role === 'worker' && { workerTier: storedWorkerTier(sessions.jobs.get(row.addr)) }),
+            ...(row.role === 'worker' && { workerTier: storedWorkerTier(job), ...(storedHostUnconfined(job) && { unconfined: true }) }),
             lastProgressAt: observed?.lastProgressAt ?? row.startedAt, ...(liveness && { liveness }),
             ...(worker && { ...worker, runtimeState }),
             ...((senior(row) || row.role === 'super') && { compactions: observations.get(row.addr)?.compactions ?? 0,
@@ -1560,7 +1563,10 @@ ${details}`, {
         }));
         const closedWorkers = rows.filter(row => row.endedAt != null).flatMap(row => {
           const status = workerStatus(row);
-          return status ? [{ addr: row.addr, ...status }] : [];
+          const job = sessions.jobs.get(row.addr);
+          return status ? [{ addr: row.addr,
+            ...(row.role === 'worker' && { workerTier: storedWorkerTier(job), ...(storedHostUnconfined(job) && { unconfined: true }) }),
+            ...status }] : [];
         });
         if (command === 'status') return { sessions: [...live, ...closedWorkers], workerMetrics: metrics(rows),
           ...(v2.enabled() && { rotationPolicy: [...new Set(rows.filter(row => row.endedAt === null).map(row => row.project))]
@@ -1633,13 +1639,15 @@ ${details}`, {
       }
       if (command === 'state') {
         const incident = health.get(row.addr);
-        const tui = sessions.jobs.get(row.addr)?.tui;
+        const job = sessions.jobs.get(row.addr);
+        const tui = job?.tui;
         const { snapshot, userPrompt } = row.endedAt === null ? await inspectSession(row) : {};
         const observed = progress.get(row.addr);
-        const liveness = row.endedAt !== null ? sessions.jobs.get(row.addr)?.exit : isReleased(sessions.jobs.get(row.addr)) ? undefined : observed?.health;
+        const liveness = row.endedAt !== null ? job?.exit : isReleased(job) ? undefined : observed?.health;
         const runtimeState = userPrompt?.kind ?? liveness?.status ?? reportedState(snapshot, incident);
         const worker = workerStatus(row, snapshot);
         return { addr: row.addr, state: row.endedAt !== null ? 'exited' : runtimeState,
+          ...(row.role === 'worker' && { workerTier: storedWorkerTier(job), ...(storedHostUnconfined(job) && { unconfined: true }) }),
           ...(worker && { ...worker, runtimeState }),
           ...((senior(row) || row.role === 'super') && { compactions: observations.get(row.addr)?.compactions ?? 0,
             ...(observations.get(row.addr)?.rotationDue && { rotationDue: true }) }),

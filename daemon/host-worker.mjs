@@ -13,12 +13,15 @@ export function hostWorkerEnvironment(project, row) {
   return { ...provider, HOME: homedir(), TMPDIR: tmp, TMP: tmp, TEMP: tmp,
     TMPPREFIX: join(tmp, 'zsh'), GIT_OPTIONAL_LOCKS: '0',
     LOOM_HOST_GUARD: '1', LOOM_HOST_PROJECT: project, LOOM_HOST_ADDR: row.addr,
-    LOOM_HOST_EXPIRES: String(row.hostGrant.expiresAt), ...(row.cli === 'codex' && { CODEX_SQLITE_HOME: provider.CODEX_HOME, CODEX_INTERNAL_APP_SERVER_REMOTE_CONTROL_DISABLED: '1' }) };
+    LOOM_HOST_EXPIRES: String(row.hostGrant.expiresAt),
+    ...(row.hostGrant.unconfined && { LOOM_HOST_UNCONFINED: '1' }),
+    ...(row.cli === 'codex' && { CODEX_SQLITE_HOME: provider.CODEX_HOME, CODEX_INTERNAL_APP_SERVER_REMOTE_CONTROL_DISABLED: '1' }) };
 }
 
 export function hostWriteBoundary(project, row, env, executable) {
   // Codex host workers need to allocate PTYs and create their own Seatbelt sandboxes.
-  if (row.cli === 'codex' || process.platform !== 'darwin' || !lstatSync('/usr/bin/sandbox-exec', { throwIfNoEntry: false })) return executable;
+  // Explicit --unconfined host grants also bypass Loom's outer Seatbelt for any CLI.
+  if (row.cli === 'codex' || row.hostGrant?.unconfined === true || process.platform !== 'darwin' || !lstatSync('/usr/bin/sandbox-exec', { throwIfNoEntry: false })) return executable;
   const logs = [workerExecutableLog(project, row.addr)];
   for (const log of logs) prepareJournal(log);
   const claude = env.CLAUDE_CONFIG_DIR;
