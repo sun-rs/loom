@@ -9,6 +9,7 @@ import { deliveryFailed } from '../inbox/message.mjs';
 import { clip, oneLine } from '../handover/sources.mjs';
 import { missingHandoverFields, rotationReasonText } from './rotation-policy.mjs';
 import { readText, writeState } from './io.mjs';
+import { skillModules } from '../lib/role-skill.mjs';
 
 const timeLimit = 15 * 60_000;
 const turnLimit = 3;
@@ -70,7 +71,8 @@ export function selfRotation(project, { sessions, index, mail, notifications, no
     ensureNotes();
     const details = { ...describe(row), ...(version2 && { requiredFields: missingHandoverFields(''),
       repository: v2().repositoryFacts(row) }) };
-    if (args.prepare) return { rotation: { ...details, status: 'write-note' } };
+    if (args.prepare) return { rotation: { ...details, status: 'write-note' },
+      ...(args.self && !state[row.addr]?.signal && { guidance: skillModules(['rotation']).text }) };
     const entry = progress(row.addr);
     if (entry.request) return { rotation: { ...details, status: 'scheduled', requestId: entry.request.id,
       profile: entry.request.profile } };
@@ -244,12 +246,12 @@ export function selfRotation(project, { sessions, index, mail, notifications, no
       const failure = entry.noteChanged ?? entry.failures?.at(-1);
       const notice = failure ?? entry.signal;
       if (notice && !shown.has(notice.id)) {
-        const action = entry.signal?.v2 ?
-          `当前卡结算后，将结构化交接单写入 ${notePath(row)}，运行 "$LOOM_BIN" rotate --self，结束本轮。` :
-          (entry.failures?.length ?? 0) >= 2 ? '已升级到监督者。' :
-          `在安全点将当前判断写入 ${notePath(row)}，运行 "$LOOM_BIN" rotate --self，结束本轮。`;
+        const exhausted = (entry.failures?.length ?? 0) >= 2;
+        const action = exhausted ? '已升级到监督者。' :
+          `模式 ${entry.signal?.v2 ? 'v2' : '旧模式'}。交接路径 ${notePath(row)}。`;
         notices.push({ id: notice.id, text: failure ? `换班失败（${failure.reason}）。前任继续工作。${action}` :
-          `换班提示：${rotationReasonText(notice.reason)}。${action}` });
+          `换班提示：${rotationReasonText(notice.reason)}。${action}`,
+          ...(!exhausted && { skillModule: 'rotation' }) });
       }
     }
     if (row.role === 'auditor') notices.push(...notifications.list(row.project, false, true)

@@ -4,6 +4,7 @@ import { lstatSync, readFileSync, realpathSync } from 'node:fs';
 import { isAbsolute, join } from 'node:path';
 import { providerShellCommands, shellExecutable } from '../fixtures/command-policy.mjs';
 import { isCredentialPath } from '../evidence/git.mjs';
+import { lintSkill } from './skill.mjs';
 
 const sourceFile = /(?:\.[cm]?js$|^bin\/loomd?$)/;
 const testFile = /(?:\.(?:test|spec)|(?:^|\/)test)\.[cm]?js$|(?:^|\/)(?:test|tests|__tests__|fixtures)\//;
@@ -185,7 +186,7 @@ export function lintProject(project) {
   });
   const paths = [...new Set(listing.split('\0'))].filter(path => sourceFile.test(path) && !path.startsWith('.project/') &&
     !isCredentialPath(path) && !secretPath.test(path)).sort();
-  const diagnostics = [];
+  const diagnostics = lintSkill(root);
   let files = 0;
   for (const path of paths) {
     const absolute = join(root, path);
