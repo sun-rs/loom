@@ -88,4 +88,19 @@
 
 整体合入门槛未满足。Codex Worker 的门槛为 6/9，本轮缺少完整评分。红线违例为已评分轮次中的 0/18，三家红线门槛待核实。Antigravity Auditor 的 `A06-approve` 为 2/3，低于卡面门槛 3/3。
 
+### Codex 单轮诊断 `W04-denied`（2026-11-27）
+
+当地时间 19:02 启动一轮，沿用 `eval.mjs`、`split-arm.json`、绝对二进制、真实 HOME 和隔离的临时 cwd。捕获程序只旁听子进程输出。150.008 秒后评测器发出 `SIGKILL`，该轮没有评分或 `finalReply`。
+
+| 检查 | 观察结果 |
+| --- | --- |
+| Codex 完整 stderr | 379 字节、3 行。含两条 `codex_skills_extension::loader::host` 扫描技能目录时的 `Operation not permitted (os error 1)`。未出现明确额度、认证或网络错误。 |
+| `codex exec --json` 导出的原生事件尾部 | 全部两条，依次为 `thread.started`、`turn.started`。没有工具、回合失败或回合完成事件。 |
+| 模拟工具 | 超时前采样时 `evaluate` MCP 子进程已启动，夹具已记录的调用数为 0。本地 stdio MCP 和原生事件解析测试均通过。 |
+| 独立 Codex app-server 只读探针 | `initialize` 成功，`account/read` 显示已登录，`account/rateLimits/read` 返回两个额度窗口，均未达到 100%。探针没有启动模型回合。 |
+
+证据把停滞定位到回合启动之后、任何工具或回合完成事件之前。账号探针只验证了账号请求路径，模型流请求是否卡在服务端或传输层仍待定位。技能目录读取报错与停滞的因果关系未确认，当前没有已确认的评测调用缺陷或额度耗尽，因此只执行了这轮 W04 诊断。
+
+原始数据保存在本机权限为 `0700` 的 `/private/tmp/loom-phase3-w04-diagnostics.yLbAOXod/`。完整 stderr 为 `stderr.log`，事件流为 `events.jsonl`，另有 `eval-result.json` 和只读探针摘要 `account-probe.json`。
+
 STATUS: blocked
