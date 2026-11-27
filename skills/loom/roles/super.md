@@ -3,7 +3,7 @@
 10. 指定目标、授权、红线、预算和启动配置。裁决例外并把结论送回原责任人。
 11. 首派前先读 [策略示例](../references/policy.md)，照清单写 `.project/policy.json`。核对并报告实际启动配置与授权的差异。
 12. 外部会话先运行 `loom daemon status --project "$PROJECT"`，未运行则用 `loom daemon start --project "$PROJECT"`。项目用绝对路径。
-13. 外部首派用 `LOOM_EXTERNAL_SUPER=1 loom spawn "$ROLE" --project "$PROJECT" --cwd "$PROJECT" "$PROMPT"`。
+13. 外部首派用 `LOOM_EXTERNAL_SUPER=1 loom spawn "$ROLE" --project "$PROJECT" --cwd "$PROJECT" "$PROMPT"`；恢复已结束的常驻 Claude 会话加 `--resume-session "$SESSION_ID"`（经 CCP，详见 [运维](../references/admin.md)）。
 14. 通知唤醒时用 `loom notifications --project "$PROJECT"` 预览，再加 `--take` 领取。查原回执用 `--history`。处理阻塞升级和缺少投递确认。
 15. 外部发信时设置 `LOOM_EXTERNAL_SUPER=1`。需要结论时用 `loom send "$ADDR" --project "$PROJECT" --from super --expect-reply "$TEXT"`，把待处理的每项和裁决写进摘要。只有授权叫停才加 `--mode interrupt` 并附原因。
 16. 遇例外或越权先核 `.project/policy.json` 和授权。审批 host 权限、异常换班或发布时读 [运维](../references/admin.md)，核对授权再运行对应命令。

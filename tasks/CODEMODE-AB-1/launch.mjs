@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 
 const skill = readFileSync(new URL('./script-first.md', import.meta.url), 'utf8');
-const claude = '/Users/sun/.local/share/claude/versions/2.1.331';
+const claude = '/Users/sun/.local/bin/claude';
 const codex = '/opt/homebrew/Caskroom/codex/0.172.0/bin/codex';
 
 export const arms = ['C0', 'C1', 'C2', 'X0', 'X1', 'X2'];
@@ -12,7 +12,7 @@ export function profile(arm, cwd, logs) {
     const model = 'claude-sonnet-5-5';
     return {
       vendor: 'claude', binary: claude, version: '2.1.331', model,
-      args: ['--model', model, '--setting-sources', '',
+      args: ['--model', model,
         ...(arm === 'C2' ? ['--append-system-prompt', skill] : [])],
       env: { CLAUDE_CODE_DISABLE_AUTO_MEMORY: '1',
         ...(arm !== 'C0' && { CLAUDE_CODE_EXPERIMENTAL_CODE_MODE: arm === 'C1' ? '1' : '0' }) },

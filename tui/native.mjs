@@ -1,6 +1,6 @@
 import { isClaudeStopSummary, isClaudeTranscriptEnd } from '../adapters/claude/parse.mjs';
 import { completedClaudeTurns, provesClaudeTurnEnd } from '../relay/sources.mjs';
-import { realpath } from 'node:fs/promises';
+import { lstat, realpath } from 'node:fs/promises';
 import { basename, dirname, extname, isAbsolute, join, relative, sep } from 'node:path';
 import { jsonlTail } from '../runtimes/tui/read-jsonl.mjs';
 import { agyDeliveryParts, claudeDigestVersion } from '../inbox/message.mjs';
@@ -11,7 +11,7 @@ function inside(root, path) {
   return child !== '' && child !== '..' && !child.startsWith(`..${sep}`) && !isAbsolute(child);
 }
 
-export function nativeState(provider, { hookSink, promptSink, evidenceRoot, cwd, sessionId, boundTranscript = false, resumedAt, expectedPayload }) {
+export function nativeState(provider, { hookSink, promptSink, evidenceRoot, cwd, sessionId, configDir, boundTranscript = false, resumedAt, expectedPayload }) {
   const readHook = jsonlTail();
   const readPrompt = jsonlTail();
   const readTranscript = jsonlTail();
@@ -122,13 +122,24 @@ export function nativeState(provider, { hookSink, promptSink, evidenceRoot, cwd,
     changedInputs,
     async read() {
       const observations = await hooks();
+      if (!transcript && !candidate && provider.id === 'claude' && boundTranscript && sessionId && cwd) {
+        const located = await provider.transcript.locate({ sessionId, cwd, configDir }).catch(() => null);
+        if (located) candidate = located;
+      }
       if (!transcript && typeof candidate === 'string' && validTranscript(candidate)) {
         const paths = provider.id === 'agy' ? [join(dirname(candidate), 'transcript_full.jsonl'), candidate] : [candidate];
         for (const path of paths) {
+          const info = await lstat(path).catch(error => {
+            if (error.code !== 'ENOENT') throw error;
+          });
+          if (!info?.isFile()) continue;
           const actual = await realpath(path).catch(error => {
             if (error.code !== 'ENOENT') throw error;
           });
-          if (actual === path && validTranscript(actual)) { transcript = actual; break; }
+          if (actual && validTranscript(actual) && (actual === path || provider.id === 'claude')) {
+            transcript = actual;
+            break;
+          }
         }
       }
       let verifiedEnds;

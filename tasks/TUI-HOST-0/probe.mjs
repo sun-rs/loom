@@ -10,7 +10,7 @@ import { mockProvider } from './mock-provider.mjs';
 export const root = '/Users/sun/Code/exp-relay/tui-host-0';
 const shell = value => "'" + value.replaceAll("'", "'\\''") + "'";
 const providerCommands = {
-  claude: '/Users/sun/.local/share/claude/versions/2.1.331',
+  claude: '/Users/sun/.local/bin/claude',
   codex: '/opt/homebrew/bin/codex',
   agy: '/Users/sun/.local/bin/agy',
 };

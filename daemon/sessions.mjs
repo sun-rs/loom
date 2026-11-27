@@ -6,7 +6,9 @@ import { CommandError as ErrorCode, resolveTarget } from '../cli/sessions.mjs';
 import { runtimeDirectory } from '../cli/project.mjs';
 import { roles, rotatingRoles } from '../index/index.mjs';
 import { hc, hcAt, tui, addressPattern } from '../inbox/tui.mjs';
-import { deliveryId, wireText } from '../inbox/message.mjs';
+import { deliveryId, messageIdPattern, wireText } from '../inbox/message.mjs';
+import claude from '../adapters/claude/index.mjs';
+import { nativeClaude } from './executables.mjs';
 import { recordLifecycle } from '../handover/index.mjs';
 import { generateBrief } from '../handover/brief.mjs';
 import { extractOutstanding } from '../handover/outstanding.mjs';
@@ -194,7 +196,7 @@ export function ownedSessions(project, index, report, {
     if (upgrade?.phase !== 'committed' || row.startedAt >= upgrade.finishedAt) return [];
     const shimBorn = row.cli === 'claude' && statSync(join(runtimeDirectory(project), 'hook.mjs'), { throwIfNoEntry: false })?.birthtimeMs;
     return [{ kind: 'cli', reason: 'Session uses a legacy CLI path. Existing LOOM_BIN cannot pick up gate/escalate through upgrades. Use a successor.' },
-      ...(row.backend === 'tui' && !(shimBorn && shimBorn <= row.startedAt) ? [
+      ...(row.cli !== 'claude' && row.backend === 'tui' && !(shimBorn && shimBorn <= row.startedAt) ? [
         { kind: 'hook', reason: 'Session predates the serving release and uses a legacy hook path' },
       ] : [])];
   }
@@ -539,7 +541,13 @@ export function ownedSessions(project, index, report, {
   }
 
   async function newJob(input, caller, checkBarrier, occupies, handoverState, selfHandoff) {
-    if (!roles.includes(input.role) || !hasText(input.cwd) || !validInput(input.prompt) ||
+    const resumeSession = input['resume-session'];
+    const validPrompt = resumeSession !== undefined
+      ? (input.prompt === undefined || validInput(input.prompt))
+      : validInput(input.prompt);
+    if (!roles.includes(input.role) || !hasText(input.cwd) || !validPrompt ||
+        (resumeSession !== undefined && (typeof resumeSession !== 'string' || !messageIdPattern.test(resumeSession) ||
+          temporaryRole(input.role) || input['handover-from'] !== undefined)) ||
         (input.parent !== undefined && !hasText(input.parent)) ||
         (input['trust-workspace'] !== undefined && typeof input['trust-workspace'] !== 'boolean') ||
         (input['expect-red'] !== undefined && (input.role !== 'worker' || typeof input['expect-red'] !== 'boolean')) ||
@@ -584,6 +592,10 @@ export function ownedSessions(project, index, report, {
     const { requested, selected, deny, warnings, fastRequested, trustWorkspace } = spawnProfile(project,
       input.role === 'worker' ? { ...input, workerCaller: caller ?? null } : input, addr => routeParent(addr)?.addr, occupies);
     const { cli, mode, model, effort } = selected;
+    if (cli === 'claude') {
+      validateCcpClaudeEntry(process.env.LOOM_CLAUDE_BIN ?? process.env.OAR_CLAUDE_BIN ?? undefined, process.env);
+      if (mode === 'headless' && !open || mode === 'tui' && openPane === openTui) nativeClaude();
+    }
     if ((integration || workerTier === 'host') && mode !== 'headless') {
       throw new ErrorCode('invalid-arguments', `The ${workerTier} tier requires a headless Worker`);
     }
@@ -591,8 +603,18 @@ export function ownedSessions(project, index, report, {
     if (input['keep-warm'] && mode !== 'headless') throw new ErrorCode('invalid-arguments', '--keep-warm requires a headless worker');
     const addr = `${mode === 'headless' ? 'oar' : 'loom'}-${randomUUID()}`;
     const runtimeId = mode === 'tui' ? `${cli}-tui` : runtimeIds[cli];
+    let resumedTranscript;
+    if (resumeSession && cli === 'claude') {
+      const located = await claude.transcript.locate({ sessionId: resumeSession, cwd }).catch(() => null);
+      if (located) {
+        try { resumedTranscript = checkedTranscript(realpathSync(located), { cwd, cli, sessionId: resumeSession }); }
+        catch { /* Transcript may not yet be accessible. */ }
+      }
+    }
     const row = { addr, role: input.role, project: name, task: input.task, wave: input.wave,
       backend: mode, runtimeId, cli, model, effort, cwd, baseCommit: gitHead(cwd), parent: parent?.addr ?? null,
+      ...(resumeSession && { sessionId: resumeSession }),
+      ...(resumedTranscript && { transcriptPath: resumedTranscript }),
       startedAt: [...jobs.values()].reduce((at, job) => Math.max(at, job.row.startedAt + 1), Date.now()) };
     const herdr = mode === 'tui' && visibleRoles.includes(row.role) ? await layout?.placement(row) : undefined;
     if (herdr && !predecessor && rows().some(old => old.role === row.role && old.endedAt === null)) {
@@ -636,7 +658,7 @@ export function ownedSessions(project, index, report, {
       prompt = [prompt, conventions, roleCore(row.role),
         '## Loom dispatch baseline\n' + workerCheckpointText(checkpoint),
         integration && skillModules(['worker-integration']).text, memory].filter(Boolean).join('\n\n');
-    } else {
+    } else if (!resumeSession) {
       prompt = `${heading}\n${roleCore(row.role)}\n\n## Startup request\n${prompt}`;
       if (rotatingRoles.includes(row.role)) {
         try { prompt = await projectMemoryPrompt(project) + prompt; }
@@ -652,8 +674,9 @@ export function ownedSessions(project, index, report, {
     }
     const fast = selfHandoff?.inheritFast ? jobs.get(predecessor.addr)?.fast : selected.fast;
     const requestedFast = selfHandoff?.inheritFast ? jobs.get(predecessor.addr)?.fastRequested : fastRequested;
-    const job = { row, firstId: randomUUID(), prompt, gate, requested, deny, release: releaseId(),
+    const job = { row, ...(prompt !== undefined && { firstId: randomUUID(), prompt }), gate, requested, deny, release: releaseId(),
       accountDir: resolveAccountDir(cli),
+      ...(resumeSession && { resumeNativeId: resumeSession }),
       ...(actor && jobs.has(actor.addr) && { sender: targetBinding(actor) }),
       ...(row.role === 'worker' && { isolatedWorkerHome: workerTier !== 'host', workerTier }),
       ...(input['keep-warm'] && { retention: { keepWarm: true } }),
@@ -676,7 +699,7 @@ export function ownedSessions(project, index, report, {
       ...(input['expect-red'] !== undefined && { expectRed: input['expect-red'] }),
       ...(deliver && { deliver, ...(input.barrier && { barrier: input.barrier }) }),
       ...(cli === 'opencode' && mode === 'tui' && { plannedNativeId: `ses_${randomUUID().replaceAll('-', '')}` }) };
-    await memoryInjection?.()?.prepare(job, input.prompt, sessionMemoryBinding(actor, jobs.get(actor?.addr)));
+    await memoryInjection?.()?.prepare(job, input.prompt ?? '', sessionMemoryBinding(actor, jobs.get(actor?.addr)));
     if (workerTier === 'host') {
       job.pendingHostGrant = hostGrants.prepare(row, policyAllowsHost(row));
       job.prompt += `\n\nTrusted host grant${job.pendingHostGrant.unconfined ? ' (unconfined, no outer Seatbelt)' : ''} for this card. Use absolute native CLI paths. Keep credentials, global config, CCP, Solars, rah_os, loom-next and unrelated processes or panes outside the task. Run only the authorized work and end the card with a conclusion.`;
@@ -880,7 +903,7 @@ export function ownedSessions(project, index, report, {
     }
     enforceDeny(runtimeSelection(row).effective, job.deny ?? []);
     confirmHostLaunch(job);
-    if (!job.resumingExplicit && !mail.messages.some(message => message.id === job.firstId)) {
+    if (!job.resumingExplicit && job.prompt && job.firstId && !mail.messages.some(message => message.id === job.firstId)) {
       mail.enqueue({ id: job.firstId, target: targetBinding(row), createdAt: row.startedAt,
         text: job.prompt, requestedMode: 'queue', mode: 'queue', phase: 'queued', startup: true,
         ...(job.sender && { from: job.sender }),
@@ -956,6 +979,15 @@ export function ownedSessions(project, index, report, {
         row = index.update(row.addr, { sessionId, ...(native && { transcriptPath: native }) });
       }
     }
+    if (row.cli === 'claude' && row.sessionId && !row.transcriptPath) {
+      const located = await claude.transcript.locate({ sessionId: row.sessionId, cwd: row.cwd }).catch(() => null);
+      if (located) {
+        let canonical = null;
+        try { canonical = checkedTranscript(realpathSync(located), row); }
+        catch { /* Transcript file may be transient or outside allowed path. */ }
+        if (canonical && row.transcriptPath !== canonical) row = index.update(row.addr, { transcriptPath: canonical });
+      }
+    }
     if (row.sessionId) {
       try {
         const bound = hooks.filter(event => !event.agent_id && (event.session_id ?? event.conversationId) === row.sessionId);
@@ -997,7 +1029,9 @@ export function ownedSessions(project, index, report, {
   async function retainCompaction(job, row) {
     if (!row.transcriptPath || temporaryRole(row.role)) return;
     const handled = new Set(job.compactions);
-    for (const event of events(row.addr).filter(event =>
+    const source = row.cli === 'claude' && row.backend === 'tui' ?
+      withClaudeTranscriptStops(row, events(row.addr), row.sessionId) : events(row.addr);
+    for (const event of source.filter(event =>
       ['compaction_started', 'compaction_ended'].includes(event.type) ||
       ['PreCompact', 'PostCompact'].includes(event.hook_event_name))) {
       const key = event.eventId ?? `${event.hook_event_name}:${event.receivedAt}`;
@@ -1128,7 +1162,8 @@ export function ownedSessions(project, index, report, {
     try {
       setRetention(job, { ...(by !== 'ttl' && { keep: false }), ...(job.closed && { keepWarm: false }), releasedAt: at,
         releasedBy: by, idleSinceBeforeRelease, lastContext: context,
-        releasing: undefined, eligible: false, idleSince: undefined, idleStream: undefined });
+        releasing: undefined, eligible: false, idleSince: undefined, idleStream: undefined,
+        releaseTimeoutAt: undefined });
     } catch (error) {
       job.releases = previous;
       job.closed = previousClose;

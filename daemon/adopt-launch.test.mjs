@@ -11,23 +11,35 @@ import { disposeSession } from './session-close.mjs';
 
 const exec = promisify(execFile);
 
-test('Claude native TUI and OAR children inherit API credentials only for opted-in roles', async t => {
+async function writeClaudeCcpStub(home, body) {
+  const { symlink } = await import('node:fs/promises');
+  const ccpDir = join(home, 'ccp', 'bin');
+  const binDir = join(home, '.local', 'bin');
+  await mkdir(ccpDir, { recursive: true });
+  await mkdir(binDir, { recursive: true });
+  const target = join(ccpDir, 'claude-protected');
+  const entry = join(binDir, 'claude');
+  await writeFile(target, body, { mode: 0o700 });
+  await symlink(target, entry);
+  return entry;
+}
+
+test('Claude native TUI and OAR children inherit API credentials only for opted-in roles and preserve proxy env', async t => {
   const project = await mkdtemp(join(tmpdir(), 'loom-auth-test-'));
   t.after(() => rm(project, { recursive: true, force: true }));
   await mkdir(join(project, '.project'), { recursive: true });
-  const claude = join(project, 'claude');
   const hc = join(project, 'hc');
   const seen = join(project, 'seen.jsonl');
   const pane = join(project, 'pane.json');
-  await writeFile(claude, `#!${process.execPath}
+  const claude = await writeClaudeCcpStub(project, `#!${process.execPath}
 import { appendFileSync } from 'node:fs';
 if (process.argv.includes('--version')) { console.log('2.1.331 (Claude Code)'); process.exit(0); }
 const input = process.argv.slice(2);
 appendFileSync(${JSON.stringify(seen)}, JSON.stringify({ headless: input.includes('--print') || input.includes('-p'),
   hasKey: Object.hasOwn(process.env, 'ANTHROPIC_API_KEY'), hasToken: Object.hasOwn(process.env, 'ANTHROPIC_AUTH_TOKEN'),
-  bare: input.includes('--bare') }) + '\\n');
+  httpsProxy: process.env.HTTPS_PROXY, noProxy: process.env.NO_PROXY, bare: input.includes('--bare') }) + '\\n');
 process.exit(23);
-`, { mode: 0o700 });
+`);
   await writeFile(hc, `#!${process.execPath}
 import { readFileSync, writeFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
@@ -52,7 +64,8 @@ import { openOar } from ${JSON.stringify(oar)};
 const [project, claude, hc] = process.argv.slice(1);
 const role = 'leader';
 const authMode = claudeAuthMode(project, role);
-await openNativeTui({ cli: 'claude', cwd: project, command: claude, hcCommand: hc, stateDir: project, authMode });
+await openNativeTui({ cli: 'claude', cwd: project, command: claude, hcCommand: hc, stateDir: project, authMode,
+  env: { HTTPS_PROXY: 'http://override-ignored:9999' }, unset: ['HTTPS_PROXY', 'NO_PROXY'] });
 try {
   const session = await openOar({ addr: 'oar-00000000-0000-4000-8000-000000000001', cli: 'claude',
     runtimeId: 'claude', cwd: project, role, authMode, effort: 'low' }, project);
@@ -64,23 +77,23 @@ try {
     await writeFile(join(project, '.project', 'policy.json'), JSON.stringify(enabled ? { roles: { leader: { auth: 'api-key' } } } : {}));
     await exec(process.execPath, ['--input-type=module', '-e', script, project, claude, hc], {
       cwd: project, timeout: 15_000, env: { HOME: project, TMPDIR: project, PATH: '/usr/bin:/bin',
-        LOOM_CLAUDE_BIN: claude, ANTHROPIC_API_KEY: 'fixture-only', ANTHROPIC_AUTH_TOKEN: 'fixture-only' },
+        HTTPS_PROXY: 'http://127.0.0.1:17891', NO_PROXY: 'localhost,127.0.0.1',
+        ANTHROPIC_API_KEY: 'fixture-only', ANTHROPIC_AUTH_TOKEN: 'fixture-only' },
     });
   }
   assert.deepEqual((await readFile(seen, 'utf8')).trim().split('\n').map(JSON.parse), [
-    { headless: false, hasKey: false, hasToken: false, bare: false },
-    { headless: true, hasKey: false, hasToken: false, bare: false },
-    { headless: false, hasKey: true, hasToken: true, bare: false },
-    { headless: true, hasKey: true, hasToken: true, bare: false },
+    { headless: false, hasKey: false, hasToken: false, httpsProxy: 'http://127.0.0.1:17891', noProxy: 'localhost,127.0.0.1', bare: false },
+    { headless: true, hasKey: false, hasToken: false, httpsProxy: 'http://127.0.0.1:17891', noProxy: 'localhost,127.0.0.1', bare: false },
+    { headless: false, hasKey: true, hasToken: true, httpsProxy: 'http://127.0.0.1:17891', noProxy: 'localhost,127.0.0.1', bare: false },
+    { headless: true, hasKey: true, hasToken: true, httpsProxy: 'http://127.0.0.1:17891', noProxy: 'localhost,127.0.0.1', bare: false },
   ]);
 });
 
 test('Claude headless host keeps the native login namespace', { skip: nestedSeatbeltLimited }, async t => {
   const project = await mkdtemp(join(await realpath(tmpdir()), 'loom-claude-host-'));
   t.after(() => rm(project, { recursive: true, force: true }));
-  const claude = join(project, 'claude');
   const seen = join(project, 'seen.json');
-  await writeFile(claude, `#!${process.execPath}
+  await writeClaudeCcpStub(project, `#!${process.execPath}
 import { writeFileSync } from 'node:fs';
 if (process.argv.includes('--version')) { console.log('2.1.331 (Claude Code)'); process.exit(0); }
 const { HOME, CLAUDE_CONFIG_DIR, CLAUDE_SECURESTORAGE_CONFIG_DIR } = process.env;
@@ -88,7 +101,7 @@ writeFileSync(${JSON.stringify(seen)}, JSON.stringify({ nativeHome: HOME === ${J
   config: CLAUDE_CONFIG_DIR === undefined ? 'unset' : CLAUDE_CONFIG_DIR === ${JSON.stringify(join(project, 'custom'))} ? 'custom' : 'other',
   storage: CLAUDE_SECURESTORAGE_CONFIG_DIR !== undefined, headless: process.argv.includes('-p') }));
 process.exit(23);
-`, { mode: 0o700 });
+`);
   const script = `import { openOar } from ${JSON.stringify(new URL('./oar.mjs', import.meta.url).href)};
 const [cwd] = process.argv.slice(1);
 try {
@@ -98,7 +111,7 @@ try {
 } catch (error) { if (!/exited|closed/i.test(error.message)) throw error; }`;
   for (const custom of [false, true]) {
     await exec(process.execPath, ['--input-type=module', '-e', script, project], { cwd: project, timeout: 10_000,
-      env: { HOME: project, TMPDIR: project, PATH: '/usr/bin:/bin', LOOM_CLAUDE_BIN: claude, LOOM_WORKER_TMP: project,
+      env: { HOME: project, TMPDIR: project, PATH: '/usr/bin:/bin', LOOM_WORKER_TMP: project,
         ...(custom && { CLAUDE_CONFIG_DIR: join(project, 'custom'), CLAUDE_SECURESTORAGE_CONFIG_DIR: join(project, 'storage') }) } });
     assert.deepEqual(JSON.parse(await readFile(seen, 'utf8')),
       { nativeHome: true, config: custom ? 'custom' : 'unset', storage: custom, headless: true });
@@ -109,9 +122,8 @@ test('Claude headless host uses Seatbelt by default and bypasses sandbox-exec un
   { skip: process.platform !== 'darwin' || nestedSeatbeltLimited }, async t => {
   const project = await mkdtemp(join(await realpath(tmpdir()), 'loom-claude-unconfined-'));
   t.after(() => rm(project, { recursive: true, force: true }));
-  const claude = join(project, 'claude');
   const seen = join(project, 'seen.json');
-  await writeFile(claude, `#!${process.execPath}
+  await writeClaudeCcpStub(project, `#!${process.execPath}
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { spawnSync } from 'node:child_process';
@@ -127,7 +139,7 @@ writeFileSync(${JSON.stringify(seen)}, JSON.stringify({
   guard: process.env.LOOM_HOST_GUARD === '1',
 }));
 process.exit(23);
-`, { mode: 0o700 });
+`);
   const script = `import { openOar } from ${JSON.stringify(new URL('./oar.mjs', import.meta.url).href)};
 const [cwd, addr, mode] = process.argv.slice(1);
 const hostGrant = { expiresAt: Date.now() + 30000, write: [], ...(mode === 'unconfined' && { unconfined: true }) };
@@ -143,7 +155,7 @@ try {
   ]) {
     await exec(process.execPath, ['--input-type=module', '-e', script, project, addr, mode], {
       cwd: project, timeout: 10_000,
-      env: { HOME: project, TMPDIR: project, PATH: '/usr/bin:/bin', LOOM_CLAUDE_BIN: claude, LOOM_WORKER_TMP: project },
+      env: { HOME: project, TMPDIR: project, PATH: '/usr/bin:/bin', LOOM_WORKER_TMP: project },
     });
     assert.deepEqual(JSON.parse(await readFile(seen, 'utf8')), expected, mode);
   }

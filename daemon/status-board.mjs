@@ -80,15 +80,17 @@ export function workerBoard(rows, messages, jobs, observations, sessionFields) {
   return rows.filter(row => row.role === 'worker' && row.backend === 'headless').map(row => {
     const session = sessionFields(row);
     const job = jobs.get(row.addr);
-    const releasedAt = job?.releasedAt ?? row.releasedAt;
+    const releasedAt = job?.retention?.releasedAt ?? job?.releasedAt ?? row.releasedAt;
     const endedAt = row.endedAt ?? releasedAt ?? null;
     const state = endedAt == null ? session.state : releasedAt == null ? 'ended' : 'released';
     const releaseAt = state === 'idle' ? job?.releaseAt ?? row.releaseAt ?? null : null;
     const completion = latest.get(row.addr);
-    const result = replyConclusion(completion?.body).tag;
+    const result = job?.retention?.resultUnconfirmedAt != null ? 'UNCONFIRMED' : replyConclusion(completion?.body).tag;
+    const releaseTimedOut = job?.retention?.releaseTimeoutAt != null && endedAt == null;
     return { ...session, state, task: row.task, wave: row.wave, endedAt, releasedAt, releaseAt,
       awaitingUser: observations.get(row.addr)?.awaitingUser,
-      lastResult: ['DONE', 'BLOCKED', 'FAILED'].includes(result) ? result : undefined };
+      ...(releaseTimedOut && { releaseTimedOut: true, releaseTimeoutAt: job.retention.releaseTimeoutAt }),
+      lastResult: ['DONE', 'BLOCKED', 'FAILED', 'UNCONFIRMED'].includes(result) ? result : undefined };
   });
 }
 
@@ -147,6 +149,10 @@ export function attentionBoard(delivery, roles, workers, gates, events, roleFor)
     if (['quota-wait', 'auth-expired'].includes(row.state) || row.awaitingUser) attention.push({
       id: 'session:' + row.addr, kind: ['quota-wait', 'auth-expired'].includes(row.state) ? row.state : 'awaiting-user',
       addr: row.addr, area: row.task ? 'workers' : 'roles', subject: row.task ?? row.role,
+    });
+    if (row.releaseTimedOut) attention.push({
+      id: 'release-timeout:' + row.addr, kind: 'release-timeout',
+      addr: row.addr, area: 'workers', subject: row.task ?? row.addr, at: row.releaseTimeoutAt,
     });
   }
   for (const event of events.filter(event => event.type === 'needs-decision' && !event.logOnly && event.takenAt == null).sort(newestNoticeFirst)) {

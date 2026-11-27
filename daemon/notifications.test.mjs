@@ -50,3 +50,16 @@ test('a failed desktop completion stays pending until a delivery route succeeds'
   await notices.push(async () => 'managed-super');
   assert.equal(notices.list('P')[0].pushRoute, 'managed-super');
 });
+
+test('worker-release-timeout pushes explicitly to external desktop route when no managed Super exists', async t => {
+  const root = mkdtempSync(join(tmpdir(), 'loom-notices-'));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  mkdirSync(join(root, '.project', 'loomd'), { recursive: true });
+  const notices = projectNotifications(root, () => 1000);
+  const calls = [];
+  notices.add({ id: 'timeout-1', type: 'worker-release-timeout', project: 'P', at: 1000, batch: 'timeout-1',
+    text: 'Worker T1 oar-1 exceeded 2x TTL' });
+  await notices.push(async () => undefined, async (project, events) => { calls.push([project, ...events.map(event => event.type)]); });
+  assert.deepEqual(calls, [['P', 'worker-release-timeout']]);
+  assert.equal(notices.list('P')[0].pushRoute, 'external');
+});

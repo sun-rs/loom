@@ -100,7 +100,7 @@ export function bindTuiSession(terminal, provider, {
 
   function idleBefore(native, at) {
     return !native.identityChanged && (native.phase === 'idle' && Number.isFinite(native.observedAt) && native.observedAt < at ||
-      provider.id === 'agy' && !native.phase && !native.turnSequence);
+      provider.screenStartup && !native.phase && !native.turnSequence);
   }
 
   function serialize(action) {

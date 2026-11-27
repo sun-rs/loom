@@ -1,7 +1,8 @@
-import { lstatSync, readFileSync, realpathSync } from 'node:fs';
+import { lstatSync, readdirSync, readFileSync, realpathSync } from 'node:fs';
 import { homedir } from 'node:os';
-import { basename, dirname, join } from 'node:path';
+import { basename, dirname, join, resolve } from 'node:path';
 import { parseAgyTranscriptLine } from '../adapters/agy/transcript.mjs';
+import { CLAUDE_BUCKET_NAME_MAX_LENGTH, encodeClaudeProjectPaths, isClaudeProjectOwnBucketName, isSafeClaudeSessionId } from '../adapters/claude/locate.mjs';
 import { isClaudeStopSummary, isClaudeTranscriptEnd, parseClaude, parseTranscriptRow } from '../adapters/claude/parse.mjs';
 import { parseCodexTranscriptLine } from '../adapters/codex/transcript.mjs';
 import { deliveryId } from '../inbox/message.mjs';
@@ -16,6 +17,36 @@ function existingPath(path) {
     if (error.code !== 'ENOENT') throw error;
   }
 }
+function isRegularEntry(path, kind) {
+  const info = lstatSync(path, { throwIfNoEntry: false });
+  return Boolean(info && (kind === 'file' ? info.isFile() : info.isDirectory()));
+}
+function locateClaudeTranscriptSync(cwd, sessionId, configDir = process.env.CLAUDE_CONFIG_DIR) {
+  if (typeof sessionId !== 'string' || !sessionId.trim() || !isSafeClaudeSessionId(sessionId)) return;
+  if (typeof cwd !== 'string' || !cwd.trim()) return;
+  const root = existingPath(resolve(configDir || join(homedir(), '.claude'), 'projects'));
+  if (!root || !isRegularEntry(root, 'directory')) return;
+  const filename = `${sessionId}.jsonl`;
+  const directory = resolve(cwd);
+  const physical = existingPath(directory) ?? directory;
+  const encoded = new Set([...encodeClaudeProjectPaths(directory), ...encodeClaudeProjectPaths(physical)]);
+  for (const bucket of encoded) {
+    const bucketDir = join(root, bucket);
+    const path = join(bucketDir, filename);
+    if (isRegularEntry(bucketDir, 'directory') && isRegularEntry(path, 'file')) return path;
+  }
+  const longNames = [...encoded].filter(name => name.length > CLAUDE_BUCKET_NAME_MAX_LENGTH);
+  if (!longNames.length) return;
+  let entries = [];
+  try { entries = readdirSync(root, { withFileTypes: true }); } catch { return; }
+  const matches = [];
+  for (const bucket of entries) {
+    if (!bucket.isDirectory() || !longNames.some(name => isClaudeProjectOwnBucketName(bucket.name, name))) continue;
+    const path = join(root, bucket.name, filename);
+    if (isRegularEntry(path, 'file')) matches.push(path);
+  }
+  return matches.length === 1 ? matches[0] : undefined;
+}
 function jsonl(path) {
   if (!path) return [];
   try {
@@ -27,7 +58,8 @@ function jsonl(path) {
   } catch (error) { if (error.code === 'ENOENT') return []; throw error; }
 }
 
-// A native Stop associates the path with the worker. The no-hook path must be inside its cwd.
+// A native Stop associates the path with the worker. Without hooks, Claude
+// resolves its bound transcript from sessionId + encoded cwd under ~/.claude/projects.
 function transcriptPath(provider, cwd, terminal, stop) {
   const supplied = stop?.transcript_path ?? stop?.transcriptPath;
   if (typeof supplied === 'string' && supplied.startsWith('/')) {
@@ -42,11 +74,19 @@ function transcriptPath(provider, cwd, terminal, stop) {
     const path = existingPath(join(cwd, '.project/relay', name));
     if (within(cwd, path) && basename(path) === name) return path;
   }
-  const args = terminal.argv ?? [];
-  const session = args[args.indexOf('--session-id') + 1];
-  if (provider === 'claude' && args.includes('--session-id') && /^[\da-f-]{36}$/i.test(session ?? '')) {
-    const path = join(homedir(), '.claude/projects', cwd.replace(/[^a-z0-9]/gi, '-'), `${session}.jsonl`);
-    if (existingPath(path) === path) return path;
+  if (provider === 'claude') {
+    const args = terminal.argv ?? [];
+    const argFor = flag => {
+      const idx = args.indexOf(flag);
+      if (idx >= 0 && idx + 1 < args.length) return args[idx + 1];
+      const eq = args.find(arg => typeof arg === 'string' && arg.startsWith(`${flag}=`));
+      return eq?.slice(flag.length + 1);
+    };
+    const session = stop?.session_id ?? stop?.sessionId ?? argFor('--session-id') ?? argFor('--resume');
+    if (session && isSafeClaudeSessionId(session)) {
+      const located = locateClaudeTranscriptSync(cwd, session);
+      if (located && existingPath(located) === located) return located;
+    }
   }
 }
 
@@ -68,13 +108,20 @@ export function boundTranscript(provider, terminal, stop) {
 
 export const provesClaudeTurnEnd = turn => turn.status === 'completed' && turn.boundary && Boolean(turn.reply) && !turn.pendingTools;
 
-export function completedClaudeTurns(path, id) {
+function readClaudeTranscriptSnapshot(path, id) {
   const stat = lstatSync(path, { bigint: true, throwIfNoEntry: false });
-  if (!stat?.isFile()) return [];
+  if (!stat?.isFile()) return { turns: [], compactions: [], apiErrors: [] };
   const revision = `${stat.dev}:${stat.ino}:${stat.size}:${stat.mtimeNs}`;
   const cached = claudeTurnCache.get(path);
-  if (cached?.revision === revision && cached.id === id) return cached.turns;
+  if (cached?.revision === revision && cached.id === id) return cached;
   const rows = jsonl(path).filter(row => row.sessionId === id && !row.agent_id && !row.isSidechain && !row.parent_tool_use_id && !row.parentToolUseId);
+  const compactions = rows
+    .filter(row => (row.type === 'compact_boundary' || row.type === 'system' && row.subtype === 'compact_boundary') &&
+      Number.isFinite(Date.parse(row.timestamp)))
+    .map(row => Date.parse(row.timestamp));
+  const apiErrors = rows
+    .filter(row => row.type === 'assistant' && row.isApiErrorMessage && Number.isFinite(Date.parse(row.timestamp)))
+    .map(row => ({ at: Date.parse(row.timestamp), error: row.apiError ?? row.error ?? 'api_error' }));
   const last = rows.findLastIndex(row => row.type === 'user' || row.type === 'assistant' || row.type === 'system');
   // A non-continuing Stop summary at the end can be the only
   // boundary available while the process is between native writes.
@@ -86,11 +133,19 @@ export function completedClaudeTurns(path, id) {
   }
   const turns = parseClaude(rows.map(row => JSON.stringify(row)).join('\n')).turns
     .map(turn => ({ ...turn, boundary: boundaries.get(turn.endedAt) }));
+  const entry = { revision, id, turns, compactions, apiErrors };
   claudeTurnCache.delete(path);
   if (claudeTurnCache.size >= 16) claudeTurnCache.delete(claudeTurnCache.keys().next().value);
-  claudeTurnCache.set(path, { revision, id, turns });
-  return turns;
+  claudeTurnCache.set(path, entry);
+  return entry;
 }
+
+export function completedClaudeTurns(path, id) {
+  return readClaudeTranscriptSnapshot(path, id).turns;
+}
+
+const eventRank = row => row.hook_event_name === 'UserPromptSubmit' ? 0 :
+  ['Stop', 'StopFailure', 'Interrupt'].includes(row.hook_event_name) ? 1 : 2;
 
 export function withClaudeTranscriptStops(terminal, events, sessionId) {
   const bound = events.filter(row => !row.agent_id && !row.isSidechain && row.session_id);
@@ -110,12 +165,17 @@ export function withClaudeTranscriptStops(terminal, events, sessionId) {
       if (entry) entry.ended = true;
     }
   }
+  const cwd = existingPath(terminal.cwd);
+  if (!cwd) return events;
   const binding = session.findLast(row => row.transcript_path ?? row.transcriptPath);
-  const path = binding?.transcript_path ?? binding?.transcriptPath ?? terminal.transcriptPath;
-  if (typeof path !== 'string' || basename(path) !== `${id}.jsonl` || existingPath(path) !== path ||
-      transcriptPath('claude', realpathSync(terminal.cwd), terminal, { transcript_path: path }) !== path) return events;
-  const turns = completedClaudeTurns(path, id);
-  if (!turns.length) return events;
+  const supplied = binding?.transcript_path ?? binding?.transcriptPath ?? terminal.transcriptPath;
+  const path = supplied ?
+    (typeof supplied === 'string' && basename(supplied) === `${id}.jsonl` && existingPath(supplied) === supplied &&
+      transcriptPath('claude', cwd, terminal, { transcript_path: supplied, session_id: id }) === supplied ? supplied : undefined) :
+    transcriptPath('claude', cwd, terminal, { session_id: id });
+  if (!path) return events;
+  const { turns, compactions, apiErrors } = readClaudeTranscriptSnapshot(path, id);
+  if (!turns.length && !compactions.length) return events;
   function decorate(stop, turn) {
     if (turn.status === 'paused') return { ...stop, paused: true };
     if (!turn.backgroundPrompts || turn.status !== 'completed') return stop;
@@ -137,7 +197,7 @@ export function withClaudeTranscriptStops(terminal, events, sessionId) {
   });
   const fallbackStop = (turn, fields) => ({
     cwd: terminal.cwd, session_id: id, receivedAt: Date.parse(turn.endedAt), hook_event_name: 'Stop',
-    last_assistant_message: turn.reply, source: 'claude transcript ' + (turn.boundary ?? 'turn_duration'),
+    last_assistant_message: turn.reply, transcript_path: path, source: 'claude transcript ' + (turn.boundary ?? 'turn_duration'),
     ...(provesClaudeTurnEnd(turn) && { hookGap: true }), ...fields,
   });
   const stops = starts.flatMap(({ row, key, ended }, index) => {
@@ -153,25 +213,69 @@ export function withClaudeTranscriptStops(terminal, events, sessionId) {
   });
   const knownInputs = new Set(starts.map(({ row }) => row.deliveryId ?? deliveryId(row.prompt)).filter(Boolean));
   const nativeEnds = session.filter(row => ['Stop', 'StopFailure', 'Interrupt'].includes(row.hook_event_name));
+  const since = terminal.created_ms ?? terminal.startedAt ?? 0;
+  const synthetic = [];
   for (const [index, turn] of turns.entries()) {
-    if (!provesClaudeTurnEnd(turn)) continue;
-    if (turn.backgroundPrompts && ![...decorated, ...stops].some(stop => stop.nativeTurnId === turn.id && stop.backgroundDeliveryIds)) {
-      stops.push(decorate(fallbackStop(turn), turn));
-    }
-    // A pinned hook may also drop UserPromptSubmit after cd. Only a marker
-    // in this bound transcript's user turn can identify that delivery.
-    const markers = new Set(turn.prompts.map(deliveryId).filter(marker => marker && !knownInputs.has(marker)));
-    if (!markers.size) continue;
     const began = Date.parse(turn.startedAt);
     const ended = Date.parse(turn.endedAt);
     const next = turns[index + 1] ? Date.parse(turns[index + 1].startedAt) : Infinity;
-    if (!(began >= (terminal.created_ms ?? terminal.startedAt ?? 0)) ||
-        nativeEnds.some(row => row.receivedAt >= began && row.receivedAt <= ended + grace && row.receivedAt < next)) continue;
-    for (const marker of markers) {
-      stops.push(fallbackStop(turn, { deliveryId: marker }));
+    const withinSession = Number.isFinite(began) && began >= since;
+    const promptMarkers = [...new Set(turn.prompts.map(deliveryId).filter(Boolean))];
+    const missingMarkers = promptMarkers.filter(marker => !knownInputs.has(marker));
+    const hasStartNear = starts.some(({ row }) => Math.abs(row.receivedAt - began) <= 5_000);
+    if (withinSession) {
+      for (const prompt of turn.prompts) {
+        const marker = deliveryId(prompt);
+        if (marker ? !knownInputs.has(marker) : !session.length && !hasStartNear) {
+          synthetic.push({
+            cwd: terminal.cwd, session_id: id, receivedAt: began, hook_event_name: 'UserPromptSubmit',
+            prompt, ...(marker && { deliveryId: marker }), transcript_path: path, source: 'claude transcript',
+          });
+        }
+      }
+    }
+    const hasNativeEnd = Number.isFinite(began) && nativeEnds.some(row =>
+      row.receivedAt >= began && row.receivedAt <= (Number.isFinite(ended) ? ended + grace : Infinity) && row.receivedAt < next);
+    if (provesClaudeTurnEnd(turn)) {
+      if (turn.backgroundPrompts && ![...decorated, ...stops].some(stop => stop.nativeTurnId === turn.id && stop.backgroundDeliveryIds)) {
+        stops.push(decorate(fallbackStop(turn), turn));
+      }
+      if (withinSession && !hasNativeEnd) {
+        if (missingMarkers.length) {
+          for (const marker of missingMarkers) stops.push(fallbackStop(turn, { deliveryId: marker }));
+        } else if (!session.length && !promptMarkers.length) {
+          stops.push(fallbackStop(turn));
+        }
+      }
+    } else if (withinSession && !hasNativeEnd) {
+      if (turn.status === 'paused' && (!session.length || missingMarkers.length) && Number.isFinite(ended)) {
+        stops.push(decorate(fallbackStop(turn, { ...(missingMarkers[0] && { deliveryId: missingMarkers[0] }) }), turn));
+      } else if (turn.status === 'interrupted' && Number.isFinite(ended) && (!session.length || missingMarkers.length)) {
+        synthetic.push({
+          cwd: terminal.cwd, session_id: id, receivedAt: ended, hook_event_name: 'Interrupt', is_interrupt: true,
+          ...(missingMarkers[0] && { deliveryId: missingMarkers[0] }), transcript_path: path, source: 'claude transcript interrupted',
+        });
+      } else {
+        const apiError = apiErrors.findLast(err => err.at >= began && err.at < next);
+        if (apiError && (!session.length || missingMarkers.length)) {
+          synthetic.push({
+            cwd: terminal.cwd, session_id: id, receivedAt: apiError.at, hook_event_name: 'StopFailure', error: apiError.error,
+            ...(missingMarkers[0] && { deliveryId: missingMarkers[0] }), transcript_path: path, source: 'claude transcript api_error',
+          });
+        }
+      }
     }
   }
-  return stops.length ? [...decorated, ...stops].sort((a, b) => a.receivedAt - b.receivedAt) : decorated;
+  for (const at of compactions) {
+    if (at >= since && !session.some(row => row.hook_event_name === 'PostCompact' && Math.abs(row.receivedAt - at) <= 5_000)) {
+      synthetic.push({
+        cwd: terminal.cwd, session_id: id, receivedAt: at, hook_event_name: 'PostCompact',
+        transcript_path: path, source: 'claude transcript compact_boundary',
+      });
+    }
+  }
+  const added = [...stops, ...synthetic];
+  return added.length ? [...decorated, ...added].sort((a, b) => a.receivedAt - b.receivedAt || eventRank(a) - eventRank(b)) : decorated;
 }
 
 export function finalFromStop(provider, stop, rows) {
