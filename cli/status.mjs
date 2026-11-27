@@ -12,7 +12,7 @@ import { auditorWakeFiltered } from '../daemon/routing.mjs';
 import { seniorToolSummary } from '../daemon/senior-tools.mjs';
 import { readLayout } from '../daemon/herdr-layout.mjs';
 
-export async function projectStatus(project) {
+export async function projectStatus(project, { now } = {}) {
   let live;
   let exits;
   if (managedProject(project)) {
@@ -93,7 +93,8 @@ export async function projectStatus(project) {
     }));
   const merges = [...new Map([...history, ...verified].filter(merge => merge.sha).map(merge => [merge.sha, merge])).values()]
     .sort((a, b) => b.at - a.at).slice(0, 5);
-  const { byRole, rawTokens, missing, pyramid, memoryExtractor, memoryPilot } = projectCost(project, rows, { includeAcceptance: false });
+  const { byRole, rawTokens, missing, pyramid, memoryExtractor, memoryPilot } = projectCost(project, rows,
+    { includeAcceptance: false, ...(now !== undefined && { now }) });
   const activeAddresses = new Set(rows.filter(row => row.endedAt === null).map(row => row.addr));
   const rotationNotices = notifications.filter(event => event.type === 'leader-handover-failed' ||
     event.type === 'leader-rotation-proposed' && activeAddresses.has(event.addr)).slice(-6).reverse();

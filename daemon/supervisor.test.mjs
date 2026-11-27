@@ -2092,7 +2092,7 @@ test('T100 project-completed with phase resets Auditor wake budget and excludes 
   assert.equal(phase2Budgets[0].usage.wakes, 4, 'prior phase budget alert must not accumulate new phase wakes');
 
   const packet = await d.handle('gate-pack', { gate: 'PHASE-2', base, candidate, question: 'Verify phase 2.' }, leader.addr);
-  const packetBody = readFileSync(join(f.project, packet.path), 'utf8');
+  const packetBody = readFileSync(packet.path, 'utf8');
   assert.doesNotMatch(packetBody, /Auditor 超出预算|auditor-budget-exceeded/,
     'prior phase budget alert must not pollute a new phase gate packet');
 });
@@ -2103,6 +2103,7 @@ test('T103 Auditor wake budget re-alerts in a new cycle after rotation, phase co
   f.policy({ roles: { auditor: { maxWakesPerGate: 3, maxContextTokens: 150_000 } } });
   const d = f.daemon();
   t.after(d.shutdown);
+  await f.spawn(d, 'super', 'S');
   const { session: leader } = await f.spawn(d, 'leader', 'L');
   const { session: first } = await f.spawn(d, 'auditor', 'A1', undefined, {
     cli: 'codex', model: 'same-model', effort: 'low', prompt: 'HOLD startup',

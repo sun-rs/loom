@@ -11,6 +11,8 @@ const driftType = 'consumption-pyramid';
 const budgetType = 'auditor-budget-exceeded';
 const outputType = 'senior-tool-output-share';
 export const gateBoundary = event => ['gate-completed', 'auditor-rotation-proposed'].includes(event.type);
+export const auditorBudgetBoundary = event => gateBoundary(event) ||
+  event.type === 'auditor-rotation-completed' || event.type === 'project-completed';
 
 export function rotationReason(policy, role, { gate, contextTokens, wakes }) {
   const limits = rotationLimits(policy, role);
@@ -38,7 +40,7 @@ export function roleBudget(project, { now, sessions, notifications, batchDeliver
     const wakes = new Set();
     const active = rows.findLast(row => row.endedAt === null && sessions.jobs.has(row.addr));
     let tokens = null;
-    for (const row of rows) {
+    for (const row of active ? [active] : rows) {
       if (row.endedAt != null && row.endedAt <= boundary) continue;
       try {
         const history = reader.sessionHistory(row);
@@ -113,8 +115,8 @@ export function roleBudget(project, { now, sessions, notifications, batchDeliver
       if (!completeGate && !gateRecorded && at - (sampled.get(name) ?? -Infinity) < sampleIntervalMs) return;
       for (const row of rows) if (row.endedAt != null) nativeContexts.delete(row.addr);
       const events = notifications.list(name, false, true);
-      const gate = events.findLast(gateBoundary);
-      const id = 'auditor-budget:' + batchDeliveryId(name, gate?.id ?? '');
+      const boundaryEvent = events.findLast(auditorBudgetBoundary);
+      const id = 'auditor-budget:' + batchDeliveryId(name, boundaryEvent?.id ?? '');
       const reader = historyReader(project);
       if (safeLeader) await proposeLeader(name, safeLeader, reader, events, policy, at);
       else if (leader) {
@@ -122,7 +124,7 @@ export function roleBudget(project, { now, sessions, notifications, batchDeliver
         if (contextTokens > rotationLimits(policy, 'leader').maxContextTokens) signalRotation?.(leader, 'budget');
       }
       if (gateRecorded) return;
-      const usage = await assessAuditor(rows.filter(row => row.role === 'auditor'), reader, gate?.at ?? -Infinity, policy);
+      const usage = await assessAuditor(rows.filter(row => row.role === 'auditor'), reader, boundaryEvent?.at ?? -Infinity, policy);
       const overBudget = Boolean(rotationReason(policy, 'auditor', usage));
       if (usage.contextTokens > usage.maxContextTokens) signalRotation?.(auditor, 'budget');
       const prior = events.find(event => event.id === id);
@@ -130,7 +132,7 @@ export function roleBudget(project, { now, sessions, notifications, batchDeliver
         const context = usage.contextTokens == null ? '未知' : `${usage.contextTokens}/${usage.maxContextTokens}`;
         const stamp = new Date(at).toISOString();
         const action = overBudget ? ' 请把常规材料合并成一份门禁包。下次门禁完成时将建议换班。' : '';
-        const text = `Auditor ${overBudget ? '超出预算' : '当前在预算内'}（采样 ${stamp}，本门禁唤醒 ${usage.wakes}/${usage.maxWakesPerGate}，上下文 token ${context}）。${action}`;
+        const text = `Auditor ${overBudget ? '超出预算' : '当前在预算内'}（采样 ${stamp}，当前周期唤醒 ${usage.wakes}/${usage.maxWakesPerGate}，上下文 token ${context}）。${action}`;
         const sample = { text, usage, sampledAt: at, overBudget };
         if (prior) notifications.refresh(id, sample);
         else notifications.add({ id, project: name, type: budgetType, at, logOnly: true, ...sample });

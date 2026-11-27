@@ -236,7 +236,7 @@ function fixture(t, { config = {}, runStage, fixtureCredential = () => fixtureKe
     tick, restart, spawn, finish, finishTurn, send, read, initGit,
     advance: (ms = 86_400_000) => { clock += ms; },
     cost: () => projectCost(project, projectSessions(project), { now: clock }),
-    status: () => projectStatus(project) };
+    status: () => projectStatus(project, { now: clock }) };
 }
 
 function assertNoFixtureKey(label, value) {
@@ -1747,6 +1747,7 @@ test('T100 reference pointers are not misclassified as noise while repo source p
 
 test('T100 per-turn extractor runs on NOREPLY turns when received includes a Super or user message and skips worker-only NOREPLY', async t => {
   const f = fixture(t);
+  f.advance(Math.max(0, Date.now() - Date.UTC(2026, 10, 26, 12)) + 60_000);
   const leader = await f.spawn('leader', 'Prepare Leader for correction turns.');
   const auditor = await f.spawn('auditor', 'Prepare Auditor for ruling turns.');
   const superAddr = await f.spawn('super', 'Prepare Super oversight.');
