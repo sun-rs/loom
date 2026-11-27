@@ -8,10 +8,10 @@ import { checkFacts, plannedCardPaths } from './facts.mjs';
 
 test('resolves shipped Loom skill references without extending a scoped proof boundary', () => {
   const cwd = import.meta.dirname;
-  const body = 'Checked `references/card.md` and `references/missing-skill-file.md`.';
+  const body = 'Checked `references/card.md`, `~/.loom/super/handoff.md` and `references/missing-skill-file.md`.';
   assert.deepEqual(checkFacts(body, cwd).misses, [{ kind: 'path', value: 'references/missing-skill-file.md' }]);
   assert.deepEqual(checkFacts(body, cwd, cwd, null, { pathBoundary: cwd }).misses.map(fact => fact.value),
-    ['references/card.md', 'references/missing-skill-file.md']);
+    ['references/card.md', '~/.loom/super/handoff.md', 'references/missing-skill-file.md']);
 });
 import { worktreeAt, worktreeDelta } from './worktree.mjs';
 

@@ -31,3 +31,5 @@
 - [2026-11-27 启动与恢复流程设计（草案）](2026-11-27-lifecycle-design.md) — L1 全局只管 Super，Super 决定项目恢复；待用户决定 Super 由什么管理
 - [2026-11-27 Orca bot 会话连续性](2026-11-27-orca-bot-session-continuity.md) — 默认新开+带上限播种，原生续接默认关、只提供给用户选
 - [2026-11-27 Claude 出网硬保证](2026-11-27-claude-egress-guarantee.md) — Mac 上用 Seatbelt 只放行 127.0.0.1:17891 是最便宜的内核级保证；pf 需专用用户、VPN 进程规则会 fail-open
+- [2026-11-27 DeepSeek / Kimi API key 余额查询](2026-11-27-apikey-balance-deepseek-kimi.md) — DeepSeek GET /user/balance、Kimi GET /v1/users/me/balance（只有金额）；Kimi Code 订阅 /coding/v1/usages（5h/7d 比例，社区资料）
+- [2026-11-27 账号用量协议 v1 草案](2026-11-27-account-usage-protocol.md) — loom.account-usage/1：windows[]+balances[]、适配器接口、被动优先合并；参考 T3/CodexBar/Orca（均 MIT）

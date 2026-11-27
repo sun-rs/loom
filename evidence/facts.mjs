@@ -63,6 +63,7 @@ function pathFacts(roots, gitRoot, snapshot, boundary) {
       const release = resolve(skillRoot, '../..');
       if (pathStat(resolve(release, 'docs/HEADLESS.md'), release)?.isFile()) return true;
     }
+    if (token.startsWith('~/')) return boundary ? false : null;
     const paths = isAbsolute(token) ? [resolve(token)] : roots.map(root => resolve(root, token))
       .filter(path => roots.some(root => inside(root, path)));
     if (paths.some(path => pathStat(path, boundary))) return true;

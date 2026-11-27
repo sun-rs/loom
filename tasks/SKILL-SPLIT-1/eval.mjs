@@ -8,6 +8,7 @@ import { parseArgs, promisify } from 'node:util';
 import { fileURLToPath } from 'node:url';
 import { estimateTokens } from '../../lib/token-budget.mjs';
 import { assembleRoleCore, stripSkillComments } from '../../lib/role-skill.mjs';
+import { defaultCcpClaudeEntry, validateCcpClaudeEntry } from '../../daemon/claude-ccp.mjs';
 import { roles, scenarios } from './scenarios.mjs';
 import { fixturePrompt, score } from './simulator.mjs';
 
@@ -21,24 +22,22 @@ const quote = JSON.stringify;
 const repo = resolve(location, '../..');
 const proxyEnvKeys = ['HTTP_PROXY', 'HTTPS_PROXY', 'ALL_PROXY', 'NO_PROXY',
   'http_proxy', 'https_proxy', 'all_proxy', 'no_proxy', 'ANTHROPIC_BASE_URL'];
-export const claudeCcpPath = (home = homedir()) => join(home, '.local/bin/claude');
+export const claudeCcpPath = (home = homedir(), env = {}) => defaultCcpClaudeEntry({ ...env, HOME: home });
 
 export async function resolveEvalBinary(vendor, requested, {
   home = homedir(),
+  env = {},
   resolvePath = realpath,
   checkAccess = path => access(path, constants.X_OK),
 } = {}) {
   if (vendor === 'claude') {
-    const expected = claudeCcpPath(home);
-    if (requested !== expected) {
-      throw Object.assign(new Error(`Claude launches must use CCP entry ${expected} (ccp-required)`), { code: 'ccp-required' });
-    }
-    try { await checkAccess(requested); }
+    const entry = validateCcpClaudeEntry(requested, { ...env, HOME: home });
+    try { await checkAccess(entry); }
     catch (error) {
       if (error.code === 'ENOENT') return null;
       throw error;
     }
-    return requested;
+    return entry;
   }
   const binary = await resolvePath(requested).catch(error => {
     if (error.code !== 'ENOENT') throw error;
@@ -193,9 +192,7 @@ if (!/^(?:mcp_+)?evaluate_+operate$/.test(name ?? '')) {
 
 async function privateRun(binary, vendor, loggedIn, call) {
   const home = homedir();
-  if (vendor === 'claude' && binary !== claudeCcpPath(home)) {
-    throw Object.assign(new Error(`Claude launches must use CCP entry ${claudeCcpPath(home)} (ccp-required)`), { code: 'ccp-required' });
-  }
+  if (vendor === 'claude') validateCcpClaudeEntry(binary, { ...process.env, HOME: home });
   const root = await mkdtemp('/private/tmp/loom-skill-eval-');
   try {
     const paths = Object.fromEntries(['home', 'work', 'tmp', 'data'].map(name => [name, join(root, name)]));
@@ -344,7 +341,7 @@ async function main() {
   const arm = await loadArm(flags.arm);
   const sizes = Object.fromEntries(roles.map(role => [role, describeSkill(arm.skills[role])]));
   if (flags.describe) return console.log(JSON.stringify({ arm: arm.id, sizes, scenarios: scenarios.map(({ id, role }) => ({ id, role })) }, null, 2));
-  const requestedBinary = flags.binary ?? (flags.cli === 'claude' ? claudeCcpPath() : '');
+  const requestedBinary = flags.binary ?? (flags.cli === 'claude' ? claudeCcpPath(homedir(), process.env) : '');
   if (!vendors.includes(flags.cli) || !flags.model || !isAbsolute(requestedBinary) || !flags.out) {
     throw new Error('Provide --cli codex|claude|agy|gemini --binary /absolute/path --model ID --out FILE [--runs N] [--case ID]');
   }
@@ -356,7 +353,7 @@ async function main() {
       !Number.isSafeInteger(repeats) || repeats < 1 || !Number.isSafeInteger(jobs) || jobs < 1 || jobs > 6) {
     throw new Error('Invalid case, repeat count, or concurrency');
   }
-  const binary = await resolveEvalBinary(flags.cli, requestedBinary);
+  const binary = await resolveEvalBinary(flags.cli, requestedBinary, { env: process.env });
   const out = resolve(flags.out);
   const reporting = relative(repo, out);
   if (reporting.startsWith('../') || !reporting.startsWith('tasks/SKILL-SPLIT-1/')) {

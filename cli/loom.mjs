@@ -49,13 +49,19 @@ const help = {
   ],
   status: ['loom status --project DIR [--json]'],
   accounts: ['loom accounts [--project DIR] [--json] [--refresh]'],
-  up: ['loom up [--project DIR]'],
+  up: [
+    'loom up [--resume | --fresh] [--cli CLI] [--model MODEL] [--effort EFFORT] [--entry PATH] [--account-dir DIR] [--cwd DIR] [--timeout-ms N] [--json]',
+    'Starts or resumes Super in the global "Loom" space. Legacy: loom up --project DIR (use loom project up DIR).',
+  ],
+  project: ['loom project up [DIR] [--project DIR]'],
+  recover: ['loom recover [--project DIR | --all-projects] [--json]'],
+  resume: ['loom resume <addr> [--project DIR] [--cli CLI] [--model MODEL] [--account-dir DIR] [--entry PATH] [--timeout-ms N] [--json]'],
   tui: ['loom tui [--project DIR | --all] [--once]'],
   layout: [
     'loom layout get <leader|auditor|status> [--project DIR] [--json]',
     'loom layout adopt --project DIR --leader HC_ADDRESS --auditor HC_ADDRESS',
   ],
-  super: ['loom super --terminal HC_ADDRESS [--project DIR]'],
+  super: ['loom super --terminal HC_ADDRESS [--project DIR]', 'loom super --close [--reason TEXT]'],
   cost: ['loom cost [--project DIR]', 'Reports role usage, rotation briefing tokens, the rolling consumption pyramid, estimated USD costs, session-tree RSS and per-turn acceptance timing.'],
   gate: ['loom gate pack <gate-id> [--round N] [--reuse] [--project DIR] [--base REF] [--candidate REF] [--question TEXT]'],
   escalate: ['loom escalate <gate-id> --reason REASON --evidence TEXT [--round N] [--project DIR] [--base REF] [--candidate REF]',
@@ -101,10 +107,13 @@ const commands = {
   'worker-handoff': { ...projectArgs, ...strings('wip', 'passed', 'pending', 'reason', 'evidence') },
   status: { ...projectArgs, ...flags('json') },
   accounts: { ...projectArgs, ...flags('json', 'refresh') },
-  up: projectArgs,
+  up: { ...projectArgs, ...flags('resume', 'fresh', 'json'), ...strings('cli', 'model', 'effort', 'entry', 'account-dir', 'cwd', 'timeout-ms', 'cli-version') },
+  project: projectArgs,
+  recover: { ...projectArgs, ...flags('all-projects', 'json') },
+  resume: { ...projectArgs, ...strings('cli', 'model', 'account-dir', 'entry', 'timeout-ms', 'cli-version'), ...flags('json') },
   tui: { ...projectArgs, ...flags('all', 'once') },
   layout: { ...projectArgs, ...strings('leader', 'auditor'), ...flags('json') },
-  super: { ...projectArgs, ...strings('terminal') },
+  super: { ...projectArgs, ...strings('terminal', 'reason'), ...flags('close') },
   gate: { ...projectArgs, ...strings('base', 'candidate', 'question', 'round'), ...flags('reuse') },
   escalate: { ...projectArgs, ...strings('base', 'candidate', 'reason', 'evidence', 'round') },
   memory: { ...projectArgs, ...flags('json') },
@@ -308,20 +317,108 @@ export async function main(args) {
         },
       });
     }
-    if (['up', 'tui', 'layout', 'super'].includes(command)) {
+    if (['up', 'project', 'recover', 'resume', 'tui', 'layout', 'super'].includes(command)) {
       const { values, positionals } = parse(command, rest);
       if (command === 'tui') {
         if (positionals.length || values.all && values.project !== undefined) invalid(help.tui[0]);
         const { statusTui } = await import('./status-tui.mjs');
         return await statusTui({ project: values.all ? undefined : projectDirectory(values.project), once: values.once });
       }
+      async function runProjectUp(project) {
+        await startDaemon(project);
+        const { registerGlobalProject } = await import('../daemon/global-registry.mjs');
+        const { releaseId } = await import('../daemon/release.mjs');
+        try { registerGlobalProject(project, { release: releaseId(), lastOnlineAt: Date.now(), lastShutdown: 'abnormal' }); }
+        catch { /* Global registry updates are best-effort if LOOM_GLOBAL_DIR is unwritable. */ }
+        try {
+          return { ...await request(project, 'layout-up'), ...projectReceipt(project) };
+        } catch (error) {
+          if (error.code === 'herdr-disabled') {
+            return { ok: true, layout: null, layoutSkipped: 'herdr-disabled', ...projectReceipt(project) };
+          }
+          throw error;
+        }
+      }
+      if (command === 'project') {
+        const [action, dir] = positionals;
+        if (action !== 'up' || positionals.length > 2 || dir && values.project !== undefined) invalid(help.project[0]);
+        emit(await runProjectUp(projectDirectory(dir ?? values.project)));
+        return 0;
+      }
+      if (command === 'up') {
+        if (values.project !== undefined) {
+          if (positionals.length) invalid(help.up[0]);
+          console.error('loom up --project DIR 已更名为 loom project up DIR，请改用新命令。');
+          const res = await runProjectUp(projectDirectory(values.project));
+          emit({ ...res, deprecated: 'Use loom project up DIR' });
+          return 0;
+        }
+        if (positionals.length) invalid(help.up[0]);
+        const timeoutMs = values['timeout-ms'] === undefined ? undefined : positiveNumber(values['timeout-ms']);
+        if (values['timeout-ms'] !== undefined && timeoutMs === undefined) invalid('Expected a positive integer for --timeout-ms');
+        const { formatSuperChooseText, superUp } = await import('../daemon/super-up.mjs');
+        const result = await superUp({
+          resume: values.resume, fresh: values.fresh, cli: values.cli, model: values.model, effort: values.effort,
+          entry: values.entry, accountDir: values['account-dir'], cwd: values.cwd, cliVersion: values['cli-version'],
+          ...(timeoutMs !== undefined && { readyTimeoutMs: timeoutMs }),
+        });
+        if (result.action === 'choose' && !values.json) console.log(formatSuperChooseText(result));
+        else emit(result);
+        return 0;
+      }
+      if (command === 'recover') {
+        if (positionals.length || values['all-projects'] && values.project !== undefined) invalid(help.recover[0]);
+        const { formatRecoverText, recoverAllProjects, recoverProject, requireSuperCaller } = await import('../daemon/recover.mjs');
+        const scope = values['all-projects'] ? undefined : projectDirectory(values.project);
+        requireSuperCaller(process.env, scope);
+        let result;
+        if (values['all-projects']) {
+          result = await recoverAllProjects();
+        } else {
+          try { result = { ok: true, ...await request(scope, 'recover') }; }
+          catch (error) {
+            if (!daemonAbsent(error)) throw error;
+            result = { ok: true, ...await recoverProject(scope) };
+          }
+        }
+        if (values.json) emit(result);
+        else console.log(formatRecoverText(result));
+        return 0;
+      }
+      if (command === 'resume') {
+        const [target] = positionals;
+        if (positionals.length !== 1 || !target.trim()) invalid(help.resume[0]);
+        const timeoutMs = values['timeout-ms'] === undefined ? undefined : positiveNumber(values['timeout-ms']);
+        if (values['timeout-ms'] !== undefined && timeoutMs === undefined) invalid('Expected a positive integer for --timeout-ms');
+        const project = projectDirectory(values.project);
+        const { resolveAccountDir } = await import('../daemon/global-registry.mjs');
+        const accountDirs = {
+          codex: resolveAccountDir('codex'), agy: resolveAccountDir('agy'),
+          claude: resolveAccountDir('claude'), opencode: resolveAccountDir('opencode'),
+        };
+        try {
+          const result = await request(project, 'resume', {
+            target, cli: values.cli, model: values.model, accountDir: values['account-dir'], accountDirs,
+            entry: values.entry, cliVersion: values['cli-version'], ...(timeoutMs !== undefined && { timeoutMs }),
+          });
+          emit({ ...result, ...projectReceipt(project) });
+          return 0;
+        } catch (error) {
+          if (daemonAbsent(error)) {
+            throw new CommandError('not-ready', `loomd is not running for this project. Run loom project up ${project} first.`);
+          }
+          throw error;
+        }
+      }
+      if (command === 'super' && values.close) {
+        if (positionals.length || values.terminal !== undefined) invalid(help.super[1]);
+        const { superClose } = await import('../daemon/super-up.mjs');
+        emit(superClose({ reason: values.reason ?? 'normal' }));
+        return 0;
+      }
       const project = projectDirectory(values.project);
       const { readLayout, superLayout, visibleRoles } = await import('../daemon/herdr-layout.mjs');
-      if (command === 'up') {
-        if (positionals.length) invalid(help.up[0]);
-        await startDaemon(project);
-        emit(await request(project, 'layout-up'));
-      } else if (command === 'super') {
+      if (command === 'super') {
         if (positionals.length || !/^t[0-9a-z]+$/.test(values.terminal ?? '')) invalid(help.super[0]);
         emit({ ok: true, layout: await superLayout(project, values.terminal) });
       } else if (positionals[0] === 'get') {
@@ -528,7 +625,7 @@ export async function main(args) {
     return 0;
   } catch (error) {
     const code = typeof error.code === 'string' && /^[a-z-]+$/.test(error.code) ? error.code : 'unavailable';
-    emit({ ok: false, error: { code, message: error.message } });
+    emit({ ok: false, error: { code, message: error.message, ...(error.freshCommand && { freshCommand: error.freshCommand }) } });
     return errorExit(code);
   }
 }

@@ -145,7 +145,7 @@ test('loomd trusts launch capabilities over caller, sender, and role hints', { t
   const proposals = await wire(project, 'memory-proposals', { decision: 'list' }, { capability: auditor.token });
   assert.equal(proposals.ok, true, JSON.stringify(proposals));
   await denied('mem', { action: 'search', target: 'SOCK-AUTH fixture' }, { capability: external });
-  for (const command of ['daemon-stop', 'upgrade-plan', 'upgrade-apply', 'upgrade-holder', 'layout-up', 'layout-adopt', 'switch']) {
+  for (const command of ['daemon-stop', 'upgrade-plan', 'upgrade-apply', 'upgrade-holder', 'layout-up', 'layout-adopt', 'switch', 'recover', 'resume']) {
     await denied(command, {}, { caller: 'super' });
   }
   const hostGrant = { target: 'HOST-CARD', tier: 'host', reason: 'Read-only fixture' };

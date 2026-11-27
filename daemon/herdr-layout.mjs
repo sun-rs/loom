@@ -9,6 +9,7 @@ import { runtimeDirectory } from '../cli/project.mjs';
 import { absoluteCommand } from '../runtimes/tui/transport.mjs';
 import { readText, writeState } from './io.mjs';
 import { managedCliPath, releaseRoot } from './release.mjs';
+import { listGlobalProjects } from './global-registry.mjs';
 
 const exec = promisify(execFile);
 const layoutPath = project => join(runtimeDirectory(project), 'layout.json');
@@ -341,29 +342,43 @@ export function projectLayout(project, { connect = herdrCommands } = {}) {
   };
 }
 
-export async function superLayout(project, terminalAddress, commands) {
+function superStatusArgv(env = process.env) {
+  const vars = [];
+  if (env.XDG_STATE_HOME) vars.push(`XDG_STATE_HOME=${env.XDG_STATE_HOME}`);
+  if (env.LOOM_GLOBAL_DIR) vars.push(`LOOM_GLOBAL_DIR=${env.LOOM_GLOBAL_DIR}`);
+  return ['/usr/bin/env', ...vars, process.execPath, join(releaseRoot, 'bin', 'loom'), 'tui', '--all'];
+}
+
+export async function ensureSuperSpace(cwd, commands, env = process.env) {
   commands ??= await herdrCommands();
   const path = join(localState(), 'herdr-super.json');
   mkdirSync(dirname(path), { recursive: true, mode: 0o700 });
-  const layout = panels(project, path, 'Loom', 'loom-global', ['super', 'status'], commands);
+  const layout = panels(cwd, path, 'Loom', 'loom-global', ['super', 'status'], commands);
+  await layout.prepare(superStatusArgv(env));
+  return { layout, state: layout.load(), commands };
+}
+
+export async function superLayout(project, terminalAddress, commands, env = process.env) {
+  const { layout } = await ensureSuperSpace(project, commands, env);
   const terminal = await layout.get(terminalAddress);
   if (terminal?.state !== 'live') throw new Error('Specify a live local Super terminal');
-  const stateEnvironment = process.env.XDG_STATE_HOME ? [`XDG_STATE_HOME=${process.env.XDG_STATE_HOME}`] : [];
-  await layout.prepare(['/usr/bin/env', ...stateEnvironment, process.execPath, join(releaseRoot, 'bin', 'loom'), 'tui', '--all']);
   layout.publish('super', await layout.adopt('super', terminal));
   return layout.load();
 }
 
-export function herdrProjects() {
+export function herdrProjects(env = process.env) {
   const roster = join(localState(), 'herdr-projects');
-  let files;
+  let files = [];
   try { files = readdirSync(roster, { withFileTypes: true }); }
   catch (error) {
-    if (error.code === 'ENOENT') return [];
-    throw error;
+    if (error.code !== 'ENOENT') throw error;
   }
-  return files.filter(file => file.isFile() && /^[0-9a-f]{64}\.json$/.test(file.name))
+  const fromRoster = files.filter(file => file.isFile() && /^[0-9a-f]{64}\.json$/.test(file.name))
     .map(file => readLayoutFile(join(roster, file.name)))
-    .filter(project => typeof project === 'string' && isAbsolute(project) && readLayout(project))
-    .sort();
+    .filter(project => typeof project === 'string' && isAbsolute(project) && readLayout(project));
+  let fromGlobal = [];
+  try {
+    fromGlobal = listGlobalProjects(env).map(item => item.dir).filter(dir => isAbsolute(dir) && readLayout(dir));
+  } catch { /* Global registry is optional for layout discovery. */ }
+  return [...new Set([...fromRoster, ...fromGlobal])].sort();
 }

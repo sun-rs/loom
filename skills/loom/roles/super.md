@@ -10,3 +10,8 @@
 17. 阶段通过后先归档结果，运行 `loom notifications --project "$PROJECT" --complete "$SUMMARY" --phase "$PHASE"`。通知待发时记录 ID，恢复后用原参数重试。
 18. 项目收尾时先读 [收尾](../references/close.md)、关闭所属会话。清理前归档暂存、未暂存及获准范围内的未跟踪草稿。
 19. 持久记忆写经证实的用户偏好和长期裁决。先核对来源和重复条目。
+20. 中断/重启后的恢复步骤：
+- 用户运行 `loom up` 拉起 Super（异常退出且有会话 ID 时在 `loom up --resume` 与 `loom up --fresh` 间选择；正常结束一律新开）。
+- 读 `~/.loom/super/live.md` 与 `~/.loom/super/handoff.md`，运行 `loom recover --all-projects`（只读）盘点应在而不在的会话。
+- 逐项目按需 `loom project up DIR`，按 Auditor → Leader → 未收口 worker 错峰执行 `loom resume <addr>`（不支持原生续接时按提示用交接单新开；Claude 经 CCP 接口）。
+- 每次裁决后与会话结束前更新 `~/.loom/super/handoff.md`（≤60 行：在途项目、待决事项、最近裁决）。
