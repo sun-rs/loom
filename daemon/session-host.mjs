@@ -2,6 +2,7 @@ import { createHash, randomUUID } from 'node:crypto';
 import { appendFileSync, linkSync, lstatSync, readFileSync, unlinkSync } from 'node:fs';
 import { createServer } from 'node:net';
 import { join } from 'node:path';
+import { setTimeout as delay } from 'node:timers/promises';
 import { controllerFile, releaseRoot } from './release.mjs';
 import { hostDirectory, hostMethods, hostProtocol, hostSocket, hostUUID, privateHostSocket,
   readJSON, receiveHostLine } from './host-control.mjs';
@@ -10,6 +11,7 @@ import { oarControl, oarSnapshot, openOar, trackOar } from './oar.mjs';
 import { processTable } from './processes.mjs';
 import { closeHostChildren, disposeSession, ownedHostChildren, withDeadline } from './session-close.mjs';
 import { idleForRelease } from './worker-retention.mjs';
+import { hostGrants } from './host-grants.mjs';
 
 const oarVersion = () => JSON.parse(readFileSync(new URL('../package.json', import.meta.resolve('@botiverse/oar')))).version;
 const refused = (message, kind = 'input-refused') => Object.assign(new Error(message), { kind });
@@ -19,7 +21,7 @@ export async function main(project, addr, incarnation, release, { ownerGraceMs =
   if (!/^oar-/.test(addr) || !hostUUID.test(addr.slice(4)) || !hostUUID.test(incarnation)) throw new Error('Invalid host identity');
   const dir = hostDirectory(project, addr, incarnation);
   const directory = lstatSync(dir);
-  const { row } = readJSON(join(dir, 'launch.json'));
+  const { row, awaitHostGrant } = readJSON(join(dir, 'launch.json'));
   if (row.addr !== addr || row.backend !== 'headless') throw new Error('Invalid host launch intent');
   const path = hostSocket(project, addr, incarnation);
   const identity = (await processTable([process.pid])).get(process.pid);
@@ -191,10 +193,26 @@ export async function main(project, addr, incarnation, release, { ownerGraceMs =
     }
   }
 
+  const grants = awaitHostGrant ? hostGrants(project, {}) : undefined;
+  const cancelled = () => stopRequested || !stateDirectoryPresent() || readJSON(join(dir, 'cancelled.json'));
+
+  async function waitForHostGrant() {
+    // Loomd writes a reservation before launch and records usage after startup.
+    writeState(join(dir, 'preflight-ready.json'), 'true');
+    for (;;) {
+      if (cancelled()) throw new Error('Host launch was cancelled');
+      if (Date.now() >= row.hostGrant.expiresAt) throw new Error('Host grant expired before native launch');
+      if (grants.permitted(row, row.hostGrant.id)) return;
+      await delay(50);
+    }
+  }
+
   try {
     for (const receipt of jsonRows(prepareJournal(journal))) receipts.set(receipt.key, receipt);
     if (row.hostGrant && Date.now() >= row.hostGrant.expiresAt) throw new Error('Host grant expired before native launch');
-    session = await withDeadline(openOar(row, project, row.sessionId), 35_000, 'OAR host startup timed out', 'startup-timeout');
+    session = await withDeadline(openOar(row, project, row.sessionId, awaitHostGrant ? waitForHostGrant : undefined),
+      35_000, 'OAR host startup timed out', 'startup-timeout');
+    if (grants && (cancelled() || !grants.permitted(row, row.hostGrant.id))) throw new Error('Host launch authorization ended during startup');
     if (row.sessionId && session.id !== row.sessionId) throw new Error('OAR resumed a different native session');
     let nativeExited = false;
     runtime = trackOar(project, row, session, error => console.error(error.message), incarnation, () => {
@@ -236,6 +254,7 @@ export async function main(project, addr, incarnation, release, { ownerGraceMs =
     ownerTimer.unref();
     if (stopRequested || nativeExited) retire();
   } catch (error) {
+    stopRequested = true;
     await releaseSession().catch(error => console.error(error.message));
     try {
       if (stateDirectoryPresent()) writeState(join(dir, 'failed.json'), JSON.stringify({ message: error.message }));

@@ -323,6 +323,98 @@ test('real ACP text chunks without a final boundary produce an UNCONFIRMED wave 
   assert.equal(f.deliveries(message.id).length, 1);
 });
 
+test('Codex host launches without Seatbelt and keeps the host tool guard', { timeout: 25_000, skip: nestedSeatbeltLimited }, async t => {
+  const f = fixtureProject(t);
+  f.write('codex-host-probes.json', true);
+  await f.start();
+  const { grant } = await f.rpc('grant', { target: 'host', tier: 'host', reason: 'Fixture' });
+  const { session } = await f.spawn('worker', 'host', { tier: 'host' });
+  for (const tier of ['integration', 'sandbox']) await f.spawn('worker', tier, { tier });
+  const [host, ...restricted] = f.lines('codex-host-launches.jsonl');
+  assert.deepEqual(host, { sandbox: ['sandbox_mode="danger-full-access"'], wrapped: false,
+    sandboxExec: 'ok', pty: 'ok', guard: true, hooks: true });
+  assert.equal(restricted.length, 2);
+  for (const launch of restricted) {
+    assert.deepEqual(launch.sandbox, []);
+    assert.match(launch.profile, /^default_permissions="loom-worker-/);
+  }
+  const [entry] = f.read('.project/loomd/host-grants.json').grants;
+  assert.equal(entry.id, grant.id);
+  assert.deepEqual(entry.claims.map(claim => claim.addr), [session.addr]);
+});
+
+test('headless agy tiers launch with the recorded 1.5.18 ACP flags',
+  { timeout: 25_000, skip: nestedSeatbeltLimited }, async t => {
+  const f = fixtureProject(t);
+  await f.start();
+  await f.rpc('grant', { target: 'host', tier: 'host', reason: 'Fixture' });
+  for (const tier of ['host', 'integration', 'sandbox']) {
+    const { session } = await f.spawn('worker', tier, { cli: 'agy', tier });
+    assert.ok(session.sessionId);
+  }
+  const [host, integration, sandbox] = f.lines('agy-acp-argv.jsonl');
+  assert.ok(host.includes('--add-dir'));
+  assert.ok(integration.includes('--log-file') && sandbox.includes('--log-file'));
+});
+
+test('invariant [idempotency] agy preflight leaves the host grant available for a successful retry',
+  { timeout: 25_000, skip: nestedSeatbeltLimited }, async t => {
+  const f = fixtureProject(t);
+  const task = 'ACP-PREFLIGHT';
+  const spawn = () => f.spawn('worker', task, { cli: 'agy', tier: 'host' });
+  const claims = () => f.read('.project/loomd/host-grants.json').grants[0].claims;
+  await f.start();
+  await f.rpc('grant', { target: task, tier: 'host', reason: 'Fixture' });
+  f.write('agy-omit-acp-flag.json', '--sandbox');
+  await assert.rejects(spawn(), /agy ACP preflight.*--sandbox/);
+  assert.deepEqual(claims(), []);
+  assert.deepEqual(f.lines('agy-acp-argv.jsonl'), []);
+  rmSync(join(f.project, 'agy-omit-acp-flag.json'));
+  const { session } = await spawn();
+  assert.deepEqual(claims().map(claim => claim.addr), [session.addr]);
+  await assert.rejects(spawn(), { code: 'host-grant-exhausted' });
+});
+
+test('invariant [persistence] a failed native host startup releases its reservation and cannot use a replacement grant',
+  { timeout: 25_000, skip: nestedSeatbeltLimited }, async t => {
+  const f = fixtureProject(t);
+  const task = 'ACP-FAILED-START';
+  const spawn = () => f.spawn('worker', task, { cli: 'agy', tier: 'host' });
+  const grant = () => f.rpc('grant', { target: task, tier: 'host', reason: 'Fixture' });
+  const ledger = () => f.read('.project/loomd/host-grants.json').grants;
+  const first = await f.start();
+  await grant();
+  f.write('agy-fail-start.json', true);
+  await assert.rejects(spawn(), /fixture rejected ACP startup/);
+  assert.deepEqual(ledger()[0].claims, []);
+  assert.deepEqual(ledger()[0].reservations, []);
+  const index = projectIndex(f.project);
+  const [failed] = index.query({ task });
+  assert.ok(failed.endedAt);
+  assert.equal(f.lines('agy-acp-argv.jsonl').length, 1);
+  rmSync(join(f.project, 'agy-fail-start.json'));
+  const { grant: replacement } = await grant();
+  assert.equal(replacement.remaining, 1);
+  signal(-first.child.pid, 'SIGTERM');
+  await first.exit;
+  // Replay an error record whose index and grant-binding cleanup was interrupted.
+  const jobFile = `.project/loomd/sessions/${failed.addr}.json`;
+  const { id, expiresAt, write } = replacement;
+  const stale = f.read(jobFile);
+  delete stale.stopping;
+  delete stale.host;
+  stale.pendingHostGrant = { id, expiresAt, write };
+  f.write(jobFile, stale);
+  index.update(failed.addr, { endedAt: null });
+  await f.start();
+  await until(() => index.query({ addr: failed.addr })[0].endedAt, 'failed host recovery did not close the job');
+  assert.deepEqual(ledger()[1].claims, []);
+  const { session } = await spawn();
+  assert.notEqual(session.addr, failed.addr);
+  assert.deepEqual(ledger()[1].claims.map(claim => claim.addr), [session.addr]);
+  assert.equal(f.lines('agy-acp-argv.jsonl').length, 2);
+});
+
 test('definitive Codex native refusals do not escalate as uncertain', { timeout: 25_000 }, async t => {
   const f = fixtureProject(t, { env: { LOOM_UNCERTAIN_MS: '1500' } });
   await f.start();

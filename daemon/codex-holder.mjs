@@ -20,7 +20,7 @@ import { seniorToolEnvironment } from './senior-tools.mjs';
 
 export const pipeTransport = 'holder-pipes';
 export const useCodexHolder = (row, job) => row.cli === 'codex' &&
-  (job.host ? job.host.transport === pipeTransport : !job.integration && !job.hostGrant && process.env.LOOM_TEST_CODEX_PIPES === '1');
+  (job.host ? job.host.transport === pipeTransport : !job.integration && !job.hostGrant && !job.pendingHostGrant && process.env.LOOM_TEST_CODEX_PIPES === '1');
 const sameBirth = (identity, live) => live && live.pid === identity?.pid &&
   live.started === identity.started && live.uid === process.getuid();
 const unknown = () => Object.assign(new Error('Codex holder liveness is unknown; preserving the existing holder binding'),

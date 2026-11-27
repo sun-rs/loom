@@ -139,6 +139,7 @@ export function ownedSessions(project, index, report, {
     if (!entry.isFile() || !/^(?:loom|oar)-[0-9a-f-]{36}\.json$/.test(entry.name)) continue;
     const job = JSON.parse(readText(join(path, entry.name)));
     if (file(job.row.addr) !== join(path, entry.name) || !within(project, job.row.cwd)) throw new Error('Invalid stored session');
+    if (storedWorkerTier(job) === 'host' && job.error) job.stopping = true;
     jobs.set(job.row.addr, job);
   }
   const save = job => writeState(file(job.row.addr), JSON.stringify(job) + '\n');
@@ -425,6 +426,7 @@ export function ownedSessions(project, index, report, {
       catch (error) { report(`Could not remove finished session capability for ${row.addr}: ${error.code ?? 'filesystem error'}`); }
     }
     const final = row.endedAt === null ? index.update(row.addr, { endedAt: Math.max(row.startedAt, at) }) : row;
+    releaseHostReservation(job);
     if (job.hostGrant && !job.hostEvidencePath) {
       const evidence = await recordHostEvidence(project, final, job.hostGrant, events(row.addr));
       job.hostEvidencePath = evidence.path;
@@ -687,13 +689,38 @@ export function ownedSessions(project, index, report, {
       ...(deliver && { deliver, ...(input.barrier && { barrier: input.barrier }) }),
       ...(cli === 'opencode' && mode === 'tui' && { plannedNativeId: `ses_${randomUUID().replaceAll('-', '')}` }) };
     if (workerTier === 'host') {
-      const waves = readPolicy(project, { optional: true }).roles?.worker?.tiers;
-      job.hostGrant = hostGrants.reserve(row, waves && Object.hasOwn(waves, row.wave) && waves[row.wave] === 'host');
+      job.pendingHostGrant = hostGrants.prepare(row, policyAllowsHost(row));
       job.prompt += '\n\nTrusted host grant for this card. Use absolute native CLI paths. Keep credentials, global config, CCP, Solars, rah_os, loom-next and unrelated processes or panes outside the task. Run only the authorized work and end the card with a conclusion.';
     }
     save(job);
     jobs.set(addr, job);
     return job;
+  }
+
+  function policyAllowsHost(row) {
+    const waves = readPolicy(project, { optional: true }).roles?.worker?.tiers;
+    return waves && Object.hasOwn(waves, row.wave) && waves[row.wave] === 'host';
+  }
+
+  function authorizeHostLaunch(job) {
+    if (!job.pendingHostGrant) return;
+    if (job.stopping || job.error) throw new ErrorCode('not-ready', 'Host launch was cancelled');
+    hostGrants.reserve(job.row, policyAllowsHost(job.row), job.pendingHostGrant.id);
+  }
+
+  function confirmHostLaunch(job) {
+    if (!job.pendingHostGrant) return;
+    if (job.stopping || job.error) throw new ErrorCode('not-ready', 'Host launch was cancelled');
+    job.hostGrant = hostGrants.claim(job.row, policyAllowsHost(job.row), job.pendingHostGrant.id);
+    delete job.pendingHostGrant;
+    save(job);
+  }
+
+  function releaseHostReservation(job) {
+    if (!job.pendingHostGrant) return;
+    hostGrants.release(job.row, job.pendingHostGrant.id);
+    delete job.pendingHostGrant;
+    save(job);
   }
 
   function runtimeSelection(row) {
@@ -734,7 +761,9 @@ export function ownedSessions(project, index, report, {
       throw new ErrorCode('not-ready', 'Codex attachment retry budget exhausted');
     }
     try {
-      const runtime = await (pipe ? attachCodexHolder : attachHost)(project, row, job, save, controller, { ...options, capabilities });
+      const runtime = await (pipe ? attachCodexHolder : attachHost)(project, row, job, save, controller, {
+        ...options, capabilities, authorizeLaunch: () => authorizeHostLaunch(job),
+      });
       unknownLiveness.delete(row.addr);
       return runtime;
     } catch (error) {
@@ -745,8 +774,10 @@ export function ownedSessions(project, index, report, {
   }
 
   async function openFixture(row, job) {
+    authorizeHostLaunch(job);
+    const hostGrant = job.pendingHostGrant ?? job.hostGrant;
     const session = await open({ ...row, ...(job.fast !== undefined && { fast: job.fast }),
-      ...(job.hostGrant && { hostGrant: job.hostGrant }) }, project, row.sessionId,
+      ...(hostGrant && { hostGrant }) }, project, row.sessionId,
       capabilities?.ensureSession(row.addr).token);
     try {
       if (row.sessionId && session.id !== row.sessionId) throw new Error('OAR resumed a different native session');
@@ -767,7 +798,7 @@ export function ownedSessions(project, index, report, {
     }
     let row = rowFor(job.row.addr);
     if (row && row.endedAt !== null) return row;
-    if (storedWorkerTier(job) === 'host' && !job.stopping && !hostGrants.active(job.row, job.hostGrant?.id)) {
+    if (storedWorkerTier(job) === 'host' && !job.stopping && !job.pendingHostGrant && !hostGrants.active(job.row, job.hostGrant?.id)) {
       if (row) return stop(row);
       throw new ErrorCode('host-grant-expired', 'Host launch requires an active reservation');
     }
@@ -854,6 +885,7 @@ export function ownedSessions(project, index, report, {
       }
     }
     enforceDeny(runtimeSelection(row).effective, job.deny ?? []);
+    confirmHostLaunch(job);
     if (!mail.messages.some(message => message.id === job.firstId)) {
       mail.enqueue({ id: job.firstId, target: targetBinding(row), createdAt: row.startedAt,
         text: job.prompt, requestedMode: 'queue', mode: 'queue', phase: 'queued', startup: true,
@@ -866,12 +898,13 @@ export function ownedSessions(project, index, report, {
   }
 
   async function failSpawn(job, error) {
-    if (error.code === 'liveness-unknown') return;
+    if (error.code === 'liveness-unknown' && !job.pendingHostGrant) return;
     job.error = error.message;
     job.stopping = true;
     save(job);
     const row = rowFor(job.row.addr);
     if (row?.endedAt === null) await stop(row).catch(cleanup => report(cleanup.message));
+    else releaseHostReservation(job);
     if (job.handoverFrom && rotatingRoles.includes(job.row.role)) index.failRotation(job.row.addr, Date.now(), error.message);
   }
 
@@ -1025,9 +1058,10 @@ export function ownedSessions(project, index, report, {
             }
           }
         }
-        if (row.endedAt !== null && (!job.endRecorded || job.hostGrant && !job.hostEvidencePath)) await finish(job, row);
+        if (row.endedAt !== null && (job.pendingHostGrant || !job.endRecorded || job.hostGrant && !job.hostEvidencePath)) await finish(job, row);
         await retainCompaction(job, row);
       } catch (error) {
+        if (job.pendingHostGrant && !job.stopping && error.code !== 'liveness-unknown') await failSpawn(job, error);
         if (!(retryAt.get(addr) > Date.now())) {
           report(`${addr} recovery: ${error.message}`);
           retryAt.set(addr, Date.now() + 10_000);

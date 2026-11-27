@@ -16,7 +16,7 @@ function fixture(t) {
   return project;
 }
 
-test('grant uses and expirations survive reloading state', t => {
+test('invariant [persistence] grant reservations, claims and expirations survive reloading state', t => {
   const project = fixture(t);
   let time = Date.now();
   const events = new Map();
@@ -24,16 +24,28 @@ test('grant uses and expirations survive reloading state', t => {
     for (const event of incoming) events.set(event.id, event);
   } });
   const row = { project, task: 'PROBE', wave: 'W', addr: 'first' };
+  const second = { ...row, addr: 'second' };
+  const third = { ...row, addr: 'third' };
   const grant = open().grant(project, { target: row.task, reason: 'Fixture', ttlMs: 2000, uses: 2, wave: false, write: [] }, 'super');
-  assert.equal(open().reserve(row, false).id, grant.id);
-  assert.equal(open().reserve({ ...row, addr: 'second' }, false).id, grant.id);
-  assert.throws(() => open().reserve({ ...row, addr: 'third' }, false), { code: 'host-grant-exhausted' });
+  assert.equal(open().prepare(row, false).id, grant.id);
+  assert.equal(open().permitted(row, grant.id), false);
+  open().reserve(row, false, grant.id);
+  open().reserve(second, false, grant.id);
+  assert.equal(open().permitted(row, grant.id), true);
+  assert.equal(open().active(row, grant.id), false);
+  assert.throws(() => open().reserve(third, false, grant.id), { code: 'host-grant-exhausted' });
+  open().release(second, grant.id);
+  assert.equal(open().permitted(second, grant.id), false);
+  assert.equal(open().claim(row, false, grant.id).id, grant.id);
+  assert.equal(open().claim(row, false, grant.id).id, grant.id);
+  open().reserve(third, false, grant.id);
+  open().claim(third, false, grant.id);
   assert.equal(open().active(row, grant.id), true);
-  assert.equal(open().active({ ...row, addr: 'third' }, grant.id), false);
+  assert.equal(open().active(second, grant.id), false);
   time += 2001;
   open().sweep();
   assert.equal(open().active(row, grant.id), false);
-  assert.throws(() => open().reserve({ ...row, addr: 'third' }, false), { code: 'host-grant-expired' });
+  assert.throws(() => open().reserve(third, false, grant.id), { code: 'host-grant-expired' });
   assert.ok([...events.values()].some(event => event.type === 'host-tier-expired' && event.at === time));
   assert.equal([...events.values()].filter(event => event.type === 'host-tier-used').length, 2);
 });
@@ -47,7 +59,7 @@ test('host write grants resolve through ancestors and reject aliases into protec
   assert.throws(() => hostWritePaths(project, ['/']), { code: 'invalid-arguments' });
 });
 
-test('macOS host boundary allows named paths and blocks ungranted writes',
+test('macOS Claude host boundary allows named paths and blocks ungranted writes',
   { skip: process.platform !== 'darwin' || nestedSeatbeltLimited }, t => {
   const project = fixture(t);
   const outside = fixture(t);
@@ -56,7 +68,7 @@ test('macOS host boundary allows named paths and blocks ungranted writes',
   mkdirSync(granted);
   const tmp = join(temporary, 't');
   mkdirSync(tmp);
-  const row = { cli: 'codex', addr: `oar-${randomUUID()}`, cwd: project, hostGrant: { write: [granted] } };
+  const row = { cli: 'claude', addr: `oar-${randomUUID()}`, cwd: project, hostGrant: { write: [granted] } };
   const launcher = hostWriteBoundary(project, row, { TMPDIR: tmp }, '/usr/bin/touch');
   assert.equal(spawnSync(launcher, [join(granted, 'granted')]).status, 0);
   assert.equal(spawnSync(launcher, [join(project, 'worktree')]).status, 0);

@@ -20,7 +20,9 @@ function inside(parent, child) {
   return path === '' || (!isAbsolute(path) && path !== '..' && !path.startsWith(`..${sep}`));
 }
 
-function stageHooks(directory, sink, captureScript, sessionId, allowNativeQuestions) {
+export function stageAgyHooks({ cwd, hookSink, captureScript = capture, expectedSessionId, allowNativeQuestions }) {
+  const directory = realpathSync(cwd);
+  const sink = resolve(directory, hookSink);
   mkdirSync(dirname(sink), { recursive: true, mode: 0o700 });
   const parent = realpathSync(dirname(sink));
   const stagingRoot = inside(directory, parent) ? realpathSync(tmpdir()) : parent;
@@ -28,7 +30,7 @@ function stageHooks(directory, sink, captureScript, sessionId, allowNativeQuesti
   const workspace = mkdtempSync(join(stagingRoot, 'loom-agy-hooks-'));
   const sinkPath = join(parent, basename(sink));
   try {
-    const config = hookConfig(event => [process.execPath, captureScript, sinkPath, directory, event, join(workspace, 'session'), sessionId ?? '', ...(allowNativeQuestions === false ? ['deny-questions'] : [])]
+    const config = hookConfig(event => [process.execPath, captureScript, sinkPath, directory, event, join(workspace, 'session'), expectedSessionId ?? '', ...(allowNativeQuestions === false ? ['deny-questions'] : [])]
       .map(quotePosixShell).join(' '));
     mkdirSync(join(workspace, '.agents'), { mode: 0o700 });
     writeFileSync(join(workspace, '.agents', 'hooks.json'), `${JSON.stringify(config, null, 2)}\n`, { mode: 0o600, flag: 'wx' });
@@ -59,7 +61,7 @@ export function launch({ model, effort, cwd, prompt, hookSink, statusLine, captu
 
   // Orca b7fd7caa3: src/main/agent-launch/trust/agent-trust-presets.ts:94-101, trustedWorkspaces.
   const trustedWorkspaces = [directory];
-  const workspace = hookSink ? stageHooks(directory, resolve(directory, hookSink), captureScript, expectedSessionId, allowNativeQuestions) : undefined;
+  const workspace = hookSink ? stageAgyHooks({ cwd: directory, hookSink, captureScript, expectedSessionId, allowNativeQuestions }) : undefined;
   if (workspace) {
     argv.push('--add-dir', workspace);
     trustedWorkspaces.push(workspace);
