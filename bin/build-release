@@ -1,0 +1,12 @@
+#!/bin/sh
+set -eu
+entry=$(/usr/bin/readlink -f "$0")
+cd "${entry%/*}/.."
+node=$(bin/loom-node -p 'process.execPath')
+node_dir=${node%/bin/node}
+PATH="$node_dir/bin:$PATH"
+export PATH
+npm_dir="$node_dir/lib/node_modules/npm"
+"$node" "$npm_dir/bin/npm-cli.js" ci
+"$node" "$npm_dir/node_modules/node-gyp/bin/node-gyp.js" rebuild --directory "$PWD/node_modules/node-pty" --nodedir "$node_dir"
+"$node" "$npm_dir/bin/npm-cli.js" run release:smoke

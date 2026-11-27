@@ -239,10 +239,16 @@ test('failed verification restores the old writer and a successful upgrade prese
   writeFileSync(main, candidateCode);
   const committed = await run('upgrade', '--to', candidate);
   assert.equal(committed.phase, 'committed', JSON.stringify(committed));
-  assert.notEqual((await run('daemon', 'status')).pid, failed.pid);
+  const published = await run('daemon', 'status');
+  assert.notEqual(published.pid, failed.pid);
+  assert.deepEqual(published.release.nodeRuntime, { path: process.execPath, version: process.versions.node, abi: process.versions.modules });
   const current = await run('upgrade', '--status');
   assert.deepEqual(current.sessions[0], original);
   await checkCapabilities();
+  const after = randomUUID();
+  assert.equal((await run('send', addr, '--id', after, 'Delivered after the successful hot upgrade')).ok, true);
+  await answered(after);
+  assert.equal((await run('doctor')).report.nodeRuntime.ok, true);
 });
 
 test('live legacy rights, Worker TTL and Status TUI survive an authenticated hot upgrade', { skip: !supported }, async t => {

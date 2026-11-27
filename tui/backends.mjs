@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { setTimeout as sleep } from 'node:timers/promises';
 import { controlHello, requestControl } from './pty-control.mjs';
 import { startPane } from '../runtimes/tui/hc.mjs';
+import { nodeRuntimeRoot } from '../lib/node-runtime.mjs';
 
 export function hcBackend({ command = 'hc' } = {}) {
   return {
@@ -34,6 +35,7 @@ export function hcWrappedBackend({ command = 'hc', modules } = {}) {
       socket = join(sessionDir, 'pty.sock'), placementLabels }) {
       const wrapEnv = {
         ...env,
+        LOOM_NODE_ROOT: nodeRuntimeRoot(),
         LOOM_PTY_SOCKET: socket,
         LOOM_PTY_PROVIDER: provider,
         LOOM_PTY_CLI: nativeCommand,

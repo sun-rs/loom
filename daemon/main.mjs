@@ -10,6 +10,7 @@ import { maxLine } from './rpc.mjs';
 import { projectLayout } from './herdr-layout.mjs';
 import { readText, syncDirectory } from './io.mjs';
 import { activeRelease, installManagedCli, nextController, releaseDigest, releaseId, releaseRoot, upgradeState } from './release.mjs';
+import { runningNode } from '../lib/node-runtime.mjs';
 import { beginUpgrade, checkUpgradeAttachments, daemonProtocol, liveHandoff, planUpgrade, selfCheck, validateHandoff, validateReattachment } from './upgrade.mjs';
 import { authorizeSocketCommand, hasStoredSessionCapability, mayUseLegacyCaller, socketCapabilities } from './socket-auth.mjs';
 import { preparePeerAuth } from './peer-auth.mjs';
@@ -38,7 +39,7 @@ function optionalTimeout(name) {
   return Number(raw);
 }
 
-export async function main(args, { pollInterval = 350, ...options } = {}) {
+export async function main(args, { pollInterval = 350, legacyNode, ...options } = {}) {
   const { values } = parseArgs({ args, options: { project: { type: 'string' }, help: { type: 'boolean', short: 'h' },
     'self-check': { type: 'boolean' }, 'check-attachments': { type: 'boolean' }, handoff: { type: 'string' },
     'handoff-recovery': { type: 'boolean' } } });
@@ -46,7 +47,7 @@ export async function main(args, { pollInterval = 350, ...options } = {}) {
     console.log(`loomd [--project DIR]\n${projectOption}`);
     return;
   }
-  if (values['self-check']) { console.log(JSON.stringify(await selfCheck())); return; }
+  if (values['self-check']) { console.log(JSON.stringify(await selfCheck(legacyNode))); return; }
   const project = projectDirectory(values.project);
   if (values['check-attachments']) {
     const { probeAttachments } = await import('./attachment-check.mjs');
@@ -65,7 +66,7 @@ export async function main(args, { pollInterval = 350, ...options } = {}) {
   }
   delete process.env.LOOM_CAPABILITY;
   delete process.env.LOOM_EXTERNAL_SUPER;
-  const runningRelease = { id: releaseId(), root: releaseRoot, digest: releaseDigest(releaseRoot) };
+  const runningRelease = { id: releaseId(), root: releaseRoot, digest: releaseDigest(releaseRoot), nodeRuntime: runningNode() };
   const metadata = join(project, '.project');
   mkdirSync(metadata, { recursive: true, mode: 0o700 });
   if (realpathSync(metadata) !== metadata) throw new Error('loomd metadata directory must be project-local');
@@ -79,7 +80,7 @@ export async function main(args, { pollInterval = 350, ...options } = {}) {
   syncDirectory(join(metadata, 'relay'));
   const handoff = await validateHandoff(project, values.handoff, values['handoff-recovery']);
   const capabilities = socketCapabilities(project);
-  installManagedCli(project);
+  installManagedCli(project, { keepLauncher: Boolean(handoff && !values['handoff-recovery']) });
   try { registerGlobalProject(project, { release: runningRelease.id, lastOnlineAt: Date.now(), lastShutdown: 'abnormal' }); }
   catch (error) { console.error(`global registry update: ${error.message}`); }
   const controller = nextController(project);
@@ -116,9 +117,11 @@ export async function main(args, { pollInterval = 350, ...options } = {}) {
     if (activated) return true;
     const state = upgradeState(project);
     if (state?.id !== handoff.id || state.pid !== process.pid) return false;
-    activated = recovering ? state.phase === 'failed' :
+    const committed = recovering ? state.phase === 'failed' :
       state.phase === 'committed' && activeRelease(project)?.upgradeId === handoff.id;
-    return activated;
+    if (!committed) return false;
+    installManagedCli(project);
+    return activated = true;
   }
   function serial(task) {
     const result = chain.then(task);

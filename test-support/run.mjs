@@ -4,6 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { assertSocketPathLimit, resolveIntegrationBinDir } from './integration-bin.mjs';
+import { enterPinnedNode, nodeRuntimeRoot } from '../lib/node-runtime.mjs';
 
 function allocateShortRoot(parent) {
   const offset = Math.floor(Math.random() * 36);
@@ -51,7 +52,7 @@ function main() {
       PATH: [bin, ...(integrationBin ? [integrationBin] : []), '/usr/bin', '/bin'].join(':'),
       GIT_CONFIG_GLOBAL: '/dev/null', GIT_CONFIG_NOSYSTEM: '1',
       LOOM_DESKTOP_NOTIFY: '0', LOOM_HERDR_LAYOUT: '0', LOOM_TEST_FIXTURE_ROOT: root,
-      LOOM_WORKER_TMP: root,
+      LOOM_WORKER_TMP: root, LOOM_NODE_ROOT: nodeRuntimeRoot(),
       NODE_OPTIONS: `--import=${JSON.stringify(guard)}`,
       ...(process.env.LOOM_TEST_PS && { LOOM_TEST_PS: process.env.LOOM_TEST_PS, LOOM_TEST_PS_BACKEND: process.env.LOOM_TEST_PS }),
       ...(integrationBin && { LOOM_TEST_INTEGRATION_BIN: integrationBin }),
@@ -71,5 +72,6 @@ function main() {
 }
 
 if (process.argv[1] && pathToFileURL(process.argv[1]).href === import.meta.url) {
+  enterPinnedNode();
   main();
 }

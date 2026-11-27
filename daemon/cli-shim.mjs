@@ -18,8 +18,13 @@ function metadata(path) {
 const [, , dir, fallback, ...args] = process.argv;
 const active = metadata(join(dir, 'release.json'));
 const upgrade = metadata(join(dir, 'upgrade.json'));
-const root = upgrade?.phase === 'switching' && active?.upgradeId === upgrade.id
-  ? upgrade.current?.root ?? fallback : active?.current?.root ?? fallback;
+const release = upgrade?.phase === 'switching' && active?.upgradeId === upgrade.id ? upgrade.current : active?.current;
+const root = release?.root ?? fallback;
 if (!isAbsolute(root)) throw new Error('Invalid active Loom release');
+const node = release?.nodeRuntime?.path;
+if (node && node !== process.execPath) {
+  if (!isAbsolute(node)) throw new Error('Invalid active Loom Node path');
+  process.execve(node, [node, ...process.argv.slice(1)], process.env);
+}
 const { main } = await import(pathToFileURL(join(root, 'cli', 'loom.mjs')).href);
 process.exitCode = await main(args);

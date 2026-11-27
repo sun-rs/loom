@@ -1,0 +1,16 @@
+#!/bin/sh
+set -eu
+entry=$(/usr/bin/readlink -f "$0")
+IFS= read -r version < "${entry%/*}/node-runtime"
+LOOM_NODE_ROOT=${LOOM_NODE_ROOT:-${HOME:?}/.loom-cell/runtime}
+case "$LOOM_NODE_ROOT" in
+  /*) ;;
+  *) echo 'Loom Node runtime directory must be absolute' >&2; exit 1 ;;
+esac
+node="$LOOM_NODE_ROOT/node-$version/bin/node"
+if [ ! -x "$node" ]; then
+  echo "Missing Loom Node $version at $node. Run bin/install-node." >&2
+  exit 1
+fi
+export LOOM_NODE_ROOT
+exec "$node" "$@"

@@ -6,7 +6,8 @@ import { setTimeout as delay } from 'node:timers/promises';
 import { hostAbsent, hostDirectory, hostHello, hostRequest, hostSocket, hostUUID, readJSON } from './host-control.mjs';
 import { eventPath, jsonRows, readText, syncDirectory, writeState } from './io.mjs';
 import { inspectProcess } from './processes.mjs';
-import { releaseId, releaseRoot } from './release.mjs';
+import { activeRelease, releaseId, releaseRoot } from './release.mjs';
+import { releaseNode, runningNode } from '../lib/node-runtime.mjs';
 import { claudeApiEnvKeys } from '../adapters/claude/launch.mjs';
 import { claudeAuthMode } from '../cli/policy.mjs';
 
@@ -77,7 +78,7 @@ export async function attachHost(project, row, job, save, controller, { stop = f
   if (start) {
     boundIdentity = undefined;
     if (row.cli === 'claude') job.authMode = claudeAuthMode(project, row.role);
-    job.host = { incarnation: randomUUID(), release: releaseId(), root: releaseRoot };
+    job.host = { incarnation: randomUUID(), release: releaseId(), root: releaseRoot, nodeRuntime: runningNode() };
     const dir = hostDirectory(project, addr, job.host.incarnation);
     const hostGrant = job.pendingHostGrant ?? job.hostGrant;
     mkdirSync(dir, { recursive: true, mode: 0o700 });
@@ -119,7 +120,10 @@ export async function attachHost(project, row, job, save, controller, { stop = f
     if (capabilities) env = { ...(env ?? process.env), LOOM_CAPABILITY: capabilities.ensureSession(addr).token };
     const log = openSync(join(dir, 'host.log'), constants.O_WRONLY | constants.O_CREAT | constants.O_APPEND | constants.O_NOFOLLOW, 0o600);
     try {
-      const child = spawn(process.execPath, [join(root, 'daemon', 'session-host.mjs'), project, addr, incarnation, release], {
+      const active = activeRelease(project);
+      const recorded = job.host.nodeRuntime ?? (active?.previous?.root === root ?
+        active.previous.nodeRuntime ?? active.current.legacyNodeRuntime : active?.current?.nodeRuntime);
+      const child = spawn(releaseNode(root, recorded), [join(root, 'daemon', 'session-host.mjs'), project, addr, incarnation, release], {
         cwd: row.cwd, detached: true, stdio: ['ignore', log, log],
         env,
       });

@@ -1,7 +1,11 @@
-#!/usr/bin/env node
-import { main } from '../daemon/main.mjs';
+#!/bin/sh
+':' //; entry=$(/usr/bin/readlink -f "$0"); exec "${entry%/*}/loom-node" "$entry" "$@"
+import { enterPinnedNode } from '../lib/node-runtime.mjs';
 
-main(process.argv.slice(2)).catch(error => {
+const args = process.argv.slice(2);
+const legacyNode = enterPinnedNode({ legacyProbe: args.includes('--self-check') });
+const { main } = await import('../daemon/main.mjs');
+main(args, { legacyNode }).catch(error => {
   console.error(error.message);
   process.exitCode = 1;
 });
