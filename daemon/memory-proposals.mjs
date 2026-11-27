@@ -1,7 +1,7 @@
 import { CommandError } from '../cli/sessions.mjs';
 import { validateProposalCommand } from '../cli/memory.mjs';
 import { lstatSync } from 'node:fs';
-import { join } from 'node:path';
+import { join, resolve, sep } from 'node:path';
 import { activeItems, commitProjectMemory, prepareProjectMemory } from '../memory/project.mjs';
 import { validateEntryFormat } from '../memory/format.mjs';
 import { projectReviewMemoryId } from '../memory/ledger.mjs';
@@ -26,16 +26,36 @@ export function candidateFields(raw) {
 const normalize = value => value.toLowerCase().replace(/[.!?]+$/u, '').replace(/\s+/gu, ' ').trim();
 const noiseSignals = [
   /^(?:git\s+(?:history|log)|code(?:base)?\s+(?:structure|layout)|current\s+(?:progress|status)|(?:git\s+)?(?:commit|revision)\s+`?[a-f\d]{7,64}\b)/iu,
-  /\b(?:lives|is located|can be found)\s+in\s+[`'"]?(?:[\w.-]+\/)+[\w.-]+/iu,
   /\b(?:as\s+(?:already\s+)?documented\s+in\s+the\s+(?:repo(?:sitory)?|codebase)|(?:the\s+)?current\s+(?:command|build|test|job|task)\s+is\s+(?:waiting|running|pending))\b/iu,
   /^(?:the\s+)?(?:latest|last|current)\s+(?:build|test run|command|job)\s+(?:has\s+)?(?:passed|failed|finished|completed|timed out)\b/iu,
   /^(?:git\s*历史|代码结构|当前进度|当前状态|(?:提交|修订)\s*[a-f\d]{7,64}\b)|(?:已(?:在|由)(?:仓库|代码库)记录|(?:当前|本轮)(?:命令|构建|测试|任务)(?:正在|尚在)(?:运行|等待))/iu,
 ];
-function isNoise(title, body) {
+const locationPathPattern = /\b(?:lives?|(?:is|are)\s+located|can\s+be\s+found)\s+in\s+[`'"]?((?:[\w.-]+\/)+[\w.-]+(?::\d+(?::\d+)?)?)/giu;
+const codeFileExt = /\.(?:[cm]?[jt]sx?|py|go|rs|java|kt|rb|php|cs|c|cc|cpp|h|hpp|sh|bash|zsh|sql|yaml|yml|json|toml|xml|html|css|scss|vue|svelte)$/iu;
+function existsInProject(project, relPath) {
+  if (!project || !relPath) return false;
+  const parts = relPath.split('/');
+  if (parts.some(part => !part || part === '.' || part === '..')) return false;
+  const root = resolve(project);
+  const full = resolve(root, relPath);
+  if (full !== root && !full.startsWith(root + sep)) return false;
+  return Boolean(lstatSync(full, { throwIfNoEntry: false }));
+}
+function isRepoPathNoise(project, value) {
+  for (const match of value.matchAll(locationPathPattern)) {
+    const clean = match[1].replace(/\.+$/u, '');
+    const hasLine = /:\d+(?::\d+)?$/u.test(clean);
+    const pathPart = clean.replace(/:\d+(?::\d+)?$/u, '').replace(/\.+$/u, '');
+    if (hasLine || codeFileExt.test(pathPart) || existsInProject(project, pathPart)) return true;
+  }
+  return false;
+}
+function isNoise(title, body, project) {
   const marker = label => new RegExp('^[ \\t]*(?:[-*] |#{1,6} )?(?:\\*\\*)?' + label +
     '(?:\\*\\*)?[ \\t]*[:：][ \\t]*(?:\\*\\*)?[^\\s*]', 'imu').test(body);
   if (marker('Why') && marker('How to apply')) return false;
-  return [title, body].some(value => value && noiseSignals.some(pattern => pattern.test(value.trim())));
+  return [title, body].some(value => value &&
+    (noiseSignals.some(pattern => pattern.test(value.trim())) || isRepoPathNoise(project, value)));
 }
 const revision = item => item?.meta ? digest(item) : item?.revision ?? null;
 const userDraft = ({ title, body, createdAt, source, targets }, current) => ({
@@ -141,7 +161,7 @@ export function createMemoryProposals(project, { memory, sessions, state, save, 
         filtered('duplicate');
         continue;
       }
-      if (action !== 'invalidate' && isNoise(title, body)) {
+      if (action !== 'invalidate' && isNoise(title, body, project)) {
         filtered('noise');
         continue;
       }

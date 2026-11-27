@@ -502,9 +502,11 @@ export function createMemoryStore({ now = Date.now, readState, commitState, evid
 
   async function syncLedger(text) {
     if (!eventProject || typeof classifySensitive !== 'function') return invalid('Memory ledger is unavailable');
+    if (typeof text !== 'string' || !text.trim()) return { ok: true };
+    const parsed = ledgerRulings(eventProject, text);
+    if (!parsed.length) return { ok: true };
     const state = await snapshot();
     const current = new Map(state.entries.map(item => [item.id, item]));
-    const parsed = ledgerRulings(eventProject, text);
     const ledger = new Map(parsed.map(item => [item.id, item]));
     const incoming = new Map();
     const updatedAt = time();
@@ -548,6 +550,16 @@ export function createMemoryStore({ now = Date.now, readState, commitState, evid
       if (!result.ok) return result;
       updateEntry(state, item, active(item) ? (prior && active(prior) ? 'update' : 'add') :
         prior && active(prior) ? 'withdraw' : null);
+      changed = true;
+    }
+    for (const prior of current.values()) {
+      if (prior.status !== 'active' || ledger.has(prior.id)) continue;
+      if (prior.kind !== 'ruling' || prior.layer !== 'user' || prior.source?.path !== rulingPath ||
+          !prior.id.startsWith('memory-event-')) continue;
+      const item = { ...prior, status: 'stale', revision: prior.revision + 1, updatedAt };
+      const result = validateEntryFormat(item, validation);
+      if (!result.ok) return result;
+      updateEntry(state, item, 'withdraw');
       changed = true;
     }
     if (state.seq !== before) indexFiles(state);

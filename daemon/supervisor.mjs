@@ -23,7 +23,7 @@ import { defaultCoalesceMs, readPolicy, setWorkerProfile, workerHandoffLimits,
 import { isStartupBlocker } from '../tui/agent-status.mjs';
 import { recordAuditFinding, requireAuditRegressions } from './audit-findings.mjs';
 import { gateId, saveGatePacket } from './gate-packet.mjs';
-import { gateBoundary, roleBudget } from './role-budget.mjs';
+import { auditorBudgetBoundary, gateBoundary, roleBudget } from './role-budget.mjs';
 import { leaderHandoverState } from '../handover/brief.mjs';
 import { startedOutstanding } from '../handover/outstanding.mjs';
 import { denialIdPattern } from '../lib/senior-command.mjs';
@@ -1530,7 +1530,7 @@ ${details}`, {
             (event.gate === gate || members.some(row => row.addr === event.addr)));
           const workerAddrs = new Set(members.filter(row => row.role === 'worker').map(row => row.addr));
           const boundary = notifications.list(name, false, true)
-            .findLast(gateBoundary)?.at ?? 0;
+            .findLast(auditorBudgetBoundary)?.at ?? 0;
           const signals = leaderSignals(name).filter(notice => workerAddrs.has(notice.addr) ||
             notice.type === 'auditor-budget-exceeded' && notice.at >= boundary);
           const { path, fullPath, candidate, base } = saveGatePacket(project, { ...args, id, round }, { members,

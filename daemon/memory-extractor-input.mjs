@@ -56,19 +56,24 @@ const deliveryRoles = new Set(['user', 'super', 'auditor', 'leader']);
 const escalationTypes = new Set(['red-escalation', 'audit-escalation', 'escalation']);
 const startupRequest = '\n\n## Startup request\n';
 
-function receivedDelivery(message, senderRoles) {
-  const source = { kind: 'delivery', id: message.id };
-  const withheld = { source, user: false, text: '[Delivery body withheld]' };
+function deliveryRole(message, senderRoles) {
   if (message.waveBatch || message.continuationBatch || message.replyKey || message.replyTo || message.autoReceipt ||
       message.receipt || message.memoryReview || message.gatePacket || message.projectEvents || message.reviewerResult ||
       message.stuckOf || message.watchResume || message.corruptedOf || message.uncertainOf ||
-      message.orgEvents && !message.orgAppendix) return withheld;
+      message.orgEvents && !message.orgAppendix) return undefined;
 
   // Sender bindings carry an address. A direct user send has Super priority
   // and no sender, while a user-launched startup carries the request wrapper.
   const role = message.from === undefined ?
     (message.startup || message.superPriority === true ? 'user' : undefined) : senderRoles.get(message.from?.addr);
-  if (!deliveryRoles.has(role) || message.kind !== undefined && message.kind !== role) return withheld;
+  return deliveryRoles.has(role) && (message.kind === undefined || message.kind === role) ? role : undefined;
+}
+
+function receivedDelivery(message, senderRoles) {
+  const source = { kind: 'delivery', id: message.id };
+  const withheld = { source, user: false, text: '[Delivery body withheld]' };
+  const role = deliveryRole(message, senderRoles);
+  if (!role) return withheld;
 
   if (!message.startup) return { source, user: role === 'user', text: message.text };
   const parts = message.text.split(startupRequest);
@@ -101,8 +106,13 @@ export function extractionTurns(project, rows, messages) {
       const received = deliveries.map(message => receivedDelivery(message, senderRoles));
       const toolNames = [...new Set(tools.map(tool => tool.name))];
       const directUserDeliveries = new Set(deliveries.filter(message => !message.startup).map(message => message.id));
+      const directSuperOrUser = deliveries.some(message => {
+        if (message.startup || typeof message.text !== 'string' || !message.text.trim()) return false;
+        const role = deliveryRole(message, senderRoles);
+        return role === 'user' || role === 'super';
+      });
       return [{ ...identity, startedAt: timestamp(turn.startedAt) || at, received, reply: turn.reply ?? '', toolNames,
-        directUserDeliveries }];
+        directUserDeliveries, directSuperOrUser }];
     });
   }).sort((a, b) => a.at - b.at);
 }

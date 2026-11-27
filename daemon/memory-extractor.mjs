@@ -206,7 +206,7 @@ export function createMemoryExtractor(project, { memory, sessions, now, report, 
     for (const turn of turns) {
       if (turn.at < since || turn.at > boundary.at || Object.hasOwn(staged, turn.key)) continue;
       if (seniorExtractor(turn.role)) {
-        const { directUserDeliveries, ...entry } = turn;
+        const { directUserDeliveries, directSuperOrUser: _, ...entry } = turn;
         work.push({ at: turn.at, key: turn.key, field: 'history', entry });
         for (const delivery of entry.received) {
           if (delivery.user && directUserDeliveries.has(delivery.source.id)) userDeliveries.add(delivery.source.id);
@@ -356,7 +356,7 @@ export function createMemoryExtractor(project, { memory, sessions, now, report, 
         (!event.addr || event.addr === turn.addr) && !Object.hasOwn(previous, event.source.id));
       for (const event of related) previous[event.source.id] = true;
       save();
-      if (!substantiveReply(turn.reply)) continue;
+      if (!substantiveReply(turn.reply) && !turn.directSuperOrUser) continue;
       const secret = await getKey();
       if (!secret) {
         report('Loom memory extractor credential unavailable');

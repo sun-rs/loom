@@ -1194,3 +1194,86 @@ test('M10 fixed role prompts explain citation syntax and show for reading on dem
   }
   assert.deepEqual(missing, []);
 });
+
+test('T100 syncLedger automatically retires rulings removed from rulings.md', async () => {
+  const { ledgerRulings, rulingPath } = await import('./ledger.mjs');
+  const root = '/fixture/repo';
+  const { store, readState } = await fixture({
+    eventProject: project,
+    evidence: {
+      root,
+      realpath: path => path === `${root}/${rulingPath}` ? path : undefined,
+      hasCommit: () => false,
+    },
+  });
+  const initialText = 'R1. Keep release manifests signed.\nR2. Temporary rule to be retired.\n';
+  const [r1Meta, r2Meta] = ledgerRulings(project, initialText);
+  assert.equal((await store.syncLedger(initialText)).ok, true);
+  assert.deepEqual(readState().entries.map(entry => [entry.id, entry.status]), [
+    [r1Meta.id, 'active'],
+    [r2Meta.id, 'active'],
+  ]);
+  assert.deepEqual(ids((await store.access.index(bindings.super)).rows).sort(), [r1Meta.id, r2Meta.id].sort());
+
+  const updatedText = 'R1. Keep release manifests signed.\n';
+  assert.equal((await store.syncLedger(updatedText)).ok, true);
+  const after = readState();
+  const r1 = after.entries.find(entry => entry.id === r1Meta.id);
+  const r2 = after.entries.find(entry => entry.id === r2Meta.id);
+  assert.equal(r1?.status, 'active', 'retained ruling must stay active');
+  assert.notEqual(r2?.status, 'active', 'deleted ruling must be retired automatically');
+  const activeIndex = ids((await store.access.index(bindings.super)).rows);
+  assert.ok(activeIndex.includes(r1Meta.id), 'retained ruling stays in active index');
+  assert.ok(!activeIndex.includes(r2Meta.id), 'retired ruling is removed from active index');
+  assert.ok(!after.files['memory/INDEX.md'].includes(r2Meta.id), 'retired ruling is removed from startup INDEX.md');
+});
+
+test('T103 syncLedger guardrails: missing, empty, or unparseable rulings.md retires nothing and non-ledger entries stay active', async () => {
+  const { ledgerRulings, rulingPath } = await import('./ledger.mjs');
+  const root = '/fixture/repo';
+  const allowed = new Set([`${root}/${rulingPath}`, `${root}/${source.path}`]);
+  const { store, readState } = await fixture({
+    eventProject: project,
+    evidence: {
+      root,
+      realpath: path => allowed.has(path) ? path : undefined,
+      hasCommit: () => false,
+    },
+  });
+  const initialText = 'R1. Keep release manifests signed.\nR2. Temporary rule to be retired.\n';
+  const [r1Meta, r2Meta] = ledgerRulings(project, initialText);
+  assert.equal((await store.syncLedger(initialText)).ok, true);
+
+  const manualPref = saved(await store.write(bindings.super, put('req-manual-pref', {
+    ...fact, kind: 'preference', layer: 'user', project: null,
+    title: 'Concise release summaries', body: 'Prefer bulleted release summaries.',
+  })));
+  const manualRuling = saved(await store.write(bindings.super, put('req-manual-ruling', {
+    ...fact, kind: 'ruling', layer: 'user', project: null,
+    title: 'Manual user ruling', body: 'Always verify checksums before upload.',
+  })));
+  const projectLesson = saved(await store.write(bindings.leader, put('req-project-lesson', {
+    ...fact, kind: 'lesson', layer: 'shared', project,
+    title: 'Project lesson', body: 'Keep retry backoff capped at 30s.',
+  })));
+  const protectedIds = [manualPref.id, manualRuling.id, projectLesson.id];
+
+  for (const invalidInput of [undefined, null, '', '   \n# Rulings heading without numbered items\n']) {
+    await store.syncLedger(invalidInput);
+    const state = readState();
+    for (const id of [r1Meta.id, r2Meta.id, ...protectedIds]) {
+      assert.equal(state.entries.find(entry => entry.id === id)?.status, 'active',
+        `guardrail must not retire ${id} on input ${JSON.stringify(invalidInput)}`);
+    }
+  }
+
+  assert.equal((await store.syncLedger('R1. Keep release manifests signed.\n')).ok, true);
+  const after = readState();
+  assert.equal(after.entries.find(entry => entry.id === r1Meta.id)?.status, 'active');
+  assert.notEqual(after.entries.find(entry => entry.id === r2Meta.id)?.status, 'active',
+    'deleted ledger ruling must be retired once valid non-empty rulings.md is parsed');
+  for (const id of protectedIds) {
+    assert.equal(after.entries.find(entry => entry.id === id)?.status, 'active',
+      `non-ledger entry ${id} must never be retired by syncLedger`);
+  }
+});
