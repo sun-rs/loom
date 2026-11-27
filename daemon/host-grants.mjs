@@ -33,7 +33,10 @@ export function hostGrants(project, { now = Date.now, notify }) {
   const read = () => JSON.parse(readText(file, '{"grants":[]}'));
   const save = state => writeState(file, JSON.stringify(state) + '\n');
   const matches = (grant, row) => grant.project === row.project && (grant.wave ? row.wave : row.task) === grant.target;
-  const publicGrant = ({ claims, closedTasks, ...grant }) => ({ ...grant, remaining: grant.uses - claims.length });
+  const publicGrant = ({ claims, reservations, closedTasks, ...grant }) => ({ ...grant, remaining: grant.uses - claims.length });
+  const has = (entries, row) => entries?.some(entry => entry.addr === row.addr && entry.task === row.task);
+  const usable = (grant, row) => grant && matches(grant, row) && !grant.closedAt && grant.expiresAt > now() &&
+    !Object.hasOwn(grant.closedTasks, row.task);
 
   function issue(state, name, { target, wave, reason, ttlMs, uses, write }, issuedBy) {
     const issuedAt = now();
@@ -70,20 +73,14 @@ export function hostGrants(project, { now = Date.now, notify }) {
     throw new CommandError(code, reason);
   }
 
-  function eligible(state, row, policyWave, id) {
-    const matching = state.grants.filter(grant => matches(grant, row));
-    let grant = id ? matching.find(grant => grant.id === id) :
-      matching.findLast(grant => !grant.wave) ?? matching.findLast(grant => grant.wave);
-    if (!grant && !id && policyWave) {
-      grant = issue(state, row.project, { target: row.wave, wave: true, reason: 'Named wave pre-authorized in project policy',
-        uses: 1, write: [] }, 'policy');
-    }
-    if (!grant) throw new CommandError('host-grant-required', `No host grant for ${row.task} or ${row.wave}`);
+  function eligible(grant, row, policyWave) {
+    if (!grant || !matches(grant, row)) throw new CommandError('host-grant-required', `No host grant for ${row.task} or ${row.wave}`);
     if (grant.issuedBy === 'policy' && !policyWave) unavailable(grant, row, 'host-grant-expired', 'Host wave authorization was removed');
-    if (grant.closedAt || grant.expiresAt <= now() || Object.hasOwn(grant.closedTasks, row.task)) {
+    if (!usable(grant, row)) {
       unavailable(grant, row, 'host-grant-expired', 'Host grant expired or card ended');
     }
-    if (grant.claims.length >= grant.uses && !grant.claims.some(claim => claim.addr === row.addr)) {
+    if (grant.claims.length + (grant.reservations?.length ?? 0) >= grant.uses &&
+        !has(grant.claims, row) && !has(grant.reservations, row)) {
       unavailable(grant, row, 'host-grant-exhausted', 'Host grant has no remaining uses');
     }
     return grant;
@@ -98,22 +95,48 @@ export function hostGrants(project, { now = Date.now, notify }) {
       return publicGrant(grant);
     },
     prepare(row, policyWave) {
-      return binding(eligible(read(), row, policyWave));
+      const state = read();
+      const matching = state.grants.filter(grant => matches(grant, row));
+      let grant = matching.findLast(grant => !grant.wave) ?? matching.findLast(grant => grant.wave);
+      if (!grant && policyWave) {
+        grant = issue(state, row.project, { target: row.wave, wave: true, reason: 'Named wave pre-authorized in project policy',
+          uses: 1, write: [] }, 'policy');
+      }
+      return binding(eligible(grant, row, policyWave));
     },
     reserve(row, policyWave, id) {
       const state = read();
-      const grant = eligible(state, row, policyWave, id);
-      if (!grant.claims.some(claim => claim.addr === row.addr)) {
+      const grant = eligible(state.grants.find(grant => grant.id === id), row, policyWave);
+      if (has(grant.claims, row) || has(grant.reservations, row)) return;
+      (grant.reservations ??= []).push({ addr: row.addr, task: row.task });
+      save(state);
+    },
+    claim(row, policyWave, id) {
+      const state = read();
+      const grant = eligible(state.grants.find(grant => grant.id === id), row, policyWave);
+      if (!has(grant.claims, row)) {
+        if (!has(grant.reservations, row)) throw new CommandError('host-grant-required', 'Host launch has no reservation');
+        grant.reservations = grant.reservations.filter(entry => entry.addr !== row.addr);
         grant.claims.push({ addr: row.addr, task: row.task, at: now() });
         save(state);
       }
       publish(grant);
       return binding(grant);
     },
+    release(row, id) {
+      const state = read();
+      const grant = state.grants.find(grant => grant.id === id);
+      if (!grant || !matches(grant, row) || !has(grant.reservations, row)) return;
+      grant.reservations = grant.reservations.filter(entry => entry.addr !== row.addr);
+      save(state);
+    },
+    permitted(row, id) {
+      const grant = read().grants.find(grant => grant.id === id);
+      return Boolean(usable(grant, row) && (has(grant.reservations, row) || has(grant.claims, row)));
+    },
     active(row, id) {
       const grant = read().grants.find(grant => grant.id === id);
-      return Boolean(grant && matches(grant, row) && !grant.closedAt && grant.expiresAt > now() &&
-        !Object.hasOwn(grant.closedTasks, row.task) && grant.claims.some(claim => claim.addr === row.addr));
+      return Boolean(usable(grant, row) && has(grant.claims, row));
     },
     closeCard(row, id, at = now()) {
       const state = read();

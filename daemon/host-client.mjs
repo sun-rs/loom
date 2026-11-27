@@ -91,10 +91,12 @@ export async function attachHost(project, row, job, save, controller, { stop = f
   const { incarnation, root, release } = job.host;
   const dir = hostDirectory(project, addr, incarnation);
   const path = hostSocket(project, addr, incarnation);
+  let authorized = false;
   const authorizePreparedLaunch = () => {
-    if (stop || !job.pendingHostGrant || !readJSON(join(dir, 'preflight-ready.json'))) return;
+    if (authorized || stop || !job.pendingHostGrant || !readJSON(join(dir, 'preflight-ready.json'))) return;
     if (readJSON(join(dir, 'cancelled.json'))) throw new Error('Host launch was cancelled');
     authorizeLaunch();
+    authorized = true;
   };
   let spawnError;
   hello ??= await connect(path, incarnation);

@@ -113,6 +113,10 @@ function acp({ method, id, params }) {
       options: [{ value: 'high', name: 'High' }] },
   ];
   if (method === 'session/new' || method === 'session/load') {
+    if (existsSync('agy-fail-start.json')) {
+      console.error('fixture rejected ACP startup');
+      process.exit(24);
+    }
     open(params.sessionId);
     return reply(id, { sessionId: session, configOptions });
   }

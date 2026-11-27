@@ -193,14 +193,16 @@ export async function main(project, addr, incarnation, release, { ownerGraceMs =
     }
   }
 
+  const grants = awaitHostGrant ? hostGrants(project, {}) : undefined;
+  const cancelled = () => stopRequested || !stateDirectoryPresent() || readJSON(join(dir, 'cancelled.json'));
+
   async function waitForHostGrant() {
-    const grants = hostGrants(project, {});
-    // Loomd remains the only writer of the grant ledger. Its claim is the launch permit.
+    // Loomd writes a reservation before launch and records usage after startup.
     writeState(join(dir, 'preflight-ready.json'), 'true');
     for (;;) {
-      if (stopRequested || !stateDirectoryPresent() || readJSON(join(dir, 'cancelled.json'))) throw new Error('Host launch was cancelled');
+      if (cancelled()) throw new Error('Host launch was cancelled');
       if (Date.now() >= row.hostGrant.expiresAt) throw new Error('Host grant expired before native launch');
-      if (grants.active(row, row.hostGrant.id)) return;
+      if (grants.permitted(row, row.hostGrant.id)) return;
       await delay(50);
     }
   }
@@ -210,6 +212,7 @@ export async function main(project, addr, incarnation, release, { ownerGraceMs =
     if (row.hostGrant && Date.now() >= row.hostGrant.expiresAt) throw new Error('Host grant expired before native launch');
     session = await withDeadline(openOar(row, project, row.sessionId, awaitHostGrant ? waitForHostGrant : undefined),
       35_000, 'OAR host startup timed out', 'startup-timeout');
+    if (grants && (cancelled() || !grants.permitted(row, row.hostGrant.id))) throw new Error('Host launch authorization ended during startup');
     if (row.sessionId && session.id !== row.sessionId) throw new Error('OAR resumed a different native session');
     let nativeExited = false;
     runtime = trackOar(project, row, session, error => console.error(error.message), incarnation, () => {

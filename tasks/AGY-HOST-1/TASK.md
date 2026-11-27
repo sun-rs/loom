@@ -7,3 +7,9 @@
 2. 找出 host 档（及 integration/sandbox 档）给 agy 拼 `--settings` 的位置（参考 daemon/account-wiring-codex-agy.test.mjs:170），改为该版本支持的方式传设置；不支持就不传，并在启动前预检失败时报明确原因。
 3. 启动前预检失败不应消耗 host grant 次数（只有真正启动会话才计次）；改动需有测试。
 4. 全量 `npm test`、`npm run lint` 通过。分支 infra/agy-host，工作树 /Users/sun/Code/repos/loom-agy-host，显式路径提交，不 commit -a。结果写 RESULT.md，以 STATUS 行收尾。Codex 周额度 <10%，请求保持精简。
+
+## 追加（Super）：失败会话残留预留吞掉新授权
+pilot-cell 实况：host worker oar-624e4897 以 host-grant-exhausted 启动失败后，会话记录未清理；Super 对同一 task 新签 grant 后 3 秒内，该失败会话被重新 claim（host-grants.json claims 记录），grant 变为 0 剩余，但会话从未运行（记录仍为 error）。
+- RED：失败（任何启动前/启动时错误）的会话不得在之后自动 claim 新 grant；新 grant 只能被新的显式 spawn 使用。
+- claim 只在子进程真正启动后计入；启动失败回滚 claim。
+- 与上面第 3 条一起交付、一起测。
