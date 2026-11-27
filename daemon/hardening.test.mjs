@@ -323,6 +323,38 @@ test('real ACP text chunks without a final boundary produce an UNCONFIRMED wave 
   assert.equal(f.deliveries(message.id).length, 1);
 });
 
+test('headless agy tiers launch with the recorded 1.5.18 ACP flags',
+  { timeout: 25_000, skip: nestedSeatbeltLimited }, async t => {
+  const f = fixtureProject(t);
+  await f.start();
+  await f.rpc('grant', { target: 'host', tier: 'host', reason: 'Fixture' });
+  for (const tier of ['host', 'integration', 'sandbox']) {
+    const { session } = await f.spawn('worker', tier, { cli: 'agy', tier });
+    assert.ok(session.sessionId);
+  }
+  const [host, integration, sandbox] = f.lines('agy-acp-argv.jsonl');
+  assert.ok(host.includes('--add-dir'));
+  assert.ok(integration.includes('--log-file') && sandbox.includes('--log-file'));
+});
+
+test('invariant idempotency agy preflight leaves the host grant available for a successful retry',
+  { timeout: 25_000, skip: nestedSeatbeltLimited }, async t => {
+  const f = fixtureProject(t);
+  const task = 'ACP-PREFLIGHT';
+  const spawn = () => f.spawn('worker', task, { cli: 'agy', tier: 'host' });
+  const claims = () => f.read('.project/loomd/host-grants.json').grants[0].claims;
+  await f.start();
+  await f.rpc('grant', { target: task, tier: 'host', reason: 'Fixture' });
+  f.write('agy-omit-acp-flag.json', '--sandbox');
+  await assert.rejects(spawn(), /agy ACP preflight.*--sandbox/);
+  assert.deepEqual(claims(), []);
+  assert.deepEqual(f.lines('agy-acp-argv.jsonl'), []);
+  rmSync(join(f.project, 'agy-omit-acp-flag.json'));
+  const { session } = await spawn();
+  assert.deepEqual(claims().map(claim => claim.addr), [session.addr]);
+  await assert.rejects(spawn(), { code: 'host-grant-exhausted' });
+});
+
 test('definitive Codex native refusals do not escalate as uncertain', { timeout: 25_000 }, async t => {
   const f = fixtureProject(t, { env: { LOOM_UNCERTAIN_MS: '1500' } });
   await f.start();

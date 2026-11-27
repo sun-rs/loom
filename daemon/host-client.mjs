@@ -19,7 +19,7 @@ async function connect(path, incarnation) {
   catch (error) { if (!hostAbsent(error)) throw error; }
 }
 
-export async function attachHost(project, row, job, save, controller, { stop = false, capabilities } = {}) {
+export async function attachHost(project, row, job, save, controller, { stop = false, capabilities, authorizeLaunch } = {}) {
   const addr = row.addr;
   const journal = eventPath(project, addr);
   let resume = row.sessionId;
@@ -55,30 +55,35 @@ export async function attachHost(project, row, job, save, controller, { stop = f
       const socket = hostSocket(project, addr, owner.incarnation);
       hello = await connect(socket, owner.incarnation);
       if (!hello) {
+        if (stop && job.pendingHostGrant) {
+          writeState(join(dir, 'cancelled.json'), 'true');
+          return { endedAt: Date.now() };
+        }
         const event = lastExit(journal);
         if (event && ['exited', 'released'].includes(event.type) && event.incarnation === owner.incarnation) {
           return { endedAt: event.at };
         }
         const status = await inspectProcess(owner.identity);
-        if (status !== 'dead') throw unknown();
+        if (status !== 'dead' && !(status === 'alive' && job.pendingHostGrant)) throw unknown();
         start = status === 'dead';
         if (start && lstatSync(socket, { throwIfNoEntry: false })?.isSocket()) unlinkSync(socket);
       }
     }
     if (stop && (start || !owner)) return { endedAt: Date.now() };
   } else if (stop) return { endedAt: Date.now() };
-  if (start && job.host && job.hostGrant) return { endedAt: Date.now() };
+  if (start && job.host && (job.hostGrant || job.pendingHostGrant)) return { endedAt: Date.now() };
   if (start) {
     boundIdentity = undefined;
     if (row.cli === 'claude') job.authMode = claudeAuthMode(project, row.role);
     job.host = { incarnation: randomUUID(), release: releaseId(), root: releaseRoot };
     const dir = hostDirectory(project, addr, job.host.incarnation);
+    const hostGrant = job.pendingHostGrant ?? job.hostGrant;
     mkdirSync(dir, { recursive: true, mode: 0o700 });
     writeState(join(dir, 'launch.json'), JSON.stringify({ row: { ...row, sessionId: resume,
       ...(job.integration && { integration: true }),
-      ...(job.hostGrant && { hostGrant: job.hostGrant }),
+      ...(hostGrant && { hostGrant }),
       ...(job.fast !== undefined && { fast: job.fast }),
-      ...(job.authMode && { authMode: job.authMode }) } }));
+      ...(job.authMode && { authMode: job.authMode }) }, ...(job.pendingHostGrant && { awaitHostGrant: true }) }));
     syncDirectory(join(dir, '..'));
     save(job);
   }
@@ -86,6 +91,11 @@ export async function attachHost(project, row, job, save, controller, { stop = f
   const { incarnation, root, release } = job.host;
   const dir = hostDirectory(project, addr, incarnation);
   const path = hostSocket(project, addr, incarnation);
+  const authorizePreparedLaunch = () => {
+    if (stop || !job.pendingHostGrant || !readJSON(join(dir, 'preflight-ready.json'))) return;
+    if (readJSON(join(dir, 'cancelled.json'))) throw new Error('Host launch was cancelled');
+    authorizeLaunch();
+  };
   let spawnError;
   hello ??= await connect(path, incarnation);
   if (!hello && !readJSON(join(dir, 'owner.json'))) {
@@ -124,9 +134,11 @@ export async function attachHost(project, row, job, save, controller, { stop = f
       throw new Error(readJSON(join(dir, 'failed.json'))?.message ?? 'Session host exited during startup');
     }
     if (Date.now() >= deadline) throw owner ? unknown() : new Error('Session host did not become ready');
+    authorizePreparedLaunch();
     await delay(125);
     hello = await connect(path, incarnation);
   }
+  authorizePreparedLaunch();
 
   const call = (method, params) => hostRequest(path, incarnation, method, params, hello.protocol, controller);
   let current = await call('claim');

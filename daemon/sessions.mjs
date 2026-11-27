@@ -687,13 +687,25 @@ export function ownedSessions(project, index, report, {
       ...(deliver && { deliver, ...(input.barrier && { barrier: input.barrier }) }),
       ...(cli === 'opencode' && mode === 'tui' && { plannedNativeId: `ses_${randomUUID().replaceAll('-', '')}` }) };
     if (workerTier === 'host') {
-      const waves = readPolicy(project, { optional: true }).roles?.worker?.tiers;
-      job.hostGrant = hostGrants.reserve(row, waves && Object.hasOwn(waves, row.wave) && waves[row.wave] === 'host');
+      job.pendingHostGrant = hostGrants.prepare(row, policyAllowsHost(row));
       job.prompt += '\n\nTrusted host grant for this card. Use absolute native CLI paths. Keep credentials, global config, CCP, Solars, rah_os, loom-next and unrelated processes or panes outside the task. Run only the authorized work and end the card with a conclusion.';
     }
     save(job);
     jobs.set(addr, job);
     return job;
+  }
+
+  function policyAllowsHost(row) {
+    const waves = readPolicy(project, { optional: true }).roles?.worker?.tiers;
+    return waves && Object.hasOwn(waves, row.wave) && waves[row.wave] === 'host';
+  }
+
+  function authorizeHostLaunch(job) {
+    if (!job.pendingHostGrant) return;
+    if (job.stopping) throw new ErrorCode('not-ready', 'Host launch was cancelled');
+    job.hostGrant = hostGrants.reserve(job.row, policyAllowsHost(job.row), job.pendingHostGrant.id);
+    delete job.pendingHostGrant;
+    save(job);
   }
 
   function runtimeSelection(row) {
@@ -734,7 +746,9 @@ export function ownedSessions(project, index, report, {
       throw new ErrorCode('not-ready', 'Codex attachment retry budget exhausted');
     }
     try {
-      const runtime = await (pipe ? attachCodexHolder : attachHost)(project, row, job, save, controller, { ...options, capabilities });
+      const runtime = await (pipe ? attachCodexHolder : attachHost)(project, row, job, save, controller, {
+        ...options, capabilities, authorizeLaunch: () => authorizeHostLaunch(job),
+      });
       unknownLiveness.delete(row.addr);
       return runtime;
     } catch (error) {
@@ -745,6 +759,7 @@ export function ownedSessions(project, index, report, {
   }
 
   async function openFixture(row, job) {
+    authorizeHostLaunch(job);
     const session = await open({ ...row, ...(job.fast !== undefined && { fast: job.fast }),
       ...(job.hostGrant && { hostGrant: job.hostGrant }) }, project, row.sessionId,
       capabilities?.ensureSession(row.addr).token);
@@ -767,7 +782,7 @@ export function ownedSessions(project, index, report, {
     }
     let row = rowFor(job.row.addr);
     if (row && row.endedAt !== null) return row;
-    if (storedWorkerTier(job) === 'host' && !job.stopping && !hostGrants.active(job.row, job.hostGrant?.id)) {
+    if (storedWorkerTier(job) === 'host' && !job.stopping && !job.pendingHostGrant && !hostGrants.active(job.row, job.hostGrant?.id)) {
       if (row) return stop(row);
       throw new ErrorCode('host-grant-expired', 'Host launch requires an active reservation');
     }

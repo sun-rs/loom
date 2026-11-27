@@ -16,7 +16,7 @@ function fixture(t) {
   return project;
 }
 
-test('grant uses and expirations survive reloading state', t => {
+test('invariant persistence grant claims and expirations survive reloading state', t => {
   const project = fixture(t);
   let time = Date.now();
   const events = new Map();
@@ -25,8 +25,11 @@ test('grant uses and expirations survive reloading state', t => {
   } });
   const row = { project, task: 'PROBE', wave: 'W', addr: 'first' };
   const grant = open().grant(project, { target: row.task, reason: 'Fixture', ttlMs: 2000, uses: 2, wave: false, write: [] }, 'super');
-  assert.equal(open().reserve(row, false).id, grant.id);
+  assert.equal(open().prepare(row, false).id, grant.id);
+  assert.equal(open().active(row, grant.id), false);
+  assert.equal(open().reserve(row, false, grant.id).id, grant.id);
   assert.equal(open().reserve({ ...row, addr: 'second' }, false).id, grant.id);
+  assert.equal(open().reserve(row, false, grant.id).id, grant.id);
   assert.throws(() => open().reserve({ ...row, addr: 'third' }, false), { code: 'host-grant-exhausted' });
   assert.equal(open().active(row, grant.id), true);
   assert.equal(open().active({ ...row, addr: 'third' }, grant.id), false);

@@ -6,6 +6,8 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { appRequestKind, antigravityRuntime, claudeRuntime, codexRuntime, createRuntimeRegistry, opencodeRuntime } from '@botiverse/oar';
 import agy from '../adapters/agy/index.mjs';
+import { preflightAgyAcp } from '../adapters/agy/acp.mjs';
+import { stageAgyHooks } from '../adapters/agy/launch.mjs';
 import claude from '../adapters/claude/index.mjs';
 import codex from '../adapters/codex/index.mjs';
 import { openCodeQuestionDeny, promptObserver } from '../adapters/opencode/index.mjs';
@@ -47,7 +49,7 @@ export function checkedTranscript(path, row) {
   catch (error) { if (error.code !== 'ENOENT') throw error; return null; }
 }
 
-export async function openOar(row, project, resume) {
+export async function openOar(row, project, resume, beforeLaunch) {
   const runtime = registry.require(row.runtimeId);
   const executable = row.role === 'worker' ? nativeWorkerExecutable(row.cli) : undefined;
   const managed = managedEnvironment(project, row.addr);
@@ -78,11 +80,6 @@ export async function openOar(row, project, resume) {
     // to generate profiles in the real login home before running a command.
     launchArgs = [host || login ? '--sandbox=false' : '--sandbox', '--log-file', host || login ? join(isolated.TMPDIR, 'agy.log') :
       eventPath(project, row.addr).replace(/\.jsonl$/, '.agy.log')];
-    if (host || guard.LOOM_SENIOR_TOOL_LOG) {
-      const spec = agy.launch({ cwd: row.cwd, hookSink: host ? join(isolated.TMPDIR, 'agy-hooks.jsonl') : eventPath(project, row.addr), allowNativeQuestions: questions });
-      agyWorkspace = spec.env.LOOM_AGY_HOOK_WORKSPACE;
-      launchArgs.push(...spec.argv.slice(spec.argv.indexOf('--add-dir')));
-    }
   } else if (row.cli === 'claude') {
     Object.assign(env, { OAR_CLAUDE_BIN: executable ?? nativeClaude(), CLAUDE_CODE_ENTRYPOINT: 'loom', DISABLE_AUTOUPDATER: '1' });
     if (row.authMode === 'subscription' || claudeAuthMode(project, row.role) !== 'api-key') {
@@ -98,6 +95,11 @@ export async function openOar(row, project, resume) {
   }
   const probe = login ? { ...env, ...isolated, CLAUDE_CONFIG_DIR: null, GEMINI_HOME: null, ANTIGRAVITY_APP_DATA_DIR: null } : env;
   try {
+    if (row.cli === 'agy' && (host || guard.LOOM_SENIOR_TOOL_LOG)) {
+      agyWorkspace = stageAgyHooks({ cwd: row.cwd, hookSink: host ? join(isolated.TMPDIR, 'agy-hooks.jsonl') : eventPath(project, row.addr),
+        allowNativeQuestions: questions });
+      launchArgs.push('--add-dir', agyWorkspace);
+    }
     if (executable) recordWorkerExecutable(project, row, executable, 'probe');
     let installation = await runtime.installation({ env: probe });
     if (installation.kind !== 'available') throw new Error(`${row.cli} unavailable: ${installation.reason ?? installation.kind}`);
@@ -105,6 +107,7 @@ export async function openOar(row, project, resume) {
       if (resolveNativeExecutable(installation.command) !== executable) throw new Error('Worker installation changed during probe');
       installation = { ...installation, command: executable };
     }
+    if (row.cli === 'agy') await preflightAgyAcp(installation.command, row.cwd, { ...probe, GEMINI_HOME: env.GEMINI_HOME }, launchArgs);
     if (host) installation = { ...installation, command: hostWriteBoundary(project, row, isolated, installation.command) };
     if (login) installation = { ...installation, command: sandboxNativeWorker(project, row, login, isolated, installation.command) };
     integration = await integrationPs(row, isolated, managed.PATH);
@@ -113,6 +116,7 @@ export async function openOar(row, project, resume) {
       if (row.cli === 'codex') launchArgs = codexConfiguration(project, row, { ...managed, ...integration.env }, isolated);
     }
     const { cwd, model, effort } = row;
+    await beforeLaunch?.();
     if (executable) recordWorkerExecutable(project, row, executable, 'launch');
     const session = await runtime.session(installation, { cwd, model, effort, env, launchArgs,
       ...(row.cli === 'claude' && !questions && { disallowedTools: ['AskUserQuestion'] }),

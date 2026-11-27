@@ -5,8 +5,24 @@ import { basename, dirname, join } from 'node:path';
 
 const cli = basename(process.argv[1]).startsWith('agy') ? 'agy' : 'codex';
 const argv = process.argv.slice(2);
+if (cli === 'agy' && argv[0] === 'acp') {
+  const help = readFileSync(new URL('../../../adapters/agy/fixtures/agy-1.5.18-acp-help.txt', import.meta.url), 'utf8');
+  if (argv[1] === '--help') {
+    const omitted = 'agy-omit-acp-flag.json';
+    const flag = existsSync(omitted) ? JSON.parse(readFileSync(omitted, 'utf8')) : null;
+    console.error(flag ? help.split('\n').filter(line => line.trimStart().split(/\s+/)[0] !== flag).join('\n') : help);
+    process.exit(0);
+  }
+  const flags = new Set(Array.from(help.matchAll(/^\s+(--[\w-]+)/gm), match => match[1]));
+  appendFileSync('agy-acp-argv.jsonl', JSON.stringify(argv) + '\n');
+  for (const arg of argv.slice(1).filter(arg => arg.startsWith('-'))) {
+    if (flags.has(arg.split('=', 1)[0])) continue;
+    console.error(`flags provided but not defined: ${arg}`);
+    process.exit(2);
+  }
+}
 if (argv.includes('--version')) {
-  console.log(cli === 'agy' ? '1.5.16' : 'codex-cli 0.171.0');
+  console.log(cli === 'agy' ? '1.5.18' : 'codex-cli 0.171.0');
   process.exit(0);
 }
 if (argv.includes('--help')) {

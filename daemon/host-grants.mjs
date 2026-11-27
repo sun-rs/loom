@@ -70,6 +70,26 @@ export function hostGrants(project, { now = Date.now, notify }) {
     throw new CommandError(code, reason);
   }
 
+  function eligible(state, row, policyWave, id) {
+    const matching = state.grants.filter(grant => matches(grant, row));
+    let grant = id ? matching.find(grant => grant.id === id) :
+      matching.findLast(grant => !grant.wave) ?? matching.findLast(grant => grant.wave);
+    if (!grant && !id && policyWave) {
+      grant = issue(state, row.project, { target: row.wave, wave: true, reason: 'Named wave pre-authorized in project policy',
+        uses: 1, write: [] }, 'policy');
+    }
+    if (!grant) throw new CommandError('host-grant-required', `No host grant for ${row.task} or ${row.wave}`);
+    if (grant.issuedBy === 'policy' && !policyWave) unavailable(grant, row, 'host-grant-expired', 'Host wave authorization was removed');
+    if (grant.closedAt || grant.expiresAt <= now() || Object.hasOwn(grant.closedTasks, row.task)) {
+      unavailable(grant, row, 'host-grant-expired', 'Host grant expired or card ended');
+    }
+    if (grant.claims.length >= grant.uses && !grant.claims.some(claim => claim.addr === row.addr)) {
+      unavailable(grant, row, 'host-grant-exhausted', 'Host grant has no remaining uses');
+    }
+    return grant;
+  }
+
+  const binding = ({ id, expiresAt, write }) => ({ id, expiresAt, write });
   return {
     grant(name, spec, issuedBy) {
       const state = read();
@@ -77,24 +97,18 @@ export function hostGrants(project, { now = Date.now, notify }) {
       for (const entry of state.grants) publish(entry);
       return publicGrant(grant);
     },
-    reserve(row, policyWave) {
+    prepare(row, policyWave) {
+      return binding(eligible(read(), row, policyWave));
+    },
+    reserve(row, policyWave, id) {
       const state = read();
-      const eligible = state.grants.filter(grant => matches(grant, row));
-      let grant = eligible.findLast(grant => !grant.wave) ?? eligible.findLast(grant => grant.wave);
-      if (!grant && policyWave) {
-        grant = issue(state, row.project, { target: row.wave, wave: true, reason: 'Named wave pre-authorized in project policy',
-          uses: 1, write: [] }, 'policy');
+      const grant = eligible(state, row, policyWave, id);
+      if (!grant.claims.some(claim => claim.addr === row.addr)) {
+        grant.claims.push({ addr: row.addr, task: row.task, at: now() });
+        save(state);
       }
-      if (!grant) throw new CommandError('host-grant-required', `No host grant for ${row.task} or ${row.wave}`);
-      if (grant.issuedBy === 'policy' && !policyWave) unavailable(grant, row, 'host-grant-expired', 'Host wave authorization was removed');
-      if (grant.closedAt || grant.expiresAt <= now() || Object.hasOwn(grant.closedTasks, row.task)) {
-        unavailable(grant, row, 'host-grant-expired', 'Host grant expired or card ended');
-      }
-      if (grant.claims.length >= grant.uses) unavailable(grant, row, 'host-grant-exhausted', 'Host grant has no remaining uses');
-      grant.claims.push({ addr: row.addr, task: row.task, at: now() });
-      save(state);
       publish(grant);
-      return { id: grant.id, expiresAt: grant.expiresAt, write: grant.write };
+      return binding(grant);
     },
     active(row, id) {
       const grant = read().grants.find(grant => grant.id === id);
