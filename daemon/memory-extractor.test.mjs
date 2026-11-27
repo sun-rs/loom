@@ -1716,3 +1716,64 @@ test('R3B extractor excludes raw red escalation evidence from outbound requests'
     'stage upstream events': JSON.stringify(stages.upstream.events), 'stage upstream request': f.requests[1].raw };
   assert.deepEqual(Object.keys(outbound).filter(channel => outbound[channel].includes(evidence)), []);
 });
+
+test('T100 reference pointers are not misclassified as noise while repo source paths remain filtered', async t => {
+  let proposals = [];
+  const f = fixture(t, { proposals: () => proposals });
+  mkdirSync(join(f.project, 'src'), { recursive: true });
+  writeFileSync(join(f.project, 'src', 'auth.mjs'), 'export const auth = () => true;\n');
+  const leader = await f.spawn('leader', 'Record external reference pointers from this turn.');
+  const source = { kind: 'delivery', id: deliveryId(f.prompts.at(-1).input) };
+  const references = [
+    ['ref-linear', 'Architecture decisions pointer', 'Architecture decisions can be found in Linear project INGEST.'],
+    ['ref-grafana', 'Ingest latency dashboard', 'Dashboard lives in grafana/prod-ingest，用于排查线上吞吐抖动。'],
+    ['ref-runbook', 'On-call runbook location', 'The on-call escalation guide can be found in wiki/ops/oncall-runbook.'],
+  ];
+  const repoNoise = ['repo-source-noise', 'Auth handler location', 'The auth handler lives in src/auth.mjs:42.'];
+  proposals = [...references, repoNoise].map(([id, title, body]) => ({
+    id, action: 'add', scope: 'project', source, title, body,
+  }));
+  await f.finish(leader, proposals.map(({ body }) => body).join('\n'));
+  assert.equal(f.requests.length, 1);
+  const state = readExtractorState(f.project);
+  assert.deepEqual(Object.keys(state.proposals).sort(), references.map(([id]) => id).sort(),
+    'valid external/document reference pointers must reach review even without English Why/How to apply labels');
+  for (const [id] of references) {
+    assert.equal(state.proposals[id]?.status, 'pending', `${id} must be queued for review`);
+  }
+  assert.equal(state.proposals[repoNoise[0]], undefined, 'real repository source path noise must still be filtered');
+  assert.deepEqual(f.cost().memoryExtractor.diagnostics.filterReasons, { noise: 1 });
+});
+
+test('T100 per-turn extractor runs on NOREPLY turns when received includes a Super or user message and skips worker-only NOREPLY', async t => {
+  const f = fixture(t);
+  const leader = await f.spawn('leader', 'Prepare Leader for correction turns.');
+  const auditor = await f.spawn('auditor', 'Prepare Auditor for ruling turns.');
+  const superAddr = await f.spawn('super', 'Prepare Super oversight.');
+  await f.finish(leader, 'Leader initialized.');
+  await f.finish(auditor, 'Auditor initialized.');
+  const baseline = f.requests.length;
+
+  const userCorrection = 'Correction: never push directly to main without explicit approval.';
+  await f.send(leader, userCorrection);
+  await f.finish(leader, 'NOREPLY');
+  assert.equal(f.requests.length, baseline + 1, 'NOREPLY turn with direct user correction must invoke extractor');
+  const userTurn = extractorRequestInput(f.requests.at(-1));
+  assert.equal(userTurn.reply, 'NOREPLY');
+  assert.ok(userTurn.received.some(item => item.text.includes(userCorrection)));
+
+  const superRuling = 'Super 裁决：以后所有门禁必须附带隔离沙箱测试结果。';
+  await f.daemon.handle('send', { target: auditor, mode: 'queue', text: superRuling }, superAddr);
+  await f.tick();
+  await f.finish(auditor, '收到');
+  assert.equal(f.requests.length, baseline + 2, 'ack-only turn with Super ruling must invoke extractor');
+  const superTurn = extractorRequestInput(f.requests.at(-1));
+  assert.equal(superTurn.reply, '收到');
+  assert.ok(superTurn.received.some(item => item.text.includes(superRuling)));
+
+  const worker = await f.spawn('worker', 'Run routine worker task.', leader, { deliver: 'stream' });
+  await f.daemon.handle('send', { target: leader, mode: 'queue', text: 'Routine worker ping.' }, worker);
+  await f.tick();
+  await f.finish(leader, 'NOREPLY');
+  assert.equal(f.requests.length, baseline + 2, 'NOREPLY turn with only worker/non-user message must still be skipped');
+});
