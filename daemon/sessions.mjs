@@ -1184,7 +1184,8 @@ export function ownedSessions(project, index, report, {
     try {
       setRetention(job, { ...(by !== 'ttl' && { keep: false }), ...(job.closed && { keepWarm: false }), releasedAt: at,
         releasedBy: by, idleSinceBeforeRelease, lastContext: context,
-        releasing: undefined, eligible: false, idleSince: undefined, idleStream: undefined });
+        releasing: undefined, eligible: false, idleSince: undefined, idleStream: undefined,
+        releaseTimeoutAt: undefined });
     } catch (error) {
       job.releases = previous;
       job.closed = previousClose;
