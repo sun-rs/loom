@@ -6,7 +6,7 @@ import { join } from 'node:path';
 import { createInterface } from 'node:readline';
 import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
-import { describeSkill, loadBaseline, parseNative, summarize } from './eval.mjs';
+import { describeSkill, execWithoutStdin, loadBaseline, parseNative, summarize } from './eval.mjs';
 import { roles, scenarios, sha } from './scenarios.mjs';
 import { createFixture, fixturePrompt, score } from './simulator.mjs';
 
@@ -18,6 +18,16 @@ const write = (input, content) => ({ op: 'write', input, content });
 const loom = input => ({ op: 'loom', input });
 const work = input => ({ op: 'work', input });
 const finish = input => ({ op: 'finish', input });
+
+test('the Codex launcher gives the native process a null input device and a literal prompt', async () => {
+  const prompt = 'two lines\n"quotes" and $LOOM_EVAL_TEST';
+  const script = `import { fstatSync, readFileSync, statSync } from 'node:fs';
+const stdin = fstatSync(0);
+const nullDevice = stdin.isCharacterDevice() && stdin.rdev === statSync('/dev/null').rdev;
+console.log(JSON.stringify({ nullDevice, input: readFileSync(0, 'utf8'), prompt: process.argv[1] }));`;
+  const { stdout } = await execWithoutStdin(process.execPath, ['--input-type=module', '-e', script, prompt], { timeout: 5_000 });
+  assert.deepEqual(JSON.parse(stdout), { nullDevice: true, input: '', prompt });
+});
 
 test('the pinned audit accounts for every source line and all action lines map to rules', () => {
   const size = describeSkill(skill);

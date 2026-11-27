@@ -103,4 +103,20 @@
 
 原始数据保存在本机权限为 `0700` 的 `/private/tmp/loom-phase3-w04-diagnostics.yLbAOXod/`。完整 stderr 为 `stderr.log`，事件流为 `events.jsonl`，另有 `eval-result.json` 和只读探针摘要 `account-probe.json`。
 
+### Codex 标准输入修订后复测（2026-11-27）
+
+前次 W04 的完整 stderr 确有 `Reading additional input from stdin...`。旧路径使用 `child.stdin.end()`，本地对照子进程在管道上读到 EOF。新路径在启动 Codex 前把 fd 0 直接接到 `/dev/null`，保留原生绝对路径、启动参数、沙箱和临时 cwd。回归测试核对空输入和原样传递的提示词。评测本地测试 8 项通过，lint 通过。
+
+抽查首批和末批原生子进程，六个进程的 fd 0 均指向 `/dev/null`。15 个进程仍打印补充输入提示，11 个事件流止于 `turn.started`，4 个完成至少一次 MCP 工具调用。15 轮均未发出 `turn.completed`，无有效评分或原始 `finalReply`。提示出现时 fd 0 已提供 EOF，等待标准输入无法解释本轮超时。stderr 与原生错误事件未报告明确的额度、认证或网络错误。原始流保存在本机私有目录 `/private/tmp/loom-phase3-codex-stdin.glLhhc0K/`。 [Codex 新复测逐轮记录](runs/phase3-codex-stdin.json)
+
+| 用例 | 有效评分 | 整题通过 | 缺分状态 |
+| --- | ---: | ---: | --- |
+| `W01-fix` | 0/3 | — | 超时 3 |
+| `W04-denied` | 0/3 | — | 超时 3 |
+| `W05-runtime` | 0/3 | — | 超时 3 |
+| `L06-route-reject` | 0/3 | — | 超时 3 |
+| `S03-exception` | 0/3 | — | 超时 3 |
+
+Codex Worker 无有效评分，6/9 门槛待验证。沿用两家已完成的记录，三家最新复测共 18/33 轮有效评分，整题通过 13/18，有效评分中的红线违例为 0/18。Antigravity Auditor 的 A06 为 2/3。整体合入门槛仍未满足。
+
 STATUS: blocked

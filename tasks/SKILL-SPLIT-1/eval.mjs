@@ -19,6 +19,12 @@ const vendors = ['codex', 'claude', 'agy', 'gemini'];
 const quote = JSON.stringify;
 const repo = resolve(location, '../..');
 
+export function execWithoutStdin(file, args, options) {
+  // execFile always gives its child a pipe. Bind fd 0 to /dev/null before exec,
+  // and pass the executable, flags, and prompt as literal arguments.
+  return exec('/bin/sh', ['-c', 'exec "$@" </dev/null', 'loom-eval', file, ...args], options);
+}
+
 export function describeSkill(skill) {
   const bytes = Buffer.byteLength(skill);
   const blob = createHash('sha1').update(`blob ${bytes}\0`).update(skill).digest('hex');
@@ -208,10 +214,11 @@ ${vendor === 'agy' ? ['brain', 'conversations', 'log'].map(name => `(subpath ${q
 (deny file-write*)
 (allow file-write* (subpath ${quote(root)}) (literal "/dev/null"))`;
     return await call(root, args => {
-      const process = exec('/usr/bin/sandbox-exec', ['-p', profile, binary, ...args],
-        { cwd: paths.work, env, timeout: 150_000, killSignal: 'SIGKILL', maxBuffer: 2 ** 22, encoding: 'utf8' });
-      process.child.stdin.end();
-      return process;
+      const command = ['/usr/bin/sandbox-exec', ['-p', profile, binary, ...args],
+        { cwd: paths.work, env, timeout: 150_000, killSignal: 'SIGKILL', maxBuffer: 2 ** 22, encoding: 'utf8' }];
+      const result = (vendor === 'codex' ? execWithoutStdin : exec)(...command);
+      result.child.stdin.end();
+      return result;
     });
   } finally {
     await rm(root, { recursive: true, force: true });
