@@ -17,6 +17,7 @@ import { request } from './rpc.mjs';
 import { clientCapability } from './socket-auth.mjs';
 import { projectIndex } from '../cli/project.mjs';
 import { preparePeerAuth } from './peer-auth.mjs';
+import { processCommand } from './processes.mjs';
 import { statusTui } from '../cli/status-tui.mjs';
 
 const exec = promisify(execFile);
@@ -91,6 +92,16 @@ test('failed verification restores the old writer and a successful upgrade prese
   const ps = join(dir, 'ps');
   const denyLookup = join(dir, 'deny-holder-lookup');
   const denied = join(dir, 'denied-holder-lookups');
+  const savedPs = process.env.LOOM_TEST_PS;
+  let backendPs;
+  try {
+    delete process.env.LOOM_TEST_PS;
+    backendPs = processCommand();
+  } catch {
+    backendPs = savedPs ?? '/bin/ps';
+  } finally {
+    if (savedPs !== undefined) process.env.LOOM_TEST_PS = savedPs;
+  }
   writeFileSync(ps, '#!' + process.execPath + '\n' + `
     import { spawnSync } from 'node:child_process';
     import { appendFileSync, existsSync, readFileSync } from 'node:fs';
@@ -101,9 +112,9 @@ test('failed verification restores the old writer and a successful upgrade prese
       console.error('Fixture could not enumerate the existing holder');
       process.exit(1);
     }
-    const result = spawnSync(${JSON.stringify(process.env.LOOM_TEST_PS ?? '/bin/ps')}, process.argv.slice(2), { stdio: 'inherit' });
+    const result = spawnSync(${JSON.stringify(backendPs)}, process.argv.slice(2), { stdio: 'inherit' });
     if (result.error) throw result.error;
-    process.exitCode = result.status ?? 1;
+    process.exit(result.status ?? 1);
   `, { mode: 0o700 });
   const anchor = process.env.LOOM_TEST_PS ? await anchorUpgradeProcesses(t, dir, project, root, candidate) : {};
   const env = { ...anchor, HOME: dir, TMPDIR: dir, CODEX_HOME: dir, XDG_STATE_HOME: join(dir, 'state'), PATH: process.env.PATH, LOOM_CODEX_BIN: codex,

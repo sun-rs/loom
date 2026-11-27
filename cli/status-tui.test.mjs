@@ -234,3 +234,23 @@ test('fragmented mouse reports select tabs and rows, open details and scroll', {
   assert.match(frames, /\x1b\[\?1000l\x1b\[\?1006l/);
   assert.equal(input.isRaw, false);
 });
+
+test('Status TUI highlights unconfined host workers on Board, Workers and detail views', async () => {
+  const { boardView } = await import('./status-view.mjs');
+  const withUnconfined = structuredClone(board);
+  withUnconfined.workers.push(
+    { task: 'HOST-DEF', addr: 'oar-dead0001-0000-4000-8000-000000000001', state: 'working', wave: 'W-HOST',
+      cli: 'agy', model: 'neon', startedAt: now - 1000, workerTier: 'host' },
+    { task: 'HOST-UNC', addr: 'oar-dead0002-0000-4000-8000-000000000002', state: 'working', wave: 'W-HOST',
+      cli: 'agy', model: 'neon', startedAt: now - 1000, workerTier: 'host', unconfined: true },
+  );
+  const summary = boardLines(project, { board: withUnconfined }, { page: 0, now, width: 120 }).join('\n');
+  assert.match(summary, /1 unconfined/);
+  const workersPage = boardLines(project, { board: withUnconfined }, { page: 1, now, width: 120 }).join('\n');
+  assert.match(workersPage, /\[host\] HOST-DEF/);
+  assert.match(workersPage, /\[host\/unconfined\] HOST-UNC/);
+  const view = boardView(project, { board: withUnconfined }, { page: 1, now, width: 120 });
+  const item = view.body.flatMap(line => line.items ?? []).find(entry => entry?.id === 'worker:oar-dead0002-0000-4000-8000-000000000002');
+  assert.ok(item);
+  assert.deepEqual(item.fields.find(([label]) => label === 'Tier'), ['Tier', 'host/unconfined']);
+});

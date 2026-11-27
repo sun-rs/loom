@@ -155,8 +155,9 @@ export function boardView(project, { board, error, offlineAccounts } = {}, { wid
     const idle = liveWorkers.filter(worker => worker.state === 'idle').length;
     const released = workers.filter(worker => ['released', 'offline'].includes(worker.state) || worker.releasedAt != null).length;
     const ended = workers.length - liveWorkers.length - released;
+    const unconfined = liveWorkers.filter(worker => worker.unconfined).length;
     const links = [
-      [1, 'Workers', `${liveWorkers.length - idle} active · ${idle} idle · ${released} released${ended ? ' · ' + ended + ' ended' : ''}`],
+      [1, 'Workers', `${liveWorkers.length - idle} active · ${idle} idle · ${released} released${ended ? ' · ' + ended + ' ended' : ''}${unconfined ? ' · ' + unconfined + ' unconfined' : ''}`],
       [2, 'Gates', `${openGates.length} open`],
       [3, 'Notices', `${notifications?.count ?? 0} unread`],
     ].map(([page, title, counts]) => {
@@ -185,9 +186,10 @@ export function boardView(project, { board, error, offlineAccounts } = {}, { wid
         Math.ceil(retention.remainingMs / 1000) + 's' : '—';
       const context = worker.contextPercent == null ? '—' : `${Math.round(worker.contextPercent)}%`;
       const reuse = worker.reuse === 'same-card-only' ? 'same card' : worker.reuse;
+      const tierLabel = worker.workerTier === 'host' && worker.unconfined ? 'host/unconfined' : worker.workerTier;
       const item = itemFor('worker:' + worker.addr, 'Worker · ' + show(worker.task), [
         ['Address', worker.addr], ['CLI / model', [worker.cli, worker.model].filter(Boolean).join(' · ')],
-        ['Wave', worker.wave], ['State', worker.state], ['Tier', worker.workerTier], ['Result', worker.lastResult], ['Session UUID', worker.sessionId],
+        ['Wave', worker.wave], ['State', worker.state], ['Tier', tierLabel], ['Result', worker.lastResult], ['Session UUID', worker.sessionId],
         ['Working directory', worker.cwd], ['Transcript path', worker.transcriptPath],
         ['Warm countdown', countdown], ['Context', context], ['Last result', worker.lastResultTag],
         ['Compactions', worker.compactions], ['Reuse', reuse === 'same card' ? 'Same card only' : reuse],
@@ -203,7 +205,7 @@ export function boardView(project, { board, error, offlineAccounts } = {}, { wid
       if (state === 'idle' && Number.isFinite(worker.releaseAt)) {
         state += worker.releaseAt > now ? ` · 释放于 ${duration(worker.releaseAt - now, Math.ceil)}` : ' · 待释放';
       }
-      const tier = worker.workerTier && worker.workerTier !== 'sandbox' ? `[${show(worker.workerTier)}] ` : '';
+      const tier = worker.workerTier && worker.workerTier !== 'sandbox' ? `[${show(tierLabel)}] ` : '';
       return { item, cells: [tableLabel(item, paint(worker.workerTier === 'host' ? 'warn' : 'text', tier) + show(worker.task)), show(worker.wave),
         paint(tones.get(worker.state) ?? 'muted', state), [show(worker.cli), worker.model && show(worker.model)].filter(Boolean).join('·'),
         shortAddress(worker.addr), showRetention ? countdown : age(worker.startedAt, now),

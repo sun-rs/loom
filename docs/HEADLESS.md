@@ -22,6 +22,10 @@ Worker 宿主在下次派工时随发布更新。loomd 升级接回原宿主，�
 
 集成配置沿用同一提供方的网络和凭据权限。Worker 在原生回执记录候选 SHA、完整命令、退出码、计数和工作树日志路径，由 loomd 采集证据卡。共享 `.project/` 下的摘要由 Leader 根据证据卡整理。
 
+## host 档
+
+需要宿主机执行的卡片用 `loom spawn worker --tier host`，须先由 Super 签发 `loom grant <task|wave> host --reason ...`（或由策略 `roles.worker.tiers.<wave>` 预授权），按次计费并在 TTL 或卡片结案时收回。macOS 默认对非 Codex 的 host worker 保留 Loom 外层 Seatbelt 写入边界（Codex 保持直接启动以自建 Seatbelt 和 PTY）。Super 签发 grant 时可显式附加 `--unconfined`，使该 grant 启动的所有 CLI host worker 均免除 Loom 外层 Seatbelt（用于嵌套 `sandbox-exec`/`srt` 或分配 PTY），回执、通知、证据卡和状态页均标为 `unconfined` 便于审计。
+
 ## 用量估算
 
 `loom cost` 同时展示原始 token 与按 CLI 加权的美元估算和角色占比。它按轮把新输入、缓存写入、缓存命中、输出分别计价。推理 token 已计入原生输出时只计一次。未记录的用量保持缺失。

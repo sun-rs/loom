@@ -112,8 +112,8 @@ function fixtureProject(t, options = {}) {
   const native = () => lines('native-deliveries.jsonl');
   const deliveries = id => native().filter(row => deliveryId(row.text) === id);
   const fixtureEnv = Object.fromEntries(Object.entries(process.env).filter(([key]) =>
-    ['PATH', 'TMPDIR', 'LOOM_TEST_PS', 'LOOM_TEST_PS_BACKEND', 'LOOM_TEST_FIXTURE_ROOT', 'LOOM_WORKER_TMP',
-      'GIT_CONFIG_GLOBAL', 'GIT_CONFIG_NOSYSTEM'].includes(key)));
+    ['PATH', 'TMPDIR', 'LOOM_TEST_PS', 'LOOM_TEST_PS_BACKEND', 'LOOM_TEST_INTEGRATION_BIN', 'LOOM_TEST_FIXTURE_ROOT',
+      'LOOM_WORKER_TMP', 'GIT_CONFIG_GLOBAL', 'GIT_CONFIG_NOSYSTEM'].includes(key)));
   const codex = join(project, 'codex');
   const agy = join(project, 'agy');
   for (const cli of [codex, agy]) writeFileSync(cli, '#!' + process.execPath + '\nimport(' +
@@ -341,6 +341,28 @@ test('Codex host launches without Seatbelt and keeps the host tool guard', { tim
   const [entry] = f.read('.project/loomd/host-grants.json').grants;
   assert.equal(entry.id, grant.id);
   assert.deepEqual(entry.claims.map(claim => claim.addr), [session.addr]);
+});
+
+test('agy host worker bypasses sandbox-exec under --unconfined grant and keeps it under default grant',
+  { timeout: 25_000, skip: process.platform !== 'darwin' || nestedSeatbeltLimited }, async t => {
+  const f = fixtureProject(t);
+  f.write('agy-host-probes.json', true);
+  await f.start();
+  await f.rpc('grant', { target: 'AGY-CONFINED', tier: 'host', reason: 'Fixture confined' });
+  const { grant: unconfinedGrant, warning } = await f.rpc('grant',
+    { target: 'AGY-UNCONFINED', tier: 'host', reason: 'Fixture unconfined', unconfined: true });
+  assert.equal(unconfinedGrant.unconfined, true);
+  assert.match(warning, /unconfined/i);
+  const confinedSpawn = await f.spawn('worker', 'AGY-CONFINED', { cli: 'agy', tier: 'host' });
+  const unconfinedSpawn = await f.spawn('worker', 'AGY-UNCONFINED', { cli: 'agy', tier: 'host' });
+  assert.equal(confinedSpawn.unconfined, undefined);
+  assert.equal(confinedSpawn.hostGrant.unconfined, undefined);
+  assert.equal(unconfinedSpawn.unconfined, true);
+  assert.equal(unconfinedSpawn.hostGrant.unconfined, true);
+  const [confined, unconfined] = f.lines('agy-host-launches.jsonl');
+  assert.deepEqual(confined, { wrapped: true, sandboxExecInWrapper: true, sandboxExecStatus: 71, guard: true, unconfinedEnv: false });
+  assert.deepEqual(unconfined, { wrapped: false, sandboxExecInWrapper: false, sandboxExecStatus: 0, guard: true, unconfinedEnv: true });
+  await assert.rejects(f.spawn('worker', 'AGY-UNCONFINED', { cli: 'agy', tier: 'host' }), { code: 'host-grant-exhausted' });
 });
 
 test('headless agy tiers launch with the recorded 1.5.18 ACP flags',

@@ -70,7 +70,7 @@ const help = {
   'worker-check': ['loom worker-check [--project DIR]'],
   'worker-handoff': ['loom worker-handoff --wip TEXT --passed TEXT --pending TEXT [--project DIR]',
     'loom worker-handoff <task|addr> [--reason no-progress | --reason fabrication|overreach --evidence TEXT] [--project DIR]'],
-  grant: [grantUsage, 'A Leader can use --request to ask Super for a host grant.'],
+  grant: [grantUsage, 'A Leader can use --request to ask Super for a host grant. --unconfined (Super only) disables Loom outer Seatbelt for all CLIs.'],
   rotate: ['loom rotate --self [--prepare | --reason R] [--project DIR]',
     'loom rotate --target <leader|auditor|ADDR> [--prepare | --reason R] [--cli CLI] [--model MODEL] [--effort EFFORT] [--passive] [--project DIR] (Super)'],
   'rotation-policy': ['loom rotation-policy <scope|ruling|correction|profile|error|incident|spot-check|audit|constraint|verify-note|verify|verify-decision|abort|rule-change> [--project DIR]',

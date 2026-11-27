@@ -15,7 +15,7 @@ import { seniorToolSummary } from '../daemon/senior-tools.mjs';
 import { readAccounts } from '../daemon/accounts.mjs';
 import { accountSummaryLines } from './accounts.mjs';
 import { readLayout } from '../daemon/herdr-layout.mjs';
-import { storedWorkerTier } from '../lib/worker-tiers.mjs';
+import { storedHostUnconfined, storedWorkerTier } from '../lib/worker-tiers.mjs';
 import { rotatingRoles } from '../index/index.mjs';
 import { rootEvents, sessionContext } from '../lib/session-context.mjs';
 import { historyReader } from './history.mjs';
@@ -226,14 +226,17 @@ export async function projectStatus(project, { now = Date.now() } = {}) {
     ...(snapshotUnavailable && { accountSnapshotUnavailable: true }), running: Boolean(live), layout: readLayout(project), stalledDeliveries: deliveryAlerts, awaitingUser, sessionHealth, exits: [...incidents.values()],
     suppressedReplies: suppressedReplies(messages).sort((a, b) => b.at - a.at),
     sessions: rows.filter(row => row.endedAt == null || retentionFor(row)).map(row => {
-      const authMode = row.cli === 'claude' ? jobs.get(row.addr)?.authMode : undefined;
+      const job = jobs.get(row.addr);
+      const authMode = row.cli === 'claude' ? job?.authMode : undefined;
+      const unconfined = states.get(row.addr)?.unconfined ?? storedHostUnconfined(job);
       return { role: row.role, addr: row.addr, cli: row.cli, task: row.task, state: lifecycle(row),
         ...(seniorByAddress.has(row.addr) && { metrics: seniorByAddress.get(row.addr),
           rotationsToday: rotationsToday[row.role].length }),
         ...(retentionFor(row) && { retention: retentionFor(row), runtimeState: runtimeState(row), ...details(row) }),
         ...(states.get(row.addr)?.rotationDue && { rotationDue: true }),
         ...(states.get(row.addr)?.compactions != null && { compactions: states.get(row.addr).compactions }),
-        ...(row.role === 'worker' && { workerTier: states.get(row.addr)?.workerTier ?? storedWorkerTier(artifacts.job(row.addr)) }),
+        ...(row.role === 'worker' && { workerTier: states.get(row.addr)?.workerTier ?? storedWorkerTier(job),
+          ...(unconfined && { unconfined: true }) }),
         ...(authMode && { authMode }),
         ...(states.get(row.addr)?.userPrompt && { userPrompt: states.get(row.addr).userPrompt }),
         ...(states.get(row.addr)?.lastProgressAt != null && { lastProgressAt: states.get(row.addr).lastProgressAt }),
@@ -300,7 +303,8 @@ export function printStatus(result) {
   section('Senior tools', result.seniorTools, row => [row.type, row.role, row.count,
     ...(row.reasons?.slice(-2).toReversed().map(item => item.reason) ?? [])].join(' · '), 8);
   const elevated = result.sessions.filter(row => row.workerTier && row.workerTier !== 'sandbox');
-  if (elevated.length) section('Elevated workers', elevated, row => [row.workerTier, row.task, row.addr, row.state].join(' · '), Infinity);
+  if (elevated.length) section('Elevated workers', elevated, row =>
+    [row.unconfined ? `${row.workerTier}/unconfined` : row.workerTier, row.task, row.addr, row.state].join(' · '), Infinity);
   section('Roles', result.sessions, row => [row.role ?? 'unassigned', row.cli, row.state,
     row.awaitingHandoverAck ? 'awaiting handover acknowledgement' :
       row.awaitingVerifiedReport ? 'awaiting report' : row.task ?? row.addr, row.rotationDue ? 'rotate at card boundary' : ''].join(' '), 6);
