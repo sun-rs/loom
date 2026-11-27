@@ -81,7 +81,11 @@ export function bindTuiSession(terminal, provider, {
     provider.screen.startupAnnouncement?.(frame.outsideComposer ?? frame.text);
   const agyOverlayKey = frame => provider.id === 'agy' && frame.text != null &&
     provider.screen.dialogKeys?.('overlay', frame.outsideComposer ?? frame.text)?.[0];
-  const classifyFrame = frame => agyAnnouncement(frame) || agyOverlayKey(frame) ? 'overlay' : classify(frame.composerText ?? frame.text);
+  function classifyFrame(frame) {
+    if (agyAnnouncement(frame) || agyOverlayKey(frame)) return 'overlay';
+    const kind = classify(frame.composerText ?? frame.text);
+    return kind === 'unknown' && frame.agyStartupComposer ? 'idle' : kind;
+  }
   const heldComposer = frame => frame.vacantText &&
     (classify(frame.vacantText) === 'idle' || provider.screen.hasHeldComposer?.(frame.vacantText));
 
@@ -126,7 +130,7 @@ export function bindTuiSession(terminal, provider, {
     const host = hostPhase(state);
     const title = currentTitle(observation, evidence, observedAt);
     const fallback = sameInterruptedTurn(evidence);
-    const empty = text != null && provider.screen.hasEmptyComposer(composerText) &&
+    const empty = text != null && (observation.agyStartupComposer || provider.screen.hasEmptyComposer(composerText)) &&
       (generation === undefined ? !draft : draft === '');
     // A stale native idle edge cannot authorize writes into current UI activity.
     const liveBlocker = userPrompt ? { phase: userPrompt.kind, source: userPrompt.source } : blocksInput(screen) ? { phase: screen, source: 'screen' } :

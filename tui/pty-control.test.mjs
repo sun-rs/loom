@@ -7,7 +7,9 @@ import { join } from 'node:path';
 import { test } from 'node:test';
 import { setTimeout as sleep } from 'node:timers/promises';
 import xterm from '@xterm/headless';
+import { inbox, receipt } from '../inbox/engine.mjs';
 import { wireText } from '../inbox/message.mjs';
+import { tui } from '../inbox/tui.mjs';
 import { bindTuiSession } from './index.mjs';
 import { controlHello, listenControl, requestControl } from './pty-control.mjs';
 import { readGrid } from './pty-grid.mjs';
@@ -24,7 +26,7 @@ test('Codex draft readback skips an empty paragraph placeholder and preserves in
   } finally { grid.dispose(); }
 });
 
-async function setup(t, { afterPaste, firstEnter, announce, hidePart, collapsedScreen, feedback, transcript } = {}) {
+async function setup(t, { afterPaste, firstEnter, announce, hidePart, collapsedScreen, feedback, transcript, agyWelcome } = {}) {
   const cwd = await mkdtemp(join(await realpath(tmpdir()), 'lpt-'));
   t.after(() => rm(cwd, { recursive: true, force: true }));
   const socket = join(cwd, 's');
@@ -34,11 +36,11 @@ async function setup(t, { afterPaste, firstEnter, announce, hidePart, collapsedS
   const bookPath = join(cwd, 'requests.jsonl');
   const transcriptPath = join(cwd, `${sessionId}.jsonl`);
   const hook = fields => appendFile(hookSink, JSON.stringify({ cwd, session_id: sessionId, receivedAt: Date.now(), ...fields }) + '\n');
-  await hook({ hook_event_name: 'SessionStart', ...(transcript && { transcript_path: transcriptPath }) });
+  if (!agyWelcome) await hook({ hook_event_name: 'SessionStart', ...(transcript && { transcript_path: transcriptPath }) });
   let draft = '';
   let overlay = false;
   let enterCount = 0;
-  const provider = announce || feedback ? providers.agy : providers.claude;
+  const provider = announce || feedback || agyWelcome ? providers.agy : providers.claude;
   const prompt = provider.id === 'agy' ? '>' : '❯';
   const writes = [];
   const events = new EventEmitter();
@@ -74,8 +76,15 @@ async function setup(t, { afterPaste, firstEnter, announce, hidePart, collapsedS
         } else if (bytes === '\r') {
           enterCount++;
           if (enterCount !== 1 || !['held', 'discarded', 'question'].includes(firstEnter)) {
-            void hook({ hook_event_name: provider.id === 'agy' ? 'PreInvocation' : 'UserPromptSubmit', prompt: draft })
-              .then(() => feedback && hook({ hook_event_name: 'Stop', fullyIdle: true, executionNum: 1 }));
+            const prompt = draft;
+            if (agyWelcome) {
+              void appendFile(transcriptPath, JSON.stringify({ source: 'USER_EXPLICIT', type: 'USER_INPUT', content: prompt,
+                step_index: 1, timestamp: new Date().toISOString() }) + '\n').then(() =>
+                hook({ hook_event_name: 'PreInvocation', prompt, transcript_path: transcriptPath }));
+            } else {
+              void hook({ hook_event_name: provider.id === 'agy' ? 'PreInvocation' : 'UserPromptSubmit', prompt })
+                .then(() => feedback && hook({ hook_event_name: 'Stop', fullyIdle: true, executionNum: 1 }));
+            }
           }
           if (enterCount !== 1 || firstEnter === undefined || firstEnter === 'discarded') draft = '';
         } else if (bytes === '0' && feedback) return; // Keep the survey painted to exercise the retry bound.
@@ -90,16 +99,19 @@ async function setup(t, { afterPaste, firstEnter, announce, hidePart, collapsedS
   };
   const data = bytes => events.emit('data', Buffer.from(bytes));
   const terminal = await thinBackend({ pty, Terminal: xterm.Terminal, humanPauseMs: 400,
-    cols: collapsedScreen?.split('\n', 1)[0].length ?? 180 }).launch({
+    cols: agyWelcome ? 80 : collapsedScreen?.split('\n', 1)[0].length ?? 180 }).launch({
     cwd, argv: [provider.id], env: {}, provider: provider.id, unset: [],
   });
   t.after(() => terminal.close());
+  // Exercise holder-mode payload verification without adopting any past write.
+  if (agyWelcome) terminal.provePaste = () => ({ status: 'unproven' });
   const bind = () => bindTuiSession(terminal, provider, {
     hookSink, evidenceRoot: cwd, cwd, bookPath, incarnation, requireNative: true,
   });
   let close = await listenControl(socket, bind(), incarnation);
   t.after(() => close());
   const account = (method, params) => requestControl(socket, method, params, incarnation);
+  if (agyWelcome) return { terminal, account, writes, cwd, bookPath, data };
   draw();
   let ready;
   for (let attempt = 0; attempt < 40; attempt++) {
@@ -112,6 +124,38 @@ async function setup(t, { afterPaste, firstEnter, announce, hidePart, collapsedS
     appendTranscript: row => appendFile(transcriptPath, JSON.stringify({ sessionId, cwd, timestamp: new Date().toISOString(), ...row }) + '\n'),
     restartControl: async () => { await close(); close = await listenControl(socket, bind(), incarnation); } };
 }
+
+test('agy welcome without shortcuts delivers the queued compact handover exactly once', async t => {
+  const f = await setup(t, { agyWelcome: true });
+  const pane = { address: 't1', cwd: f.cwd, state: 'live', pid: 101, created_ms: Date.now(), status: { state: 'idle' } };
+  const transport = tui(f.cwd, async command => {
+    assert.equal(command, 'get');
+    return pane;
+  }, undefined, (_binding, method, params) => f.account(method, params));
+  const mail = inbox(f.cwd, transport);
+  const id = randomUUID();
+  mail.enqueue({ id, target: { addr: pane.address, cwd: f.cwd, pid: pane.pid, createdAt: pane.created_ms,
+    provider: 'agy', tui: { transport: 'holder-v3', bookPath: f.bookPath } }, createdAt: Date.now(),
+  text: 'Read .project/replies/fixture.txt. Reply with its exact HANDOVER-ACK.', phase: 'queued', startup: true,
+  mode: 'queue', requestedMode: 'queue' });
+  const result = () => receipt(mail.messages.find(message => message.id === id));
+  // agy 1.5.18 startup paint: bright-black placeholder at the caret, a
+  // rule wider than the viewport, and no shortcut or model footer.
+  const welcome = (hint, paint = '') => '\x1b[2J\x1b[HAntigravity CLI 1.5.18\r\n' + '─'.repeat(80) +
+    `\r\n> ${paint}${hint}\x1b[0m\r\n` + '─'.repeat(200) + '\x1b[3;3H';
+  const hint = 'Accept-edits mode: file edits auto-approved (shift+tab to cycle)';
+  f.data(welcome(hint));
+  await sleep(150);
+  await mail.step();
+  assert.equal(result().reason, 'waiting-writable');
+  assert.deepEqual(f.writes, []);
+  f.data(welcome(hint, '\x1b[90m'));
+  await sleep(150);
+  await mail.step();
+  await mail.step();
+  assert.equal(result().deliveryStatus, 'delivered', JSON.stringify(result()));
+  assert.equal(f.writes.filter(bytes => bytes === '\r').length, 1);
+});
 
 test('an agy feedback survey after a native turn sends only Skip once', async t => {
   const f = await setup(t, { feedback: true });

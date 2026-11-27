@@ -186,7 +186,7 @@ export function selfRotation(project, { sessions, index, mail, notifications, no
         save();
       } else if (!pending.v2 && now() - pending.at >= timeLimit) {
         if (job) {
-          failHandover(job, 'self-rotation-overdue');
+          await failHandover(job, 'self-rotation-overdue');
           fail(row, entry, 'self-rotation-overdue');
         } else {
           delete entry.request;
