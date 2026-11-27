@@ -37,7 +37,7 @@ function globalView(projects, snapshots, selected, error, paint, width) {
     return row(truncate(index === selected ? paint('selected', '› ' + line) : '  ' + line, width), { id: 'project:' + project, project, index });
   });
   if (error) body.push(row(truncate(safe(error), width)));
-  else if (!projects.length) body.push(row(truncate('No projects registered. Run loom up in a project.', width)));
+  else if (!projects.length) body.push(row(truncate('No projects registered. Run loom project up <DIR> in a project.', width)));
   return { header: [row(paint('accent', 'Loom · All projects')), row()], body,
     footer: '↑↓ select  Enter open  r refresh  q quit  ? help' };
 }

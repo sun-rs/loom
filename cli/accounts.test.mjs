@@ -83,11 +83,24 @@ test('accounts --refresh prints each resolved executable in JSON and text only o
   const { socketPath } = await import('./project.mjs');
   const executables = {};
   const expected = {};
+  const ccpDir = join(project, 'ccp', 'bin');
+  const localBin = join(project, '.local', 'bin');
+  mkdirSync(ccpDir, { recursive: true });
+  mkdirSync(localBin, { recursive: true });
   for (const cli of ['codex', 'claude', 'agy', 'opencode']) {
-    expected[cli] = join(project, cli + '-stub');
-    executables[cli] = join(project, cli);
-    writeFileSync(expected[cli], '#!/bin/sh\nexit 2\n', { mode: 0o755 });
-    symlinkSync(expected[cli], executables[cli]);
+    if (cli === 'claude') {
+      const target = join(ccpDir, 'claude-protected');
+      writeFileSync(target, '#!/bin/sh\nexit 2\n', { mode: 0o755 });
+      const entry = join(localBin, 'claude');
+      symlinkSync(target, entry);
+      executables.claude = entry;
+      expected.claude = entry;
+    } else {
+      expected[cli] = join(project, cli + '-stub');
+      executables[cli] = join(project, cli);
+      writeFileSync(expected[cli], '#!/bin/sh\nexit 2\n', { mode: 0o755 });
+      symlinkSync(expected[cli], executables[cli]);
+    }
   }
   const refresh = await refreshAccounts({ executables, env: { HOME: project, PATH: '' } });
   const server = createServer(socket => socket.once('data', () => {

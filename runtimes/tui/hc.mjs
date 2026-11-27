@@ -4,7 +4,7 @@ import { performance } from 'node:perf_hooks';
 import { setTimeout as sleep } from 'node:timers/promises';
 import { promisify } from 'node:util';
 import { tuiVersionLabels, verifiedTuiVersions, versionWarnings } from '../../adapters/tui-version.mjs';
-import { claudeApiEnvKeys } from '../../adapters/claude/launch.mjs';
+import { claudeApiEnvKeys, claudeNetworkEnvKeys } from '../../adapters/claude/launch.mjs';
 
 export const exec = promisify(execFile);
 
@@ -12,6 +12,10 @@ export async function startPane(command, cwd, argv, {
   name = `loom-tui-${randomUUID().replaceAll('-', '').slice(0, 20)}`, env = {}, unset = [], provider = argv[0],
   nativeCommand = argv[0], placementLabels = {},
 } = {}) {
+  if (provider === 'claude') {
+    unset = unset.filter(key => !claudeNetworkEnvKeys.includes(key));
+    env = Object.fromEntries(Object.entries(env).filter(([key]) => !claudeNetworkEnvKeys.includes(key)));
+  }
   // A task's inherited HC_TERMINAL_ID would wrap submitted text in a sender tag.
   const call = async (args, timeout = 5_000) => {
     let stdout;
@@ -30,11 +34,12 @@ export async function startPane(command, cwd, argv, {
   const launchEnv = Object.hasOwn(verifiedTuiVersions, provider) && process.env.PATH && !unset.includes('PATH')
     ? { PATH: process.env.PATH, ...env } : env;
   const processArgs = [
-    ...unset.flatMap(key => ['-u', key]), ...Object.entries(launchEnv).map(([key, value]) => `${key}=${value}`),
+    ...unset.flatMap(key => ['-u', key]), ...Object.entries(launchEnv).filter(([, value]) => value != null)
+      .map(([key, value]) => `${key}=${value}`),
   ];
   const omitted = new Set(provider === 'claude' ? [...unset, ...claudeApiEnvKeys] : unset);
   const probeEnv = Object.fromEntries([process.env, launchEnv].flatMap(source => Object.keys(source)
-    .filter(key => !omitted.has(key)).map(key => [key, source[key]])));
+    .filter(key => !omitted.has(key) && source[key] != null).map(key => [key, source[key]])));
   const labels = { ...await tuiVersionLabels(provider, nativeCommand, { cwd, env: probeEnv }), ...placementLabels };
   const launchId = randomUUID();
   let started;

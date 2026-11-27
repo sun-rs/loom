@@ -17,49 +17,50 @@ function scratch(t) {
   return path;
 }
 
-test('launch uses session settings and literal argv without creating files', (t) => {
+test('launch emits CCP-compatible argv without hooks or protected settings', (t) => {
   const cwd = scratch(t);
   const prompt = '--literal prompt with "quotes" and\na newline';
   const launch = claude.launch({
     model: 'haiku', effort: 'low', cwd, prompt, extraArgs: ['--tools', 'Bash'],
-    hookSink: 'event logs/worker\'s.jsonl',
+    hookSink: 'event logs/worker\'s.jsonl', statusLine: { type: 'command', command: 'echo hi' },
+    idleCompaction: false,
   });
   const { argv, env } = launch;
   assert.equal(claude.id, 'claude');
   assert.deepEqual(env, {});
-  assert.deepEqual(argv.slice(0, 12), ['claude', '--tools', 'Bash', '--dangerously-skip-permissions',
-    '--setting-sources', '', '--strict-mcp-config', '--model', 'haiku', '--effort', 'low', '--settings']);
+  assert.deepEqual(argv.slice(0, 8), ['claude', '--tools', 'Bash', '--dangerously-skip-permissions',
+    '--model', 'haiku', '--effort', 'low']);
   assert.deepEqual(argv.slice(-2), ['--', prompt]);
-  const settings = JSON.parse(argv[12]);
-  assert.equal(settings.skipDangerousModePermissionPrompt, true);
-  assert.equal(settings.idleCompaction, false);
-  assert.deepEqual(Object.keys(settings.hooks), ['UserPromptSubmit', 'Stop', 'StopFailure', 'PreToolUse',
-    'PostToolUse', 'PostToolUseFailure', 'PermissionRequest', 'Notification']);
-  assert.match(settings.hooks.Notification[0].matcher, /permission_prompt/);
-  assert.equal(settings.hooks.Stop[0].hooks[0].args[1], join(cwd, 'event logs/worker\'s.jsonl'));
-  assert.equal(settings.hooks.PostToolUse[0].matcher, '*');
+  assert.equal(argv.includes('--settings'), false);
+  assert.equal(argv.includes('--setting-sources'), false);
+  assert.equal(argv.includes('--strict-mcp-config'), false);
   assert.deepEqual(readdirSync(cwd), []);
   assert.throws(() => claude.launch({ extraArgs: ['--'] }), TypeError);
-  assert.deepEqual(JSON.parse(claude.launch().argv.at(-1)), { skipDangerousModePermissionPrompt: true, idleCompaction: false });
+  const fastLaunch = claude.launch({ fast: true });
+  assert.equal(fastLaunch.argv.includes('--settings'), true);
+  assert.deepEqual(JSON.parse(fastLaunch.argv.at(-1)), { fastMode: true });
+  const slowLaunch = claude.launch({ fast: false });
+  assert.deepEqual(JSON.parse(slowLaunch.argv.at(-1)), { fastMode: false });
 });
 
-test('Claude idle compaction can be enabled per role', t => {
+test('Claude idle compaction policy parses cleanly without injecting disallowed CCP settings', t => {
   const project = scratch(t);
   mkdirSync(join(project, '.project'));
   const path = join(project, '.project', 'policy.json');
   writeFileSync(path, JSON.stringify({ roles: { auditor: { claude: { idleCompaction: true } } } }));
   const idleCompaction = claudeIdleCompaction(project, 'auditor');
-  assert.equal(JSON.parse(claude.launch({ idleCompaction }).argv.at(-1)).idleCompaction, true);
+  assert.equal(idleCompaction, true);
+  assert.equal(claude.launch({ idleCompaction }).argv.includes('--settings'), false);
   assert.equal(claudeIdleCompaction(project, 'leader'), false);
   writeFileSync(path, JSON.stringify({ roles: { auditor: { claude: { idleCompaction: 'false' } } } }));
   assert.throws(() => claudeIdleCompaction(project, 'auditor'), { code: 'invalid-policy' });
 });
 
-test('the injected hook writes native fields to its literal sink without a decision', (t) => {
+test('legacy hook helper writes native fields to its literal sink without a decision', async (t) => {
+  const { hookSettings } = await import('./hooks.mjs');
   const cwd = scratch(t);
   const sink = 'event logs/worker\'s.jsonl';
-  const { argv } = claude.launch({ cwd, hookSink: sink });
-  const { command, args } = JSON.parse(argv.at(-1)).hooks.Stop[0].hooks[0];
+  const { command, args } = hookSettings(join(cwd, sink)).hooks.Stop[0].hooks[0];
   const run = (input) => spawnSync(command, args, { cwd, input, encoding: 'utf8' });
   const stop = {
     hook_event_name: 'Stop', session_id: 'session', transcript_path: '/fixture/session.jsonl',

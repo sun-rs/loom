@@ -192,9 +192,12 @@ test('C3 account refresh shows Claude windows and persists OpenCode usage unavai
   const { formatAccountsText, runAccounts } = await import('../cli/accounts.mjs');
 
   // Replay the fields consumed from the redacted C3 host probe. Only stubs run.
-  const claudeDir = join(project, '.local/share/claude/versions');
-  mkdirSync(claudeDir, { recursive: true });
-  const claude = join(claudeDir, '2.1.331');
+  const ccpDir = join(project, 'ccp/bin');
+  const localBin = join(project, '.local/bin');
+  mkdirSync(ccpDir, { recursive: true });
+  mkdirSync(localBin, { recursive: true });
+  const claudeTarget = join(ccpDir, 'claude-protected');
+  const claude = join(localBin, 'claude');
   const opencode = join(project, 'opencode');
   const auth = {
     loggedIn: true, authMethod: 'claude.ai', email: 'b***@example.com',
@@ -215,18 +218,19 @@ test('C3 account refresh shows Claude windows and persists OpenCode usage unavai
     ].join('\n'),
   };
   const writeStub = (file, responses) => {
-    writeFileSync(file, `#!/bin/sh\nexec "${process.execPath}" "$0.cjs" "$@"\n`, { mode: 0o755 });
+    writeFileSync(file, `#!/bin/sh\nexec "${process.execPath}" ${JSON.stringify(file + '.cjs')} "$@"\n`, { mode: 0o755 });
     writeFileSync(file + '.cjs', `
       const response = ${JSON.stringify(responses)}[process.argv.slice(2).join(' ')];
       if (response === undefined) process.exit(2);
       console.log(response);
     `);
   };
-  writeStub(claude, {
+  writeStub(claudeTarget, {
     '--version': '2.1.331 (Claude Code)',
     'auth status --json': JSON.stringify(auth),
     '-p /usage --no-session-persistence --output-format json': JSON.stringify(usage),
   });
+  symlinkSync(claudeTarget, claude);
   const openCodeUsage = '--standalone api GET /api/experimental/usage/limits';
   const openCodeResponses = {
     '--version': 'opencode v2.3.0',

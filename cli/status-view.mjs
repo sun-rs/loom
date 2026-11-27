@@ -19,7 +19,7 @@ const itemFor = (id, title, fields) => ({ id, title, fields });
 const age = (at, now) => duration(at == null ? NaN : now - at);
 const tones = new Map([
   ...['idle', 'idle-warm', 'working', 'ready', 'running', 'busy', 'completed', 'PASS', 'DONE'].map(state => [state, 'good']),
-  ...['starting', 'stalled', 'awaiting-user', 'quota-wait', 'BLOCKED'].map(state => [state, 'warn']),
+  ...['starting', 'stalled', 'awaiting-user', 'quota-wait', 'BLOCKED', 'UNCONFIRMED'].map(state => [state, 'warn']),
   ...['stuck', 'refused', 'auth-expired', 'silent-hang', 'REJECT', 'FAILED'].map(state => [state, 'bad']),
 ]);
 const badge = (state, paint) => paint(tones.get(state) ?? 'muted', '[' + show(state) + ']');
@@ -28,6 +28,7 @@ const clickLine = (text, item) => ({ ...row(text), hits: [{ from: 1, to: widthOf
 const attentionLabels = {
   stalled: '投递停滞', refused: '投递被拒', 'awaiting-user': '等待用户', 'needs-decision': '需要决定',
   'quota-wait': '额度受限', 'auth-expired': '认证过期', 'rotation-overdue': '换班逾期', 'gate-wait': '门禁待处理',
+  'release-timeout': '超时未释放',
 };
 const noticeLabels = {
   'needs-decision': '需要决定', 'session-liveness': '会话异常', 'session-exited': '会话结束',
@@ -37,10 +38,11 @@ const noticeLabels = {
   'senior-override-budget': '工具预算', 'project-completed': '项目完成',
   'leader-rotation-completed': '换班完成', 'auditor-rotation-completed': '换班完成',
   'audit-escalation': '审核升级', 'blocked-escalation': '阻塞升级', 'wave-timeout': '波次超时',
+  'worker-result-unconfirmed': 'Worker 结果未确认', 'worker-release-timeout': 'Worker 释放超时',
 };
 const alerts = new Set(['session-liveness', 'session-exited', 'leader-exited', 'target-awaiting-user', 'delivery-stalled',
   'super-delivery-receipt', 'consumption-pyramid', 'senior-tool-output-share', 'senior-override-budget',
-  'audit-escalation', 'blocked-escalation', 'wave-timeout']);
+  'audit-escalation', 'blocked-escalation', 'wave-timeout', 'worker-result-unconfirmed', 'worker-release-timeout']);
 const details = fields => fields.filter(([, value]) => value != null && value !== '');
 
 export function overlayRows(view, width, height, paint) {
@@ -161,8 +163,9 @@ export function boardView(project, { board, error, offlineAccounts } = {}, { wid
     const released = workers.filter(worker => ['released', 'offline'].includes(worker.state) || worker.releasedAt != null).length;
     const ended = workers.length - liveWorkers.length - released;
     const unconfined = liveWorkers.filter(worker => worker.unconfined).length;
+    const releaseTimeouts = board.releaseTimeoutCount ?? workers.filter(worker => worker.releaseTimedOut).length;
     const links = [
-      [1, 'Workers', `${liveWorkers.length - idle} active · ${idle} idle · ${released} released${ended ? ' · ' + ended + ' ended' : ''}${unconfined ? ' · ' + unconfined + ' unconfined' : ''}`],
+      [1, 'Workers', `${liveWorkers.length - idle} active · ${idle} idle · ${released} released${ended ? ' · ' + ended + ' ended' : ''}${releaseTimeouts ? ' · ' + releaseTimeouts + ' 超时未释放' : ''}${unconfined ? ' · ' + unconfined + ' unconfined' : ''}`],
       [2, 'Gates', `${openGates.length} open`],
       [3, 'Notices', `${notifications?.count ?? 0} unread`],
     ].map(([page, title, counts]) => {
@@ -205,6 +208,7 @@ export function boardView(project, { board, error, offlineAccounts } = {}, { wid
         ['Check mismatch', worker.firstReportCheck?.mismatches?.join(', ')],
         ['Handoff reason', worker.handoff?.reason], ['Handoff sheet', worker.handoff?.path],
         ['Closure', retention?.closeReason], ['Release', retention?.releasedBy],
+        ['Release timeout', worker.releaseTimedOut ? '超时未释放' : undefined],
       ]);
       let state = show(worker.state);
       if (state === 'idle' && Number.isFinite(worker.releaseAt)) {
@@ -217,9 +221,10 @@ export function boardView(project, { board, error, offlineAccounts } = {}, { wid
         ...(showRetention ? [context] : []), (worker.lastResultTag ?? worker.lastResult) ? badge(worker.lastResultTag ?? worker.lastResult, paint) : '—',
         ...(showRetention ? [show(worker.compactions), show(reuse)] : [])] };
     });
+    const releaseTimeouts = board.releaseTimeoutCount ?? workers.filter(worker => worker.releaseTimedOut).length;
     const toggle = { id: 'workers:filter', toggle: true };
     const label = showEnded ? 'All workers · a Show live only' : `Live workers · a Show all (${workers.length - liveWorkers.length} inactive)`;
-    return panel(w, `Workers · ${records.length}`, [row(marker(toggle, paint('accent', label)), toggle),
+    return panel(w, `Workers · ${records.length}${releaseTimeouts ? ' · ' + releaseTimeouts + ' 超时未释放' : ''}`, [row(marker(toggle, paint('accent', label)), toggle),
       ...entries.length ? table(inside(w), columns, entries, paint) : [row(paint('muted', 'No workers in this view'))]]);
   }
 

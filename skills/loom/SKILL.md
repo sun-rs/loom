@@ -18,6 +18,11 @@ description: 在 Loom 中启动、指挥、复核或接手由 Super、Auditor、
 - **Auditor** 负责维护 `.project/charter.md` 和 `.project/rulings.md`。章程写目标、非目标、红线和验收，账本按编号逐字记录用户裁决。新裁决另起编号并标明取代关系。参照 [章程模板](../../examples/charter.md) 和 [裁决模板](../../examples/rulings.md)。
 - Leader、Auditor 和 Worker 的会话无人值守。禁止交互式询问用户，原生提问工具仅向与用户直接对话的 Super 开放。需要裁决时，写文件记录事实、选项和建议，运行 `"$LOOM_BIN" notifications --needs-decision "$SUMMARY" --kind decision`，并在摘要带上文件路径。处理可独立完成的工作，等待裁决时以 `BLOCKED <决定点>` 结束本轮。答复以普通投递返回。托管 Super 由收件箱按批唤醒，外部 Super 收本机通知。`loom notifications --project "$PROJECT"` 预览，`--take` 领取，`--history` 回看。
 - Super 巡检通知时也处理 `blocked-escalation`（工作阻塞升级）和 `delivery-uncertain`（投递缺少原生确认）。
+- **中断/重启后的恢复步骤**：
+  1. 用户运行 `loom up` 拉起 Super（上次异常且有会话 ID 时在 `loom up --resume` 续接或 `loom up --fresh` 新开并注入实况间选择；正常结束一律新开）。
+  2. Super 先读 `~/.loom/super/live.md` 与 `~/.loom/super/handoff.md`，运行 `loom recover --all-projects`（只读）盘点各项目应在而不在的会话。
+  3. 逐项目按需执行 `loom project up DIR`，再按 Auditor → Leader → 未收口 worker 错峰执行 `loom resume <addr>`（不支持原生续接时按提示用交接单新开；Claude 经 CCP 接口）。
+  4. 每次裁决后与会话结束前更新 `~/.loom/super/handoff.md`（≤60 行：在途项目、待决事项、最近裁决）。
 - 项目记忆 v0 保存在 `.project/memory/items/<id>.md`，该目录是 [v1 设计](../../docs/MEMORY.md)的导入来源。每条 ≤200 tokens。用两行 `---` 包裹单行 JSON，必填 `id/scope/owner/source/verified`（`scope` 为 `project`），可选 `expires/supersededBy/keywords`，随后写 `# 标题`、空行和正文。Leader 写入已证实的坑、环境条件和入口，Auditor 裁决争议。首轮注入重建 `.project/memory/INDEX.md`，可用 `"$LOOM_BIN" memory search <query> --project "$PROJECT"` 查询。
   - `id` 与 `owner` 仅使用小写字母、数字、`-` 和 `_`。`verified` 和 `expires` 使用 `YYYY-MM-DD`，`source` 使用项目内相对路径或 Git SHA，`keywords` 为单个字符串（非数组）。
   - 标题和正文避免计数斜杠写法（如 `37/37`）及项目外路径。写完运行 `"$LOOM_BIN" memory search <query> --project "$PROJECT"`，确认结果包含该条目。
@@ -86,8 +91,11 @@ Worker 线统一由 OAR 托管。新增特殊 worker（例如 Claude TUI worker�
 
   ```sh
   LOOM_EXTERNAL_SUPER=1 loom spawn "$ROLE" --project "$PROJECT" --cwd "$PROJECT" "$PROMPT"
+  LOOM_EXTERNAL_SUPER=1 loom spawn auditor --project "$PROJECT" --cwd "$PROJECT" --resume-session "$SESSION_ID"
   loom spawn worker --project "$PROJECT" --cwd "$WORKTREE" --parent "$LOOM_ADDR" --task "$TASK" --wave "$WAVE" "$PROMPT"
   ```
+
+- 按用户 2026-11-27 裁决，**所有 Claude Code 调用必须经 CCP 入口**（默认 `/Users/sun/.local/bin/claude`，禁止直接执行 `~/.local/share/claude/versions/*` 或 realpath 绕过，非 CCP 入口由 loomd 硬拒绝 `ccp-required`）。经 CCP 启动的 Claude 不注入 loom hooks/statusLine，loom 改读 `~/.claude/projects/<编码后的 cwd>/<sessionId>.jsonl` 追踪回合、投递与上下文。已结束的常驻 Claude 会话可用 `loom spawn <role> --resume-session <UUID>` 经 CCP 恢复原会话上下文。
 
 - `loom status --project "$PROJECT"` 看项目总览，`loom ls` 查稳定地址，`loom state "$ADDR"` 查在途事项和换班状态。用 `loom hist "$ADDR" --evidence` 查证据卡，`loom hist --wave "$WAVE"` 查波次，`loom hist "$ADDR" --turn "$N" --level L2 --diff` 查单轮提交差异。用 `--before N` 或 `--page N` 翻到更早轮次，`--all` 输出全部 L1 摘要。未提交的改动查证据卡，正文未确认时按历史给出的路径和行号核查原件。
 - Leader、Auditor 和 Super 用 `loom send "$ADDR" --project "$PROJECT" "$TEXT"` 排队发信，也可用 `leader` 或 `auditor` 发送给当前已接任的唯一角色。loomd 使用已认证的会话作为发信人。外部 Super 在本机操作终端设置 `LOOM_EXTERNAL_SUPER=1`，可用 `--from super` 收取通知回执，并用 `--expect-reply` 请求答复。授权叫停用 `--mode interrupt` 并说明理由。loomd 按投递 SLA 对账并升级停滞投递。

@@ -280,3 +280,49 @@ test('Status TUI displays auditor calls per turn against target <= 5 on Cost and
   assert.match(okCost, /Auditor calls\/turn · 3\.2 \(target ≤ 5\)/);
   assert.doesNotMatch(okCost, /over target/);
 });
+
+test('Status TUI displays release timeout count on Board, Workers and detail views', async () => {
+  const { boardView } = await import('./status-view.mjs');
+  const timedOut = structuredClone(board);
+  timedOut.releaseTimeoutCount = 1;
+  timedOut.workers.push({
+    task: 'STUCK-IDLE', addr: 'oar-dead0003-0000-4000-8000-000000000003', state: 'idle-warm', wave: 'W-REAP',
+    cli: 'codex', model: 'sol', startedAt: now - 1_800_000, lastResultTag: 'UNCONFIRMED',
+    releaseTimedOut: true, releaseTimeoutAt: now - 60_000,
+    retention: { keep: false, idleSince: now - 1_500_000, remainingMs: 0, releaseTimedOut: true },
+  });
+  timedOut.attention = [...timedOut.attention, {
+    id: 'release-timeout:oar-dead0003-0000-4000-8000-000000000003', kind: 'release-timeout',
+    addr: 'oar-dead0003-0000-4000-8000-000000000003', area: 'workers', subject: 'STUCK-IDLE', at: now - 60_000,
+  }];
+  const summary = boardLines(project, { board: timedOut }, { page: 0, now, width: 120 }).join('\n');
+  assert.match(summary, /1 超时未释放/);
+  assert.match(summary, /超时未释放 · STUCK-IDLE/);
+  const workersPage = boardLines(project, { board: timedOut }, { page: 1, now, width: 120 }).join('\n');
+  assert.match(workersPage, /Workers · \d+ · 1 超时未释放/);
+  assert.match(workersPage, /\[UNCONFIRMED\]/);
+  const view = boardView(project, { board: timedOut }, { page: 1, now, width: 120 });
+  const item = view.body.flatMap(line => line.items ?? []).find(entry => entry?.id === 'worker:oar-dead0003-0000-4000-8000-000000000003');
+  assert.ok(item);
+  assert.deepEqual(item.fields.find(([label]) => label === 'Release timeout'), ['Release timeout', '超时未释放']);
+
+  const { printStatus } = await import('./status.mjs');
+  const lines = [];
+  const orig = console.log;
+  console.log = (...args) => lines.push(args.join(' '));
+  try {
+    printStatus({
+      project, running: true, releaseTimeoutCount: 1, stalledDeliveries: [], awaitingUser: [],
+      sessionHealth: [], exits: [], suppressedReplies: [], accounts: [], waves: [], pendingContinuations: [],
+      cards: [], blocked: [], notices: [], merges: [], rotations: [], rotationsToday: {}, workerMetrics: [],
+      rotationNotices: [], seniorTools: [], routing: { filtered: [] },
+      cost: { rawTokens: 0, byRole: {}, usageByRole: {}, pyramid: { state: 'ok', inversions: [] }, missingSessions: 0 },
+      sessions: [{ role: 'worker', addr: 'oar-dead0003', cli: 'codex', task: 'STUCK-IDLE', state: 'idle-warm',
+        lastResultTag: 'UNCONFIRMED', compactions: 0, reuse: 'unmeasured',
+        retention: { keep: false, idleSince: now - 1_500_000, remainingMs: 0, releaseTimedOut: true } }],
+    });
+  } finally { console.log = orig; }
+  const printed = lines.join('\n');
+  assert.match(printed, /Release timeouts · 1 超时未释放/);
+  assert.match(printed, /STUCK-IDLE · idle-warm.*超时未释放/);
+});

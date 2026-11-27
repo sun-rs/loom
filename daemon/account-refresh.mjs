@@ -1,10 +1,11 @@
 import { createHmac, randomBytes } from 'node:crypto';
 import { realpathSync, statSync } from 'node:fs';
 import { isAbsolute, join } from 'node:path';
-import { resolveCliExecutable, resolveNativeExecutable } from './executables.mjs';
+import { resolveCliExecutable, resolveClaudeExecutable, resolveNativeExecutable } from './executables.mjs';
 import { RefreshFailure } from './account-refresh/process.mjs';
 import { readProvider } from './account-refresh/providers.mjs';
 import { verifiedAccountVersion } from '../adapters/accounts/versions.mjs';
+import { claudeNetworkEnvKeys } from '../adapters/claude/launch.mjs';
 
 const sources = {
   codex: 'codex-app-server', claude: 'claude-cli', agy: 'agy-cli', opencode: 'opencode-api',
@@ -19,6 +20,7 @@ const baseEnvKeys = [
   'HOME', 'PATH', 'TMPDIR', 'TMP', 'TEMP', 'TZ', 'GIT_CONFIG_GLOBAL', 'GIT_CONFIG_NOSYSTEM',
   'XDG_CONFIG_HOME', 'XDG_CACHE_HOME', 'XDG_DATA_HOME', 'XDG_STATE_HOME', 'XDG_RUNTIME_DIR',
 ];
+baseEnvKeys.push(...claudeNetworkEnvKeys);
 const projectKeys = new WeakMap();
 const defaultRefreshTimeoutMs = 50_000;
 const safeRef = value => typeof value === 'string' && /^[a-z\d][a-z\d_.:-]{0,127}$/i.test(value);
@@ -116,10 +118,12 @@ function makeObservations(data, profile, observedAt, secret, unverified) {
 function resolveRefreshExecutable(cli, executables, env) {
   try {
     const binary = executables && Object.hasOwn(executables, cli) ?
-      resolveNativeExecutable(executables[cli]) : resolveCliExecutable(cli, { env });
+      cli === 'claude' ? resolveClaudeExecutable(executables[cli], { env }) : resolveNativeExecutable(executables[cli]) :
+      resolveCliExecutable(cli, { env });
     return { binary };
   } catch (error) {
-    return { status: error.code === 'protected-executable' ? 'rejected' : error.code === 'ENOENT' ? 'not-found' : 'invalid-cli-executable' };
+    return { status: error.code === 'protected-executable' || error.code === 'ccp-required' ? 'rejected' :
+      error.code === 'ENOENT' ? 'not-found' : 'invalid-cli-executable' };
   }
 }
 

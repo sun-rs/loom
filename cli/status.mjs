@@ -60,8 +60,9 @@ export async function projectStatus(project, { now = Date.now() } = {}) {
   let rotationPolicy;
   let memory;
   let metrics;
+  let releaseTimeoutCount;
   if (managedProject(project)) {
-    try { ({ sessions: live, exits, rotationPolicy, memory, workerMetrics: metrics } = await request(project, 'status')); }
+    try { ({ sessions: live, exits, rotationPolicy, memory, workerMetrics: metrics, releaseTimeoutCount } = await request(project, 'status')); }
     catch (error) { if (!daemonAbsent(error)) throw error; }
   }
   const rotations = projectIndex(project).rotations();
@@ -97,7 +98,7 @@ export async function projectStatus(project, { now = Date.now() } = {}) {
     const handoff = draft?.ready || draft?.reason !== 'no-progress' && (draft?.cardId == null || draft.cardId === cardId) ?
       draft : undefined;
     return { ...(job?.firstReportCheck?.status === 'mismatch' ? { lastResultTag: 'BLOCKED' } :
-      workerDetails(inputs)), ...context,
+      job?.retention?.resultUnconfirmedAt != null ? { lastResultTag: 'UNCONFIRMED' } : workerDetails(inputs)), ...context,
       ...(row.role === 'worker' && reuseStatus(job, row.endedAt != null, context, workerReuseLimits(policy), findings)),
       ...((handoff || incident && row.endedAt == null) && { handoff: handoff ?? { reason: incident.kind, ready: false } }),
       ...(job?.firstReportCheck && { firstReportCheck: job.firstReportCheck }) };
@@ -227,7 +228,10 @@ export async function projectStatus(project, { now = Date.now() } = {}) {
   const deliveryAlerts = stalledDeliveries(messages).map(item =>
     ({ ...item, role: byAddress.get(item.target)?.role, since: item.stalledAt }));
   const { accounts, diagnostics, snapshotUnavailable } = readAccounts(project);
-  return { ok: true, accounts, ...(diagnostics.length && { accountDiagnostics: diagnostics }),
+  releaseTimeoutCount ??= rows.filter(row => row.role === 'worker' && row.endedAt == null &&
+    jobs.get(row.addr)?.retention?.releaseTimeoutAt != null &&
+    jobs.get(row.addr)?.retention?.releasedAt == null).length;
+  return { ok: true, accounts, releaseTimeoutCount, ...(diagnostics.length && { accountDiagnostics: diagnostics }),
     ...(snapshotUnavailable && { accountSnapshotUnavailable: true }), running: Boolean(live), layout: readLayout(project), stalledDeliveries: deliveryAlerts, awaitingUser, sessionHealth, exits: [...incidents.values()],
     suppressedReplies: suppressedReplies(messages).sort((a, b) => b.at - a.at),
     sessions: rows.filter(row => row.endedAt == null || retentionFor(row)).map(row => {
@@ -317,10 +321,12 @@ export function printStatus(result) {
     compactions, reuse, retirementReason, handoff, firstReportCheck }) =>
     [task ?? addr, state, retention.keep || retention.keepWarm ? 'kept warm' :
       retention.remainingMs != null ? `warm for ${Math.ceil(retention.remainingMs / 1000)}s` : undefined,
+    retention.releaseTimedOut && '超时未释放',
     contextPercent == null ? 'context unknown' : `context ${Math.round(contextPercent)}%`, lastResultTag,
     `${compactions ?? 0} compactions`, reuse === 'same-card-only' ? `same card only (${retirementReason})` : reuse,
     firstReportCheck && `baseline ${firstReportCheck.status}`,
     handoff && `handoff ${handoff.reason}${handoff.path ? ' · ' + handoff.path : ''}`].filter(Boolean).join(' · '), 12);
+  if (result.releaseTimeoutCount) console.log(`Release timeouts · ${result.releaseTimeoutCount} 超时未释放`);
   section('Worker metrics by gate', result.workerMetrics, workerMetricsLabel, 8);
   section('Hook gaps', result.sessions.filter(row => row.hookGap),
     row => [row.role, row.addr, 'hook-gap', row.hookGap.source].join(' '), Infinity);

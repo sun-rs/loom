@@ -95,5 +95,9 @@
 - `cli/status.mjs` 保留 main 的账号、状态页和恢复字段及统一采样时间，同时展示 Auditor 每轮调用指标和超标提示。CLI 与 Status TUI 的指标回归均通过。
 - `npm ci`、`npm run lint` 与 `git diff --check` 均通过。合并 `c8717916` 后运行全量 `npm test -- --test-concurrency=4`，1097 项通过，失败、取消、跳过均为 0。 [全量日志](/private/tmp/loom-auditor-lean-merge-full.log)
 - 已纳入本次验证期间 main 的后续提交，最新合并到 `1f528010`。这些上游提交只改研究文档，最终代码与已验证的合并提交 `21f0acf2` 一致。
+- 2026-11-28 合并最新 `main`（`1ab84f67`，包含 `e97556ae` 的 `WORKER-REAP-2`、`1d1872a1` 的 `CCP-ROUTE-1`、`RESUME-1`、`GUARD-ARGV-1` 及 `NODE-LTS-1` 卡）：
+  - `cli/status-tui.test.mjs`：保留两边新增的 Status TUI 回归用例（本分支的 `auditor calls per turn` 指标断言与 `main` 的 `release timeout count` / `printStatus` 断言）。
+  - `daemon/sessions.mjs`：保留 `main` 的 CCP 无 hooks Claude 启动与 `!resumeSession` 跳过新建角色模板逻辑，同时保留本分支的 `auditorGuidance` 允许/禁止清单与 `seniorGuidance` ≤200 行单文件覆盖说明；其余自动合并文件（`cli/status-view.mjs`、`cli/status.mjs`、`daemon/supervisor.mjs`、`daemon/supervisor.test.mjs`、`skills/loom/SKILL.md`）均核对兼容。
+  - 验证：`npm ci` 通过，`npm run lint` 通过（360 files），`git diff --check` 通过，全量 `npm test -- --test-concurrency=3` **1126/1126 通过，0 失败、0 取消、0 跳过**（首轮 `--test-concurrency=4` 仅 `daemon/upgrade.test.mjs` 偶发一次 `ps` 枚举竞争 `SIGKILL`，单跑 4/4 与降并发全量 1126/1126 均通过）。
 
 STATUS: done

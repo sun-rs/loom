@@ -2073,6 +2073,221 @@ test('delivered workers release by Leader or TTL and resume Codex, agy, Claude a
   for (const worker of workers) assert.equal(f.resumes.filter(id => id === worker.sessionId).length, 1);
 });
 
+test('starts retention for a BLOCKED result after the parent reads the result and allows release and resume', async t => {
+  let advance = 0;
+  const f = fixture(t, { now: () => Date.now() + advance });
+  f.policy({ workers: { idleRetainMs: 60_000 }, delivery: { coalesceMs: 0 } });
+  const d = f.daemon();
+  t.after(d.shutdown);
+  const { session: leader } = await f.spawn(d, 'leader', 'L');
+  await d.tick();
+  const { session: worker } = await f.spawn(d, 'worker', 'BLOCKED', leader.addr, { prompt: 'HOLD worker' });
+  const { session: released } = await f.spawn(d, 'worker', 'BLOCKED-REL', leader.addr, { prompt: 'HOLD worker release' });
+  await d.tick();
+  f.sessions.get(leader.addr).finish('dispatch ended');
+  f.sessions.get(worker.addr).finish('BLOCKED cannot continue');
+  f.sessions.get(released.addr).finish('BLOCKED release directly');
+  await d.tick();
+  await d.tick();
+  const result = await d.handle('state', { target: worker.addr });
+  assert.equal(result.lastResultTag, 'BLOCKED');
+  assert.equal(result.retention.eligible, true);
+  assert.ok(result.retention.idleSince != null);
+  assert.ok(result.retention.remainingMs > 0);
+  assert.equal((await d.handle('release', { target: released.addr }, leader.addr)).state, 'offline');
+  advance = 61_000;
+  await d.tick();
+  const offline = await d.handle('state', { target: worker.addr });
+  assert.equal(offline.state, 'offline');
+  assert.equal(offline.retention.resumable, true);
+  const revived = await d.handle('assign', { target: worker.task }, leader.addr);
+  assert.equal(revived.dispatch, 'revived');
+  assert.equal(revived.session.sessionId, worker.sessionId);
+});
+
+test('starts retention, reports UNCONFIRMED to Leader, and releases on TTL when the parent result receipt is missing', async t => {
+  let advance = 0;
+  const f = fixture(t, { now: () => Date.now() + advance });
+  f.policy({ workers: { idleRetainMs: 1_200_000 }, delivery: { coalesceMs: 0 } });
+  const d = f.daemon();
+  t.after(d.shutdown);
+  const { session: leader } = await f.spawn(d, 'leader', 'L');
+  await d.tick();
+  const { session: worker } = await f.spawn(d, 'worker', 'UNCONFIRMED', leader.addr, { prompt: 'HOLD worker' });
+  await d.tick();
+  // Keep Leader busy on its startup turn so the worker's wave delivery cannot obtain a native receipt.
+  f.sessions.get(worker.addr).finish('DONE worker');
+  await d.tick();
+  await d.tick();
+  advance = 300_000;
+  await d.tick();
+  const waiting = await d.handle('state', { target: worker.addr });
+  assert.equal(waiting.lastResultTag, 'DONE');
+  assert.equal(waiting.retention.remainingMs, null);
+  await assert.rejects(d.handle('release', { target: worker.addr }, leader.addr), { code: 'not-ready' });
+
+  advance = 601_000;
+  await d.tick();
+  const result = await d.handle('state', { target: worker.addr });
+  assert.equal(result.lastResultTag, 'UNCONFIRMED');
+  assert.equal(result.retention.eligible, true);
+  assert.ok(result.retention.idleSince != null);
+  assert.ok(result.retention.remainingMs > 0);
+  const messages = f.read('inbox/state.json').messages;
+  assert.ok(messages.some(message => message.target.addr === leader.addr &&
+    message.workerNoticeId?.startsWith(`worker-result-unconfirmed:${worker.addr}:`) &&
+    /UNCONFIRMED/.test(message.text)));
+  assert.ok((await d.handle('notifications', { history: true })).notifications.some(event =>
+    event.type === 'worker-result-unconfirmed' && event.addr === worker.addr));
+
+  advance = 1_201_000;
+  await d.tick();
+  const offline = await d.handle('state', { target: worker.addr });
+  assert.equal(offline.state, 'offline');
+  assert.equal(offline.retention.resumable, true);
+  const revived = await d.handle('assign', { target: worker.task }, leader.addr);
+  assert.equal(revived.dispatch, 'revived');
+  assert.equal(revived.session.sessionId, worker.sessionId);
+});
+
+test('backfills idleSince on hot-upgrade reattach for adopted legacy workers without retention metadata', async t => {
+  let advance = 0;
+  const f = fixture(t, { now: () => Date.now() + advance });
+  f.policy({ workers: { idleRetainMs: 60_000 }, delivery: { coalesceMs: 0 } });
+  let d = f.daemon();
+  t.after(() => d.shutdown());
+  const { session: leader } = await f.spawn(d, 'leader', 'L');
+  await d.tick();
+  const { session: doneWorker } = await f.spawn(d, 'worker', 'LEGACY-DONE', leader.addr, { prompt: 'HOLD done' });
+  const { session: blockedWorker } = await f.spawn(d, 'worker', 'LEGACY-BLOCKED', leader.addr, { prompt: 'HOLD blocked' });
+  await d.tick();
+  f.sessions.get(leader.addr).finish('dispatch ended');
+  f.sessions.get(doneWorker.addr).finish('DONE legacy');
+  f.sessions.get(blockedWorker.addr).finish('BLOCKED legacy');
+  for (let i = 0; i < 3; i++) await d.tick();
+  const doneEnd = readArtifacts(f.project).journal(doneWorker.addr).findLast(event => event.type === 'turn-end').at;
+  const blockedEnd = readArtifacts(f.project).journal(blockedWorker.addr).findLast(event => event.type === 'turn-end').at;
+  await d.shutdown();
+  // Simulate pre-WORKER-REAP-1 stored session files that have no retention metadata.
+  for (const addr of [doneWorker.addr, blockedWorker.addr]) {
+    const path = join(f.project, '.project', 'loomd', 'sessions', `${addr}.json`);
+    const job = JSON.parse(readFileSync(path, 'utf8'));
+    delete job.retention;
+    writeFileSync(path, JSON.stringify(job) + '\n');
+  }
+  d = f.daemon();
+  await d.reattach([]);
+  const adoptedDone = await d.handle('state', { target: doneWorker.addr });
+  const adoptedBlocked = await d.handle('state', { target: blockedWorker.addr });
+  assert.equal(adoptedDone.retention.idleSince, doneEnd);
+  assert.ok(adoptedDone.retention.remainingMs > 0);
+  assert.equal(adoptedBlocked.retention.idleSince, blockedEnd);
+  assert.ok(adoptedBlocked.retention.remainingMs > 0);
+  advance = 61_000;
+  await d.tick();
+  assert.equal((await d.handle('state', { target: doneWorker.addr })).state, 'offline');
+  assert.equal((await d.handle('state', { target: blockedWorker.addr })).state, 'offline');
+});
+
+test('alerts Leader and Super explicitly when idle workers survive twice their TTL and clears counts on release', async t => {
+  let advance = 0;
+  const external = [];
+  const f = fixture(t, { now: () => Date.now() + advance, externalNotification: async (name, batch) => { external.push({ name, batch }); } });
+  f.policy({ workers: { idleRetainMs: 1_000 }, delivery: { coalesceMs: 0 } });
+  const d = f.daemon();
+  t.after(d.shutdown);
+  const { session: superSession } = await f.spawn(d, 'super', 'S');
+  const { session: leader } = await f.spawn(d, 'leader', 'L');
+  await d.tick();
+  const { session: kept } = await f.spawn(d, 'worker', 'TIMEOUT-KEEP', leader.addr, { prompt: 'HOLD worker', 'keep-warm': true });
+  await d.tick();
+  f.sessions.get(leader.addr).finish('dispatch ended');
+  f.sessions.get(kept.addr).finish('DONE worker');
+  await d.tick();
+  await d.tick();
+  // Also spawn a worker whose result has no parent receipt yet (ineligible for TTL release).
+  const { session: stuck } = await f.spawn(d, 'worker', 'TIMEOUT-INELIGIBLE', leader.addr, { prompt: 'HOLD stuck' });
+  await d.tick();
+  await d.handle('send', { target: leader.addr, mode: 'queue', text: 'HOLD leader busy' });
+  await d.tick();
+  f.sessions.get(stuck.addr).finish('DONE without receipt');
+  await d.tick();
+  advance = 2_500;
+  await d.tick();
+  const board = await d.handle('board', {});
+  const status = await d.handle('status', {});
+  assert.equal(board.releaseTimeoutCount, 2);
+  assert.equal(status.releaseTimeoutCount, 2);
+  assert.ok(board.workers.find(row => row.addr === kept.addr).releaseTimedOut);
+  assert.ok(board.workers.find(row => row.addr === stuck.addr).releaseTimedOut);
+  assert.equal(board.attention.filter(item => item.kind === 'release-timeout').length, 2);
+  const notices = (await d.handle('notifications', { history: true })).notifications
+    .filter(event => event.type === 'worker-release-timeout');
+  assert.equal(notices.length, 2);
+  assert.ok(notices.every(event => event.pushRoute === superSession.addr));
+  const messages = f.read('inbox/state.json').messages;
+  assert.equal(messages.filter(message => message.target.addr === leader.addr &&
+    message.workerNoticeId?.startsWith('worker-release-timeout:')).length, 2);
+  assert.ok(messages.some(message => message.target.addr === superSession.addr &&
+    message.projectEvents?.some(id => id.startsWith(`worker-release-timeout:${kept.addr}:`))));
+  // Releasing one timed-out worker must clear its timeout flag and decrement the count.
+  await d.handle('keep', { target: kept.addr, keep: false }, leader.addr);
+  await d.tick();
+  assert.equal((await d.handle('state', { target: kept.addr })).state, 'offline');
+  assert.equal((await d.handle('board', {})).releaseTimeoutCount, 1);
+  assert.equal((await d.handle('status', {})).releaseTimeoutCount, 1);
+  assert.equal(external.length, 0);
+});
+
+test('invariant [persistence] retention unconfirmed and release-timeout alerts persist once across restart', async t => {
+  let advance = 0;
+  const f = fixture(t, { now: () => Date.now() + advance });
+  f.policy({ workers: { idleRetainMs: 1_200_000 }, delivery: { coalesceMs: 0 } });
+  let d = f.daemon();
+  t.after(() => d.shutdown());
+  const { session: leader } = await f.spawn(d, 'leader', 'L');
+  await d.tick();
+  const { session: worker } = await f.spawn(d, 'worker', 'PERSIST', leader.addr, { prompt: 'HOLD worker', 'keep-warm': true });
+  await d.tick();
+  f.sessions.get(worker.addr).finish('DONE worker');
+  await d.tick();
+  // Simulate a missing native delivery receipt on the parent wave delivery (e.g. refused/lost receipt).
+  const inboxPath = join(f.project, '.project', 'inbox', 'state.json');
+  const inboxState = JSON.parse(readFileSync(inboxPath, 'utf8'));
+  for (const message of inboxState.messages) {
+    if (message.resultWorkers?.includes(worker.addr)) {
+      message.phase = 'refused';
+      message.issue = 'input-refused';
+      message.refusedAt = Date.now();
+    }
+  }
+  writeFileSync(inboxPath, JSON.stringify(inboxState) + '\n');
+  await d.shutdown();
+  d = f.daemon();
+  advance = 601_000;
+  await d.tick();
+  advance = 2_401_000;
+  await d.tick();
+  const before = await d.handle('state', { target: worker.addr });
+  assert.equal(before.lastResultTag, 'UNCONFIRMED');
+  assert.equal(before.retention.releaseTimedOut, true);
+  await d.shutdown();
+  d = f.daemon();
+  await d.reattach([]);
+  await d.tick();
+  await d.tick();
+  const after = await d.handle('state', { target: worker.addr });
+  assert.equal(after.retention.idleSince, before.retention.idleSince);
+  assert.equal(after.retention.resultUnconfirmedAt, before.retention.resultUnconfirmedAt);
+  assert.equal(after.retention.releaseTimeoutAt, before.retention.releaseTimeoutAt);
+  const notices = (await d.handle('notifications', { history: true })).notifications;
+  assert.equal(notices.filter(event => event.type === 'worker-result-unconfirmed' && event.addr === worker.addr).length, 1);
+  assert.equal(notices.filter(event => event.type === 'worker-release-timeout' && event.addr === worker.addr).length, 1);
+  const messages = f.read('inbox/state.json').messages;
+  assert.equal(messages.filter(message => message.workerNoticeId?.startsWith(`worker-result-unconfirmed:${worker.addr}:`)).length, 1);
+  assert.equal(messages.filter(message => message.workerNoticeId?.startsWith(`worker-release-timeout:${worker.addr}:`)).length, 1);
+});
+
 test('keeps a planned follow-up warm and closes only approved waves after pending work settles', async t => {
   let verdict = 'REJECT same-file fix needed';
   const f = fixture(t, { auditVerdict: () => verdict });

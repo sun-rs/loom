@@ -13,6 +13,7 @@ import { activeRelease, installManagedCli, nextController, releaseDigest, releas
 import { beginUpgrade, checkUpgradeAttachments, daemonProtocol, liveHandoff, planUpgrade, selfCheck, validateHandoff, validateReattachment } from './upgrade.mjs';
 import { authorizeSocketCommand, hasStoredSessionCapability, mayUseLegacyCaller, socketCapabilities } from './socket-auth.mjs';
 import { preparePeerAuth } from './peer-auth.mjs';
+import { markProjectShutdown, registerGlobalProject } from './global-registry.mjs';
 
 function excludeProjectMetadata(project) {
   const git = (...args) => execFileSync('git', ['-C', project, 'rev-parse', ...args],
@@ -79,6 +80,8 @@ export async function main(args, { pollInterval = 350, ...options } = {}) {
   const handoff = await validateHandoff(project, values.handoff, values['handoff-recovery']);
   const capabilities = socketCapabilities(project);
   installManagedCli(project);
+  try { registerGlobalProject(project, { release: runningRelease.id, lastOnlineAt: Date.now(), lastShutdown: 'abnormal' }); }
+  catch (error) { console.error(`global registry update: ${error.message}`); }
   const controller = nextController(project);
 
   const path = socketPath(project);
@@ -136,7 +139,7 @@ export async function main(args, { pollInterval = 350, ...options } = {}) {
       socket.setTimeout(0);
       serve().catch(error => socket.end(JSON.stringify({
         ok: false, error: { code: error.code && typeof error.code === 'string' && /^[a-z-]+$/.test(error.code) ?
-          error.code : 'unavailable', message: error.message },
+          error.code : 'unavailable', message: error.message, ...(error.freshCommand && { freshCommand: error.freshCommand }) },
       }) + '\n'));
 
       async function serve() {
@@ -213,6 +216,8 @@ export async function main(args, { pollInterval = 350, ...options } = {}) {
       server.close();
       await chain;
       await supervisor.shutdown();
+      try { markProjectShutdown(project, 'normal', process.env, Date.now()); }
+      catch (error) { console.error(`global registry shutdown: ${error.message}`); }
       release();
       process.exit(0);
     })();

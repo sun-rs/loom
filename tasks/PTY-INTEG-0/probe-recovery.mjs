@@ -12,7 +12,7 @@ import { readRequestBook } from '../../tui/request-book.mjs';
 const exec = promisify(execFile);
 const repo = join(import.meta.dirname, '../..');
 const project = await mkdtemp('/Users/sun/Code/exp-relay/pty-integ-0/recovery-');
-const options = { cwd: project, env: { ...process.env, LOOM_CLAUDE_BIN: join(import.meta.dirname, 'fake-claude.mjs'),
+const options = { cwd: project, env: { ...process.env, LOOM_CLAUDE_CCP_BIN: join(import.meta.dirname, 'fake-claude.mjs'),
   LOOM_UNCERTAIN_MS: '1200', LOOM_DESKTOP_NOTIFY: '0' } };
 delete options.env.HC_TERMINAL_ID;
 delete options.env.LOOM_ADDR;
