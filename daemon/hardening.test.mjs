@@ -112,8 +112,8 @@ function fixtureProject(t, options = {}) {
   const native = () => lines('native-deliveries.jsonl');
   const deliveries = id => native().filter(row => deliveryId(row.text) === id);
   const fixtureEnv = Object.fromEntries(Object.entries(process.env).filter(([key]) =>
-    ['PATH', 'TMPDIR', 'LOOM_TEST_PS', 'LOOM_TEST_PS_BACKEND', 'LOOM_TEST_FIXTURE_ROOT', 'LOOM_WORKER_TMP',
-      'GIT_CONFIG_GLOBAL', 'GIT_CONFIG_NOSYSTEM'].includes(key)));
+    ['PATH', 'TMPDIR', 'LOOM_TEST_PS', 'LOOM_TEST_PS_BACKEND', 'LOOM_TEST_INTEGRATION_BIN', 'LOOM_TEST_FIXTURE_ROOT',
+      'LOOM_WORKER_TMP', 'GIT_CONFIG_GLOBAL', 'GIT_CONFIG_NOSYSTEM'].includes(key)));
   const codex = join(project, 'codex');
   const agy = join(project, 'agy');
   for (const cli of [codex, agy]) writeFileSync(cli, '#!' + process.execPath + '\nimport(' +

@@ -5,8 +5,11 @@ import { isAbsolute, relative } from 'node:path';
 import { promisify } from 'node:util';
 import pty from 'node-pty';
 import { providerShellCommands, shellExecutable } from './command-policy.mjs';
+import { resolveIntegrationBinDir, validateIntegrationBinDir } from '../test-support/integration-bin.mjs';
 
 const directories = new Set();
+const integrationDir = resolveIntegrationBinDir(process.env);
+if (integrationDir) directories.add(integrationDir);
 // Node, the shell hook harness, temporary Git repositories, process accounting and the holder C fixture.
 const system = new Set([process.execPath, '/bin/sh', '/bin/bash', '/bin/zsh', '/bin/ps', '/usr/bin/ps',
   '/usr/bin/git', '/usr/bin/cc', '/usr/bin/clang']);
@@ -19,6 +22,13 @@ function inside(root, file) {
 function register(path) {
   directories.add(realpathSync(path));
   return path;
+}
+
+export function registerIntegrationDirectory(path) {
+  const validated = validateIntegrationBinDir(path);
+  if (!validated) throw new Error('Expected a private integration-bin directory: ' + path);
+  directories.add(validated);
+  return validated;
 }
 
 export const mkdtemp = async (...args) => register(await makeDirectory(...args));

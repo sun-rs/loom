@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { execFile, execFileSync, spawn, spawnSync, mkdtempSync } from '../fixtures/test-process.mjs';
+import { execFile, execFileSync, spawn, spawnSync, mkdtempSync, registerIntegrationDirectory } from '../fixtures/test-process.mjs';
 import { randomUUID } from 'node:crypto';
 import { lstatSync, mkdirSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { homedir, tmpdir } from 'node:os';
@@ -70,14 +70,16 @@ function fixtureWorkerEnvironment(row, directory) {
 }
 
 test('integration permits limited worktree process listings and keeps the worker network policy', async t => {
-  const cwd = mkdtempSync(join(realpathSync(tmpdir()), 'loom-integration-'));
+  const base = realpathSync(tmpdir());
+  const cwd = mkdtempSync(join(base, 'loom-integration-'));
   t.after(() => rmSync(cwd, { recursive: true, force: true }));
   const row = { role: 'worker', addr: `oar-${randomUUID()}`, cwd };
-  const env = fixtureWorkerEnvironment(row, cwd);
+  const env = fixtureWorkerEnvironment(row, base);
   t.after(() => rmSync(dirname(env.HOME), { recursive: true, force: true }));
   assert.equal(await integrationPs(row, env), undefined);
   const profile = { ...row, integration: true };
   const bridge = await integrationPs(profile, env, process.env.PATH);
+  registerIntegrationDirectory(dirname(bridge.env.LOOM_TEST_PS));
   t.after(bridge.close);
   const child = spawn(process.execPath, ['-e', 'setTimeout(() => {}, 10000)', 'private-fixture-argument']);
   t.after(() => child.kill());
