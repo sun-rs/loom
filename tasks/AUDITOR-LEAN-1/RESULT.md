@@ -94,6 +94,6 @@
 - `cli/cost.mjs` 保留 main 的 `memoryExtractor`、`memoryPilot` 与恢复后首轮用量统计，同时保留本分支的 Auditor 每轮模型调用数、目标值和一小时滚动指标。
 - `cli/status.mjs` 保留 main 的账号、状态页和恢复字段及统一采样时间，同时展示 Auditor 每轮调用指标和超标提示。CLI 与 Status TUI 的指标回归均通过。
 - `npm ci`、`npm run lint` 与 `git diff --check` 均通过。合并 `c8717916` 后运行全量 `npm test -- --test-concurrency=4`，1097 项通过，失败、取消、跳过均为 0。 [全量日志](/private/tmp/loom-auditor-lean-merge-full.log)
-- 测试期间 main 更新到 `aafe9ceb`。追加合并的上游差异只有两个研究文档，最终代码与已验证的合并提交 `21f0acf2` 一致。
+- 已纳入本次验证期间 main 的后续提交，最新合并到 `1f528010`。这些上游提交只改研究文档，最终代码与已验证的合并提交 `21f0acf2` 一致。
 
 STATUS: done
