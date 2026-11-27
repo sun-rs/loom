@@ -10,7 +10,7 @@ import { setTimeout as delay } from 'node:timers/promises';
 import { fileURLToPath } from 'node:url';
 import { test } from 'node:test';
 import { promisify } from 'node:util';
-import { socketPath } from '../cli/project.mjs';
+import { inDirectory, socketPath } from '../cli/project.mjs';
 import { connectUnix } from '../lib/unix-socket.mjs';
 import { clientCapability, socketCapabilities } from './socket-auth.mjs';
 import { preparePeerAuth } from './peer-auth.mjs';
@@ -43,14 +43,22 @@ async function until(read) {
 }
 
 test('loomd trusts launch capabilities over caller, sender, and role hints', { timeout: 40_000 }, async t => {
-  const root = mkdtempSync(join(realpathSync(tmpdir()), 'lsa-'));
+  const base = realpathSync(process.env.LOOM_WORKER_TMP || process.env.LOOM_TEST_PS ? tmpdir() : '/tmp');
+  const root = mkdtempSync(join(base, 'lsa-'));
   const project = join(root, 'p');
   const metadata = join(project, '.project');
   const state = join(root, 'state');
   const codex = join(root, 'codex');
   const authDir = join(state, 'loom', 'socket-auth', createHash('sha256').update(project).digest('hex'));
+  const workerTmp = process.env.LOOM_WORKER_TMP && inDirectory(process.env.LOOM_WORKER_TMP, project)
+    ? process.env.LOOM_WORKER_TMP
+    : Buffer.byteLength(join(root, 's', '0'.repeat(32) + '.sock')) <= 103 ? root : base;
   const env = { HOME: root, TMPDIR: root, PATH: process.env.PATH, XDG_STATE_HOME: state, CODEX_HOME: join(root, 'cx'),
-    LOOM_CODEX_BIN: codex, OAR_CODEX_BIN: codex, LOOM_DESKTOP_NOTIFY: '0', LOOM_HERDR_LAYOUT: '0' };
+    LOOM_CODEX_BIN: codex, OAR_CODEX_BIN: codex, LOOM_DESKTOP_NOTIFY: '0', LOOM_HERDR_LAYOUT: '0',
+    LOOM_WORKER_TMP: workerTmp,
+    ...(process.env.LOOM_TEST_PS && { LOOM_TEST_PS: process.env.LOOM_TEST_PS }),
+    ...(process.env.LOOM_TEST_PS_BACKEND && { LOOM_TEST_PS_BACKEND: process.env.LOOM_TEST_PS_BACKEND }),
+    ...(process.env.LOOM_TEST_INTEGRATION_BIN && { LOOM_TEST_INTEGRATION_BIN: process.env.LOOM_TEST_INTEGRATION_BIN }) };
   mkdirSync(metadata, { recursive: true });
   mkdirSync(env.CODEX_HOME);
   const git = (...args) => exec('/usr/bin/git', args, { cwd: project, env });
