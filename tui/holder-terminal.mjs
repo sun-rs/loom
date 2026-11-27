@@ -88,8 +88,8 @@ export async function holderTerminal(binding, controller, provider, expectedPid,
           let emptyComposer;
           if (provider === 'agy') {
             const before = readGrid(grid, provider);
-            emptyComposer = before.draft === '' && (before.agyStartupComposer ||
-              providers.agy.screen.hasEmptyComposer(before.composerText ?? before.text));
+            emptyComposer = grid.buffer.active.type !== 'alternate' && before.draft === '' &&
+              providers.agy.screen.hasEmptyComposer(before.composerText ?? before.text);
           }
           recentWrites.push({ id: event.data.toString('hex', 0, 16), count: event.data.readUInt32BE(16), human: editing, rows: size.rows, bufferSequence,
             seq: event.seq, output: event.offset, boundary: pasteBoundary, emptyComposer });
@@ -216,7 +216,8 @@ export async function holderTerminal(binding, controller, provider, expectedPid,
         const before = await read();
         if (!sameInput(expected, before) || !writable(before)) break;
         if (before.outputSequence > expected.outputSequence && before.quietForMs >= QUIET_OUTPUT_MS &&
-            before.draft === '' && providers.agy.screen.hasEmptyComposer(before.composerText ?? before.text) &&
+            before.buffer !== 'alternate' && before.draft === '' &&
+            providers.agy.screen.hasEmptyComposer(before.composerText ?? before.text) &&
             await verify(before)) {
           return submitComposer(input, { before, provider, read, valid: writable, verify, pastePlaceholder, provenWrites: true,
             async write(bytes, view) {

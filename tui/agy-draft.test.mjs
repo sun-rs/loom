@@ -133,3 +133,77 @@ test('agy submits the 42-column pilot-2 draft even when its first paint already 
     assert.deepEqual(writes.map(bytes => Buffer.byteLength(bytes)), changed ? [530, 109] : [530, 109, 1]);
   }
 });
+
+test('real agy 1.5.18 startup bytes distinguish startup hints, unknown muted placeholders, and real user drafts', async () => {
+  const { providers } = await import('./providers.mjs');
+  const startup = JSON.parse(readFileSync(new URL('../tasks/ROT-AGY-2/agy-startup-frames.json', import.meta.url)));
+  const replayBytes = async (cols, rows, bytes) => {
+    const grid = new xterm.Terminal({ cols, rows, scrollback: 500, allowProposedApi: true });
+    try {
+      await new Promise(resolve => grid.write(bytes, resolve));
+      return readGrid(grid, 'agy');
+    } finally { grid.dispose(); }
+  };
+
+  // 1. Captured pilot-cell pty-Gi2J8U: empty statusLine footer before AND after paste.
+  const gi = startup.pilotGi2J8U;
+  const welcome = await replayBytes(gi.cols, gi.rows, gi.welcomeBytes);
+  assert.equal(welcome.draft, '');
+  assert.equal(providers.agy.screen.classify(welcome.composerText), 'idle');
+  assert.equal(providers.agy.screen.hasEmptyComposer(welcome.composerText), true);
+  const pasted = await replayBytes(gi.cols, gi.rows, gi.welcomeBytes + gi.afterPasteBytes + gi.asyncBannerBytes);
+  assert.ok(pasted.draft.includes(`[loom:${gi.deliveryId}]`));
+  assert.equal(providers.agy.screen.hasHeldComposer(pasted.vacantText), true);
+
+  // 2. Live agy 1.5.18 with empty statusLine, Tip footer, and narrow 50-col truncated placeholder.
+  for (const sample of [startup.statuslineEmpty, startup.statuslineTip, startup.narrow50]) {
+    const before = await replayBytes(sample.cols, sample.rows, sample.welcomeBytes);
+    assert.equal(before.draft, '');
+    assert.equal(providers.agy.screen.classify(before.composerText), 'idle');
+    assert.equal(providers.agy.screen.hasEmptyComposer(before.composerText), true);
+    const after = await replayBytes(sample.cols, sample.rows, sample.welcomeBytes + sample.afterInputBytes);
+    assert.match(after.draft, /hello from test/);
+    assert.equal(providers.agy.screen.hasHeldComposer(after.vacantText), true);
+  }
+
+  // 3. Sign-in update needed + Tip + wrapped/unknown muted placeholders are not drafts; unknown hints are flagged.
+  const signIn = '⚠ Sign-in update needed\r\n  ⎿  Your sign-in is missing permissions that are now required, so some requests may fail. Run /logout to sign in again.\r\n';
+  const withSignIn = await replayBytes(120, 35,
+    `\x1b[2J\x1b[H${signIn}${'─'.repeat(120)}\r\n\x1b[94m>\x1b[m \x1b[90mAccept-edits mode: file edits auto-approved (shift+tab to cycle)\x1b[m\r\n${'─'.repeat(120)}\r\nTip: Press esc to cancel\x1b[4;3H`);
+  assert.equal(withSignIn.draft, '');
+  assert.equal(providers.agy.screen.classify(withSignIn.composerText), 'idle');
+
+  const unknownMuted = await replayBytes(100, 24,
+    `\x1b[2J\x1b[HAntigravity CLI 1.6.0\r\n${'─'.repeat(100)}\r\n\x1b[94m>\x1b[m \x1b[90mAsk Antigravity anything or type /help\x1b[m\r\n${'─'.repeat(100)}\r\nNew: Try /fast mode\x1b[3;3H`);
+  assert.equal(unknownMuted.draft, '');
+  assert.equal(providers.agy.screen.classify(unknownMuted.composerText), 'idle');
+  assert.deepEqual(unknownMuted.unknownHints, [
+    { kind: 'composer-placeholder', text: 'Ask Antigravity anything or type /help' },
+    { kind: 'footer-hint', text: 'New: Try /fast mode' },
+  ]);
+
+  const unknownDim = await replayBytes(100, 24,
+    `\x1b[2J\x1b[HAntigravity CLI 1.6.0\r\n${'─'.repeat(100)}\r\n\x1b[94m>\x1b[m \x1b[2mType a prompt...\x1b[m\r\n${'─'.repeat(100)}\x1b[3;3H`);
+  assert.equal(unknownDim.draft, '');
+  assert.equal(providers.agy.screen.classify(unknownDim.composerText), 'idle');
+  assert.deepEqual(unknownDim.unknownHints, [{ kind: 'composer-placeholder', text: 'Type a prompt...' }]);
+
+  // Wrapped muted placeholder (42 cols) and torn paint before bottom rule (must not capture history/Sign-in as draft).
+  const wrappedMuted = await replayBytes(42, 20,
+    `\x1b[2J\x1b[HAntigravity CLI 1.5.18\r\n${'─'.repeat(42)}\r\n\x1b[94m>\x1b[m \x1b[90mAccept-edits mode: file edits auto-approved (shift+tab to cycle)\x1b[m\r\n${'─'.repeat(42)}\x1b[3;3H`);
+  assert.equal(wrappedMuted.draft, '');
+  assert.equal(providers.agy.screen.classify(wrappedMuted.composerText), 'idle');
+  const tornPaint = await replayBytes(80, 20,
+    `\x1b[2J\x1b[H${'─'.repeat(60)}\r\n> previous prompt\r\n${signIn}${'─'.repeat(80)}\r\n> `);
+  assert.equal(tornPaint.draft, undefined);
+
+  // 4. Real user-typed drafts (captured live bytes + default-fg text + /slash command at col 2) remain drafts.
+  const typed = await replayBytes(startup.typedDraft120.cols, startup.typedDraft120.rows, startup.typedDraft120.bytes);
+  assert.equal(typed.draft, startup.typedDraft120.expectedDraft);
+  const slashHome = await replayBytes(100, 24,
+    `\x1b[2J\x1b[H${'─'.repeat(100)}\r\n\x1b[94m>\x1b[m \x1b[94m/help\x1b[m\r\n${'─'.repeat(100)}\x1b[2;3H`);
+  assert.equal(slashHome.draft, '/help');
+  const plainSameText = await replayBytes(100, 24,
+    `\x1b[2J\x1b[H${'─'.repeat(100)}\r\n> Accept-edits mode: file edits auto-approved (shift+tab to cycle)\r\n${'─'.repeat(100)}\x1b[2;3H`);
+  assert.equal(plainSameText.draft, 'Accept-edits mode: file edits auto-approved (shift+tab to cycle)');
+});

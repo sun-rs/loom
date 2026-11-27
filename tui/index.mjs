@@ -58,7 +58,8 @@ export function createTuiHost(backend) {
 }
 
 export function bindTuiSession(terminal, provider, {
-  ownedStaging, bookPath, incarnation, requireNative, autoTrustWorkspace, readPending, ...evidence
+  ownedStaging, bookPath, incarnation, requireNative, autoTrustWorkspace, readPending,
+  report = message => process.stderr.write(`loom-tui: ${message}\n`), ...evidence
 }) {
   const { requests, put } = openRequestBook(bookPath);
   const native = nativeState(provider, { ...evidence, ...(terminal.provePaste && { expectedPayload: id => requests.get(id)?.digest }) });
@@ -76,6 +77,7 @@ export function bindTuiSession(terminal, provider, {
   let previousPrompt;
   let startupKeyAt = -Infinity;
   const startupAttempts = new Map();
+  const seenUnknownHints = new Set();
   const classify = text => provider.screen.classify(text);
   const agyAnnouncement = frame => provider.id === 'agy' && frame.text != null &&
     provider.screen.startupAnnouncement?.(frame.outsideComposer ?? frame.text);
@@ -84,9 +86,10 @@ export function bindTuiSession(terminal, provider, {
   function classifyFrame(frame) {
     if (agyAnnouncement(frame) || agyOverlayKey(frame)) return 'overlay';
     const kind = classify(frame.composerText ?? frame.text);
-    return kind === 'unknown' && frame.agyStartupComposer ? 'idle' : kind;
+    return kind === 'idle' && provider.id === 'agy' && frame.buffer === 'alternate' ? 'unknown' : kind;
   }
   const heldComposer = frame => frame.vacantText &&
+    !(provider.id === 'agy' && frame.buffer === 'alternate') &&
     (classify(frame.vacantText) === 'idle' || provider.screen.hasHeldComposer?.(frame.vacantText));
 
   function sameInterruptedTurn(evidence) {
@@ -114,7 +117,13 @@ export function bindTuiSession(terminal, provider, {
     native.changedInputs.clear();
     const { text, composerText = text, draft, cursor, state, agent, lastOutputAt, quietForMs, generation,
       outputSequence, buffer, bufferSequence, resizeSequence, size, humanActive, humanInputAt, humanSequence,
-      writable, exited, code, reason } = observation;
+      writable, exited, code, reason, unknownHints } = observation;
+    for (const hint of unknownHints ?? []) {
+      const key = `${hint.kind}:${hint.text}`;
+      if (seenUnknownHints.has(key) || seenUnknownHints.size >= 64) continue;
+      seenUnknownHints.add(key);
+      report?.(`${provider.id} unknown ${hint.kind} (ignored as draft): ${JSON.stringify(hint.text)}`);
+    }
     const screen = text == null ? 'unavailable' : classifyFrame(observation);
     const visiblePrompt = screenPrompt(screen, composerText ?? '');
     const nativePrompt = evidence.userPrompt;
@@ -130,7 +139,8 @@ export function bindTuiSession(terminal, provider, {
     const host = hostPhase(state);
     const title = currentTitle(observation, evidence, observedAt);
     const fallback = sameInterruptedTurn(evidence);
-    const empty = text != null && (observation.agyStartupComposer || provider.screen.hasEmptyComposer(composerText)) &&
+    const empty = text != null && !(provider.id === 'agy' && buffer === 'alternate') &&
+      provider.screen.hasEmptyComposer(composerText) &&
       (generation === undefined ? !draft : draft === '');
     // A stale native idle edge cannot authorize writes into current UI activity.
     const liveBlocker = userPrompt ? { phase: userPrompt.kind, source: userPrompt.source } : blocksInput(screen) ? { phase: screen, source: 'screen' } :
@@ -175,7 +185,7 @@ export function bindTuiSession(terminal, provider, {
       incarnation, ...status, observedAt, native: evidence, ...(userPrompt && { userPrompt }),
       host: { state, agent, lastOutputAt, quietForMs, generation, outputSequence, buffer, bufferSequence, resizeSequence,
         size, title, humanActive, humanInputAt, humanSequence },
-      screen: { kind: screen, text, draft, cursor, empty }, pending,
+      screen: { kind: screen, text, draft, cursor, empty, ...(unknownHints?.length && { unknownHints }) }, pending,
       ...(submitted && { submittedDeliveryId: pending }),
       ...(retryable && { retryableDeliveryId: pending, ...(heldRetry && { retryHeld: true }) }),
       blocker, unsafeDraft: Boolean(unsafe), ready: frameReady && !pending, urgentReady: frameReady && Boolean(pending) && !unsafe,

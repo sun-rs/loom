@@ -20,7 +20,6 @@ const capture = fileURLToPath(new URL('../runtimes/tui/capture-hook.mjs', import
 const agyActivityCapture = fileURLToPath(new URL('./agy-activity-hook.mjs', import.meta.url));
 const content = input => typeof input === 'string' ? input :
   Array.isArray(input) ? input.filter(block => ['text', 'input_text'].includes(block?.type)).map(block => block.text).join('\n') : undefined;
-const agyScreen = text => text.trimEnd().replace(/\n[ \t]*(?:accept-edits|auto|plan|yolo) · [^·\n]+$/i, '');
 const abortReason = /cancel|interrupt|abort/i;
 const input = (value, key) => ({ inputId: deliveryId(value), key });
 function launchStatusline(cli, options, nativeId) {
@@ -155,15 +154,15 @@ export const providers = {
       classify(text) {
         if (/^\s*⚠ request failed \(code 429\):/m.test(text)) return 'rate-limit';
         if (/^\s*⚠ request failed \(code [45]\d{2}\):/m.test(text)) return 'error';
-        return this.dialogKeys('onboarding', text).length ? 'onboarding' : agy.screen.classify(agyScreen(text));
+        return this.dialogKeys('onboarding', text).length ? 'onboarding' : agy.screen.classify(text);
       },
       interruptions: text => (text.match(/^\s*(?:⎿\s*)?Interrupted · What should Antigravity CLI do instead\?\s*$/gm) ?? []).length,
-      hasEmptyComposer: text => agy.screen.hasEmptyComposer(agyScreen(text)),
+      hasEmptyComposer: text => agy.screen.hasEmptyComposer(text),
       hasHeldComposer,
       pastePlaceholder: matchesAgyPastePlaceholder,
-      startupAnnouncement: text => startupAnnouncement(agyScreen(text)),
+      startupAnnouncement: text => startupAnnouncement(text),
       dialogKeys(kind, text) {
-        if (kind !== 'onboarding') return agy.screen.dialogKeys(kind, agyScreen(text));
+        if (kind !== 'onboarding') return agy.screen.dialogKeys(kind, text);
         return /^\s*Welcome to Antigravity CLI!\s*$/m.test(text) && /^\s*Choose your color scheme:/m.test(text) &&
           /^\s*> terminal\s+│/m.test(text) && /^\s*\[Next\]\s*$/m.test(text) &&
           /^\s*↑\/↓ Navigate · enter Confirm\s*$/m.test(text) ? ['enter'] : [];
