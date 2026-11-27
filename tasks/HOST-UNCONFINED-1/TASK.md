@@ -13,3 +13,6 @@
 2. 实现 + 文档（docs 里 host 档一节补一句）。
 3. 全量 `npm test`、`npm run lint` 通过（本机直接跑）。分支 infra/host-unconfined，工作树 /Users/sun/Code/repos/loom-host-unconfined，显式路径提交，不 commit -a。RESULT.md 以 STATUS 行收尾。不 push，不改 main。
 所有 CLI 用绝对路径，不改全局配置，不读凭据。
+
+## 追加（Super，用户裁决）
+srt 内的 CLI 一律完全访问模式（关闭自带沙箱与审批）。本卡只负责"去掉 loom 外层 Seatbelt"；在 RESULT.md 里列出四家 CLI 当前 host 档启动参数中自带沙箱/审批的开关状态，供后续 cell 启动器统一设为完全访问。
