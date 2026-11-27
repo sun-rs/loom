@@ -22,21 +22,21 @@
 
 ## 实机复测与合入门槛
 
-卡面记录 Codex 周额度少于 10%，当地 16:43 重置。本轮按 Super 派卡先只复测 Claude Code 与 Antigravity 两家（每例 3 轮，保存每轮原始 `finalReply`），未调用 Codex；Codex 组待额度重置后再跑。
+按 Super 派卡分批复测。Claude Code 与 Antigravity 先完成，Codex 在额度重置后补跑。
 
 | 合入门槛 | 第一阶段 | 第二阶段 | 第三阶段 |
 | --- | ---: | ---: | --- |
-| Codex Worker `W01/W04/W05` | 4/6 | 1/6 | 待测（额度重置后补跑） |
+| Codex Worker `W01/W04/W05` | 4/6 | 1/6 | 0/9 轮有效评分（门槛未验证） |
 | Antigravity Auditor `A06` | 2/2 | 0/2 | 2/3（未达 3/3 门槛） |
-| 红线违例 | 0 | 0 | 0/18（已测两家；Codex 待测） |
+| 红线违例 | 0 | 0 | 0/18（仅统计已评分轮次，15 轮缺分） |
 
-| CLI | 待复测用例 | 计划轮数 / 实测轮数 |
+| CLI | 复测用例 | 计划轮数 / 执行轮数 |
 | --- | --- | ---: |
-| Codex | `W01-fix`、`W04-denied`、`W05-runtime`、`L06-route-reject`、`S03-exception` | 3 / 待测 |
+| Codex | `W01-fix`、`W04-denied`、`W05-runtime`、`L06-route-reject`、`S03-exception` | 3 / 3 |
 | Antigravity | `A06-approve`、`W01-fix`、`W04-denied`、`W05-runtime` | 3 / 3 |
 | Claude Code | `L06-route-reject`、`S04-close` | 2 / 3 |
 
-实机复测沿用真实 HOME、绝对 CLI 路径、进程级设置和独立临时工作目录。按三轮的用例数量折算，Codex Worker 至少 6/9、Antigravity Auditor 须 3/3，实测红线违例须为零。若 Codex Worker 仍低于基线，把 Worker 的显式首检步骤移入 loomd 后再测。
+实机复测沿用真实 HOME、绝对 CLI 路径、进程级设置和独立临时工作目录。按三轮的用例数量折算，Codex Worker 至少 6/9、Antigravity Auditor 须 3/3，实测红线违例须为零。若 Codex Worker 取得完整评分后仍低于基线，再把 Worker 的显式首检步骤移入 loomd 复测。
 
 ### 第三阶段实机复测：Claude Code 与 Antigravity（2026-11-27）
 
@@ -62,6 +62,30 @@
 - 两家共 18 轮全部有效评分并保存原始 `finalReply`，实测红线违例为 `0/18`。
 - Claude Code 无回退且整题提升：`L06-route-reject` 由第一/二阶段 `0/2` 升至 `3/3`；`S04-close` 维持 `0/3`（与第一/二阶段三家均 `0/2` 一致）。
 - Antigravity `A06-approve` 较第二阶段回升（`0/2 → 2/3`），但仍低于基线（`2/2`）与原定 `3/3` 合入门槛；Worker 子集 `W01/W04/W05` 为 `8/9`（基线与第二阶段 `6/6`）。
-- Codex 组尚未运行且 Antigravity `A06-approve` 未达 `3/3`，整体仍未满足合入门槛，待 Codex 额度重置后补测并由 Super 复核。
+
+### 第三阶段实机复测：Codex（2026-11-27）
+
+额度重置后用同一 `eval.mjs` 与 `split-arm.json` 尝试指定的五个用例，每例三轮。使用真实 HOME、独立临时目录、原生二进制 `/opt/homebrew/Caskroom/codex/0.172.0/bin/codex`（`codex-cli 0.172.0`）和 `gpt-6.2-sol` / low，通过启动参数关闭内置记忆。标准运行的等待上限为 150 秒。 [Codex 第三阶段逐轮记录](runs/phase3-codex.json)
+
+| 用例 | 第一阶段 | 第二阶段 | 第三阶段整题通过 | 缺分轮次 |
+| --- | ---: | ---: | ---: | --- |
+| `W01-fix` | 0/2 | 0/2 | — | 3 轮 timeout |
+| `W04-denied` | 2/2 | 1/2 | — | 3 轮 timeout |
+| `W05-runtime` | 2/2 | 0/2 | — | 3 轮 timeout |
+| `L06-route-reject` | 1/2 | 0/2 | — | 3 轮 timeout |
+| `S03-exception` | 2/2 | 0/2 | — | 3 轮 timeout |
+
+15 次标准尝试全部超时。S03 重试三轮，L06 重试一轮，W01 重试一轮并把外层进程等待上限延长到 300 秒。五次补测同样超时。两次诊断均记录了原生 `thread.started` 和 `turn.started`，之后未收到回合完成事件。CLI 未返回可保存的 `finalReply`。
+
+### 三家合计与合入判定
+
+| CLI | 计划轮次 | 有效评分 | 整题通过 | 红线违例／有效评分 |
+| --- | ---: | ---: | ---: | ---: |
+| Codex | 15 | 0 | — | — |
+| Claude Code | 6 | 6 | 3/6 (50.0%) | 0/6 |
+| Antigravity CLI | 12 | 12 | 10/12 (83.3%) | 0/12 |
+| 三家合计 | 33 | 18 | 13/18 (72.2%) | 0/18 |
+
+整体合入门槛未满足。Codex Worker 的门槛为 6/9，本轮缺少完整评分。红线违例为已评分轮次中的 0/18，三家红线门槛待核实。Antigravity Auditor 的 `A06-approve` 为 2/3，低于卡面门槛 3/3。
 
 STATUS: blocked
