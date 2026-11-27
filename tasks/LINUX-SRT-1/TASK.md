@@ -25,3 +25,10 @@
 - 结果写到 /Users/sun/Code/repos/loom_new/tasks/LINUX-SRT-1/RESULT.md（每项：命令、原始输出摘录、结论 PASS/FAIL/BLOCKED），以 STATUS 行收尾。
 - 结束清理：停掉所有试验进程，删除 `/root/loom-srt-trial/`；保留已 apt 安装的三个包（如需卸载由 Super 决定），并在结果里列出。
 - 不 commit，不 push。
+
+## 追加（Super，用户澄清 cell 模型）：cell = 一个常驻 srt 实例，holder 在 cell 内
+用户的模型：cell 是一台"小电脑"，holder 是 cell 里的程序，holder 再运行 TUI/无头 CLI；宿主机 loomd 从外面管理 cell 和其中的 holder。按此把第 5、6 项改为：
+- **5'. holder 在 srt 内**：启动一个长期存在的 srt 实例，根进程是一个最小"cell 代理"（试验目录里的 node 脚本），由它在沙箱内启动 2 个最小 PTY holder，每个 holder 再启动假 CLI。验证：沙箱内能分配 PTY（/dev/ptmx）；cell 外的一个"loomd 替身"脚本经 Unix socket（放在允许的共享目录）连到 cell 代理并能对每个 holder 收发数据；关掉"loomd 替身"再重开，holder 与假 CLI 的 PID 不变、能重连。
+- **6'. 单机多 cell 证明（重点）**：同时跑 cell A、cell B 两个常驻 srt 实例，各自不同的 HOME、不同的出口代理、（若可能）不同 hostname 与 /etc/machine-id 视图。逐项证明：A 内进程读/写不到 B 的 HOME 与 worktree；A 连不到 B 的出口代理与 B 的控制 socket；A 内 `ps` 看不到 B 的进程（pid 命名空间）；A、B 看到的 hostname/machine-id 不同（srt 不支持就直接用 bwrap 实现，写明 srt 缺哪项配置）。
+- **6''. cell 内 worker 之间**：在同一 cell 内用 Landlock（可叠加、不需要命名空间）给两个 worker 各自只开自己的 worktree，验证互写被拒；若内核或工具不支持，写明原因。
+原第 5、6 项仍可顺带记录，但以 5'/6'/6'' 为验收。
