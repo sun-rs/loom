@@ -22,3 +22,20 @@
 - **Mac 上的 Linux 虚拟机/容器不能做开发 cell。** Apple silicon 上的 OrbStack、Apple `container`、Lima 跑的都是 arm64 Linux；x86 只能经 Rosetta 转译或仿真。生产环境只会是 x86 Linux 或 macOS，在 arm64 Linux 里写出、测过的代码两边都不算数（原生依赖、二进制、性能、系统调用差异都可能不同）。因此 T2 取消。
 - **修订后的分层**：Mac 目标 → 原生 macOS + 每 worker 沙箱 + 出网白名单（T0）；x86 Linux 目标 → 真实 x86 Linux 机器（裸机或 x86 云主机）上的 T0，需要更强隔离时在同架构上加 rootless Podman / Firecracker（T1）；Windows 待定；托管沙箱（T4）只跑 x86 Linux 的一次性无头任务。原则：**cell 的 OS 与架构必须等于生产目标**。
 - **顺序**：先完成文件 + 网络隔离的 T0 cell，账号额度调度冻结，之后以 Magpie 开源实现为蓝本重做（切换策略、Codex 等切账号后原地重连）。
+
+## 四方讨论汇总（2026-11-27，t17g / t17w / t2sb / t2sw 独立作答，原文在 ~/.loom-next/runs/loom-next/briefing/DISCUSS-ANSWER-*-cell.md）
+**一致意见**
+- Mac 默认：原生 macOS + 每 worker 一层进程沙箱（srt/Seatbelt）+ 宿主侧本地出网代理（域名白名单）+ 原生磁盘 worktree。四方一致。
+- arm64 Linux（OrbStack / Apple container / Lima）不做默认，也不当验收环境；四方都认为不必写成禁令，保留窄场景：生产本就是 arm64、只当不可信代码隔离盒、纯解释型项目的快速试跑。
+- holder 与 loomd 留在沙箱外，只把 CLI 子进程放进沙箱 → 热升级不碰沙箱。
+- 出网：不靠 IP 防火墙；沙箱内无 DNS、只能连本地代理；被拒必须显式（403 + loomd 记录 + 通知），否则就是静默停工。
+- 订阅登录：在目标环境里用官方 CLI 原地登录，绝不复制 auth.json / credentials；托管沙箱只用 API key。
+**补充修正（采纳）**
+- 区分**开发 cell** 与**验收闸门**（t17w、t2sw）：开发 cell 用宿主原生环境；Auditor 的门禁命令与合入前测试必须在与生产同 OS、同架构的机器上跑，并在回执里记录实际运行环境。Mac 上做 x86 Linux 项目 → 开发在原生 macOS，闸门用远程 x86 Linux runner 按 commit SHA 执行。
+- **XNU 不支持嵌套 Seatbelt**（t17g 引 loom-next 实测、t2sb：exit 71）→ 外层 srt 包住时关掉 CLI 自带沙箱，只留一层。
+- **共享 .git 是越权通道**：linked worktree 的 worker 若能写共享 .git，就能 update-ref main。主仓库 .git 对沙箱只读，worker 用独立 clone（或只允许写自己分支 ref），结果由 loomd fetch 回来。
+- **同账号多会话的令牌刷新竞争**（t17w、t2sb：refresh_token_reused）要在 T0 阶段就验证。
+- Linux：多数（t17g、t17w、t2sw）默认 x86 实机 + srt(bwrap + netns + seccomp)；需要可复现工具链时按项目加 rootless Podman；gVisor / Firecracker 等出现多租户需求再说。t2sb 主张默认 rootless Podman + egress sidecar，作为 T1 备选保留。
+**分歧与风险（需用户知情）**
+- t2sb、t2sw 建议每订阅账号一个 OS 用户。理由：agy 的 Keychain 键名固定（t2sb 称为 ("gemini","antigravity")，待核实），同一 UID 下 agy 多账号会串号；用户已裁决不建 OS 用户 → 单 UID 下 agy 只能一个账号，需实测确认。
+- t2sb、t2sw 指出 Google 明文将第三方包装 agy 与自动账号轮换排除在消费计划支持之外，Anthropic 对产品内运行 Claude Code 另有条件 → 将来参考 Magpie 做自动切号前须先核条款（待核实原文）。
