@@ -1,5 +1,7 @@
 # LIFECYCLE-E2E-1：三层换班 + 三层重启恢复 端到端实测（测好再上线）
 
+> **暂停（Super，2026-11-27）**：用户要求先讨论、参考他人经验定设计再实施；本卡待设计定稿后改写。
+
 用户 2026-11-27："换班的三个层次，super / leader auditor / worker，也要测试好了以后上线，推送代码，重启恢复三个层次角色也要测试，完成后提交。"
 基线：最新 main（含 CCP-ROUTE-1、RESUME-1、WORKER-REAP-2；设计见 docs/research/2026-11-27-lifecycle-design.md）。
 
