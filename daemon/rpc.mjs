@@ -7,7 +7,7 @@ export const maxLine = 1024 * 1024;
 export const daemonAbsent = error => ['ENOENT', 'ECONNREFUSED'].includes(error.code);
 
 export async function request(project, command, args = {}, { capability = clientCapability(project),
-  timeout = ['spawn', 'switch', 'assign', 'send'].includes(command) ? 180_000 :
+  timeout = ['spawn', 'switch', 'assign', 'send', 'resume'].includes(command) ? 180_000 :
   ['upgrade-plan', 'upgrade-apply', 'accounts-refresh'].includes(command) ? 60_000 : 30_000 } = {}) {
   return new Promise((resolve, reject) => {
     const socket = connectUnix(socketPath(project));
@@ -24,7 +24,8 @@ export async function request(project, command, args = {}, { capability = client
       try {
         const response = JSON.parse(body);
         if (response.ok) resolve(response);
-        else reject(new CommandError(response.error.code, response.error.message));
+        else reject(Object.assign(new CommandError(response.error.code, response.error.message),
+          response.error.freshCommand && { freshCommand: response.error.freshCommand }));
       } catch (error) { reject(error); }
     });
   });

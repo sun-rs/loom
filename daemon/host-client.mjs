@@ -65,8 +65,10 @@ export async function attachHost(project, row, job, save, controller, { stop = f
         }
         const status = await inspectProcess(owner.identity);
         if (status !== 'dead' && !(status === 'alive' && job.pendingHostGrant)) throw unknown();
-        start = status === 'dead';
-        if (start && lstatSync(socket, { throwIfNoEntry: false })?.isSocket()) unlinkSync(socket);
+        if (status === 'dead') {
+          if (lstatSync(socket, { throwIfNoEntry: false })?.isSocket()) unlinkSync(socket);
+          return { endedAt: Date.now(), sessionId: native?.sessionId ?? resume, exitReason: 'host-lost' };
+        }
       }
     }
     if (stop && (start || !owner)) return { endedAt: Date.now() };
@@ -81,6 +83,7 @@ export async function attachHost(project, row, job, save, controller, { stop = f
     mkdirSync(dir, { recursive: true, mode: 0o700 });
     writeState(join(dir, 'launch.json'), JSON.stringify({ row: { ...row, sessionId: resume,
       ...(memory && { memory }),
+      ...(job.accountDir && { accountDir: job.accountDir }),
       ...(job.integration && { integration: true }),
       ...(hostGrant && { hostGrant }),
       ...(job.fast !== undefined && { fast: job.fast }),

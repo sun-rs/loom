@@ -1,12 +1,12 @@
 import { execFileSync } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
 import { mkdirSync, readdirSync, realpathSync, statSync } from 'node:fs';
-import { isAbsolute, join, relative, sep } from 'node:path';
+import { isAbsolute, join, relative, resolve as resolvePath, sep } from 'node:path';
 import { CommandError as ErrorCode, resolveTarget } from '../cli/sessions.mjs';
 import { runtimeDirectory } from '../cli/project.mjs';
 import { roles, rotatingRoles } from '../index/index.mjs';
 import { hc, hcAt, tui, addressPattern } from '../inbox/tui.mjs';
-import { wireText } from '../inbox/message.mjs';
+import { deliveryId, wireText } from '../inbox/message.mjs';
 import { recordLifecycle } from '../handover/index.mjs';
 import { generateBrief } from '../handover/brief.mjs';
 import { extractOutstanding } from '../handover/outstanding.mjs';
@@ -25,7 +25,10 @@ import { attachCodexHolder, pipeTransport, useCodexHolder } from './codex-holder
 import { managedCliPath, releaseId, releaseRoot, upgradeState } from './release.mjs';
 import { projectMemoryPrompt, workerMemoryPrompt } from '../memory/project.mjs';
 import { sessionMemoryBinding } from './memory-injection.mjs';
-import { disposeSession } from './session-close.mjs';
+import { disposeSession, withDeadline } from './session-close.mjs';
+import { createClaudeCcpBridge, defaultCcpClaudeEntry, validateCcpClaudeEntry } from './claude-ccp.mjs';
+import { markSuperCleanExit, resolveAccountDir } from './global-registry.mjs';
+import { freshHandoffCommand, nativeResumeCapability } from './resume-capabilities.mjs';
 import { workerEnvironment } from './worker-environment.mjs';
 import { withClaudeTranscriptStops } from '../relay/sources.mjs';
 import { rotationReasonText } from './rotation-policy.mjs';
@@ -115,6 +118,7 @@ function defaultTrustWorkspace(project, cwd) {
 export function ownedSessions(project, index, report, {
   open, exportOpenCode, openPane = openTui, getPane = ownedPane, callHc = hc, controller, layout, capabilities, hostGrants, memoryInjection,
   observeAccounts, observeAccountDiagnostics, observeAccountIncidents, accountBinding, accountStatusline,
+  ccpBridge = createClaudeCcpBridge(),
 } = {}) {
   const path = join(runtimeDirectory(project), 'sessions');
   mkdirSync(path, { recursive: true, mode: 0o700 });
@@ -420,7 +424,7 @@ export function ownedSessions(project, index, report, {
     if (exit && !job.stopping && !job.exit) {
       const code = exit.code ?? exit.exit_code ?? exit.exitCode;
       job.exit = { status: 'exited', since: Math.max(row.startedAt, at), code: Number.isSafeInteger(code) ? code : null,
-        reason: `Native CLI exited${Number.isSafeInteger(code) ? ` with code ${code}` : ' (exit code unavailable)'}` };
+        reason: exit.reason ?? `Native CLI exited${Number.isSafeInteger(code) ? ` with code ${code}` : ' (exit code unavailable)'}` };
       save(job);
     }
     openCodeProofs.delete(row.addr);
@@ -671,6 +675,7 @@ export function ownedSessions(project, index, report, {
     const fast = selfHandoff?.inheritFast ? jobs.get(predecessor.addr)?.fast : selected.fast;
     const requestedFast = selfHandoff?.inheritFast ? jobs.get(predecessor.addr)?.fastRequested : fastRequested;
     const job = { row, firstId: randomUUID(), prompt, gate, requested, deny, release: releaseId(),
+      accountDir: resolveAccountDir(cli),
       ...(actor && jobs.has(actor.addr) && { sender: targetBinding(actor) }),
       ...(row.role === 'worker' && { isolatedWorkerHome: workerTier !== 'host', workerTier }),
       ...(input['keep-warm'] && { retention: { keepWarm: true } }),
@@ -784,7 +789,8 @@ export function ownedSessions(project, index, report, {
     const memory = await memoryInjection?.()?.launch(job, sessionMemoryBinding(row, job));
     authorizeHostLaunch(job);
     const hostGrant = job.pendingHostGrant ?? job.hostGrant;
-    const session = await open({ ...row, memory, ...(job.fast !== undefined && { fast: job.fast }),
+    const session = await open({ ...row, memory, ...(job.accountDir && { accountDir: job.accountDir }),
+      ...(job.fast !== undefined && { fast: job.fast }),
       ...(hostGrant && { hostGrant }) }, project, row.sessionId,
       capabilities?.ensureSession(row.addr).token);
     try {
@@ -816,7 +822,7 @@ export function ownedSessions(project, index, report, {
     if (row.backend === 'headless') {
       if (!running.has(row.addr)) {
         const last = events(row.addr).findLast(event => ['stream-opened', 'exited', 'released'].includes(event.type));
-        if (!job.host && !job.retention?.resuming && ['exited', 'released'].includes(last?.type) && !last.suspending) {
+        if (!job.host && !job.retention?.resuming && !job.resumingExplicit && ['exited', 'released'].includes(last?.type) && !last.suspending) {
           return job.retention?.releasing ? released(job, row, last.at) : finish(job, row, last.at);
         }
         if (!job.host && !last) saveLaunchPaths(job);
@@ -832,7 +838,8 @@ export function ownedSessions(project, index, report, {
           const transcriptPath = checkedTranscript(runtime.transcriptPath, row);
           await refreshAccounts(job, row, { transcript: transcriptPath, runtime });
           if (transcriptPath && row.transcriptPath !== transcriptPath) row = index.update(row.addr, { transcriptPath });
-          return job.retention?.releasing ? released(job, row, runtime.endedAt) : finish(job, row, runtime.endedAt);
+          return job.retention?.releasing ? released(job, row, runtime.endedAt) :
+            finish(job, row, runtime.endedAt, runtime.exitReason ? { reason: runtime.exitReason } : undefined);
         }
         running.set(row.addr, runtime);
         if (runtime.session.id !== row.sessionId) row = index.update(row.addr, { sessionId: runtime.session.id });
@@ -848,7 +855,7 @@ export function ownedSessions(project, index, report, {
         save(job);
       }
     } else {
-      let terminal = await getPane(job, row);
+      let terminal = job.resumingExplicit && !job.paneBinding ? undefined : await getPane(job, row);
       let nativeId;
       if (!job.paneBinding && completedPane(terminal) && wrapperFailedStart(job.tui)) {
         job.tui = { transport: 'plain-hc', reason: 'loom-pty-start-failed' };
@@ -895,7 +902,7 @@ export function ownedSessions(project, index, report, {
     }
     enforceDeny(runtimeSelection(row).effective, job.deny ?? []);
     confirmHostLaunch(job);
-    if (!mail.messages.some(message => message.id === job.firstId)) {
+    if (!job.resumingExplicit && !mail.messages.some(message => message.id === job.firstId)) {
       mail.enqueue({ id: job.firstId, target: targetBinding(row), createdAt: row.startedAt,
         text: job.prompt, requestedMode: 'queue', mode: 'queue', phase: 'queued', startup: true,
         ...(job.sender && { from: job.sender }),
@@ -1191,6 +1198,146 @@ export function ownedSessions(project, index, report, {
     return resumed;
   }
 
+  async function resumeSession(target, options = {}, mail) {
+    const row = rowFor(target) ?? resolve(target);
+    const job = row && jobs.get(row.addr);
+    if (!row || !job) throw new ErrorCode('not-found', `Session is not managed by this daemon: ${target}`);
+    if (row.endedAt === null && restored.has(row.addr) && !isReleased(job)) {
+      throw new ErrorCode('not-ready', `Session is already live: ${row.addr}`);
+    }
+    if (row.role === 'reviewer' || job.handoverFailure) {
+      throw new ErrorCode('not-ready', `Session cannot be resumed: ${row.addr}`);
+    }
+    if (!row.sessionId) {
+      const freshCommand = freshHandoffCommand(project, row, job);
+      throw Object.assign(
+        new ErrorCode('resume-unsupported', `无法原生续接：会话 ${row.addr} 缺少原生会话标识。改用交接单新开：${freshCommand}`),
+        { freshCommand },
+      );
+    }
+    if (options.cli !== undefined && options.cli !== row.cli) {
+      throw new ErrorCode('resume-mismatch', `CLI mismatch for ${row.addr}: recorded ${row.cli}, got ${options.cli}`);
+    }
+    if (options.model !== undefined && row.model && options.model !== row.model) {
+      throw new ErrorCode('resume-mismatch', `Model mismatch for ${row.addr}: recorded ${row.model}, got ${options.model}`);
+    }
+    const recordedAccount = job.accountDir ?? resolveAccountDir(row.cli);
+    const requestedAccount = options.accountDir ?? options.accountDirs?.[row.cli];
+    const currentAccount = requestedAccount ? resolvePath(requestedAccount) : resolveAccountDir(row.cli);
+    if (recordedAccount && currentAccount && resolvePath(recordedAccount) !== resolvePath(currentAccount)) {
+      throw new ErrorCode('resume-mismatch', `Account directory mismatch for ${row.addr}: recorded ${recordedAccount}, got ${currentAccount}`);
+    }
+    enforceDeny({ cli: row.cli, model: row.model, effort: row.effort }, readPolicy(project, { optional: true }).deny ?? []);
+
+    if (row.cli === 'claude') {
+      const entry = validateCcpClaudeEntry(options.entry ?? job.launchEntry ?? defaultCcpClaudeEntry(), process.env);
+      await ccpBridge.resumeSession({ project, row, job, sessionId: row.sessionId, entry, accountDir: recordedAccount, env: process.env });
+    } else {
+      const cap = nativeResumeCapability({
+        cli: row.cli, backend: row.backend, sessionId: row.sessionId,
+        cliVersion: options.cliVersion ?? job.cliVersion, ccpBridge, project, row, job,
+      });
+      if (!cap.supported) {
+        throw Object.assign(
+          new ErrorCode(cap.status === 'not-ready' ? 'not-ready' : 'resume-unsupported', `${cap.reason}。改用交接单新开：${cap.freshCommand}`),
+          { freshCommand: cap.freshCommand },
+        );
+      }
+    }
+
+    if (storedWorkerTier(job) === 'host') {
+      if (!job.hostGrant || !hostGrants.active(row, job.hostGrant.id)) {
+        throw new ErrorCode('host-grant-expired', `Host grant for ${row.addr} is expired or closed`);
+      }
+    }
+
+    const previousEndedAt = row.endedAt;
+    const previousPane = row.pane;
+    const previousJob = structuredClone(job);
+    const timeoutMs = Number.isSafeInteger(options.timeoutMs) && options.timeoutMs > 0 ? options.timeoutMs : 120_000;
+    for (const key of ['stopping', 'exit', 'closed', 'host', 'pipeRecovery', 'paneBinding', 'tui',
+      'herdrPlaced', 'herdrPublished', 'endRecorded']) delete job[key];
+    if (job.retention) {
+      delete job.retention.releasedAt;
+      delete job.retention.releasing;
+      delete job.retention.resuming;
+    }
+    job.resumingExplicit = true;
+    if (row.backend === 'tui') {
+      job.resumeNativeId = row.sessionId;
+      job.resumeGeneration = (job.resumes?.length ?? 0) + 1;
+      if (visibleRoles.includes(row.role) && layout) job.herdr = await layout.placement(row);
+    }
+    const reopened = index.update(row.addr, { endedAt: null, ...(row.backend === 'tui' && { pane: null }) });
+    save(job);
+
+    let activated;
+    try {
+      activated = await withDeadline(activate(job, mail), timeoutMs,
+        `Session ${row.addr} resume did not become ready within ${timeoutMs}ms`, 'resume-timeout');
+      if (!activated || activated.endedAt !== null) {
+        throw new ErrorCode('not-ready', `Resumed session ${row.addr} exited during startup`);
+      }
+      if (activated.sessionId && activated.sessionId !== row.sessionId) {
+        throw new ErrorCode('resume-mismatch', `Native session ID changed during resume: expected ${row.sessionId}, got ${activated.sessionId}`);
+      }
+    } catch (error) {
+      const live = running.get(row.addr);
+      if (live) {
+        try { if (live.hosted) await live.close(); else await disposeSession(live.session); }
+        catch (cleanup) { report(`${row.addr} resume rollback: ${cleanup.message}`); }
+        finally { live.unsubscribe?.(); running.delete(row.addr); }
+      }
+      if (row.backend === 'tui') {
+        const pane = await getPane(job, reopened).catch(() => undefined);
+        if (pane && !completedPane(pane)) await terminalCall(job, 'kill', pane.address).catch(() => {});
+      }
+      restored.delete(row.addr);
+      bindings.delete(row.addr);
+      for (const key of Object.keys(job)) delete job[key];
+      Object.assign(job, previousJob);
+      save(job);
+      index.update(row.addr, { endedAt: previousEndedAt ?? Date.now(), ...(row.backend === 'tui' && { pane: previousPane }) });
+      if (error.code === 'resume-timeout') throw new ErrorCode('resume-timeout', error.message);
+      throw error;
+    }
+
+    const journal = events(row.addr);
+    const confirmedIds = new Set();
+    for (const event of journal) {
+      if (event.inputId) confirmedIds.add(event.inputId);
+      if (event.deliveryId) confirmedIds.add(event.deliveryId);
+      if (typeof event.prompt === 'string') {
+        const parsed = deliveryId(event.prompt);
+        if (parsed) confirmedIds.add(parsed);
+      }
+      if (Array.isArray(event.inputIds)) for (const id of event.inputIds) confirmedIds.add(id);
+    }
+    const hadNativeTurns = confirmedIds.size > 0 ||
+      journal.some(event => ['turn-start', 'turn-end', 'input-received'].includes(event.type) ||
+        ['UserPromptSubmit', 'Stop', 'PreInvocation'].includes(event.hook_event_name)) ||
+      mail.messages.some(message => message.target?.addr === row.addr && Boolean(message.received));
+    const binding = { ...targetBinding(activated), sessionId: activated.sessionId };
+    const replay = mail.replayForResume(row.addr, binding, { firstId: job.firstId, confirmedIds, hadNativeTurns });
+    delete job.resumeNativeId;
+    delete job.resumingExplicit;
+    (job.resumes ??= []).push({ at: Date.now(), by: 'super', sessionId: activated.sessionId, previousEndedAt });
+    save(job);
+    retryAt.delete(row.addr);
+    return {
+      session: activated,
+      resumed: true,
+      role: activated.role,
+      task: activated.task,
+      wave: activated.wave,
+      worktree: activated.cwd,
+      ...(activated.role === 'worker' && { workerTier: storedWorkerTier(job) }),
+      hostGrantPreserved: Boolean(job.hostGrant),
+      replayedDeliveries: replay.replayed,
+      deduplicatedDeliveries: replay.deduplicated,
+    };
+  }
+
   async function closeWorker(row, reason, at, contextPercent) {
     const job = jobs.get(row.addr);
     if (!job.closed) {
@@ -1228,6 +1375,10 @@ export function ownedSessions(project, index, report, {
       endedAt = closed?.finished_ms;
     }
     if (row.backend === 'tui' && row.pane) row = await refreshTui(job, row);
+    if (row.role === 'super') {
+      try { markSuperCleanExit('loom-stop'); }
+      catch (error) { report(`global registry super exit: ${error.message}`); }
+    }
     return finish(job, row, endedAt);
   }
 
@@ -1361,7 +1512,7 @@ export function ownedSessions(project, index, report, {
   }
 
   return { rows, rowFor, events, targetBinding, transport, requestedMode, canInterrupt, resolve, requireLive, newJob,
-    activate, failSpawn, failHandover, runtimeSelection, refresh, stop, closeWorker, release, resume, setRetention,
+    activate, failSpawn, failHandover, runtimeSelection, refresh, stop, closeWorker, release, resume, resumeSession, setRetention,
     verifyWorkerStart, workerHandoff, sessionMemory,
     shutdown, upgradeSessions, upgradeHolder, jobs, managedHc, sealed, lastActivity,
     routeParent, bindSuccessor, retirePredecessor, finalizeV2, legacyPeerCaller, legacySessions, liveCaller, successorOf, holdsForHandover, rememberUserPrompt, pathWarnings, rememberLiveness, adoptLayout,
