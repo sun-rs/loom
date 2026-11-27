@@ -1277,3 +1277,16 @@ test('T103 syncLedger guardrails: missing, empty, or unparseable rulings.md reti
       `non-ledger entry ${id} must never be retired by syncLedger`);
   }
 });
+
+test('R41 writing rules explicitly state feedback->lesson and project->ruling storage mapping boundaries', async () => {
+  const { observationRules, memoryStartupPrompt, renderMemoryPrompt } = await import('./prompts.mjs');
+  const targets = [
+    ['observationRules', observationRules],
+    ['memoryStartupPrompt', memoryStartupPrompt('leader', '')],
+    ['renderMemoryPrompt', renderMemoryPrompt({ binding: bindings.leader })],
+  ];
+  for (const [label, text] of targets) {
+    assert.match(text, /用户纠正\/确认工作流程（feedback）存为\s*`?lesson`?/u, `${label} must state feedback -> lesson mapping`);
+    assert.match(text, /项目级红线\/期限\/决策（project）存为\s*`?ruling`?/u, `${label} must state project -> ruling mapping`);
+  }
+});
