@@ -1,6 +1,7 @@
 import { execFile } from 'node:child_process';
 import { readFileSync, realpathSync } from 'node:fs';
-import { join } from 'node:path';
+import { homedir } from 'node:os';
+import { join, resolve } from 'node:path';
 import { promisify } from 'node:util';
 import { projectMessages } from '../adapters/opencode/index.mjs';
 import { hc, hcAt } from '../inbox/tui.mjs';
@@ -9,7 +10,7 @@ import { codexFastArgs, nativeClaude, nativeWorkerExecutable } from './executabl
 import { recordWorkerExecutable } from './worker-executables.mjs';
 import { eventPath, readText, writeState } from './io.mjs';
 import { codexEnvironmentArgs, runtimeDirectory } from '../cli/project.mjs';
-import { allowNativeQuestions, claudeIdleCompaction } from '../cli/policy.mjs';
+import { allowNativeQuestions } from '../cli/policy.mjs';
 import { controllerFile, managedEnvironment, releaseRoot } from './release.mjs';
 import { workerEnvironment, workerProviderEnvironment } from './worker-environment.mjs';
 import { seniorToolEnvironment } from './senior-tools.mjs';
@@ -52,11 +53,13 @@ export async function openTui(job, row, project, recordTemporary, recordBinding,
   const worker = row.role === 'worker';
   const command = worker ? nativeWorkerExecutable(row.cli) : row.cli === 'claude' ? nativeClaude() : undefined;
   const hookSink = eventPath(project, row.addr);
-  const runner = row.cli !== 'opencode' && hookRunner(project, row.cli);
+  const runner = !['opencode', 'claude'].includes(row.cli) && hookRunner(project, row.cli);
+  const defaultClaudeAccountDir = resolve(process.env.HOME || homedir(), '.claude');
   const accountEnv = job.accountDir ? (
     row.cli === 'codex' ? { CODEX_HOME: job.accountDir } :
     row.cli === 'agy' ? { ANTIGRAVITY_APP_DATA_DIR: job.accountDir } :
-    row.cli === 'claude' ? { CLAUDE_CONFIG_DIR: job.accountDir } : {}
+    row.cli === 'claude' && (process.env.CLAUDE_CONFIG_DIR || resolve(job.accountDir) !== defaultClaudeAccountDir)
+      ? { CLAUDE_CONFIG_DIR: job.accountDir } : {}
   ) : {};
   const env = { ...managedEnvironment(project, row.addr),
     ...(runner && { LOOM_HOOK_RELEASE: releaseRoot }),
@@ -82,8 +85,7 @@ export async function openTui(job, row, project, recordTemporary, recordBinding,
     autoTrustWorkspace: job.autoTrustWorkspace, ...(controller && { controllerPath: controllerFile(project) }),
     stateDir: join(project, '.project', 'pty'),
     ...(row.cli === 'claude' && { env: { ...env, DISABLE_AUTOUPDATER: '1' },
-      ...(['leader', 'auditor'].includes(row.role) && { contextStatusPath: hookSink.replace(/\.jsonl$/, '.context.json') }),
-      authMode: job.authMode, idleCompaction: claudeIdleCompaction(project, row.role), unset: [...guardUnset, 'CLAUDE_CODE_ENTRYPOINT', 'CLAUDECODE'] }),
+      authMode: job.authMode, unset: [...guardUnset, 'CLAUDE_CODE_ENTRYPOINT', 'CLAUDECODE'] }),
     ...(row.cli === 'codex' && { extraArgs: ['--disable', 'memories', ...codexEnvironmentArgs(env), ...codexFastArgs(job.fast)] }),
   });
   try {

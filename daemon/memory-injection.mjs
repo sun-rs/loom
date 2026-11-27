@@ -79,20 +79,19 @@ export function createMemoryInjection(project, access) {
       const appendices = [];
       const memoryAccess = {};
       let memoryCompaction;
-      if (job.row.cli !== 'claude') {
-        const compaction = events.findLastIndex(event =>
-          (event.type === 'compaction_ended' && (event.outcome?.kind ?? event.outcome) === 'completed') ||
-          (event.hook_event_name === 'SessionStart' && event.source === 'compact'));
-        if (compaction >= 0) {
-          const key = compactionKey(events[compaction], compaction);
-          if (!taken.some(item => item.memoryCompaction === key)) memoryCompaction = key;
-        }
-        if (memoryCompaction || job.row.cli === 'agy' && message.startup) {
-          const index = await query.index(binding);
-          const text = indexText(index);
-          appendices.push(job.row.cli === 'agy' && message.startup ? memoryStartupPrompt(binding.role, text) : text);
-          if (index.rows.length) memoryAccess.index = index.rows.map(row => row.id);
-        }
+      const compaction = events.findLastIndex(event =>
+        (event.type === 'compaction_ended' && (event.outcome?.kind ?? event.outcome) === 'completed') ||
+        event.hook_event_name === 'PostCompact' ||
+        (event.hook_event_name === 'SessionStart' && event.source === 'compact'));
+      if (compaction >= 0) {
+        const key = compactionKey(events[compaction], compaction);
+        if (!taken.some(item => item.memoryCompaction === key)) memoryCompaction = key;
+      }
+      if (memoryCompaction || job.row.cli === 'agy' && message.startup) {
+        const index = await query.index(binding);
+        const text = indexText(index);
+        appendices.push(job.row.cli === 'agy' && message.startup ? memoryStartupPrompt(binding.role, text) : text);
+        if (index.rows.length) memoryAccess.index = index.rows.map(row => row.id);
       }
       if (message.startup && binding.role === 'worker') {
         const { rows } = await access.attachments(binding, { project: binding.project, attached: true });

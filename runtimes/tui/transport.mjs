@@ -7,17 +7,20 @@ import { performance } from 'node:perf_hooks';
 import { setTimeout as sleep } from 'node:timers/promises';
 import { prepareJournal, readText, syncDirectory } from '../../daemon/io.mjs';
 import { releaseRoot } from '../../daemon/release.mjs';
-import { missingExecutable, resolveNativeExecutable } from '../../daemon/executables.mjs';
+import { missingExecutable, nativeClaude, resolveClaudeExecutable, resolveNativeExecutable } from '../../daemon/executables.mjs';
 import { holderAsset } from '../../holder/assets.mjs';
 import { hcWrappedBackend } from '../../tui/backends.mjs';
 import { holderClient } from '../../holder/protocol.mjs';
 import { requestControl } from '../../tui/pty-control.mjs';
 import { providers } from '../../tui/providers.mjs';
 import { startPane } from './hc.mjs';
-import { claudeApiEnvKeys } from '../../adapters/claude/launch.mjs';
+import { claudeApiEnvKeys, claudeNetworkEnvKeys } from '../../adapters/claude/launch.mjs';
 import { codexDeveloperArgs, memoryLaunch } from '../../memory/launch-config.mjs';
 
 export async function absoluteCommand(command, provider = basename(command)) {
+  if (provider === 'claude') {
+    return command === 'claude' ? nativeClaude() : resolveClaudeExecutable(command);
+  }
   const variable = `LOOM_${provider.toUpperCase()}_BIN`;
   const override = command === provider ? process.env[variable] : undefined;
   const candidates = isAbsolute(command) ? [command] : override ? [override] :
@@ -83,8 +86,11 @@ export async function openNativeTui({
   if (cli === 'claude') {
     if (authMode !== 'api-key') unset = [...new Set([...unset, ...claudeApiEnvKeys])];
     // Opt in through inherited credentials, never via hc's command arguments.
-    env = Object.fromEntries([env, launchEnv].flatMap(source => Object.keys(source).filter(key => !claudeApiEnvKeys.includes(key))
+    // Never clear or rewrite proxy/egress variables for Claude; CCP owns them.
+    env = Object.fromEntries([env, launchEnv].flatMap(source => Object.keys(source)
+      .filter(key => !claudeApiEnvKeys.includes(key) && !claudeNetworkEnvKeys.includes(key))
       .map(key => [key, source[key]])));
+    unset = unset.filter(key => !claudeNetworkEnvKeys.includes(key));
   } else env = { ...env, ...launchEnv };
   const workspace = launchEnv.LOOM_AGY_HOOK_WORKSPACE;
   let staging;
@@ -111,6 +117,7 @@ export async function openNativeTui({
   };
   const evidence = {
     cwd, evidenceRoot: stateDir, hookSink, sessionId, ...(promptSink && { promptSink }), boundTranscript, requireNative: true,
+    ...(cli === 'claude' && env.CLAUDE_CONFIG_DIR && { configDir: env.CLAUDE_CONFIG_DIR }),
     autoTrustWorkspace: options.autoTrustWorkspace === true,
     bookPath: binding.bookPath, startPath: binding.startPath, exitPath: binding.exitPath, incarnation: binding.incarnation,
     ...(options.resume && { resumedAt: Date.now() }),

@@ -14,7 +14,7 @@ const { spawn } = createRequire(import.meta.url)('node-pty');
 const hcCommand = '/Users/sun/.local/bin/hc';
 const root = '/Users/sun/Code/exp-relay/tui-orca-1';
 const profiles = {
-  claude: ['/Users/sun/.local/share/claude/versions/2.1.331', 'sonnet'],
+  claude: ['/Users/sun/.local/bin/claude', 'sonnet'],
   codex: ['/opt/homebrew/Caskroom/codex/0.171.0/bin/codex', 'gpt-6.2-sol'],
   agy: ['/Users/sun/.local/bin/agy'],
 };
@@ -102,7 +102,7 @@ async function until(read, accepts, timeout = 45_000, step = 250) {
 
 async function run(cli) {
   const [command, model] = profiles[cli];
-  const binary = await realpath(command);
+  const binary = cli === 'claude' ? command : await realpath(command);
   const cwd = join(runDir, cli);
   const stateDir = join(runDir, evidenceDirectory(cli));
   await Promise.all([mkdir(cwd, { mode: 0o700 }), mkdir(stateDir, { mode: 0o700 })]);

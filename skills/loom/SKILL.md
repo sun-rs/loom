@@ -82,8 +82,11 @@ Worker 线统一由 OAR 托管。新增特殊 worker（例如 Claude TUI worker�
 
   ```sh
   LOOM_EXTERNAL_SUPER=1 loom spawn "$ROLE" --project "$PROJECT" --cwd "$PROJECT" "$PROMPT"
+  LOOM_EXTERNAL_SUPER=1 loom spawn auditor --project "$PROJECT" --cwd "$PROJECT" --resume-session "$SESSION_ID"
   loom spawn worker --project "$PROJECT" --cwd "$WORKTREE" --parent "$LOOM_ADDR" --task "$TASK" --wave "$WAVE" "$PROMPT"
   ```
+
+- 按用户 2026-11-27 裁决，**所有 Claude Code 调用必须经 CCP 入口**（默认 `/Users/sun/.local/bin/claude`，禁止直接执行 `~/.local/share/claude/versions/*` 或 realpath 绕过，非 CCP 入口由 loomd 硬拒绝 `ccp-required`）。经 CCP 启动的 Claude 不注入 loom hooks/statusLine，loom 改读 `~/.claude/projects/<编码后的 cwd>/<sessionId>.jsonl` 追踪回合、投递与上下文。已结束的常驻 Claude 会话可用 `loom spawn <role> --resume-session <UUID>` 经 CCP 恢复原会话上下文。
 
 - `loom status --project "$PROJECT"` 看项目总览，`loom ls` 查稳定地址，`loom state "$ADDR"` 查在途事项和换班状态。用 `loom hist "$ADDR" --evidence` 查证据卡，`loom hist --wave "$WAVE"` 查波次，`loom hist "$ADDR" --turn "$N" --level L2 --diff` 查单轮提交差异。用 `--before N` 或 `--page N` 翻到更早轮次，`--all` 输出全部 L1 摘要。未提交的改动查证据卡，正文未确认时按历史给出的路径和行号核查原件。
 - Leader、Auditor 和 Super 用 `loom send "$ADDR" --project "$PROJECT" "$TEXT"` 排队发信，也可用 `leader` 或 `auditor` 发送给当前已接任的唯一角色。loomd 使用已认证的会话作为发信人。外部 Super 在本机操作终端设置 `LOOM_EXTERNAL_SUPER=1`，可用 `--from super` 收取通知回执，并用 `--expect-reply` 请求答复。授权叫停用 `--mode interrupt` 并说明理由。loomd 按投递 SLA 对账并升级停滞投递。

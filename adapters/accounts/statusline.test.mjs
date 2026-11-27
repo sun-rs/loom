@@ -40,10 +40,8 @@ test('launch-scoped statusline settings for Claude and agy never modify global s
       cwd: workDir,
       statusLine: claudeStatusLine.statusLine,
     });
-    const settingsIdx = launchedClaude.argv.indexOf('--settings');
-    assert.ok(settingsIdx >= 0, 'Claude launch must pass --settings');
-    const parsedClaudeSettings = JSON.parse(launchedClaude.argv[settingsIdx + 1]);
-    assert.deepEqual(parsedClaudeSettings.statusLine, claudeStatusLine.statusLine);
+    assert.equal(launchedClaude.argv.includes('--settings'), false,
+      'Claude under CCP must not inject statusLine into --settings');
 
     const agySink = join(workDir, '.project', 'loomd', 'statusline-agy.jsonl');
     const agyStatusLine = createStatuslineSettings({

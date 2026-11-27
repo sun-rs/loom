@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { createHash, randomUUID } from 'node:crypto';
-import { mkdirSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { after, before, test } from 'node:test';
@@ -35,7 +35,7 @@ before(() => {
     CLAUDE_CONFIG_DIR: join(home, '.claude'), XDG_CONFIG_HOME: join(home, '.config'),
     XDG_DATA_HOME: join(home, '.local/share'), XDG_STATE_HOME: join(home, '.local/state'),
     LOOM_DESKTOP_NOTIFY: '0', GIT_CONFIG_NOSYSTEM: '1',
-    OAR_CODEX_BIN: writeStub(home, 'codex'), LOOM_CLAUDE_BIN: writeStub(home, 'claude'),
+    OAR_CODEX_BIN: writeStub(home, 'codex'), LOOM_CLAUDE_CCP_BIN: writeStub(home, 'claude'),
     OAR_CODEX_SANDBOX: 'inherit', CLAUDE_CODE_DISABLE_AUTO_MEMORY: '0',
   });
 });
@@ -136,9 +136,18 @@ function flag(argv, name) {
 }
 
 function writeStub(home, cli) {
-  const path = join(home, cli);
+  let target = join(home, cli);
+  let entry = target;
+  if (cli === 'claude') {
+    const ccpDir = join(home, 'ccp', 'bin');
+    const binDir = join(home, '.local', 'bin');
+    mkdirSync(ccpDir, { recursive: true });
+    mkdirSync(binDir, { recursive: true });
+    target = join(ccpDir, 'claude-protected');
+    entry = join(binDir, 'claude');
+  }
   const codexNative = new URL('../tasks/PROTO-HARDEN-0/fixtures/native.mjs', import.meta.url).href;
-  writeFileSync(path, `#!${process.execPath}
+  writeFileSync(target, `#!${process.execPath}
 import { appendFileSync, readFileSync } from 'node:fs';
 import { createInterface } from 'node:readline';
 const cli = ${JSON.stringify(cli)};
@@ -165,7 +174,8 @@ else createInterface({ input: process.stdin }).on('line', line => {
   } }));
 });
 `, { mode: 0o700 });
-  return path;
+  if (cli === 'claude') symlinkSync(target, entry);
+  return entry;
 }
 
 // Reopening the supervisor suspends this transport and launches a new native process.
@@ -173,7 +183,7 @@ else createInterface({ input: process.stdin }).on('line', line => {
 function nativeFixture(t) {
   assert.equal(process.env.HOME, fixtureHome);
   assert.equal(process.env.OAR_CODEX_BIN, join(fixtureHome, 'codex'));
-  assert.equal(process.env.LOOM_CLAUDE_BIN, join(fixtureHome, 'claude'));
+  assert.equal(process.env.LOOM_CLAUDE_CCP_BIN, join(fixtureHome, '.local', 'bin', 'claude'));
   return fixture(t, openOar);
 }
 function nativeLaunches(f, cli) {
@@ -255,32 +265,18 @@ for (const [budget, count, title] of [['line', 203, 'Short title'], ['UTF-8 byte
   });
 }
 
-test('5c live compact: the Claude SessionStart hook outputs the authorized index', async t => {
+test('5c live compact: Claude under CCP omits settings hooks and keeps startup system index', async t => {
   const f = nativeFixture(t);
   seedHidden(f);
   f.publish(item(shared, f.project));
   f.publish(item(ruling, null, { layer: 'user', kind: 'ruling' }));
-  const { session } = await f.spawn('leader', 'claude', 'Compact hook probe');
-  const [{ argv, env }] = nativeLaunches(f, 'claude');
+  await f.spawn('leader', 'claude', 'Compact hook probe');
+  const [{ argv, system }] = nativeLaunches(f, 'claude');
   const settings = JSON.parse(flag(argv, '--settings') ?? '{}');
-  const hooks = (settings.hooks?.SessionStart ?? []).filter(rule => rule.matcher === 'compact')
-    .flatMap(rule => rule.hooks ?? []).filter(hook => hook.type === 'command' && hook.command);
-  assert.ok(hooks.length > 0, 'native Claude did not receive a compact hook command');
-  const context = hooks.map(({ command, args }) => {
-    const [program, parameters] = args ? [command, args] : ['/bin/sh', ['-c', command]];
-    const result = spawnSync(program, parameters, {
-      cwd: f.project, env, encoding: 'utf8', timeout: 5000,
-      input: JSON.stringify({ hook_event_name: 'SessionStart', source: 'compact',
-        cwd: f.project, session_id: session.sessionId }),
-    });
-    assert.ifError(result.error);
-    assert.equal(result.status, 0, result.stderr);
-    const output = result.stdout.trim();
-    return output.startsWith('{') ? JSON.parse(output).hookSpecificOutput?.additionalContext ?? '' : output;
-  }).join('\n');
-  assert.match(context, /MEM-SHARED/);
-  assert.match(context, /MEM-USER-RULING/);
-  assert.doesNotMatch(context, /MEM-HIDDEN-(?:PRIVATE|FOREIGN)/);
+  assert.equal(settings.hooks, undefined, 'Claude under CCP must not inject hooks in --settings');
+  assert.match(system, /MEM-SHARED/);
+  assert.match(system, /MEM-USER-RULING/);
+  assert.doesNotMatch(system, /MEM-HIDDEN-(?:PRIVATE|FOREIGN)/);
 });
 
 for (const [provider, systemPrompt] of [
@@ -618,14 +614,12 @@ test('7b delta keeps forgotten and unreadable titles out of individual and group
   assert.equal(withdrawalLines(grouped).length, 1, 'the grouped notice covers the visible withdrawals');
 });
 
-test('5c Claude registers a SessionStart hook scoped to compact', async () => {
+test('5c Claude under CCP omits SessionStart hook from --settings and reinjects via compaction events', async () => {
   const launch = await buildTuiLaunch({ provider: 'claude', binding: binding('leader', 'A'), indexText });
-  const settings = JSON.parse(launch.argv.includes('--settings') ? flag(launch.argv, '--settings') : '{}');
-  assert.ok(settings.hooks?.SessionStart?.some(rule => rule.matcher === 'compact' &&
-    rule.hooks?.some(hook => hook.type === 'command' && hook.command)), 'missing Claude compact reinjection hook');
+  assert.equal(launch.argv.includes('--settings'), false, 'Claude under CCP must not inject hooks in --settings');
 });
 
-for (const cli of ['codex', 'opencode', 'agy']) {
+for (const cli of ['claude', 'codex', 'opencode', 'agy']) {
   test(`5c ${cli}: a completed compaction restores the current index once on the next send`, async t => {
     const f = fixture(t);
     const before = item('MEM-BEFORE-COMPACT', f.project);

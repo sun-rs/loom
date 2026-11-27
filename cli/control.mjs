@@ -11,13 +11,14 @@ import { providers } from './policy.mjs';
 import { daemonAbsent, request } from '../daemon/rpc.mjs';
 import { activeRelease } from '../daemon/release.mjs';
 import { roles } from '../index/index.mjs';
+import { messageIdPattern } from '../inbox/message.mjs';
 import { hostGrantSpec, requestedWorkerTier } from '../lib/worker-tiers.mjs';
 
 const executable = fileURLToPath(new URL('../bin/loomd', import.meta.url));
 const invalid = message => new CommandError('invalid-arguments', message);
 const named = entries => Object.fromEntries(entries.map(key => [key, { type: 'string' }]));
-export const spawnUsage = 'loom spawn <role> --cwd DIR [--project DIR] [--task T --wave W] [--keep-warm] [--reason TEXT] [--expect-red] [--tier sandbox|integration|host | --integration] [--deliver stream | --deliver barrier --barrier SET] [--cli CLI] [--mode tui|headless] [--model MODEL] [--effort EFFORT] [--parent ADDR] [--handover-from OLD_ADDR] [--trust-workspace] "<prompt>"';
-export const spawnHelp = 'Roles: super, leader, auditor, worker. Workers require --task and --wave. Worker results stream by default with delivery.coalesceMs (45 seconds). Use --deliver barrier --barrier SET for a set that must arrive together. --parent defaults to LOOM_ADDR in managed sessions. The required .project/policy.json supplies per-role runtime defaults, roles.leader.maxActiveWorkers (default 3, maximum 4). --handover-from includes the brief on startup. A Leader or Auditor successor must acknowledge the brief in its first native turn before the predecessor retires.';
+export const spawnUsage = 'loom spawn <role> --cwd DIR [--project DIR] [--task T --wave W] [--keep-warm] [--reason TEXT] [--expect-red] [--tier sandbox|integration|host | --integration] [--deliver stream | --deliver barrier --barrier SET] [--cli CLI] [--mode tui|headless] [--model MODEL] [--effort EFFORT] [--parent ADDR] [--handover-from OLD_ADDR] [--resume-session UUID] [--trust-workspace] ["<prompt>"]';
+export const spawnHelp = 'Roles: super, leader, auditor, worker. Workers require --task and --wave. Worker results stream by default with delivery.coalesceMs (45 seconds). Use --deliver barrier --barrier SET for a set that must arrive together. --parent defaults to LOOM_ADDR in managed sessions. The required .project/policy.json supplies per-role runtime defaults, roles.leader.maxActiveWorkers (default 3, maximum 4). --handover-from includes the brief on startup. A Leader or Auditor successor must acknowledge the brief in its first native turn before the predecessor retires. --resume-session UUID resumes a stopped resident session (super, leader, auditor) through its native session ID (Claude always routes through CCP); <prompt> is optional with --resume-session.';
 export const grantUsage = 'loom grant <task|wave> host --reason REASON [--ttl 30m] [--uses N] [--write PATH]... [--wave] [--request] [--unconfined] [--project DIR]';
 export const daemonUsage = 'loom daemon start|stop|status [--project DIR] [--foreground]';
 
@@ -86,7 +87,7 @@ export async function workerGrant(args) {
 export async function control(command, args) {
   let values;
   let positionals;
-  const spawnOptions = ['cli', 'mode', 'model', 'effort', 'cwd', 'project', 'task', 'wave', 'handover-from', 'deliver', 'barrier', 'tier'];
+  const spawnOptions = ['cli', 'mode', 'model', 'effort', 'cwd', 'project', 'task', 'wave', 'handover-from', 'resume-session', 'deliver', 'barrier', 'tier'];
   try {
     ({ values, positionals } = parseArgs({ args, allowPositionals: true, options: command === 'spawn' ?
       { ...named([...spawnOptions, 'parent', 'reason']), 'trust-workspace': { type: 'boolean' }, 'expect-red': { type: 'boolean' },
@@ -96,8 +97,13 @@ export async function control(command, args) {
 
   if (command === 'spawn') {
     const [role, prompt] = positionals;
+    const resumeSession = values['resume-session'];
     const tier = role === 'worker' ? requestedWorkerTier(values) : undefined;
-    if (positionals.length !== 2 || !roles.includes(role) || !prompt.trim() || !isAbsolute(values.cwd ?? '') ||
+    const validPositionals = resumeSession !== undefined
+      ? (positionals.length === 1 || positionals.length === 2 && Boolean(prompt?.trim()))
+      : (positionals.length === 2 && Boolean(prompt?.trim()));
+    if (!validPositionals || !roles.includes(role) || !isAbsolute(values.cwd ?? '') ||
+        (resumeSession !== undefined && (role === 'worker' || values['handover-from'] !== undefined || !messageIdPattern.test(resumeSession))) ||
         ['cli', 'mode', 'model', 'effort', 'task', 'wave', 'parent', 'handover-from'].some(key => values[key] !== undefined && !values[key].trim()) ||
         (role === 'worker' ? !values.task || !values.wave : values['expect-red'] !== undefined || values.integration !== undefined ||
           values.tier !== undefined || values['keep-warm'] !== undefined || values.reason !== undefined) ||
@@ -109,7 +115,7 @@ export async function control(command, args) {
     }
     const project = projectDirectory(values.project);
     try {
-      const result = await request(project, 'spawn', { ...values, project, cwd: realpathSync(values.cwd), role, prompt });
+      const result = await request(project, 'spawn', { ...values, project, cwd: realpathSync(values.cwd), role, ...(prompt !== undefined && { prompt }) });
       return withTuiVersionWarnings({ ...result, ...projectReceipt(project) }, result.session);
     } catch (error) {
       if (daemonAbsent(error)) throw new CommandError('not-ready', 'loomd is not running for this project');

@@ -259,6 +259,17 @@ test('a wrapper that exits before spawning the native CLI falls back to a manual
   const root = await temp(t);
   const fakeHc = join(root, 'hc');
   const output = join(root, 'pane.json');
+  const ccpDir = join(root, 'ccp', 'bin');
+  const ccpEntry = join(ccpDir, 'claude-protected');
+  const { mkdir, symlink } = await import('node:fs/promises');
+  await mkdir(ccpDir, { recursive: true });
+  await symlink('/usr/bin/true', ccpEntry);
+  const prev = process.env.LOOM_CLAUDE_CCP_BIN;
+  process.env.LOOM_CLAUDE_CCP_BIN = ccpEntry;
+  t.after(() => {
+    if (prev === undefined) delete process.env.LOOM_CLAUDE_CCP_BIN;
+    else process.env.LOOM_CLAUDE_CCP_BIN = prev;
+  });
   await writeFile(fakeHc, `#!${process.execPath}
 import { readFileSync, writeFileSync } from 'node:fs';
 const out = ${JSON.stringify(output)};
@@ -272,8 +283,10 @@ if (command === 'run') {
 if (!['run', 'get'].includes(command)) process.exit(2);
 console.log(readFileSync(out, 'utf8'));
 `, { mode: 0o700 });
+  await assert.rejects(openNativeTui({ cli: 'claude', cwd: root, command: '/usr/bin/true', hcCommand: fakeHc, stateDir: root }),
+    { code: 'ccp-required' });
   const bindings = [];
-  const session = await openNativeTui({ cli: 'claude', cwd: root, command: '/usr/bin/true', hcCommand: fakeHc,
+  const session = await openNativeTui({ cli: 'claude', cwd: root, command: ccpEntry, hcCommand: fakeHc,
     stateDir: root, recordBinding: binding => bindings.push(binding.transport) });
   assert.deepEqual(bindings, ['loom-pty', 'plain-hc']);
   assert.equal(session.id, 't2');
@@ -285,13 +298,26 @@ console.log(readFileSync(out, 'utf8'));
 test('TUI launch loads the capability inside the pane without passing it to hc in argv', async t => {
   const root = await temp(t);
   const fakeHc = join(root, 'hc');
-  const native = join(root, 'claude');
+  const ccpDir = join(root, 'ccp', 'bin');
+  const binDir = join(root, '.local', 'bin');
+  const { mkdir, symlink } = await import('node:fs/promises');
+  await mkdir(ccpDir, { recursive: true });
+  await mkdir(binDir, { recursive: true });
+  const target = join(ccpDir, 'claude-protected');
+  const ccpEntry = join(binDir, 'claude');
   const keyFile = join(root, 'synthetic-capability');
   const proof = join(root, 'launch.json');
   await writeFile(keyFile, 'fixture-bearer-value\n', { mode: 0o600 });
-  await writeFile(native, `#!${process.execPath}
+  await writeFile(target, `#!${process.execPath}
 process.exitCode = process.argv.includes('--version') || process.env.LOOM_CAPABILITY === 'fixture-bearer-value' ? 0 : 99;
 `, { mode: 0o700 });
+  await symlink(target, ccpEntry);
+  const prev = process.env.LOOM_CLAUDE_CCP_BIN;
+  process.env.LOOM_CLAUDE_CCP_BIN = ccpEntry;
+  t.after(() => {
+    if (prev === undefined) delete process.env.LOOM_CLAUDE_CCP_BIN;
+    else process.env.LOOM_CLAUDE_CCP_BIN = prev;
+  });
   await writeFile(fakeHc, `#!${process.execPath}
 import { spawnSync } from 'node:child_process';
 import { writeFileSync } from 'node:fs';
@@ -304,7 +330,7 @@ if (command === 'run') {
 }
 console.log(JSON.stringify({ address: 't1', name, state: 'live' }));
 `, { mode: 0o700 });
-  await openNativeTui({ cli: 'claude', cwd: root, command: native, hcCommand: fakeHc, stateDir: root,
+  await openNativeTui({ cli: 'claude', cwd: root, command: ccpEntry, hcCommand: fakeHc, stateDir: root,
     name: 'loom-auth-fixture', capabilityPath: keyFile, previous: { transport: 'plain-hc' } });
   assert.deepEqual(JSON.parse(await readFile(proof, 'utf8')), { status: 0, exposed: false });
 });

@@ -1068,7 +1068,8 @@ ${details}`, {
     const retired = await sessions.retirePredecessor(job).catch(error => { retirementIssue = error.message; });
     const handoff = job.hostGrant ? undefined : codexHandoff(session);
     notifyProfile(session.project, session.addr, job.warnings);
-    return { session, deliveryId: job.firstId, requested: job.requested, ...sessions.runtimeSelection(session),
+    return { session, ...(job.firstId && { deliveryId: job.firstId }), ...(job.resumeNativeId && { resumedSessionId: job.resumeNativeId }),
+      requested: job.requested, ...sessions.runtimeSelection(session),
       ...(session.role === 'worker' && { dispatch: 'new', dispatchReason: args.reason ?? 'clean context',
         ...(job.checkpoint && { checkpoint: job.checkpoint }) }),
       ...(session.role === 'worker' && { workerTier: storedWorkerTier(job) }),
@@ -1223,9 +1224,11 @@ ${details}`, {
         const shownRotationNotices = rotationNotices.filter(notice => visibleIds.has(notice.id))
           .flatMap(notice => [notice.id, ...notice.aliases ?? []]);
         const job = sessions.jobs.get(row?.addr);
+        const sessionEvents = row && row.cli === 'claude' && row.backend === 'tui' ?
+          withClaudeTranscriptStops(row, sessions.events(row.addr), row.sessionId) :
+          row ? sessions.events(row.addr) : [];
         const { text: memoryText, ...memoryReceipt } = job ?
-          await injection.decorate(job, sessionMemoryBinding(row, job), message, mail.messages,
-            row.cli === 'claude' ? [] : sessions.events(row.addr)) : {};
+          await injection.decorate(job, sessionMemoryBinding(row, job), message, mail.messages, sessionEvents) : {};
         if (memoryText) deliveryAppendix = [deliveryAppendix, memoryText].filter(Boolean).join('\n\n');
         return { ...(deliveryAppendix && { deliveryAppendix }), ...(workerDigest && { resultContext: workerDigest }),
           ...(replySuppressionNotices.length && { replySuppressionNotices }),
