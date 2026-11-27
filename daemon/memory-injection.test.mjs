@@ -1,10 +1,10 @@
 import assert from 'node:assert/strict';
-import { spawnSync } from 'node:child_process';
 import { createHash, randomUUID } from 'node:crypto';
-import { mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { after, before, test } from 'node:test';
+import { mkdtempSync, spawnSync } from '../fixtures/test-process.mjs';
 import { deliveryId } from '../inbox/message.mjs';
 import { createAccess } from '../memory/access.mjs';
 import { createIndexQuery } from '../memory/index-query.mjs';

@@ -1,14 +1,14 @@
 import assert from 'node:assert/strict';
-import { ChildProcess, execFileSync } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
-import { appendFileSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, realpathSync, readlinkSync,
+import { appendFileSync, mkdirSync, readdirSync, readFileSync, realpathSync, readlinkSync,
   rmSync, writeFileSync } from 'node:fs';
-import { createServer, request, Server } from 'node:http';
+import { Server } from 'node:http';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
-import { Duplex } from 'node:stream';
+import { Readable } from 'node:stream';
 import { test } from 'node:test';
+import { ChildProcess, execFileSync, mkdtempSync } from '../fixtures/test-process.mjs';
 import { fileURLToPath } from 'node:url';
 import { inspect } from 'node:util';
 import { projectCost } from '../cli/cost.mjs';
@@ -35,7 +35,7 @@ function fakeProvider(t, { statusFor = () => 200, usage = turnUsage, proposals =
   const requests = [];
   const addresses = [];
   const networkAuth = [];
-  const server = createServer(async (req, res) => {
+  async function handleRequest(req, res) {
     let raw = '';
     for await (const chunk of req) raw += chunk;
     const status = statusFor(requests.length + 1);
@@ -58,7 +58,7 @@ function fakeProvider(t, { statusFor = () => 200, usage = turnUsage, proposals =
     attempt.responseBody = JSON.stringify(status === 200 ? envelope : { error: { message: `Provider rejected ${auth}` } });
     res.writeHead(status, { 'content-type': 'application/json' });
     res.end(attempt.responseBody);
-  });
+  }
   async function fetch(input, init) {
     const wire = new Request(input, init);
     addresses.push(wire.url);
@@ -70,32 +70,21 @@ function fakeProvider(t, { statusFor = () => 200, usage = turnUsage, proposals =
         new Error(`Connection reset for ${auth}`), { code: 'ECONNRESET' }) });
     }
     const body = Buffer.from(await wire.arrayBuffer());
-    // Run Node's real HTTP client and server over a duplex pair. No socket is opened.
-    const pipe = peer => new Duplex({
-      read() {},
-      write(chunk, _, done) { peer().push(chunk); done(); },
-      final(done) { peer().push(null); done(); },
+    const parsed = new URL(wire.url);
+    const req = Object.assign(Readable.from([body]), {
+      url: parsed.pathname + parsed.search,
+      method: wire.method,
+      headers: { ...Object.fromEntries(wire.headers), 'content-length': String(body.length) },
     });
-    const client = pipe(() => receiver);
-    const receiver = pipe(() => client);
-    try {
-      return await new Promise((resolve, reject) => {
-        server.emit('connection', receiver);
-        const req = request(wire.url, { method: wire.method, createConnection: () => client,
-          headers: { ...Object.fromEntries(wire.headers), 'content-length': body.length } }, async res => {
-          try {
-            const chunks = [];
-            for await (const chunk of res) chunks.push(chunk);
-            resolve(new Response(Buffer.concat(chunks), { status: res.statusCode, headers: res.headers }));
-          } catch (error) { reject(error); }
-        });
-        req.on('error', reject);
-        req.end(body);
-      });
-    } finally {
-      client.destroy();
-      receiver.destroy();
-    }
+    let statusCode = 200;
+    let headers = {};
+    const chunks = [];
+    const res = {
+      writeHead(code, nextHeaders = {}) { statusCode = code; headers = nextHeaders; return this; },
+      end(chunk) { if (chunk !== undefined) chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk)); },
+    };
+    await handleRequest(req, res);
+    return new Response(Buffer.concat(chunks), { status: statusCode, headers });
   }
   t.mock.method(globalThis, 'fetch', fetch);
   return { requests, addresses, networkAuth, fetch };
@@ -229,7 +218,7 @@ function fixture(t, { config = {}, runStage, fixtureCredential = () => fixtureKe
   }
   const read = path => readFileSync(join(project, path), 'utf8');
   function initGit() {
-    const git = (...args) => execFileSync('git', args, { cwd: project, stdio: 'pipe' });
+    const git = (...args) => execFileSync('/usr/bin/git', args, { cwd: project, stdio: 'pipe' });
     git('init', '-q');
     git('-c', 'user.name=Loom fixture', '-c', 'user.email=fixture@example.invalid',
       'commit', '--allow-empty', '-qm', 'Gate fixture candidate');
@@ -784,7 +773,7 @@ test('stage runs with only v1 shared project memory', async t => {
 test('stage fixture traps PATH lookups and pins the child to its stand-in', async t => {
   const f = fixture(t);
   const runner = fakeOpenCode(t, f.root);
-  assert.throws(() => execFileSync('opencode', [], { env: { PATH: runner.bin }, stdio: 'pipe' }), { status: 73 });
+  assert.throws(() => execFileSync(join(runner.bin, 'opencode'), [], { env: { PATH: runner.bin }, stdio: 'pipe' }), { status: 73 });
   assert.equal(readFileSync(runner.trace, 'utf8'), 'opencode resolved via PATH\n');
   seedLegacyStageMemory(f.project);
   const leader = await f.spawn('leader', 'Prepare the stage launch.');
@@ -977,7 +966,7 @@ test('8f empty and mixed extractor turns accumulate diagnostics in cost and stat
   let proposals = [];
   const f = fixture(t, { proposals: () => proposals });
   async function snapshots() {
-    const cost = JSON.parse(execFileSync(LOOM_BIN, ['cost', '--project', f.project], { encoding: 'utf8' }));
+    const cost = JSON.parse(execFileSync(process.execPath, [LOOM_BIN, 'cost', '--project', f.project], { encoding: 'utf8' }));
     const status = await f.status();
     return {
       cost: cost.memoryExtractor.diagnostics,

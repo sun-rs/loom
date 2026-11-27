@@ -1,14 +1,14 @@
 import assert from 'node:assert/strict';
-import { execFile } from 'node:child_process';
 import { createHash, randomUUID } from 'node:crypto';
 import { once } from 'node:events';
-import { appendFileSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
+import { appendFileSync, mkdirSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { createServer } from 'node:net';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
+import { execFile, mkdtempSync } from '../fixtures/test-process.mjs';
 import { projectCost } from '../cli/cost.mjs';
 import { projectSessions, socketPath } from '../cli/project.mjs';
 import { deliveryId } from '../inbox/message.mjs';
@@ -136,7 +136,7 @@ async function fixture(t, { capture = false, proposals = [], ...memoryOptions } 
   });
   await once(server, 'listening');
   const cli = async (caller, ...args) => {
-    const { stdout } = await exec(LOOM_BIN, [...args, '--project', project, '--json'], {
+    const { stdout } = await exec(process.execPath, [LOOM_BIN, ...args, '--project', project, '--json'], {
       cwd: project, timeout: 5000, env: { ...process.env, LOOM_ADDR: caller ?? '', HC_TERMINAL_ID: '',
         LOOM_PROJECT: project, ...(caller && { LOOM_CAPABILITY: capabilities.ensureSession(caller).token }) },
     });

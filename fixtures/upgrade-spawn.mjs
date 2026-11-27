@@ -1,9 +1,9 @@
-import children from 'node:child_process';
 import { EventEmitter, once } from 'node:events';
-import { syncBuiltinESMExports } from 'node:module';
-import { createConnection, createServer } from 'node:net';
+import { createServer } from 'node:net';
 import { join } from 'node:path';
 import { createInterface } from 'node:readline';
+import { connectUnix } from '../lib/unix-socket.mjs';
+import { interceptSpawn, spawn } from './test-process.mjs';
 
 const endpoint = 'LOOM_TEST_UPGRADE_SPAWN_SOCKET';
 const holderName = `loom-holder-${process.platform}-${process.arch}`;
@@ -35,7 +35,7 @@ export async function anchorUpgradeProcesses(t, directory, project, root, candid
           kind === 'upgrade' ? [join(root, 'daemon/upgrade.mjs'), join(candidate, 'daemon/upgrade.mjs')] :
             kind === 'handoff' ? [join(root, 'bin/loomd'), join(candidate, 'bin/loomd')] : [];
         if (!permitted.includes(entry)) throw new Error('Unexpected upgrade fixture process');
-        const child = children.spawn(file, args, { cwd: project, env, stdio: 'ignore', detached: true });
+        const child = spawn(file, args, { cwd: project, env, stdio: 'ignore', detached: true });
         active.add(child);
         child.once('spawn', () => send({ pid: child.pid }));
         child.once('error', error => send({ error: error.message }));
@@ -65,10 +65,9 @@ export async function anchorUpgradeProcesses(t, directory, project, root, candid
 }
 
 if (process.env[endpoint]) {
-  const spawn = children.spawn;
-  children.spawn = (file, args, options) => {
-    if (!options?.detached || !launchKind(file, args)) return spawn(file, args, options);
-    const socket = createConnection(process.env[endpoint]);
+  interceptSpawn((original, file, args, options) => {
+    if (!options?.detached || !launchKind(file, args)) return original(file, args, options);
+    const socket = connectUnix(process.env[endpoint]);
     const child = Object.assign(new EventEmitter(), {
       exitCode: null, signalCode: null, unref: () => socket.unref(), kill: signal => process.kill(child.pid, signal),
     });
@@ -87,6 +86,5 @@ if (process.env[endpoint]) {
       }
     });
     return child;
-  };
-  syncBuiltinESMExports();
+  });
 }
