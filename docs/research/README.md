@@ -27,3 +27,4 @@
 | 2026-11-24 | 热升级初查：hc、Herdr、Orca | [tasks/HOTSWAP-0/RESULT.md](../../tasks/HOTSWAP-0/RESULT.md) |
 | 2026-11-24 | Orca TUI 调度体系复刻 | [tasks/TUI-ORCA-1/RESULT.md](../../tasks/TUI-ORCA-1/RESULT.md) |
 - [2026-11-27 cell 容器与沙箱项目调研](2026-11-27-cell-container-projects.md) — srt/bwrap/Seatbelt/Podman/sbx/apple container/Claude-Cage 等，含维护证据
+- [2026-11-27 cell 底层 PK：Podman / Docker / srt / blackwall](2026-11-27-cell-substrate-pk.md) — 含“容器包 srt”核查与组合判定
