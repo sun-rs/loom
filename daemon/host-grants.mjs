@@ -7,7 +7,7 @@ import { CommandError } from '../cli/sessions.mjs';
 import { readText, writeState } from './io.mjs';
 
 const defaultTtl = 30 * 60_000;
-export const hostTrustWarning = 'Trusted host tier. Best-effort hooks are not fail-closed for Codex tool paths.';
+export const hostTrustWarning = 'Trusted host tier. Codex runs without a kernel write boundary. Best-effort hooks are not fail-closed for Codex tool paths.';
 const restrictedPath = /(?:^|[/\\])(?:ccp|solars|rah_os|\.?loom-next|\.ssh|\.aws|\.codex|\.claude|\.gemini)(?:[/\\]|$)|claude-protected/i;
 
 export function hostWritePaths(project, paths) {

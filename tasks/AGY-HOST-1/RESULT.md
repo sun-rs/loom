@@ -16,4 +16,19 @@
 - 修复保留原生启动环境中的配置目录缺省状态及显式覆盖，写入边界继续使用解析后的目录。启动回归使用真实 OAR 与本地 Claude 夹具，仅检查启动参数和环境变量，实机登录未复验。
 - `npm test` 全量 877 项通过，`npm run lint` 和 `git diff --check` 通过。[全量测试输出](/tmp/loom-claude-host-test.RSl7eV)
 
+## Codex host Seatbelt
+
+- RED 运行 `node --test --test-name-pattern='Codex host launches' daemon/hardening.test.mjs`，退出 1。夹具捕获的 app-server 配置已经是 `sandbox_mode="danger-full-access"`，但实际启动经过 Loom 生成的 `host-native` Seatbelt 包装。夹具模拟的子级 `sandbox-exec` 与 PTY 均返回 `EPERM`。[Codex RED 原始输出](/tmp/loom-codex-host-red.PrEAw7) · [Codex 0.172.0 配置解析](https://github.com/openai/codex/blob/rust-v0.172.0/codex-rs/config/src/permission_config.rs)
+- Codex host 直接启动。夹具确认两项模拟探针可用，grant 启动成功后扣次，工具钩子启用。integration 和 sandbox 仍选各自的 `loom-worker-*` 权限配置。Codex host 的 `--write` 作为授权范围记录，内核写入隔离已移除，工具钩子尽力执行。探针只用夹具验证。
+
+## 三家 CLI 的 host 启动
+
+| CLI | 沙箱状态 | 登录态来源 | 启动关键 argv |
+| --- | --- | --- | --- |
+| Codex | 直接启动，Codex 沙箱关闭。grant 控制计次、到期和审计 | 原生 `CODEX_HOME`，缺省 `~/.codex` | `app-server`、`-c sandbox_mode="danger-full-access"`、`-c approval_policy="never"`、`-c features.hooks=true` |
+| Claude | macOS 使用 Loom Seatbelt 写入边界。OAR 跳过原生审批提示 | 原生 `HOME` 和登录命名空间，保留 `CLAUDE_CONFIG_DIR` 与 `CLAUDE_SECURESTORAGE_CONFIG_DIR` 的启动环境语义 | `-p`、`--input-format stream-json`、`--output-format stream-json`、`--dangerously-skip-permissions`、`--settings` 注入工具钩子 |
+| agy | macOS 使用 Loom Seatbelt 写入边界，agy 自带沙箱关闭 | 原生 `HOME` 和 `ANTIGRAVITY_APP_DATA_DIR`，`GEMINI_HOME` 设定时由 OAR 传 `--gemini-dir` | `acp`、`--process-per-session`、`--sandbox=false`、`--log-file`、`--add-dir` 加载暂存钩子 |
+
+统一验收的 `npm test` 全量 878 项通过。`npm run lint` 和 `git diff --check` 通过。[统一验收输出](/tmp/loom-codex-host-test.NP0KcB)
+
 STATUS: done

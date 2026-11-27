@@ -323,6 +323,26 @@ test('real ACP text chunks without a final boundary produce an UNCONFIRMED wave 
   assert.equal(f.deliveries(message.id).length, 1);
 });
 
+test('Codex host launches without Seatbelt and keeps the host tool guard', { timeout: 25_000, skip: nestedSeatbeltLimited }, async t => {
+  const f = fixtureProject(t);
+  f.write('codex-host-probes.json', true);
+  await f.start();
+  const { grant } = await f.rpc('grant', { target: 'host', tier: 'host', reason: 'Fixture' });
+  const { session } = await f.spawn('worker', 'host', { tier: 'host' });
+  for (const tier of ['integration', 'sandbox']) await f.spawn('worker', tier, { tier });
+  const [host, ...restricted] = f.lines('codex-host-launches.jsonl');
+  assert.deepEqual(host, { sandbox: ['sandbox_mode="danger-full-access"'], wrapped: false,
+    sandboxExec: 'ok', pty: 'ok', guard: true, hooks: true });
+  assert.equal(restricted.length, 2);
+  for (const launch of restricted) {
+    assert.deepEqual(launch.sandbox, []);
+    assert.match(launch.profile, /^default_permissions="loom-worker-/);
+  }
+  const [entry] = f.read('.project/loomd/host-grants.json').grants;
+  assert.equal(entry.id, grant.id);
+  assert.deepEqual(entry.claims.map(claim => claim.addr), [session.addr]);
+});
+
 test('headless agy tiers launch with the recorded 1.5.18 ACP flags',
   { timeout: 25_000, skip: nestedSeatbeltLimited }, async t => {
   const f = fixtureProject(t);

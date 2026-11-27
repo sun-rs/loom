@@ -59,7 +59,7 @@ test('host write grants resolve through ancestors and reject aliases into protec
   assert.throws(() => hostWritePaths(project, ['/']), { code: 'invalid-arguments' });
 });
 
-test('macOS host boundary allows named paths and blocks ungranted writes',
+test('macOS Claude host boundary allows named paths and blocks ungranted writes',
   { skip: process.platform !== 'darwin' || nestedSeatbeltLimited }, t => {
   const project = fixture(t);
   const outside = fixture(t);
@@ -68,7 +68,7 @@ test('macOS host boundary allows named paths and blocks ungranted writes',
   mkdirSync(granted);
   const tmp = join(temporary, 't');
   mkdirSync(tmp);
-  const row = { cli: 'codex', addr: `oar-${randomUUID()}`, cwd: project, hostGrant: { write: [granted] } };
+  const row = { cli: 'claude', addr: `oar-${randomUUID()}`, cwd: project, hostGrant: { write: [granted] } };
   const launcher = hostWriteBoundary(project, row, { TMPDIR: tmp }, '/usr/bin/touch');
   assert.equal(spawnSync(launcher, [join(granted, 'granted')]).status, 0);
   assert.equal(spawnSync(launcher, [join(project, 'worktree')]).status, 0);

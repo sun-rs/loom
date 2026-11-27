@@ -67,6 +67,16 @@ function codex({ method, id, params }) {
   }
   if (method === 'initialize') return reply(id, { userAgent: 'codex/0.171.0' });
   if (method === 'thread/start' || method === 'thread/resume') {
+    if (existsSync('codex-host-probes.json')) {
+      const config = argv.flatMap((arg, i) => arg === '-c' ? [argv[i + 1]] : []);
+      const sandbox = config.filter(arg => arg.startsWith('sandbox_mode='));
+      const profile = config.find(arg => arg.startsWith('default_permissions='));
+      const wrapped = existsSync(join(dirname(process.env.TMPDIR), 'host-native'));
+      // Model the two Darwin operations without opening a live Seatbelt or PTY.
+      const outcome = wrapped || sandbox.at(-1) !== 'sandbox_mode="danger-full-access"' || profile ? 'EPERM' : 'ok';
+      log('codex-host-launches.jsonl', { sandbox, profile, wrapped, sandboxExec: outcome, pty: outcome,
+        guard: process.env.LOOM_HOST_GUARD === '1', hooks: config.includes('features.hooks=true') });
+    }
     open(params.threadId);
     return reply(id, { thread: { id: session, path: transcript }, model: params.model ?? 'fixture', reasoningEffort: 'high' });
   }
