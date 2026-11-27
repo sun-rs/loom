@@ -409,3 +409,39 @@ test('pilot-2 post-resize 611/615-byte readback enters only with a classified re
     assert.equal(tdir.resends.length, 0);
   }
 });
+
+test('pty-Gi2J8U held draft with empty statusLine footer is adopted once by holder recovery', async t => {
+  const { mkdtemp, rm, writeFile } = await import('node:fs/promises');
+  const { join } = await import('node:path');
+  const { tmpdir } = await import('node:os');
+  const { default: xterm } = await import('@xterm/headless');
+  const { readGrid } = await import('./pty-grid.mjs');
+  const startup = JSON.parse(readFileSync(new URL('../tasks/ROT-AGY-2/agy-startup-frames.json', import.meta.url), 'utf8'));
+  const gi = startup.pilotGi2J8U;
+  const grid = new xterm.Terminal({ cols: gi.cols, rows: gi.rows, scrollback: 500, allowProposedApi: true });
+  t.after(() => grid.dispose());
+  await new Promise(resolve => grid.write(gi.welcomeBytes + gi.afterPasteBytes + gi.asyncBannerBytes, resolve));
+  const captured = readGrid(grid, 'agy');
+  const dir = await mkdtemp(join(tmpdir(), 'loom-held-gi2j8u-'));
+  t.after(() => rm(dir, { recursive: true, force: true }));
+  const bookPath = join(dir, 'book.jsonl');
+  await writeFile(bookPath, JSON.stringify({ id: gi.deliveryId, entry: { digest: payloadDigest(gi.prompt),
+    hostReceipt: { accepted: false, outcome: 'composer-blocked-during-paste' } } }) + '\n');
+  const frame = { ...captured, generation: '15', humanActive: false, writable: true, quietForMs: 200,
+    size: { cols: gi.cols, rows: gi.rows } };
+  const keys = [];
+  const session = bindTuiSession({
+    read: async () => frame,
+    writeIf: () => assert.fail('Do not repaste an already-complete held draft'),
+    provePaste: () => ({ status: 'complete', written: gi.writeCount, total: gi.writeCount, ownsDraft: true, closedBracket: true }),
+    key: async (...args) => { keys.push(args); },
+  }, providers.agy, {
+    bookPath, incarnation: 'gi2j8u', evidenceRoot: dir, cwd: dir, hookSink: join(dir, 'hooks.jsonl'),
+    readPending: () => ({ text: gi.prompt, attemptAt: 100 }),
+  });
+  await session.readState();
+  await session.readState();
+  assert.equal(keys.length, 1);
+  assert.equal(keys[0][0], 'enter');
+  assert.equal(lastBookEntry(bookPath).hostReceipt.outcome, 'adopted-draft');
+});

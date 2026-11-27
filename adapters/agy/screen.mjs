@@ -5,15 +5,14 @@ import { classifyScreen, stripAnsiAndControl } from './lib/classify-screen.mjs';
 const RULE = '─{8,}';
 const COMPOSER = '>[ \\t]*(?:[a-z][a-z-]* mode:[ \\t][^\\n]+)?';
 const TASKS = '(?:●\\s+\\[\\d{1,2}:\\d{2}:\\d{2}\\]\\s+\\S[^\\n]*\\n){1,6}';
-const idleComposer = new RegExp(
-  `^${RULE}\\n${COMPOSER}\\n${RULE}\\n(?:${TASKS}${RULE}\\n)?\\? for shortcuts[^\\n]*$`, 'im',
-);
-const busyComposer = new RegExp(`^${RULE}\\n${COMPOSER}\\n${RULE}\\nesc to cancel[^\\n]*$`, 'im');
+const composerRow = new RegExp(`^${COMPOSER}$`, 'i');
+const agyTaskRow = /^●\s+\[\d{1,2}:\d{2}:\d{2}\]\s+\S/;
 const backgroundComposer = new RegExp(
   `^${RULE}\\n${COMPOSER}\\n${RULE}\\n${TASKS}${RULE}\\n\\? for shortcuts[^\\n]*$`, 'im',
 );
-const heldComposer = new RegExp(`(?:^|\\n)${RULE}\\n>\\n${RULE}(?:\\n${TASKS}${RULE})?$`);
-const modelFooter = /^(?:accept-edits|auto|plan|yolo)\s+·\s+[^·]+\s+·\s+(?:low|medium|high|xhigh|max)$/i;
+const modelFooter = /^(?:accept-edits|auto|plan|yolo)\s+·\s+[^·\n]+(?:\s+·\s+(?:low|medium|high|xhigh|max))?$/i;
+const bareModeFooter = /^(?:accept-edits|auto|plan|yolo)$/i;
+const tipFooter = /^(?:[⎿└]\s*)?tip\s*:\s*\S/i;
 const trustFooter = /^↑\/↓\s+Navigate\s+·\s+enter Confirm$/i;
 const pickerFooter = /^Keyboard:.*\besc Go Back$/i;
 const announcementTitle = /^Introducing Gemini \d+(?:\.\d+)? (?:Neon|Carbon|Argon|Hydrogen)[!.]?(?:\s+[·•]\s+|\s{2,}|$)/i;
@@ -24,10 +23,19 @@ const survey = /^How['’]s the CLI experience so far\? Help us improve: \[1\] G
 const ruleRow = new RegExp(`^${RULE}$`);
 const settingsError = /^failed to (?:load|read|save|write) settings\b/i;
 const interactiveStatus = /[─↑↓⏎]|\b(?:esc|enter|select|cancel|confirm|navigate|for shortcuts)\b|^(?:error|warning|failed|unable)\b/i;
+const nonHeldStates = new Set([
+  'overlay', 'trust-dialog', 'awaiting-user', 'auth-fail', 'rate-limit',
+  'choice', 'picker', 'permission', 'compacting', 'busy', 'error',
+]);
 const signInTitle = '⚠ Sign-in update needed';
 const signInBody = 'Your sign-in is missing permissions that are now required, so some requests may fail. Run /logout to sign in again.';
 const signInBlock = new RegExp(`^[ \\t]*${signInTitle}[ \\t]*\\n[ \\t]*(?:⎿[ \\t]*)?${
   signInBody.replaceAll('.', '\\.').replaceAll(' ', '\\s+')}[ \\t]*$`, 'mu');
+const signInSoftBlock = /^[ \t]*⚠[ \t]+Sign-in update needed[ \t]*\n[ \t]*[⎿└][ \t]*[^\n]*(?:\n[ \t]{2,}[^─>●○\u2800-\u28ff\n][^\n]*){0,3}/gmu;
+
+function stripSoftNotices(text) {
+  return stripAnsiAndControl(text).replace(signInBlock, '').replace(signInSoftBlock, '');
+}
 
 export function signInWarning(text) {
   const frame = stripAnsiAndControl(text);
@@ -37,34 +45,71 @@ export function signInWarning(text) {
 }
 
 function rowsOf(text, keepBlanks = false) {
-  const rows = stripAnsiAndControl(text).trimEnd().split('\n').map(line => line.trim())
+  const rows = stripSoftNotices(text).trimEnd().split('\n').map(line => line.trim())
     .filter(line => keepBlanks || line).slice(-32);
-  if (modelFooter.test(rows.at(-1) ?? '')) rows.pop();
+  while (rows.length && (modelFooter.test(rows.at(-1)) || tipFooter.test(rows.at(-1)))) rows.pop();
   return rows;
 }
 
-export function hasEmptyComposer(text) {
-  const rows = rowsOf(text, true);
+function inspectComposer(text) {
+  const rows = stripSoftNotices(text).trimEnd().split('\n').map(line => line.trim());
   while (rows.at(-1) === '') rows.pop();
-  const body = rows.slice(-10).join('\n');
-  if (/^(?:\? for shortcuts|esc to cancel)\b/i.test(rows.at(-1) ?? '')) {
-    return idleComposer.test(body) || busyComposer.test(body);
+  const tail = rows.slice(-32);
+  const lastRule = tail.findLastIndex(row => ruleRow.test(row));
+  if (lastRule < 2) return;
+  let bottom = lastRule;
+  let tasks = false;
+  while (bottom >= 2 && agyTaskRow.test(tail[bottom - 1] ?? '')) {
+    let cursor = bottom - 1;
+    while (cursor >= 0 && agyTaskRow.test(tail[cursor])) cursor--;
+    if (cursor < 0 || !ruleRow.test(tail[cursor])) break;
+    tasks = true;
+    bottom = cursor;
   }
-  // Orca antigravity.json's custom status line rule. A bare caret must
-  // remain between both rules, with no spinner or interactive keys nearby.
-  const bottom = rows.findLastIndex(row => ruleRow.test(row));
-  const status = rows.slice(bottom + 1).filter(Boolean);
-  return bottom >= 2 && rows[bottom - 1] === '>' && ruleRow.test(rows[bottom - 2]) &&
-    !/^[\u2800-\u28ff]/.test(rows[bottom - 3] ?? '') && status.length >= 1 && status.length <= 3 &&
-    status.every(row => !modelFooter.test(row) && !interactiveStatus.test(row));
+  if (bottom < 2 || !ruleRow.test(tail[bottom - 2])) return;
+  const top = bottom - 2;
+  const promptRow = tail[bottom - 1];
+  const above = tail.slice(0, top).filter(row => row && !tipFooter.test(row));
+  const spinnerAbove = /^[\u2800-\u28ff]/.test(above.at(-1) ?? '');
+  const footer = tail.slice(lastRule + 1).filter(Boolean);
+  const shortcuts = footer.filter(row => /^\? for shortcuts\b/i.test(row));
+  const busy = footer.filter(row => /^esc to cancel\b/i.test(row));
+  const model = footer.filter(row => modelFooter.test(row) || bareModeFooter.test(row));
+  const tips = footer.filter(row => tipFooter.test(row));
+  const other = footer.filter(row => !/^(?:\? for shortcuts|esc to cancel)\b/i.test(row) &&
+    !modelFooter.test(row) && !bareModeFooter.test(row) && !tipFooter.test(row));
+  return { promptRow, tasks, spinnerAbove, footer, shortcuts, busy, model, tips, other };
+}
+
+function hasSafeOtherFooter(other) {
+  return other.length <= 3 && other.every(row =>
+    !interactiveStatus.test(row) && !settingsError.test(row) && !trustFooter.test(row) && !pickerFooter.test(row));
+}
+
+export function unknownFooterHints(text) {
+  const info = inspectComposer(text);
+  if (!info || info.busy.length || !info.other.length || !hasSafeOtherFooter(info.other)) return [];
+  if (nonHeldStates.has(classify(text))) return [];
+  return info.other;
+}
+
+export function hasEmptyComposer(text) {
+  const info = inspectComposer(text);
+  if (!info) return false;
+  if (info.busy.length) return !info.tasks && !info.other.length && composerRow.test(info.promptRow);
+  if (info.shortcuts.length) return !info.other.length && composerRow.test(info.promptRow);
+  if (info.spinnerAbove || info.tasks || info.promptRow !== '>') return false;
+  if (!info.other.length) return !(info.model.length && !info.tips.length);
+  return hasSafeOtherFooter(info.other);
 }
 
 export function hasHeldComposer(text) {
-  // Agy hides the shortcuts hint while the draft has focus. Its mode/model
-  // status is still present directly below the two composer borders.
-  const rows = stripAnsiAndControl(text).trimEnd().split('\n').map(line => line.trim());
-  return /^(?:accept-edits|auto|plan|yolo) · [^·]+(?: · (?:low|medium|high|xhigh|max))?$/i.test(rows.at(-1) ?? '') &&
-    heldComposer.test(rows.slice(-12, -1).join('\n'));
+  // Agy hides the shortcuts hint while the draft has focus, and an empty
+  // statusLine omits the built-in footer entirely.
+  const info = inspectComposer(text);
+  if (!info || info.busy.length || info.spinnerAbove || info.promptRow !== '>') return false;
+  if (info.other.length && !hasSafeOtherFooter(info.other)) return false;
+  return !nonHeldStates.has(classify(text));
 }
 
 function overlay(rows) {
@@ -101,7 +146,7 @@ export function matchesPastePlaceholder(draft, text) {
 }
 
 export function classify(text) {
-  text = stripAnsiAndControl(text).replace(signInBlock, '');
+  text = stripSoftNotices(text);
   const rows = rowsOf(text);
   const tail = rows.join('\n');
   const footer = rows.at(-1) ?? '';
@@ -135,7 +180,7 @@ export function classify(text) {
 }
 
 export function hasRunningBackgroundTask(text) {
-  return backgroundComposer.test(rowsOf(text).join('\n'));
+  return backgroundComposer.test(rowsOf(text).join('\n')) || Boolean(inspectComposer(text)?.tasks);
 }
 
 export function dialogKeys(kind, text) {

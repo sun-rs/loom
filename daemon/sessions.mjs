@@ -216,7 +216,7 @@ export function ownedSessions(project, index, report, {
         { kind: 'hook', reason: 'Session predates the serving release and uses a legacy hook path' },
       ] : [])];
   }
-  const holders = tuiHolders(project, controller, save);
+  const holders = tuiHolders(project, controller, save, report);
   const events = addr => running.get(addr)?.rows ?? jsonRows(readText(eventPath(project, addr)));
   const transportReceipt = metadata => metadata && { transport: metadata.transport, reason: metadata.reason };
   const bound = (row, extra = {}) => ({ addr: row.addr, cwd: row.cwd, provider: row.cli,

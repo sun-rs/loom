@@ -98,6 +98,29 @@ test('classifies captured trust, model picker, busy and idle frames', () => {
   assert.deepEqual(agy.screen.dialogKeys('auth-fail'), []);
 });
 
+test('treats agy sign-in notices, Tip footers, and empty statusLine footers as idle/held without false positives', async () => {
+  const { hasHeldComposer } = await import('./screen.mjs');
+  const rule = '─'.repeat(60);
+  const signIn = '⚠ Sign-in update needed\n  ⎿  Your sign-in is missing permissions that are now required,\n     so some requests may fail. Run /logout to sign in again.';
+  assert.equal(agy.screen.classify(`${signIn}\n${rule}\n>\n${rule}`), 'idle');
+  assert.equal(agy.screen.classify(`${rule}\n>\n${rule}\n${signIn}`), 'idle');
+  assert.equal(agy.screen.classify(`${rule}\n>\n${rule}\n? for shortcuts   accept-edits · Gemini 4 Neon · xhigh\nTip: Press shift+tab to cycle modes`), 'idle');
+  assert.equal(agy.screen.classify(`${rule}\n>\n${rule}\nTip: Press esc to cancel or enter to confirm`), 'idle');
+  assert.equal(agy.screen.hasEmptyComposer(`${rule}\n>\n${rule}`), true);
+  assert.equal(hasHeldComposer(`${rule}\n>\n${rule}`), true);
+  assert.equal(hasHeldComposer(`${rule}\n>\n${rule}\nTip: Press esc to cancel`), true);
+  assert.equal(hasHeldComposer(`${rule}\n>\n${rule}\naccept-edits · Gemini 4 Neon · xhigh\nTip: Use /plan`), true);
+  // Built-in model footer without shortcuts still means shortcuts are hidden (held only, not empty).
+  assert.equal(agy.screen.hasEmptyComposer(`${rule}\n>\n${rule}\naccept-edits · Gemini 4 Neon · xhigh`), false);
+  assert.equal(hasHeldComposer(`${rule}\n>\n${rule}\naccept-edits · Gemini 4 Neon · xhigh`), true);
+  // Interactive prompts, busy spinners, errors and real drafts must still block.
+  assert.notEqual(agy.screen.classify(`${rule}\n> real draft\n${rule}`), 'idle');
+  assert.notEqual(agy.screen.classify(`${rule}\n>\n${rule}\nEnter to confirm`), 'idle');
+  assert.equal(hasHeldComposer(`${rule}\n>\n${rule}\nEnter to confirm`), false);
+  assert.equal(hasHeldComposer(`${rule}\n>\n${rule}\nesc to cancel`), false);
+  assert.equal(agy.screen.classify(`⢿  Generating...\n└ Tip: Use /cs\n${rule}\n>\n${rule}`), 'busy');
+});
+
 test('normalizes the actual 1.5.16 hook and OSC samples', () => {
   const { hooks, firstDone } = JSON.parse(fixture('live-hooks.json'));
   assert.deepEqual(hooks.map(row => agy.hooks.normalize(row)?.type), [

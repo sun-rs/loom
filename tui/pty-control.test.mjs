@@ -157,6 +157,119 @@ test('agy welcome without shortcuts delivers the queued compact handover exactly
   assert.equal(f.writes.filter(bytes => bytes === '\r').length, 1);
 });
 
+test('agy 1.5.18 with empty statusLine footer delivers first handover without draft-held', async t => {
+  const startup = JSON.parse(await readFile(new URL('../tasks/ROT-AGY-2/agy-startup-frames.json', import.meta.url), 'utf8'));
+  const gi = startup.pilotGi2J8U;
+  const cwd = await mkdtemp(join(await realpath(tmpdir()), 'lpt-rot2-'));
+  t.after(() => rm(cwd, { recursive: true, force: true }));
+  const socket = join(cwd, 's');
+  const sessionId = randomUUID();
+  const incarnation = randomUUID();
+  const hookSink = join(cwd, 'hooks.jsonl');
+  const bookPath = join(cwd, 'requests.jsonl');
+  const transcriptPath = join(cwd, `${sessionId}.jsonl`);
+  const writes = [];
+  const events = new EventEmitter();
+  const subscribe = (event, callback) => {
+    events.on(event, callback);
+    return { dispose: () => events.off(event, callback) };
+  };
+  const pty = {
+    spawn: () => ({
+      onData: callback => subscribe('data', callback),
+      onExit: callback => subscribe('exit', callback),
+      write(bytes) {
+        writes.push(bytes);
+        if (bytes.startsWith('\x1b[200~')) {
+          events.emit('data', Buffer.from(gi.afterPasteBytes));
+        } else if (bytes === '\r') {
+          void appendFile(transcriptPath, JSON.stringify({ source: 'USER_EXPLICIT', type: 'USER_INPUT', content: gi.wire,
+            step_index: 1, timestamp: new Date().toISOString() }) + '\n').then(() =>
+            appendFile(hookSink, JSON.stringify({ cwd, session_id: sessionId, receivedAt: Date.now(),
+              hook_event_name: 'PreInvocation', prompt: gi.wire, transcript_path: transcriptPath }) + '\n'));
+        }
+      },
+      resize() {},
+      kill: () => events.emit('exit', { exitCode: 0 }),
+    }),
+  };
+  const terminal = await thinBackend({ pty, Terminal: xterm.Terminal, cols: gi.cols, rows: gi.rows, humanPauseMs: 400 }).launch({
+    cwd, argv: ['agy'], env: {}, provider: 'agy', unset: [],
+  });
+  t.after(() => terminal.close());
+  terminal.provePaste = () => ({ status: 'unproven' });
+  const close = await listenControl(socket, bindTuiSession(terminal, providers.agy, {
+    hookSink, evidenceRoot: cwd, cwd, bookPath, incarnation, requireNative: true,
+  }), incarnation);
+  t.after(() => close());
+  const account = (method, params) => requestControl(socket, method, params, incarnation);
+
+  events.emit('data', Buffer.from('\x1b[2J\x1b[H' + gi.welcomeBytes));
+  await sleep(150);
+  const pane = { address: 't-rot2', cwd, state: 'live', pid: 102, created_ms: Date.now(), status: { state: 'idle' } };
+  const transport = tui(cwd, async () => pane, undefined, (_binding, method, params) => account(method, params));
+  const mail = inbox(cwd, transport);
+  mail.enqueue({ id: gi.deliveryId, target: { addr: pane.address, cwd, pid: pane.pid, createdAt: pane.created_ms,
+    provider: 'agy', tui: { transport: 'holder-v3', bookPath } }, createdAt: Date.now(),
+  text: gi.prompt, phase: 'queued', startup: true, mode: 'queue', requestedMode: 'queue' });
+  await mail.step();
+  await mail.step();
+  const status = receipt(mail.messages.find(message => message.id === gi.deliveryId));
+  assert.equal(status.deliveryStatus, 'delivered', JSON.stringify(status));
+  assert.equal(writes.filter(bytes => bytes === '\r').length, 1);
+});
+
+test('agy treats unknown muted placeholders and unknown non-interactive footers as non-drafts and logs once', async t => {
+  const cwd = await mkdtemp(join(await realpath(tmpdir()), 'lpt-rot2-hint-'));
+  t.after(() => rm(cwd, { recursive: true, force: true }));
+  const socket = join(cwd, 's');
+  const incarnation = randomUUID();
+  const hookSink = join(cwd, 'hooks.jsonl');
+  const bookPath = join(cwd, 'requests.jsonl');
+  const logs = [];
+  const events = new EventEmitter();
+  const subscribe = (event, callback) => {
+    events.on(event, callback);
+    return { dispose: () => events.off(event, callback) };
+  };
+  const pty = {
+    spawn: () => ({
+      onData: callback => subscribe('data', callback),
+      onExit: callback => subscribe('exit', callback),
+      write() {},
+      resize() {},
+      kill: () => events.emit('exit', { exitCode: 0 }),
+    }),
+  };
+  const terminal = await thinBackend({ pty, Terminal: xterm.Terminal, cols: 120, rows: 35, humanPauseMs: 400 }).launch({
+    cwd, argv: ['agy'], env: {}, provider: 'agy', unset: [],
+  });
+  t.after(() => terminal.close());
+  const close = await listenControl(socket, bindTuiSession(terminal, providers.agy, {
+    hookSink, evidenceRoot: cwd, cwd, bookPath, incarnation, requireNative: true,
+    report: message => logs.push(message),
+  }), incarnation);
+  t.after(() => close());
+  const account = (method, params) => requestControl(socket, method, params, incarnation);
+
+  events.emit('data', Buffer.from(`\x1b[2J\x1b[HAntigravity CLI 1.6.0\r\n${'─'.repeat(120)}\r\n\x1b[94m>\x1b[m \x1b[90mAsk Antigravity anything\x1b[m\r\n${'─'.repeat(120)}\r\nNew: Try /fast mode\x1b[3;3H`));
+  await sleep(150);
+  const firstUnknown = await account('state');
+  const secondUnknown = await account('state');
+  assert.equal(firstUnknown.ready, true);
+  assert.equal(secondUnknown.ready, true);
+  assert.equal(firstUnknown.screen.draft, '');
+  assert.equal(logs.length, 2);
+  assert.match(logs[0], /unknown composer-placeholder.*Ask Antigravity anything/);
+  assert.match(logs[1], /unknown footer-hint.*New: Try \/fast mode/);
+
+  events.emit('data', Buffer.from(`\x1b[2J\x1b[H${'─'.repeat(120)}\r\n> user draft\r\n${'─'.repeat(120)}\x1b[2;13H`));
+  await sleep(150);
+  const userDraft = await account('state');
+  assert.equal(userDraft.ready, false);
+  assert.equal(userDraft.screen.draft, 'user draft');
+});
+
 test('an agy feedback survey after a native turn sends only Skip once', async t => {
   const f = await setup(t, { feedback: true });
   assert.equal((await f.account('submit', { id: randomUUID(), text: 'first' })).kind, 'confirmed');

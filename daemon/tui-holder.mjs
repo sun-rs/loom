@@ -8,7 +8,7 @@ import { providers } from '../tui/providers.mjs';
 import { switchHolder, verifyHolderBuild } from './native-holder.mjs';
 import { readJSON } from './host-control.mjs';
 
-export function tuiHolders(project, controller, save) {
+export function tuiHolders(project, controller, save, report) {
   const attached = new Map();
 
   async function attach(job, row, pane) {
@@ -24,6 +24,7 @@ export function tuiHolders(project, controller, save) {
     const terminal = await holderTerminal(binding, controller, row.cli, pane.pid, binding.childPid);
     const session = bindTuiSession(terminal, providers[row.cli], {
       ...binding.evidence, sessionId: row.sessionId ?? binding.evidence.sessionId,
+      report: message => report?.(`${row.addr}: ${message}`),
       readPending(id) {
         const { messages } = readJSON(join(project, '.project', 'inbox', 'state.json'), { messages: [] });
         const message = messages.find(message => message.id === id && message.target.addr === row.addr &&
