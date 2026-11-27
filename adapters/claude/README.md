@@ -7,17 +7,15 @@ import claude from './adapters/claude/index.mjs';
 
 const cwd = '/path/to/workspace';
 const { argv, env } = claude.launch({
-  cwd,
   model: 'haiku',
   effort: 'low',
   prompt: 'Check the local test output.',
-  hookSink: '/path/to/relay/worker-events.jsonl',
 });
 ```
 
-hc 按 `cwd` 启动 `argv`，并把 `env` 合并进已有环境。`argv[0]` 是 `claude`，启动器可以使用已解析的原生二进制路径。`extraArgs` 接收额外的 TUI 选项。需要继续已知会话时可传 `['--resume', sessionId]`。
+按用户 2026-11-27 裁决，所有 Claude Code 调用必须经 CCP 保护入口（默认 `/Users/sun/.local/bin/claude`，禁止 realpath 执行目标或直接启动 `~/.local/share/claude/versions/*`；非 CCP 入口直接报 `ccp-required` 拒绝）。`extraArgs` 接收额外的 TUI 选项，继续已知会话时可传 `['--resume', sessionId]`。
 
-`launch` 通过本次 `--settings` 注入权限提示设置、观察型 hook 和 `idleCompaction: false`。项目可用 `roles.<role>.claude.idleCompaction` 覆盖该布尔值。`--setting-sources ''` 关闭用户、项目和项目本地 settings 来源，`--strict-mcp-config` 只使用显式传入的 MCP 配置。`--model` 和 `--effort` 直接设置本轮启动参数。整个调用只构造 argv 和环境补丁。 [Claude Code settings](https://code.claude.com/docs/en/settings) · [权限模式](https://code.claude.com/docs/en/permission-modes)
+CCP 独占 Claude 的受保护 settings，仅允许在 `--settings` 中传入 `fastMode` 或 `disableAllHooks`。因此 `launch` 不注入 hooks、`statusLine`、`idleCompaction`、`skipDangerousModePermissionPrompt`，也不传 `--setting-sources ''` 或 `--strict-mcp-config`，且不清空或改写代理/出口环境变量（`HTTP(S)_PROXY`、`ALL_PROXY`、`NO_PROXY` 及小写形式、`ANTHROPIC_BASE_URL`）。仅在显式指定 `fast` 时传 `--settings '{"fastMode":...}'`。回合、投递确认、最终回复、压缩与上下文用量改为直接读取 `~/.claude/projects/<编码后的 cwd>/<sessionId>.jsonl`。 [Claude Code settings](https://code.claude.com/docs/en/settings) · [权限模式](https://code.claude.com/docs/en/permission-modes)
 
 ## 屏幕和输入
 

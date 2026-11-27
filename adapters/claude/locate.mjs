@@ -3,21 +3,21 @@ import { homedir } from 'node:os';
 import { join, resolve } from 'node:path';
 
 // Orca b7fd7caa3: src/main/ai-vault/scanners/claude/claude-project-dir-encoding.ts
-const CLAUDE_BUCKET_NAME_MAX_LENGTH = 200;
+export const CLAUDE_BUCKET_NAME_MAX_LENGTH = 200;
 
-function encodeClaudeProjectPaths(pathValue) {
+export function encodeClaudeProjectPaths(pathValue) {
   const raw = encodeClaudeProjectPath(pathValue);
   const composed = encodeClaudeProjectPath(pathValue.normalize('NFC'));
   return raw === composed ? [raw] : [raw, composed];
 }
 
-function encodeClaudeProjectPath(pathValue) {
+export function encodeClaudeProjectPath(pathValue) {
   const separated = pathValue.replaceAll('\\', '/');
   const trimmed = separated === '/' || /^[A-Za-z]:\/$/.test(separated) ? separated : separated.replace(/\/+$/, '');
   return trimmed.replace(/[^a-zA-Z0-9]/g, '-');
 }
 
-function isClaudeProjectOwnBucketName(projectDirName, encodedPath) {
+export function isClaudeProjectOwnBucketName(projectDirName, encodedPath) {
   return (
     projectDirName === encodedPath ||
     (encodedPath.length > CLAUDE_BUCKET_NAME_MAX_LENGTH &&
@@ -26,7 +26,7 @@ function isClaudeProjectOwnBucketName(projectDirName, encodedPath) {
 }
 
 // Orca b7fd7caa3: src/main/native-chat/transcript-discovery/session-file-resolver-claude-probe.ts
-function isSafeClaudeSessionId(sessionId) {
+export function isSafeClaudeSessionId(sessionId) {
   return (
     sessionId !== '.' &&
     sessionId !== '..' &&

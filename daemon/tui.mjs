@@ -9,7 +9,7 @@ import { codexFastArgs, nativeClaude, nativeWorkerExecutable } from './executabl
 import { recordWorkerExecutable } from './worker-executables.mjs';
 import { eventPath, readText, writeState } from './io.mjs';
 import { codexEnvironmentArgs, runtimeDirectory } from '../cli/project.mjs';
-import { allowNativeQuestions, claudeIdleCompaction } from '../cli/policy.mjs';
+import { allowNativeQuestions } from '../cli/policy.mjs';
 import { controllerFile, managedEnvironment, releaseRoot } from './release.mjs';
 import { workerEnvironment, workerProviderEnvironment } from './worker-environment.mjs';
 import { seniorToolEnvironment } from './senior-tools.mjs';
@@ -48,7 +48,7 @@ export async function openTui(job, row, project, recordTemporary, recordBinding,
   const worker = row.role === 'worker';
   const command = worker ? nativeWorkerExecutable(row.cli) : row.cli === 'claude' ? nativeClaude() : undefined;
   const hookSink = eventPath(project, row.addr);
-  const runner = row.cli !== 'opencode' && hookRunner(project, row.cli);
+  const runner = !['opencode', 'claude'].includes(row.cli) && hookRunner(project, row.cli);
   const env = { ...managedEnvironment(project, row.addr),
     ...(runner && { LOOM_HOOK_RELEASE: releaseRoot }),
     ...seniorToolEnvironment(project, row),
@@ -71,8 +71,7 @@ export async function openTui(job, row, project, recordTemporary, recordBinding,
     autoTrustWorkspace: job.autoTrustWorkspace, ...(controller && { controllerPath: controllerFile(project) }),
     stateDir: join(project, '.project', 'pty'),
     ...(row.cli === 'claude' && { env: { ...env, DISABLE_AUTOUPDATER: '1' },
-      ...(['leader', 'auditor'].includes(row.role) && { contextStatusPath: hookSink.replace(/\.jsonl$/, '.context.json') }),
-      authMode: job.authMode, idleCompaction: claudeIdleCompaction(project, row.role), unset: [...guardUnset, 'CLAUDE_CODE_ENTRYPOINT', 'CLAUDECODE'] }),
+      authMode: job.authMode, resume: job.resumeNativeId, unset: [...guardUnset, 'CLAUDE_CODE_ENTRYPOINT', 'CLAUDECODE'] }),
     ...(row.cli === 'codex' && { extraArgs: ['--disable', 'memories', ...codexEnvironmentArgs(env), ...codexFastArgs(job.fast)] }),
   });
   try {

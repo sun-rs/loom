@@ -3,7 +3,6 @@ import { approval, choice, codexPrompt, promptDetails } from '../adapters/prompt
 import { appendFileSync, constants, lstatSync, realpathSync, rmSync } from 'node:fs';
 import { randomUUID } from 'node:crypto';
 import { join } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { appRequestKind, antigravityRuntime, claudeRuntime, codexRuntime, createRuntimeRegistry, opencodeRuntime } from '@botiverse/oar';
 import agy from '../adapters/agy/index.mjs';
 import { preflightAgyAcp } from '../adapters/agy/acp.mjs';
@@ -13,15 +12,15 @@ import codex from '../adapters/codex/index.mjs';
 import { openCodeQuestionDeny, promptObserver } from '../adapters/opencode/index.mjs';
 import { deliveryId, wireText } from '../inbox/message.mjs';
 import { eventPath, jsonRows, prepareJournal } from './io.mjs';
-import { nativeClaude, nativeWorkerExecutable, resolveNativeExecutable, workerBinaryKeys } from './executables.mjs';
+import { nativeClaude, nativeWorkerExecutable, resolveClaudeExecutable, resolveNativeExecutable, workerBinaryKeys } from './executables.mjs';
 import { recordWorkerExecutable } from './worker-executables.mjs';
 import { hostWorkerEnvironment, hostWriteBoundary } from './host-worker.mjs';
 import { captureOarTurnEnd, headAt } from './turn-heads.mjs';
 import { codexConfiguration } from './codex-launch.mjs';
 import { codexRefusal } from './codex-pipe-errors.mjs';
 import { claudeMemoryArgs, codexDeveloperArgs, memoryLaunch } from '../memory/launch-config.mjs';
-import { claudeApiEnvKeys } from '../adapters/claude/launch.mjs';
-import { allowNativeQuestions, claudeAuthMode, claudeIdleCompaction } from '../cli/policy.mjs';
+import { claudeApiEnvKeys, claudeNetworkEnvKeys } from '../adapters/claude/launch.mjs';
+import { allowNativeQuestions, claudeAuthMode } from '../cli/policy.mjs';
 import { managedEnvironment } from './release.mjs';
 import { seniorToolEnvironment } from './senior-tools.mjs';
 import { integrationPs } from './integration-processes.mjs';
@@ -52,7 +51,7 @@ export function checkedTranscript(path, row) {
 
 export async function openOar(row, project, resume, beforeLaunch) {
   const runtime = registry.require(row.runtimeId);
-  const executable = row.role === 'worker' ? nativeWorkerExecutable(row.cli) : undefined;
+  const executable = row.cli === 'claude' ? nativeClaude() : row.role === 'worker' ? nativeWorkerExecutable(row.cli) : undefined;
   const managed = managedEnvironment(project, row.addr);
   const host = Boolean(row.hostGrant);
   const isolated = host ? hostWorkerEnvironment(project, row) : workerEnvironment(row);
@@ -89,15 +88,13 @@ export async function openOar(row, project, resume, beforeLaunch) {
     if (row.authMode === 'subscription' || claudeAuthMode(project, row.role) !== 'api-key') {
       for (const key of claudeApiEnvKeys) env[key] = null;
     }
+    for (const key of claudeNetworkEnvKeys) delete env[key];
     if (host || login) env.CLAUDE_CODE_TMPDIR = isolated.TMPDIR;
-    const { env: memoryEnv, claudeSettings } = memoryLaunch(row.cli, { ...row.memory, claudeSettings: {
-      idleCompaction: claudeIdleCompaction(project, row.role), fastMode: row.fast,
-      ...(host || guard.LOOM_SENIOR_TOOL_LOG ? { hooks: { PreToolUse: [{ matcher: '*', hooks: [{
-        type: 'command', command: process.execPath, args: [fileURLToPath(new URL('../runtimes/tui/capture-hook.mjs', import.meta.url))], timeout: 5,
-      }] }] } } : {}),
-    } });
+    const { env: memoryEnv, claudeSettings } = memoryLaunch(row.cli, { ...row.memory,
+      claudeSettings: row.fast === undefined ? {} : { fastMode: Boolean(row.fast) } });
     Object.assign(env, memoryEnv);
-    launchArgs = [...claudeMemoryArgs(), '--setting-sources', '', '--strict-mcp-config', '--settings', JSON.stringify(claudeSettings)];
+    for (const key of claudeNetworkEnvKeys) delete env[key];
+    launchArgs = [...claudeMemoryArgs(), ...(Object.keys(claudeSettings).length ? ['--settings', JSON.stringify(claudeSettings)] : [])];
   }
   const probe = login ? { ...env, ...isolated, CLAUDE_CONFIG_DIR: null, GEMINI_HOME: null, ANTIGRAVITY_APP_DATA_DIR: null } : env;
   try {
@@ -106,14 +103,18 @@ export async function openOar(row, project, resume, beforeLaunch) {
         allowNativeQuestions: questions });
       launchArgs.push('--add-dir', agyWorkspace);
     }
-    if (executable) recordWorkerExecutable(project, row, executable, 'probe');
+    if (row.role === 'worker' && executable) recordWorkerExecutable(project, row, executable, 'probe');
     let installation = await runtime.installation({ env: probe });
     if (installation.kind !== 'available') throw new Error(`${row.cli} unavailable: ${installation.reason ?? installation.kind}`);
     if (row.cli === 'opencode') Object.assign(env, memoryLaunch(row.cli, {
       ...row.memory, openCodeConfig: env.OPENCODE_CONFIG_CONTENT ?? process.env.OPENCODE_CONFIG_CONTENT,
       openCodeNative: !/^(?:opencode\s+)?v?1\./u.test(installation.version ?? ''),
     }).env);
-    if (executable) {
+    if (row.cli === 'claude') {
+      if (resolveClaudeExecutable(installation.command) !== executable) throw Object.assign(
+        new Error('Claude must be launched through the CCP entry'), { code: 'ccp-required' });
+      installation = { ...installation, command: executable };
+    } else if (executable) {
       if (resolveNativeExecutable(installation.command) !== executable) throw new Error('Worker installation changed during probe');
       installation = { ...installation, command: executable };
     }
@@ -128,7 +129,7 @@ export async function openOar(row, project, resume, beforeLaunch) {
     const { cwd, model, effort } = row;
     if (row.cli === 'codex') launchArgs.push(...codexDeveloperArgs(row.memory?.indexText));
     await beforeLaunch?.();
-    if (executable) recordWorkerExecutable(project, row, executable, 'launch');
+    if (row.role === 'worker' && executable) recordWorkerExecutable(project, row, executable, 'launch');
     const session = await runtime.session(installation, { cwd, model, effort, env, launchArgs,
       ...(row.cli === 'claude' && row.memory?.indexText && { appendSystemPrompt: row.memory.indexText }),
       ...(row.cli === 'claude' && !questions && { disallowedTools: ['AskUserQuestion'] }),

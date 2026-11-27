@@ -111,7 +111,8 @@ export function authorizeSocketCommand(command, args, actor) {
   else if (command === 'accounts-refresh') allowed = role === 'super' || role === 'worker';
   else if (command === 'grant') allowed = role === (args.request === true ? 'leader' : 'super');
   else if (command === 'spawn') {
-    allowed = ['super', 'leader', 'auditor', 'worker'].includes(args.role) && (role === 'super' || role === 'leader' &&
+    allowed = ['super', 'leader', 'auditor', 'worker'].includes(args.role) && (role === 'super' ||
+      args['resume-session'] === undefined && role === 'leader' &&
       (args.role === 'worker' && (args.parent === undefined || args.parent === actor.addr || args.parent === actor.pane || args.parent === 'leader') ||
         args.role === 'auditor' && typeof args['handover-from'] === 'string'));
   } else if (command === 'gate-pack' || command === 'handover' || command === 'stop') {

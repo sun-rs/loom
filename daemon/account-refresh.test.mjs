@@ -26,6 +26,20 @@ function isolatedEnv(dir) {
   return { HOME: dir, XDG_CONFIG_HOME: dir, PATH: '', GIT_CONFIG_GLOBAL: '/dev/null', GIT_CONFIG_NOSYSTEM: '1' };
 }
 
+function makeClaudeCcpStub(home, jsBody) {
+  const ccpDir = join(home, 'ccp/bin');
+  const binDir = join(home, '.local/bin');
+  mkdirSync(ccpDir, { recursive: true });
+  mkdirSync(binDir, { recursive: true });
+  const target = makeStub(ccpDir, 'claude-protected', `
+    if (process.argv.slice(2).join(' ') === '--version') { console.log(${JSON.stringify(fixtures.versions.claude)}); process.exit(0); }
+    ${jsBody}
+  `);
+  const entry = join(binDir, 'claude');
+  symlinkSync(target, entry);
+  return entry;
+}
+
 test('resolveCliExecutable accepts absolute executable paths and rejects relative paths', async () => {
   const dir = mkdtempSync(join(tmpdir(), 'loom-acct-exec-'));
   try {
@@ -45,24 +59,20 @@ test('resolveCliExecutable accepts absolute executable paths and rejects relativ
   }
 });
 
-test('Claude resolution and refresh prefer the native version over a wrapper symlink', async t => {
-  const home = mkdtempSync(join(realpathSync(tmpdir()), 'loom-acct-claude-native-'));
+test('Claude resolution and refresh require the CCP entry and never fall back to native versions', async t => {
+  const home = mkdtempSync(join(realpathSync(tmpdir()), 'loom-acct-claude-ccp-'));
   t.after(() => rmSync(home, { recursive: true, force: true }));
-  const bin = join(home, '.local/bin');
   const versions = join(home, '.local/share/claude/versions');
-  const sentinel = join(home, 'wrapper-ran');
-  mkdirSync(bin, { recursive: true });
+  const sentinel = join(home, 'native-ran');
   mkdirSync(versions, { recursive: true });
-  const wrapper = makeStub(home, 'claude-wrapper', `
+  const native = makeStub(versions, '2.1.331', `
     require('node:fs').writeFileSync(${JSON.stringify(sentinel)}, '');
     process.exit(2);
   `);
-  symlinkSync(wrapper, join(bin, 'claude'));
-  const native = makeStub(versions, '2.1.331', `
+  const entry = makeClaudeCcpStub(home, `
     const fx = ${JSON.stringify(fixtures.claude)};
     const command = process.argv[2];
-    console.log(command === '--version' ? ${JSON.stringify(fixtures.versions.claude)} :
-      JSON.stringify(command === 'auth' ? fx.authStatus : fx.usageJson));
+    console.log(JSON.stringify(command === 'auth' ? fx.authStatus : fx.usageJson));
   `);
 
   const { resolveCliExecutable } = await import('./executables.mjs');
@@ -70,46 +80,48 @@ test('Claude resolution and refresh prefer the native version over a wrapper sym
   const result = await refreshAccounts({ providers: ['claude'], env: isolatedEnv(home) });
   const resolved = resolveCliExecutable('claude', { home, env: isolatedEnv(home) });
   assert.deepEqual(
-    { resolved, status: result.outcomes.claude.status, wrapperRan: existsSync(sentinel) },
-    { resolved: native, status: 'ok', wrapperRan: false },
+    { resolved, status: result.outcomes.claude.status, nativeRan: existsSync(sentinel) },
+    { resolved: entry, status: 'ok', nativeRan: false },
   );
-  assert.equal(resolveCliExecutable('claude', { home, env: {} }), native);
+  assert.equal(resolveCliExecutable('claude', { home, env: {} }), entry);
+  assert.throws(() => resolveCliExecutable('claude', { home, env: { ...isolatedEnv(home), LOOM_CLAUDE_BIN: native } }),
+    { code: 'ccp-required' });
 });
 
-test('Claude resolution rejects a symlink outside the native versions directory', async t => {
-  const home = mkdtempSync(join(tmpdir(), 'loom-acct-claude-link-'));
+test('Claude resolution rejects direct native version symlinks and non-CCP overrides with ccp-required', async t => {
+  const home = mkdtempSync(join(realpathSync(tmpdir()), 'loom-acct-claude-link-'));
   t.after(() => rmSync(home, { recursive: true, force: true }));
   const bin = join(home, '.local/bin');
-  const wrapperDir = join(home, 'ccp/bin');
-  const sentinel = join(home, 'wrapper-ran');
+  const versions = join(home, '.local/share/claude/versions');
+  const sentinel = join(home, 'native-ran');
   mkdirSync(bin, { recursive: true });
-  mkdirSync(wrapperDir, { recursive: true });
-  const wrapper = makeStub(wrapperDir, 'claude-protected', `
+  mkdirSync(versions, { recursive: true });
+  const native = makeStub(versions, '2.1.331', `
     require('node:fs').writeFileSync(${JSON.stringify(sentinel)}, '');
   `);
   const link = join(bin, 'claude');
-  symlinkSync(wrapper, link);
+  symlinkSync(native, link);
 
   const { resolveCliExecutable } = await import('./executables.mjs');
   const { refreshAccounts } = await import('./account-refresh.mjs');
   const result = await refreshAccounts({ providers: ['claude'], env: isolatedEnv(home) });
   assert.equal(result.outcomes.claude.reason, 'invalid-cli-executable');
+  assert.equal(result.resolvedExecutables.claude, 'rejected');
   assert.equal(existsSync(sentinel), false);
   assert.throws(() => resolveCliExecutable('claude', { home, env: isolatedEnv(home) }),
-    { code: 'protected-executable' });
+    { code: 'ccp-required' });
 
-  const external = makeStub(home, 'claude-wrapper', 'process.exit(2);');
+  const external = makeStub(home, 'claude-direct', 'process.exit(2);');
   unlinkSync(link);
-  symlinkSync(external, link);
-  assert.throws(() => resolveCliExecutable('claude', { home, env: isolatedEnv(home) }),
-    /symlink.*outside.*versions directory/i);
+  assert.throws(() => resolveCliExecutable('claude', { home, env: { ...isolatedEnv(home), LOOM_CLAUDE_BIN: external } }),
+    { code: 'ccp-required' });
 });
 
-test('all refresh providers reject protected realpaths before launching', async t => {
+test('non-Claude refresh providers reject protected CCP realpaths while Claude rejects native versions', async t => {
   const { resolveCliExecutable } = await import('./executables.mjs');
   const { refreshAccounts } = await import('./account-refresh.mjs');
   const { readProvider } = await import('./account-refresh/providers.mjs');
-  for (const cli of ['codex', 'claude', 'agy', 'opencode']) {
+  for (const cli of ['codex', 'agy', 'opencode']) {
     for (const target of ['CcP/stub', 'ClAuDe-PrOtEcTeD']) {
       await t.test(cli + ' rejects ' + target, async t => {
         const home = mkdtempSync(join(realpathSync(tmpdir()), 'loom-acct-guard-'));
@@ -145,6 +157,26 @@ test('all refresh providers reject protected realpaths before launching', async 
       });
     }
   }
+  await t.test('claude rejects native version binary and requires CCP entry', async t => {
+    const home = mkdtempSync(join(realpathSync(tmpdir()), 'loom-acct-claude-guard-'));
+    t.after(() => rmSync(home, { recursive: true, force: true }));
+    const versions = join(home, '.local/share/claude/versions');
+    const sentinel = join(home, 'invocations');
+    mkdirSync(versions, { recursive: true });
+    const native = makeStub(versions, '2.1.331', `
+      require('node:fs').appendFileSync(${JSON.stringify(sentinel)}, 'ran\\n');
+      process.exit(2);
+    `);
+    const env = isolatedEnv(home);
+    const override = { ...env, LOOM_CLAUDE_BIN: native };
+    for (const options of [{ env: override }, { env, executables: { claude: native } }]) {
+      const result = await refreshAccounts({ providers: ['claude'], ...options });
+      assert.equal(existsSync(sentinel), false);
+      assert.equal(result.outcomes.claude.reason, 'invalid-cli-executable');
+      assert.equal(result.resolvedExecutables?.claude, 'rejected');
+    }
+    assert.throws(() => resolveCliExecutable('claude', { env: override }), { code: 'ccp-required' });
+  });
 });
 
 test('refreshAccounts gives a provider at least 45 seconds by default', async t => {
@@ -194,7 +226,7 @@ test('refreshAccounts calls each B-class CLI once with absolute paths, zero poll
       });
     `);
 
-    const claudeStub = makeStub(dir, 'claude', `
+    const claudeStub = makeClaudeCcpStub(dir, `
       const fs = require('node:fs');
       const fx = ${JSON.stringify(fixtures.claude)};
       const args = process.argv.slice(2);
@@ -340,7 +372,7 @@ test('refreshAccounts isolates partial provider failures and rejects non-zero mo
 
     const badCodex = makeStub(dir, 'codex', 'process.stderr.write("SYNTHETIC_STDERR_MARKER"); process.exit(1);');
     const goodAgy = makeStub(dir, 'agy', `process.stdout.write(${JSON.stringify(JSON.stringify(fixtures.agy.usageJson))} + '\\n');`);
-    const badTurnClaude = makeStub(dir, 'claude', `
+    const badTurnClaude = makeClaudeCcpStub(dir, `
       const args = process.argv.slice(2);
       if (args[0] === 'auth') process.stdout.write(${JSON.stringify(JSON.stringify(fixtures.claude.authStatus))} + '\\n');
       else process.stdout.write(JSON.stringify({ ...${JSON.stringify(fixtures.claude.usageJson)}, num_turns: 1 }) + '\\n');
@@ -372,15 +404,13 @@ test('refreshAccounts reads independent login directories and cools down each ac
     return { cli: 'claude', accountRef, configDir, active: index === 0 };
   });
   const log = join(dir, 'calls.jsonl');
-  const claude = makeStub(dir, 'profile-claude', `
+  const claude = makeClaudeCcpStub(dir, `
     const { appendFileSync } = require('node:fs');
     const args = process.argv.slice(2);
     const config = process.env.CLAUDE_CONFIG_DIR;
     const fx = ${JSON.stringify(fixtures.claude)};
     appendFileSync(${JSON.stringify(log)}, JSON.stringify({ config, args }) + '\\n');
-    if (args.join(' ') === '--version') {
-      console.log(${JSON.stringify(fixtures.versions.claude)});
-    } else if (args.join(' ') === 'auth status --json') {
+    if (args.join(' ') === 'auth status --json') {
       console.log(JSON.stringify(fx.authStatus));
     } else if (args.includes('/usage') && args.includes('--no-session-persistence')) {
       console.log(JSON.stringify(fx.usageJson));
@@ -482,7 +512,7 @@ test('refreshAccounts preserves Claude’s native login selectors for the defaul
   const dir = mkdtempSync(join(tmpdir(), 'loom-acct-claude-env-'));
   t.after(() => rmSync(dir, { recursive: true, force: true }));
   const env = { ...isolatedEnv(dir), USER: 'fixture-user', CLAUDE_SECURESTORAGE_CONFIG_DIR: dir };
-  const claude = makeStub(dir, 'claude', `
+  const claude = makeClaudeCcpStub(dir, `
     const fx = ${JSON.stringify(fixtures.claude)};
     if (process.env.USER !== 'fixture-user' || process.env.CLAUDE_SECURESTORAGE_CONFIG_DIR !== ${JSON.stringify(dir)}) {
       console.log(JSON.stringify(fx.authLoggedOut));
@@ -500,7 +530,7 @@ test('refreshAccounts reports a signed-out Claude without attempting usage', asy
   const dir = mkdtempSync(join(tmpdir(), 'loom-acct-signed-out-'));
   t.after(() => rmSync(dir, { recursive: true, force: true }));
   const log = join(dir, 'calls.jsonl');
-  const claude = makeStub(dir, 'claude', `
+  const claude = makeClaudeCcpStub(dir, `
     const args = process.argv.slice(2);
     require('node:fs').appendFileSync(${JSON.stringify(log)}, JSON.stringify(args) + '\\n');
     if (args.join(' ') !== 'auth status --json') process.exit(2);

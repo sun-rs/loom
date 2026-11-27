@@ -14,7 +14,7 @@ const exec = promisify(execFile);
 const repo = fileURLToPath(new URL('../../', import.meta.url));
 const root = '/Users/sun/Code/exp-relay/tui-orca-1';
 const commands = {
-  claude: '/Users/sun/.local/share/claude/versions/2.1.331',
+  claude: '/Users/sun/.local/bin/claude',
   codex: '/opt/homebrew/Caskroom/codex/0.171.0/bin/codex',
   agy: '/Users/sun/.local/bin/agy',
 };

@@ -104,7 +104,7 @@ export function accountCollector(project, { jobs, save, report, events, accountB
   }
 
   function reserveStatusline(job, row) {
-    if (!collectAccounts || !['agy', 'claude'].includes(row.cli)) return;
+    if (!collectAccounts || row.cli !== 'agy') return;
     delete job.accountStatusline;
     const generation = randomUUID();
     const sink = statuslinePath(project, generation);

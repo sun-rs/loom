@@ -16,7 +16,6 @@ import { claudeNativeDigest, deliveryId } from '../inbox/message.mjs';
 import { addCodexStartHook } from '../runtimes/tui/codex-start.mjs';
 import { agentResumeArgs } from './resume.mjs';
 
-const capture = fileURLToPath(new URL('../runtimes/tui/capture-hook.mjs', import.meta.url));
 const agyActivityCapture = fileURLToPath(new URL('./agy-activity-hook.mjs', import.meta.url));
 const content = input => typeof input === 'string' ? input :
   Array.isArray(input) ? input.filter(block => ['text', 'input_text'].includes(block?.type)).map(block => block.text).join('\n') : undefined;
@@ -37,6 +36,7 @@ const activity = (phase, extra) => ({ phase, ...extra });
 export const providers = {
   claude: {
     ...claude,
+    screenStartup: true, // CCP forbids hook injection; startup readiness uses screen idle + transcript tail.
     screenInterrupt: true,
     restoresInterruptedDraft: true, // Escape can return the just-submitted prompt to the composer.
     screen: {
@@ -53,26 +53,11 @@ export const providers = {
     async start(options) {
       const sessionId = options.resume ?? randomUUID();
       const { argv, env } = claude.launch({
-        ...options, extraArgs: [...(options.resume ? agentResumeArgs('claude', sessionId) : ['--session-id', sessionId]),
+        ...options, fast: options.fast, extraArgs: [...(options.resume ? agentResumeArgs('claude', sessionId) : ['--session-id', sessionId]),
           '--prompt-suggestions', 'off', ...(options.extraArgs ?? [])],
       });
-      const index = argv.indexOf('--settings') + 1;
-      const settings = JSON.parse(argv[index]);
-      if (options.fast !== undefined) settings.fastMode = options.fast;
-      let statusLine = options.statusLine;
-      if (options.contextStatusPath) {
-        const recorder = fileURLToPath(new URL('../runtimes/tui/claude-context.mjs', import.meta.url));
-        const command = [process.execPath, recorder, options.contextStatusPath, sessionId]
-          .map(word => "'" + word.replaceAll("'", "'\\''") + "'").join(' ');
-        statusLine = { type: 'command', command };
-      }
-      if (statusLine || options.accountStatusline) settings.statusLine = launchStatusline('claude', { ...options, statusLine }, sessionId);
-      const observer = { ...settings.hooks.Stop[0].hooks[0], args: [options.hookRunner ?? capture, options.hookSink, sessionId, options.cwd] };
-      for (const entries of Object.values(settings.hooks)) for (const entry of entries) entry.hooks = [observer];
-      for (const event of ['SessionStart', 'SessionEnd', 'PreCompact', 'PostCompact']) {
-        settings.hooks[event] = [{ hooks: [observer] }];
-      }
-      argv[index] = JSON.stringify(settings);
+      // CCP rejects Loom hook/statusline settings. Claude's own transcript is
+      // tailed by the TUI runtime for turn boundaries and delivery evidence.
       return { argv, env, sessionId };
     },
     hook(row) {
@@ -101,10 +86,22 @@ export const providers = {
         return activity('idle');
       }
       if (row.type === 'user' && !row.isMeta && !row.isCompactSummary && !row.isVisibleInTranscriptOnly) {
-        const message = content(row.message?.content);
+        const raw = row.message?.content ?? row.content;
+        const message = content(raw);
         if (row.interruptedMessageId || /^\[Request interrupted by user/.test(message ?? '')) return activity('idle', { interrupted: true });
         const id = deliveryId(message);
-        if (id) return { ...input(message, row.uuid), payloadDigest: claudeNativeDigest(message, id, expectedPayload?.(id)), phase: 'busy' };
+        if (id) return { ...input(message, row.uuid), payloadDigest: claudeNativeDigest(message, id, expectedPayload?.(id)), phase: 'busy', turnId: row.promptId ?? row.uuid };
+        const isToolResult = Array.isArray(raw) && raw.some(block => block?.type === 'tool_result');
+        const localCommandTag = /^<(?:local-command-(?:caveat|stdout|stderr)|command-(?:name|message|args))(?=[\s/>])/;
+        if (!isToolResult && message?.trim() && !localCommandTag.test(message.trim())) {
+          return activity('busy', { key: row.uuid, turnId: row.promptId ?? row.uuid });
+        }
+      }
+      if (row.type === 'attachment' && row.attachment?.type === 'queued_command' && row.attachment.commandMode === 'prompt' &&
+          (row.attachment.origin?.kind === undefined || row.attachment.origin?.kind === 'human')) {
+        const message = content(row.attachment.prompt);
+        const id = deliveryId(message);
+        if (id) return { ...input(message, row.attachment.source_uuid ?? row.uuid), payloadDigest: claudeNativeDigest(message, id, expectedPayload?.(id)), phase: 'busy' };
       }
       if (row.type === 'assistant' && row.isApiErrorMessage) {
         const { failure } = stopFailure({ error: row.apiError ?? row.error, error_details: content(row.message?.content) });
