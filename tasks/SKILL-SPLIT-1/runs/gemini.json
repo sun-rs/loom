@@ -1,0 +1,226 @@
+{
+  "date": "2026-11-26T17:43:23.013Z",
+  "arm": "baseline",
+  "cli": "gemini",
+  "binary": "/opt/homebrew/bin/gemini",
+  "version": null,
+  "modelRequested": "gemini-2.5-pro",
+  "isolatedLogin": null,
+  "sizes": {
+    "super": {
+      "blob": "2bd9b8357fe6cdad12a805e4eba15083c32309de",
+      "bytes": 13421,
+      "lines": 91,
+      "estimatedTokens": 4767
+    },
+    "auditor": {
+      "blob": "2bd9b8357fe6cdad12a805e4eba15083c32309de",
+      "bytes": 13421,
+      "lines": 91,
+      "estimatedTokens": 4767
+    },
+    "leader": {
+      "blob": "2bd9b8357fe6cdad12a805e4eba15083c32309de",
+      "bytes": 13421,
+      "lines": 91,
+      "estimatedTokens": 4767
+    },
+    "worker": {
+      "blob": "2bd9b8357fe6cdad12a805e4eba15083c32309de",
+      "bytes": 13421,
+      "lines": 91,
+      "estimatedTokens": 4767
+    }
+  },
+  "repeats": 2,
+  "selected": [
+    "S01-policy",
+    "S02-inbox",
+    "S03-exception",
+    "S04-close",
+    "A01-rulings",
+    "A02-gate",
+    "A03-reviewer",
+    "A04-rotate",
+    "A05-memory",
+    "A06-approve",
+    "L01-dispatch",
+    "L02-gate",
+    "L03-decision",
+    "L04-guard",
+    "L05-successor",
+    "L06-route-reject",
+    "L07-manual-rotation",
+    "L08-history-incident",
+    "W01-fix",
+    "W02-integration",
+    "W03-blocked",
+    "W04-denied",
+    "W05-runtime"
+  ],
+  "summary": {
+    "attempted": 1,
+    "statuses": {
+      "missing-binary": 1
+    },
+    "passed": [
+      0,
+      0
+    ],
+    "redlineViolations": [
+      0,
+      0
+    ],
+    "requiredReadsMissed": [
+      0,
+      0
+    ],
+    "injectedModulePasses": [
+      0,
+      0
+    ],
+    "inlineModuleEquivalentPasses": [
+      0,
+      0
+    ],
+    "nativeInputTokens": {
+      "n": 0,
+      "mean": null,
+      "min": null,
+      "max": null
+    }
+  },
+  "byRole": {
+    "super": {
+      "attempted": 1,
+      "statuses": {
+        "missing-binary": 1
+      },
+      "passed": [
+        0,
+        0
+      ],
+      "redlineViolations": [
+        0,
+        0
+      ],
+      "requiredReadsMissed": [
+        0,
+        0
+      ],
+      "injectedModulePasses": [
+        0,
+        0
+      ],
+      "inlineModuleEquivalentPasses": [
+        0,
+        0
+      ],
+      "nativeInputTokens": {
+        "n": 0,
+        "mean": null,
+        "min": null,
+        "max": null
+      }
+    },
+    "auditor": {
+      "attempted": 0,
+      "statuses": {},
+      "passed": [
+        0,
+        0
+      ],
+      "redlineViolations": [
+        0,
+        0
+      ],
+      "requiredReadsMissed": [
+        0,
+        0
+      ],
+      "injectedModulePasses": [
+        0,
+        0
+      ],
+      "inlineModuleEquivalentPasses": [
+        0,
+        0
+      ],
+      "nativeInputTokens": {
+        "n": 0,
+        "mean": null,
+        "min": null,
+        "max": null
+      }
+    },
+    "leader": {
+      "attempted": 0,
+      "statuses": {},
+      "passed": [
+        0,
+        0
+      ],
+      "redlineViolations": [
+        0,
+        0
+      ],
+      "requiredReadsMissed": [
+        0,
+        0
+      ],
+      "injectedModulePasses": [
+        0,
+        0
+      ],
+      "inlineModuleEquivalentPasses": [
+        0,
+        0
+      ],
+      "nativeInputTokens": {
+        "n": 0,
+        "mean": null,
+        "min": null,
+        "max": null
+      }
+    },
+    "worker": {
+      "attempted": 0,
+      "statuses": {},
+      "passed": [
+        0,
+        0
+      ],
+      "redlineViolations": [
+        0,
+        0
+      ],
+      "requiredReadsMissed": [
+        0,
+        0
+      ],
+      "injectedModulePasses": [
+        0,
+        0
+      ],
+      "inlineModuleEquivalentPasses": [
+        0,
+        0
+      ],
+      "nativeInputTokens": {
+        "n": 0,
+        "mean": null,
+        "min": null,
+        "max": null
+      }
+    }
+  },
+  "runs": [
+    {
+      "case": "S01-policy",
+      "role": "super",
+      "repeat": 1,
+      "moduleInjected": false,
+      "status": "missing-binary"
+    }
+  ]
+}

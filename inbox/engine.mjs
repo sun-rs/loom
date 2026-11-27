@@ -333,9 +333,9 @@ export function inbox(project, transport, report = console.error, { replyLimit, 
     const combined = combinedDeliveryText(decorated, waves);
     const automatic = message.replyKey || message.waveBatch || message.continuationBatch || message.projectEvents;
     let text = combined;
-    if (automatic) {
+    if (!message.payloadFrozen && automatic) {
       const limit = replyLimit?.() ?? defaultReplyBytes;
-      const options = { attachFile: Boolean(message.reviewerResult) };
+      const options = { attachFile: Boolean(message.reviewerResult || decorated.gateRejection) };
       const overflow = Buffer.byteLength(combined) > limit;
       text = replyForDelivery(project, resultContext && overflow ? resultContext + '\n\n' + combined : combined, limit, options);
       if (resultContext) {
@@ -347,7 +347,7 @@ export function inbox(project, transport, report = console.error, { replyLimit, 
         }
         if (preview !== heading) text += '\n\n' + preview;
       }
-    } else if (waves.length && message.wireBody === undefined) {
+    } else if (!message.payloadFrozen && waves.length && message.wireBody === undefined) {
       const batch = waves.map(wave => wave.text).join('\n\n');
       const brief = replyForDelivery(project, batch, replyLimit?.());
       if (brief !== batch) text = combinedDeliveryText(decorated, [{ text: brief }]);
@@ -692,7 +692,8 @@ export function inbox(project, transport, report = console.error, { replyLimit, 
       message.phase = 'queued';
       if (message.memoryRecipient && message.memoryRecipient !== target.addr) {
         for (const key of ['wireBody', 'payloadFrozen', 'payloadDigest', 'memoryRecipient',
-          'memoryAccess', 'memoryCursor', 'memoryCompaction']) delete message[key];
+          'memoryAccess', 'memoryCursor', 'memoryCompaction', 'skillModules', 'skillDeferred',
+          'skillDenialOf', 'skillRedNotices', 'skillCompactionAt', 'resumeCheckpoint', 'gateRejection']) delete message[key];
       }
       for (const key of ['active', 'barrier', 'issue', 'refusedAt', 'waitingForWritable']) delete message[key];
       changed = true;
