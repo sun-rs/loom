@@ -5,6 +5,7 @@ import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { promisify } from 'node:util';
+import { nativeWorkerExecutable } from './executables.mjs';
 
 const exec = promisify(execFile);
 
@@ -51,7 +52,7 @@ export async function runOpenCodeStage(input, request) {
     await writeFile(configPath, JSON.stringify(config), { mode: 0o600 });
     let stdout;
     try {
-      ({ stdout } = await exec('opencode', ['run', '--standalone', '--archived', '--log-level', 'none',
+      ({ stdout } = await exec(nativeWorkerExecutable('opencode'), ['run', '--standalone', '--archived', '--log-level', 'none',
         '--model', model, '--agent', 'loom-stage', '--format', 'json',
         '--', JSON.stringify(input)], {
         cwd: root, timeout: 45_000, maxBuffer: 1024 * 1024,

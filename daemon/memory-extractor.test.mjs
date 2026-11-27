@@ -1577,14 +1577,21 @@ for (const queued of [false, true]) {
 test('R3B extractor only forwards inbox bodies from allowlisted sources', async t => {
   const f = fixture(t);
   // Inbox attempts use wall time. Keep the synthetic native events after those attempts.
-  f.advance(Math.max(0, Date.now() - Date.UTC(2026, 10, 26, 12)) + 60_000);
+  let clock = Date.UTC(2026, 10, 26, 12);
+  const syncClock = () => {
+    const delta = Math.max(0, Date.now() + 30_000 - clock);
+    if (delta > 0) { f.advance(delta); clock += delta; }
+  };
+  syncClock();
   f.initGit();
   const runner = fakeOpenCode(t, f.root);
   seedLegacyStageMemory(f.project);
   const leader = await f.spawn('leader', 'Prepare inbox review.');
   const auditor = await f.spawn('auditor', 'Prepare to request a worker receipt.');
   const superAddr = await f.spawn('super', 'Prepare user oversight.');
+  syncClock();
   await f.finish(leader, 'Leader ready.');
+  syncClock();
   await f.finish(auditor, 'Auditor ready.');
   await assert.rejects(f.spawn('reviewer', 'Review the inbox fixture.', auditor, { task: 'INBOX-REVIEW' }),
     { code: 'invalid-arguments' });
@@ -1609,6 +1616,7 @@ test('R3B extractor only forwards inbox bodies from allowlisted sources', async 
     assert.ok(prompt?.input.includes(sentinel), `${sentinel} reached the native turn for ${id}`);
     const count = f.requests.length;
     const reply = `Inbox fixture turn ${deliveries.length + 1} complete.`;
+    syncClock();
     await f.finish(addr, reply);
     assert.equal(inbox().find(message => message.id === id)?.completion?.body, reply);
     assert.equal(f.requests.length, count + 1, 'completion reached the per-turn provider');
@@ -1630,6 +1638,7 @@ test('R3B extractor only forwards inbox bodies from allowlisted sources', async 
   await sendToLeader(worker, 'SHORT_WORKER_MSG_SENTINEL_R3B', false);
 
   const batchSentinel = 'SHORT_BATCH_SENTINEL_R3B';
+  syncClock();
   await f.finish(worker, `DONE FIXTURE\n${batchSentinel}`);
   const batch = inbox().find(message => message.waveBatch && message.target.addr === leader);
   assert.ok(batch?.text.includes(batchSentinel), 'wave batch keeps the short worker reply');
@@ -1640,6 +1649,7 @@ test('R3B extractor only forwards inbox bodies from allowlisted sources', async 
   }, auditor);
   await f.tick();
   const receiptSentinel = 'SHORT_RECEIPT_SENTINEL_R3B';
+  syncClock();
   await f.finish(worker, `DONE FIXTURE\n${receiptSentinel}`);
   const receipt = inbox().find(message => message.replyTo === requestId && message.target.addr === auditor);
   assert.ok(receipt?.replyKey && receipt.text.includes(receiptSentinel), 'automatic receipt keeps the short reply');
