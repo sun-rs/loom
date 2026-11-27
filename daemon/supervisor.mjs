@@ -42,7 +42,8 @@ import { createMemoryExtractor } from './memory-extractor.mjs';
 import { rotationPolicy } from './rotation-policy.mjs';
 import { selfRotation } from './self-rotation.mjs';
 import { approvedWaves, handoffReason, idleForRelease, isReleased, releaseConditions, retainedState, retirementReason, retentionStatus,
-  reuseStatus, workerCardId, workerContext, workerDetails, workerIdleSince, workerMetrics, workerStalledSince } from './worker-retention.mjs';
+  reuseStatus, workerCardId, workerContext, workerDetails, workerIdleSince, workerMetrics, workerResultReceiptMs,
+  workerStalledSince } from './worker-retention.mjs';
 import { hostGrantSpec, storedHostUnconfined, storedWorkerTier } from '../lib/worker-tiers.mjs';
 import { hostGrantWarning, hostGrants, hostWritePaths } from './host-grants.mjs';
 
@@ -478,12 +479,13 @@ ${details}`, {
         const completion = message?.completion;
         const mismatch = job.firstReportCheck?.status === 'mismatch' && job.firstReportCheck.mismatches;
         const settled = completion?.body || completion?.noReply || row.endedAt !== null || deliveryFailed(message);
-        const unconfirmed = completion?.unconfirmed;
+        const unconfirmed = Boolean(completion?.unconfirmed ||
+          job.retention?.resultUnconfirmedAt != null && (job.retention.resultUnconfirmedFor ?? job.firstId) === job.firstId);
         const reply = settled ? {
           key: job.firstId, at: completion?.at ?? row.endedAt ?? now(),
           body: mismatch ? `BLOCKED ${row.task}\nWorker first-report mismatch: ${mismatch.join(', ')}` :
-            completion?.body ?? (unconfirmed ? `UNCONFIRMED ${row.task} 未确认正文\n${completion.unconfirmedBody ?? ''}` :
-            `FAILED ${row.task}\n${job.error ?? message?.issue ?? '无原生最终回复'}`),
+            unconfirmed ? `UNCONFIRMED ${row.task} 未确认正文\n${completion?.body ?? completion?.unconfirmedBody ?? ''}` :
+            completion?.body ?? `FAILED ${row.task}\n${job.error ?? message?.issue ?? '无原生最终回复'}`,
           source: completion?.source ?? 'loom inbox', failed: !mismatch && !unconfirmed && !completion?.body,
           unconfirmed, sessionId: row.sessionId,
           evidenceInput: !mismatch && { cwd: row.cwd, sessionId: row.sessionId, expectRed: job.expectRed, nativeTurnIndex: completion?.nativeTurnIndex ?? 1,
@@ -815,8 +817,11 @@ ${details}`, {
   }
 
   function leaderSignals(name) {
+    const sent = new Set(mail.messages.filter(message => message.workerNoticeId && !deliveryFailed(message))
+      .map(message => message.workerNoticeId));
     return [...org.notices().filter(notice => notice.project === name), ...notifications.list(name, false, true)
       .filter(event => event.type === 'worker-handoff' ||
+        (event.type === 'worker-result-unconfirmed' || event.type === 'worker-release-timeout') && !sent.has(event.id) ||
         event.type === 'stuck' && sessions.rowFor(event.addr)?.role === 'worker')];
   }
 
@@ -916,8 +921,10 @@ ${details}`, {
     const draft = job.workerHandoff;
     const handoff = draft?.ready ? draft : pressure && (draft?.reason === pressure &&
       (draft.cardId == null || draft.cardId === currentCard(row, job)) ? draft : { reason: pressure, ready: false });
+    const details = workerDetails(deliveries(row.addr));
     return { state: retainedState(retention, idle, row.endedAt != null), retention,
-      ...(job?.firstReportCheck?.status === 'mismatch' ? { lastResultTag: 'BLOCKED' } : workerDetails(deliveries(row.addr))), ...context,
+      ...(job?.firstReportCheck?.status === 'mismatch' ? { lastResultTag: 'BLOCKED' } :
+        { lastResultTag: job?.retention?.resultUnconfirmedAt != null ? 'UNCONFIRMED' : details.lastResultTag }), ...context,
       ...(row.role === 'worker' && reuseStatus(job, row.endedAt != null, context, workerReuseLimits(policy), workerFindings(row, job))),
       ...(job?.firstReportCheck && { firstReportCheck: job.firstReportCheck }),
       ...(handoff && { handoff }) };
@@ -960,6 +967,54 @@ ${details}`, {
     if (job.workerHandoff?.ready) return { handoff: job.workerHandoff };
     return { handoff: await publishWorkerHandoff(row, job, reason, { evidence }) };
   }
+  function notifyLeader(row, noticeId, text) {
+    const parent = row.parent && sessions.routeParent(row.parent);
+    const leader = parent?.role === 'leader' && parent.endedAt === null ? parent : liveRole(row.project, 'leader');
+    if (!leader || leader.endedAt !== null) return;
+    saved(sessions.targetBinding(leader), text, {
+      id: batchDeliveryId(noticeId, 'leader'),
+      workerNoticeId: noticeId,
+    });
+  }
+  function recordReleaseTimeout(row, job, idle, idleSince, at, detail) {
+    const ttl = retainMs(row);
+    if (!idle || !Number.isFinite(idleSince) || ttl <= 0 || at - idleSince < 2 * ttl ||
+        isReleased(job) || sessions.rowFor(row.addr)?.endedAt !== null ||
+        job.retention?.releaseTimeoutAt != null) return;
+    sessions.setRetention(job, { releaseTimeoutAt: at });
+    const noticeId = `worker-release-timeout:${row.addr}:${idleSince}`;
+    const state = retainedState(retentionFor(row, at), true, false);
+    const suffix = detail ? `（${detail}）` : '';
+    const text = `Worker ${row.task} ${row.addr} 处于 ${state} 超过 TTL 的 2 倍（已空闲 ${Math.round((at - idleSince) / 1000)}s，TTL ${Math.round(ttl / 1000)}s）仍未下线${suffix}，请 Leader 与 Super 介入处理。`;
+    notifications.add({ id: noticeId, project: row.project, addr: row.addr, task: row.task,
+      type: 'worker-release-timeout', at, reason: 'ttl-2x', batch: noticeId, text });
+    notifyLeader(row, noticeId, text);
+  }
+  async function backfillAdoptedRetention(at = now()) {
+    const conditions = releaseConditions(mail.messages);
+    for (const row of sessions.rows()) {
+      const job = sessions.jobs.get(row.addr);
+      if (!job || row.endedAt !== null || job.stopping || job.hostGrant || isReleased(job) ||
+          row.role !== 'worker' || row.backend !== 'headless' || job.retention?.idleSince != null) continue;
+      const view = await sessions.transport.inspect(sessions.targetBinding(row)).catch(() => undefined);
+      if (!idleForRelease(view)) continue;
+      const resultState = conditions.workerResultState(row, job, {
+        allowBlocked: true, allowUnconfirmed: true, at, receiptMs: workerResultReceiptMs,
+      });
+      const boundary = view.events?.findLast(event =>
+        (!view.streamId || !event.streamId || event.streamId === view.streamId) &&
+        ['turn-end', 'compaction_ended', 'turn-start'].includes(event.type));
+      if (resultState.pendingWithoutResult && !resultState.settled &&
+          boundary?.type !== 'turn-end' && boundary?.type !== 'compaction_ended') continue;
+      const revivedStream = Boolean(view.streamId && job.revivals?.some(item => item.streamId === view.streamId));
+      const fallbackAt = !revivedStream && Number.isFinite(resultState.resultAt) ? resultState.resultAt : undefined;
+      const idleSince = workerIdleSince(view, at, job.retention, fallbackAt);
+      const pending = resultState.unconfirmed || resultState.confirmed && !resultState.allReceipts ?
+        resultState.pendingWithoutResult : resultState.pending;
+      const eligible = Boolean(resultState.confirmed && !pending);
+      sessions.setRetention(job, { idleSince, idleStream: view.streamId, ...(eligible && { eligible: true }) });
+    }
+  }
   async function reapSessions() {
     const conditions = releaseConditions(mail.messages);
     const rows = sessions.rows();
@@ -978,41 +1033,82 @@ ${details}`, {
       const handoff = job.workerHandoff?.ready;
       const closingReason = mismatch ? 'first-report-mismatch' : handoff ? 'worker-handoff' : approved && 'gate-approved';
       if (isReleased(job) && (!closingReason || job.retention.resuming)) continue;
+      const resultState = mismatch ? undefined : conditions.workerResultState(row, job, {
+        allowBlocked: true, allowUnconfirmed: true, at, receiptMs: workerResultReceiptMs,
+      });
+      if (resultState?.confirmed && job.retention?.resultUnconfirmedAt != null) {
+        sessions.setRetention(job, { resultUnconfirmedAt: undefined, resultUnconfirmedFor: undefined });
+      }
+      const reportId = resultState?.final?.id ?? job.firstId;
+      if (resultState?.stale && (job.retention?.resultUnconfirmedAt == null ||
+          job.retention.resultUnconfirmedFor !== reportId)) {
+        sessions.setRetention(job, { resultUnconfirmedAt: at, resultUnconfirmedFor: reportId });
+        const noticeId = `worker-result-unconfirmed:${row.addr}:${reportId}`;
+        const minutes = Math.max(1, Math.round(workerResultReceiptMs / 60_000));
+        const text = `UNCONFIRMED ${row.task} ${row.addr}\nWorker 最终结果超过 ${minutes} 分钟未收到父级原生投递回执，已标为未确认；空闲 TTL 照常计时，到期后自动下线（保留原生会话可 resume）。`;
+        notifications.add({ id: noticeId, project: row.project, addr: row.addr, task: row.task,
+          type: 'worker-result-unconfirmed', at, reason: 'missing-result-receipt', text });
+        notifyLeader(row, noticeId, text);
+      }
       const resultDelivered = mismatch ? conditions.workerSummaryDelivered(row.addr) :
-        conditions.workerResult(row, job, { allowBlocked: handoff });
-      const eligible = Boolean(resultDelivered && !conditions.pending(row.addr));
-      if (!eligible) {
-        if (context && !isReleased(job) && !handoff && observations.get(row.addr)?.idle && !conditions.pending(row.addr)) {
-          const reason = handoffReason(context, workerHandoffLimits(policy));
-          const draft = job.workerHandoff;
-          if (reason && (draft?.cardId !== currentCard(row, job) || draft.reason !== reason) && !incidentFinding(row, job)) {
-            await publishWorkerHandoff(row, job, reason).catch(error => report(`${row.addr}: ${error.message}`));
-          }
+        Boolean(resultState?.confirmed || resultState?.unconfirmed);
+      const pending = resultState && (resultState.unconfirmed || resultState.confirmed && !resultState.allReceipts) ?
+        resultState.pendingWithoutResult : conditions.pending(row.addr);
+      const eligible = Boolean(resultDelivered && !pending);
+      if (isReleased(job)) {
+        if (eligible) {
+          try { await sessions.closeWorker(row, closingReason, at, context?.contextPercent); }
+          catch (error) { report(`${row.addr} release: ${error.message}`); }
         }
-        if (job.retention?.eligible) sessions.setRetention(job, { eligible: false, idleSince: undefined, idleStream: undefined });
         continue;
       }
+      if (!eligible && observations.has(row.addr) && !observations.get(row.addr).idle &&
+          !job.retention?.eligible && job.retention?.idleSince == null && job.retention?.releaseTimeoutAt == null) continue;
+      let idle = false;
+      let idleSince;
       try {
-        if (isReleased(job)) {
-          await sessions.closeWorker(row, closingReason, at, context?.contextPercent);
-          continue;
-        }
         const view = await sessions.transport.inspect(sessions.targetBinding(row));
-        const idle = idleForRelease(view);
-        const idleSince = idle ? workerIdleSince(view, at, job.retention) : undefined;
-        sessions.setRetention(job, { idleSince, idleStream: idle ? view.streamId : undefined, eligible: eligible && idle });
-        const finalContext = idle && contextFor(row, view);
-        if (idle && closingReason) {
-          if (row.backend === 'headless') await sessions.release(row, view, at, closingReason, finalContext);
-          await sessions.closeWorker(row, closingReason, at, finalContext.contextPercent);
-        } else if (idle && !job.retention.keep && !job.retention.keepWarm && at - idleSince >= retainMs(row)) {
-          if (row.backend === 'headless' && row.sessionId) {
-            await sessions.release(row, view, at, 'ttl', finalContext);
+        idle = idleForRelease(view);
+        const revivedStream = Boolean(view?.streamId && job.revivals?.some(item => item.streamId === view.streamId));
+        const fallbackAt = !revivedStream && Number.isFinite(resultState?.resultAt) ? resultState.resultAt : undefined;
+        const settledOrIdle = Boolean(resultState?.settled || mismatch || !conditions.pending(row.addr, { ignoreResult: true }));
+        idleSince = idle && (eligible || settledOrIdle) ? workerIdleSince(view, at, job.retention, fallbackAt) : undefined;
+        const idleStream = idle && idleSince != null ? view.streamId : undefined;
+        if (!eligible) {
+          if (context && !handoff && idle && !conditions.pending(row.addr)) {
+            const reason = handoffReason(context, workerHandoffLimits(policy));
+            const draft = job.workerHandoff;
+            if (reason && (draft?.cardId !== currentCard(row, job) || draft.reason !== reason) && !incidentFinding(row, job)) {
+              await publishWorkerHandoff(row, job, reason).catch(error => report(`${row.addr}: ${error.message}`));
+            }
           }
-          else if (row.backend === 'tui') await sessions.stop(row);
+          sessions.setRetention(job, {
+            eligible: false,
+            idleSince,
+            idleStream,
+            ...(!idle && { releaseTimeoutAt: undefined }),
+          });
+        } else {
+          sessions.setRetention(job, {
+            idleSince,
+            idleStream,
+            eligible: idle,
+            ...(!idle && { releaseTimeoutAt: undefined }),
+          });
+          const finalContext = idle && contextFor(row, view);
+          if (idle && closingReason) {
+            if (row.backend === 'headless') await sessions.release(row, view, at, closingReason, finalContext);
+            await sessions.closeWorker(row, closingReason, at, finalContext.contextPercent);
+          } else if (idle && !job.retention.keep && !job.retention.keepWarm && at - idleSince >= retainMs(row)) {
+            if (row.backend === 'headless' && row.sessionId) {
+              await sessions.release(row, view, at, 'ttl', finalContext);
+            } else if (row.backend === 'tui') await sessions.stop(row);
+          }
         }
+        recordReleaseTimeout(row, job, idle, idleSince, at);
       } catch (error) {
         sessions.setRetention(job, { eligible: false });
+        recordReleaseTimeout(row, job, idle, idleSince ?? job.retention?.idleSince, at, `释放异常：${error.message}`);
         report(`${row.addr} release: ${error.message}`);
       }
     }
@@ -1256,8 +1352,8 @@ ${details}`, {
     health = new Map((await watcher.poll()).map(row => [row.addr, row]));
     publishNotifications();
     accounts.publishWarnings();
-    await pushNotifications();
     await reapSessions();
+    await pushNotifications();
   }
 
   async function workerDigestFor(leader, messages, byId) {
@@ -1276,7 +1372,7 @@ ${details}`, {
       const { state, retention, contextPercent, lastResultTag, compactions, reuse, retirementReason, handoff, firstReportCheck } = status;
       const at = now();
       const onReceipt = idleForRelease(view) && addrs.has(row.addr) && lastResultTag &&
-        !['BLOCKED', 'UNCONFIRMED'].includes(lastResultTag) ?
+        lastResultTag !== 'UNCONFIRMED' ?
         Math.max(0, retainMs(row) - (at - workerIdleSince(view, at, retention))) : null;
       const remaining = retention.remainingMs ?? onReceipt;
       const warm = retention.keep || retention.keepWarm ? 'kept warm' :
@@ -1299,6 +1395,7 @@ ${details}`, {
     async reattach(expected) {
       await sessions.refresh(mail);
       const attached = await sessions.upgradeSessions();
+      await backfillAdoptedRetention();
       const represented = new Set(attached.map(session => session.addr));
       for (const binding of expected) {
         if (represented.has(binding.addr)) continue;
@@ -1422,7 +1519,7 @@ ${details}`, {
         return {
           layout: readLayout(project),
           accounts: accounts.read(),
-          roles, workers, delivery, gates,
+          roles, workers, releaseTimeoutCount: workers.filter(worker => worker.releaseTimedOut).length, delivery, gates,
           attention: attentionBoard(delivery, roles, workers, gates, events, roleFor),
           notifications: notificationBoard(events, roleFor),
           workerMetrics: metrics(rows),
@@ -1652,7 +1749,9 @@ ${details}`, {
             ...(row.role === 'worker' && { workerTier: storedWorkerTier(job), ...(storedHostUnconfined(job) && { unconfined: true }) }),
             ...status }] : [];
         });
-        if (command === 'status') return { sessions: [...live, ...closedWorkers], workerMetrics: metrics(rows),
+        if (command === 'status') return { sessions: [...live, ...closedWorkers],
+          releaseTimeoutCount: live.filter(row => row.retention?.releaseTimedOut).length,
+          workerMetrics: metrics(rows),
           ...(v2.enabled() && { rotationPolicy: [...new Set(rows.filter(row => row.endedAt === null).map(row => row.project))]
             .map(name => v2.snapshot(name)) }),
           memory: await sessions.sessionMemory(), exits: rows.flatMap(row => {
@@ -1690,7 +1789,12 @@ ${details}`, {
           await mail.observe(releaseConditions(mail.messages).relatedTargets(row.addr), at,
             policy.delivery?.stallMs ?? uncertainWindow ?? defaultStallMs);
           const conditions = releaseConditions(mail.messages);
-          if (conditions.pending(row.addr) || !conditions.workerResult(row, job)) {
+          const resultState = conditions.workerResultState(row, job, {
+            allowBlocked: true, allowUnconfirmed: true, at, receiptMs: workerResultReceiptMs,
+          });
+          const pending = resultState.unconfirmed || resultState.confirmed && !resultState.allReceipts ?
+            resultState.pendingWithoutResult : conditions.pending(row.addr);
+          if (pending || !(resultState.confirmed || resultState.unconfirmed)) {
             throw new CommandError('not-ready', 'Worker has pending deliveries or its final result has no native delivery receipt');
           }
           const view = await sessions.transport.inspect(sessions.targetBinding(row));

@@ -3,6 +3,7 @@ import { reportedContext } from '../cli/state.mjs';
 
 const delivered = message => Boolean(message?.received && !deliveryFailed(message));
 export const workerStallMs = 10 * 60_000;
+export const workerResultReceiptMs = workerStallMs;
 export const isReleased = job => job?.retention?.releasedAt != null;
 export const isThresholdRetirement = reason => reason === 'context-limit' || reason === 'compaction-limit';
 
@@ -52,11 +53,16 @@ export function reuseStatus(job, ended, context, limits, findings) {
 
 export function retentionStatus(job, at, ttl) {
   if (!job || !(job.row?.role === 'worker' || job.reviewDeadline || job.handoverFailure)) return;
-  const { keep, keepWarm, eligible, idleSince, releasedAt, resuming, releasedBy } = job.retention ?? {};
-  return { keep: Boolean(keep), resumable: releasedAt != null && job.row?.role === 'worker',
+  const { keep, keepWarm, eligible, idleSince, releasedAt, resuming, releasedBy,
+    resultUnconfirmedAt, releaseTimeoutAt } = job.retention ?? {};
+  const releaseTimedOut = releaseTimeoutAt != null && releasedAt == null && !job.closed;
+  return { keep: Boolean(keep), eligible: Boolean(eligible), resumable: releasedAt != null && job.row?.role === 'worker',
     idleSince: idleSince ?? null, releasedAt: releasedAt ?? null,
     ...(job.closed && { closedAt: job.closed.at, closeReason: job.closed.reason, resumable: false }),
     ...(keepWarm && { keepWarm: true }), ...(releasedBy && { releasedBy }), ...(resuming && { resuming: true }),
+    ...(resultUnconfirmedAt != null && { resultUnconfirmedAt }),
+    ...(releaseTimeoutAt != null && { releaseTimeoutAt }),
+    ...(releaseTimedOut && { releaseTimedOut: true }),
     remainingMs: !keep && !keepWarm && eligible && idleSince != null && releasedAt == null ?
       Math.max(0, ttl - (at - idleSince)) : null };
 }
@@ -160,11 +166,18 @@ function fixAfterReject(packets, attempts) {
   return result;
 }
 
-export function workerIdleSince(view, at, previous) {
+export function workerIdleSince(view, at, previous, fallbackAt) {
   const boundary = view.events?.findLast(event => event.streamId === view.streamId &&
     ['turn-end', 'compaction_ended', 'turn-start'].includes(event.type));
   if (boundary?.type === 'turn-end' || boundary?.type === 'compaction_ended') return Math.min(at, boundary.at);
-  return previous?.idleStream === view.streamId ? previous?.idleSince ?? at : at;
+  if (previous?.idleStream === view.streamId && Number.isFinite(previous?.idleSince)) return previous.idleSince;
+  if (!boundary) {
+    const legacy = view.events?.findLast(event => !event.streamId &&
+      ['turn-end', 'compaction_ended', 'turn-start'].includes(event.type));
+    if (legacy?.type === 'turn-end' || legacy?.type === 'compaction_ended') return Math.min(at, legacy.at);
+    if (Number.isFinite(fallbackAt)) return Math.min(at, fallbackAt);
+  }
+  return at;
 }
 
 function gatePackets(messages, rows) {
@@ -220,19 +233,44 @@ export function releaseConditions(messages) {
   }
   const hasReceipt = key => byResult.get(key)?.some(delivered);
   const pending = message => !message.received && !deliveryFailed(message);
-  return {
-    pending: addr => (incoming.get(addr) ?? []).some(message => !deliveryFailed(message) &&
+  const pendingFor = (addr, { ignoreResult = false } = {}) =>
+    (incoming.get(addr) ?? []).some(message => !deliveryFailed(message) &&
       (!message.received || !message.completion?.body && !message.completion?.noReply)) ||
-      (outgoing.get(addr) ?? []).some(message => pending(message) || message.expectReply && !deliveryFailed(message) &&
-        (!message.completion || message.completion.relay?.deliveryId && !delivered(byId.get(message.completion.relay.deliveryId)))) ||
-      (byResult.get(addr) ?? []).some(pending) ||
-      (incoming.get(addr) ?? []).some(message => (byResult.get(message.id) ?? []).some(pending)),
+    (outgoing.get(addr) ?? []).some(message => pending(message) || message.expectReply && !deliveryFailed(message) &&
+      (!message.completion || message.completion.relay?.deliveryId && !delivered(byId.get(message.completion.relay.deliveryId)))) ||
+    !ignoreResult && (byResult.get(addr) ?? []).some(pending) ||
+    !ignoreResult && (incoming.get(addr) ?? []).some(message => (byResult.get(message.id) ?? []).some(pending));
+  const reportAt = message => message?.completion?.at ?? message?.refusedAt ?? message?.corruption?.at ??
+    message?.received?.at ?? message?.createdAt;
+  const isSettled = message => Boolean(message && (message.completion?.body || message.completion?.noReply || deliveryFailed(message)));
+  const workerResultState = (row, job, { allowBlocked = false, allowUnconfirmed = false, at = Date.now(), receiptMs = workerResultReceiptMs } = {}) => {
+    const reports = (incoming.get(row.addr) ?? []).filter(message =>
+      message.id === job.firstId || message.batchId || message.implicitBatch);
+    const final = reports.findLast(isSettled);
+    const body = final?.completion?.body;
+    const native = Boolean(body && !final.completion.unconfirmed);
+    const blocked = native && isBlockedReply(body);
+    const settled = Boolean(final && reports.length > 0 && reports.every(isSettled));
+    const reportKey = message => (message.id === job.firstId ? row.addr : message.id);
+    const resultAt = reportAt(final);
+    const receipt = Boolean(final && hasReceipt(reportKey(final)));
+    const allReceipts = reports.length > 0 && reports.every(message => hasReceipt(reportKey(message)));
+    const earlierResolved = reports.every(message => message === final || hasReceipt(reportKey(message)) ||
+      allowUnconfirmed && Number.isFinite(reportAt(message)) && at - reportAt(message) >= receiptMs);
+    const confirmed = Boolean(settled && receipt && (allowUnconfirmed ? earlierResolved : allReceipts) &&
+      (allowUnconfirmed || native) && (allowBlocked || !blocked));
+    const stale = Boolean(settled && !receipt && Number.isFinite(resultAt) && at - resultAt >= receiptMs);
+    const markedUnconfirmed = Boolean(job.retention?.resultUnconfirmedAt != null &&
+      (job.retention.resultUnconfirmedFor == null || job.retention.resultUnconfirmedFor === final?.id));
+    const unconfirmed = Boolean(!confirmed && settled && (markedUnconfirmed || stale));
+    return { reports, final, body, native, blocked, settled, resultAt, receipt, allReceipts, confirmed, stale, unconfirmed,
+      pending: pendingFor(row.addr), pendingWithoutResult: pendingFor(row.addr, { ignoreResult: true }) };
+  };
+  return {
+    pending: pendingFor,
+    workerResultState,
     workerResult(row, job, { allowBlocked = false } = {}) {
-      const reports = (incoming.get(row.addr) ?? []).filter(message =>
-        message.id === job.firstId || message.batchId || message.implicitBatch);
-      const final = reports.findLast(message => message.completion?.body || message.completion?.noReply);
-      return Boolean(final?.completion.body && !final.completion.unconfirmed && (allowBlocked || !isBlockedReply(final.completion.body)) &&
-        reports.every(message => hasReceipt(message.id === job.firstId ? row.addr : message.id)));
+      return workerResultState(row, job, { allowBlocked }).confirmed;
     },
     workerSummaryDelivered: hasReceipt,
     relatedTargets: addr => new Set([addr, ...(outgoing.get(addr) ?? []).map(message => message.target.addr),
