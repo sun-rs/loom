@@ -1324,6 +1324,7 @@ ${details}`, {
           ...sessionFields(row), role: row.role, backend: row.backend,
           ...contextBoard(budget.context(row.addr), observations.get(row.addr)?.context),
           compactions: budget.context(row.addr)?.compactions ?? observations.get(row.addr)?.compactions,
+          ...(row.role === 'auditor' && budget.context(row.addr)?.callsPerTurn != null && { callsPerTurn: budget.context(row.addr).callsPerTurn }),
           ...(observations.get(row.addr)?.rotationDue && { rotationDue: true }),
           activityAt: observations.get(row.addr)?.activityAt ?? row.startedAt,
           awaitingUser: observations.get(row.addr)?.awaitingUser,
@@ -1357,7 +1358,7 @@ ${details}`, {
       if (command === 'senior-override') {
         const rows = sessions.rows();
         const actor = caller && rows.find(row => row.addr === caller || row.pane === caller);
-        const { command: toolCommand, retryId, reason } = args;
+        const { command: toolCommand, retryId, reason, file, lines } = args;
         const hasCommand = retryId === undefined ? validInput(toolCommand) && toolCommand.length <= 16_000 :
           toolCommand === undefined && typeof retryId === 'string' && denialIdPattern.test(retryId);
         if (!actor || !senior(actor) || actor.endedAt !== null || !sessions.jobs.has(actor.addr) || !hasCommand) {
@@ -1370,7 +1371,7 @@ ${details}`, {
           rows.some(row => row.role === 'worker' && row.project === actor.project && row.startedAt >= since &&
             (sessions.jobs.get(row.addr)?.exit?.code > 0 || ['silent-hang', 'auth-expired', 'quota-wait'].includes(progress.get(row.addr)?.health?.status))) ||
           stalledDeliveries(mail.messages, at).some(delivery => sessions.rowFor(delivery.target)?.project === actor.project);
-        const permit = authorizeSeniorTool(project, actor, { command: toolCommand, retryId, reason, workerUnavailable, since, at });
+        const permit = authorizeSeniorTool(project, actor, { command: toolCommand, retryId, reason, file, lines, workerUnavailable, since, at });
         if (permit.category) {
           const count = rows.filter(row => row.role === actor.role && row.project === actor.project).flatMap(row => seniorToolEvents(project, row.addr))
             .filter(event => event.type === 'senior-override' && event.at >= since).length;

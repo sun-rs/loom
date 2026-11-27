@@ -31,6 +31,15 @@ description: 在 Loom 中启动、指挥、复核或接手由 Super、Auditor、
 - 把耗时验收交给 Worker。门禁回复首行写 `PASS`、`APPROVE`、`REJECT` 或 `BLOCKED`。确认收到时用 `NOREPLY`。
 - 每次介入给 Leader 一条可执行的结论。常规结论排队投递，只有可复现的阻断缺陷可用 `interrupt` 否决。每轮自查验收要求是否超出目标或证据所需。门禁退回先写清同一卡或主线 ID。该范围连续退回三轮时 loomd 通知 Super 评估换班或改设计。每次签收用 `rotation-policy spot-check` 按门禁回执 ID 登记有原件依据的抽查结论，包括「抽查无误」。已核实错误可用 `rotation-policy error` 自报；首次进入加严核对，每个结论现场查原件。
 - 收到换班提示，在当前卡结算后按[交班模板](#换班与收尾)写下门禁判断和在途审查，运行 `"$LOOM_BIN" rotate --self` 并结束本轮。v2 失败后由前任继续执行并停止本阶段换班。loomd 通知 Super。
+- 允许：读写 `.project/` 下的章程、裁决、门禁、证据与笔记。
+- 允许：运行 `"$LOOM_BIN"` 命令并用管道接 `grep`/`jq`/`cut`/`head`/`tail`/`sort`/`uniq`/`tr`/`wc` 过滤输出。
+- 允许：运行只读 Git 元数据命令（`rev-parse`/`status`/`log`/`merge-base`/`branch --show-current`/`worktree list`/`diff|show|diff-tree --stat|--numstat|--shortstat|--name-only|--name-status`）。
+- 允许：定点读取单个仓库文件 ≤200 行（`Read` 带 `limit≤200`、`sed -n`/`head -n` 或 `git show <sha>:<path> | sed -n`/`head -n` ≤200 行）。
+- 禁止：运行测试、构建、脚本或内联 `node`/`python`/`for` 循环。
+- 禁止：运行 `git diff`/`git show` 补丁、`git grep` 或仓库级 `grep`/`rg`/`find`/`Glob`/`Grep`。
+- 禁止：单次读取超过 200 行，或读写项目外路径（含 `/tmp` 与 `~/.claude`）。
+- 禁止：运行 `git merge`/`rebase`/`cherry-pick`/`worktree add`，或修改 `.project/` 外的文件。
+- 禁止：循环查 `loom state` 或后台 Bash 等待。
 
 ## Leader · 执行督导
 
@@ -51,7 +60,7 @@ description: 在 Loom 中启动、指挥、复核或接手由 Super、Auditor、
 - 换领域、方向被否、R3、造假或越权时新建 Worker，修复卡附精确的 RED 复现。
 - 新 Worker 开局收到卡面约定、适用裁决和相关记忆。首报确认分支、基线 SHA、WIP 行数和裁决。核不上即停止并报 BLOCKED。
 
-Leader 和 Auditor 起草卡片时可定点读取最多 200 行。测试、构建、合入、广域读取和循环查状态优先交给 Worker。确有必要时，复制拒绝回执中的 `"$LOOM_BIN" senior-tool --retry DENY-ID --reason "具体理由"`，用一个短句说明原因。输出只保留最后 40 行。loomd 认定执行或投递故障时可省略理由，回执记录 `worker-unavailable`。查看 `loom status` 或 `loom hist` 可追溯拒绝和重试。
+Leader 和 Auditor 定点读取单个仓库文件限 200 行以内，测试、构建、合入、广域搜索和循环查状态交给 Worker。确需覆盖时，必须显式写明唯一文件与行范围（超过 200 行拒绝）：`"$LOOM_BIN" senior-tool --retry DENY-ID --file PATH --lines START-END --reason "具体理由"`。输出只保留最后 40 行。loomd 认定执行或投递故障时可省略理由，回执记录 `worker-unavailable`。查看 `loom status` 或 `loom hist` 可追溯拒绝和覆盖记录。
 
 ## Worker · 按卡施工
 

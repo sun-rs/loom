@@ -161,6 +161,9 @@ test('only Leader and Auditor get a bounded project memory block on spawn', asyn
     assert.match(memory, /charter\.md.*Require approval.*rulings\.md.*items\/fact-0\.md/s);
     assert.doesNotMatch(memory, /fact-5\.md/);
   }
+  const auditorPrompt = f.prompts.find(item => item.addr === auditor.addr).input;
+  assert.match(auditorPrompt, /Allowed actions:\n- /);
+  assert.match(auditorPrompt, /Forbidden actions:\n- /);
   assert.doesNotMatch(f.prompts.find(item => item.addr === worker.addr).input, /项目记忆|memory\/items/);
 });
 
@@ -198,13 +201,21 @@ test('senior overrides cap output, keep reasons, and permit emergency retries pa
   const cli = await cliFor(t, f, () => d, leader.addr);
   await d.tick();
   const command = '/usr/bin/seq 1 65';
-  const retry = () => cli('senior-tool', '--reason', 'inspect candidate during this exception', '--', `/usr/bin/seq  "1" '65'`);
+  writeFileSync(join(f.project, 'sample.txt'), 'line1\nline2\n');
+  const target = ['--file', 'sample.txt', '--lines', '1-65'];
+  const retry = () => cli('senior-tool', ...target, '--reason', 'inspect candidate during this exception', '--', `/usr/bin/seq  "1" '65'`);
   const requiresDenial = error => JSON.parse(error.stdout).error.code === 'senior-override-needs-denial';
   await assert.rejects(retry(), requiresDenial);
   const log = seniorToolLog(f.project, leader.addr);
-  assert.match(recordSeniorToolDenial(log, f.project, f.project, 'Bash', { command }), /带理由重试/);
+  const receipt = recordSeniorToolDenial(log, f.project, f.project, 'Bash', { command });
+  assert.equal(receipt.includes('\n'), false);
+  assert.match(receipt, /^禁止：.+；改为：.+$/);
+  await assert.rejects(cli('senior-tool', '--reason', 'inspect candidate during this exception', '--', command),
+    error => JSON.parse(error.stdout).error.code === 'invalid-arguments');
+  await assert.rejects(cli('senior-tool', '--file', 'sample.txt', '--lines', '1-201', '--reason', 'inspect candidate during this exception', '--', command),
+    error => JSON.parse(error.stdout).error.code === 'senior-override-range-exceeded');
   for (const reason of ['', 'probe', 'true', 'just checking']) {
-    await assert.rejects(cli('senior-tool', '--reason', reason, '--', command),
+    await assert.rejects(cli('senior-tool', ...target, '--reason', reason, '--', command),
       error => JSON.parse(error.stdout).error.code === 'senior-override-required');
   }
   const { stdout } = await retry();
@@ -215,16 +226,18 @@ test('senior overrides cap output, keep reasons, and permit emergency retries pa
   await d.handle('send', { target: leader.addr, mode: 'queue', text: 'HOLD for an SLA test' });
   advance = 100;
   await d.tick();
-  for (let i = 0; i < 4; i++) await cli('senior-tool', '--', `/usr/bin/seq ${i + 1} 2`);
+  for (let i = 0; i < 4; i++) await cli('senior-tool', ...target, '--', `/usr/bin/seq ${i + 1} 2`);
   const history = (await d.handle('notifications', { history: true })).notifications;
   assert.equal(history.filter(event => event.type === 'senior-override-budget').length, 1);
   const status = JSON.parse((await cli('status', '--json')).stdout);
   assert.deepEqual(status.seniorTools.map(item => [item.type, item.count]), [['senior-tool-denied', 1], ['senior-override', 5]]);
   assert.equal(status.seniorTools[1].reasons.at(-1).reason, 'worker-unavailable');
+  assert.equal(status.seniorTools[1].reasons.at(-1).file, 'sample.txt');
+  assert.equal(status.seniorTools[1].reasons.at(-1).lines, '1-65');
   f.sessions.get(leader.addr).finish('DONE');
   await d.tick();
   const nativeHistory = JSON.parse((await cli('hist', '--role', 'leader', '--json')).stdout);
-  assert.ok(nativeHistory.turns[0].seniorTools.some(event => event.reason === 'inspect candidate during this exception'));
+  assert.ok(nativeHistory.turns[0].seniorTools.some(event => event.reason === 'inspect candidate during this exception' && event.file === 'sample.txt' && event.lines === '1-65'));
 });
 
 test('senior denial receipts bind one exact command and its work directory to the issuing session and gate', async t => {
@@ -238,20 +251,31 @@ test('senior denial receipts bind one exact command and its work directory to th
   const cwd = join(f.project, 'nested');
   mkdirSync(cwd);
   writeFileSync(join(cwd, 'proof file.txt'), 'local proof\n');
+  writeFileSync(join(cwd, 'other.txt'), 'other\n');
   const command = '/bin/cat "proof file.txt" | /usr/bin/head -n 1';
   const deny = () => recordSeniorToolDenial(seniorToolLog(f.project, leader.addr), f.project, f.project, 'exec_command',
     { command: ['/bin/sh', '-lc', command], workdir: 'nested' });
   const receipt = deny();
-  const [, id, reason] = /^"\$LOOM_BIN" senior-tool --retry ([a-f0-9-]+) --reason "([^"]+)"$/m.exec(receipt);
+  assert.equal(receipt.includes('\n'), false);
+  assert.match(receipt, /^禁止：.+；改为：.+$/);
+  const [, id] = /--retry ([a-f0-9-]+)/.exec(receipt);
+  const reason = 'verify single file candidate proof line';
   assert.ok(!receipt.includes('proof file.txt'));
-  const args = { retryId: id, reason };
+  const args = { retryId: id, reason, file: 'proof file.txt', lines: '1-1' };
   await assert.rejects(d.handle('senior-override', args, auditor.addr), { code: 'senior-override-needs-denial' });
-  await assert.rejects(cli('senior-tool', '--retry', id, '--reason', 'probe'),
+  await assert.rejects(d.handle('senior-override', { retryId: id, reason }, leader.addr), { code: 'senior-override-target-required' });
+  await assert.rejects(d.handle('senior-override', { ...args, lines: '1-201' }, leader.addr), { code: 'senior-override-range-exceeded' });
+  await assert.rejects(d.handle('senior-override', { ...args, file: 'other.txt' }, leader.addr), { code: 'senior-override-target-required' });
+  await assert.rejects(cli('senior-tool', '--retry', id, '--file', 'proof file.txt', '--lines', '1-1', '--reason', 'probe'),
     error => JSON.parse(error.stdout).error.code === 'senior-override-required');
-  await assert.rejects(cli('senior-tool', '--retry', id, '--reason', reason, '--', '/bin/pwd'),
+  await assert.rejects(cli('senior-tool', '--retry', id, '--file', 'proof file.txt', '--file', 'other.txt', '--lines', '1-1', '--reason', reason),
     error => JSON.parse(error.stdout).error.code === 'invalid-arguments');
-  const results = await Promise.allSettled([cli('senior-tool', '--retry', id, '--reason', reason),
-    cli('senior-tool', '--retry', id, '--reason', reason)]);
+  await assert.rejects(cli('senior-tool', '--retry', id, '--file', 'proof file.txt', '--lines', '1-1', '--reason', reason, '--', '/bin/pwd'),
+    error => JSON.parse(error.stdout).error.code === 'invalid-arguments');
+  const results = await Promise.allSettled([
+    cli('senior-tool', '--retry', id, '--file', 'proof file.txt', '--lines', '1-1', '--reason', reason),
+    cli('senior-tool', '--retry', id, '--file', 'proof file.txt', '--lines', '1-1', '--reason', reason),
+  ]);
   assert.equal(results.filter(result => result.status === 'fulfilled').length, 1);
   assert.equal(results.find(result => result.status === 'fulfilled').value.stdout, 'local proof\n');
   assert.equal(JSON.parse(results.find(result => result.status === 'rejected').reason.stdout).error.code, 'senior-override-needs-denial');

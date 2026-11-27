@@ -57,7 +57,23 @@ const leaderWorkerGuidance = [
   'Use a fresh Worker plus an exact RED reproduction for a changed area, rejected direction, R3, fabrication or overreach.',
   'New Workers verify branch, base SHA, WIP lines and active rulings before editing. Rotate resident roles at a card boundary after the first compaction. State the dispatch choice with --reason.',
 ].join(' ');
-const seniorGuidance = 'Use .project notes and evidence. For card preparation, keep targeted source reads to 200 lines. If a heavy tool is essential after a denial, paste the denial receipt’s "$LOOM_BIN" senior-tool --retry DENY-ID --reason "short sentence" line and state why the tool is essential. Loom keeps the output tail and records the reason. When workers or delivery are unavailable, Loom can authorize the same command without a reason.';
+const auditorGuidance = [
+  'Decide the gate verdict from the packet, fixed SHA, and integration Worker evidence. Ask for the integration Worker evidence if it is missing. At phase boundaries, inspect the deterministic checks and Worker evidence, select one evidence command for a Worker to reproduce, and record review-only findings with loom audit-findings. Wake sources are user or Super messages, a gate packet or red escalation from Leader, succession supervision, and replies you explicitly requested.',
+  'Allowed actions:',
+  '- Read and write files under .project/ (charter, rulings, gates, evidence, notes, replies).',
+  '- Run "$LOOM_BIN" commands and pipe their output to grep, jq, cut, head, tail, sort, uniq, tr, or wc.',
+  '- Run read-only Git metadata commands (rev-parse, status, log, merge-base, branch --show-current/--list, worktree list, diff/show/diff-tree --stat/--numstat/--shortstat/--name-only/--name-status) and pipe to grep, cut, head, tail, or wc.',
+  '- Read at most 200 lines of one repository file via Read (limit <= 200), sed -n, head -n, or git show <sha>:<path> | sed -n / head -n (<= 200 lines).',
+  '- Use "$LOOM_BIN" senior-tool --retry DENY-ID --file PATH --lines START-END --reason "..." only when a single-file read (<= 200 lines) is strictly necessary.',
+  'Forbidden actions:',
+  '- Do not run tests, builds, scripts, or inline node, python, or shell loops.',
+  '- Do not run git diff/show patches, git grep, or repo-wide grep, rg, find, Glob, or Grep.',
+  '- Do not read more than 200 lines per file or access files outside the project (including /tmp and ~/.claude).',
+  '- Do not run git merge, rebase, cherry-pick, or worktree add.',
+  '- Do not edit or write repository files outside .project/.',
+  '- Do not poll loom state or wait on background Bash.',
+].join('\n');
+const seniorGuidance = 'Use .project notes and evidence. Keep targeted source reads to one file and 200 lines. If an override is strictly necessary after a denial, declare one file and <=200 line range with "$LOOM_BIN" senior-tool --retry DENY-ID --file PATH --lines START-END --reason "short sentence". Loom caps output and rejects ranges over 200 lines. When workers or delivery are unavailable, Loom can authorize the same command without a reason.';
 const cardConventions = row => [
   '## Loom task conventions',
   `Task ${row.task}, working directory ${row.cwd}. Follow the card’s writable scope and acceptance commands. Start with the card and skip environment exploration or searches for AGENTS.md and skills to discover Loom conventions.`,
@@ -642,9 +658,9 @@ export function ownedSessions(project, index, report, {
       }
     }
     if (row.role === 'leader' || row.role === 'auditor') {
-      const guidance = row.role === 'leader' ? leaderGuidance + ' ' + leaderWorkerGuidance :
-        'Decide the gate verdict from the packet, fixed SHA, and integration Worker evidence. Ask for the integration Worker evidence if it is missing. Delegate investigation, tests, builds, merges and integration. At phase boundaries, inspect the deterministic checks and Worker evidence. Select one evidence command for a Worker to reproduce and record review-only findings with loom audit-findings. Wake sources are user or Super messages, a gate packet or red escalation from Leader, succession supervision, and replies you explicitly requested.';
-      prompt = `## Loom role guidance\n${guidance} ${seniorGuidance} Do not wait on background Bash or poll loom state. ${unattended} If a result is overdue, run "$LOOM_BIN" status and check stalled deliveries and suppressed replies. At a rotation signal, write your judgment and in-flight card IDs to the indicated note, run "$LOOM_BIN" rotate --self, and finish the current turn. Loom starts the same profile at idle. For v2, one failed handover stops rotation for this phase and Loom informs Super. Put DONE, BLOCKED, FAILED, PASS, REJECT or APPROVE on the first line of the final conclusion, before any preamble. The handover turn starts with its exact HANDOVER-ACK. Use NOREPLY for acknowledgements.\n\n## Startup request\n${prompt}`;
+      const guidance = row.role === 'leader' ? leaderGuidance + ' ' + leaderWorkerGuidance : auditorGuidance;
+      const sep = row.role === 'leader' ? ' ' : '\n';
+      prompt = `## Loom role guidance\n${guidance}${sep}${seniorGuidance} Do not wait on background Bash or poll loom state. ${unattended} If a result is overdue, run "$LOOM_BIN" status and check stalled deliveries and suppressed replies. At a rotation signal, write your judgment and in-flight card IDs to the indicated note, run "$LOOM_BIN" rotate --self, and finish the current turn. Loom starts the same profile at idle. For v2, one failed handover stops rotation for this phase and Loom informs Super. Put DONE, BLOCKED, FAILED, PASS, REJECT or APPROVE on the first line of the final conclusion, before any preamble. The handover turn starts with its exact HANDOVER-ACK. Use NOREPLY for acknowledgements.\n\n## Startup request\n${prompt}`;
       try { prompt = await projectMemoryPrompt(project) + prompt; }
       catch (error) { report(`Project memory unavailable: ${error.message}`); }
     }

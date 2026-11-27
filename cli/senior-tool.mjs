@@ -6,8 +6,8 @@ import { projectDirectory } from './project.mjs';
 import { CommandError } from './sessions.mjs';
 
 export const seniorToolUsage = [
-  'loom senior-tool --retry DENY-ID --reason REASON [--project DIR]',
-  'loom senior-tool [--project DIR] [--reason REASON] -- "command"',
+  'loom senior-tool --retry DENY-ID --file PATH --lines START-END --reason REASON [--project DIR]',
+  'loom senior-tool --file PATH --lines START-END [--project DIR] [--reason REASON] -- "command"',
 ].join('\n');
 const tailLines = 40;
 const tailBytes = 12_000;
@@ -17,19 +17,24 @@ export async function runSeniorTool(args) {
   let values;
   try {
     ({ values } = parseArgs({ args: separator < 0 ? args : args.slice(0, separator),
-      options: { project: { type: 'string' }, reason: { type: 'string' }, retry: { type: 'string' } } }));
+      options: {
+        project: { type: 'string' }, reason: { type: 'string' }, retry: { type: 'string' },
+        file: { type: 'string', multiple: true }, lines: { type: 'string', multiple: true },
+      } }));
   } catch (error) {
     throw new CommandError('invalid-arguments', error.message);
   }
   const command = separator < 0 ? undefined : args[separator + 1];
   const retryId = values.retry;
-  if (retryId !== undefined ? separator >= 0 || !denialIdPattern.test(retryId) :
-      separator < 0 || args.length !== separator + 2 || !command?.trim()) {
+  const file = values.file?.length === 1 ? values.file[0] : undefined;
+  const lineRange = values.lines?.length === 1 ? values.lines[0] : undefined;
+  if (!file?.trim() || !lineRange?.trim() || (retryId !== undefined ? separator >= 0 || !denialIdPattern.test(retryId) :
+      separator < 0 || args.length !== separator + 2 || !command?.trim())) {
     throw new CommandError('invalid-arguments', seniorToolUsage);
   }
   const project = projectDirectory(values.project);
   const reason = values.reason ?? process.env.LOOM_SENIOR_OVERRIDE;
-  const authorized = await request(project, 'senior-override', { command, retryId, reason });
+  const authorized = await request(project, 'senior-override', { command, retryId, reason, file, lines: lineRange });
   const child = spawn('/bin/sh', ['-c', authorized.command ?? command], { cwd: authorized.cwd, stdio: ['ignore', 'pipe', 'pipe'] });
   let tail = Buffer.alloc(0);
   let clipped = false;

@@ -271,7 +271,7 @@ export async function history(sessions, reader, options) {
     const started = entry.observation?.start?.at ?? at(turn.startedAt) ?? Infinity;
     const ended = entry.observation?.end?.at ?? at(turn.endedAt) ?? Infinity;
     const seniorTools = (seniorLogs.get(session.addr) ?? []).filter(event => event.at >= started && event.at <= ended)
-      .map(({ type, category, reason, at }) => ({ type, category, reason, at }));
+      .map(({ type, category, reason, file, lines, at }) => ({ type, category, reason, ...(file && { file }), ...(lines && { lines }), at }));
     const facts = { exitCodes: exitCodes(tools), status: activity.lifecycle,
       ...(activity.openCalls && { openCalls: activity.openCalls }),
       changedFiles: git ? git.status === 'ok' ? git.files.length : null : await reader.changedFiles(entry), claims: verdict(claims) };

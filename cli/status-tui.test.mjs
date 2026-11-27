@@ -254,3 +254,29 @@ test('Status TUI highlights unconfined host workers on Board, Workers and detail
   assert.ok(item);
   assert.deepEqual(item.fields.find(([label]) => label === 'Tier'), ['Tier', 'host/unconfined']);
 });
+
+test('Status TUI displays auditor calls per turn against target <= 5 on Cost and Board views', async () => {
+  const { boardView } = await import('./status-view.mjs');
+  const over = structuredClone(board);
+  over.roles[1].callsPerTurn = 7.5;
+  over.pyramids[0].auditorCallsPerTurn = 7.5;
+  over.pyramids[0].auditorCallsPerTurnTarget = 5;
+  for (const width of [80, 120]) {
+    const costLines = boardLines(project, { board: over }, { page: 4, now, width });
+    assert.equal(costLines.every(line => widthOf(line) <= width), true);
+    assert.match(costLines.join('\n'), /Auditor calls\/turn · 7\.5 \(target ≤ 5\) · over target/);
+    const boardText = boardLines(project, { board: over }, { page: 0, now, width }).join('\n');
+    assert.match(boardText, /Calls\/turn 7\.5 \(target ≤ 5\)/);
+  }
+  const view = boardView(project, { board: over }, { page: 4, now, width: 120 });
+  const item = view.body.flatMap(line => line.items ?? []).find(entry => entry?.id === 'cost:' + project);
+  assert.deepEqual(item.fields.find(([label]) => label === 'Auditor calls/turn'), ['Auditor calls/turn', '7.5 (target ≤ 5)']);
+
+  const ok = structuredClone(board);
+  ok.roles[1].callsPerTurn = 3.2;
+  ok.pyramids[0].auditorCallsPerTurn = 3.2;
+  ok.pyramids[0].auditorCallsPerTurnTarget = 5;
+  const okCost = boardLines(project, { board: ok }, { page: 4, now, width: 120 }).join('\n');
+  assert.match(okCost, /Auditor calls\/turn · 3\.2 \(target ≤ 5\)/);
+  assert.doesNotMatch(okCost, /over target/);
+});
