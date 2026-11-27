@@ -13,3 +13,6 @@ pilot-cell 实况：host worker oar-624e4897 以 host-grant-exhausted 启动失�
 - RED：失败（任何启动前/启动时错误）的会话不得在之后自动 claim 新 grant；新 grant 只能被新的显式 spawn 使用。
 - claim 只在子进程真正启动后计入；启动失败回滚 claim。
 - 与上面第 3 条一起交付、一起测。
+
+## 追加 2（Super）：Claude headless 报 Not logged in
+pilot-cell @812270f0：`--cli claude --model sonnet --tier host` 的 headless worker（oar-15ed61b4、oar-586dbfcb）0 秒返回 `Not logged in · Please run /login`，0 工具调用。同机 Claude TUI 是已登录的。只读材料：/Users/sun/Code/loom-pilot-cell/.project/notes/decision-host-worker-cli.md 与对应 sessions/*.json。疑点：headless 启动环境里的 HOME / CLAUDE_CONFIG_DIR / 钥匙串可达性（pilot-cell 的 CELL-SCHED-1 提交曾"在所有绑定的 Claude 启动路径上剥掉 CLAUDE_SECURESTORAGE_CONFIG_DIR"，该改动尚未进 main，但请对照）。要求：找根因、写 RED、修复；不读凭据、不读钥匙串内容，只看启动参数与环境变量名。

@@ -9,4 +9,11 @@
 - GREEN 夹具覆盖三档启动 argv、缺少 `--sandbox` 时保留原授权、ACP 启动退出时释放预留，以及 loomd 重启时回收残留错误记录。替换授权由新的显式 `spawn` 使用。
 - `npm test` 全量 876 项通过。最终命名的 4 项回归、`npm run lint` 和 `git diff --check` 均通过。[全量测试输出](/tmp/loom-agy-host-final-test.RRFOqF) · [回归输出](/tmp/loom-agy-host-invariants.ABaqZz)
 
+## Claude headless 登录
+
+- 两条 pilot-cell 失败记录都是未绑账号的订阅 host 会话。`812270f0` 已包含 `18c20e50`，该提交仅在绑定账号时移除 `CLAUDE_SECURESTORAGE_CONFIG_DIR`。未绑定的 host 启动路径会把缺省的 `CLAUDE_CONFIG_DIR` 补成 `~/.claude`。OAR 0.130.1 的 `runtimes/claude/credentials.js` 记录了 macOS 上显式设置该变量会切换钥匙串命名空间。
+- RED 运行 `node --test --test-name-pattern='Claude headless host keeps' daemon/adopt-launch.test.mjs`，退出 1。原生启动夹具看到多出来的配置目录，`HOME` 和 headless 参数符合预期。[Claude RED 原始输出](/tmp/loom-claude-host-red.a8PyiY)
+- 修复保留原生启动环境中的配置目录缺省状态及显式覆盖，写入边界继续使用解析后的目录。启动回归使用真实 OAR 与本地 Claude 夹具，仅检查启动参数和环境变量，实机登录未复验。
+- `npm test` 全量 877 项通过，`npm run lint` 和 `git diff --check` 通过。[全量测试输出](/tmp/loom-claude-host-test.RSl7eV)
+
 STATUS: done

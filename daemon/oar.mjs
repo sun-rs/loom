@@ -82,6 +82,9 @@ export async function openOar(row, project, resume, beforeLaunch) {
       eventPath(project, row.addr).replace(/\.jsonl$/, '.agy.log')];
   } else if (row.cli === 'claude') {
     Object.assign(env, { OAR_CLAUDE_BIN: executable ?? nativeClaude(), CLAUDE_CODE_ENTRYPOINT: 'loom', DISABLE_AUTOUPDATER: '1' });
+    // Even an explicit ~/.claude selects a separate Keychain namespace. The
+    // resolved directory in isolated still supplies the host write boundary.
+    if (host) env.CLAUDE_CONFIG_DIR = process.env.CLAUDE_CONFIG_DIR ?? null;
     if (row.authMode === 'subscription' || claudeAuthMode(project, row.role) !== 'api-key') {
       for (const key of claudeApiEnvKeys) env[key] = null;
     }
