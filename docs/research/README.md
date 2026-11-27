@@ -34,3 +34,4 @@
 - [2026-11-27 DeepSeek / Kimi API key 余额查询](2026-11-27-apikey-balance-deepseek-kimi.md) — DeepSeek GET /user/balance、Kimi GET /v1/users/me/balance（只有金额）；Kimi Code 订阅 /coding/v1/usages（5h/7d 比例，社区资料）
 - [2026-11-27 账号用量协议 v1 草案](2026-11-27-account-usage-protocol.md) — loom.account-usage/1：windows[]+balances[]、适配器接口、被动优先合并；参考 T3/CodexBar/Orca（均 MIT）
 - [2026-11-27 cc-switch / Magpie 如何切换 Codex 账号](2026-11-27-account-switch-ccswitch-magpie.md) — 两者都经手并覆盖 auth.json（cc-switch 明文多副本，已有 refresh_token_reused 事故）；不持有 token 的替代：每账号一个 CODEX_HOME
+- [2026-11-27 智能体身份与指令遵循：他人做法](2026-11-27-agent-identity-adherence.md) — Orca 哈希版本化规则+替换声明、live block 数据非指令、格式靠代码校验、压缩后重发核心；漂移文献
