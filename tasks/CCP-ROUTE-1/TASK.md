@@ -24,3 +24,11 @@
 - loomd 里做成硬性拒绝：任何 Claude 启动请求，可执行入口不是 `/Users/sun/.local/bin/claude`（或配置指定的 CCP 入口）就直接报错 `ccp-required`，不降级、不回退原生二进制，不允许任何开关绕过（包括测试以外的环境变量覆盖）。
 - loom 启动 Claude 时不得清空或改写会影响网络出口的环境变量（HTTP(S)_PROXY、ALL_PROXY、NO_PROXY 及其小写形式、ANTHROPIC_BASE_URL）；CCP 自己设置什么就是什么。
 - 在 RESULT.md 附：修复后经 loom 启动一个测试 Claude 会话（可用一次性项目，不发模型请求或至多 1 次最小请求），用 `ps eww` 只看代理相关变量名与值、用 `lsof -nP -a -p <pid> -i` 看连接目标，证明其出网只连 127.0.0.1 上的 CCP 代理端口。
+
+## 追加 2（Super，用户要求用 resume 恢复 Auditor）
+- 已确认：代理变量由 CCP 入口自身设置（shell 配置里没有；由 Herdr 直接拉起的 CCP Claude 也带 HTTPS_PROXY=http://127.0.0.1:17891），所以只要以 `/Users/sun/.local/bin/claude` 启动，任何环境下都走 CCP 代理。
+- 需要支持：对已结束（loom stop）的 Claude 高级角色会话，经 CCP 入口以 `--resume <原 sessionId>` 重新拉起并由 loomd 重新接管（同一角色、同一项目、原会话上下文），例如 `loom spawn auditor --resume-session <sessionId>` 或等价命令。用于恢复：
+  - pilot-cell Auditor：sessionId dd8f3c43-2781-4f75-8c80-7a259c3d3137，cwd /Users/sun/Code/loom-pilot-cell
+  - pilot-2 Auditor：sessionId 296091e4-ad89-4b92-80d9-d7968f4e4a31，cwd /Users/sun/Code/loom-pilot2
+- 拉起前若可执行入口不是 CCP 入口，直接拒绝（ccp-required），绝不回退原生二进制。
+- 有测试覆盖；RESULT.md 写明恢复命令的用法。不要自己去恢复这两个会话，交付后由 Super 执行并实测。
