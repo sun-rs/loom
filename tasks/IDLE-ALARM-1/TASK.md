@@ -10,3 +10,11 @@
 4. **待决未回复**：发给 Super 的 needs-decision 超过 30 分钟未被处理（无 Super 回复/裁决记录）→ 每 30 分钟重提醒一次，直到处理；Status 页列出"待 Super 决定"及等待时长。
 5. **Status**：每个项目显示上次进展时间与停滞时长；`loom status --json` 同样字段。
 6. 测试先行（假时钟）；全量 `npm test`、`npm run lint` 通过。分支 infra/idle-alarm，工作树 /Users/sun/Code/repos/loom-idle-alarm，显式路径提交，不 commit -a，不 push。RESULT.md 以 STATUS 行收尾。不往 pilot 终端输入，不读凭据，不启动 Claude。
+
+## 追加（用户 2026-11-27）："系统里状态监控加提醒很重要，并且应该可以从 loom tui 看到这些情况，谁在转圈，谁在 idle，谁有 alert 等等。"
+7. **全局健康视图**（`loom tui --all` 首页 + 每个项目 Status 首页）：
+   - 每个项目一行：上次进展时间、停滞时长、待 Super 决定数（含最长等待时长）、告警数。
+   - 每个角色一行（Super、Leader、Auditor、每个在途 worker）：状态用统一的少数几类——工作中（转圈）、空闲、等用户/等 Super、额度等待（带重置时间）、登录失效、卡住（无进展）、阻塞（BLOCKED）、已退出；附 CLI/模型、所在卡、上次活动时间。
+   - 告警区：按严重度排序（停滞、待决超时、额度/登录、投递卡住、CCP 守卫），可展开看详情与建议动作。
+   - 颜色与图标区分状态；鼠标可点开详情（之前用户反馈过只能方向键）；文字不要挤在一起。
+8. 数据来源统一：TUI、`loom status --json`、停滞警报读同一份状态，不各自计算。
