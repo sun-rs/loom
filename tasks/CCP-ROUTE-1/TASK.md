@@ -18,3 +18,9 @@
 3. RED→GREEN 测试：Claude 启动 argv 的第一个可执行文件必须是 CCP 入口；直接用原生二进制被拒；其他 CLI 行为不变。
 4. 文档与 skill：把"拒绝 CCP"改为"Claude 必须经 CCP"，写明原因来自用户裁决。
 5. 全量 `npm test`、`npm run lint` 通过。分支 infra/ccp-route，工作树 /Users/sun/Code/repos/loom-ccp-route，显式路径提交，不 commit -a，不 push。RESULT.md 列出：改了哪些启动点、参数冲突核查结论（附你观察到的 argv）、剩余风险；以 STATUS 行收尾。
+
+## 追加（Super，用户再次强调）
+用户原话："存在 ip 暴露的 claude session 必须结束掉……为什么要绕开 ccp 的环境保护，这是当前情况下，没有搞定 cell 前，绝对禁止行为"。
+- loomd 里做成硬性拒绝：任何 Claude 启动请求，可执行入口不是 `/Users/sun/.local/bin/claude`（或配置指定的 CCP 入口）就直接报错 `ccp-required`，不降级、不回退原生二进制，不允许任何开关绕过（包括测试以外的环境变量覆盖）。
+- loom 启动 Claude 时不得清空或改写会影响网络出口的环境变量（HTTP(S)_PROXY、ALL_PROXY、NO_PROXY 及其小写形式、ANTHROPIC_BASE_URL）；CCP 自己设置什么就是什么。
+- 在 RESULT.md 附：修复后经 loom 启动一个测试 Claude 会话（可用一次性项目，不发模型请求或至多 1 次最小请求），用 `ps eww` 只看代理相关变量名与值、用 `lsof -nP -a -p <pid> -i` 看连接目标，证明其出网只连 127.0.0.1 上的 CCP 代理端口。
