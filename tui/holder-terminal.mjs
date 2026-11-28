@@ -189,11 +189,12 @@ export async function holderTerminal(binding, controller, provider, expectedPid,
       if (!Object.hasOwn(keys, key) || frame?.generation !== expectedGeneration ||
           !await write(keys[key], frame, { id })) throw stale();
     },
-    provePaste(input, expected, overlayDismissal) {
+    provePaste(input, expected, overlayDismissal, { legacyAgySegments } = {}) {
       if (frame !== expected || !binding.bookPath) return { status: 'unproven', written: null };
       return provePaste(recentWrites, input, { ...frame.cursorToken, humanInputOffset: editing, boundary: pasteBoundary, bufferSequence },
         id => readPasteReceipt(dirname(binding.bookPath), id),
-        { provider, rows: frame.size.rows, overlayDismissal: [overlayDismissal].flat().filter(Boolean).map(id => id.replaceAll('-', '')) });
+        { provider, rows: frame.size.rows, legacyAgySegments,
+          overlayDismissal: [overlayDismissal].flat().filter(Boolean).map(id => id.replaceAll('-', '')) });
     },
     async resumePaste(input, expected, resume, verify, enterId) {
       if (provider !== 'agy' || frame !== expected || !writable(frame) || !await verify(frame)) throw stale();

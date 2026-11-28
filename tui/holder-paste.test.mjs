@@ -5,6 +5,7 @@ import { setTimeout as delay } from 'node:timers/promises';
 import { matchesPastePlaceholder } from '../adapters/claude/screen.mjs';
 import { claudeNativeDigest, payloadDigest, wireText } from '../inbox/message.mjs';
 import { nativeDelivery } from '../inbox/tui.mjs';
+import { agyPasteSegments } from './agent-input.mjs';
 import { adoptionWriteId, provePaste, utf8PasteChunk, writeGuardedInput } from './holder-paste.mjs';
 import { bindTuiSession } from './index.mjs';
 import { providers } from './providers.mjs';
@@ -173,7 +174,7 @@ test('Claude digest unwraps the native paste notation and treats a truncated mar
 });
 
 test('agy proof recovers the exact suffix after completed bracketed segments and rejects a later Escape', async () => {
-  const { agyPasteSegments, submitComposer } = await import('./agent-input.mjs');
+  const { submitComposer } = await import('./agent-input.mjs');
   const { handover } = JSON.parse(readFileSync(new URL('../tasks/PILOT2-FIX-2/agy-receipts.json', import.meta.url)));
   const content = Array.from({ length: 21 }, (_, index) => ('line ' + index + ' ').padEnd(index >= 10 ? 180 : 18, 'x')).join('\n');
   const input = wireText(handover.deliveryId, content);
@@ -210,6 +211,27 @@ test('agy proof recovers the exact suffix after completed bracketed segments and
   });
   assert.equal(result.accepted, true);
   assert.deepEqual(writes, [bracket(parts[1]).subarray(partial), ...parts.slice(2).map(bracket), Buffer.from('\r')]);
+});
+
+test('agy paste keeps the captured blank lines inside bracketed segments', () => {
+  const { id, wireBody, native } = JSON.parse(readFileSync(new URL('../tasks/DLV-AGY-1/agy-receipt.json', import.meta.url)));
+  const input = wireText(id, wireBody);
+  const landed = parts => parts.map((part, index) =>
+    parts[index - 1]?.endsWith('\n') && part.startsWith('\n') ? part.slice(1) : part).join('');
+  const captured = native.content.slice('<USER_REQUEST>\n'.length).split('\n</USER_REQUEST>')[0];
+  assert.equal(landed(agyPasteSegments(input, 22, true)), captured);
+  for (const rows of [12, 22, 40]) assert.equal(landed(agyPasteSegments(input, rows)), input);
+  const view = { eventSeq: 1n, outputOffset: 101n, humanInputOffset: 0n, boundary: 0 };
+  for (const legacyAgySegments of [false, true]) {
+    const first = '\x1b[200~' + agyPasteSegments(input, 22, legacyAgySegments)[0] + '\x1b[201~';
+    const record = { id: 'first', seq: 1n, count: Buffer.byteLength(first), output: 100n, human: 0n, boundary: 0 };
+    const receipt = () => ({ digest: payloadDigest(first), count: record.count, start: 0n });
+    const options = { provider: 'agy', rows: 22, legacyAgySegments };
+    assert.deepEqual(provePaste([record], input, view, receipt, options).continuation, {
+      segment: 1, offset: 0, ...(legacyAgySegments && { legacyAgySegments: true }),
+    });
+    assert.equal(provePaste([record], input, view, receipt, { ...options, legacyAgySegments: !legacyAgySegments }).status, 'unproven');
+  }
 });
 
 test('agy urgent bypass refuses an invisible parked partial even if an old daemon released its request', async t => {

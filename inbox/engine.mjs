@@ -5,6 +5,7 @@ import { refusals } from './tui.mjs';
 import { checksDeliveryIntegrity, combinedDeliveryText, deliveryFailed, payloadDigest, replyConclusion, wireText } from './message.mjs';
 import { replyForDelivery } from './reply-file.mjs';
 import { defaultReplyBytes } from '../cli/policy.mjs';
+import { maxSkillModules } from '../lib/role-skill.mjs';
 
 export const defaultStallMs = 120_000;
 const awaitingDelivery = message => !message.received && !deliveryFailed(message);
@@ -100,7 +101,7 @@ export function inbox(project, transport, report = console.error, { replyLimit, 
   const store = openStore(project);
   const { messages, save } = store;
   const integrityScanned = new Set();
-  function legacyAgyDigests(message) {
+  function legacyAgyBatchDigests(message) {
     if (message.target.provider !== 'agy' || !message.combinedWaves?.length ||
         message.waveSeparator || message.wireBody !== undefined || message.orgAppendix) return;
     const peers = message.combinedWaves.map(id => messages.find(item => item.id === id));
@@ -116,9 +117,24 @@ export function inbox(project, transport, report = console.error, { replyLimit, 
     return peers.map((_, index) => payloadDigest(parts.slice(0, index + 1).join('\n\n') +
       '\n' + parts.slice(index + 1).join('\n\n')));
   }
+  function legacyAgySkillDigests({ wireBody, payloadFrozen, payloadDigest: expected, skillModules: names }) {
+    if (!payloadFrozen || typeof wireBody !== 'string' || !Array.isArray(names) || !names.length || names.length > maxSkillModules ||
+        payloadDigest(wireBody) !== expected) return [];
+    // The recorded module names identify appended headers at the end of the frozen input.
+    // Permit losing one LF at each of those separators while hashing every other byte.
+    const headers = [...wireBody.matchAll(/\n\n\[loom-skill:([a-z0-9-]+)\]\n/g)].slice(-names.length);
+    if (headers.length !== names.length || headers.some((header, index) => header[1] !== names[index])) return [];
+    const variants = [wireBody];
+    for (const { index } of headers.reverse()) {
+      variants.push(...variants.map(body => body.slice(0, index) + body.slice(index + 1)));
+    }
+    return variants.slice(1).map(payloadDigest);
+  }
+  const agyCompatibleDigests = message => message.target.provider === 'agy' ?
+    [...(legacyAgyBatchDigests(message) ?? []), ...legacyAgySkillDigests(message)] : [];
   const legacyCorruption = message => message.phase === 'corrupted' && message.corruption &&
     (message.target.provider === 'claude' && !message.corruption.digestVersion ||
-      legacyAgyDigests(message)?.includes(message.corruption.observed));
+      agyCompatibleDigests(message).includes(message.corruption.observed));
   const needsIntegrity = message => checksDeliveryIntegrity(message.target) && !integrityScanned.has(message.id) &&
     (legacyCorruption(message) || isDone(message) && !message.payloadVerified);
   const recovering = messages.filter(message =>
@@ -162,8 +178,8 @@ export function inbox(project, transport, report = console.error, { replyLimit, 
       message.partialWrite = { written, total, reason };
       return failRequest(message, 'holder-partial-write');
     }
-    const compatibleDigests = legacyAgyDigests(message);
-    const native = transport.nativeDelivery(compatibleDigests ? { ...message, compatibleDigests } : message, observation);
+    const compatibleDigests = agyCompatibleDigests(message);
+    const native = transport.nativeDelivery(compatibleDigests.length ? { ...message, compatibleDigests } : message, observation);
     if (complete) integrityScanned.add(message.id);
     if (!native) return;
     if (native.failed) {

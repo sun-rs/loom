@@ -350,6 +350,45 @@ test('repairs both pilot-2 agy batch receipts from the bound native step without
   }
 });
 
+test('agy verifies the captured skill separators without accepting other payload changes', async t => {
+  const { id, skillModules, wireBody, native, receivedAt: at } = JSON.parse(readFileSync(
+    new URL('../tasks/DLV-AGY-1/agy-receipt.json', import.meta.url)));
+  const sessionId = 'native';
+  const expected = payloadDigest(wireBody);
+  const observed = payloadDigest(native.content.split('\n</USER_REQUEST>')[0].slice(`<USER_REQUEST>\n[loom:${id}]\n`.length));
+  const target = { addr: 't9', provider: 'agy', tui: { transport: 'holder-v3' } };
+  const corruption = { expected, observed, at, sessionId };
+  for (const [name, phase, content, modules, accepted, agyWholeLineBreaks] of [
+    ['older holder receipt', 'sending', native.content, skillModules, true],
+    ['one separator', 'sending', native.content.replace('\n[loom-skill:gate-pack]', '\n\n[loom-skill:gate-pack]'), skillModules, true],
+    ['historical receipt', 'corrupted', native.content, skillModules, true],
+    ['unbound module quote', 'sending', native.content, [], false],
+    ['body blank line lost', 'sending', native.content.replace('\n\nLoom Workers', '\nLoom Workers'), skillModules, false],
+    ['body changed', 'sending', native.content.replace('baseline verified', 'baseline verifier'), skillModules, false],
+    ['module text truncated', 'corrupted', native.content.replace('触发条件', '触发'), skillModules, false],
+    ['new holder separator lost', 'sending', native.content, skillModules, false, true],
+  ]) await t.test(name, async t => {
+    const f = fixture(t);
+    const path = join(f.root, 'transcript_full.jsonl');
+    writeFileSync(path, JSON.stringify({ ...native, content }) + '\n');
+    const book = new Map([[id, { digest: expected, agyWholeLineBreaks, confirmation: { at, sessionId, digests: [observed] } }]]);
+    const observation = { state: 'idle', provider: 'agy', tui: target.tui, book, terminal: { cwd: f.root },
+      events: [{ hook_event_name: 'PreInvocation', invocationNum: 0, conversationId: sessionId,
+        receivedAt: at, deliveryId: id, transcriptPath: path }] };
+    const transport = { nativeDelivery, inspect: async () => observation, send: () => assert.fail('No resend') };
+    const store = inbox(f.root, transport);
+    store.enqueue({ id, target, text: 'Worker result', wireBody, payloadFrozen: true, payloadDigest: expected,
+      skillModules: modules, createdAt: at - 500, attemptAt: at - 500, mode: 'queue', requestedMode: 'queue', phase,
+      ...(phase === 'corrupted' && { issue: 'payload-mismatch', corruption }) });
+    await inbox(f.root, transport).step();
+    const verified = f.lookup(id);
+    assert.equal(verified.phase, accepted ? 'received' : 'corrupted');
+    assert.equal(verified.payloadVerified, accepted || undefined);
+    assert.equal(verified.issue, accepted ? undefined : 'payload-mismatch');
+    assert.equal(verified.received?.sessionId, accepted ? sessionId : undefined);
+  });
+});
+
 test('Claude root transcript completion of a human-submitted delivery releases its FIFO queue', async t => {
   const f = fixture(t);
   const target = f.terminal('t9', 'claude', 'idle', false);

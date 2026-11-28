@@ -18,18 +18,29 @@ const sameInput = (before, frame) => frame.humanSequence === before.humanSequenc
   frame.bufferSequence === before.bufferSequence;
 const bracket = text => AGENT_PROMPT_BRACKETED_PASTE_START + text + AGENT_PROMPT_BRACKETED_PASTE_END;
 
-export function agyPasteSegments(text, rows) {
+export function agyPasteSegments(text, rows, legacy = false) {
   // Agy 1.5.16 folds large multiline pastes into a chip. Keep each bracketed
   // segment small enough that a shorter viewport can also show some overlap.
   const limit = Math.min(10, Math.max(1, Math.floor((rows - 10) / 2)));
   const parts = [];
   let start = 0;
   let breaks = 0;
+  let lastBreakEnd = -1;
+  let runStart = 0;
+  let runBreaks = 0;
   for (const match of text.matchAll(/\r\n?|\n/g)) {
-    if (++breaks < limit) continue;
-    parts.push(text.slice(start, match.index));
-    start = match.index;
-    breaks = 0;
+    if (match.index !== lastBreakEnd) {
+      runStart = match.index;
+      runBreaks = 0;
+    }
+    runBreaks++;
+    lastBreakEnd = match.index + match[0].length;
+    // Agy can eat a newline when two adjacent line breaks land in separate pastes.
+    const boundary = legacy ? match.index : runStart;
+    if (++breaks < limit || !legacy && boundary === start) continue;
+    parts.push(text.slice(start, boundary));
+    start = boundary;
+    breaks = legacy ? 0 : runBreaks - 1;
   }
   return [...parts, text.slice(start)];
 }
@@ -40,7 +51,7 @@ async function submitAgyComposer(text, { before, read, write, valid, verify, res
   let frame = before;
   let prefix = '';
   if (before.draft !== '' && !resume) return denied('draft-unverified');
-  for (const [index, segment] of agyPasteSegments(text, before.size.rows).entries()) {
+  for (const [index, segment] of agyPasteSegments(text, before.size.rows, resume?.legacyAgySegments).entries()) {
     prefix += segment;
     if (resume && index < resume.segment) continue;
     if (performance.now() >= deadline) return denied('draft-unverified');

@@ -208,19 +208,22 @@ export function bindTuiSession(terminal, provider, {
       result.heldDraftBytes = { status: 'unknown', written: null, total: null };
       if (message && typeof message.text === 'string' && entry.digest === digestOf(message.text)) {
         const input = wireText(pending, message.text);
-        const dismissals = provider.id === 'agy' ? ['overlay-esc', 'overlay-auto-mode']
+        const agy = provider.id === 'agy';
+        const dismissals = agy ? ['overlay-esc', 'overlay-auto-mode']
           .map(key => adoptionWriteId(incarnation, pending, key)) : [];
-        const proof = terminal.provePaste(input, frame, dismissals);
+        // A parked paste must be proved against the same segment layout that wrote it.
+        const legacyAgySegments = agy && !entry.agyWholeLineBreaks;
+        const proof = terminal.provePaste(input, frame, dismissals, { legacyAgySegments });
         result.heldDraftBytes = { status: proof.written == null ? 'unknown' : proof.written === proof.total ? 'complete' : 'partial',
           written: proof.written, total: proof.total };
         if (proof.status === 'incomplete') result.heldDraftProof = 'incomplete';
         const beforePasteTurn = !entry.hostReceipt?.partialWrite && entry.hostReceipt?.accepted !== true && Number.isFinite(message.attemptAt) &&
           idleBefore(result.native, message.attemptAt) && !frame.outsideComposer?.includes(`[loom:${pending}]`);
         const expected = draftExpectation(input);
-        const agy = provider.id === 'agy';
         const continuation = proof.continuation;
         const boundaryMismatch = agy && proof.closedBracket && continuation?.offset === 0 &&
-          !verifyAgyDraft(frame, draftExpectation(agyPasteSegments(input, frame.size.rows).slice(0, continuation.segment).join('')), proof.ownsDraft);
+          !verifyAgyDraft(frame, draftExpectation(agyPasteSegments(input, frame.size.rows, legacyAgySegments)
+            .slice(0, continuation.segment).join('')), proof.ownsDraft);
         const completeDraft = agy ? verifyAgyDraft(frame, expected, proof.ownsDraft) ||
           proof.ownsDraft && proof.closedBracket && provider.screen.pastePlaceholder?.(frame.draft, input) :
           verifyDraft(frame, expected) || provider.screen.pastePlaceholder?.(frame.draft, input);
@@ -309,10 +312,10 @@ export function bindTuiSession(terminal, provider, {
       if (clearId || continuation || repaste) {
         if (clearId) {
           // Reserve the destructive step before writing so that a restart cannot clear again.
-          put(token, { ...entry, clearResend: true });
+          put(token, { ...entry, clearResend: true, agyWholeLineBreaks: true });
           hostReceipt = await terminal.resendAfterClear(input, frame, { clearId, enterId: writeId }, stillSafe);
         } else {
-          if (repaste) put(token, { ...entry, clearResend: true });
+          if (repaste) put(token, { ...entry, clearResend: true, agyWholeLineBreaks: true });
           hostReceipt = await terminal.resumePaste(input, frame, continuation, stillSafe, writeId);
         }
         if (!hostReceipt.accepted) {
@@ -423,7 +426,7 @@ export function bindTuiSession(terminal, provider, {
       }
       if (generation !== undefined && state.host.generation !== generation) return refusal('frame-changed');
       if (pending && !retry) put(pending, { ...requests.get(pending), released: true });
-      const entry = { digest, ...(retry && { nativeRetry: true }), beforeSubmit: {
+      const entry = { digest, ...(retry && { nativeRetry: true }), ...(provider.id === 'agy' && { agyWholeLineBreaks: true }), beforeSubmit: {
         humanSequence: state.host.humanSequence, sessionId: state.native.sessionId, observedAt: state.native.observedAt,
         nativeSequence: state.native.turnSequence, phase: state.native.phase,
       } };

@@ -79,8 +79,8 @@ export function readPasteReceipt(dir, id) {
     partial: bytes[32] === 5 };
 }
 
-export function provePaste(events, input, view, receipt, { provider, rows, overlayDismissal } = {}) {
-  const segments = height => (provider === 'agy' ? agyPasteSegments(input, height) : [input]).map(text =>
+export function provePaste(events, input, view, receipt, { provider, rows, overlayDismissal, legacyAgySegments } = {}) {
+  const segments = height => (provider === 'agy' ? agyPasteSegments(input, height, legacyAgySegments) : [input]).map(text =>
     Buffer.from(AGENT_PROMPT_BRACKETED_PASTE_START + text + AGENT_PROMPT_BRACKETED_PASTE_END));
   let total = segments(rows).reduce((sum, frame) => sum + frame.length, 0);
   const legacyChunk = (bytes, offset) => bytes.subarray(offset, offset + 4096);
@@ -137,7 +137,8 @@ export function provePaste(events, input, view, receipt, { provider, rows, overl
       // Agy can buffer an unfinished bracketed paste without repainting.
       if (provider === 'agy' && uninterrupted && (frames[frameIndex][cursor] & 0xc0) !== 0x80 &&
           offset > (continuationBytes ?? 0)) {
-        continuation = { segment: frameIndex, offset: cursor, ...(ownsDraft && { ownsDraft: true }) };
+        continuation = { segment: frameIndex, offset: cursor, ...(ownsDraft && { ownsDraft: true }),
+          ...(legacyAgySegments && { legacyAgySegments: true }) };
         continuationBytes = offset;
       }
     }
