@@ -1,12 +1,13 @@
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import { EventEmitter } from 'node:events';
-import { appendFile, mkdtemp, readFile, realpath, rm } from 'node:fs/promises';
+import { appendFile, mkdir, mkdtemp, readFile, realpath, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
 import { setTimeout as sleep } from 'node:timers/promises';
 import xterm from '@xterm/headless';
+import { encodeClaudeProjectPath } from '../adapters/claude/locate.mjs';
 import { inbox, receipt } from '../inbox/engine.mjs';
 import { wireText } from '../inbox/message.mjs';
 import { tui } from '../inbox/tui.mjs';
@@ -312,6 +313,67 @@ test('Claude releases an idle composer when the bound root transcript records tu
     await sleep(20);
   }
   assert.equal(state.ready, true);
+});
+
+test('hookless Claude resume delivers with the context-saving footer and blocks busy frames and dialogs', async t => {
+  const cwd = await mkdtemp(join(await realpath(tmpdir()), 'lpt-resume-'));
+  t.after(() => rm(cwd, { recursive: true, force: true }));
+  const sessionId = randomUUID();
+  const id = randomUUID();
+  const resumedAt = Date.now() - 1_000;
+  const bound = { sessionId, cwd, evidenceRoot: cwd, boundTranscript: true, requireNative: true };
+  const append = (path, type, fields, at = Date.now()) => appendFile(path,
+    JSON.stringify({ sessionId, timestamp: new Date(at).toISOString(), type, ...fields }) + '\n');
+  const bucket = configDir => join(configDir, 'projects', encodeClaudeProjectPath(cwd));
+  const configDir = join(cwd, 'resumed');
+  await mkdir(bucket(cwd), { recursive: true });
+  await mkdir(bucket(configDir), { recursive: true });
+  const oldPath = join(bucket(cwd), `${sessionId}.jsonl`);
+  const newPath = join(bucket(configDir), `${sessionId}.jsonl`);
+  const rule = '─'.repeat(74);
+  const idle = `${rule}\n❯\u00a0\n${rule}\n  ⏵⏵ bypass permissions on · install gh for PR status\n` +
+    '                                  new task? /clear to save 433.4k tokens';
+  let screen = idle;
+  let writes = 0;
+  const terminal = {
+    read: async () => ({ text: screen, draft: '', writable: true, quietForMs: 500 }),
+    async writeIf(input, _state, verify) {
+      assert.equal(await verify(await this.read()), true);
+      writes++;
+      await append(newPath, 'user', { message: { content: input } });
+      return { accepted: true, submittedAt: Date.now() };
+    },
+  };
+  const prior = { message: { content: wireText(id, 'continued work') } };
+  await append(oldPath, 'user', prior, resumedAt - 1);
+  const old = bindTuiSession(terminal, providers.claude, { ...bound, configDir: cwd });
+  assert.equal((await old.readState()).native.transcriptPath, oldPath);
+  assert.equal((await old.confirmations(id)).count, 1);
+  await append(newPath, 'user', prior, resumedAt - 1);
+  const live = bindTuiSession(terminal, providers.claude, { ...bound, configDir, resumedAt });
+  await append(oldPath, 'user', prior);
+  assert.equal((await live.readState()).native.transcriptPath, newPath);
+  assert.equal((await live.confirmations(id)).count, 0);
+
+  const submit = () => live.submit({ id, text: 'continued work', timeoutMs: 100 });
+  await append(newPath, 'user', { message: { content: 'current turn' } });
+  assert.deepEqual(await submit(), { kind: 'refused', code: 'busy' });
+  await append(newPath, 'assistant', { message: { content: 'current reply' } });
+  await append(newPath, 'system', { subtype: 'turn_duration' });
+  screen = `✻ Thinking…\n${idle}`;
+  assert.deepEqual(await submit(), { kind: 'refused', code: 'busy' });
+  screen = `${idle}\nSelect model\n❯ 1. Default\nEnter to set as default · s to use this session only · Esc to cancel`;
+  assert.deepEqual(await submit(), { kind: 'refused', code: 'picker' });
+  screen = `${idle}\nUnknown overlay footer`;
+  assert.deepEqual(await submit(), { kind: 'refused', code: 'composer-not-proven-empty' });
+  assert.equal(writes, 0);
+
+  screen = idle;
+  const sent = await submit();
+  assert.equal(sent.kind, 'confirmed', JSON.stringify(sent));
+  assert.equal(sent.confirmation.source, 'transcript');
+  assert.equal((await submit()).confirmation.count, 1);
+  assert.equal(writes, 1);
 });
 
 test('Claude idle compaction leaves the idle composer writable without creating a turn', async t => {

@@ -2992,6 +2992,46 @@ test('worker switch affects only new spawns and a quota failure keeps the select
   assert.equal(next.model, 'after');
 });
 
+test('a queued delivery to a hookless resumed Claude Auditor raises delivery and project idle alerts', async t => {
+  const minute = 60_000;
+  let at = Date.now();
+  let pane;
+  const desktop = [];
+  const f = fixture(t, { now: () => at, externalNotification: async (_, events) => desktop.push(...events), sessionOptions: {
+    async openPane(job, row) {
+      pane = { address: 't1', cwd: row.cwd, pid: 101, created_ms: at, status_ms: at,
+        state: 'live', status: { state: 'done' } };
+      return { terminal: pane, nativeId: job.resumeNativeId };
+    },
+    getPane: async () => pane,
+    async callHc(command) {
+      if (command === 'get') return pane;
+      assert.equal(command, 'read');
+      return { text: '❯', complete: true, how: 'screen' };
+    },
+  } });
+  const d = f.daemon();
+  t.after(d.shutdown);
+  const { session: auditor } = await f.spawn(d, 'auditor', 'A', undefined,
+    { cli: 'claude', mode: 'tui', 'resume-session': randomUUID(), prompt: undefined });
+  at = Date.now();
+  const { id } = await d.handle('send', { target: auditor.addr, text: 'queued work', mode: 'queue' });
+  await d.tick();
+  const health = async () => (await d.handle('status', {})).health;
+  assert.ok(!(await health()).alerts.some(alert => alert.id === id));
+  at += 2 * minute;
+  await d.tick();
+  assert.equal((await health()).alerts.find(alert => alert.id === id)?.text, 'waiting-writable');
+  assert.ok(desktop.some(event => event.type === 'delivery-stalled' && event.deliveryId === id));
+  at += 28 * minute;
+  await d.tick();
+  assert.equal((await health()).projects[0].severity, 'warning');
+  at += 90 * minute;
+  await d.tick();
+  assert.equal((await health()).projects[0].severity, 'urgent');
+  assert.ok(desktop.some(event => event.type === 'project-idle-urgent'));
+});
+
 test('overdue pilot-shaped holds reach Auditor once, are shown on worker cards, and follow the sender on its next wake', async t => {
   const pilotId = '57883071-cae2-a796-329c-d9354090c345';
   const handoverId = '5b58581e-f9a6-4b2d-bfe8-508056c06c1f';

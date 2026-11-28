@@ -372,12 +372,13 @@ export function matchesPastePlaceholder(draft, text) {
 }
 
 const COMPOSER_FOOTER = /^(?:⚠ Transcript saving is off — |[⏵⏸]+ ?(?:bypass permissions|don't ask|accept edits|plan mode|auto mode|manual mode) on\b|[?] for shortcuts|esc to interrupt|paste again to expand$)/i;
+const CONTEXT_SAVING_FOOTER = /^new task\? \/clear to save \d[\d,]*(?:\.\d+)?[km]? tokens$/i;
 
 export function hasEmptyComposer(text) {
   const rows = stripAnsiAndControl(text).split('\n').map(stripBoxEdges);
   const end = rows.findLastIndex(row => COMPOSER_RULE.test(row));
   if (end < 2 || !COMPOSER_RULE.test(rows[end - 2]) ||
-      !rows.slice(end + 1).every(row => !row || COMPOSER_FOOTER.test(row))) return false;
+      !rows.slice(end + 1).every(row => !row || COMPOSER_FOOTER.test(row) || CONTEXT_SAVING_FOOTER.test(row))) return false;
   const input = rows[end - 1];
   return input === '❯' || (/^❯ try ["'“].+["'”]$/i.test(input) &&
     rows.slice(end + 1).some(row => /\? for shortcuts$/.test(row)));
