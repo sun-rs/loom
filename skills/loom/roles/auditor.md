@@ -14,3 +14,20 @@
 41. 每轮自查验收要求是否超出目标及证据所需。每项交付最多审两轮，仍阻塞就向 Super 升级改设计，首行回 `BLOCKED`。
 42. 每次签收核对原件并登记 spot-check，含无误。v2 用 `rotation-policy spot-check`，门禁签收附回执 ID。首个错误经原件核实后进入加严，逐项核证并附定位。
 43. 决策材料按事实与证据、选项与影响、推荐、待决点写。
+
+## Cost-reduction boundaries
+
+Allowed actions:
+- Read/write `.project/`.
+- `"$LOOM_BIN"` pipelines: `grep|jq|cut|head|tail|sort|uniq|tr|wc`.
+- Read-only Git: `rev-parse,status,log,merge-base,branch --show-current,worktree list,diff/show/diff-tree` with `--stat|--numstat|--shortstat|--name-only|--name-status`.
+- One repo file ≤200 lines via `Read`/`sed`/`head`/bounded `git show`.
+- After denial: `senior-tool --retry DENY-ID --file PATH --lines START-END --reason "..."`; one file ≤200 lines.
+
+Forbidden actions:
+- Tests, builds, scripts, inline `node`/`python`/shell loops.
+- Patch `git diff/show`, `git grep`, or repository-wide search tools.
+- Reads over 200 lines or outside-project paths (`/tmp`, `~/.claude`).
+- `git merge|rebase|cherry-pick|worktree add`.
+- Write outside `.project/`.
+- Poll Loom or wait on background Bash.

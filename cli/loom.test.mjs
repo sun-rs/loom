@@ -598,3 +598,48 @@ test('cost and status check the pyramid using calls inside the rolling window', 
   assert.equal(f.run(2, 'gate', 'pack', ...args).error.code, 'invalid-arguments');
   assert.equal(f.run(1, 'gate', 'pack', 'G1', ...args).error.code, 'not-ready');
 });
+
+test('cost and status report auditor calls per turn with target <= 5', t => {
+  const f = fixture(t);
+  const now = Date.now();
+  const makeTranscript = (name, turns) => {
+    const path = join(f.cwd, `${name}.jsonl`);
+    const rows = [];
+    let t0 = now - 60_000;
+    for (const [ti, count] of turns.entries()) {
+      const id = `${name}-turn-${ti}`;
+      rows.push({ type: 'event_msg', timestamp: new Date(t0).toISOString(), payload: { type: 'task_started', turn_id: id } });
+      for (let c = 0; c < count; c++) {
+        t0 += 500;
+        rows.push({ type: 'token_usage_record', timestamp: new Date(t0).toISOString(),
+          payload: { response_id: `${id}-c${c}`, usage: { input_tokens: 100, output_tokens: 10 } } });
+      }
+      t0 += 500;
+      rows.push({ type: 'event_msg', timestamp: new Date(t0).toISOString(), payload: { type: 'task_complete', turn_id: id, last_agent_message: 'PASS' } });
+      t0 += 500;
+    }
+    writeFileSync(path, rows.map(row => JSON.stringify(row)).join('\n') + '\n');
+    return path;
+  };
+  const args = ['--project', f.cwd];
+  // No auditor turns yet -> null
+  const emptyCost = f.run(0, 'cost', ...args);
+  assert.equal(emptyCost.auditorCallsPerTurn, null);
+  assert.equal(emptyCost.auditorCallsPerTurnTarget, 5);
+
+  // Auditor with 2 turns: 8 calls + 6 calls = 14 calls / 2 turns = 7.0 (over target 5)
+  f.register('auditor-1', { role: 'auditor', transcriptPath: makeTranscript('auditor', [8, 6]) });
+  const cost = f.run(0, 'cost', ...args);
+  assert.equal(cost.auditorCallsPerTurn, 7);
+  assert.equal(cost.auditorCallsPerTurnTarget, 5);
+  assert.equal(cost.pyramid.auditorCallsPerTurn, 7);
+  assert.equal(cost.pyramid.auditorCallsPerTurnTarget, 5);
+
+  const statusJson = f.run(0, 'status', ...args, '--json');
+  assert.equal(statusJson.cost.auditorCallsPerTurn, 7);
+  assert.equal(statusJson.cost.auditorCallsPerTurnTarget, 5);
+  assert.equal(statusJson.cost.pyramid.auditorCallsPerTurn, 7);
+
+  const statusText = f.cli('status', ...args).stdout;
+  assert.match(statusText, /Auditor calls\/turn · 7\.0 \(target ≤ 5\) · over target/);
+});

@@ -1,8 +1,8 @@
 import { basename } from 'node:path';
 import { attentionBoard, newestNoticeFirst, routineSuperReceipt } from '../daemon/status-board.mjs';
-import { pyramidSampleReady } from './cost.mjs';
+import { auditorCallsPerTurnTarget, pyramidSampleReady } from './cost.mjs';
 import { accountRows, duration } from './status-accounts.mjs';
-import { memoryLabel, workerMetricsLabel } from './status.mjs';
+import { auditorCallsPerTurnLabel, memoryLabel, workerMetricsLabel } from './status.mjs';
 import { box, columns, inside, meter, pad, row, safe, table, theme, truncate, widthOf, wrap } from './status-layout.mjs';
 
 export const pages = ['Board', 'Workers', 'Gates', 'Notices', 'Cost'];
@@ -111,13 +111,18 @@ export function boardView(project, { board, error, offlineAccounts } = {}, { wid
         ['Transcript path', role.transcriptPath], ['Context input tokens', role.contextTokens],
         ['Model window', role.contextWindow != null && role.contextWindow > 0 ?
           (role.contextEstimated ? '≈' : '') + tokenCount.format(role.contextWindow) + ' tokens' : undefined],
+        ['Auditor calls/turn', kind === 'auditor' && Number.isFinite(role.callsPerTurn) ?
+          `${role.callsPerTurn.toFixed(1)} (target ≤ ${auditorCallsPerTurnTarget})` : undefined],
       ]);
       let ctx = '—';
       if (Number.isFinite(role.contextPercent)) ctx = `${role.contextEstimated ? '≈' : ''}${Math.round(role.contextPercent)}%`;
       else if (Number.isFinite(role.contextTokens)) ctx = `${tokenCount.format(role.contextTokens)} tokens`;
       const context = clickLine(`Context ${ctx} · activity ${age(role.activityAt, now)} · ${shortAddress(role.addr)}`, item);
+      const callsLine = kind === 'auditor' && Number.isFinite(role.callsPerTurn) ? [row(paint(
+        role.callsPerTurn > auditorCallsPerTurnTarget ? 'warn' : 'good',
+        `Calls/turn ${role.callsPerTurn.toFixed(1)} (target ≤ ${auditorCallsPerTurnTarget})`))] : [];
       return [row(marker(item, [show(role.cli), role.model && show(role.model)].filter(Boolean).join('·')) +
-        '  ' + badge(role.state, paint), item), context,
+        '  ' + badge(role.state, paint), item), context, ...callsLine,
       ...(role.rotationDue ? [row(paint('warn', 'Rotate at card boundary'))] : []),
       ...(role.awaitingHandover ? [row(paint('warn', 'Awaiting handover'))] : [])];
     });
@@ -278,8 +283,15 @@ export function boardView(project, { board, error, offlineAccounts } = {}, { wid
       });
       const peak = Math.max(1, ...totals.map(total => total.rawTokens ?? 0));
       const size = Math.max(3, Math.min(20, inside(w) - 12 - Math.max(...totals.map(total => widthOf(total.caption)))));
+      const hasAuditorCalls = Object.hasOwn(pyramid, 'auditorCallsPerTurn');
+      const target = pyramid.auditorCallsPerTurnTarget ?? auditorCallsPerTurnTarget;
+      const callsValue = pyramid.auditorCallsPerTurn;
+      const callsDetail = hasAuditorCalls ?
+        (Number.isFinite(callsValue) ? `${callsValue.toFixed(1)} (target ≤ ${target})` : `— (target ≤ ${target})`) : undefined;
+      const callsTone = !Number.isFinite(callsValue) ? 'muted' : callsValue > target ? 'warn' : 'good';
       const item = itemFor('cost:' + pyramid.project, 'Cost pyramid · ' + show(pyramid.project), [
         ['Window', '1 hour'], ['State', label],
+        ['Auditor calls/turn', callsDetail],
         ['Sampled at', pyramid.sampledAt == null ? undefined : new Date(pyramid.sampledAt).toISOString()],
         ['Inversions', ready ? pyramid.inversions?.map(({ higher, lower, metric }) =>
           `${higher} > ${lower} (${metric})`).join('\n') : undefined],
@@ -287,7 +299,8 @@ export function boardView(project, { board, error, offlineAccounts } = {}, { wid
       return [row(marker(item, (pyramids.length > 1 ? safe(basename(pyramid.project)) + ' · ' : '') +
         paint(ready ? label === 'inverted' ? 'warn' : 'good' : 'muted', label)), item),
       ...totals.map(({ role, rawTokens, caption }) => row(pad(role, 7) + ' ' +
-        meter(100 * (rawTokens ?? 0) / peak, size, paint) + '  ' + caption))];
+        meter(100 * (rawTokens ?? 0) / peak, size, paint) + '  ' + caption)),
+      ...(hasAuditorCalls ? [row(paint(callsTone, 'Auditor calls/turn · ' + auditorCallsPerTurnLabel(callsValue, target)))] : [])];
     });
     for (const entry of memory ?? []) {
       lines.push(row([(memory.length > 1 ? safe(basename(entry.project)) : 'Session memory'), memoryLabel(entry)].join(' · ')));

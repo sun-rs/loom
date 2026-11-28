@@ -59,7 +59,11 @@ export function roleBudget(project, { now, sessions, notifications, batchDeliver
     const context = sessionContext(row, { items, raw: raw.map(item => item.row) }, {
       snapshot: { ...snapshot, contextUsage: snapshot?.contextUsage ?? sessions.runtimeContext(row.addr) }, events: rootEvents(row, sessions.events(row.addr)), statusline: artifacts.context(row.addr),
     });
-    return { ...context, turns: items.filter(({ turn }) => timestamp(turn.startedAt) >= row.startedAt).length };
+    const sessionItems = items.filter(({ turn }) => timestamp(turn.startedAt) >= row.startedAt);
+    const measured = sessionItems.filter(({ turn }) => turn.usage?.calls > 0);
+    const callsPerTurn = row.role === 'auditor' && measured.length ?
+      measured.reduce((sum, { turn }) => sum + turn.usage.calls, 0) / measured.length : null;
+    return { ...context, turns: sessionItems.length, ...(callsPerTurn != null && { callsPerTurn }) };
   }
 
   async function assessRotation(name, row, reader, gateBoundaryEvent, policy, at, safe) {

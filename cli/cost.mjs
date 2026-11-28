@@ -28,6 +28,7 @@ const emptyUsage = () => ({
 });
 const emptyRole = () => ({ sessions: 0, turns: 0, turnsWithUsage: 0, ...emptyUsage(), estimatedCostUsd: 0 });
 export const pyramidWindowMs = 60 * 60_000;
+export const auditorCallsPerTurnTarget = 5;
 const minimumPyramidCalls = 3;
 export const pyramidSampleReady = sample => ['auditor', 'leader', 'worker']
   .every(role => sample?.byRole?.[role]?.modelCalls >= minimumPyramidCalls);
@@ -56,7 +57,7 @@ function inWindow(turn, since, until) {
   return within(turnTime) ? [turn.usage] : [];
 }
 
-function pyramid(byRole, since, until) {
+function pyramid(byRole, since, until, windowTurns = {}) {
   const inversions = [];
   for (const metric of ['modelCalls', 'rawTokens']) {
     for (const [higher, lower] of [['auditor', 'leader'], ['leader', 'worker']]) {
@@ -66,7 +67,10 @@ function pyramid(byRole, since, until) {
     }
   }
   const observed = ['auditor', 'leader', 'worker'].some(role => byRole[role].modelCalls > 0);
+  const auditorTurns = windowTurns.auditor ?? 0;
   return { since, until, windowMs: until - since, byRole, inversions,
+    auditorCallsPerTurn: auditorTurns ? byRole.auditor.modelCalls / auditorTurns : null,
+    auditorCallsPerTurnTarget,
     state: inversions.length ? 'inverted' : observed ? 'balanced' : 'unobserved' };
 }
 
@@ -133,6 +137,7 @@ export function projectCost(directory, sessions, { includeAcceptance = true, now
     .map(([cli, defaults]) => [cli, { ...defaults, ...overrides[cli] }]));
   const byRole = Object.fromEntries([...roles, 'unassigned'].map(role => [role, emptyRole()]));
   const rolling = Object.fromEntries(Object.keys(byRole).map(role => [role, emptyUsage()]));
+  const windowTurns = Object.fromEntries(Object.keys(byRole).map(role => [role, 0]));
   const since = now - pyramidWindowMs;
   const workerTurns = [];
   const missing = [];
@@ -171,7 +176,11 @@ export function projectCost(directory, sessions, { includeAcceptance = true, now
       if (usage?.calls > 0) {
         role.turnsWithUsage++;
         addUsage(role, usage, session.cli, prices[session.cli]);
-        for (const call of inWindow(item.turn, since, now)) addUsage(rolling[name], call, session.cli);
+        const recentCalls = inWindow(item.turn, since, now);
+        if (recentCalls.length) {
+          windowTurns[name]++;
+          for (const call of recentCalls) addUsage(rolling[name], call, session.cli);
+        }
       }
       if (includeAcceptance && session.role === 'worker') {
         workerTurns.push({ addr: session.addr, task: session.task, turn: item.index,
@@ -185,6 +194,8 @@ export function projectCost(directory, sessions, { includeAcceptance = true, now
   for (const totals of Object.values(byRole)) {
     totals.estimatedCostShare = estimatedCostUsd ? totals.estimatedCostUsd / estimatedCostUsd : null;
   }
+  const auditorCallsPerTurn = byRole.auditor.turnsWithUsage ?
+    byRole.auditor.modelCalls / byRole.auditor.turnsWithUsage : null;
   const memoryExtractor = extractorMetrics(directory, now);
   const factMiss = Object.values(readOrg(directory).notices)
     .filter(notice => notice.type === 'fact-miss').reduce((sum, notice) => sum + (notice.count ?? 0), 0);
@@ -204,7 +215,8 @@ export function projectCost(directory, sessions, { includeAcceptance = true, now
   diagnostics: memoryExtractor.diagnostics, indexSubstantiveRatio };
   return { byRole, rawTokens, memoryExtractor, memoryPilot, workerShare: rawTokens ? byRole.worker.rawTokens / rawTokens : null,
     estimatedCostUsd, estimatedWorkerShare: byRole.worker.estimatedCostShare,
+    auditorCallsPerTurn, auditorCallsPerTurnTarget,
     pricing: { estimate: true, unit: 'USD per million tokens', prices },
-    leaderWakes, workerTurns, missing, pyramid: pyramid(rolling, since, now),
+    leaderWakes, workerTurns, missing, pyramid: pyramid(rolling, since, now, windowTurns),
     ...(includeAcceptance && { rotationBriefings: rotationBriefings(directory, sessions, reader) }) };
 }

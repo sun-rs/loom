@@ -3,8 +3,8 @@ import { join } from 'node:path';
 import { inDirectory, runtimeDirectory } from '../cli/project.mjs';
 import { toolGuardEnabled } from '../cli/policy.mjs';
 import { jsonRows, readText } from './io.mjs';
-import { appendSeniorToolEvent, rotationToolDenial, seniorShellCategory } from '../lib/senior-tool-guard.mjs';
-import { legacySeniorCommandKey, seniorCommandKey, seniorOverrideReason } from '../lib/senior-command.mjs';
+import { appendSeniorToolEvent, overrideCommandTargets, rotationToolDenial, seniorShellCategory } from '../lib/senior-tool-guard.mjs';
+import { legacySeniorCommandKey, parseOverrideFile, parseOverrideLines, seniorCommandKey, seniorOverrideReason } from '../lib/senior-command.mjs';
 import { CommandError } from '../cli/sessions.mjs';
 
 export const seniorToolLog = (project, addr) => join(runtimeDirectory(project), 'sessions', `${addr}.tool-guard.jsonl`);
@@ -24,12 +24,14 @@ export function seniorToolSummary(project, rows) {
       type, role: row.role, addr: row.addr, count: items.length, at: items.at(-1).at,
       categories: Object.fromEntries(Object.entries(Object.groupBy(items, event => event.category))
         .map(([category, entries]) => [category, entries.length])),
-      ...(type === 'senior-override' && { reasons: items.slice(-6).map(({ reason, category, at }) => ({ reason, category, at })) }),
+      ...(type === 'senior-override' && { reasons: items.slice(-6).map(({ reason, category, file, lines, at }) => ({
+        reason, category, ...(file && { file }), ...(lines && { lines }), at,
+      })) }),
     }));
   });
 }
 
-export function authorizeSeniorTool(project, row, { command, retryId, reason, workerUnavailable, since, at }) {
+export function authorizeSeniorTool(project, row, { command, retryId, reason, file, lines, workerUnavailable, since, at }) {
   const reasonText = seniorOverrideReason(reason);
   if (reason !== undefined && !reasonText) {
     throw new CommandError('senior-override-required', 'Explain why you need this command in a short sentence.');
@@ -58,12 +60,29 @@ export function authorizeSeniorTool(project, row, { command, retryId, reason, wo
       throw new CommandError('senior-override-needs-denial', 'The denial work directory changed. Retry the original tool to get a fresh receipt.');
     }
   }
+  const targetFile = parseOverrideFile(project, cwd, file);
+  if (!targetFile.ok) throw new CommandError(targetFile.code, targetFile.message);
+  const targetLines = parseOverrideLines(lines);
+  if (!targetLines.ok) throw new CommandError(targetLines.code, targetLines.message);
   const rotation = rotationToolDenial(log, project, cwd, 'Bash', { command });
   if (rotation) throw new CommandError('permission-denied', rotation);
   const category = seniorShellCategory(command, cwd, project);
-  if (!category && !retryId) return { cwd, command };
+  if (!category && !retryId) return { cwd, command, file: targetFile.relative, lines: targetLines.range, lineCount: targetLines.count };
   if (category !== previous?.category && retryId) {
     throw new CommandError('senior-override-needs-denial', 'The denial no longer matches this command. Get a fresh denial to retry it.');
+  }
+  const inspected = overrideCommandTargets(command, cwd, project);
+  if (inspected.exceedsLimit) {
+    throw new CommandError('senior-override-range-exceeded', 'Command requests more than 200 lines.');
+  }
+  if (inspected.files.length > 1) {
+    throw new CommandError('senior-override-target-required', 'Override may target only one unique file.');
+  }
+  if (inspected.files.length === 1) {
+    const cmdFile = parseOverrideFile(project, cwd, inspected.files[0]);
+    if (!cmdFile.ok || cmdFile.relative !== targetFile.relative) {
+      throw new CommandError('senior-override-target-required', 'Command target file must match --file.');
+    }
   }
   if (!workerUnavailable && !reasonText) {
     throw new CommandError('senior-override-required', 'Provide a short sentence with --reason to retry the denied tool.');
@@ -73,6 +92,7 @@ export function authorizeSeniorTool(project, row, { command, retryId, reason, wo
   }
   const writtenReason = workerUnavailable && !reasonText ? 'worker-unavailable' : reasonText;
   appendSeniorToolEvent(log, { at, type: 'senior-override', category, reason: writtenReason,
+    file: targetFile.relative, lines: targetLines.range, lineCount: targetLines.count,
     ...(previous && { denyId: previous.denyId, denialAt: previous.at, denialKey: previous.key }) });
-  return { cwd, command, category, reason: writtenReason };
+  return { cwd, command, category, reason: writtenReason, file: targetFile.relative, lines: targetLines.range, lineCount: targetLines.count };
 }

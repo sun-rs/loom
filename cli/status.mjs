@@ -1,7 +1,7 @@
 import { spawnSync } from 'node:child_process';
 import { basename } from 'node:path';
 import { readArtifacts } from './artifacts.mjs';
-import { projectCost } from './cost.mjs';
+import { auditorCallsPerTurnTarget, projectCost } from './cost.mjs';
 import { request, daemonAbsent } from '../daemon/rpc.mjs';
 import { activeOrgNotices, readOrg, workerCardFindings } from '../daemon/org.mjs';
 import { summarizeAuditFindings } from '../daemon/audit-findings.mjs';
@@ -33,6 +33,11 @@ export async function sessionMemory(project) {
 export function memoryLabel({ rssKiB, unavailableSessions }) {
   return `${rssKiB == null ? 'unavailable' : (rssKiB / 1024).toFixed(1) + ' MiB RSS'}` +
     (unavailableSessions ? ` · ${unavailableSessions} unmeasured` : '');
+}
+
+export function auditorCallsPerTurnLabel(value, target = auditorCallsPerTurnTarget) {
+  if (!Number.isFinite(value)) return `— (target ≤ ${target})`;
+  return `${value.toFixed(1)} (target ≤ ${target})` + (value > target ? ' · over target' : '');
 }
 
 export const workerMetricsLabel = ({ gate, newSpawns, revives, coldRevives, coldRevivesMeasured, coldReviveTokens,
@@ -173,7 +178,7 @@ export async function projectStatus(project, { now = Date.now() } = {}) {
   const merges = [...new Map([...history, ...verified].filter(merge => merge.sha).map(merge => [merge.sha, merge])).values()]
     .sort((a, b) => b.at - a.at).slice(0, 5);
   const reader = historyReader(project);
-  const { byRole, rawTokens, missing, pyramid, memoryExtractor, memoryPilot } =
+  const { byRole, rawTokens, missing, pyramid, memoryExtractor, memoryPilot, auditorCallsPerTurn, auditorCallsPerTurnTarget: target } =
     projectCost(project, rows, { includeAcceptance: false, now, reader });
   const activeAddresses = new Set(rows.filter(row => row.endedAt === null).map(row => row.addr));
   const rotationNotices = notifications.filter(event => event.type === 'leader-handover-failed' ||
@@ -254,7 +259,7 @@ export async function projectStatus(project, { now = Date.now() } = {}) {
     blocked, notices, auditFindings, merges, ...(rotationPolicy && { rotationPolicy }), rotations: rotationDetails, rotationsToday, seniorSessions, rotationNotices, seniorTools, memoryExtractor, memoryPilot, routing: { filtered },
     memory: memory ?? null, workerMetrics: metrics ?? workerMetrics(rows, addr => jobs.get(addr), artifacts.journal, messages),
     cost: { rawTokens, byRole: Object.fromEntries(Object.entries(byRole).map(([role, value]) => [role, value.rawTokens])),
-      usageByRole: byRole, pyramid, missingSessions: missing.length },
+      usageByRole: byRole, auditorCallsPerTurn, auditorCallsPerTurnTarget: target, pyramid, missingSessions: missing.length },
   };
 }
 
@@ -357,5 +362,6 @@ export function printStatus(result) {
     console.log(`  ${role} · ${usage.modelCalls} calls · ${usage.rawTokens} raw (${share}) · ${usage.freshInputTokens} fresh input · ${usage.outputTokens} output`);
   }
   const { state, inversions } = result.cost.pyramid;
+  console.log('Auditor calls/turn · ' + auditorCallsPerTurnLabel(result.cost.auditorCallsPerTurn, result.cost.auditorCallsPerTurnTarget));
   console.log('Pyramid (1h) · ' + state + inversions.map(item => ` · ${item.higher} > ${item.lower} (${item.metric})`).join(''));
 }
