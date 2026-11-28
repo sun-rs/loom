@@ -36,3 +36,4 @@
 - [2026-11-27 cc-switch / Magpie 如何切换 Codex 账号](2026-11-27-account-switch-ccswitch-magpie.md) — 两者都经手并覆盖 auth.json（cc-switch 明文多副本，已有 refresh_token_reused 事故）；不持有 token 的替代：每账号一个 CODEX_HOME
 - [2026-11-27 智能体身份与指令遵循：他人做法](2026-11-27-agent-identity-adherence.md) — Orca 哈希版本化规则+替换声明、live block 数据非指令、格式靠代码校验、压缩后重发核心；漂移文献
 - [2026-11-27 三层换班与重启恢复设计 v2](2026-11-27-lifecycle-design-v2.md) — 综合 t17g/t17w/t4c：别名地址+收件箱屏障+单实例锁+首轮机器题；Super 交接拆裁决账本/机器实况/工作台；恢复中冻结、链式核对
+- [2026-11-27 agy 多账号与令牌存储：外部做法](2026-11-27-agy-accounts-external.md) — AGY_CLI_FORCE_FILE_TOKEN_STORAGE=1 + 每账号 GEMINI_HOME（t3code 做法）；agy-swap/agy-auth 等拷贝类工具；CodexBar 直调额度端点不稳
