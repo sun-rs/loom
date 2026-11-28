@@ -19,7 +19,7 @@
    Claude 的 Stop 如果带着未结束的后台任务，一律视为未确认。
 2. **格式解析只在可靠终止时进行。** 违规时保留原件和机器原因，阻止状态结案和 gate 流转。不发自动纠正消息。
 3. **窄取证入口。** 这些入口要覆盖 Auditor 读文件、搜索被拒的大头：
-   - `loom evidence show <卡> [--log tail]`
+   - `loom status --card <卡> [--evidence] [--log tail]`
    - gate 包内容
    - 候选 SHA 相对基线的 diff --stat，以及指定文件的 diff
    - 卡的验收命令和最后一次执行结果
@@ -32,3 +32,8 @@
 - 用两个 pilot 的历史拒绝样本回放：误拒率下降，受保护操作的违规执行为 0。
 - 固定 Node 26，全量测试 0 fail、0 cancelled、0 skipped。
 - 每条消息不得增加模型请求。
+
+## 命令面约束（用户 2026-11-28）
+"能合并进 loom status 的就合并，别搞太多的 loom xxxx，最后用户记不住，高级角色调用聊天也乱；可以通过 -- 参数区分内容。"
+- 本卡**不得新增顶层子命令**。查询类能力一律作为 `loom status` 的参数，例如 `--tui`、`--todo`、`--card`、`--json`、`--project`、`--owner`、`--overdue`。
+- 旧命令保留为兼容别名，帮助里标注"已并入 `loom status --…`"。
