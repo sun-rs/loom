@@ -39,3 +39,4 @@
 - [2026-11-27 agy 多账号与令牌存储：外部做法](2026-11-27-agy-accounts-external.md) — AGY_CLI_FORCE_FILE_TOKEN_STORAGE=1 + 每账号 GEMINI_HOME（t3code 做法）；agy-swap/agy-auth 等拷贝类工具；CodexBar 直调额度端点不稳
 - [2026-11-27 agy 切号工具 agy-auth / agy-swap 源码分析](2026-11-27-agy-switch-tools.md) — 登录按 OS 用户全局；隔离要换 HOME + keyring-unavailable 标记 + 强制文件存储；用量走 loadCodeAssist/retrieveUserQuotaSummary
 - [2026-11-28 统一待办与环节时限提醒（OA 式）](2026-11-28-todo-sla-unified.md)
+- [2026-11-28 角色遵循深入研究与设计选项](2026-11-28-skill-adherence-deep.md)
