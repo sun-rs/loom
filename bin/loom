@@ -1,3 +1,7 @@
-#!/usr/bin/env node
+#!/bin/sh
+':' //; entry=$(/usr/bin/readlink -f "$0"); exec "${entry%/*}/loom-node" "$entry" "$@"
+import { enterPinnedNode } from '../lib/node-runtime.mjs';
+
+enterPinnedNode();
 const { main } = await import('../cli/loom.mjs');
 process.exitCode = await main(process.argv.slice(2));

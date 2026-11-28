@@ -10,6 +10,7 @@ import { projectDirectory, projectReceipt } from './project.mjs';
 import { providers } from './policy.mjs';
 import { daemonAbsent, request } from '../daemon/rpc.mjs';
 import { activeRelease } from '../daemon/release.mjs';
+import { releaseNode } from '../lib/node-runtime.mjs';
 import { roles } from '../index/index.mjs';
 import { messageIdPattern } from '../inbox/message.mjs';
 import { hostGrantSpec, requestedWorkerTier } from '../lib/worker-tiers.mjs';
@@ -43,7 +44,8 @@ export async function startDaemon(project, fallback) {
   let child;
   try {
     const active = activeRelease(project)?.current ?? fallback;
-    child = spawn(process.execPath, [active ? join(active.root, 'bin', 'loomd') : executable, '--project', project], {
+    const node = active ? releaseNode(active.root, active.nodeRuntime) : process.execPath;
+    child = spawn(node, [active ? join(active.root, 'bin', 'loomd') : executable, '--project', project], {
       cwd: project, detached: true, stdio: ['ignore', log, log],
       ...(active && { env: { ...process.env, LOOM_RELEASE_ID: active.id } }),
     });
@@ -130,7 +132,11 @@ export async function control(command, args) {
   if (action === 'status') return { ...await status(project), ...projectReceipt(project) };
   if (action === 'start' && values.foreground) {
     const active = activeRelease(project)?.current;
-    if (active) process.env.LOOM_RELEASE_ID = active.id;
+    if (active) {
+      process.env.LOOM_RELEASE_ID = active.id;
+      const node = releaseNode(active.root, active.nodeRuntime);
+      if (node !== process.execPath) process.execve(node, [node, join(active.root, 'bin', 'loomd'), '--project', project], process.env);
+    }
     const entry = active ? pathToFileURL(join(active.root, 'daemon', 'main.mjs')) : new URL('../daemon/main.mjs', import.meta.url);
     await (await import(entry)).main(['--project', project]);
     return;

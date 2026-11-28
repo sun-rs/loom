@@ -3,7 +3,7 @@
 Watcher 从 loom 索引筛选活跃 TUI 会话，用 `hc get` 核对窗格存活，用 `hc read --lines 0` 和各 CLI 适配器分类可见帧。轮次依据来自观察型 hook。巡检只调用本地工具，定时续作通过 loom 的 `queue` 接管。
 
 ```sh
-node watch/cli.mjs --index-db /path/to/index.sqlite \
+./bin/loom-node watch/cli.mjs --index-db /path/to/index.sqlite \
   --events /path/to/watch.jsonl \
   --hooks-dir /path/to/project/.project/relay/events \
   --project /path/to/project
@@ -24,5 +24,5 @@ node watch/cli.mjs --index-db /path/to/index.sqlite \
 loomd 可以直接调用 `createWatcher({ listSessions, readHooks, eventFile, trustedCwds, superAddr, enqueue })`。`listSessions()` 返回索引记录数组，`readHooks(session)` 返回该窗格截至本次采样的 hook 记录。`enqueue` 接收 `{addr, cwd, project, mode, message, resetAt, eventId}`，默认调用本工作区的 `bin/loom`。按项目组织的队列可以指定 `--project`，缺省从会话工作目录定位。每个事件文件由一个 watcher 实例持有，同一实例的并发 `poll()` 共用一次采样。
 
 ```sh
-node --test watch/watch.test.mjs
+./bin/loom-node test-support/run.mjs watch/watch.test.mjs
 ```

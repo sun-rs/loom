@@ -9,7 +9,8 @@ import { promisify } from 'node:util';
 import { runtimeDirectory } from '../cli/project.mjs';
 import { CommandError } from '../cli/sessions.mjs';
 import { hostProtocol, hostProtocols } from './host-control.mjs';
-import { activeRelease, activeReleaseFile, releaseDigest, releaseRoot, upgradeFile, upgradeState } from './release.mjs';
+import { activeRelease, activeReleaseFile, installManagedCli, releaseDigest, releaseRoot, upgradeFile, upgradeState } from './release.mjs';
+import { nodeVersion, releaseNode, runningNode } from '../lib/node-runtime.mjs';
 import { readText, writeState } from './io.mjs';
 import { daemonAbsent, request } from './rpc.mjs';
 import { hostUUID, readJSON } from './host-control.mjs';
@@ -22,7 +23,7 @@ const exec = promisify(execFile);
 export const daemonProtocol = 1;
 export const storageVersions = [0, 1, 2];
 
-export async function selfCheck() {
+export async function selfCheck(legacyNode) {
   const { roleCore, skillModuleNames, skillModules, skillRoles } = await import('../lib/role-skill.mjs');
   for (const role of skillRoles) roleCore(role);
   for (const module of skillModuleNames) skillModules([module]);
@@ -42,25 +43,31 @@ export async function selfCheck() {
     legacyPeerAuth: preparePeerAuth().available,
     daemonProtocol, socketAuthVersion, hostProtocol, hostProtocols: [...hostProtocols, 3], ptyProtocol: controlProtocol, ptyProtocols: [0, 1, 2, 3],
     defaultTuiProtocol: 3, defaultCodexHostProtocol: 3, holderDigest: holder.digest, attachmentCheck: true, storageVersions, packages,
-    platform: process.platform, arch: process.arch, node: process.versions.node };
+    platform: process.platform, arch: process.arch, node: legacyNode?.version ?? process.versions.node,
+    nodeRuntime: runningNode(), ...(legacyNode && { legacyNodeRuntime: legacyNode }) };
 }
 
-async function verifyRelease(root) {
+async function verifyRelease(root, recordedNode) {
   if (!isAbsolute(root ?? '')) throw new CommandError('invalid-arguments', 'Release path must be absolute');
   root = realpathSync(root);
   const digest = releaseDigest(root);
-  const { stdout } = await exec(process.execPath, [join(root, 'bin/loomd'), '--self-check'],
+  const node = releaseNode(root, recordedNode);
+  const version = nodeVersion(root);
+  const { stdout } = await exec(node, [join(root, 'bin/loomd'), '--self-check'],
     { cwd: root, timeout: 45_000, maxBuffer: 1024 * 1024 });
   const build = JSON.parse(stdout);
   if (build.root !== root || (build.releaseDigest ?? build.digest) !== digest ||
       build.digest !== releaseDigest(root, { legacy: true }) || build.daemonProtocol !== daemonProtocol ||
-      build.platform !== process.platform || build.arch !== process.arch || build.node !== process.versions.node) {
+      build.platform !== process.platform || build.arch !== process.arch ||
+      (version ? build.nodeRuntime?.version !== version || build.nodeRuntime?.path !== node :
+        recordedNode?.version !== undefined && build.node !== recordedNode.version)) {
     throw new Error('Release self-check returned an incompatible build');
   }
   if (!build.hostProtocols?.includes(build.hostProtocol) || !build.ptyProtocols?.includes(build.ptyProtocol)) {
     throw new Error('Release cannot attach its own session protocol');
   }
-  return { ...build, legacyDigest: build.digest, digest, id: digest };
+  return { ...build, nodeRuntime: build.nodeRuntime ?? { path: node, version: build.node },
+    legacyDigest: build.digest, digest, id: digest };
 }
 
 function storageVersion(project) {
@@ -86,12 +93,12 @@ async function projectStatus(project) {
   catch (error) { if (!daemonAbsent(error) && !['uncertain', 'ECONNRESET', 'EPIPE'].includes(error.code)) throw error; }
 }
 
-function launch(project, entry, args, env = process.env) {
+function launch(project, entry, args, env = process.env, node = process.execPath) {
   const log = openSync(join(runtimeDirectory(project), 'upgrade.log'),
     constants.O_WRONLY | constants.O_CREAT | constants.O_APPEND | constants.O_NOFOLLOW, 0o600);
   let child;
   try {
-    child = spawn(process.execPath, [entry, ...args], { detached: true, stdio: ['ignore', log, log], env, cwd: project });
+    child = spawn(node, [entry, ...args], { detached: true, stdio: ['ignore', log, log], env, cwd: project });
   } finally { closeSync(log); }
   return new Promise((resolve, reject) => {
     child.once('error', reject);
@@ -103,7 +110,9 @@ export async function planUpgrade(project, args, current, sessions) {
   const active = activeRelease(project);
   if (args.rollback && !active?.previous) throw new CommandError('not-ready', 'No previous compatible release');
   const [target, verifiedCurrent] = await Promise.all([
-    verifyRelease(args.rollback ? active.previous.root : args.target), verifyRelease(current.root),
+    verifyRelease(args.rollback ? active.previous.root : args.target,
+      args.rollback ? active.previous.nodeRuntime ?? active.current.legacyNodeRuntime : undefined),
+    verifyRelease(current.root, current.nodeRuntime),
   ]);
   if (target.socketAuthVersion !== socketAuthVersion) throw new Error('Release does not support Loom socket capabilities');
   if (target.root === current.root) throw new CommandError('invalid-arguments', 'Prepare the new build in a different release directory');
@@ -142,7 +151,8 @@ export async function checkUpgradeAttachments(project, plan) {
     return { ...plan, attachmentCheck: plan.blockers.length ? 'blocked' : 'unsupported' };
   }
   try {
-    const checkpoint = exec(process.execPath, [join(plan.target.root, 'bin/loomd'), '--project', project, '--check-attachments'],
+    const checkpoint = exec(plan.target.nodeRuntime?.path ?? process.execPath,
+      [join(plan.target.root, 'bin/loomd'), '--project', project, '--check-attachments'],
       { cwd: project, timeout: 40_000, maxBuffer: 1024 * 1024 });
     checkpoint.child.stdin.on('error', () => {}); // The subprocess can exit before accepting input.
     checkpoint.child.stdin.end(JSON.stringify(plan.sessions));
@@ -213,6 +223,9 @@ export async function validateHandoff(project, id, recovery) {
   if (!recovery && releaseDigest(releaseRoot) !== (state.target.releaseDigest ?? state.target.digest)) {
     throw new Error('Target release changed since self-check');
   }
+  const expected = (recovery ? state.current : state.target).nodeRuntime;
+  if (expected && (expected.path !== process.execPath || expected.version !== process.versions.node ||
+      expected.abi !== undefined && expected.abi !== process.versions.modules)) throw new Error('Handoff Node runtime changed since self-check');
   return state;
 }
 
@@ -267,7 +280,7 @@ async function handoff(project, id) {
     const handoff = mode !== 'restart';
     const child = await launch(project, join(build.root, 'bin/loomd'),
       ['--project', project, ...(handoff ? ['--handoff', id] : []), ...(mode === 'recovery' ? ['--handoff-recovery'] : [])],
-      { ...process.env, LOOM_RELEASE_ID: build.id });
+      { ...process.env, LOOM_RELEASE_ID: build.id }, build.nodeRuntime?.path);
     try {
       const daemon = await waitFor(async () => {
         if (exited(child)) throw new Error(`loomd exited during ${mode}`);
@@ -323,6 +336,11 @@ async function handoff(project, id) {
         save('failed', { ...extra, recoveryError: `${failure.message}; restart: ${restart.message}` });
       }
     }
+  }
+  const completed = upgradeState(project);
+  if (completed?.id === id && completed.phase === 'committed' && !nodeVersion(state.target.root)) {
+    // Legacy rollback targets do not update their pre-existing launcher.
+    installManagedCli(project, { node: state.target.nodeRuntime.path, root: state.target.root });
   }
 }
 

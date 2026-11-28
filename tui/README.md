@@ -1,6 +1,6 @@
 # loom-pty
 
-Install the pinned dependencies with `npm ci` at the repository root. The root postinstall repairs the executable bit on the macOS prebuilt `node-pty@1.1.0` spawn helper.
+Run `./bin/install-node` and `./bin/build-release` from the repository root. The build installs dependencies, rebuilds `node-pty` for Loom's pinned Node, and runs smoke tests. [Node runtime and hot upgrade](../docs/HOT-UPGRADE.md)
 
 Production startup uses `loom spawn … --mode tui`. hc runs `tui/loom-pty /absolute/path/to/native-cli …`. hc owns the visible pane, terminal attachment, agent badges, and exit observation. loom-pty owns the inner PTY, parses the terminal grid and relays human input. `hc ls` continues to report native agent and status.
 

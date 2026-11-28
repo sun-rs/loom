@@ -9,14 +9,14 @@ loom 使用驻留的 loomd 组织本地 agent 会话。无头会话通过 OAR �
 
 ## 安装与入口
 
-需要 Node.js 24.2+、Git，以及所选后端的原生 CLI。TUI 还需要本地 hc。根依赖固定为 `@botiverse/oar@0.130.1`。
+需要 Git、原生扩展编译工具和所选后端的原生 CLI。TUI 还需要本地 hc。Loom 使用独立安装的 Node LTS，运行时和升级步骤见 [Node 运行时与热升级](docs/HOT-UPGRADE.md)。根依赖固定为 `@botiverse/oar@0.130.1`。
 
 ```sh
-npm ci --ignore-scripts --omit=optional
-npm test
+./bin/install-node
+./bin/build-release
 ```
 
-OAR 由根目录统一安装。在根目录运行 `node --test runtimes/oar/events.test.mjs` 可单独验证 OAR 事件兼容层。
+OAR 由根目录统一安装。在根目录运行 `./bin/loom-node test-support/run.mjs runtimes/oar/events.test.mjs` 可单独验证 OAR 事件兼容层。
 
 每个命令的 `--project DIR` 都接收项目根目录绝对路径。省略时优先读托管环境的 `LOOM_PROJECT`，再从当前目录向上查找 Loom 项目元数据或 Git 根。回执的 `project` 为规范化路径，`projectId` 由该路径派生。
 

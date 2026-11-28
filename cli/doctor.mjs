@@ -11,6 +11,8 @@ import { receipt } from '../inbox/engine.mjs';
 import { ownedPane } from '../daemon/tui.mjs';
 import { processTable, sameProcess } from '../daemon/processes.mjs';
 import { claimProject } from '../relay/lock.mjs';
+import { releaseRoot } from '../daemon/release.mjs';
+import { nodeVersion, releaseNode, runningNode } from '../lib/node-runtime.mjs';
 
 const knownDirs = [['loomd'], ['loomd', 'sessions'], ['relay'], ['relay', 'events'],
   ['inbox'], ['inbox', 'incoming'], ['evidence'], ['replies', '.turns'], ['watch']];
@@ -163,7 +165,12 @@ async function inspect(project) {
     if (!wave) unsealedWaves.push(wave = { wave: row.wave, parent: row.parent, members: [] });
     wave.members.push(`${row.task}/${row.addr}`);
   }
-  return { report: { daemon: { running: status.running, pid: status.pid ?? null }, lock, socket, panes, oarChildren,
+  const cli = runningNode();
+  const expected = { version: nodeVersion(), path: releaseNode(releaseRoot), abi: cli.abi };
+  const daemonNode = status.release?.nodeRuntime ?? null;
+  const matches = node => node?.path === expected.path && node.version === expected.version && node.abi === expected.abi;
+  const nodeRuntime = { expected, cli, daemon: daemonNode, ok: matches(cli) && (!status.running || matches(daemonNode)) };
+  return { report: { daemon: { running: status.running, pid: status.pid ?? null }, nodeRuntime, lock, socket, panes, oarChildren,
     temporary, worktrees: worktrees(project, jobs, sessions), uncertain, unsealedWaves }, jobs, sessions };
 }
 

@@ -1,11 +1,15 @@
-#!/usr/bin/env node
+#!/bin/sh
+':' //; entry=$(/usr/bin/readlink -f "$0"); exec "${entry%/*}/../bin/loom-node" "$entry" "$@"
 import { readFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { setTimeout as sleep } from 'node:timers/promises';
 import { parseArgs } from 'node:util';
 import { createWatcher, loomQueue } from './index.mjs';
+import { enterPinnedNode } from '../lib/node-runtime.mjs';
 
-const help = `Usage: node watch/cli.mjs (--index FILE | --index-db FILE) --events FILE [options]
+enterPinnedNode();
+
+const help = `Usage: bin/loom-node watch/cli.mjs (--index FILE | --index-db FILE) --events FILE [options]
   --index FILE        JSON index snapshot, as returned by loom ls
   --index-db FILE     Query the live loom SQLite index
   --hooks-dir DIR     Read per-terminal hook logs DIR/<addr>.jsonl

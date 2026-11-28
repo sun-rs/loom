@@ -1,15 +1,16 @@
 import { createHash, randomUUID } from 'node:crypto';
 import { chmodSync, existsSync, mkdirSync, readdirSync, readFileSync, realpathSync } from 'node:fs';
-import { delimiter, join, relative } from 'node:path';
+import { delimiter, dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { runtimeDirectory } from '../cli/project.mjs';
+import { nodeRuntimeRoot } from '../lib/node-runtime.mjs';
 import { readText, writeState } from './io.mjs';
 import { skillRoot } from '../lib/role-skill.mjs';
 
 export const releaseRoot = realpathSync(fileURLToPath(new URL('..', import.meta.url)));
 export const managedCliPath = project => join(runtimeDirectory(project), 'bin', 'loom');
 const shellWord = value => "'" + value.replaceAll("'", "'\\''") + "'";
-export function installManagedCli(project) {
+export function installManagedCli(project, { keepLauncher = false, node = process.execPath, root = releaseRoot } = {}) {
   const dir = runtimeDirectory(project);
   const bin = join(dir, 'bin');
   mkdirSync(bin, { recursive: true, mode: 0o700 });
@@ -18,17 +19,20 @@ export function installManagedCli(project) {
   const code = readFileSync(new URL('./cli-shim.mjs', import.meta.url), 'utf8');
   if (readText(program, null) !== code) writeState(program, code);
   const executable = managedCliPath(project);
-  const script = `#!/bin/sh\nexec ${[process.execPath, program, dir, releaseRoot].map(shellWord).join(' ')} "$@"\n`;
-  if (readText(executable, null) === null) writeState(executable, script);
+  const script = `#!/bin/sh\nexec ${[node, program, dir, root].map(shellWord).join(' ')} "$@"\n`;
+  const existing = readText(executable, null);
+  if (existing === null || !keepLauncher && existing !== script) writeState(executable, script);
   chmodSync(executable, 0o700);
 }
 
 export function managedEnvironment(project, addr) {
   const executable = managedCliPath(project);
   const bin = join(runtimeDirectory(project), 'bin');
-  const inherited = (process.env.PATH ?? '').split(delimiter).filter(path => path && path !== bin);
-  return { LOOM_PROJECT: project, LOOM_ADDR: addr, LOOM_BIN: executable, LOOM_SKILL_ROOT: skillRoot,
-    PATH: [bin, ...inherited].join(delimiter) };
+  const path = [bin, dirname(process.execPath)];
+  const inherited = (process.env.PATH ?? '').split(delimiter).filter(entry => entry && !path.includes(entry));
+  return { LOOM_PROJECT: project, LOOM_ADDR: addr, LOOM_BIN: executable,
+    LOOM_NODE_ROOT: nodeRuntimeRoot(), LOOM_NODE: process.execPath, LOOM_SKILL_ROOT: skillRoot,
+    PATH: [...path, ...inherited].join(delimiter) };
 }
 export const activeReleaseFile = project => join(runtimeDirectory(project), 'release.json');
 export const activeRelease = project => JSON.parse(readText(activeReleaseFile(project), 'null'));

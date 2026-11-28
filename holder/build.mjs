@@ -1,13 +1,15 @@
 import { execFileSync } from 'node:child_process';
 import { mkdtempSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import { isAbsolute, join } from 'node:path';
+import { enterPinnedNode } from '../lib/node-runtime.mjs';
 import { holderName, manifestHeader, pipeManifestHeader, platforms, sha256 } from './assets.mjs';
 
+enterPinnedNode();
 const root = import.meta.dirname;
 const [archive, officialDigest] = process.argv.slice(2);
 if (process.platform !== 'darwin' || process.arch !== 'arm64' || !archive ||
     !isAbsolute(archive) || !/^[a-f\d]{64}$/.test(officialDigest ?? '') || sha256(readFileSync(archive)) !== officialDigest) {
-  throw new Error('Usage on macOS arm64: node holder/build.mjs /absolute/path/to/zig.tar.xz official-sha256');
+  throw new Error('Usage on macOS arm64: bin/loom-node holder/build.mjs /absolute/path/to/zig.tar.xz official-sha256');
 }
 const stage = mkdtempSync(join(root, '.build-'));
 try {

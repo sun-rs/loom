@@ -3,17 +3,18 @@
   "private": true,
   "type": "module",
   "engines": {
-    "node": ">=24.2"
+    "node": "26.x"
   },
   "bin": {
     "loom": "bin/loom",
     "loomd": "bin/loomd"
   },
   "scripts": {
-    "lint": "node bin/loom lint --project \"$PWD\"",
+    "lint": "bin/loom lint --project \"$PWD\"",
     "pretest": "npm run lint",
-    "test": "node test-support/run.mjs",
-    "postinstall": "node tui/install-pty.mjs"
+    "test": "bin/loom-node test-support/run.mjs",
+    "postinstall": "bin/loom-node tui/install-pty.mjs",
+    "release:smoke": "bin/loom-node test-support/run.mjs --test-name-pattern='release CLI and daemon|release self-check|failed verification restores' daemon/node-runtime.test.mjs daemon/upgrade.test.mjs"
   },
   "dependencies": {
     "@botiverse/oar": "0.130.1",
