@@ -37,13 +37,13 @@ export function processCommand() {
   }
 }
 
-export async function processTable(pids, run = exec, { rss = false } = {}) {
+export async function processTable(pids, run = exec, { rss = false, cpu = false } = {}) {
   const selected = pids && [...new Set(pids.filter(pid => Number.isSafeInteger(pid) && pid > 0))];
   if (selected?.length === 0) return new Map();
   let text;
   for (let attempt = 0; attempt < 3; attempt++) {
     try {
-      const format = rss ? 'rss=,' + fields : fields;
+      const format = (rss ? 'rss=,' : '') + (cpu ? 'time=,' : '') + fields;
       ({ stdout: text } = await run(run === exec ? processCommand() : '/bin/ps',
         selected ? ['-p', selected.join(','), '-o', format] : ['-axo', format], {
         encoding: 'utf8', timeout: 2000, killSignal: 'SIGKILL',
@@ -67,11 +67,14 @@ export async function processTable(pids, run = exec, { rss = false } = {}) {
     const resident = rss && /^\s*(\d+)\s+/.exec(line);
     if (rss && !resident) continue;
     if (resident) line = line.slice(resident[0].length);
+    const cpuTime = cpu && /^\s*([\d:.-]+)\s+/.exec(line);
+    if (cpu && !cpuTime) continue;
+    if (cpuTime) line = line.slice(cpuTime[0].length);
     const match = /^\s*(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\w{3}\s+\w{3}\s+\d+\s+[\d:]+\s+\d{4})\s+(.+)$/.exec(line);
     if (!match) continue;
     const [, pid, ppid, pgid, uid, started, executable] = match;
     rows.set(Number(pid), { pid: Number(pid), ppid: Number(ppid), pgid: Number(pgid), uid: Number(uid), started, executable,
-      ...(resident && { rssKiB: Number(resident[1]) }) });
+      ...(resident && { rssKiB: Number(resident[1]) }), ...(cpuTime && { cpuTime: cpuTime[1] }) });
   }
   return rows;
 }

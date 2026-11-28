@@ -356,6 +356,7 @@ export function relay(project, targets, window, call, report = console.log, inbo
     }
   };
   return Object.assign(step, {
+    openWaves: () => Object.values(state.waves).filter(wave => wave.managed && !wave.closed),
     isSealed: (parent, name, wave, mode) => {
       const saved = state.waves[managedWaveKey(parent, name, wave, mode)];
       return Boolean(saved && (saved.closed || saved.deadline !== null));

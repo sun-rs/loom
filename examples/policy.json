@@ -2,6 +2,7 @@
   "note": "Single-account operation only. Use one authorized account per provider for this project.",
   "rotation": { "mode": "explicit" },
   "delivery": { "coalesceMs": 45000, "replyBytes": 600, "stallMs": 120000 },
+  "idleAlarm": { "warningMs": 1800000, "urgentMs": 7200000, "reminderMs": 1800000 },
   "workers": {
     "warmMs": { "codex": 600000, "claude": 600000, "agy": 600000, "opencode": 600000 },
     "reuseMaxContext": 0.6,

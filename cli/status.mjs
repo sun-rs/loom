@@ -19,6 +19,9 @@ import { storedHostUnconfined, storedWorkerTier } from '../lib/worker-tiers.mjs'
 import { rotatingRoles } from '../index/index.mjs';
 import { rootEvents, sessionContext } from '../lib/session-context.mjs';
 import { historyReader } from './history.mjs';
+import { unresolvedDecisions } from '../daemon/idle-alarm.mjs';
+import { readOfflineHealth } from '../daemon/project-health.mjs';
+import { decisionSummary, scopeSummary } from './status-health.mjs';
 import { readPolicy, workerReuseLimits, workerWarmMs } from './policy.mjs';
 import { retainedState, retentionStatus, reuseStatus, workerCardId, workerContext, workerDetails, workerMetrics } from '../daemon/worker-retention.mjs';
 
@@ -56,8 +59,9 @@ export async function projectStatus(project, { now = Date.now() } = {}) {
   let memory;
   let metrics;
   let releaseTimeoutCount;
+  let health;
   if (managedProject(project)) {
-    try { ({ sessions: live, exits, rotationPolicy, memory, workerMetrics: metrics, releaseTimeoutCount } = await request(project, 'status')); }
+    try { ({ sessions: live, exits, rotationPolicy, memory, workerMetrics: metrics, releaseTimeoutCount, health } = await request(project, 'status')); }
     catch (error) { if (!daemonAbsent(error)) throw error; }
   }
   const rotations = projectIndex(project).rotations();
@@ -99,6 +103,7 @@ export async function projectStatus(project, { now = Date.now() } = {}) {
       ...(job?.firstReportCheck && { firstReportCheck: job.firstReportCheck }) };
   };
   const notifications = readNotifications(project);
+  health ??= readOfflineHealth(project, now, notifications, policy.idleAlarm);
   const auditFindings = [...Map.groupBy(notifications, event => event.project)].flatMap(([name, events]) =>
     [...new Set(events.filter(event => event.type === 'audit-finding').map(event => event.phase))]
       .map(phase => ({ project: name, ...summarizeAuditFindings(events, phase) })));
@@ -143,7 +148,7 @@ export async function projectStatus(project, { now = Date.now() } = {}) {
         ...(isStartupBlocker(card.runtimeState) && { reason: card.task + ' ' + card.runtimeState }) })),
     ...rows.filter(row => row.role !== 'worker' && (runtimeState(row) === 'stuck' || isStartupBlocker(runtimeState(row))))
       .map(row => ({ addr: row.addr, reason: row.role + ' ' + runtimeState(row) })),
-    ...notifications.filter(event => event.type === 'needs-decision' && event.takenAt == null)
+    ...unresolvedDecisions(notifications)
       .map(event => ({ addr: event.addr, reason: event.text })),
   ];
   const workers = new Set(rows.filter(row => row.role === 'worker').map(row => row.addr));
@@ -226,7 +231,7 @@ export async function projectStatus(project, { now = Date.now() } = {}) {
   releaseTimeoutCount ??= rows.filter(row => row.role === 'worker' && row.endedAt == null &&
     jobs.get(row.addr)?.retention?.releaseTimeoutAt != null &&
     jobs.get(row.addr)?.retention?.releasedAt == null).length;
-  return { ok: true, accounts, releaseTimeoutCount, ...(diagnostics.length && { accountDiagnostics: diagnostics }),
+  return { ok: true, accounts, releaseTimeoutCount, health, ...(diagnostics.length && { accountDiagnostics: diagnostics }),
     ...(snapshotUnavailable && { accountSnapshotUnavailable: true }), running: Boolean(live), layout: readLayout(project), stalledDeliveries: deliveryAlerts, awaitingUser, sessionHealth, exits: [...incidents.values()],
     suppressedReplies: suppressedReplies(messages).sort((a, b) => b.at - a.at),
     sessions: rows.filter(row => row.endedAt == null || retentionFor(row)).map(row => {
@@ -269,6 +274,10 @@ export function printStatus(result) {
   const incident = row => [row.role ?? 'unassigned', row.addr, row.status ?? row.kind, stamp(row.since),
     row.reason ?? row.summary, ...(row.retryAt != null ? [`retry ${stamp(row.retryAt)}`] : [])].join(' · ');
   console.log('Loom · ' + safe(result.project) + (result.running ? ' · online' : ' · offline'));
+  for (const scope of result.health?.projects ?? []) {
+    console.log(safe([basename(scope.project), scopeSummary(scope)].join(' · ')));
+    for (const decision of scope.pendingDecisions) console.log('  ' + safe(decisionSummary(decision)));
+  }
   if (result.layout) {
     const { space, tabs } = result.layout;
     console.log('Herdr space · ' + safe(space.name) + ' · ' + safe(space.id));

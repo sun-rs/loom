@@ -13,7 +13,9 @@ const exec = promisify(execFile);
 const accountNoticeTypes = new Set(['account-version-unverified', 'account-version-unsupported', 'account-quota-warning']);
 const desktopTypes = new Set([...accountNoticeTypes, 'host-tier-grant', 'host-tier-used', 'host-tier-expired', 'host-tier-refused', 'needs-decision', 'project-completed', 'audit-escalation', 'leader-exited', 'session-exited',
   'session-liveness', 'consumption-pyramid', 'delivery-stalled', 'target-awaiting-user', 'senior-override-budget', 'senior-tool-output-share',
-  'auditor-rotation-completed', 'auditor-budget-exceeded', 'super-delivery-receipt', 'super-delivery-reply', 'worker-release-timeout']);
+  'auditor-rotation-completed', 'auditor-budget-exceeded', 'super-delivery-receipt', 'super-delivery-reply', 'worker-release-timeout',
+  'project-idle-warning', 'project-idle-urgent', 'decision-reminder']);
+const desktopRoute = event => desktopTypes.has(event.type) && !(event.retryRoute && event.auditor);
 export const desktopIntervalMs = 5 * 60_000;
 export const desktopEnabled = () => process.platform === 'darwin' &&
   process.env.LOOM_DESKTOP_NOTIFY !== '0' && process.env.NODE_TEST_CONTEXT === undefined;
@@ -25,8 +27,9 @@ export async function notifyExternal(project, events, execute = exec) {
   if (!desktopEnabled()) return;
   const types = [...new Set(events.map(event => event.type).filter(type => desktopTypes.has(type)))].join(', ');
   if (!types) return;
-  const incidents = events.filter(event => ['target-awaiting-user', 'session-liveness', 'session-exited', 'leader-exited', 'worker-release-timeout'].includes(event.type));
-  const body = incidents.length ? incidents.map(event => `${event.role ?? 'leader'} · ${event.reason ?? event.type} · ${event.summary ?? event.text ?? event.addr}`)
+  const incidents = events.filter(event => ['target-awaiting-user', 'session-liveness', 'session-exited', 'leader-exited', 'worker-release-timeout',
+    'project-idle-warning', 'project-idle-urgent', 'decision-reminder'].includes(event.type));
+  const body = incidents.length ? incidents.map(event => `${event.role ?? (event.retryRoute ? '项目' : 'leader')} · ${event.reason ?? event.type} · ${event.summary ?? event.text ?? event.addr}`)
     .join('\n').slice(0, 500) : `${types.slice(0, 180)}. Open loom notifications for details.`;
   await execute('/usr/bin/osascript', ['-e', appleScript, '--', `Loom · ${basename(project)}`,
     body], { timeout: 3000 });
@@ -69,7 +72,7 @@ export function projectNotifications(project, now = Date.now) {
       try { save(); } catch (error) { events[i] = old; throw error; }
     },
     list(project, take = false, history = false) {
-      const pending = events.filter(event => (history || event.takenAt == null) && (!project || project === event.project));
+      const pending = events.filter(event => (history || event.takenAt == null && event.resolvedAt == null) && (!project || project === event.project));
       const result = pending.map(event => ({ ...event }));
       if (take && pending.length) {
         const at = now();
@@ -81,8 +84,8 @@ export function projectNotifications(project, now = Date.now) {
       }
       return result;
     },
-    async push(deliver, desktop) {
-      const pending = events.filter(event => event.pushedAt == null && !event.logOnly);
+    async push(deliver, desktop, canRoute = () => true) {
+      const pending = events.filter(event => event.pushedAt == null && !event.logOnly && canRoute(event));
       const unassigned = pending.filter(event => !event.pushBatch);
       for (const group of Map.groupBy(unassigned, event => event.project).values()) {
         for (const batch of Map.groupBy(group, event => event.batch ?? null).values()) {
@@ -98,18 +101,19 @@ export function projectNotifications(project, now = Date.now) {
       }
       const unrouted = [];
       for (const batch of Map.groupBy(pending, event => event.pushBatch).values()) {
-        if (batch[0].auditor && events.some(event => event.project === batch[0].project && event.auditor &&
+        if (batch[0].auditor && !batch[0].retryRoute && events.some(event => event.project === batch[0].project && event.auditor &&
             event.pushRoute !== 'external' && event.pushRoute !== 'log' &&
             event.pushedAt != null && now() - event.pushedAt < desktopIntervalMs)) continue;
         const route = await deliver(batch);
         if (route) mark(batch, route);
         else unrouted.push(...batch);
       }
-      const ledgerOnly = unrouted.filter(event => event.type !== 'project-completed' && !accountNoticeTypes.has(event.type) && (!desktop || !desktopTypes.has(event.type)));
+      const ledgerOnly = unrouted.filter(event => !event.retryRoute && event.type !== 'project-completed' &&
+        !accountNoticeTypes.has(event.type) && (!desktop || !desktopRoute(event)));
       if (ledgerOnly.length) mark(ledgerOnly, 'log');
       if (!desktop) return;
-      const eligible = [...unrouted.filter(event => desktopTypes.has(event.type)), ...events.filter(event =>
-        event.desktopAlso && event.pushedAt != null && event.pushRoute !== 'external' && event.desktopAt == null)];
+      const eligible = [...unrouted.filter(desktopRoute), ...events.filter(event =>
+        event.desktopAlso && event.pushedAt != null && event.pushRoute !== 'external' && event.desktopAt == null && canRoute(event))];
       for (const [name, batch] of Map.groupBy(eligible, event => event.project)) {
         if (events.some(event => event.project === name &&
             now() - (event.desktopAt ?? (event.pushRoute === 'external' ? event.pushedAt : -Infinity)) < desktopIntervalMs) ||

@@ -101,6 +101,16 @@ Leader 用 `loom gate pack <gate-id> --round <n>` 打包固定候选的 Worker �
 
 `loom spawn ROLE --handover-from OLD_ADDR` 在首轮交付前任简报。Leader 首轮通过投递 SLA 收到完整简报的 SHA-256 回执文件指针，回报文件末尾的确认码后，loomd 持久化继任并停止前任。其他角色在新原生会话及首轮输入绑定后完成路由切换。`loom handover ROLE --to ADDR` 可将已绑定的同角色更新会话登记为继任，简报进入其现有队列。波次归属仍可按原地址查询，在途波次、续作结果和未尝试的排队请求切到继任地址。旧请求保留投递 ID。已尝试发送或中断的请求留在原生会话对账。前任意外退出时，同项目同角色的更新活动会话可接收其在途队列。
 
+### 项目健康和待决提醒
+
+loomd 将 Leader、Auditor 和 Worker 的回合、工具和原生输出，与项目投递变化及已绑定会话的子进程采样合并为项目进展时间。检测范围包括在途或排队的卡片、未确认投递、待 Super 决定，以及 `.project/charter.md` 的「目标」或 `Goals` 段。可用 `- [x]` 标记完成项。普通列表项由项目级 `loom notifications --complete TEXT` 收口。
+
+仍有工作时，连续 30 分钟无活动会分别通知 Auditor 和 Super。达到 2 小时会升级给 Super，并使用已启用的桌面通道。`policy.json` 的 `idleAlarm.warningMs`、`idleAlarm.urgentMs`、`idleAlarm.reminderMs` 分别控制两档告警和待决重提醒间隔，单位均为毫秒。所有适用工作都在等待已知额度重置，或者在岗执行角色均等待用户且 Super 在重提醒周期内已收到相关通知时，状态页会显示等待原因。Super 可用 `loom pause --reason TEXT` 暂停项目告警，用 `loom pause --clear` 恢复判定。暂停仅影响告警和重提醒。
+
+`--take` 记录通知领取。Super 对单个待决通知的已确认原生回复，或 `loom notifications --resolve-decision ID --reason TEXT` 的登记，会结束该事项的提醒。对多个事项合并通知或通过其他渠道作出的决定，按事项 ID 登记。默认每 30 分钟重提醒仍未处理的事项。
+
+`loom tui --all` 和项目 Status 首页展示每个项目的上次进展、停滞时长、待决总数、最长等待与告警数。角色行显示运行状态、CLI、模型、卡片和上次活动。按严重度排列的告警支持鼠标单击或键盘回车展开。`loom status --json` 的 `health` 字段与 TUI 使用同一份 loomd 快照。断线时可查看最近持久化的项目进展和待决记录。
+
 ### 命令映射
 
 命令沿用 v1 的 JSON `ok`／`error` 外壳、退出码与历史查询默认值。`addr` 优先精确匹配，其后在调用者项目内按角色或任务查唯一会话，外部调用使用全索引。`docs/PROTOCOL.md:21-31,47-52`

@@ -1480,8 +1480,8 @@ export function ownedSessions(project, index, report, {
     }));
   }
 
-  async function sessionMemory() {
-    const entries = await Promise.all(rows().filter(row => row.endedAt === null && jobs.has(row.addr)).map(async row => {
+  function sessionProcesses(filter = () => true) {
+    return Promise.all(rows().filter(row => row.endedAt === null && jobs.has(row.addr) && filter(row)).map(async row => {
       const job = jobs.get(row.addr);
       const dormant = isReleased(job) && !job.retention.resuming;
       let root;
@@ -1492,9 +1492,12 @@ export function ownedSessions(project, index, report, {
         const pane = await getPane(job, row).catch(() => undefined);
         if (pane && !completedPane(pane)) root = { pid: pane.pid };
       }
-      return { project: row.project, dormant, root };
+      return { project: row.project, addr: row.addr, dormant, root };
     }));
-    return projectSessionMemory(project, entries);
+  }
+
+  async function sessionMemory() {
+    return projectSessionMemory(project, await sessionProcesses());
   }
 
   async function upgradeHolder({ target, rollback, check, addr }) {
@@ -1548,7 +1551,7 @@ export function ownedSessions(project, index, report, {
 
   return { rows, rowFor, events, targetBinding, transport, requestedMode, canInterrupt, resolve, requireLive, newJob,
     activate, failSpawn, failHandover, runtimeSelection, refresh, stop, closeWorker, release, resume, resumeSession, setRetention,
-    verifyWorkerStart, workerHandoff, sessionMemory,
+    verifyWorkerStart, workerHandoff, sessionMemory, sessionProcesses,
     shutdown, upgradeSessions, upgradeHolder, jobs, managedHc, sealed, lastActivity,
     routeParent, bindSuccessor, retirePredecessor, finalizeV2, legacyPeerCaller, legacySessions, liveCaller, successorOf, holdsForHandover, rememberUserPrompt, pathWarnings, rememberLiveness, adoptLayout,
     runtimeContext: addr => running.get(addr)?.session.contextUsage?.()?.value,

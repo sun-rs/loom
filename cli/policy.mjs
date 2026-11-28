@@ -17,6 +17,7 @@ const defaultMaxActiveWorkers = 3;
 const hardMaxActiveWorkers = 4;
 export const defaultCoalesceMs = 45_000;
 export const defaultReplyBytes = 600;
+export const idleAlarmDefaults = Object.freeze({ warningMs: 30 * 60_000, urgentMs: 2 * 60 * 60_000, reminderMs: 30 * 60_000 });
 export const workerWarmMs = (policy, cli) => policy.workers?.warmMs?.[cli] ?? policy.workers?.idleRetainMs ?? 10 * 60_000;
 export const workerReuseLimits = policy => ({
   contextPercent: 100 * (policy.workers?.reuseMaxContext ?? 0.6),
@@ -86,6 +87,14 @@ export function readPolicy(project, { optional = false, warn = console.error } =
     if (Object.hasOwn(policy, 'maxActiveWorkers')) throw new Error('Set maxActiveWorkers under roles.leader');
     validateProfiles(policy);
     validateRotation(policy.rotation);
+    if (policy.idleAlarm !== undefined) {
+      const timing = { ...idleAlarmDefaults, ...policy.idleAlarm };
+      if (!policy.idleAlarm || typeof policy.idleAlarm !== 'object' || Array.isArray(policy.idleAlarm) ||
+          Object.entries(policy.idleAlarm).some(([key, value]) => !Object.hasOwn(idleAlarmDefaults, key) ||
+            !Number.isSafeInteger(value) || value <= 0) || timing.urgentMs <= timing.warningMs) {
+        throw new Error('Expected positive integer idleAlarm.warningMs, urgentMs and reminderMs, with urgentMs above warningMs');
+      }
+    }
     if (policy.accounts !== undefined && (!policy.accounts || typeof policy.accounts !== 'object' ||
         Array.isArray(policy.accounts) || Object.keys(policy.accounts).some(key => key !== 'warningPercent') ||
         Object.hasOwn(policy.accounts, 'warningPercent') && (!Number.isFinite(policy.accounts.warningPercent) ||

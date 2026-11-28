@@ -13,7 +13,7 @@ export function notificationBoard(events, roleFor = () => undefined) {
   let routineReceipts = 0;
   for (const event of events) {
     if (event.auditor || (event.logOnly && !event.type.endsWith('-rotation-completed'))) continue;
-    const unread = !event.logOnly && event.takenAt == null;
+    const unread = !event.logOnly && event.takenAt == null && event.resolvedAt == null;
     if (unread) count++;
     if (routineSuperReceipt(event)) {
       routineReceipts++;
@@ -155,7 +155,8 @@ export function attentionBoard(delivery, roles, workers, gates, events, roleFor)
       addr: row.addr, area: 'workers', subject: row.task ?? row.addr, at: row.releaseTimeoutAt,
     });
   }
-  for (const event of events.filter(event => event.type === 'needs-decision' && !event.logOnly && event.takenAt == null).sort(newestNoticeFirst)) {
+  for (const event of events.filter(event => event.type === 'needs-decision' && !event.logOnly &&
+      event.takenAt == null && event.resolvedAt == null).sort(newestNoticeFirst)) {
     const overdue = event.reason === 'self-rotation-overdue';
     if (overdue && !open.has(event.addr)) continue;
     attention.push({ id: 'notice:' + event.id, kind: overdue ? 'rotation-overdue' : 'needs-decision',

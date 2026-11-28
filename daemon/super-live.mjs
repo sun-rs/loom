@@ -5,6 +5,7 @@ import { listGlobalProjects, readGlobalRegistry, superHandoffPath, superLivePath
 import { readText, writeState } from './io.mjs';
 import { readNotifications } from './notifications.mjs';
 import { recoverAllProjects } from './recover.mjs';
+import { unresolvedDecisions } from './idle-alarm.mjs';
 
 export const maxLiveLines = 12;
 export const maxLiveChars = 1500;
@@ -87,7 +88,7 @@ export async function generateSuperLive({ env = process.env, checkDaemon, ccpBri
 
   for (const rec of recovery.projects) {
     if (rec.missing) continue;
-    const decisions = readNotifications(rec.project).filter(event => event.type === 'needs-decision' && event.takenAt == null);
+    const decisions = unresolvedDecisions(readNotifications(rec.project));
     for (const event of decisions) {
       pendingDecisions.push({ project: rec.project, id: event.id, text: event.text, at: event.at });
     }

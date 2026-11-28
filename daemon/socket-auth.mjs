@@ -92,7 +92,7 @@ export function socketCapabilities(project, env = process.env) {
 }
 
 const readCommands = new Set(['hello', 'daemon-status', 'upgrade-status', 'board', 'status', 'ls', 'state', 'session-memory']);
-const superCommands = new Set(['daemon-stop', 'upgrade-plan', 'upgrade-apply', 'upgrade-holder', 'layout-up', 'layout-adopt', 'switch', 'recover', 'resume']);
+const superCommands = new Set(['daemon-stop', 'upgrade-plan', 'upgrade-apply', 'upgrade-holder', 'layout-up', 'layout-adopt', 'switch', 'recover', 'resume', 'pause']);
 const memoryCommands = new Set(['mem', 'memory-proposals', 'memory-review', 'memory-index', 'memory-show']);
 export const mayUseLegacyCaller = command => !memoryCommands.has(command) &&
   (!readCommands.has(command) || command === 'state');
@@ -128,7 +128,7 @@ export function authorizeSocketCommand(command, args, actor) {
   }
   else if (command === 'senior-override') allowed = role === 'leader' || role === 'auditor';
   else if (command === 'notifications') {
-    allowed = (!args.take || role === 'super') &&
+    allowed = (!args.take || role === 'super') && (args.resolveDecision === undefined || role === 'super') &&
       (args.auditEscalation === undefined || role === 'auditor') &&
       (args.gateComplete === undefined || ['leader', 'super'].includes(role)) &&
       ([args.complete, args.phase, args.decision, args.kind].every(value => value === undefined) ||
