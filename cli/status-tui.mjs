@@ -1,6 +1,6 @@
 import { execFile } from 'node:child_process';
 import { writeSync } from 'node:fs';
-import { join } from 'node:path';
+import { basename, join } from 'node:path';
 import { emitKeypressEvents } from 'node:readline';
 import { PassThrough } from 'node:stream';
 import { promisify } from 'node:util';
@@ -14,6 +14,8 @@ import { duration } from './status-accounts.mjs';
 import { splitInput } from './status-input.mjs';
 import { changedLines, hitRegions, row, safe, terminalColors, theme, truncate } from './status-layout.mjs';
 import { boardLines, boardView, overlayRows, pages } from './status-view.mjs';
+import { healthAlertRows, healthRoleRows, scopeSummary } from './status-health.mjs';
+import { readOfflineHealth } from '../daemon/project-health.mjs';
 
 export { boardLines };
 
@@ -24,8 +26,20 @@ const terminalLeave = '\x1b[?1000l\x1b[?1006l\x1b[?25h\x1b[?1049l';
 const scrollKeys = { down: 1, j: 1, up: -1, k: -1 };
 
 function globalView(projects, snapshots, selected, error, paint, width) {
-  const body = projects.map((project, index) => {
-    const { board, error } = snapshots.get(project) ?? {};
+  const roleGroups = [];
+  const body = projects.flatMap(project => {
+    const { board, error, offlineHealth } = snapshots.get(project) ?? {};
+    const health = board?.health ?? offlineHealth;
+    if (health) {
+      return health.projects.map(scope => {
+        const id = 'project:' + project + ':' + scope.project;
+        const name = truncate(safe(basename(scope.project) || scope.project), Math.max(6, Math.floor(width / 5)));
+        const summary = truncate('  ' + name + (error ? ' · 离线' : '') + ' · ' + scopeSummary(scope, true), width);
+        const roles = health.roles.filter(role => role.project === scope.project);
+        if (roles.length) roleGroups.push([name, roles]);
+        return row(selected === id ? paint('selected', summary) : summary, { id, project });
+      });
+    }
     const parts = [project, error ? 'disconnected' : board ? 'online' : 'connecting'];
     if (board) {
       const { delivery } = board;
@@ -34,12 +48,21 @@ function globalView(projects, snapshots, selected, error, paint, width) {
       if (delivery.oldestAgeMs != null) parts.push('oldest ' + duration(delivery.oldestAgeMs));
     }
     const line = safe(parts.filter(Boolean).join(' · '));
-    return row(truncate(index === selected ? paint('selected', '› ' + line) : '  ' + line, width), { id: 'project:' + project, project, index });
+    const id = 'project:' + project;
+    return [row(truncate(id === selected ? paint('selected', '› ' + line) : '  ' + line, width), { id, project })];
   });
+  const alerts = projects.flatMap(project => {
+    const entry = snapshots.get(project);
+    return entry?.board?.health?.alerts ?? entry?.offlineHealth?.alerts ?? [];
+  }).sort((a, b) => a.severity - b.severity || (a.at ?? Infinity) - (b.at ?? Infinity));
+  if (alerts.length) body.push(row(), row(paint('accent', '告警 · 按严重度')), ...healthAlertRows(alerts, width, paint, selected, true));
+  for (const [name, roles] of roleGroups) {
+    body.push(row(), row(paint('accent', '角色 · ' + name)), ...healthRoleRows(roles, width, paint, selected));
+  }
   if (error) body.push(row(truncate(safe(error), width)));
   else if (!projects.length) body.push(row(truncate('No projects registered. Run loom project up <DIR> in a project.', width)));
   return { header: [row(paint('accent', 'Loom · All projects')), row()], body,
-    footer: '↑↓ select  Enter open  r refresh  q quit  ? help' };
+    footer: '↑↓ select  Enter open  Click alert for details  r refresh  q quit' };
 }
 
 export function pagerArgs(mode, query, project) {
@@ -54,7 +77,6 @@ export async function statusTui({ project, once }, { input = process.stdin, outp
   const snapshots = new Map();
   let projects = [];
   let current = project;
-  let selectedProject = 0;
   let page = 0;
   let selected;
   let offset = 0;
@@ -81,24 +103,25 @@ export async function statusTui({ project, once }, { input = process.stdin, outp
     const paint = theme(depth);
     const options = { width, now: now(), page, selected, showEnded, depth, interactive };
     if (!interactive) {
-      const global = current ? undefined : globalView(projects, snapshots, -1, discoveryError, paint, width);
+      const global = current ? undefined : globalView(projects, snapshots, undefined, discoveryError, paint, width);
       const lines = current ? boardLines(current, snapshots.get(current), options) : [...global.header, ...global.body].map(line => line.text);
       output.write(lines.join('\n') + '\n');
       return;
     }
 
-    let frame = current ? boardView(current, snapshots.get(current), options) :
-      globalView(projects, snapshots, selectedProject, discoveryError, paint, width);
+    const view = () => current ? boardView(current, snapshots.get(current), { ...options, selected }) :
+      globalView(projects, snapshots, selected, discoveryError, paint, width);
+    let frame = view();
     items = frame.body.flatMap((line, index) => line.items.map(item => ({ ...item, index })));
-    if (current && items.length && !items.some(item => item.id === selected)) {
+    if (items.length && !items.some(item => item.id === selected)) {
       selected = (items.find(item => !item.toggle) ?? items[0]).id;
-      frame = boardView(current, snapshots.get(current), { ...options, selected });
+      frame = view();
     }
     const height = output.rows || 24;
     const header = frame.header.slice(0, Math.max(0, height - 2));
     bodyRows = Math.max(1, height - header.length - 1);
     if (reveal) {
-      const index = current ? items.find(item => item.id === selected)?.index : selectedProject;
+      const index = items.find(item => item.id === selected)?.index;
       if (index != null) offset = Math.max(index - bodyRows + 1, Math.min(offset, index));
     }
     offset = Math.min(Math.max(0, offset), Math.max(0, frame.body.length - bodyRows));
@@ -130,14 +153,15 @@ export async function statusTui({ project, once }, { input = process.stdin, outp
       projects = project ? [project] : discover();
       discoveryError = undefined;
     } catch (error) { discoveryError = error.message; }
-    selectedProject = Math.min(selectedProject, Math.max(0, projects.length - 1));
     await Promise.all(projects.map(async directory => {
       try {
         const board = await rpc(directory, 'board', {}, { timeout: 3_000 });
         snapshots.set(directory, { board, ...(!board.accounts && { offlineAccounts: readAccounts(directory, { now }) }) });
       } catch (error) {
         const previous = snapshots.get(directory);
-        snapshots.set(directory, { ...previous, offlineAccounts: readAccounts(directory, { now }), error: ['ENOENT', 'ECONNREFUSED', 'ECONNRESET', 'not-ready'].includes(error.code) ?
+        let offlineHealth;
+        try { offlineHealth = readOfflineHealth(directory, now()); } catch {}
+        snapshots.set(directory, { ...previous, offlineHealth, offlineAccounts: readAccounts(directory, { now }), error: ['ENOENT', 'ECONNREFUSED', 'ECONNRESET', 'not-ready'].includes(error.code) ?
           'Waiting for loomd to reconnect.' : error.message });
       }
     }));
@@ -247,8 +271,7 @@ export async function statusTui({ project, once }, { input = process.stdin, outp
       offset = Math.max(0, offset + delta);
       const nearby = items.find(item => item.index >= offset && item.index < offset + bodyRows);
       if (nearby && !items.some(item => item.id === selected && item.index >= offset && item.index < offset + bodyRows)) {
-        if (current) selected = nearby.id;
-        else selectedProject = nearby.index;
+        selected = nearby.id;
       }
     }
 
@@ -267,7 +290,7 @@ export async function statusTui({ project, once }, { input = process.stdin, outp
         return;
       }
       const { item } = hit;
-      if (item.page != null || item.toggle) openItem(item);
+      if (item.page != null || item.toggle || item.singleClick) openItem(item);
       else {
         const time = performance.now();
         if (lastClick?.id === item.id && time - lastClick.time <= 400) {
@@ -275,8 +298,7 @@ export async function statusTui({ project, once }, { input = process.stdin, outp
           openItem(item);
         } else {
           lastClick = { id: item.id, time };
-          if (item.project) selectedProject = item.index;
-          else selected = item.id;
+          selected = item.id;
         }
       }
       render();
@@ -310,12 +332,6 @@ export async function statusTui({ project, once }, { input = process.stdin, outp
       else if (name === 'escape' && !project) {
         current = undefined;
         resetPage();
-        reveal = true;
-      } else if (!current && (direction || pageScroll || name === 'return')) {
-        if (name === 'return') {
-          current = projects[selectedProject];
-          resetPage();
-        } else selectedProject = Math.max(0, Math.min(projects.length - 1, selectedProject + (pageScroll || direction)));
         reveal = true;
       } else if (current && /^[1-5]$/.test(text ?? '') && !key.ctrl && !key.meta) resetPage(Number(text) - 1);
       else if (current && ['left', 'right'].includes(name)) resetPage((page + (name === 'right' ? 1 : -1) + pages.length) % pages.length);

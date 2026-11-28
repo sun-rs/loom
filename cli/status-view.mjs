@@ -4,6 +4,7 @@ import { auditorCallsPerTurnTarget, pyramidSampleReady } from './cost.mjs';
 import { accountRows, duration } from './status-accounts.mjs';
 import { auditorCallsPerTurnLabel, memoryLabel, workerMetricsLabel } from './status.mjs';
 import { box, columns, inside, meter, pad, row, safe, table, theme, truncate, widthOf, wrap } from './status-layout.mjs';
+import { healthAlertRows, healthDecisionRows, healthRoleRows, scopeSummary } from './status-health.mjs';
 
 export const pages = ['Board', 'Workers', 'Gates', 'Notices', 'Cost'];
 export const footer = '↑↓ select  Enter detail  h hist  g grep  m mem  r refresh  q quit  ? help';
@@ -60,8 +61,9 @@ export function overlayRows(view, width, height, paint) {
     ...block.map(line => row(x + line.text))] };
 }
 
-export function boardView(project, { board, error, offlineAccounts } = {}, { width = 80, now = Date.now(),
+export function boardView(project, { board: liveBoard, error, offlineAccounts, offlineHealth } = {}, { width = 80, now = Date.now(),
   page = 0, selected, showEnded = false, interactive = false, depth = 1 } = {}) {
+  const board = liveBoard ?? (offlineHealth && { health: offlineHealth });
   const paint = theme(depth);
   const marker = (item, text) => interactive && selected === item.id ? paint('selected', '› ' + text) : text;
   const tableLabel = (item, text) => interactive && selected !== item.id ? '  ' + text : marker(item, text);
@@ -140,12 +142,15 @@ export function boardView(project, { board, error, offlineAccounts } = {}, { wid
   const liveWorkers = workers.filter(worker => worker.endedAt == null && !['ended', 'released', 'offline', 'closed'].includes(worker.state));
   const openGates = gates.filter(gate => !gate.superseded && gate.completedAt == null && gate.waitingOn !== null)
     .map(gate => gate.waitingOn ? gate : { ...gate, waitingOn: 'auditor' });
-  const attention = board.attention ?? attentionBoard({ counts: delivery?.counts ?? {}, allTime: deliveryTotals ?? { counts: {} } },
-    roles, liveWorkers, openGates, notices, () => undefined);
+  const attention = (board.attention ?? attentionBoard({ counts: delivery?.counts ?? {}, allTime: deliveryTotals ?? { counts: {} } },
+    roles, liveWorkers, openGates, notices, () => undefined)).filter(issue => !board.health ||
+    !['stalled', 'awaiting-user', 'quota-wait', 'auth-expired', 'needs-decision'].includes(issue.kind));
 
   function boardSummary() {
-    const severity = attention.length ? 'warn' : 'good';
-    const health = paint(severity, 'Health · ' + (attention.length ? `${attention.length} 项待处理` : '正常'));
+    const snapshot = board.health;
+    const issueCount = attention.length + (snapshot?.alerts.length ?? 0);
+    const severity = issueCount ? 'warn' : 'good';
+    const health = paint(severity, 'Health · ' + (issueCount ? issueCount + ' 项待处理' : '正常'));
     const issues = attention.length ? attention.map(issue => {
       const label = attentionLabels[issue.kind] ?? show(issue.kind);
       const subject = issue.area === 'roles' ? roleName(issue.subject) : issue.subject && show(issue.subject);
@@ -172,8 +177,19 @@ export function boardView(project, { board, error, offlineAccounts } = {}, { wid
       const item = { id: 'area:' + page, page };
       return row(marker(item, paint('accent', title) + ' · ' + counts), item);
     });
-    return [row(health), ...panel(width, 'Needs attention', issues),
-      ...columns(width, w => roleCard(w, 'leader'), w => roleCard(w, 'auditor')),
+    const otherRoles = new Map([...roles, ...workers].map(role => [role.addr, role]));
+    const progress = snapshot ? snapshot.projects.flatMap(scope => wrap(scopeSummary(scope), inside(width)).map(line => row(line))) : [];
+    const roleRows = snapshot ? healthRoleRows(snapshot.roles.map(role => ({ ...otherRoles.get(role.addr), ...role })),
+      inside(width), paint, selected) : [];
+    const attentionPanel = snapshot && !attention.length ? [] : panel(width, 'Needs attention', issues);
+    return [row(health), ...(snapshot ? [
+      ...panel(width, '项目进展', progress),
+      ...panel(width, '告警 · 按严重度', healthAlertRows(snapshot.alerts, inside(width), paint, selected)),
+      ...(snapshot.projects.some(scope => scope.pendingCount) ? panel(width, '待 Super 决定',
+        healthDecisionRows(snapshot.projects.flatMap(scope => scope.pendingDecisions), inside(width), paint, selected)) : []),
+      ...panel(width, '角色状态', roleRows),
+      ...attentionPanel,
+    ] : [...attentionPanel, ...columns(width, w => roleCard(w, 'leader'), w => roleCard(w, 'auditor'))]),
       ...panel(width, 'Areas', links),
       ...panel(width, 'Delivery · last hour', labels.length ? [row(marker(deliveryItem, labels.join(' · ')), deliveryItem)] : []),
       ...releaseLine()];

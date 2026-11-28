@@ -48,6 +48,7 @@ const help = {
     'loom mem proposals reject <id> [--reason TEXT] [--project DIR] [--json]',
   ],
   status: ['loom status --project DIR [--json]'],
+  pause: ['loom pause --reason TEXT [--project DIR]', 'loom pause --clear [--project DIR]'],
   accounts: ['loom accounts [--project DIR] [--json] [--refresh]'],
   up: [
     'loom up [--resume | --fresh] [--cli CLI] [--model MODEL] [--effort EFFORT] [--entry PATH] [--account-dir DIR] [--cwd DIR] [--timeout-ms N] [--json]',
@@ -89,6 +90,7 @@ const help = {
   notifications: [
     'loom notifications [--project DIR] [--peek|--take|--history]',
     'loom notifications [--project DIR] --needs-decision TEXT [--kind decision | --audit-escalation REASON]',
+    'loom notifications [--project DIR] --resolve-decision ID --reason TEXT',
     'loom notifications [--project DIR] --complete TEXT [--phase ID]',
     'loom notifications [--project DIR] --gate-complete ID [--candidate SHA]',
     'Previews pending events by default. --take acknowledges them. --history includes acknowledged events.',
@@ -106,6 +108,7 @@ const commands = {
   'worker-check': projectArgs,
   'worker-handoff': { ...projectArgs, ...strings('wip', 'passed', 'pending', 'reason', 'evidence') },
   status: { ...projectArgs, ...flags('json') },
+  pause: { ...projectArgs, ...strings('reason'), ...flags('clear') },
   accounts: { ...projectArgs, ...flags('json', 'refresh') },
   up: { ...projectArgs, ...flags('resume', 'fresh', 'json'), ...strings('cli', 'model', 'effort', 'entry', 'account-dir', 'cwd', 'timeout-ms', 'cli-version') },
   project: projectArgs,
@@ -123,7 +126,7 @@ const commands = {
   rotate: { ...projectArgs, ...flags('self', 'prepare', 'passive'), ...strings('target', 'reason', 'cli', 'model', 'effort') },
   doctor: { ...projectArgs, ...flags('fix', 'prompts') },
   notifications: { ...projectArgs, ...flags('peek', 'take', 'history'),
-    ...strings('needs-decision', 'kind', 'audit-escalation', 'complete', 'phase', 'gate-complete', 'candidate') },
+    ...strings('needs-decision', 'kind', 'audit-escalation', 'complete', 'phase', 'gate-complete', 'candidate', 'resolve-decision', 'reason') },
 };
 
 function readPendingWork(project, addr) {
@@ -500,6 +503,13 @@ export async function main(args) {
         if (!daemonAbsent(error)) throw error;
         throw new CommandError('not-ready', 'loomd is not running for this project');
       }
+    } else if (command === 'pause') {
+      if (positionals.length || (values.clear ? values.reason !== undefined : !values.reason?.trim())) invalid(help.pause[0]);
+      try { result = await request(directory, 'pause', { reason: values.reason, clear: values.clear }); }
+      catch (error) {
+        if (!daemonAbsent(error)) throw error;
+        throw new CommandError('not-ready', 'loomd is not running for this project');
+      }
     } else if (command === 'switch') {
       const [role] = positionals;
       if (positionals.length !== 1 || !['leader', 'auditor', 'worker'].includes(role) || !values.to?.trim()) invalid(help.switch[0]);
@@ -589,20 +599,24 @@ export async function main(args) {
         const decision = values['needs-decision'];
         const auditEscalation = values['audit-escalation'];
         const gateComplete = values['gate-complete'];
-        const writes = [values.complete, decision, gateComplete].filter(value => value !== undefined).length;
+        const resolveDecision = values['resolve-decision'];
+        const writes = [values.complete, decision, gateComplete, resolveDecision].filter(value => value !== undefined).length;
         if ([values.peek, values.take, values.history].filter(Boolean).length > 1 ||
             writes > 1 || auditEscalation !== undefined && decision === undefined || values.kind !== undefined &&
             (decision === undefined || values.kind !== 'decision' || auditEscalation !== undefined) ||
             values.phase !== undefined && values.complete === undefined || values.candidate !== undefined && gateComplete === undefined ||
-            (values.take || values.history) && writes) invalid(help.notifications[0]);
+            (values.take || values.history) && writes || (resolveDecision !== undefined ? !values.reason?.trim() || !resolveDecision.trim() :
+              values.reason !== undefined)) invalid(help.notifications[0]);
         try { result = await request(directory, command, { take: values.take, history: values.history,
-          decision, kind: values.kind, auditEscalation, gateComplete, candidate: values.candidate, complete: values.complete, phase: values.phase }); }
+          decision, kind: values.kind, auditEscalation, gateComplete, candidate: values.candidate, complete: values.complete, phase: values.phase,
+          resolveDecision, reason: values.reason }); }
         catch (error) {
           if (!daemonAbsent(error)) throw error;
           if (values.take || writes) {
             throw new CommandError('not-ready', 'loomd is not running for this project');
           }
-          result = { ok: true, notifications: readNotifications(directory).filter(event => values.history || event.takenAt == null) };
+          result = { ok: true, notifications: readNotifications(directory).filter(event =>
+            values.history || event.takenAt == null && event.resolvedAt == null) };
         }
       } else {
         let work;

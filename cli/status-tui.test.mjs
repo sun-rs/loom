@@ -177,6 +177,49 @@ test('Board empty state and worker history expose the right scope', () => {
   assert.match(workers, /ended.*FAILED/);
 });
 
+test('project and global overview show the same health, with a single click opening a severity-ranked alert', { timeout: 3000 }, async t => {
+  const health = {
+    projects: [{ project, lastProgressAt: now - 7_200_000, stalledMs: 7_200_000, alertCount: 1, pendingCount: 1,
+      longestDecisionWaitMs: 7_200_000, pendingDecisions: [{ id: 'd1', waitingMs: 7_200_000, text: 'Choose a rollout' }] }],
+    roles: [{ project, role: 'auditor', addr: 'auditor-1', state: 'quota-wait', task: 'T1', cli: 'codex', model: 'sol',
+      lastActivityAt: now - 600_000, retryAt: now + 600_000 }],
+    alerts: [{ project, id: 'a1', kind: 'project-idle-urgent', severity: 0, text: 'No work activity', action: 'Review open cards.' }],
+  };
+  const current = { ...board, health };
+  const local = boardLines(project, { board: current }, { now, width: 88 }).join('\n');
+  assert.match(local, /待 Super 决定.*最长 2h/);
+  assert.match(local, /Auditor T1.*等额度.*重置.*codex\/sol/);
+  assert.match(local, /项目紧急停滞.*No work activity/);
+  assert.ok(local.split('\n').every(line => widthOf(line) <= 88));
+
+  const input = new PassThrough();
+  const output = new PassThrough();
+  Object.assign(input, { isTTY: true, isRaw: false, setRawMode(mode) { this.isRaw = mode; } });
+  Object.assign(output, { isTTY: true, columns: 120, rows: 22 });
+  let frames = '';
+  let connected;
+  const ready = new Promise(resolve => { connected = resolve; });
+  output.on('data', chunk => {
+    frames += chunk;
+    if (frames.includes('No work activity')) connected();
+  });
+  const closed = statusTui({}, { input, output, discover: () => [project], rpc: async () => current, now: () => now,
+    env: { NO_COLOR: '' } });
+  t.after(() => input.end());
+  await ready;
+  assert.match(frames, /待决 1（最长 2h）.*告警 1/);
+  assert.match(frames, /Auditor T1.*等额度/);
+  const terminalRows = frames.split(/\x1b\[(\d+);1H/);
+  const at = terminalRows.findIndex((part, index) => index % 2 === 0 && part.includes('No work activity'));
+  const y = Number(terminalRows[at - 1]);
+  assert.ok(y > 0);
+  frames = '';
+  input.write('\x1b[<0;7;' + y + 'M');
+  assert.match(frames, /Review open cards/);
+  input.write('q');
+  await closed;
+});
+
 test('fragmented mouse reports select tabs and rows, open details and scroll', { timeout: 3000 }, async t => {
   const input = new PassThrough();
   const output = new PassThrough();
