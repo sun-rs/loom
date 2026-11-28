@@ -18,6 +18,7 @@ import { readArtifacts } from '../cli/artifacts.mjs';
 import { recordSeniorToolDenial } from '../lib/senior-tool-guard.mjs';
 import { seniorToolLog } from './senior-tools.mjs';
 import { authorizeSocketCommand, socketCapabilities } from './socket-auth.mjs';
+import { projectNotifications } from './notifications.mjs';
 
 function fixture(t, options) {
   const project = mkdtempSync(join(realpathSync(tmpdir()), 'loomd-test-'));
@@ -136,6 +137,75 @@ function fixture(t, options) {
   return { daemon, spawn, barrier, read, policy, git, sessions, prompts, resumes, project };
 }
 
+test('module overflow is journaled and the next ordinary delivery drains it', async t => {
+  const log = [];
+  const f = fixture(t, { report: line => log.push(line) });
+  mkdirSync(join(f.project, '.project/loomd'), { recursive: true });
+  const notices = projectNotifications(f.project);
+  for (const type of ['needs-decision', 'blocked-escalation', 'delivery-uncertain']) {
+    notices.add({ id: type, project: f.project, type, at: Date.now(), text: type });
+  }
+  const d = f.daemon();
+  t.after(d.shutdown);
+  const { session } = await f.spawn(d, 'super', 'S');
+  for (let i = 0; i < 3; i++) await d.tick();
+  const inbox = () => f.read('inbox/state.json').messages;
+  const original = inbox().find(message => message.projectEvents?.includes('delivery-uncertain'));
+  assert.deepEqual(original.skillModules, ['needs-decision', 'escalation']);
+  assert.deepEqual(original.skillDeferred, ['delivery-uncertain']);
+  assert.match(original.wireBody, /另有模块 delivery-uncertain 未附/);
+  assert.equal(log.filter(line => line.includes(`modules deferred for ${original.id}`)).length, 1);
+  for (const expected of [['delivery-uncertain'], undefined]) {
+    const { id } = await d.handle('send', { target: session.addr, mode: 'queue', text: 'ordinary turn' });
+    await d.tick();
+    const message = inbox().find(item => item.id === id);
+    assert.deepEqual(message.skillModules, expected);
+    assert.deepEqual(message.skillDeferred, []);
+  }
+});
+
+test('continuing a blocked Worker records and rechecks the resume baseline', async t => {
+  const f = fixture(t);
+  f.git('init', '-q');
+  f.git('-c', 'user.name=Loom', '-c', 'user.email=loom@example.invalid', 'commit', '--allow-empty', '-qm', 'baseline');
+  const d = f.daemon();
+  t.after(d.shutdown);
+  const { session: leader } = await f.spawn(d, 'leader', 'L');
+  const { session: worker, deliveryId: startup } = await f.spawn(d, 'worker', 'RESUME', leader.addr,
+    { prompt: 'RETURN BLOCKED RESUME\nMissing approval.' });
+  for (let i = 0; i < 3; i++) await d.tick();
+  const messages = () => f.read('inbox/state.json').messages;
+  const prior = messages().find(message => message.id === startup);
+  assert.match(prior.completion.body, /^BLOCKED RESUME/);
+  mkdirSync(join(f.project, '.project/evidence'), { recursive: true });
+  writeFileSync(join(f.project, '.project/evidence/phase3-denial.json'), JSON.stringify({
+    addr: worker.addr, endedAt: prior.completion.at, verification: { sandboxDenials: 1 },
+  }));
+  const { id } = await d.handle('send', { target: worker.addr, mode: 'queue', text: 'HOLD approval granted' }, leader.addr);
+  await d.tick();
+  const resumed = messages().find(message => message.id === id);
+  assert.deepEqual(resumed.skillModules, ['worker-resume', 'worker-denied']);
+  assert.match(resumed.wireBody, /续作基线.*\[loom-skill:worker-resume\]/s);
+  const check = await d.handle('worker-check', {}, worker.addr);
+  assert.deepEqual([check.firstReportCheck.source, check.firstReportCheck.deliveryId], ['resume', id]);
+  writeFileSync(join(f.project, 'changed.txt'), 'unexpected WIP');
+  await assert.rejects(d.handle('worker-check', {}, worker.addr), { code: 'worker-first-report-mismatch' });
+});
+
+test('an authenticated Auditor can attach reject routing through an active send', async t => {
+  const f = fixture(t);
+  const d = f.daemon();
+  t.after(d.shutdown);
+  const { session: leader } = await f.spawn(d, 'leader', 'L');
+  const { session: auditor } = await f.spawn(d, 'auditor', 'A');
+  await d.tick();
+  f.sessions.get(leader.addr).finish('DONE');
+  const { id } = await d.handle('send', { target: 'leader', mode: 'queue', text: 'REJECT\nCARD-7 loses its evidence.' }, auditor.addr);
+  await d.tick();
+  const delivered = f.read('inbox/state.json').messages.find(message => message.id === id);
+  assert.match(delivered.wireBody, /\[loom-skill:reject-routing\]/);
+});
+
 test('only Leader and Auditor get a bounded project memory block on spawn', async t => {
   const f = fixture(t);
   writeFileSync(join(f.project, 'proof.txt'), 'proof');
@@ -150,8 +220,8 @@ test('only Leader and Auditor get a bounded project memory block on spawn', asyn
   const { session: auditor } = await f.spawn(daemon, 'auditor', 'A');
   const { session: worker } = await f.spawn(daemon, 'worker', 'W', leader.addr);
   await daemon.tick();
-  const guidance = [/Make decisions.*dispatch Workers.*integration Worker supplies fixed-candidate and full-suite evidence.*reply file path.*poll loom state/,
-    /Decide the gate verdict.*Ask for the integration Worker evidence.*phase boundaries.*Worker to reproduce/];
+  const guidance = [/# Leader.*派卡.*原 Worker.*固定候选/s,
+    /# Auditor.*门禁包.*固定候选.*阶段边界.*交给 Worker/s];
   for (const [{ addr }, rule] of [[leader, guidance[0]], [auditor, guidance[1]]]) {
     const prompt = f.prompts.find(item => item.addr === addr).input;
     assert.ok(prompt.endsWith('\n\n## Startup request\nstart'));
@@ -474,7 +544,7 @@ test('an explicit window threshold waits for the native turn and in-flight card 
 });
 
 test('gate pack snapshots scoped evidence into one compact file and enqueues one pointer across restart', async t => {
-  const f = fixture(t);
+  const f = fixture(t, { auditVerdict: () => 'REJECT\n\nThe candidate loses its evidence.' });
   const commit = name => f.git('-c', 'user.name=Loom', '-c', 'user.email=loom@example.invalid', 'commit', '-qm', name);
   f.git('init', '-q');
   writeFileSync(join(f.project, 'fixture.mjs'), 'old\n');
@@ -526,9 +596,13 @@ test('gate pack snapshots scoped evidence into one compact file and enqueues one
   await assert.rejects(f.spawn(d, 'reviewer', 'RETIRED', auditor.addr, { wave: 'GATE' }), { code: 'invalid-arguments' });
   const auditMessages = f.read('inbox/state.json').messages.filter(message => message.target.addr === auditor.addr && !message.startup);
   assert.deepEqual(auditMessages.map(message => message.text), [`Read gate packet ${packet.path}`]);
+  assert.deepEqual(auditMessages[0].skillModules, ['gate-judgment']);
+  assert.equal(auditMessages[0].wireBody.split('[loom-skill:gate-judgment]').length, 2);
   assert.equal(f.prompts.filter(message => message.addr === auditor.addr && message.input.includes(packet.path)).length, 1);
   const related = f.read('inbox/state.json').messages.filter(message => message.replyTo === packet.deliveryId);
   assert.deepEqual(related.map(message => message.target.addr), [leader.addr]);
+  assert.deepEqual(related[0].skillModules, ['reject-routing']);
+  assert.match(related[0].wireBody, /Read \.project\/replies\/.*\[loom-skill:reject-routing\]/s);
   const budget = await d.handle('notifications', { gateComplete: 'GATE', history: true }, leader.addr);
   assert.equal(budget.notifications.find(event => event.type === 'auditor-budget-exceeded').usage.wakes, 2);
   assert.ok(budget.notifications.some(event => event.gate === 'GATE' && event.type === 'gate-completed'));
@@ -689,6 +763,12 @@ test('Auditor dispatch admits only user messages and one Leader gate or red esca
   assert.match(digestPrompts[0].input, /Loom Auditor next-wake digest/);
   assert.equal(messages.some(message => message.replyTo === user.deliveryId), false);
   assert.equal((await d.handle('notifications', { history: true })).notifications.filter(event => event.type === 'red-escalation').length, 2);
+  assert.equal(messages.some(message => message.target.addr === superSession.addr && message.skillRedNotices), false);
+  const { id: wake } = await d.handle('send', { target: superSession.addr, mode: 'queue', text: 'HOLD current status' });
+  await d.tick();
+  const redWake = f.read('inbox/state.json').messages.find(message => message.id === wake);
+  assert.deepEqual(redWake.skillModules, ['escalation']);
+  assert.match(redWake.wireBody, /Loom 红色事实[\s\S]*G2 · protected-file/);
   const { projectStatus } = await import('../cli/status.mjs');
   const status = await projectStatus(f.project);
   assert.deepEqual(status.routing.filtered.map(item => item.id), [invalid.deliveryId, legacy]);
@@ -1110,6 +1190,7 @@ test('a sealed wave whose BLOCKED members and final result arrive within the win
   const received = f.read('inbox/state.json').messages.filter(message => message.waveBatch);
   assert.equal(received.length, 1);
   assert.match(received[0].text, /BLOCKED B1.*BLOCKED B2.*DONE FAST/s);
+  assert.deepEqual(received[0].skillModules, ['needs-decision']);
   assert.equal(f.prompts.filter(row => row.addr === leader && row.input.includes('波次 W')).length, 1);
 });
 
@@ -1376,7 +1457,8 @@ for (const cli of ['claude', 'agy', 'codex', 'opencode']) test(`a long ${cli} TU
   f.prompts.push({ addr: next.addr, input: text });
   const { brief } = handoverBrief(f, next.addr);
   assert.ok(brief.includes(prompt));
-  assert.match(brief, /Loom role guidance.*Decide the gate verdict/s);
+  assert.match(brief, /Loom role guidance.*# Auditor.*门禁包/s);
+  assert.match(text, /\[loom-skill:successor\].*首行原样写 HANDOVER-ACK/s);
   assert.ok(brief.includes(old.addr));
 });
 
@@ -1419,7 +1501,7 @@ for (const [role, cli] of [['leader', 'agy'], ['auditor', 'claude']]) test(`${ro
   f.sessions.get(old.addr).finish('Startup finished.');
   await d.tick();
   let wire = f.prompts.find(item => deliveryId(item.input) === existing.id);
-  assert.match(wire.input, /换班提示.*rotate --self/s);
+  assert.match(wire.input, /换班提示.*\[loom-skill:rotation\].*rotate --self/s);
   await assert.rejects(d.handle('rotate', { self: true, model: 'override' }, old.addr), { code: 'invalid-arguments' });
   const { rotation: { notePath } } = await d.handle('rotate', { self: true, prepare: true }, old.addr);
   const note = 'Keep the accepted gate. Review only the next candidate.';
@@ -1630,13 +1712,15 @@ for (const [role, startsWork] of [['auditor', true], ['auditor', false], ['leade
   assert.match(brief, /## Do now\n- Register completion for phase `goal5`\.[\s\S]*## Background\nAccepted evidence/);
   assert.equal(brief.match(/^## Do now$/gm).length, 1);
   const startup = f.prompts.find(item => item.addr === next).input;
-  assert.match(startup, /When Loom sends 接管生效, start the Do now items/);
+  assert.match(startup, /\[loom-skill:successor\].*接管生效/s);
   assert.equal(f.read('inbox/state.json').messages.some(message => message.target.addr === next && message.rotationActivation), false);
   f.sessions.get(next).finish(ack);
   await d.tick();
   await d.tick();
   const activation = f.read('inbox/state.json').messages.find(message => message.target.addr === next && message.rotationActivation);
   assert.match(activation.text, /接管生效[\s\S]*goal5/);
+  assert.deepEqual(activation.skillModules, ['rotation-activation']);
+  assert.match(activation.wireBody, /\[loom-skill:rotation-activation\].*Do now/s);
   assert.ok(f.prompts.some(item => deliveryId(item.input) === activation.id));
   if (f.sessions.get(next).session.status().value.kind === 'running') f.sessions.get(next).finish('Ready to continue.');
   if (startsWork) await d.handle('notifications', { complete: 'Goal 5 checked.', phase: 'goal5' }, next);
@@ -1699,6 +1783,7 @@ test('external Super sends to the live role and receives project notification re
 
 test('integration is a headless worker profile and Loom records the suite in the evidence card', async t => {
   const f = fixture(t);
+  f.policy({ delivery: { coalesceMs: 0 } });
   const d = f.daemon();
   t.after(d.shutdown);
   const { session: leader } = await f.spawn(d, 'leader', 'L');
@@ -1710,12 +1795,17 @@ test('integration is a headless worker profile and Loom records the suite in the
   assert.equal(workerProfile, 'integration');
   assert.equal(f.read(`loomd/sessions/${worker.addr}.json`).integration, true);
   await d.tick();
-  assert.match(f.prompts.find(item => item.addr === worker.addr).input, /Integration profile.*\$TMPDIR.*evidence card/s);
+  assert.match(f.prompts.find(item => item.addr === worker.addr).input, /\[loom-skill:worker-integration\].*TMPDIR.*制品记录/s);
+  f.sessions.get(leader.addr).finish('Ready for integration evidence.');
   f.sessions.get(worker.addr).check('npm test', 10, 0);
   f.sessions.get(worker.addr).finish('DONE INTEGRATE\nnpm test exited 0');
   await d.tick();
   const checks = readArtifacts(f.project).cards(worker.addr).flatMap(card => card.data.verification.commands);
   assert.ok(checks.some(check => check.command === 'npm test' && check.result === 'passed'));
+  await d.tick();
+  const result = f.read('inbox/state.json').messages.find(message => message.resultWorkers?.includes(worker.addr));
+  assert.deepEqual(result?.skillModules, ['gate-pack']);
+  assert.match(result.wireBody, /\[loom-skill:gate-pack\].*--candidate/s);
 });
 
 test('named worker tiers preserve the existing launch profiles across providers', async t => {
@@ -3030,6 +3120,7 @@ async function v2Fixture(t, options) {
     const item = delivery();
     assert.ok(item?.received, JSON.stringify({ review: state().noteReviews?.[id],
       delivery: item && { phase: item.phase, issue: item.issue, pending: item.pendingReason, target: item.target.addr } }));
+    assert.match(item.wireBody, /\[loom-skill:rotation-verify\]/);
     return command('verify-note', { target: row.addr, id, verdict, ...evidence }, row.role === 'leader' ? auditor : leader);
   };
   const rotate = async row => {
@@ -3214,6 +3305,22 @@ test('v2 attaches facts to a long-wait wake without making the wait a rotation r
   assert.match(prompt, /当前事实卡[\s\S]*Branch: main/);
   assert.doesNotMatch(prompt, /换班提示/);
   assert.deepEqual(state().sessions[leader.addr].reasons, {});
+});
+
+test('the first ordinary wake after compaction includes one fact card and the red lines', async t => {
+  const { f, d, leader, superRole } = await v2Fixture(t);
+  f.sessions.get(leader.addr).compact();
+  await d.tick();
+  for (const expected of [true, false]) {
+    const { id } = await d.handle('send', { target: leader.addr, mode: 'queue', text: 'HOLD next work' }, superRole.addr);
+    await d.tick();
+    const input = f.prompts.find(item => deliveryId(item.input) === id).input;
+    assert.equal(input.match(/当前事实卡/g)?.length ?? 0, Number(expected));
+    assert.equal(input.includes('[loom-skill:post-compaction]'), expected);
+    if (expected) assert.match(input, /凭据红线/);
+    f.sessions.get(leader.addr).finish('DONE');
+    await d.tick();
+  }
 });
 
 test('v2 counts audit return streaks, user corrections and absolute live context independently', async t => {

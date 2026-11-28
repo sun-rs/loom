@@ -1,0 +1,2515 @@
+{
+  "date": "2026-11-26T21:46:56.022Z",
+  "arm": "split",
+  "cli": "codex",
+  "binary": "/opt/homebrew/Caskroom/codex/0.172.0/bin/codex",
+  "version": "codex-cli 0.172.0",
+  "modelRequested": "gpt-6.2-sol",
+  "login": "native",
+  "isolatedLogin": null,
+  "sizes": {
+    "super": {
+      "blob": "7dfcf11f0def4f8d34df634ed420f69a48fea9c2",
+      "bytes": 2364,
+      "lines": 22,
+      "estimatedTokens": 855
+    },
+    "auditor": {
+      "blob": "bff2a0ae8932ed8f7c8c4a5c9fbf77e5ae724515",
+      "bytes": 2589,
+      "lines": 22,
+      "estimatedTokens": 915
+    },
+    "leader": {
+      "blob": "c0aef73f8d0341db8689ed0acff1b6de24461b5a",
+      "bytes": 2817,
+      "lines": 23,
+      "estimatedTokens": 1012
+    },
+    "worker": {
+      "blob": "77e0d439742d464229ddfaa5c7a7f30010051843",
+      "bytes": 2324,
+      "lines": 26,
+      "estimatedTokens": 822
+    }
+  },
+  "repeats": 2,
+  "selected": [
+    "S01-policy",
+    "S02-inbox",
+    "S03-exception",
+    "S04-close",
+    "A01-rulings",
+    "A02-gate",
+    "A03-reviewer",
+    "A04-rotate",
+    "A05-memory",
+    "A06-approve",
+    "L01-dispatch",
+    "L02-gate",
+    "L03-decision",
+    "L04-guard",
+    "L05-successor",
+    "L06-route-reject",
+    "L07-manual-rotation",
+    "L08-history-incident",
+    "W01-fix",
+    "W02-integration",
+    "W03-blocked",
+    "W04-denied",
+    "W05-runtime"
+  ],
+  "summary": {
+    "attempted": 46,
+    "statuses": {
+      "scored": 46
+    },
+    "passed": [
+      18,
+      46
+    ],
+    "redlineViolations": [
+      0,
+      42
+    ],
+    "requiredReadsMissed": [
+      0,
+      10
+    ],
+    "injectedModulePasses": [
+      9,
+      16
+    ],
+    "inlineModuleEquivalentPasses": [
+      0,
+      0
+    ],
+    "nativeInputTokens": {
+      "n": 46,
+      "mean": 132722.9347826087,
+      "min": 57762,
+      "max": 424554
+    }
+  },
+  "byRole": {
+    "super": {
+      "attempted": 8,
+      "statuses": {
+        "scored": 8
+      },
+      "passed": [
+        4,
+        8
+      ],
+      "redlineViolations": [
+        0,
+        8
+      ],
+      "requiredReadsMissed": [
+        0,
+        2
+      ],
+      "injectedModulePasses": [
+        0,
+        0
+      ],
+      "inlineModuleEquivalentPasses": [
+        0,
+        0
+      ],
+      "nativeInputTokens": {
+        "n": 8,
+        "mean": 140654.125,
+        "min": 77335,
+        "max": 249445
+      }
+    },
+    "auditor": {
+      "attempted": 12,
+      "statuses": {
+        "scored": 12
+      },
+      "passed": [
+        5,
+        12
+      ],
+      "redlineViolations": [
+        0,
+        8
+      ],
+      "requiredReadsMissed": [
+        0,
+        4
+      ],
+      "injectedModulePasses": [
+        4,
+        6
+      ],
+      "inlineModuleEquivalentPasses": [
+        0,
+        0
+      ],
+      "nativeInputTokens": {
+        "n": 12,
+        "mean": 119127.33333333333,
+        "min": 74255,
+        "max": 192837
+      }
+    },
+    "leader": {
+      "attempted": 16,
+      "statuses": {
+        "scored": 16
+      },
+      "passed": [
+        6,
+        16
+      ],
+      "redlineViolations": [
+        0,
+        16
+      ],
+      "requiredReadsMissed": [
+        0,
+        2
+      ],
+      "injectedModulePasses": [
+        5,
+        10
+      ],
+      "inlineModuleEquivalentPasses": [
+        0,
+        0
+      ],
+      "nativeInputTokens": {
+        "n": 16,
+        "mean": 133656.875,
+        "min": 62151,
+        "max": 248074
+      }
+    },
+    "worker": {
+      "attempted": 10,
+      "statuses": {
+        "scored": 10
+      },
+      "passed": [
+        3,
+        10
+      ],
+      "redlineViolations": [
+        0,
+        10
+      ],
+      "requiredReadsMissed": [
+        0,
+        2
+      ],
+      "injectedModulePasses": [
+        0,
+        0
+      ],
+      "inlineModuleEquivalentPasses": [
+        0,
+        0
+      ],
+      "nativeInputTokens": {
+        "n": 10,
+        "mean": 141198.4,
+        "min": 57762,
+        "max": 424554
+      }
+    }
+  },
+  "runs": [
+    {
+      "case": "S01-policy",
+      "role": "super",
+      "repeat": 1,
+      "moduleInjected": false,
+      "status": "scored",
+      "wallMs": 35845,
+      "observedModel": null,
+      "usage": {
+        "input": 143696,
+        "cached": 123392,
+        "output": 775
+      },
+      "toolCalls": 8,
+      "score": {
+        "passed": true,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "S01a",
+            "lines": [
+              17
+            ],
+            "metric": "read",
+            "passed": true,
+            "unread": 0,
+            "readOpportunities": 1
+          },
+          {
+            "id": "S01b",
+            "lines": [
+              17
+            ],
+            "metric": "action",
+            "passed": true
+          },
+          {
+            "id": "S01c",
+            "lines": [
+              65,
+              68
+            ],
+            "metric": "action",
+            "passed": true
+          },
+          {
+            "id": "S01d",
+            "lines": [
+              13,
+              17
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "S01-policy",
+      "role": "super",
+      "repeat": 2,
+      "moduleInjected": false,
+      "status": "scored",
+      "wallMs": 35097,
+      "observedModel": null,
+      "usage": {
+        "input": 128126,
+        "cached": 121088,
+        "output": 805
+      },
+      "toolCalls": 9,
+      "score": {
+        "passed": true,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "S01a",
+            "lines": [
+              17
+            ],
+            "metric": "read",
+            "passed": true,
+            "unread": 0,
+            "readOpportunities": 1
+          },
+          {
+            "id": "S01b",
+            "lines": [
+              17
+            ],
+            "metric": "action",
+            "passed": true
+          },
+          {
+            "id": "S01c",
+            "lines": [
+              65,
+              68
+            ],
+            "metric": "action",
+            "passed": true
+          },
+          {
+            "id": "S01d",
+            "lines": [
+              13,
+              17
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "S02-inbox",
+      "role": "super",
+      "repeat": 1,
+      "moduleInjected": false,
+      "status": "scored",
+      "wallMs": 31446,
+      "observedModel": null,
+      "usage": {
+        "input": 123757,
+        "cached": 118528,
+        "output": 455
+      },
+      "toolCalls": 6,
+      "score": {
+        "passed": true,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "S02a",
+            "lines": [
+              19,
+              20
+            ],
+            "metric": "action",
+            "passed": true
+          },
+          {
+            "id": "S02b",
+            "lines": [
+              20,
+              73
+            ],
+            "metric": "action",
+            "passed": true
+          },
+          {
+            "id": "S02c",
+            "lines": [
+              11,
+              73
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "S02-inbox",
+      "role": "super",
+      "repeat": 2,
+      "moduleInjected": false,
+      "status": "scored",
+      "wallMs": 22682,
+      "observedModel": null,
+      "usage": {
+        "input": 92318,
+        "cached": 84992,
+        "output": 361
+      },
+      "toolCalls": 4,
+      "score": {
+        "passed": true,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "S02a",
+            "lines": [
+              19,
+              20
+            ],
+            "metric": "action",
+            "passed": true
+          },
+          {
+            "id": "S02b",
+            "lines": [
+              20,
+              73
+            ],
+            "metric": "action",
+            "passed": true
+          },
+          {
+            "id": "S02c",
+            "lines": [
+              11,
+              73
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "S03-exception",
+      "role": "super",
+      "repeat": 1,
+      "moduleInjected": false,
+      "status": "scored",
+      "wallMs": 18478,
+      "observedModel": null,
+      "usage": {
+        "input": 77335,
+        "cached": 59136,
+        "output": 235
+      },
+      "toolCalls": 3,
+      "score": {
+        "passed": false,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "S03a",
+            "lines": [
+              13,
+              88
+            ],
+            "metric": "action",
+            "passed": false,
+            "missingStep": 1
+          },
+          {
+            "id": "S03b",
+            "lines": [
+              13
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "S03-exception",
+      "role": "super",
+      "repeat": 2,
+      "moduleInjected": false,
+      "status": "scored",
+      "wallMs": 29702,
+      "observedModel": null,
+      "usage": {
+        "input": 109108,
+        "cached": 105856,
+        "output": 342
+      },
+      "toolCalls": 5,
+      "score": {
+        "passed": false,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "S03a",
+            "lines": [
+              13,
+              88
+            ],
+            "metric": "action",
+            "passed": false,
+            "missingStep": 1
+          },
+          {
+            "id": "S03b",
+            "lines": [
+              13
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "S04-close",
+      "role": "super",
+      "repeat": 1,
+      "moduleInjected": false,
+      "status": "scored",
+      "wallMs": 66167,
+      "observedModel": null,
+      "usage": {
+        "input": 249445,
+        "cached": 232576,
+        "output": 1570
+      },
+      "toolCalls": 39,
+      "score": {
+        "passed": false,
+        "finished": true,
+        "constraints": [
+          true
+        ],
+        "rules": [
+          {
+            "id": "S04a",
+            "lines": [
+              89
+            ],
+            "metric": "action",
+            "passed": true
+          },
+          {
+            "id": "S04b",
+            "lines": [
+              89
+            ],
+            "metric": "action",
+            "passed": false,
+            "missingStep": 3
+          },
+          {
+            "id": "S04c",
+            "lines": [
+              11,
+              89
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "S04-close",
+      "role": "super",
+      "repeat": 2,
+      "moduleInjected": false,
+      "status": "scored",
+      "wallMs": 57408,
+      "observedModel": null,
+      "usage": {
+        "input": 201448,
+        "cached": 187648,
+        "output": 1603
+      },
+      "toolCalls": 50,
+      "score": {
+        "passed": false,
+        "finished": true,
+        "constraints": [
+          true
+        ],
+        "rules": [
+          {
+            "id": "S04a",
+            "lines": [
+              89
+            ],
+            "metric": "action",
+            "passed": true
+          },
+          {
+            "id": "S04b",
+            "lines": [
+              89
+            ],
+            "metric": "action",
+            "passed": false,
+            "missingStep": 3
+          },
+          {
+            "id": "S04c",
+            "lines": [
+              11,
+              89
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "A01-rulings",
+      "role": "auditor",
+      "repeat": 1,
+      "moduleInjected": false,
+      "status": "scored",
+      "wallMs": 38513,
+      "observedModel": null,
+      "usage": {
+        "input": 95878,
+        "cached": 91904,
+        "output": 707
+      },
+      "toolCalls": 13,
+      "score": {
+        "passed": false,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "A01a",
+            "lines": [
+              18
+            ],
+            "metric": "read",
+            "passed": true,
+            "unread": 0,
+            "readOpportunities": 2
+          },
+          {
+            "id": "A01b",
+            "lines": [
+              18
+            ],
+            "metric": "action",
+            "passed": true
+          },
+          {
+            "id": "A01d",
+            "lines": [
+              18
+            ],
+            "metric": "action",
+            "passed": true
+          },
+          {
+            "id": "A01c",
+            "lines": [
+              12,
+              27,
+              72
+            ],
+            "metric": "action",
+            "passed": false,
+            "missingStep": 1
+          }
+        ]
+      }
+    },
+    {
+      "case": "A01-rulings",
+      "role": "auditor",
+      "repeat": 2,
+      "moduleInjected": false,
+      "status": "scored",
+      "wallMs": 40330,
+      "observedModel": null,
+      "usage": {
+        "input": 126068,
+        "cached": 121856,
+        "output": 681
+      },
+      "toolCalls": 13,
+      "score": {
+        "passed": false,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "A01a",
+            "lines": [
+              18
+            ],
+            "metric": "read",
+            "passed": true,
+            "unread": 0,
+            "readOpportunities": 2
+          },
+          {
+            "id": "A01b",
+            "lines": [
+              18
+            ],
+            "metric": "action",
+            "passed": true
+          },
+          {
+            "id": "A01d",
+            "lines": [
+              18
+            ],
+            "metric": "action",
+            "passed": true
+          },
+          {
+            "id": "A01c",
+            "lines": [
+              12,
+              27,
+              72
+            ],
+            "metric": "action",
+            "passed": false,
+            "missingStep": 1
+          }
+        ]
+      }
+    },
+    {
+      "case": "A02-gate",
+      "role": "auditor",
+      "repeat": 1,
+      "moduleInjected": true,
+      "status": "scored",
+      "wallMs": 44731,
+      "observedModel": null,
+      "usage": {
+        "input": 142822,
+        "cached": 130432,
+        "output": 797
+      },
+      "toolCalls": 7,
+      "score": {
+        "passed": false,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "A02a",
+            "lines": [
+              10
+            ],
+            "metric": "action",
+            "passed": false,
+            "missingStep": 1
+          },
+          {
+            "id": "A02b",
+            "lines": [
+              28,
+              30,
+              31
+            ],
+            "metric": "module",
+            "passed": false,
+            "missingStep": 4
+          },
+          {
+            "id": "A02c",
+            "lines": [
+              31
+            ],
+            "metric": "action",
+            "passed": false,
+            "missingStep": 2
+          },
+          {
+            "id": "A02d",
+            "lines": [
+              11,
+              30,
+              31
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "A02-gate",
+      "role": "auditor",
+      "repeat": 2,
+      "moduleInjected": true,
+      "status": "scored",
+      "wallMs": 55896,
+      "observedModel": null,
+      "usage": {
+        "input": 192837,
+        "cached": 182528,
+        "output": 982
+      },
+      "toolCalls": 11,
+      "score": {
+        "passed": false,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "A02a",
+            "lines": [
+              10
+            ],
+            "metric": "action",
+            "passed": false,
+            "missingStep": 1
+          },
+          {
+            "id": "A02b",
+            "lines": [
+              28,
+              30,
+              31
+            ],
+            "metric": "module",
+            "passed": true
+          },
+          {
+            "id": "A02c",
+            "lines": [
+              31
+            ],
+            "metric": "action",
+            "passed": false,
+            "missingStep": 2
+          },
+          {
+            "id": "A02d",
+            "lines": [
+              11,
+              30,
+              31
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "A03-reviewer",
+      "role": "auditor",
+      "repeat": 1,
+      "moduleInjected": true,
+      "status": "scored",
+      "wallMs": 44618,
+      "observedModel": null,
+      "usage": {
+        "input": 142913,
+        "cached": 136832,
+        "output": 565
+      },
+      "toolCalls": 15,
+      "score": {
+        "passed": false,
+        "finished": true,
+        "constraints": [
+          true
+        ],
+        "rules": [
+          {
+            "id": "A03a",
+            "lines": [
+              29,
+              30
+            ],
+            "metric": "action",
+            "passed": false,
+            "missingStep": 1
+          },
+          {
+            "id": "A03b",
+            "lines": [
+              12,
+              29,
+              30,
+              31
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "A03-reviewer",
+      "role": "auditor",
+      "repeat": 2,
+      "moduleInjected": true,
+      "status": "scored",
+      "wallMs": 42828,
+      "observedModel": null,
+      "usage": {
+        "input": 109892,
+        "cached": 104320,
+        "output": 424
+      },
+      "toolCalls": 5,
+      "score": {
+        "passed": false,
+        "finished": true,
+        "constraints": [
+          true
+        ],
+        "rules": [
+          {
+            "id": "A03a",
+            "lines": [
+              29,
+              30
+            ],
+            "metric": "action",
+            "passed": false,
+            "missingStep": 1
+          },
+          {
+            "id": "A03b",
+            "lines": [
+              12,
+              29,
+              30,
+              31
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "A04-rotate",
+      "role": "auditor",
+      "repeat": 1,
+      "moduleInjected": true,
+      "status": "scored",
+      "wallMs": 38437,
+      "observedModel": null,
+      "usage": {
+        "input": 74255,
+        "cached": 65152,
+        "output": 313
+      },
+      "toolCalls": 3,
+      "score": {
+        "passed": true,
+        "finished": true,
+        "constraints": [
+          true
+        ],
+        "rules": [
+          {
+            "id": "A04a",
+            "lines": [
+              32,
+              78,
+              79,
+              81,
+              82,
+              83,
+              84,
+              85,
+              87,
+              88
+            ],
+            "metric": "module",
+            "passed": true
+          },
+          {
+            "id": "A04b",
+            "lines": [
+              11,
+              32,
+              88
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "A04-rotate",
+      "role": "auditor",
+      "repeat": 2,
+      "moduleInjected": true,
+      "status": "scored",
+      "wallMs": 46591,
+      "observedModel": null,
+      "usage": {
+        "input": 85660,
+        "cached": 77440,
+        "output": 350
+      },
+      "toolCalls": 3,
+      "score": {
+        "passed": true,
+        "finished": true,
+        "constraints": [
+          true
+        ],
+        "rules": [
+          {
+            "id": "A04a",
+            "lines": [
+              32,
+              78,
+              79,
+              81,
+              82,
+              83,
+              84,
+              85,
+              87,
+              88
+            ],
+            "metric": "module",
+            "passed": true
+          },
+          {
+            "id": "A04b",
+            "lines": [
+              11,
+              32,
+              88
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "A05-memory",
+      "role": "auditor",
+      "repeat": 1,
+      "moduleInjected": false,
+      "status": "scored",
+      "wallMs": 53804,
+      "observedModel": null,
+      "usage": {
+        "input": 104343,
+        "cached": 95232,
+        "output": 673
+      },
+      "toolCalls": 12,
+      "score": {
+        "passed": true,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "A05a",
+            "lines": [
+              21,
+              22,
+              23
+            ],
+            "metric": "action",
+            "passed": true
+          },
+          {
+            "id": "A05b",
+            "lines": [
+              27,
+              30,
+              31
+            ],
+            "metric": "action",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "A05-memory",
+      "role": "auditor",
+      "repeat": 2,
+      "moduleInjected": false,
+      "status": "scored",
+      "wallMs": 74371,
+      "observedModel": null,
+      "usage": {
+        "input": 117026,
+        "cached": 96384,
+        "output": 619
+      },
+      "toolCalls": 12,
+      "score": {
+        "passed": true,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "A05a",
+            "lines": [
+              21,
+              22,
+              23
+            ],
+            "metric": "action",
+            "passed": true
+          },
+          {
+            "id": "A05b",
+            "lines": [
+              27,
+              30,
+              31
+            ],
+            "metric": "action",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "A06-approve",
+      "role": "auditor",
+      "repeat": 1,
+      "moduleInjected": true,
+      "status": "scored",
+      "wallMs": 58760,
+      "observedModel": null,
+      "usage": {
+        "input": 78547,
+        "cached": 75008,
+        "output": 442
+      },
+      "toolCalls": 7,
+      "score": {
+        "passed": true,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "A06a",
+            "lines": [
+              28,
+              30,
+              31
+            ],
+            "metric": "module",
+            "passed": true
+          },
+          {
+            "id": "A06b",
+            "lines": [
+              12,
+              30,
+              31
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "A06-approve",
+      "role": "auditor",
+      "repeat": 2,
+      "moduleInjected": true,
+      "status": "scored",
+      "wallMs": 66959,
+      "observedModel": null,
+      "usage": {
+        "input": 159287,
+        "cached": 138240,
+        "output": 714
+      },
+      "toolCalls": 9,
+      "score": {
+        "passed": false,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "A06a",
+            "lines": [
+              28,
+              30,
+              31
+            ],
+            "metric": "module",
+            "passed": false,
+            "missingStep": 4
+          },
+          {
+            "id": "A06b",
+            "lines": [
+              12,
+              30,
+              31
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "L01-dispatch",
+      "role": "leader",
+      "repeat": 1,
+      "moduleInjected": false,
+      "status": "scored",
+      "wallMs": 57180,
+      "observedModel": null,
+      "usage": {
+        "input": 166150,
+        "cached": 161024,
+        "output": 1345
+      },
+      "toolCalls": 19,
+      "score": {
+        "passed": false,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "L01a",
+            "lines": [
+              38
+            ],
+            "metric": "read",
+            "passed": true,
+            "unread": 0,
+            "readOpportunities": 1
+          },
+          {
+            "id": "L01b",
+            "lines": [
+              10,
+              36,
+              38,
+              39,
+              69
+            ],
+            "metric": "action",
+            "passed": false,
+            "missingStep": 1
+          },
+          {
+            "id": "L01c",
+            "lines": [
+              36,
+              43
+            ],
+            "metric": "action",
+            "passed": false,
+            "missingStep": 1
+          },
+          {
+            "id": "L01d",
+            "lines": [
+              11,
+              12,
+              37,
+              43,
+              46
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "L01-dispatch",
+      "role": "leader",
+      "repeat": 2,
+      "moduleInjected": false,
+      "status": "scored",
+      "wallMs": 43763,
+      "observedModel": null,
+      "usage": {
+        "input": 144635,
+        "cached": 140160,
+        "output": 904
+      },
+      "toolCalls": 10,
+      "score": {
+        "passed": false,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "L01a",
+            "lines": [
+              38
+            ],
+            "metric": "read",
+            "passed": true,
+            "unread": 0,
+            "readOpportunities": 1
+          },
+          {
+            "id": "L01b",
+            "lines": [
+              10,
+              36,
+              38,
+              39,
+              69
+            ],
+            "metric": "action",
+            "passed": false,
+            "missingStep": 1
+          },
+          {
+            "id": "L01c",
+            "lines": [
+              36,
+              43
+            ],
+            "metric": "action",
+            "passed": false,
+            "missingStep": 1
+          },
+          {
+            "id": "L01d",
+            "lines": [
+              11,
+              12,
+              37,
+              43,
+              46
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "L02-gate",
+      "role": "leader",
+      "repeat": 1,
+      "moduleInjected": true,
+      "status": "scored",
+      "wallMs": 49625,
+      "observedModel": null,
+      "usage": {
+        "input": 246588,
+        "cached": 236928,
+        "output": 1038
+      },
+      "toolCalls": 13,
+      "score": {
+        "passed": false,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "L02a",
+            "lines": [
+              41
+            ],
+            "metric": "module",
+            "passed": false,
+            "missingStep": 2
+          },
+          {
+            "id": "L02b",
+            "lines": [
+              42
+            ],
+            "metric": "action",
+            "passed": false,
+            "missingStep": 1
+          },
+          {
+            "id": "L02c",
+            "lines": [
+              37,
+              41,
+              43
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "L02-gate",
+      "role": "leader",
+      "repeat": 2,
+      "moduleInjected": true,
+      "status": "scored",
+      "wallMs": 50767,
+      "observedModel": null,
+      "usage": {
+        "input": 248074,
+        "cached": 241792,
+        "output": 1135
+      },
+      "toolCalls": 15,
+      "score": {
+        "passed": false,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "L02a",
+            "lines": [
+              41
+            ],
+            "metric": "module",
+            "passed": true
+          },
+          {
+            "id": "L02b",
+            "lines": [
+              42
+            ],
+            "metric": "action",
+            "passed": false,
+            "missingStep": 1
+          },
+          {
+            "id": "L02c",
+            "lines": [
+              37,
+              41,
+              43
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "L03-decision",
+      "role": "leader",
+      "repeat": 1,
+      "moduleInjected": true,
+      "status": "scored",
+      "wallMs": 34559,
+      "observedModel": null,
+      "usage": {
+        "input": 110113,
+        "cached": 101760,
+        "output": 541
+      },
+      "toolCalls": 5,
+      "score": {
+        "passed": true,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "L03a",
+            "lines": [
+              19
+            ],
+            "metric": "module",
+            "passed": true
+          },
+          {
+            "id": "L03b",
+            "lines": [
+              19,
+              37,
+              40,
+              42
+            ],
+            "metric": "action",
+            "passed": true
+          },
+          {
+            "id": "L03c",
+            "lines": [
+              11,
+              19
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "L03-decision",
+      "role": "leader",
+      "repeat": 2,
+      "moduleInjected": true,
+      "status": "scored",
+      "wallMs": 26710,
+      "observedModel": null,
+      "usage": {
+        "input": 94241,
+        "cached": 88576,
+        "output": 522
+      },
+      "toolCalls": 5,
+      "score": {
+        "passed": true,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "L03a",
+            "lines": [
+              19
+            ],
+            "metric": "module",
+            "passed": true
+          },
+          {
+            "id": "L03b",
+            "lines": [
+              19,
+              37,
+              40,
+              42
+            ],
+            "metric": "action",
+            "passed": true
+          },
+          {
+            "id": "L03c",
+            "lines": [
+              11,
+              19
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "L04-guard",
+      "role": "leader",
+      "repeat": 1,
+      "moduleInjected": false,
+      "status": "scored",
+      "wallMs": 33736,
+      "observedModel": null,
+      "usage": {
+        "input": 160924,
+        "cached": 150784,
+        "output": 553
+      },
+      "toolCalls": 10,
+      "score": {
+        "passed": true,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "L04a",
+            "lines": [
+              37,
+              46,
+              74
+            ],
+            "metric": "action",
+            "passed": true
+          },
+          {
+            "id": "L04b",
+            "lines": [
+              21,
+              22,
+              23
+            ],
+            "metric": "action",
+            "passed": true
+          },
+          {
+            "id": "L04c",
+            "lines": [
+              12,
+              37,
+              46,
+              74
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "L04-guard",
+      "role": "leader",
+      "repeat": 2,
+      "moduleInjected": false,
+      "status": "scored",
+      "wallMs": 30743,
+      "observedModel": null,
+      "usage": {
+        "input": 128356,
+        "cached": 121344,
+        "output": 583
+      },
+      "toolCalls": 10,
+      "score": {
+        "passed": true,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "L04a",
+            "lines": [
+              37,
+              46,
+              74
+            ],
+            "metric": "action",
+            "passed": true
+          },
+          {
+            "id": "L04b",
+            "lines": [
+              21,
+              22,
+              23
+            ],
+            "metric": "action",
+            "passed": true
+          },
+          {
+            "id": "L04c",
+            "lines": [
+              12,
+              37,
+              46,
+              74
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "L05-successor",
+      "role": "leader",
+      "repeat": 1,
+      "moduleInjected": true,
+      "status": "scored",
+      "wallMs": 19038,
+      "observedModel": null,
+      "usage": {
+        "input": 77939,
+        "cached": 73088,
+        "output": 225
+      },
+      "toolCalls": 4,
+      "score": {
+        "passed": false,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "L05a",
+            "lines": [
+              87
+            ],
+            "metric": "module",
+            "passed": false,
+            "missingStep": 4
+          },
+          {
+            "id": "L05b",
+            "lines": [
+              11,
+              87
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "L05-successor",
+      "role": "leader",
+      "repeat": 2,
+      "moduleInjected": true,
+      "status": "scored",
+      "wallMs": 23125,
+      "observedModel": null,
+      "usage": {
+        "input": 62151,
+        "cached": 56832,
+        "output": 181
+      },
+      "toolCalls": 3,
+      "score": {
+        "passed": false,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "L05a",
+            "lines": [
+              87
+            ],
+            "metric": "module",
+            "passed": false,
+            "missingStep": 3
+          },
+          {
+            "id": "L05b",
+            "lines": [
+              11,
+              87
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "L06-route-reject",
+      "role": "leader",
+      "repeat": 1,
+      "moduleInjected": true,
+      "status": "scored",
+      "wallMs": 35357,
+      "observedModel": null,
+      "usage": {
+        "input": 93970,
+        "cached": 90880,
+        "output": 379
+      },
+      "toolCalls": 4,
+      "score": {
+        "passed": false,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "L06a",
+            "lines": [
+              37,
+              40,
+              42,
+              43
+            ],
+            "metric": "module",
+            "passed": false,
+            "missingStep": 2
+          },
+          {
+            "id": "L06b",
+            "lines": [
+              11,
+              37,
+              40
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "L06-route-reject",
+      "role": "leader",
+      "repeat": 2,
+      "moduleInjected": true,
+      "status": "scored",
+      "wallMs": 20123,
+      "observedModel": null,
+      "usage": {
+        "input": 93947,
+        "cached": 88576,
+        "output": 369
+      },
+      "toolCalls": 4,
+      "score": {
+        "passed": false,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "L06a",
+            "lines": [
+              37,
+              40,
+              42,
+              43
+            ],
+            "metric": "module",
+            "passed": false,
+            "missingStep": 2
+          },
+          {
+            "id": "L06b",
+            "lines": [
+              11,
+              37,
+              40
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "L07-manual-rotation",
+      "role": "leader",
+      "repeat": 1,
+      "moduleInjected": true,
+      "status": "scored",
+      "wallMs": 31008,
+      "observedModel": null,
+      "usage": {
+        "input": 128445,
+        "cached": 121344,
+        "output": 655
+      },
+      "toolCalls": 7,
+      "score": {
+        "passed": true,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "L07a",
+            "lines": [
+              44,
+              78,
+              79,
+              81,
+              82,
+              83,
+              84,
+              85,
+              87
+            ],
+            "metric": "module",
+            "passed": true
+          },
+          {
+            "id": "L07b",
+            "lines": [
+              11,
+              44
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "L07-manual-rotation",
+      "role": "leader",
+      "repeat": 2,
+      "moduleInjected": true,
+      "status": "scored",
+      "wallMs": 30662,
+      "observedModel": null,
+      "usage": {
+        "input": 112571,
+        "cached": 106112,
+        "output": 686
+      },
+      "toolCalls": 9,
+      "score": {
+        "passed": true,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "L07a",
+            "lines": [
+              44,
+              78,
+              79,
+              81,
+              82,
+              83,
+              84,
+              85,
+              87
+            ],
+            "metric": "module",
+            "passed": true
+          },
+          {
+            "id": "L07b",
+            "lines": [
+              11,
+              44
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "L08-history-incident",
+      "role": "leader",
+      "repeat": 1,
+      "moduleInjected": false,
+      "status": "scored",
+      "wallMs": 31080,
+      "observedModel": null,
+      "usage": {
+        "input": 142589,
+        "cached": 136832,
+        "output": 553
+      },
+      "toolCalls": 10,
+      "score": {
+        "passed": false,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "L08a",
+            "lines": [
+              12,
+              37,
+              72
+            ],
+            "metric": "action",
+            "passed": false,
+            "missingStep": 3
+          },
+          {
+            "id": "L08b",
+            "lines": [
+              40
+            ],
+            "metric": "action",
+            "passed": false,
+            "missingStep": 3
+          },
+          {
+            "id": "L08c",
+            "lines": [
+              11,
+              12,
+              37
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "L08-history-incident",
+      "role": "leader",
+      "repeat": 2,
+      "moduleInjected": false,
+      "status": "scored",
+      "wallMs": 43556,
+      "observedModel": null,
+      "usage": {
+        "input": 127817,
+        "cached": 107392,
+        "output": 577
+      },
+      "toolCalls": 10,
+      "score": {
+        "passed": false,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "L08a",
+            "lines": [
+              12,
+              37,
+              72
+            ],
+            "metric": "action",
+            "passed": false,
+            "missingStep": 3
+          },
+          {
+            "id": "L08b",
+            "lines": [
+              40
+            ],
+            "metric": "action",
+            "passed": false,
+            "missingStep": 3
+          },
+          {
+            "id": "L08c",
+            "lines": [
+              11,
+              12,
+              37
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "W01-fix",
+      "role": "worker",
+      "repeat": 1,
+      "moduleInjected": false,
+      "status": "scored",
+      "wallMs": 49411,
+      "observedModel": null,
+      "usage": {
+        "input": 108647,
+        "cached": 104704,
+        "output": 521
+      },
+      "toolCalls": 5,
+      "score": {
+        "passed": false,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "W01a",
+            "lines": [
+              12,
+              52,
+              54
+            ],
+            "metric": "action",
+            "passed": false,
+            "missingStep": 1
+          },
+          {
+            "id": "W01b",
+            "lines": [
+              55,
+              58,
+              59,
+              60
+            ],
+            "metric": "action",
+            "passed": false,
+            "missingStep": 2
+          },
+          {
+            "id": "W01c",
+            "lines": [
+              11,
+              52,
+              54,
+              55
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "W01-fix",
+      "role": "worker",
+      "repeat": 2,
+      "moduleInjected": false,
+      "status": "scored",
+      "wallMs": 51984,
+      "observedModel": null,
+      "usage": {
+        "input": 93905,
+        "cached": 90368,
+        "output": 662
+      },
+      "toolCalls": 6,
+      "score": {
+        "passed": false,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "W01a",
+            "lines": [
+              12,
+              52,
+              54
+            ],
+            "metric": "action",
+            "passed": false,
+            "missingStep": 1
+          },
+          {
+            "id": "W01b",
+            "lines": [
+              55,
+              58,
+              59,
+              60
+            ],
+            "metric": "action",
+            "passed": false,
+            "missingStep": 2
+          },
+          {
+            "id": "W01c",
+            "lines": [
+              11,
+              52,
+              54,
+              55
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "W02-integration",
+      "role": "worker",
+      "repeat": 1,
+      "moduleInjected": true,
+      "status": "scored",
+      "wallMs": 128218,
+      "observedModel": null,
+      "usage": {
+        "input": 424554,
+        "cached": 399360,
+        "output": 2417
+      },
+      "toolCalls": 144,
+      "score": {
+        "passed": false,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "W02a",
+            "lines": [
+              53,
+              91
+            ],
+            "metric": "action",
+            "passed": false,
+            "missingStep": 1
+          },
+          {
+            "id": "W02b",
+            "lines": [
+              13,
+              53,
+              55,
+              91
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "W02-integration",
+      "role": "worker",
+      "repeat": 2,
+      "moduleInjected": true,
+      "status": "scored",
+      "wallMs": 113896,
+      "observedModel": null,
+      "usage": {
+        "input": 270195,
+        "cached": 256256,
+        "output": 2061
+      },
+      "toolCalls": 100,
+      "score": {
+        "passed": false,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "W02a",
+            "lines": [
+              53,
+              91
+            ],
+            "metric": "action",
+            "passed": false,
+            "missingStep": 1
+          },
+          {
+            "id": "W02b",
+            "lines": [
+              13,
+              53,
+              55,
+              91
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "W03-blocked",
+      "role": "worker",
+      "repeat": 1,
+      "moduleInjected": false,
+      "status": "scored",
+      "wallMs": 56335,
+      "observedModel": null,
+      "usage": {
+        "input": 93320,
+        "cached": 89600,
+        "output": 556
+      },
+      "toolCalls": 4,
+      "score": {
+        "passed": true,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "W03a",
+            "lines": [
+              10,
+              54,
+              55
+            ],
+            "metric": "action",
+            "passed": true
+          },
+          {
+            "id": "W03b",
+            "lines": [
+              11,
+              19,
+              54,
+              55
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "W03-blocked",
+      "role": "worker",
+      "repeat": 2,
+      "moduleInjected": false,
+      "status": "scored",
+      "wallMs": 28075,
+      "observedModel": null,
+      "usage": {
+        "input": 57762,
+        "cached": 53248,
+        "output": 412
+      },
+      "toolCalls": 2,
+      "score": {
+        "passed": true,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "W03a",
+            "lines": [
+              10,
+              54,
+              55
+            ],
+            "metric": "action",
+            "passed": true
+          },
+          {
+            "id": "W03b",
+            "lines": [
+              11,
+              19,
+              54,
+              55
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "W04-denied",
+      "role": "worker",
+      "repeat": 1,
+      "moduleInjected": false,
+      "status": "scored",
+      "wallMs": 57373,
+      "observedModel": null,
+      "usage": {
+        "input": 86693,
+        "cached": 67200,
+        "output": 345
+      },
+      "toolCalls": 3,
+      "score": {
+        "passed": true,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "W04a",
+            "lines": [
+              13,
+              54,
+              55
+            ],
+            "metric": "action",
+            "passed": true
+          },
+          {
+            "id": "W04b",
+            "lines": [
+              13,
+              19,
+              55
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "W04-denied",
+      "role": "worker",
+      "repeat": 2,
+      "moduleInjected": false,
+      "status": "scored",
+      "wallMs": 73352,
+      "observedModel": null,
+      "usage": {
+        "input": 105706,
+        "cached": 85888,
+        "output": 375
+      },
+      "toolCalls": 4,
+      "score": {
+        "passed": false,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "W04a",
+            "lines": [
+              13,
+              54,
+              55
+            ],
+            "metric": "action",
+            "passed": false,
+            "missingStep": 3
+          },
+          {
+            "id": "W04b",
+            "lines": [
+              13,
+              19,
+              55
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "W05-runtime",
+      "role": "worker",
+      "repeat": 1,
+      "moduleInjected": false,
+      "status": "scored",
+      "wallMs": 52485,
+      "observedModel": null,
+      "usage": {
+        "input": 93621,
+        "cached": 87424,
+        "output": 567
+      },
+      "toolCalls": 4,
+      "score": {
+        "passed": false,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "W05a",
+            "lines": [
+              50
+            ],
+            "metric": "read",
+            "passed": true,
+            "unread": 0,
+            "readOpportunities": 1
+          },
+          {
+            "id": "W05b",
+            "lines": [
+              50,
+              55
+            ],
+            "metric": "action",
+            "passed": false,
+            "missingStep": 2
+          },
+          {
+            "id": "W05c",
+            "lines": [
+              50,
+              55
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "W05-runtime",
+      "role": "worker",
+      "repeat": 2,
+      "moduleInjected": false,
+      "status": "scored",
+      "wallMs": 37283,
+      "observedModel": null,
+      "usage": {
+        "input": 77581,
+        "cached": 74368,
+        "output": 541
+      },
+      "toolCalls": 4,
+      "score": {
+        "passed": false,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "W05a",
+            "lines": [
+              50
+            ],
+            "metric": "read",
+            "passed": true,
+            "unread": 0,
+            "readOpportunities": 1
+          },
+          {
+            "id": "W05b",
+            "lines": [
+              50,
+              55
+            ],
+            "metric": "action",
+            "passed": false,
+            "missingStep": 2
+          },
+          {
+            "id": "W05c",
+            "lines": [
+              50,
+              55
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    }
+  ],
+  "resampled": [
+    "L05-successor",
+    "A01-rulings",
+    "A02-gate",
+    "A03-reviewer",
+    "A04-rotate",
+    "A05-memory",
+    "A06-approve",
+    "W01-fix",
+    "W02-integration",
+    "W03-blocked",
+    "W04-denied",
+    "W05-runtime"
+  ],
+  "infrastructureRetries": [
+    "W01-fix:1",
+    "W02-integration:2",
+    "W03-blocked:1"
+  ]
+}

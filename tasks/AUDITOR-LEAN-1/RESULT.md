@@ -101,3 +101,11 @@
   - 验证：`npm ci` 通过，`npm run lint` 通过（360 files），`git diff --check` 通过，全量 `npm test -- --test-concurrency=3` **1126/1126 通过，0 失败、0 取消、0 跳过**（首轮 `--test-concurrency=4` 仅 `daemon/upgrade.test.mjs` 偶发一次 `ps` 枚举竞争 `SIGKILL`，单跑 4/4 与降并发全量 1126/1126 均通过）。
 
 STATUS: done
+
+## 2026-11-28 merge follow-up
+
+- Ran `git merge main` on `infra/auditor-lean`. The local `main` was `e1afe62e`, a descendant of the requested `8efd3cbb`.
+- Resolved `daemon/sessions.mjs` with `main`'s split `roleCore` and `skillModules` startup flow.
+- Resolved `skills/loom/SKILL.md` with `main`'s split skill index and moved the Auditor cost-reduction allowed/forbidden list into `skills/loom/roles/auditor.md`.
+- Verification passed: `npm ci`, `npm run lint` (369 files), and `npm test` (1149 passed, 0 failed, 0 cancelled, 0 skipped).
+- No push was performed.

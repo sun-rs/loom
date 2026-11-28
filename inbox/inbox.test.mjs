@@ -168,6 +168,27 @@ test('automatic replies require a conclusion and honour an explicit NOREPLY', ()
   assert.equal(conclusoryReply('收到材料。\n\n**NOREPLY**\n\nPASS'), false);
 });
 
+test('an automatic delivery keeps its inline module byte-for-byte on a refused attempt', async t => {
+  const f = fixture(t);
+  const pane = f.terminal('t1', 'codex', 'idle');
+  const id = await f.submit(pane, 'queue', undefined, { replyKey: 'gate-reply' });
+  const deliveryAppendix = '[loom-skill:reject-routing]\n' + '核对原件。'.repeat(50);
+  let decorations = 0;
+  const options = { decorate: () => {
+    decorations++;
+    return { deliveryAppendix, skillModules: ['reject-routing'] };
+  } };
+  f.refuse('status_mismatch');
+  await f.reopen().step(undefined, options);
+  const before = f.lookup(id).wireBody;
+  assert.ok(before.endsWith(deliveryAppendix));
+  f.refuse();
+  await f.reopen().step(undefined, options);
+  assert.equal(decorations, 1);
+  assert.equal(f.lookup(id).wireBody, before);
+  assert.equal(f.sends[0][1], wireText(id, before));
+});
+
 test('both pilot gate verdicts relay once via hook Stop, Claude transcript and OAR turn-end', async t => {
   const fixtures = JSON.parse(readFileSync(new URL('../tasks/RELAY-GATE-1/pilot-verdicts.json', import.meta.url), 'utf8'));
   for (const source of ['hook', 'transcript', 'OAR']) {

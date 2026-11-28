@@ -5,6 +5,7 @@ import { join } from 'node:path';
 import { CommandError } from '../cli/sessions.mjs';
 import { accountService } from './account-service.mjs';
 import { projectIndex } from '../cli/project.mjs';
+import { readArtifacts } from '../cli/artifacts.mjs';
 import { reportedContext } from '../cli/state.mjs';
 import { defaultStallMs, inbox, pendingWork, receipt, stalledDeliveries, stallText, suppressedReplies, suppressedReplyText } from '../inbox/engine.mjs';
 import { conclusoryReply, deliveryFailed, isBlockedReply, messageIdPattern, replyConclusion } from '../inbox/message.mjs';
@@ -42,10 +43,13 @@ import { createMemoryExtractor } from './memory-extractor.mjs';
 import { rotationPolicy } from './rotation-policy.mjs';
 import { selfRotation } from './self-rotation.mjs';
 import { approvedWaves, handoffReason, idleForRelease, isReleased, releaseConditions, retainedState, retirementReason, retentionStatus,
-  reuseStatus, workerCardId, workerContext, workerDetails, workerIdleSince, workerMetrics, workerResultReceiptMs,
+  nativeCompaction, reuseStatus, workerCardId, workerContext, workerDetails, workerIdleSince, workerMetrics, workerResultReceiptMs,
   workerStalledSince } from './worker-retention.mjs';
 import { hostGrantSpec, storedHostUnconfined, storedWorkerTier } from '../lib/worker-tiers.mjs';
 import { hostGrantWarning, hostGrants, hostWritePaths } from './host-grants.mjs';
+import { skillModules } from '../lib/role-skill.mjs';
+import { deliverySkillEvents } from './skill-events.mjs';
+import { workerCheckpoint, workerCheckpointMismatch, workerCheckpointText } from './worker-handoff.mjs';
 import { superHandoffReminder } from './global-registry.mjs';
 import { recoverProject } from './recover.mjs';
 
@@ -156,7 +160,7 @@ export function createSupervisor(project, {
       `请先核对 ${row.role} ${row.addr} 的交接单，用命令确认 SHA、路径及在途项。`, proof,
       `loomd 在途项：${work.map(item => [item.task, item.addr].filter(Boolean).join(' ')).join(' · ') || '无'}`,
       `用 "$LOOM_BIN" rotation-policy verify-note --target ${row.addr} --id ${id} --verdict pass|fail --detail TEXT --evidence FILE[:LINE] 登记。`,
-    ].join('\n'), { id: messageId, rotationVerification: true });
+    ].join('\n'), { id: messageId, rotationVerification: true, rotationVerifier: true });
     return messageId;
   }
   const budget = roleBudget(project, { now, sessions, notifications, batchDeliveryId, report, signalRotation: rotation.propose,
@@ -195,7 +199,7 @@ export function createSupervisor(project, {
           saved(sessions.targetBinding(auditor), `Loom delivery infrastructure exception
 
 ${details}`, {
-            id, ...(deliveryEscalations.length && { deliveryEscalations }), projectEvents: batch.map(event => event.id),
+            id, auditorNotice: true, ...(deliveryEscalations.length && { deliveryEscalations }), projectEvents: batch.map(event => event.id),
           });
           return auditor.addr;
         }
@@ -324,10 +328,10 @@ ${details}`, {
       if (other) {
         const proof = replyForDelivery(project, done.body, 0);
         saved(sessions.targetBinding(other), [
-          `请核对 ${row.role} ${row.addr} 的首报，核对 HEAD、分支、基线、WIP 和裁决编号。`,
+          `请核对 ${row.role} ${row.addr} 的首报。`,
           proof,
-          `用 "$LOOM_BIN" rotation-policy verify --target ${row.addr} --verdict pass|fail --detail TEXT --evidence FILE[:LINE] 登记原件和结论。`,
-        ].join('\n'), { id: batchDeliveryId(message.id, 'v2-verification'), rotationVerification: true });
+        ].join('\n'), { id: batchDeliveryId(message.id, 'v2-verification'), rotationVerification: true,
+          rotationVerifier: true });
       }
       return;
     }
@@ -435,7 +439,7 @@ ${details}`, {
       if (view?.state !== 'idle' || view.active || view.userPrompt) continue;
       const text = `交接里有待办：${clip(remaining.join(' · '), 400)}`;
       if (!nudge) {
-        saved(target, text, { id });
+        saved(target, text, { id, handoverWorkReminder: true });
       } else {
         notifications.add({ id: escalationId, project: row.project, addr: row.addr, at: now(),
           type: 'needs-decision', reason: 'handover-work-unstarted', text, deliveryId: nudge.id,
@@ -515,6 +519,7 @@ ${details}`, {
       const late = batch.lateWorker && sessions.rowFor(batch.lateWorker);
       if (late && superseded(late, workers())) return;
       saved(sessions.targetBinding(row), batch.message, { id: batchDeliveryId(batch.id, addr), waveBatch: batch.id, waveKey: batch.waveKey, waveKind: batch.waveKind,
+        ...(batch.failed && { workerResultsFailed: true }),
         ...(batch.resultWorkers?.length && { resultWorkers: batch.resultWorkers }),
         ...(batch.streamAt != null && { streamAt: batch.streamAt }),
         ...(late && { lateWorker: late.addr }), ...(batch.forcedSeal && { allowIdleWithoutEnd: true }) });
@@ -785,6 +790,8 @@ ${details}`, {
         // Retry publication from the durable delivery if interrupted between the two writes.
         const record = saved(target, text, { id: delivery, continuationBatch: id, continuationKind: kind,
           continuationMembers: selected.map(message => message.id), continuationEvents: events,
+          ...(selected.some(message => !message.completion?.unconfirmed &&
+            (!message.completion?.body || replyConclusion(message.completion.body).tag === 'FAILED')) && { workerResultsFailed: true }),
           ...(first.streamContinuation && { streamAt: selected.length ? Math.min(...selected.map(settledAt)) : deadline }),
           ...(kind === 'timeout' && { allowIdleWithoutEnd: true }) });
         notifications.add(...(record.continuationEvents ?? []));
@@ -868,7 +875,7 @@ ${details}`, {
     }
     if (row?.role !== 'auditor') return;
     const job = sessions.jobs.get(message.target.addr);
-    if (message.deliveryEscalations && message.projectEvents) return;
+    if ((message.deliveryEscalations || message.auditorNotice) && message.projectEvents) return;
     const request = message.replyKey && mail.messages.find(item => item.id === message.replyTo);
     if (request?.expectReply && request.completion?.relay?.deliveryId === message.id &&
         request.target.addr === message.from?.addr && parentFor(request.from?.addr) === row.addr) return;
@@ -937,8 +944,12 @@ ${details}`, {
     const card = deliveries(row.addr).find(message => message.id === cardId);
     const handoff = await sessions.workerHandoff(job, reason, now(), { acceptance, card, evidence });
     notifications.add({ id: `worker-handoff:${row.addr}:${cardId}:${reason}:${handoff.ready ? 'ready' : 'draft'}`,
-      project: row.project, addr: row.addr, task: row.task, type: 'worker-handoff', at: handoff.at, logOnly: true,
+      project: row.project, addr: row.addr, task: row.task, type: 'worker-handoff', reason, at: handoff.at, logOnly: true,
       text: `Worker ${row.task} handoff ${handoff.ready ? 'ready' : 'draft'} · ${reason} · ${handoff.path}` });
+    if (reason === 'context-after-compaction' && !handoff.ready) {
+      saved(sessions.targetBinding(row), `Loom 交接提示：${handoff.path}。在步骤边界提交交接单。`,
+        { id: batchDeliveryId(cardId, 'worker-handoff'), workerHandoffReminder: true });
+    }
     return handoff;
   }
   async function seniorWorkerHandoff(args, caller, external) {
@@ -1261,8 +1272,8 @@ ${details}`, {
         // Defer delivery notices until after the compact TUI briefing.
         if (message.startup && sessions.jobs.get(message.target.addr)?.compactHandover) return;
         const row = sessions.rowFor(message.target.addr);
-        const rotationNotices = [...v2.decorate(message, row, v2.enabled() && senior(row ?? {}) ?
-          budget.freshContext(row) : budget.context(row?.addr)), ...rotation.decorate(message, row)];
+        const rotationContext = v2.enabled() && senior(row ?? {}) ? budget.freshContext(row) : budget.context(row?.addr);
+        const rotationNotices = [...v2.decorate(message, row, rotationContext), ...rotation.decorate(message, row)];
         const byId = new Map(mail.messages.map(item => [item.id, item]));
         const workerDigest = row?.role === 'leader' && await workerDigestFor(row, [message, ...peers], byId);
         const senderStalls = stalledDeliveries(mail.messages, now()).filter(delivery => {
@@ -1326,7 +1337,61 @@ ${details}`, {
         const { text: memoryText, ...memoryReceipt } = job ?
           await injection.decorate(job, sessionMemoryBinding(row, job), message, mail.messages, sessionEvents) : {};
         if (memoryText) deliveryAppendix = [deliveryAppendix, memoryText].filter(Boolean).join('\n\n');
+        const related = [message, ...peers];
+        const resultAddrs = related.flatMap(item => [
+          ...item.resultWorkers ?? [], ...(item.continuationMembers ?? []).map(id => byId.get(id)?.target.addr),
+        ]);
+        const projectEvents = new Set(related.flatMap(item => item.projectEvents ?? []));
+        const prior = deliveries(row?.addr).filter(item => item.id !== message.id && item.payloadFrozen && !deliveryFailed(item));
+        const lastModules = prior.filter(item => item.skillDeferred).sort((a, b) => a.attemptAt - b.attemptAt).at(-1);
+        const ledger = projectEvents.size || row?.role === 'super' ? notifications.list(row.project, false, true) : [];
+        const seenRed = new Set(prior.flatMap(item => item.skillRedNotices ?? []));
+        const red = row?.role === 'super' ? ledger.filter(event => event.type === 'red-escalation' && event.logOnly &&
+          !seenRed.has(event.id)).slice(0, 4) : [];
+        if (red.length) deliveryAppendix = [deliveryAppendix, 'Loom 红色事实\n' + red.map(event =>
+          `${event.gate} · ${event.reason} · ${event.evidencePath}`).join('\n')].filter(Boolean).join('\n\n');
+        const lastWorkerTurn = row?.role === 'worker' && !message.startup && !message.nextCard &&
+          prior.findLast(item => item.completion);
+        const workerDenied = Boolean(lastWorkerTurn?.completion && !prior.some(item => item.skillDenialOf === lastWorkerTurn.id) &&
+          readArtifacts(project).cards(row.addr).some(({ data }) =>
+            data.endedAt === lastWorkerTurn.completion.at && data.verification?.sandboxDenials > 0));
+        const findings = resultAddrs.map(addr => sessions.jobs.get(addr)).filter(Boolean)
+          .map(resultJob => incidentFinding(resultJob.row, resultJob)).filter(Boolean);
+        const { names, gateRejection } = deliverySkillEvents({ role: row?.role, message, peers,
+          notices: [...red, ...ledger.filter(event => projectEvents.has(event.id))], senderStalls: senderStalls.length > 0,
+          observed: [...batch, ...findings], requestFor: item => byId.get(item.replyTo),
+          senderRole: item => sessions.rowFor(item.from?.addr)?.role,
+          resultTags: resultAddrs.map(addr => replyConclusion(deliveries(addr).findLast(item => item.completion?.body)?.completion.body).tag),
+          integrated: resultAddrs.some(addr => sessions.jobs.get(addr)?.integration), workerDenied });
+        const compact = row && !message.startup && sessionEvents.findLast(nativeCompaction);
+        const compactAt = compact?.at ?? compact?.receivedAt ?? rotationContext?.afterCompaction?.at(-1)?.at;
+        const newCompact = Number.isFinite(compactAt) && compactAt <= now() &&
+          !prior.some(item => item.skillCompactionAt >= compactAt);
+        let resumeCheckpoint;
+        if (message.workerResume && row?.role === 'worker') {
+          try { resumeCheckpoint = await workerCheckpoint(project, row, job.card ?? message.text); }
+          catch { resumeCheckpoint = null; }
+          const facts = resumeCheckpoint ? workerCheckpointText(resumeCheckpoint) : '无法读取续作基线。';
+          deliveryAppendix = [deliveryAppendix, `## 续作基线\n${facts}`].filter(Boolean).join('\n\n');
+        }
+        if (newCompact) {
+          names.unshift('post-compaction');
+          if (!rotationNotices.some(notice => visibleIds.has(notice.id) && notice.text.startsWith('## 当前事实卡'))) {
+            deliveryAppendix = [deliveryAppendix, v2.facts(row)].filter(Boolean).join('\n\n');
+          }
+        }
+        const modules = skillModules([...rotationNotices.filter(notice => visibleIds.has(notice.id)).map(notice => notice.skillModule),
+          ...names, ...lastModules?.skillDeferred ?? []]);
+        if (modules.deferred.length) report(`Loom skill modules deferred for ${message.id}: ${modules.deferred.join(', ')}`);
+        if (modules.text) deliveryAppendix = [deliveryAppendix, modules.text].filter(Boolean).join('\n\n');
         return { ...(deliveryAppendix && { deliveryAppendix }), ...(workerDigest && { resultContext: workerDigest }),
+          ...(modules.names.length && { skillModules: modules.names }),
+          ...(modules.deferred.length || lastModules ? { skillDeferred: modules.deferred } : {}),
+          ...(workerDenied && { skillDenialOf: lastWorkerTurn.id }),
+          ...(red.length && { skillRedNotices: red.map(event => event.id) }),
+          ...(newCompact && { skillCompactionAt: compactAt }),
+          ...(resumeCheckpoint !== undefined && { resumeCheckpoint }),
+          ...(gateRejection && { gateRejection }),
           ...(replySuppressionNotices.length && { replySuppressionNotices }),
           ...(shownRotationNotices.length && { rotationNotices: shownRotationNotices }),
           ...memoryReceipt,
@@ -1483,6 +1548,16 @@ ${details}`, {
           throw new CommandError('invalid-arguments', 'This command requires the current live Worker');
         }
         if (command === 'worker-check') {
+          const resume = deliveries(actor.addr).findLast(message => message.workerResume &&
+            message.attemptAt && !message.completion && !deliveryFailed(message));
+          if (resume) {
+            const actual = await workerCheckpoint(project, actor, job.card ?? resume.text).catch(() => null);
+            const mismatches = actual && resume.resumeCheckpoint ? workerCheckpointMismatch(resume.resumeCheckpoint, actual) :
+              ['checkout-or-rulings-unavailable'];
+            if (mismatches.length) throw new CommandError('worker-first-report-mismatch',
+              `Stop work and report BLOCKED. Resume baseline mismatch: ${mismatches.join(', ')}`);
+            return { firstReportCheck: { status: 'verified', source: 'resume', deliveryId: resume.id, actual } };
+          }
           const check = await sessions.verifyWorkerStart(job, now(), 'worker');
           if (check?.status === 'mismatch') {
             throw new CommandError('worker-first-report-mismatch', `Stop work and report BLOCKED. Mismatch: ${check.mismatches.join(', ')}`);
@@ -1973,12 +2048,17 @@ ${details}`, {
       if (effectiveMode === 'interrupt' && !active) throw new CommandError('not-ready', 'interrupt requires an active turn');
       const mode = sessions.requestedMode(target, effectiveMode, active);
       const continuation = mode === 'queue' && from?.role === 'leader' && row.role === 'worker' && from.project === row.project;
+      const lastWorkerReply = continuation && !args.nextCard &&
+        deliveries(row.addr).findLast(item => item.completion?.body)?.completion.body;
+      const rejected = continuation && /^(?:REJECT|REJECTED)$/.test(replyConclusion(args.text).tag ?? '');
+      const workerResume = !args.nextCard && (rejected || isBlockedReply(lastWorkerReply));
       const message = saved(target, args.text, { ...fields,
         ...(continuation && !args.batch && { implicitBatch: 'auto:' + randomUUID(), coalesceWindow: 0, streamContinuation: true }),
         ...(row.role === 'worker' && { dispatch: revived ? 'revived' : 'continued',
           dispatchReason: args.reason ?? (revived ? 'reuse task context' : 'continue in live context') }),
         ...(args.reason !== undefined && { requestedDispatchReason: args.reason }),
         ...(args.nextCard && { nextCard: true }),
+        ...(workerResume && { workerResume: rejected ? 'REJECT' : 'BLOCKED' }),
         mode, active, barrier: mode === 'queue' ? active : undefined });
       if (successor.role === 'worker') {
         const card = args.nextCard ? message.id : currentCard(successor, targetJob);

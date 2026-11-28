@@ -30,6 +30,12 @@ function copyRelease(destination, source = root) {
     'memory', 'relay', 'runtimes', 'schema', 'tui', 'watch', 'package.json', 'package-lock.json']) {
     cpSync(join(source, name), join(destination, name), { recursive: true, filter: path => includeReleaseEntry(basename(path)) });
   }
+  const skill = join(source, 'skills', 'loom');
+  if (existsSync(skill)) {
+    cpSync(skill, join(destination, 'skills', 'loom'), { recursive: true });
+    mkdirSync(join(destination, 'docs'), { recursive: true });
+    cpSync(join(source, 'docs', 'HEADLESS.md'), join(destination, 'docs', 'HEADLESS.md'));
+  }
   symlinkSync(join(root, 'node_modules'), join(destination, 'node_modules'));
 }
 

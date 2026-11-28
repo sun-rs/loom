@@ -1,0 +1,42 @@
+{
+  "id": "split",
+  "common": "../../skills/loom/roles/common.md",
+  "skills": {
+    "super": "../../skills/loom/roles/super.md",
+    "auditor": "../../skills/loom/roles/auditor.md",
+    "leader": "../../skills/loom/roles/leader.md",
+    "worker": "../../skills/loom/roles/worker.md"
+  },
+  "references": {
+    "references/admin.md": "../../skills/loom/references/admin.md",
+    "../../examples/card.md": "../../skills/loom/references/card.md",
+    "../../examples/charter.md": "../../skills/loom/references/charter.md",
+    "references/close.md": "../../skills/loom/references/close.md",
+    "references/memory.md": "../../skills/loom/references/memory.md",
+    "../../examples/policy.json": "../../skills/loom/references/policy.md",
+    "../../examples/rulings.md": "../../skills/loom/references/rulings.md",
+    "docs/HEADLESS.md": "../../skills/loom/references/runtime.md",
+    "references/tools.md": "../../skills/loom/references/tools.md",
+    "references/workers.md": "../../skills/loom/references/workers.md"
+  },
+  "modules": {
+    "close": "../../skills/loom/modules/close.md",
+    "containment": "../../skills/loom/modules/containment.md",
+    "delivery-uncertain": "../../skills/loom/modules/delivery-uncertain.md",
+    "escalation": "../../skills/loom/modules/escalation.md",
+    "gate-judgment": "../../skills/loom/modules/gate-judgment.md",
+    "gate-pack": "../../skills/loom/modules/gate-pack.md",
+    "host-tier": "../../skills/loom/modules/host-tier.md",
+    "needs-decision": "../../skills/loom/modules/needs-decision.md",
+    "post-compaction": "../../skills/loom/modules/post-compaction.md",
+    "reject-routing": "../../skills/loom/modules/reject-routing.md",
+    "rotation-activation": "../../skills/loom/modules/rotation-activation.md",
+    "rotation-verify": "../../skills/loom/modules/rotation-verify.md",
+    "rotation": "../../skills/loom/modules/rotation.md",
+    "senior-recovery": "../../skills/loom/modules/senior-recovery.md",
+    "successor": "../../skills/loom/modules/successor.md",
+    "worker-denied": "../../skills/loom/modules/worker-denied.md",
+    "worker-integration": "../../skills/loom/modules/worker-integration.md",
+    "worker-resume": "../../skills/loom/modules/worker-resume.md"
+  }
+}

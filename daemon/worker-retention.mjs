@@ -20,14 +20,16 @@ export function workerStalledSince(view, lastProgressAt, at) {
   if (at - since >= workerStallMs) return since;
 }
 
+export const nativeCompaction = event => event.type === 'compaction_ended' &&
+  (event.outcome?.kind ?? event.outcome) === 'completed' ||
+  event.hook_event_name === 'PostCompact' && !event.agent_id && !event.isSidechain;
+
 export function workerContext(events, snapshot) {
-  const compacted = event => event.type === 'compaction_ended' && event.outcome === 'completed' ||
-    event.hook_event_name === 'PostCompact' && !event.agent_id && !event.isSidechain;
-  const compactions = events.filter(compacted).length;
+  const compactions = events.filter(nativeCompaction).length;
   const contextPercent = reportedContext(snapshot ?? {}, events, []).percent;
   // A sample from before compaction describes the old context window.
   const contextAfterCompactionPercent = compactions ?
-    reportedContext({}, events.slice(events.findLastIndex(compacted) + 1), []).percent : null;
+    reportedContext({}, events.slice(events.findLastIndex(nativeCompaction) + 1), []).percent : null;
   return { compactions, contextPercent, contextAfterCompactionPercent };
 }
 
