@@ -3,12 +3,13 @@ import { execFile, mkdtempSync, spawn } from '../fixtures/test-process.mjs';
 import { anchorUpgradeProcesses } from '../fixtures/upgrade-spawn.mjs';
 import { createHash, randomUUID } from 'node:crypto';
 import { once } from 'node:events';
-import { cpSync, existsSync, mkdirSync, readFileSync, realpathSync, renameSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { copyFileSync, cpSync, existsSync, mkdirSync, readFileSync, realpathSync, renameSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { basename, join, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 import { test } from 'node:test';
 import { PassThrough } from 'node:stream';
 import { setTimeout as delay } from 'node:timers/promises';
+import { pathToFileURL } from 'node:url';
 import { promisify } from 'node:util';
 import { platforms } from '../holder/assets.mjs';
 import { includeReleaseEntry, installManagedCli, managedEnvironment, releaseDigest } from './release.mjs';
@@ -17,7 +18,7 @@ import { request } from './rpc.mjs';
 import { clientCapability } from './socket-auth.mjs';
 import { projectIndex } from '../cli/project.mjs';
 import { preparePeerAuth } from './peer-auth.mjs';
-import { processCommand } from './processes.mjs';
+import { processCommand, processTable } from './processes.mjs';
 import { statusTui } from '../cli/status-tui.mjs';
 
 const exec = promisify(execFile);
@@ -38,6 +39,52 @@ function copyRelease(destination, source = root) {
   }
   symlinkSync(join(root, 'node_modules'), join(destination, 'node_modules'));
 }
+
+test('release self-check lets a pre-pin daemon hand off to a pinned release with managed skills', { skip: !supported }, async t => {
+  const dir = realpathSync(mkdtempSync(join(tmpdir(), 'lpin-')));
+  t.after(() => rmSync(dir, { recursive: true, force: true }));
+  const candidate = join(dir, 'candidate');
+  const legacyNode = join(dir, 'node');
+  const project = join(dir, 'p');
+  const runtime = join(project, '.project', 'loomd');
+  mkdirSync(runtime, { recursive: true });
+  copyRelease(candidate);
+  copyFileSync(process.execPath, legacyNode);
+
+  // The pre-pin verifier hashes the release sources and holder, with no managed skills.
+  const roles = join(candidate, 'skills', 'loom', 'roles');
+  renameSync(roles, join(dir, 'roles'));
+  const legacyReleaseDigest = releaseDigest(candidate);
+  renameSync(join(dir, 'roles'), roles);
+  const fullReleaseDigest = releaseDigest(candidate);
+  assert.notEqual(fullReleaseDigest, legacyReleaseDigest);
+
+  const { stdout } = await exec(legacyNode, [join(candidate, 'bin', 'loomd'), '--self-check'], { cwd: candidate });
+  const build = JSON.parse(stdout);
+  assert.equal(build.node, process.versions.node);
+  assert.equal(build.legacyNodeRuntime.path, legacyNode);
+  assert.equal(build.nodeRuntime.path, process.execPath);
+  assert.equal(build.digest, releaseDigest(candidate, { legacy: true }));
+  assert.equal(build.releaseDigest, legacyReleaseDigest);
+  assert.equal(build.fullReleaseDigest, fullReleaseDigest);
+
+  const id = randomUUID();
+  const target = { ...build, id: legacyReleaseDigest, digest: legacyReleaseDigest };
+  const owner = (await processTable([process.pid])).get(process.pid);
+  assert.ok(owner);
+  writeFileSync(join(runtime, `upgrade-${id}.owner.json`), JSON.stringify(owner));
+  writeFileSync(join(runtime, 'upgrade.json'), JSON.stringify({ id, phase: 'switching', target }));
+  const { validateHandoff, planUpgrade } = await import(pathToFileURL(join(candidate, 'daemon', 'upgrade.mjs')));
+  assert.deepEqual((await validateHandoff(project, id, false)).target, target);
+
+  projectIndex(project).initialize();
+  writeFileSync(join(runtime, 'release.json'), JSON.stringify({ current: target }));
+  const plan = await planUpgrade(project, { target: root }, { ...target, digest: fullReleaseDigest }, async () => []);
+  assert.equal(plan.current.digest, fullReleaseDigest);
+
+  writeFileSync(join(roles, 'common.md'), 'Changed after self-check');
+  await assert.rejects(validateHandoff(project, id, false), /Target release changed since self-check/);
+});
 
 test('upgrade observes a late commit and reports a distinct pending outcome at its deadline', async () => {
   const result = { upgradeId: 'this-upgrade', phase: 'switching' };

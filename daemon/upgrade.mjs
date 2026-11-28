@@ -39,12 +39,16 @@ export async function selfCheck(legacyNode) {
   await import('@xterm/headless');
   const { controlProtocol } = await import('../tui/pty-control.mjs');
   const holder = await checkHolder(releaseRoot, { pipes: true });
-  return { root: releaseRoot, digest: releaseDigest(releaseRoot, { legacy: true }), releaseDigest: releaseDigest(releaseRoot),
+  const fullReleaseDigest = releaseDigest(releaseRoot);
+  // The pre-pin verifier expects the digest through holder assets. The full
+  // digest is carried in its handoff record to verify managed skills as well.
+  return { root: releaseRoot, digest: releaseDigest(releaseRoot, { legacy: true }),
+    releaseDigest: legacyNode ? releaseDigest(releaseRoot, { managedSkills: false }) : fullReleaseDigest,
     legacyPeerAuth: preparePeerAuth().available,
     daemonProtocol, socketAuthVersion, hostProtocol, hostProtocols: [...hostProtocols, 3], ptyProtocol: controlProtocol, ptyProtocols: [0, 1, 2, 3],
     defaultTuiProtocol: 3, defaultCodexHostProtocol: 3, holderDigest: holder.digest, attachmentCheck: true, storageVersions, packages,
     platform: process.platform, arch: process.arch, node: legacyNode?.version ?? process.versions.node,
-    nodeRuntime: runningNode(), ...(legacyNode && { legacyNodeRuntime: legacyNode }) };
+    nodeRuntime: runningNode(), ...(legacyNode && { legacyNodeRuntime: legacyNode, fullReleaseDigest }) };
 }
 
 async function verifyRelease(root, recordedNode) {
@@ -106,6 +110,8 @@ function launch(project, entry, args, env = process.env, node = process.execPath
   });
 }
 
+const recordedDigest = build => build?.fullReleaseDigest ?? build?.digest;
+
 export async function planUpgrade(project, args, current, sessions) {
   const active = activeRelease(project);
   if (args.rollback && !active?.previous) throw new CommandError('not-ready', 'No previous compatible release');
@@ -116,11 +122,13 @@ export async function planUpgrade(project, args, current, sessions) {
   ]);
   if (target.socketAuthVersion !== socketAuthVersion) throw new Error('Release does not support Loom socket capabilities');
   if (target.root === current.root) throw new CommandError('invalid-arguments', 'Prepare the new build in a different release directory');
-  if (current.digest !== verifiedCurrent.digest || active?.current.digest &&
-      ![verifiedCurrent.digest, verifiedCurrent.legacyDigest].includes(active.current.digest)) {
+  const currentDigest = recordedDigest(active?.current);
+  if (current.digest !== verifiedCurrent.digest || currentDigest &&
+      ![verifiedCurrent.digest, verifiedCurrent.legacyDigest].includes(currentDigest)) {
     throw new Error('Active release changed since it was verified');
   }
-  if (args.rollback && active.previous.digest && ![target.digest, target.legacyDigest].includes(active.previous.digest)) {
+  const previousDigest = recordedDigest(active?.previous);
+  if (args.rollback && previousDigest && ![target.digest, target.legacyDigest].includes(previousDigest)) {
     throw new Error('Previous release changed since it was verified');
   }
   if (!verifiedCurrent.hostProtocols.includes(target.hostProtocol) || !target.hostProtocols.includes(verifiedCurrent.hostProtocol) ||
@@ -220,7 +228,7 @@ export async function validateHandoff(project, id, recovery) {
       !await liveHandoff(project, id)) {
     throw new Error('Invalid loomd handoff identity');
   }
-  if (!recovery && releaseDigest(releaseRoot) !== (state.target.releaseDigest ?? state.target.digest)) {
+  if (!recovery && releaseDigest(releaseRoot) !== (state.target.fullReleaseDigest ?? state.target.releaseDigest ?? state.target.digest)) {
     throw new Error('Target release changed since self-check');
   }
   const expected = (recovery ? state.current : state.target).nodeRuntime;

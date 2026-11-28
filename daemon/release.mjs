@@ -57,7 +57,7 @@ const source = ['adapters', 'bin', 'cli', 'daemon', 'evidence', 'handover', 'inb
 export const includeReleaseEntry = name => !/^\.(?:env|test-|build-)|^\.[\w-]+-test-/i.test(name) &&
   !/^(?:SKILL\.md|skills|auth\.json|memories.*|provider-homes)$/i.test(name);
 
-export function releaseDigest(root, { legacy = false } = {}) {
+export function releaseDigest(root, { legacy = false, managedSkills = true } = {}) {
   const digest = createHash('sha256');
   function visit(path) {
     const entries = readdirSync(path, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name, 'en'));
@@ -85,7 +85,7 @@ export function releaseDigest(root, { legacy = false } = {}) {
   }
   const skill = join(root, 'skills', 'loom');
   // Releases from before managed role cores have no role assets.
-  if (!legacy && existsSync(join(skill, 'roles'))) {
+  if (!legacy && managedSkills && existsSync(join(skill, 'roles'))) {
     file(join(skill, 'SKILL.md'));
     for (const dir of ['roles', 'modules', 'references']) visit(join(skill, dir));
     file(join(root, 'docs', 'HEADLESS.md'));
