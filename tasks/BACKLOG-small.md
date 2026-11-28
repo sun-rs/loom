@@ -6,3 +6,7 @@
 - pilot-2：2c0fc285 → auditor loom-3f4df1ff（t3rc，用 CCP resume 恢复）从 2026-11-27T21:30Z 起 waiting-writable 36614s，status 同时显示 "Hook gaps · auditor … hook-gap transcript"。窗口实际空闲可输入。
 - 疑点：CCP-ROUTE-1 不用 hooks、靠 transcript 判状态；resume 后 transcript 路径/会话 id 变化，loomd 没跟上，判为不可写。
 - Super 已手工救援投递一次。需修根因并补测试；停滞告警（IDLE-ALARM-1）上线后此类应自动报给 Super。
+
+## 2026-11-28 CLI-CONSOLIDATE-1（待用户确认后派）：收拢 loom 命令面
+- 现状：`loom` 帮助里列出约 60 个子命令用法。用户原话："别搞太多的 loom xxxx，最后用户记不住，高级角色调用聊天也乱；可以通过 -- 参数区分内容。"
+- 方向：查询类能力并入 `loom status --…`（含 tui、todo、card、accounts、cost、notifications --peek 等）；写入类按对象归并成少数几个动词。旧命令保留为兼容别名，逐步下线。skill 里只出现收拢后的命令，顺带缩短提示词。
