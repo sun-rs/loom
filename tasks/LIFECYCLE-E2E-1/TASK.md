@@ -32,3 +32,5 @@ E. 发现的缺陷：写 RED 测试并修复（在本分支），修完重跑对
 
 ## 交付
 分支 infra/lifecycle-e2e，工作树 /Users/sun/Code/repos/loom-lifecycle-e2e；RESULT.md 给总表（A1–D3 每项 PASS/FAIL）、修复的缺陷清单、全量 `npm test`/`npm run lint` 通过；显式路径提交，不 commit -a，不 push。实验结束停掉所有一次性进程并清理目录。不读凭据，不碰 /Users/sun/Code/ccp 与真实 pilot。
+
+> 2026-11-28：已被 TODO-SLA-1 / ROLE-RULES-1 / STATE-GATE-1 取代（用户批准的设计，见 docs/research/2026-11-28-*）。本卡不再派发。

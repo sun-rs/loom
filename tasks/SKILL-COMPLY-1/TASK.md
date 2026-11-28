@@ -13,3 +13,5 @@
 5. 长对话评测：新增场景——一个会话连续 30+ 回合并触发一次压缩，再考 5 个核心规则，三家 CLI（Claude 只经 CCP）各 1 轮，统计遗忘率。
 6. 结论报告：docs/research/2026-11-27-skill-compliance.md，给出各因素贡献与改进前后对比。
 分支 infra/skill-comply（基于合入 skill 拆分后的 main），显式路径提交，不 push。不读凭据，不碰 /Users/sun/Code/ccp。
+
+> 2026-11-28：已被 TODO-SLA-1 / ROLE-RULES-1 / STATE-GATE-1 取代（用户批准的设计，见 docs/research/2026-11-28-*）。本卡不再派发。
