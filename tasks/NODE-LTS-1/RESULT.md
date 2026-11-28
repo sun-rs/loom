@@ -17,3 +17,11 @@ macOS arm64 包从 Node.js 官方站下载。用独立临时密钥环境校验 `
 存量会话和回滚仍需要旧 release、其依赖及旧 Node 二进制。全局 Homebrew Node 与 PATH 配置未改动。验证在隔离的项目中执行。
 
 STATUS: done
+
+## 合并 main 后验收（2026-11-28）
+
+- 按卡面指定的 `8efd3cbb` 合并到 `infra/node-lts`。`daemon/release.mjs` 保留固定 Node 运行时与技能根目录环境，`daemon/upgrade.mjs` 保留旧运行时兼容字段和技能资源自检。
+- 使用 `/Users/sun/.loom-cell/runtime/node-26.13.1/bin/node`（v26.13.1，ABI 147）对应的 npm 完成 `npm ci`。
+- 固定 Node 下 `npm run lint` 通过，扫描 371 个文件。全量 `npm test` 通过 **1146/1146**，0 失败、0 跳过、0 取消，退出码 0。
+
+STATUS: done

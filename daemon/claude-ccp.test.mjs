@@ -273,3 +273,87 @@ if (verb === 'run') {
   assert.equal(state.confirmations(newDelivery).count, 1);
   assert.equal(state.confirmations(oldDelivery).count, 0);
 });
+
+test('hookless Claude TUI delivers post-compaction skill module via transcript compact_boundary', async t => {
+  const project = tempDir(t, 'loom-ccp-compact-skill-');
+  mkdirSync(join(project, '.project'), { recursive: true });
+  writeFileSync(join(project, '.project', 'policy.json'), JSON.stringify({
+    preferred: [{ cli: 'claude', model: 'claude-sonnet-5-5', effort: 'high', mode: 'tui' }],
+    deny: [],
+  }));
+  makeFakeCcp(project);
+  const prevHome = process.env.HOME;
+  const prevClaudeBin = process.env.LOOM_CLAUDE_BIN;
+  const prevCcpBin = process.env.LOOM_CLAUDE_CCP_BIN;
+  process.env.HOME = project;
+  delete process.env.LOOM_CLAUDE_BIN;
+  delete process.env.LOOM_CLAUDE_CCP_BIN;
+  t.after(() => {
+    process.env.HOME = prevHome;
+    if (prevClaudeBin === undefined) delete process.env.LOOM_CLAUDE_BIN;
+    else process.env.LOOM_CLAUDE_BIN = prevClaudeBin;
+    if (prevCcpBin === undefined) delete process.env.LOOM_CLAUDE_CCP_BIN;
+    else process.env.LOOM_CLAUDE_CCP_BIN = prevCcpBin;
+  });
+
+  const sessionId = randomUUID();
+  const bucket = join(project, '.claude', 'projects', project.replace(/[^a-zA-Z0-9]/g, '-'));
+  mkdirSync(bucket, { recursive: true });
+  const transcriptPath = join(bucket, `${sessionId}.jsonl`);
+  const idleScreen = readFileSync(new URL('../adapters/claude/fixtures/live-idle.txt', import.meta.url), 'utf8');
+  let clock = Date.now() + 5_000;
+  writeFileSync(transcriptPath, [
+    { type: 'user', sessionId, cwd: project, uuid: 'u0', timestamp: new Date(clock - 10_000).toISOString(),
+      message: { role: 'user', content: 'prior turn' } },
+    { type: 'assistant', sessionId, cwd: project, uuid: 'a0', timestamp: new Date(clock - 5_000).toISOString(),
+      message: { id: 'm0', role: 'assistant', stop_reason: 'end_turn', content: [{ type: 'text', text: 'OK' }] } },
+  ].map(row => JSON.stringify(row) + '\n').join(''));
+
+  let pane;
+  const supervisor = createSupervisor(project, {
+    now: () => clock,
+    report: () => {},
+    externalNotification: async () => {},
+    sessionOptions: {
+      async openPane(job, row) {
+        pane = { address: 't1', name: 'loom-auditor', cwd: row.cwd, pid: process.pid, created_ms: clock,
+          status_ms: clock, state: 'live', status: { state: 'idle' } };
+        return { terminal: pane, nativeId: job.resumeNativeId };
+      },
+      async getPane() { return pane; },
+      async callHc(command) {
+        if (command === 'get') return pane;
+        if (command === 'read') return { how: 'screen', complete: true, text: idleScreen };
+        if (command === 'send') return { ok: true };
+        if (command === 'kill') return { state: 'finished' };
+        throw new Error(`Unexpected hc command: ${command}`);
+      },
+    },
+  });
+  t.after(() => supervisor.shutdown());
+
+  const { session } = await supervisor.handle('spawn', { role: 'auditor', cwd: project, 'resume-session': sessionId },
+    undefined, { external: true });
+  clock += 5_000;
+  writeFileSync(transcriptPath, [
+    { type: 'user', sessionId, cwd: project, uuid: 'u1', timestamp: new Date(clock - 3_000).toISOString(),
+      message: { role: 'user', content: 'turn after resume' } },
+    { type: 'assistant', sessionId, cwd: project, uuid: 'a1', timestamp: new Date(clock - 2_500).toISOString(),
+      message: { id: 'm1', role: 'assistant', stop_reason: 'end_turn', content: [{ type: 'text', text: 'DONE' }] } },
+    { type: 'system', subtype: 'turn_duration', sessionId, cwd: project, uuid: 's1',
+      timestamp: new Date(clock - 2_000).toISOString(), isSidechain: false, isMeta: false },
+    { type: 'system', subtype: 'compact_boundary', sessionId, cwd: project, uuid: 'c1',
+      timestamp: new Date(clock - 1_000).toISOString(), isSidechain: false, isMeta: false },
+  ].map(row => JSON.stringify(row) + '\n').join(''), { flag: 'a' });
+
+  const { id } = await supervisor.handle('send', { target: session.addr, mode: 'queue', text: 'HOLD after compact' },
+    undefined, { external: true });
+  await supervisor.tick();
+
+  const delivered = JSON.parse(readFileSync(join(project, '.project/inbox/state.json'), 'utf8'))
+    .messages.find(message => message.id === id);
+  assert.equal(existsSync(join(project, '.project/events', `${session.addr}.jsonl`)), false);
+  assert.deepEqual(delivered.skillModules, ['post-compaction']);
+  assert.match(delivered.wireBody, /\[loom-skill:post-compaction\]/);
+  assert.match(delivered.wireBody, /当前事实卡/);
+});

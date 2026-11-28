@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { runtimeDirectory } from '../cli/project.mjs';
 import { nodeRuntimeRoot } from '../lib/node-runtime.mjs';
 import { readText, writeState } from './io.mjs';
+import { skillRoot } from '../lib/role-skill.mjs';
 
 export const releaseRoot = realpathSync(fileURLToPath(new URL('..', import.meta.url)));
 export const managedCliPath = project => join(runtimeDirectory(project), 'bin', 'loom');
@@ -30,7 +31,8 @@ export function managedEnvironment(project, addr) {
   const path = [bin, dirname(process.execPath)];
   const inherited = (process.env.PATH ?? '').split(delimiter).filter(entry => entry && !path.includes(entry));
   return { LOOM_PROJECT: project, LOOM_ADDR: addr, LOOM_BIN: executable,
-    LOOM_NODE_ROOT: nodeRuntimeRoot(), LOOM_NODE: process.execPath, PATH: [...path, ...inherited].join(delimiter) };
+    LOOM_NODE_ROOT: nodeRuntimeRoot(), LOOM_NODE: process.execPath, LOOM_SKILL_ROOT: skillRoot,
+    PATH: [...path, ...inherited].join(delimiter) };
 }
 export const activeReleaseFile = project => join(runtimeDirectory(project), 'release.json');
 export const activeRelease = project => JSON.parse(readText(activeReleaseFile(project), 'null'));
@@ -80,6 +82,13 @@ export function releaseDigest(root, { legacy = false } = {}) {
     const path = join(root, name);
     if (name.endsWith('.json')) file(path);
     else visit(path);
+  }
+  const skill = join(root, 'skills', 'loom');
+  // Releases from before managed role cores have no role assets.
+  if (!legacy && existsSync(join(skill, 'roles'))) {
+    file(join(skill, 'SKILL.md'));
+    for (const dir of ['roles', 'modules', 'references']) visit(join(skill, dir));
+    file(join(root, 'docs', 'HEADLESS.md'));
   }
   if (!legacy && existsSync(join(root, 'holder'))) visit(join(root, 'holder'));
   return digest.digest('hex');

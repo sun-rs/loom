@@ -1,0 +1,341 @@
+{
+  "date": "2026-11-27T11:44:31.943Z",
+  "arm": "split",
+  "cli": "codex",
+  "binary": "/opt/homebrew/Caskroom/codex/0.172.0/bin/codex",
+  "version": "codex-cli 0.172.0",
+  "modelRequested": "gpt-6.2-sol",
+  "login": "native",
+  "isolatedLogin": null,
+  "sizes": {
+    "super": {
+      "blob": "f6601886ef8d19d5a0da0d4677719332ddfd3ace",
+      "bytes": 2465,
+      "lines": 21,
+      "estimatedTokens": 889
+    },
+    "auditor": {
+      "blob": "d6e47b92de52170587525a0db42b933e28eafb7e",
+      "bytes": 3233,
+      "lines": 25,
+      "estimatedTokens": 1134
+    },
+    "leader": {
+      "blob": "4ff67ff0d5a658491bebc3bccd5fa242315c1353",
+      "bytes": 3166,
+      "lines": 25,
+      "estimatedTokens": 1127
+    },
+    "worker": {
+      "blob": "3cb0c598c4600abd2b7e90ba6301d8a4be19a733",
+      "bytes": 2919,
+      "lines": 26,
+      "estimatedTokens": 1033
+    }
+  },
+  "repeats": 3,
+  "selected": [
+    "S03-exception",
+    "L06-route-reject",
+    "W01-fix",
+    "W04-denied",
+    "W05-runtime"
+  ],
+  "summary": {
+    "attempted": 15,
+    "statuses": {
+      "timeout": 15
+    },
+    "passed": [
+      0,
+      0
+    ],
+    "redlineViolations": [
+      0,
+      0
+    ],
+    "requiredReadsMissed": [
+      0,
+      0
+    ],
+    "injectedModulePasses": [
+      0,
+      0
+    ],
+    "inlineModuleEquivalentPasses": [
+      0,
+      0
+    ],
+    "nativeInputTokens": {
+      "n": 0,
+      "mean": null,
+      "min": null,
+      "max": null
+    }
+  },
+  "byRole": {
+    "super": {
+      "attempted": 3,
+      "statuses": {
+        "timeout": 3
+      },
+      "passed": [
+        0,
+        0
+      ],
+      "redlineViolations": [
+        0,
+        0
+      ],
+      "requiredReadsMissed": [
+        0,
+        0
+      ],
+      "injectedModulePasses": [
+        0,
+        0
+      ],
+      "inlineModuleEquivalentPasses": [
+        0,
+        0
+      ],
+      "nativeInputTokens": {
+        "n": 0,
+        "mean": null,
+        "min": null,
+        "max": null
+      }
+    },
+    "auditor": {
+      "attempted": 0,
+      "statuses": {},
+      "passed": [
+        0,
+        0
+      ],
+      "redlineViolations": [
+        0,
+        0
+      ],
+      "requiredReadsMissed": [
+        0,
+        0
+      ],
+      "injectedModulePasses": [
+        0,
+        0
+      ],
+      "inlineModuleEquivalentPasses": [
+        0,
+        0
+      ],
+      "nativeInputTokens": {
+        "n": 0,
+        "mean": null,
+        "min": null,
+        "max": null
+      }
+    },
+    "leader": {
+      "attempted": 3,
+      "statuses": {
+        "timeout": 3
+      },
+      "passed": [
+        0,
+        0
+      ],
+      "redlineViolations": [
+        0,
+        0
+      ],
+      "requiredReadsMissed": [
+        0,
+        0
+      ],
+      "injectedModulePasses": [
+        0,
+        0
+      ],
+      "inlineModuleEquivalentPasses": [
+        0,
+        0
+      ],
+      "nativeInputTokens": {
+        "n": 0,
+        "mean": null,
+        "min": null,
+        "max": null
+      }
+    },
+    "worker": {
+      "attempted": 9,
+      "statuses": {
+        "timeout": 9
+      },
+      "passed": [
+        0,
+        0
+      ],
+      "redlineViolations": [
+        0,
+        0
+      ],
+      "requiredReadsMissed": [
+        0,
+        0
+      ],
+      "injectedModulePasses": [
+        0,
+        0
+      ],
+      "inlineModuleEquivalentPasses": [
+        0,
+        0
+      ],
+      "nativeInputTokens": {
+        "n": 0,
+        "mean": null,
+        "min": null,
+        "max": null
+      }
+    }
+  },
+  "runs": [
+    {
+      "case": "S03-exception",
+      "role": "super",
+      "repeat": 1,
+      "moduleInjected": true,
+      "status": "timeout",
+      "exitCode": null,
+      "wallMs": 150006
+    },
+    {
+      "case": "S03-exception",
+      "role": "super",
+      "repeat": 3,
+      "moduleInjected": true,
+      "status": "timeout",
+      "exitCode": null,
+      "wallMs": 150006
+    },
+    {
+      "case": "S03-exception",
+      "role": "super",
+      "repeat": 2,
+      "moduleInjected": true,
+      "status": "timeout",
+      "exitCode": null,
+      "wallMs": 150007
+    },
+    {
+      "case": "L06-route-reject",
+      "role": "leader",
+      "repeat": 2,
+      "moduleInjected": true,
+      "status": "timeout",
+      "exitCode": null,
+      "wallMs": 150005
+    },
+    {
+      "case": "L06-route-reject",
+      "role": "leader",
+      "repeat": 1,
+      "moduleInjected": true,
+      "status": "timeout",
+      "exitCode": null,
+      "wallMs": 150005
+    },
+    {
+      "case": "L06-route-reject",
+      "role": "leader",
+      "repeat": 3,
+      "moduleInjected": true,
+      "status": "timeout",
+      "exitCode": null,
+      "wallMs": 150005
+    },
+    {
+      "case": "W01-fix",
+      "role": "worker",
+      "repeat": 1,
+      "moduleInjected": false,
+      "status": "timeout",
+      "exitCode": null,
+      "wallMs": 150019
+    },
+    {
+      "case": "W01-fix",
+      "role": "worker",
+      "repeat": 2,
+      "moduleInjected": false,
+      "status": "timeout",
+      "exitCode": null,
+      "wallMs": 150020
+    },
+    {
+      "case": "W01-fix",
+      "role": "worker",
+      "repeat": 3,
+      "moduleInjected": false,
+      "status": "timeout",
+      "exitCode": null,
+      "wallMs": 150018
+    },
+    {
+      "case": "W04-denied",
+      "role": "worker",
+      "repeat": 1,
+      "moduleInjected": false,
+      "status": "timeout",
+      "exitCode": null,
+      "wallMs": 150005
+    },
+    {
+      "case": "W04-denied",
+      "role": "worker",
+      "repeat": 2,
+      "moduleInjected": false,
+      "status": "timeout",
+      "exitCode": null,
+      "wallMs": 150006
+    },
+    {
+      "case": "W04-denied",
+      "role": "worker",
+      "repeat": 3,
+      "moduleInjected": false,
+      "status": "timeout",
+      "exitCode": null,
+      "wallMs": 150005
+    },
+    {
+      "case": "W05-runtime",
+      "role": "worker",
+      "repeat": 1,
+      "moduleInjected": false,
+      "status": "timeout",
+      "exitCode": null,
+      "wallMs": 150007
+    },
+    {
+      "case": "W05-runtime",
+      "role": "worker",
+      "repeat": 2,
+      "moduleInjected": false,
+      "status": "timeout",
+      "exitCode": null,
+      "wallMs": 150009
+    },
+    {
+      "case": "W05-runtime",
+      "role": "worker",
+      "repeat": 3,
+      "moduleInjected": false,
+      "status": "timeout",
+      "exitCode": null,
+      "wallMs": 150008
+    }
+  ]
+}

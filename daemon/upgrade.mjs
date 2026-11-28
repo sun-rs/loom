@@ -24,6 +24,9 @@ export const daemonProtocol = 1;
 export const storageVersions = [0, 1, 2];
 
 export async function selfCheck(legacyNode) {
+  const { roleCore, skillModuleNames, skillModules, skillRoles } = await import('../lib/role-skill.mjs');
+  for (const role of skillRoles) roleCore(role);
+  for (const module of skillModuleNames) skillModules([module]);
   const requirements = JSON.parse(readText(join(releaseRoot, 'package.json'))).dependencies;
   const packages = {};
   for (const [name, version] of Object.entries(requirements)) {

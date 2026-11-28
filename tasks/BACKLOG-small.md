@@ -1,2 +1,3 @@
 - rotate 交接单超过 60 行时 loomd 只报 rotation-note-required，应明确报超长与当前行数（pilot-cell 2026-11-27 实测）
 - pre-tool 守卫把命令参数里的 `--cli codex` 误判为裸原生 CLI 调用并拒绝（pilot-2 T120，2026-11-27，见 loom-pilot2/.project/eval-g9/blocked-t120-pre-tool-hook.md）；应只检查可执行位置的 argv[0]
+- loom recover 把早已收口、被正常 stop 的旧会话（pilot-2 共 66 个，含目标 1 时期的 worker）都列为"待恢复"；应只列异常中断或卡未收口的会话，正常结束/已收口的默认隐藏（--all 才显示）（2026-11-27 实测 e97556ae）

@@ -41,6 +41,7 @@ import { workerCheckpoint, workerCheckpointMismatch, workerCheckpointText, write
 import { requestedWorkerTier, storedWorkerTier } from '../lib/worker-tiers.mjs';
 import { recordHostEvidence } from '../evidence/host.mjs';
 import { accountCollector } from './account-collection.mjs';
+import { roleCore, skillModules } from '../lib/role-skill.mjs';
 
 const runtimeIds = { codex: 'codex', agy: 'antigravity', claude: 'claude', opencode: 'opencode' };
 const modes = new Set(['tui', 'headless']);
@@ -53,32 +54,6 @@ const temporaryRole = role => role === 'worker' || role === 'reviewer'; // Old l
 export const validInput = text => hasText(text) && !/[\x00-\x08\x0b\x0c\x0e-\x1f\x7f-\x9f]/.test(text);
 export const validDispatchReason = value => value === undefined ||
   validInput(value) && !/[\r\n]/.test(value) && Buffer.byteLength(value) <= 512;
-const unattended = 'No human is watching this session. Never ask the user interactively or open a native question. For a decision, write the facts, options and recommendation in a file. Run "$LOOM_BIN" notifications --needs-decision TEXT --kind decision with a short summary and the file path. Continue any independent work, then end the turn with BLOCKED <decision> while the decision is pending. The answer arrives as a normal delivery.';
-const leaderGuidance = 'Make decisions. Split work into cards, dispatch Workers, review their receipts and evidence summaries, and choose the next action. Use loom status, loom hist summaries and git diff --stat. Delegate source and test inspection, diagnosis, integration, merging and test/build execution to Workers. An integration Worker supplies fixed-candidate and full-suite evidence. Forward any Auditor-commissioned findings verbatim with loom send and the reply file path. Pack Worker evidence with loom gate pack and use loom escalate for confirmed red facts. End the turn while waiting for deliveries.';
-const leaderWorkerGuidance = [
-  'Keep one Worker through the card, including resumed work and local R1/R2 fixes that preserve interfaces.',
-  'Use send --next-card only for an adjacent small card in the same area and worktree, with at most 60% context used and one compaction by default, and no verified fact errors or overreach on the preceding card.',
-  'After compaction, switch at a step boundary with a handoff sheet when remaining context falls below 15% again.',
-  'Use worker-handoff <Worker> after 10 minutes without progress, or give --reason fabrication|overreach and --evidence for a confirmed finding.',
-  'Use a fresh Worker plus an exact RED reproduction for a changed area, rejected direction, R3, fabrication or overreach.',
-  'New Workers verify branch, base SHA, WIP lines and active rulings before editing. Rotate resident roles at a card boundary after the first compaction. State the dispatch choice with --reason.',
-].join(' ');
-const seniorGuidance = 'Use .project notes and evidence. For card preparation, keep targeted source reads to 200 lines. If a heavy tool is essential after a denial, paste the denial receipt’s "$LOOM_BIN" senior-tool --retry DENY-ID --reason "short sentence" line and state why the tool is essential. Loom keeps the output tail and records the reason. When workers or delivery are unavailable, Loom can authorize the same command without a reason.';
-const cardConventions = row => [
-  '## Loom task conventions',
-  `Task ${row.task}, working directory ${row.cwd}. Follow the card’s writable scope and acceptance commands. Start with the card and skip environment exploration or searches for AGENTS.md and skills to discover Loom conventions.`,
-  'Invoke Loom commands through "$LOOM_BIN", the absolute executable path.',
-  'Before editing, run "$LOOM_BIN" worker-check. Confirm its branch, base SHA, WIP line counts and active rulings in your first report. If verification fails, stop work and report BLOCKED with the mismatch.',
-  'After a completed compaction, if context remaining falls below 15% again by default, finish the current step and run "$LOOM_BIN" worker-handoff --wip TEXT --passed TEXT --pending TEXT. Report BLOCKED with the handoff sheet path.',
-  unattended,
-  'Keep Git hooks enabled. Git --no-verify, core.hooksPath overrides, and equivalent bypasses are forbidden.',
-  ...(row.integration ? ['Integration profile: use the private $TMPDIR for temporary test artifacts and `ps` on PATH or $LOOM_TEST_PS for process listing. Run the card’s full-suite command directly and leave its exit status visible. Report the candidate SHA, command, exit code and totals in the result so Loom can record the evidence card. Put any full log in the card worktree or its private temporary directory. Do not write project .project summaries.'] : []),
-  'Use relevant fragments of large files and output. Avoid rereading whole files already read. After the final acceptance passes, give the final reply immediately. Skip extra status/diff checks, rereads and reruns unless the card requires them.',
-  `Final reply line 1: DONE ${row.task}, BLOCKED ${row.task} or FAILED ${row.task}.`,
-  'Line 2: a one-line conclusion with the deliverable or the blocking decision. Line 3: Leftovers & deviations: none, or list the specific items.',
-  'When applicable, add one line each for a design trade-off, why an old assertion changed and what replaced it, and what was not verified and why. Loom collects Git and test evidence and publishes receipts.',
-].join('\n');
-
 function within(parent, child) {
   const path = relative(parent, child);
   return !isAbsolute(path) && path !== '..' && !path.startsWith(`..${sep}`);
@@ -660,30 +635,18 @@ export function ownedSessions(project, index, report, {
         handoverItems = [...new Set([...note.items, ...startup.items])];
         const judgment = selfHandoff && !selfHandoff.urgent ?
           `\n\n## 交班判断\n${selfHandoff.notePath}\n原因：${rotationReasonText(selfHandoff.reason)}\n\n${note.background}` : '';
-        const rotationInstructions = selfHandoff?.v2 ?
-          '\n\n首轮只核对原件。首行写完整确认码。逐行照抄事实卡的 HEAD、Branch、Base SHA、WIP、Rulings 标签，并报告现查的值。若发现不一致，第二行写 MISMATCH，列明差异后结束。接管生效通知到达后执行 Next action。' : '';
         const outstanding = handoverItems.length ? handoverItems.map(item => '- ' + item).join('\n') : '无';
-        const complete = `## Do now\n${outstanding}\n\n${brief.trimEnd()}${state}${judgment}${rotationInstructions}${selfHandoff?.facts ? '\n\n' + selfHandoff.facts : ''}\n\n## 启动指令\n${startup.background}\n\n## 交接确认\n${handoverAck}\n`;
+        const complete = `## Do now\n${outstanding}\n\n${brief.trimEnd()}${state}${judgment}${selfHandoff?.facts ? '\n\n' + selfHandoff.facts : ''}\n\n## 启动指令\n${startup.background}\n\n## 交接确认\n${handoverAck}\n`;
         compactHandover = mode === 'tui';
-        prompt = compactHandover ? complete :
-          `Complete the ${input.role === 'leader' ? 'Leader' : 'Auditor'} handover in this first native turn. ${replyForDelivery(project, complete, 0)}. Resolve the path from ${project}. Read the full file through its final acknowledgement line, then copy that line exactly onto the first line of your final reply. Include the current SHA and relevant paths you verified. This first turn is for verification. Follow the report format in the briefing. When Loom sends 接管生效, start the Do now items.` +
-          (row.role === 'leader' ? '\n\n' + leaderWorkerGuidance : '');
+        prompt = compactHandover ? complete : [
+          `交接简报位于 ${project}。模式 ${selfHandoff?.v2 ? 'v2' : '旧模式'}。`,
+          replyForDelivery(project, complete, 0), skillModules(['successor']).text,
+        ].join('\n\n');
       } else {
         prompt = `先读前任简报及任务指定的交接记录，再开始接管。\n\n${brief.trimEnd()}\n\n## 启动指令\n${prompt}`;
       }
     }
-    if (!resumeSession && (row.role === 'leader' || row.role === 'auditor')) {
-      const guidance = row.role === 'leader' ? leaderGuidance + ' ' + leaderWorkerGuidance :
-        'Decide the gate verdict from the packet, fixed SHA, and integration Worker evidence. Ask for the integration Worker evidence if it is missing. Delegate investigation, tests, builds, merges and integration. At phase boundaries, inspect the deterministic checks and Worker evidence. Select one evidence command for a Worker to reproduce and record review-only findings with loom audit-findings. Wake sources are user or Super messages, a gate packet or red escalation from Leader, succession supervision, and replies you explicitly requested.';
-      prompt = `## Loom role guidance\n${guidance} ${seniorGuidance} Do not wait on background Bash or poll loom state. ${unattended} If a result is overdue, run "$LOOM_BIN" status and check stalled deliveries and suppressed replies. At a rotation signal, write your judgment and in-flight card IDs to the indicated note, run "$LOOM_BIN" rotate --self, and finish the current turn. Loom starts the same profile at idle. For v2, one failed handover stops rotation for this phase and Loom informs Super. Put DONE, BLOCKED, FAILED, PASS, REJECT or APPROVE on the first line of the final conclusion, before any preamble. The handover turn starts with its exact HANDOVER-ACK. Use NOREPLY for acknowledgements.\n\n## Startup request\n${prompt}`;
-      try { prompt = await projectMemoryPrompt(project) + prompt; }
-      catch (error) { report(`Project memory unavailable: ${error.message}`); }
-    }
-    if (compactHandover) {
-      // Keep a fresh TUI's startup wire within a single holder chunk.
-      const pointer = replyForDelivery(project, prompt, 0);
-      prompt = `${pointer} relative to $LOOM_PROJECT. Read the briefing. Start your reply with its exact HANDOVER-ACK, then verify the SHAs and paths in its format. For v2, report differences on line two with MISMATCH and stop. When Loom sends 接管生效, follow Do now and Next action.`;
-    }
+    const heading = '## Loom role guidance\n低频参考文件相对于 $LOOM_SKILL_ROOT。';
     let checkpoint;
     if (row.role === 'worker') {
       const card = `${row.task}\n${input.prompt}`;
@@ -691,8 +654,23 @@ export function ownedSessions(project, index, report, {
       let memory;
       try { memory = workerMemoryPrompt(project, card); }
       catch (error) { report(`Worker memory unavailable: ${error.message}`); }
-      prompt = [prompt, cardConventions({ ...row, integration }),
-        '## Loom dispatch baseline\n' + workerCheckpointText(checkpoint), memory].filter(Boolean).join('\n\n');
+      const conventions = `## Loom task conventions\n任务 ${row.task}，工作目录 ${row.cwd}。低频参考文件相对于 $LOOM_SKILL_ROOT。`;
+      prompt = [prompt, conventions, roleCore(row.role),
+        '## Loom dispatch baseline\n' + workerCheckpointText(checkpoint),
+        integration && skillModules(['worker-integration']).text, memory].filter(Boolean).join('\n\n');
+    } else if (!resumeSession) {
+      prompt = `${heading}\n${roleCore(row.role)}\n\n## Startup request\n${prompt}`;
+      if (rotatingRoles.includes(row.role)) {
+        try { prompt = await projectMemoryPrompt(project) + prompt; }
+        catch (error) { report(`Project memory unavailable: ${error.message}`); }
+      }
+    }
+    if (compactHandover) {
+      // Readers must open this briefing to verify its facts and acknowledgement.
+      // Keep the dispatch itself compact even with a long role core or memory.
+      const pointer = replyForDelivery(project, prompt, 0);
+      prompt = [`${pointer} ($LOOM_PROJECT, ${selfHandoff?.v2 ? 'v2' : 'legacy'})`,
+        skillModules(['successor']).text].join('\n\n');
     }
     const fast = selfHandoff?.inheritFast ? jobs.get(predecessor.addr)?.fast : selected.fast;
     const requestedFast = selfHandoff?.inheritFast ? jobs.get(predecessor.addr)?.fastRequested : fastRequested;

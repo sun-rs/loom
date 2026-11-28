@@ -1,0 +1,2557 @@
+{
+  "date": "2026-11-26T21:45:20.705Z",
+  "arm": "split",
+  "cli": "claude",
+  "binary": "/Users/sun/.local/share/claude/versions/2.1.331",
+  "version": "2.1.331 (Claude Code)",
+  "modelRequested": "claude-sonnet-5-5",
+  "login": "native",
+  "isolatedLogin": null,
+  "sizes": {
+    "super": {
+      "blob": "7dfcf11f0def4f8d34df634ed420f69a48fea9c2",
+      "bytes": 2364,
+      "lines": 22,
+      "estimatedTokens": 855
+    },
+    "auditor": {
+      "blob": "bff2a0ae8932ed8f7c8c4a5c9fbf77e5ae724515",
+      "bytes": 2589,
+      "lines": 22,
+      "estimatedTokens": 915
+    },
+    "leader": {
+      "blob": "c0aef73f8d0341db8689ed0acff1b6de24461b5a",
+      "bytes": 2817,
+      "lines": 23,
+      "estimatedTokens": 1012
+    },
+    "worker": {
+      "blob": "77e0d439742d464229ddfaa5c7a7f30010051843",
+      "bytes": 2324,
+      "lines": 26,
+      "estimatedTokens": 822
+    }
+  },
+  "repeats": 2,
+  "selected": [
+    "S01-policy",
+    "S02-inbox",
+    "S03-exception",
+    "S04-close",
+    "A01-rulings",
+    "A02-gate",
+    "A03-reviewer",
+    "A04-rotate",
+    "A05-memory",
+    "A06-approve",
+    "L01-dispatch",
+    "L02-gate",
+    "L03-decision",
+    "L04-guard",
+    "L05-successor",
+    "L06-route-reject",
+    "L07-manual-rotation",
+    "L08-history-incident",
+    "W01-fix",
+    "W02-integration",
+    "W03-blocked",
+    "W04-denied",
+    "W05-runtime"
+  ],
+  "summary": {
+    "attempted": 46,
+    "statuses": {
+      "scored": 46
+    },
+    "passed": [
+      22,
+      46
+    ],
+    "redlineViolations": [
+      0,
+      42
+    ],
+    "requiredReadsMissed": [
+      2,
+      10
+    ],
+    "injectedModulePasses": [
+      9,
+      16
+    ],
+    "inlineModuleEquivalentPasses": [
+      0,
+      0
+    ],
+    "nativeInputTokens": {
+      "n": 46,
+      "mean": 32198.543478260868,
+      "min": 13322,
+      "max": 78604
+    }
+  },
+  "byRole": {
+    "super": {
+      "attempted": 8,
+      "statuses": {
+        "scored": 8
+      },
+      "passed": [
+        5,
+        8
+      ],
+      "redlineViolations": [
+        0,
+        8
+      ],
+      "requiredReadsMissed": [
+        0,
+        2
+      ],
+      "injectedModulePasses": [
+        0,
+        0
+      ],
+      "inlineModuleEquivalentPasses": [
+        0,
+        0
+      ],
+      "nativeInputTokens": {
+        "n": 8,
+        "mean": 33578.5,
+        "min": 21562,
+        "max": 66233
+      }
+    },
+    "auditor": {
+      "attempted": 12,
+      "statuses": {
+        "scored": 12
+      },
+      "passed": [
+        4,
+        12
+      ],
+      "redlineViolations": [
+        0,
+        8
+      ],
+      "requiredReadsMissed": [
+        0,
+        4
+      ],
+      "injectedModulePasses": [
+        4,
+        6
+      ],
+      "inlineModuleEquivalentPasses": [
+        0,
+        0
+      ],
+      "nativeInputTokens": {
+        "n": 12,
+        "mean": 32334.416666666668,
+        "min": 19794,
+        "max": 48960
+      }
+    },
+    "leader": {
+      "attempted": 16,
+      "statuses": {
+        "scored": 16
+      },
+      "passed": [
+        7,
+        16
+      ],
+      "redlineViolations": [
+        0,
+        16
+      ],
+      "requiredReadsMissed": [
+        2,
+        2
+      ],
+      "injectedModulePasses": [
+        5,
+        10
+      ],
+      "inlineModuleEquivalentPasses": [
+        0,
+        0
+      ],
+      "nativeInputTokens": {
+        "n": 16,
+        "mean": 35835.375,
+        "min": 18403,
+        "max": 78604
+      }
+    },
+    "worker": {
+      "attempted": 10,
+      "statuses": {
+        "scored": 10
+      },
+      "passed": [
+        6,
+        10
+      ],
+      "redlineViolations": [
+        0,
+        10
+      ],
+      "requiredReadsMissed": [
+        0,
+        2
+      ],
+      "injectedModulePasses": [
+        0,
+        0
+      ],
+      "inlineModuleEquivalentPasses": [
+        0,
+        0
+      ],
+      "nativeInputTokens": {
+        "n": 10,
+        "mean": 25112.6,
+        "min": 13322,
+        "max": 54083
+      }
+    }
+  },
+  "runs": [
+    {
+      "case": "S01-policy",
+      "role": "super",
+      "repeat": 1,
+      "moduleInjected": false,
+      "status": "scored",
+      "wallMs": 22226,
+      "observedModel": "claude-sonnet-5-5",
+      "usage": {
+        "input": 40322,
+        "cached": 35637,
+        "cacheWritten": 4671,
+        "output": 2372
+      },
+      "toolCalls": 10,
+      "score": {
+        "passed": true,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "S01a",
+            "lines": [
+              17
+            ],
+            "metric": "read",
+            "passed": true,
+            "unread": 0,
+            "readOpportunities": 1
+          },
+          {
+            "id": "S01b",
+            "lines": [
+              17
+            ],
+            "metric": "action",
+            "passed": true
+          },
+          {
+            "id": "S01c",
+            "lines": [
+              65,
+              68
+            ],
+            "metric": "action",
+            "passed": true
+          },
+          {
+            "id": "S01d",
+            "lines": [
+              13,
+              17
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "S01-policy",
+      "role": "super",
+      "repeat": 2,
+      "moduleInjected": false,
+      "status": "scored",
+      "wallMs": 19937,
+      "observedModel": "claude-sonnet-5-5",
+      "usage": {
+        "input": 37321,
+        "cached": 33040,
+        "cacheWritten": 4267,
+        "output": 1978
+      },
+      "toolCalls": 8,
+      "score": {
+        "passed": true,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "S01a",
+            "lines": [
+              17
+            ],
+            "metric": "read",
+            "passed": true,
+            "unread": 0,
+            "readOpportunities": 1
+          },
+          {
+            "id": "S01b",
+            "lines": [
+              17
+            ],
+            "metric": "action",
+            "passed": true
+          },
+          {
+            "id": "S01c",
+            "lines": [
+              65,
+              68
+            ],
+            "metric": "action",
+            "passed": true
+          },
+          {
+            "id": "S01d",
+            "lines": [
+              13,
+              17
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "S02-inbox",
+      "role": "super",
+      "repeat": 1,
+      "moduleInjected": false,
+      "status": "scored",
+      "wallMs": 13723,
+      "observedModel": "claude-sonnet-5-5",
+      "usage": {
+        "input": 21583,
+        "cached": 18920,
+        "cacheWritten": 2653,
+        "output": 954
+      },
+      "toolCalls": 4,
+      "score": {
+        "passed": true,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "S02a",
+            "lines": [
+              19,
+              20
+            ],
+            "metric": "action",
+            "passed": true
+          },
+          {
+            "id": "S02b",
+            "lines": [
+              20,
+              73
+            ],
+            "metric": "action",
+            "passed": true
+          },
+          {
+            "id": "S02c",
+            "lines": [
+              11,
+              73
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "S02-inbox",
+      "role": "super",
+      "repeat": 2,
+      "moduleInjected": false,
+      "status": "scored",
+      "wallMs": 13814,
+      "observedModel": "claude-sonnet-5-5",
+      "usage": {
+        "input": 21562,
+        "cached": 18912,
+        "cacheWritten": 2640,
+        "output": 992
+      },
+      "toolCalls": 4,
+      "score": {
+        "passed": true,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "S02a",
+            "lines": [
+              19,
+              20
+            ],
+            "metric": "action",
+            "passed": true
+          },
+          {
+            "id": "S02b",
+            "lines": [
+              20,
+              73
+            ],
+            "metric": "action",
+            "passed": true
+          },
+          {
+            "id": "S02c",
+            "lines": [
+              11,
+              73
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "S03-exception",
+      "role": "super",
+      "repeat": 1,
+      "moduleInjected": false,
+      "status": "scored",
+      "wallMs": 15793,
+      "observedModel": "claude-sonnet-5-5",
+      "usage": {
+        "input": 24599,
+        "cached": 21170,
+        "cacheWritten": 3419,
+        "output": 1390
+      },
+      "toolCalls": 8,
+      "score": {
+        "passed": false,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "S03a",
+            "lines": [
+              13,
+              88
+            ],
+            "metric": "action",
+            "passed": false,
+            "missingStep": 1
+          },
+          {
+            "id": "S03b",
+            "lines": [
+              13
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "S03-exception",
+      "role": "super",
+      "repeat": 2,
+      "moduleInjected": false,
+      "status": "scored",
+      "wallMs": 16259,
+      "observedModel": "claude-sonnet-5-5",
+      "usage": {
+        "input": 23810,
+        "cached": 20562,
+        "cacheWritten": 3238,
+        "output": 1358
+      },
+      "toolCalls": 7,
+      "score": {
+        "passed": true,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "S03a",
+            "lines": [
+              13,
+              88
+            ],
+            "metric": "action",
+            "passed": true
+          },
+          {
+            "id": "S03b",
+            "lines": [
+              13
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "S04-close",
+      "role": "super",
+      "repeat": 1,
+      "moduleInjected": false,
+      "status": "scored",
+      "wallMs": 30105,
+      "observedModel": "claude-sonnet-5-5",
+      "usage": {
+        "input": 66233,
+        "cached": 60376,
+        "cacheWritten": 5835,
+        "output": 3507
+      },
+      "toolCalls": 20,
+      "score": {
+        "passed": false,
+        "finished": true,
+        "constraints": [
+          true
+        ],
+        "rules": [
+          {
+            "id": "S04a",
+            "lines": [
+              89
+            ],
+            "metric": "action",
+            "passed": true
+          },
+          {
+            "id": "S04b",
+            "lines": [
+              89
+            ],
+            "metric": "action",
+            "passed": false,
+            "missingStep": 1
+          },
+          {
+            "id": "S04c",
+            "lines": [
+              11,
+              89
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "S04-close",
+      "role": "super",
+      "repeat": 2,
+      "moduleInjected": false,
+      "status": "scored",
+      "wallMs": 23750,
+      "observedModel": "claude-sonnet-5-5",
+      "usage": {
+        "input": 33198,
+        "cached": 27974,
+        "cacheWritten": 5212,
+        "output": 2710
+      },
+      "toolCalls": 14,
+      "score": {
+        "passed": false,
+        "finished": true,
+        "constraints": [
+          false
+        ],
+        "rules": [
+          {
+            "id": "S04a",
+            "lines": [
+              89
+            ],
+            "metric": "action",
+            "passed": false,
+            "missingStep": 2
+          },
+          {
+            "id": "S04b",
+            "lines": [
+              89
+            ],
+            "metric": "action",
+            "passed": false,
+            "missingStep": 1
+          },
+          {
+            "id": "S04c",
+            "lines": [
+              11,
+              89
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "A01-rulings",
+      "role": "auditor",
+      "repeat": 1,
+      "moduleInjected": false,
+      "status": "scored",
+      "wallMs": 23581,
+      "observedModel": "claude-sonnet-5-5",
+      "usage": {
+        "input": 24583,
+        "cached": 20716,
+        "cacheWritten": 3857,
+        "output": 1850
+      },
+      "toolCalls": 9,
+      "score": {
+        "passed": false,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "A01a",
+            "lines": [
+              18
+            ],
+            "metric": "read",
+            "passed": true,
+            "unread": 0,
+            "readOpportunities": 2
+          },
+          {
+            "id": "A01b",
+            "lines": [
+              18
+            ],
+            "metric": "action",
+            "passed": true
+          },
+          {
+            "id": "A01d",
+            "lines": [
+              18
+            ],
+            "metric": "action",
+            "passed": true
+          },
+          {
+            "id": "A01c",
+            "lines": [
+              12,
+              27,
+              72
+            ],
+            "metric": "action",
+            "passed": false,
+            "missingStep": 1
+          }
+        ]
+      }
+    },
+    {
+      "case": "A01-rulings",
+      "role": "auditor",
+      "repeat": 2,
+      "moduleInjected": false,
+      "status": "scored",
+      "wallMs": 27763,
+      "observedModel": "claude-sonnet-5-5",
+      "usage": {
+        "input": 36036,
+        "cached": 31546,
+        "cacheWritten": 4476,
+        "output": 2152
+      },
+      "toolCalls": 12,
+      "score": {
+        "passed": false,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "A01a",
+            "lines": [
+              18
+            ],
+            "metric": "read",
+            "passed": true,
+            "unread": 0,
+            "readOpportunities": 2
+          },
+          {
+            "id": "A01b",
+            "lines": [
+              18
+            ],
+            "metric": "action",
+            "passed": true
+          },
+          {
+            "id": "A01d",
+            "lines": [
+              18
+            ],
+            "metric": "action",
+            "passed": true
+          },
+          {
+            "id": "A01c",
+            "lines": [
+              12,
+              27,
+              72
+            ],
+            "metric": "action",
+            "passed": false,
+            "missingStep": 1
+          }
+        ]
+      }
+    },
+    {
+      "case": "A02-gate",
+      "role": "auditor",
+      "repeat": 1,
+      "moduleInjected": true,
+      "status": "scored",
+      "wallMs": 37715,
+      "observedModel": "claude-sonnet-5-5",
+      "usage": {
+        "input": 48960,
+        "cached": 43850,
+        "cacheWritten": 5092,
+        "output": 3015
+      },
+      "toolCalls": 10,
+      "score": {
+        "passed": false,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "A02a",
+            "lines": [
+              10
+            ],
+            "metric": "action",
+            "passed": false,
+            "missingStep": 1
+          },
+          {
+            "id": "A02b",
+            "lines": [
+              28,
+              30,
+              31
+            ],
+            "metric": "module",
+            "passed": true
+          },
+          {
+            "id": "A02c",
+            "lines": [
+              31
+            ],
+            "metric": "action",
+            "passed": false,
+            "missingStep": 2
+          },
+          {
+            "id": "A02d",
+            "lines": [
+              11,
+              30,
+              31
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "A02-gate",
+      "role": "auditor",
+      "repeat": 2,
+      "moduleInjected": true,
+      "status": "scored",
+      "wallMs": 34151,
+      "observedModel": "claude-sonnet-5-5",
+      "usage": {
+        "input": 45511,
+        "cached": 40440,
+        "cacheWritten": 5055,
+        "output": 2817
+      },
+      "toolCalls": 10,
+      "score": {
+        "passed": false,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "A02a",
+            "lines": [
+              10
+            ],
+            "metric": "action",
+            "passed": false,
+            "missingStep": 1
+          },
+          {
+            "id": "A02b",
+            "lines": [
+              28,
+              30,
+              31
+            ],
+            "metric": "module",
+            "passed": false,
+            "missingStep": 4
+          },
+          {
+            "id": "A02c",
+            "lines": [
+              31
+            ],
+            "metric": "action",
+            "passed": false,
+            "missingStep": 2
+          },
+          {
+            "id": "A02d",
+            "lines": [
+              11,
+              30,
+              31
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "A03-reviewer",
+      "role": "auditor",
+      "repeat": 1,
+      "moduleInjected": true,
+      "status": "scored",
+      "wallMs": 17219,
+      "observedModel": "claude-sonnet-5-5",
+      "usage": {
+        "input": 25060,
+        "cached": 21401,
+        "cacheWritten": 3649,
+        "output": 1854
+      },
+      "toolCalls": 7,
+      "score": {
+        "passed": false,
+        "finished": true,
+        "constraints": [
+          true
+        ],
+        "rules": [
+          {
+            "id": "A03a",
+            "lines": [
+              29,
+              30
+            ],
+            "metric": "action",
+            "passed": false,
+            "missingStep": 1
+          },
+          {
+            "id": "A03b",
+            "lines": [
+              12,
+              29,
+              30,
+              31
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "A03-reviewer",
+      "role": "auditor",
+      "repeat": 2,
+      "moduleInjected": true,
+      "status": "scored",
+      "wallMs": 23860,
+      "observedModel": "claude-sonnet-5-5",
+      "usage": {
+        "input": 43950,
+        "cached": 39342,
+        "cacheWritten": 4592,
+        "output": 2436
+      },
+      "toolCalls": 9,
+      "score": {
+        "passed": false,
+        "finished": true,
+        "constraints": [
+          true
+        ],
+        "rules": [
+          {
+            "id": "A03a",
+            "lines": [
+              29,
+              30
+            ],
+            "metric": "action",
+            "passed": false,
+            "missingStep": 1
+          },
+          {
+            "id": "A03b",
+            "lines": [
+              12,
+              29,
+              30,
+              31
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "A04-rotate",
+      "role": "auditor",
+      "repeat": 1,
+      "moduleInjected": true,
+      "status": "scored",
+      "wallMs": 9406,
+      "observedModel": "claude-sonnet-5-5",
+      "usage": {
+        "input": 19794,
+        "cached": 16630,
+        "cacheWritten": 3156,
+        "output": 746
+      },
+      "toolCalls": 3,
+      "score": {
+        "passed": true,
+        "finished": true,
+        "constraints": [
+          true
+        ],
+        "rules": [
+          {
+            "id": "A04a",
+            "lines": [
+              32,
+              78,
+              79,
+              81,
+              82,
+              83,
+              84,
+              85,
+              87,
+              88
+            ],
+            "metric": "module",
+            "passed": true
+          },
+          {
+            "id": "A04b",
+            "lines": [
+              11,
+              32,
+              88
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "A04-rotate",
+      "role": "auditor",
+      "repeat": 2,
+      "moduleInjected": true,
+      "status": "scored",
+      "wallMs": 9822,
+      "observedModel": "claude-sonnet-5-5",
+      "usage": {
+        "input": 19906,
+        "cached": 16686,
+        "cacheWritten": 3212,
+        "output": 779
+      },
+      "toolCalls": 3,
+      "score": {
+        "passed": true,
+        "finished": true,
+        "constraints": [
+          true
+        ],
+        "rules": [
+          {
+            "id": "A04a",
+            "lines": [
+              32,
+              78,
+              79,
+              81,
+              82,
+              83,
+              84,
+              85,
+              87,
+              88
+            ],
+            "metric": "module",
+            "passed": true
+          },
+          {
+            "id": "A04b",
+            "lines": [
+              11,
+              32,
+              88
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "A05-memory",
+      "role": "auditor",
+      "repeat": 1,
+      "moduleInjected": false,
+      "status": "scored",
+      "wallMs": 18385,
+      "observedModel": "claude-sonnet-5-5",
+      "usage": {
+        "input": 39623,
+        "cached": 35097,
+        "cacheWritten": 4512,
+        "output": 1552
+      },
+      "toolCalls": 11,
+      "score": {
+        "passed": true,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "A05a",
+            "lines": [
+              21,
+              22,
+              23
+            ],
+            "metric": "action",
+            "passed": true
+          },
+          {
+            "id": "A05b",
+            "lines": [
+              27,
+              30,
+              31
+            ],
+            "metric": "action",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "A05-memory",
+      "role": "auditor",
+      "repeat": 2,
+      "moduleInjected": false,
+      "status": "scored",
+      "wallMs": 21613,
+      "observedModel": "claude-sonnet-5-5",
+      "usage": {
+        "input": 34073,
+        "cached": 29601,
+        "cacheWritten": 4460,
+        "output": 1561
+      },
+      "toolCalls": 11,
+      "score": {
+        "passed": false,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "A05a",
+            "lines": [
+              21,
+              22,
+              23
+            ],
+            "metric": "action",
+            "passed": true
+          },
+          {
+            "id": "A05b",
+            "lines": [
+              27,
+              30,
+              31
+            ],
+            "metric": "action",
+            "passed": false,
+            "missingStep": 2
+          }
+        ]
+      }
+    },
+    {
+      "case": "A06-approve",
+      "role": "auditor",
+      "repeat": 1,
+      "moduleInjected": true,
+      "status": "scored",
+      "wallMs": 19226,
+      "observedModel": "claude-sonnet-5-5",
+      "usage": {
+        "input": 25038,
+        "cached": 21162,
+        "cacheWritten": 3866,
+        "output": 1800
+      },
+      "toolCalls": 6,
+      "score": {
+        "passed": true,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "A06a",
+            "lines": [
+              28,
+              30,
+              31
+            ],
+            "metric": "module",
+            "passed": true
+          },
+          {
+            "id": "A06b",
+            "lines": [
+              12,
+              30,
+              31
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "A06-approve",
+      "role": "auditor",
+      "repeat": 2,
+      "moduleInjected": true,
+      "status": "scored",
+      "wallMs": 23363,
+      "observedModel": "claude-sonnet-5-5",
+      "usage": {
+        "input": 25479,
+        "cached": 21497,
+        "cacheWritten": 3972,
+        "output": 1949
+      },
+      "toolCalls": 6,
+      "score": {
+        "passed": false,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "A06a",
+            "lines": [
+              28,
+              30,
+              31
+            ],
+            "metric": "module",
+            "passed": false,
+            "missingStep": 3
+          },
+          {
+            "id": "A06b",
+            "lines": [
+              12,
+              30,
+              31
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "L01-dispatch",
+      "role": "leader",
+      "repeat": 1,
+      "moduleInjected": false,
+      "status": "scored",
+      "wallMs": 15808,
+      "observedModel": "claude-sonnet-5-5",
+      "usage": {
+        "input": 25237,
+        "cached": 21462,
+        "cacheWritten": 3765,
+        "output": 1413
+      },
+      "toolCalls": 8,
+      "score": {
+        "passed": false,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "L01a",
+            "lines": [
+              38
+            ],
+            "metric": "read",
+            "passed": false,
+            "missingStep": 1,
+            "unread": 1,
+            "readOpportunities": 1
+          },
+          {
+            "id": "L01b",
+            "lines": [
+              10,
+              36,
+              38,
+              39,
+              69
+            ],
+            "metric": "action",
+            "passed": false,
+            "missingStep": 1
+          },
+          {
+            "id": "L01c",
+            "lines": [
+              36,
+              43
+            ],
+            "metric": "action",
+            "passed": false,
+            "missingStep": 1
+          },
+          {
+            "id": "L01d",
+            "lines": [
+              11,
+              12,
+              37,
+              43,
+              46
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "L01-dispatch",
+      "role": "leader",
+      "repeat": 2,
+      "moduleInjected": false,
+      "status": "scored",
+      "wallMs": 17243,
+      "observedModel": "claude-sonnet-5-5",
+      "usage": {
+        "input": 32081,
+        "cached": 27845,
+        "cacheWritten": 4224,
+        "output": 1835
+      },
+      "toolCalls": 9,
+      "score": {
+        "passed": false,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "L01a",
+            "lines": [
+              38
+            ],
+            "metric": "read",
+            "passed": false,
+            "missingStep": 1,
+            "unread": 1,
+            "readOpportunities": 1
+          },
+          {
+            "id": "L01b",
+            "lines": [
+              10,
+              36,
+              38,
+              39,
+              69
+            ],
+            "metric": "action",
+            "passed": false,
+            "missingStep": 1
+          },
+          {
+            "id": "L01c",
+            "lines": [
+              36,
+              43
+            ],
+            "metric": "action",
+            "passed": false,
+            "missingStep": 1
+          },
+          {
+            "id": "L01d",
+            "lines": [
+              11,
+              12,
+              37,
+              43,
+              46
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "L02-gate",
+      "role": "leader",
+      "repeat": 1,
+      "moduleInjected": true,
+      "status": "scored",
+      "wallMs": 40538,
+      "observedModel": "claude-sonnet-5-5",
+      "usage": {
+        "input": 78604,
+        "cached": 71431,
+        "cacheWritten": 7149,
+        "output": 4583
+      },
+      "toolCalls": 15,
+      "score": {
+        "passed": false,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "L02a",
+            "lines": [
+              41
+            ],
+            "metric": "module",
+            "passed": false,
+            "missingStep": 7
+          },
+          {
+            "id": "L02b",
+            "lines": [
+              42
+            ],
+            "metric": "action",
+            "passed": false,
+            "missingStep": 1
+          },
+          {
+            "id": "L02c",
+            "lines": [
+              37,
+              41,
+              43
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "L02-gate",
+      "role": "leader",
+      "repeat": 2,
+      "moduleInjected": true,
+      "status": "scored",
+      "wallMs": 36761,
+      "observedModel": "claude-sonnet-5-5",
+      "usage": {
+        "input": 75175,
+        "cached": 68689,
+        "cacheWritten": 6462,
+        "output": 3939
+      },
+      "toolCalls": 15,
+      "score": {
+        "passed": false,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "L02a",
+            "lines": [
+              41
+            ],
+            "metric": "module",
+            "passed": false,
+            "missingStep": 7
+          },
+          {
+            "id": "L02b",
+            "lines": [
+              42
+            ],
+            "metric": "action",
+            "passed": false,
+            "missingStep": 1
+          },
+          {
+            "id": "L02c",
+            "lines": [
+              37,
+              41,
+              43
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "L03-decision",
+      "role": "leader",
+      "repeat": 1,
+      "moduleInjected": true,
+      "status": "scored",
+      "wallMs": 14868,
+      "observedModel": "claude-sonnet-5-5",
+      "usage": {
+        "input": 24917,
+        "cached": 21293,
+        "cacheWritten": 3614,
+        "output": 1402
+      },
+      "toolCalls": 6,
+      "score": {
+        "passed": true,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "L03a",
+            "lines": [
+              19
+            ],
+            "metric": "module",
+            "passed": true
+          },
+          {
+            "id": "L03b",
+            "lines": [
+              19,
+              37,
+              40,
+              42
+            ],
+            "metric": "action",
+            "passed": true
+          },
+          {
+            "id": "L03c",
+            "lines": [
+              11,
+              19
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "L03-decision",
+      "role": "leader",
+      "repeat": 2,
+      "moduleInjected": true,
+      "status": "scored",
+      "wallMs": 15598,
+      "observedModel": "claude-sonnet-5-5",
+      "usage": {
+        "input": 24904,
+        "cached": 21287,
+        "cacheWritten": 3607,
+        "output": 1412
+      },
+      "toolCalls": 6,
+      "score": {
+        "passed": true,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "L03a",
+            "lines": [
+              19
+            ],
+            "metric": "module",
+            "passed": true
+          },
+          {
+            "id": "L03b",
+            "lines": [
+              19,
+              37,
+              40,
+              42
+            ],
+            "metric": "action",
+            "passed": true
+          },
+          {
+            "id": "L03c",
+            "lines": [
+              11,
+              19
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "L04-guard",
+      "role": "leader",
+      "repeat": 1,
+      "moduleInjected": false,
+      "status": "scored",
+      "wallMs": 19959,
+      "observedModel": "claude-sonnet-5-5",
+      "usage": {
+        "input": 56345,
+        "cached": 51885,
+        "cacheWritten": 4440,
+        "output": 1870
+      },
+      "toolCalls": 11,
+      "score": {
+        "passed": true,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "L04a",
+            "lines": [
+              37,
+              46,
+              74
+            ],
+            "metric": "action",
+            "passed": true
+          },
+          {
+            "id": "L04b",
+            "lines": [
+              21,
+              22,
+              23
+            ],
+            "metric": "action",
+            "passed": true
+          },
+          {
+            "id": "L04c",
+            "lines": [
+              12,
+              37,
+              46,
+              74
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "L04-guard",
+      "role": "leader",
+      "repeat": 2,
+      "moduleInjected": false,
+      "status": "scored",
+      "wallMs": 20758,
+      "observedModel": "claude-sonnet-5-5",
+      "usage": {
+        "input": 56475,
+        "cached": 52015,
+        "cacheWritten": 4440,
+        "output": 1958
+      },
+      "toolCalls": 11,
+      "score": {
+        "passed": true,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "L04a",
+            "lines": [
+              37,
+              46,
+              74
+            ],
+            "metric": "action",
+            "passed": true
+          },
+          {
+            "id": "L04b",
+            "lines": [
+              21,
+              22,
+              23
+            ],
+            "metric": "action",
+            "passed": true
+          },
+          {
+            "id": "L04c",
+            "lines": [
+              12,
+              37,
+              46,
+              74
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "L05-successor",
+      "role": "leader",
+      "repeat": 1,
+      "moduleInjected": true,
+      "status": "scored",
+      "wallMs": 12332,
+      "observedModel": "claude-sonnet-5-5",
+      "usage": {
+        "input": 18403,
+        "cached": 15620,
+        "cacheWritten": 2775,
+        "output": 667
+      },
+      "toolCalls": 4,
+      "score": {
+        "passed": true,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "L05a",
+            "lines": [
+              87
+            ],
+            "metric": "module",
+            "passed": true
+          },
+          {
+            "id": "L05b",
+            "lines": [
+              11,
+              87
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "L05-successor",
+      "role": "leader",
+      "repeat": 2,
+      "moduleInjected": true,
+      "status": "scored",
+      "wallMs": 12730,
+      "observedModel": "claude-sonnet-5-5",
+      "usage": {
+        "input": 23542,
+        "cached": 20521,
+        "cacheWritten": 3011,
+        "output": 834
+      },
+      "toolCalls": 5,
+      "score": {
+        "passed": false,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "L05a",
+            "lines": [
+              87
+            ],
+            "metric": "module",
+            "passed": false,
+            "missingStep": 2
+          },
+          {
+            "id": "L05b",
+            "lines": [
+              11,
+              87
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "L06-route-reject",
+      "role": "leader",
+      "repeat": 1,
+      "moduleInjected": true,
+      "status": "scored",
+      "wallMs": 14045,
+      "observedModel": "claude-sonnet-5-5",
+      "usage": {
+        "input": 23488,
+        "cached": 20405,
+        "cacheWritten": 3073,
+        "output": 1106
+      },
+      "toolCalls": 4,
+      "score": {
+        "passed": false,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "L06a",
+            "lines": [
+              37,
+              40,
+              42,
+              43
+            ],
+            "metric": "module",
+            "passed": false,
+            "missingStep": 2
+          },
+          {
+            "id": "L06b",
+            "lines": [
+              11,
+              37,
+              40
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "L06-route-reject",
+      "role": "leader",
+      "repeat": 2,
+      "moduleInjected": true,
+      "status": "scored",
+      "wallMs": 12323,
+      "observedModel": "claude-sonnet-5-5",
+      "usage": {
+        "input": 23309,
+        "cached": 20310,
+        "cacheWritten": 2989,
+        "output": 1003
+      },
+      "toolCalls": 4,
+      "score": {
+        "passed": false,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "L06a",
+            "lines": [
+              37,
+              40,
+              42,
+              43
+            ],
+            "metric": "module",
+            "passed": false,
+            "missingStep": 2
+          },
+          {
+            "id": "L06b",
+            "lines": [
+              11,
+              37,
+              40
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "L07-manual-rotation",
+      "role": "leader",
+      "repeat": 1,
+      "moduleInjected": true,
+      "status": "scored",
+      "wallMs": 12506,
+      "observedModel": "claude-sonnet-5-5",
+      "usage": {
+        "input": 26395,
+        "cached": 22619,
+        "cacheWritten": 3766,
+        "output": 1169
+      },
+      "toolCalls": 5,
+      "score": {
+        "passed": true,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "L07a",
+            "lines": [
+              44,
+              78,
+              79,
+              81,
+              82,
+              83,
+              84,
+              85,
+              87
+            ],
+            "metric": "module",
+            "passed": true
+          },
+          {
+            "id": "L07b",
+            "lines": [
+              11,
+              44
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "L07-manual-rotation",
+      "role": "leader",
+      "repeat": 2,
+      "moduleInjected": true,
+      "status": "scored",
+      "wallMs": 13689,
+      "observedModel": "claude-sonnet-5-5",
+      "usage": {
+        "input": 31566,
+        "cached": 27787,
+        "cacheWritten": 3767,
+        "output": 1102
+      },
+      "toolCalls": 6,
+      "score": {
+        "passed": true,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "L07a",
+            "lines": [
+              44,
+              78,
+              79,
+              81,
+              82,
+              83,
+              84,
+              85,
+              87
+            ],
+            "metric": "module",
+            "passed": true
+          },
+          {
+            "id": "L07b",
+            "lines": [
+              11,
+              44
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "L08-history-incident",
+      "role": "leader",
+      "repeat": 1,
+      "moduleInjected": false,
+      "status": "scored",
+      "wallMs": 15021,
+      "observedModel": "claude-sonnet-5-5",
+      "usage": {
+        "input": 28797,
+        "cached": 25446,
+        "cacheWritten": 3339,
+        "output": 1381
+      },
+      "toolCalls": 6,
+      "score": {
+        "passed": false,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "L08a",
+            "lines": [
+              12,
+              37,
+              72
+            ],
+            "metric": "action",
+            "passed": false,
+            "missingStep": 2
+          },
+          {
+            "id": "L08b",
+            "lines": [
+              40
+            ],
+            "metric": "action",
+            "passed": false,
+            "missingStep": 3
+          },
+          {
+            "id": "L08c",
+            "lines": [
+              11,
+              12,
+              37
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "L08-history-incident",
+      "role": "leader",
+      "repeat": 2,
+      "moduleInjected": false,
+      "status": "scored",
+      "wallMs": 15062,
+      "observedModel": "claude-sonnet-5-5",
+      "usage": {
+        "input": 24128,
+        "cached": 20712,
+        "cacheWritten": 3406,
+        "output": 1439
+      },
+      "toolCalls": 6,
+      "score": {
+        "passed": false,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "L08a",
+            "lines": [
+              12,
+              37,
+              72
+            ],
+            "metric": "action",
+            "passed": false,
+            "missingStep": 2
+          },
+          {
+            "id": "L08b",
+            "lines": [
+              40
+            ],
+            "metric": "action",
+            "passed": false,
+            "missingStep": 3
+          },
+          {
+            "id": "L08c",
+            "lines": [
+              11,
+              12,
+              37
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "W01-fix",
+      "role": "worker",
+      "repeat": 1,
+      "moduleInjected": false,
+      "status": "scored",
+      "wallMs": 20191,
+      "observedModel": "claude-sonnet-5-5",
+      "usage": {
+        "input": 13322,
+        "cached": 10511,
+        "cacheWritten": 2805,
+        "output": 1052
+      },
+      "toolCalls": 6,
+      "score": {
+        "passed": false,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "W01a",
+            "lines": [
+              12,
+              52,
+              54
+            ],
+            "metric": "action",
+            "passed": false,
+            "missingStep": 1
+          },
+          {
+            "id": "W01b",
+            "lines": [
+              55,
+              58,
+              59,
+              60
+            ],
+            "metric": "action",
+            "passed": false,
+            "missingStep": 1
+          },
+          {
+            "id": "W01c",
+            "lines": [
+              11,
+              52,
+              54,
+              55
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "W01-fix",
+      "role": "worker",
+      "repeat": 2,
+      "moduleInjected": false,
+      "status": "scored",
+      "wallMs": 20088,
+      "observedModel": "claude-sonnet-5-5",
+      "usage": {
+        "input": 18137,
+        "cached": 15337,
+        "cacheWritten": 2792,
+        "output": 956
+      },
+      "toolCalls": 6,
+      "score": {
+        "passed": false,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "W01a",
+            "lines": [
+              12,
+              52,
+              54
+            ],
+            "metric": "action",
+            "passed": false,
+            "missingStep": 1
+          },
+          {
+            "id": "W01b",
+            "lines": [
+              55,
+              58,
+              59,
+              60
+            ],
+            "metric": "action",
+            "passed": false,
+            "missingStep": 1
+          },
+          {
+            "id": "W01c",
+            "lines": [
+              11,
+              52,
+              54,
+              55
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "W02-integration",
+      "role": "worker",
+      "repeat": 1,
+      "moduleInjected": true,
+      "status": "scored",
+      "wallMs": 35735,
+      "observedModel": "claude-sonnet-5-5",
+      "usage": {
+        "input": 52602,
+        "cached": 47869,
+        "cacheWritten": 4713,
+        "output": 2471
+      },
+      "toolCalls": 10,
+      "score": {
+        "passed": false,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "W02a",
+            "lines": [
+              53,
+              91
+            ],
+            "metric": "action",
+            "passed": false,
+            "missingStep": 1
+          },
+          {
+            "id": "W02b",
+            "lines": [
+              13,
+              53,
+              55,
+              91
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "W02-integration",
+      "role": "worker",
+      "repeat": 2,
+      "moduleInjected": true,
+      "status": "scored",
+      "wallMs": 37445,
+      "observedModel": "claude-sonnet-5-5",
+      "usage": {
+        "input": 54083,
+        "cached": 49335,
+        "cacheWritten": 4728,
+        "output": 2382
+      },
+      "toolCalls": 11,
+      "score": {
+        "passed": false,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "W02a",
+            "lines": [
+              53,
+              91
+            ],
+            "metric": "action",
+            "passed": false,
+            "missingStep": 1
+          },
+          {
+            "id": "W02b",
+            "lines": [
+              13,
+              53,
+              55,
+              91
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "W03-blocked",
+      "role": "worker",
+      "repeat": 1,
+      "moduleInjected": false,
+      "status": "scored",
+      "wallMs": 106231,
+      "observedModel": "claude-sonnet-5-5",
+      "usage": {
+        "input": 13477,
+        "cached": 10516,
+        "cacheWritten": 2955,
+        "output": 1051
+      },
+      "toolCalls": 3,
+      "score": {
+        "passed": true,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "W03a",
+            "lines": [
+              10,
+              54,
+              55
+            ],
+            "metric": "action",
+            "passed": true
+          },
+          {
+            "id": "W03b",
+            "lines": [
+              11,
+              19,
+              54,
+              55
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "W03-blocked",
+      "role": "worker",
+      "repeat": 2,
+      "moduleInjected": false,
+      "status": "scored",
+      "wallMs": 36475,
+      "observedModel": "claude-sonnet-5-5",
+      "usage": {
+        "input": 13444,
+        "cached": 10516,
+        "cacheWritten": 2922,
+        "output": 1046
+      },
+      "toolCalls": 3,
+      "score": {
+        "passed": true,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "W03a",
+            "lines": [
+              10,
+              54,
+              55
+            ],
+            "metric": "action",
+            "passed": true
+          },
+          {
+            "id": "W03b",
+            "lines": [
+              11,
+              19,
+              54,
+              55
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "W04-denied",
+      "role": "worker",
+      "repeat": 1,
+      "moduleInjected": false,
+      "status": "scored",
+      "wallMs": 108351,
+      "observedModel": "claude-sonnet-5-5",
+      "usage": {
+        "input": 17324,
+        "cached": 14678,
+        "cacheWritten": 2638,
+        "output": 785
+      },
+      "toolCalls": 3,
+      "score": {
+        "passed": true,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "W04a",
+            "lines": [
+              13,
+              54,
+              55
+            ],
+            "metric": "action",
+            "passed": true
+          },
+          {
+            "id": "W04b",
+            "lines": [
+              13,
+              19,
+              55
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "W04-denied",
+      "role": "worker",
+      "repeat": 2,
+      "moduleInjected": false,
+      "status": "scored",
+      "wallMs": 20585,
+      "observedModel": "claude-sonnet-5-5",
+      "usage": {
+        "input": 17135,
+        "cached": 14587,
+        "cacheWritten": 2540,
+        "output": 692
+      },
+      "toolCalls": 3,
+      "score": {
+        "passed": true,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "W04a",
+            "lines": [
+              13,
+              54,
+              55
+            ],
+            "metric": "action",
+            "passed": true
+          },
+          {
+            "id": "W04b",
+            "lines": [
+              13,
+              19,
+              55
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "W05-runtime",
+      "role": "worker",
+      "repeat": 1,
+      "moduleInjected": false,
+      "status": "scored",
+      "wallMs": 18604,
+      "observedModel": "claude-sonnet-5-5",
+      "usage": {
+        "input": 28993,
+        "cached": 25022,
+        "cacheWritten": 3959,
+        "output": 1388
+      },
+      "toolCalls": 5,
+      "score": {
+        "passed": true,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "W05a",
+            "lines": [
+              50
+            ],
+            "metric": "read",
+            "passed": true,
+            "unread": 0,
+            "readOpportunities": 1
+          },
+          {
+            "id": "W05b",
+            "lines": [
+              50,
+              55
+            ],
+            "metric": "action",
+            "passed": true
+          },
+          {
+            "id": "W05c",
+            "lines": [
+              50,
+              55
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "W05-runtime",
+      "role": "worker",
+      "repeat": 2,
+      "moduleInjected": false,
+      "status": "scored",
+      "wallMs": 16782,
+      "observedModel": "claude-sonnet-5-5",
+      "usage": {
+        "input": 22609,
+        "cached": 19388,
+        "cacheWritten": 3211,
+        "output": 1297
+      },
+      "toolCalls": 4,
+      "score": {
+        "passed": true,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "W05a",
+            "lines": [
+              50
+            ],
+            "metric": "read",
+            "passed": true,
+            "unread": 0,
+            "readOpportunities": 1
+          },
+          {
+            "id": "W05b",
+            "lines": [
+              50,
+              55
+            ],
+            "metric": "action",
+            "passed": true
+          },
+          {
+            "id": "W05c",
+            "lines": [
+              50,
+              55
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    }
+  ],
+  "resampled": [
+    "L05-successor",
+    "A01-rulings",
+    "A02-gate",
+    "A03-reviewer",
+    "A04-rotate",
+    "A05-memory",
+    "A06-approve",
+    "W01-fix",
+    "W02-integration",
+    "W03-blocked",
+    "W04-denied",
+    "W05-runtime"
+  ],
+  "infrastructureRetries": []
+}

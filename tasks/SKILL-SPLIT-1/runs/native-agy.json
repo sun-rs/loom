@@ -1,0 +1,2546 @@
+{
+  "date": "2026-11-26T20:00:26.834Z",
+  "arm": "baseline",
+  "cli": "agy",
+  "binary": "/Users/sun/.local/bin/agy",
+  "version": "1.5.18",
+  "modelRequested": "Gemini 4 Neon (Low)",
+  "login": "native",
+  "isolatedLogin": null,
+  "sizes": {
+    "super": {
+      "blob": "2bd9b8357fe6cdad12a805e4eba15083c32309de",
+      "bytes": 13421,
+      "lines": 91,
+      "estimatedTokens": 4767
+    },
+    "auditor": {
+      "blob": "2bd9b8357fe6cdad12a805e4eba15083c32309de",
+      "bytes": 13421,
+      "lines": 91,
+      "estimatedTokens": 4767
+    },
+    "leader": {
+      "blob": "2bd9b8357fe6cdad12a805e4eba15083c32309de",
+      "bytes": 13421,
+      "lines": 91,
+      "estimatedTokens": 4767
+    },
+    "worker": {
+      "blob": "2bd9b8357fe6cdad12a805e4eba15083c32309de",
+      "bytes": 13421,
+      "lines": 91,
+      "estimatedTokens": 4767
+    }
+  },
+  "repeats": 2,
+  "selected": [
+    "S01-policy",
+    "S02-inbox",
+    "S03-exception",
+    "S04-close",
+    "A01-rulings",
+    "A02-gate",
+    "A03-reviewer",
+    "A04-rotate",
+    "A05-memory",
+    "A06-approve",
+    "L01-dispatch",
+    "L02-gate",
+    "L03-decision",
+    "L04-guard",
+    "L05-successor",
+    "L06-route-reject",
+    "L07-manual-rotation",
+    "L08-history-incident",
+    "W01-fix",
+    "W02-integration",
+    "W03-blocked",
+    "W04-denied",
+    "W05-runtime"
+  ],
+  "summary": {
+    "attempted": 46,
+    "statuses": {
+      "scored": 46
+    },
+    "passed": [
+      24,
+      46
+    ],
+    "redlineViolations": [
+      0,
+      42
+    ],
+    "requiredReadsMissed": [
+      6,
+      10
+    ],
+    "injectedModulePasses": [
+      0,
+      0
+    ],
+    "inlineModuleEquivalentPasses": [
+      9,
+      16
+    ],
+    "nativeInputTokens": {
+      "n": 46,
+      "mean": 22694.608695652172,
+      "min": 11183,
+      "max": 31241
+    }
+  },
+  "byRole": {
+    "super": {
+      "attempted": 8,
+      "statuses": {
+        "scored": 8
+      },
+      "passed": [
+        4,
+        8
+      ],
+      "redlineViolations": [
+        0,
+        8
+      ],
+      "requiredReadsMissed": [
+        0,
+        2
+      ],
+      "injectedModulePasses": [
+        0,
+        0
+      ],
+      "inlineModuleEquivalentPasses": [
+        0,
+        0
+      ],
+      "nativeInputTokens": {
+        "n": 8,
+        "mean": 24088,
+        "min": 17151,
+        "max": 26665
+      }
+    },
+    "auditor": {
+      "attempted": 12,
+      "statuses": {
+        "scored": 12
+      },
+      "passed": [
+        7,
+        12
+      ],
+      "redlineViolations": [
+        0,
+        8
+      ],
+      "requiredReadsMissed": [
+        4,
+        4
+      ],
+      "injectedModulePasses": [
+        0,
+        0
+      ],
+      "inlineModuleEquivalentPasses": [
+        4,
+        6
+      ],
+      "nativeInputTokens": {
+        "n": 12,
+        "mean": 23768.416666666668,
+        "min": 14028,
+        "max": 29881
+      }
+    },
+    "leader": {
+      "attempted": 16,
+      "statuses": {
+        "scored": 16
+      },
+      "passed": [
+        5,
+        16
+      ],
+      "redlineViolations": [
+        0,
+        16
+      ],
+      "requiredReadsMissed": [
+        2,
+        2
+      ],
+      "injectedModulePasses": [
+        0,
+        0
+      ],
+      "inlineModuleEquivalentPasses": [
+        5,
+        10
+      ],
+      "nativeInputTokens": {
+        "n": 16,
+        "mean": 22191.1875,
+        "min": 12117,
+        "max": 31241
+      }
+    },
+    "worker": {
+      "attempted": 10,
+      "statuses": {
+        "scored": 10
+      },
+      "passed": [
+        8,
+        10
+      ],
+      "redlineViolations": [
+        0,
+        10
+      ],
+      "requiredReadsMissed": [
+        0,
+        2
+      ],
+      "injectedModulePasses": [
+        0,
+        0
+      ],
+      "inlineModuleEquivalentPasses": [
+        0,
+        0
+      ],
+      "nativeInputTokens": {
+        "n": 10,
+        "mean": 21096.8,
+        "min": 11183,
+        "max": 26338
+      }
+    }
+  },
+  "runs": [
+    {
+      "case": "S01-policy",
+      "role": "super",
+      "repeat": 1,
+      "moduleInjected": false,
+      "status": "scored",
+      "wallMs": 44337,
+      "observedModel": "Gemini 4 Neon (Low)",
+      "usage": {
+        "input": 26235,
+        "cached": 50397,
+        "output": 2239,
+        "thinking": 1430
+      },
+      "toolCalls": 5,
+      "score": {
+        "passed": false,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "S01a",
+            "lines": [
+              17
+            ],
+            "metric": "read",
+            "passed": true,
+            "unread": 0,
+            "readOpportunities": 1
+          },
+          {
+            "id": "S01b",
+            "lines": [
+              17
+            ],
+            "metric": "action",
+            "passed": true
+          },
+          {
+            "id": "S01c",
+            "lines": [
+              65,
+              68
+            ],
+            "metric": "action",
+            "passed": false,
+            "missingStep": 1
+          },
+          {
+            "id": "S01d",
+            "lines": [
+              13,
+              17
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "S01-policy",
+      "role": "super",
+      "repeat": 2,
+      "moduleInjected": false,
+      "status": "scored",
+      "wallMs": 43492,
+      "observedModel": "Gemini 4 Neon (Low)",
+      "usage": {
+        "input": 25226,
+        "cached": 51683,
+        "output": 2227,
+        "thinking": 1450
+      },
+      "toolCalls": 5,
+      "score": {
+        "passed": false,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "S01a",
+            "lines": [
+              17
+            ],
+            "metric": "read",
+            "passed": true,
+            "unread": 0,
+            "readOpportunities": 1
+          },
+          {
+            "id": "S01b",
+            "lines": [
+              17
+            ],
+            "metric": "action",
+            "passed": true
+          },
+          {
+            "id": "S01c",
+            "lines": [
+              65,
+              68
+            ],
+            "metric": "action",
+            "passed": false,
+            "missingStep": 1
+          },
+          {
+            "id": "S01d",
+            "lines": [
+              13,
+              17
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "S02-inbox",
+      "role": "super",
+      "repeat": 1,
+      "moduleInjected": false,
+      "status": "scored",
+      "wallMs": 34348,
+      "observedModel": "Gemini 4 Neon (Low)",
+      "usage": {
+        "input": 25598,
+        "cached": 49070,
+        "output": 1487,
+        "thinking": 964
+      },
+      "toolCalls": 5,
+      "score": {
+        "passed": true,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "S02a",
+            "lines": [
+              19,
+              20
+            ],
+            "metric": "action",
+            "passed": true
+          },
+          {
+            "id": "S02b",
+            "lines": [
+              20,
+              73
+            ],
+            "metric": "action",
+            "passed": true
+          },
+          {
+            "id": "S02c",
+            "lines": [
+              11,
+              73
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "S02-inbox",
+      "role": "super",
+      "repeat": 2,
+      "moduleInjected": false,
+      "status": "scored",
+      "wallMs": 41252,
+      "observedModel": "Gemini 4 Neon (Low)",
+      "usage": {
+        "input": 25703,
+        "cached": 49160,
+        "output": 1571,
+        "thinking": 1087
+      },
+      "toolCalls": 5,
+      "score": {
+        "passed": true,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "S02a",
+            "lines": [
+              19,
+              20
+            ],
+            "metric": "action",
+            "passed": true
+          },
+          {
+            "id": "S02b",
+            "lines": [
+              20,
+              73
+            ],
+            "metric": "action",
+            "passed": true
+          },
+          {
+            "id": "S02c",
+            "lines": [
+              11,
+              73
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "S03-exception",
+      "role": "super",
+      "repeat": 1,
+      "moduleInjected": false,
+      "status": "scored",
+      "wallMs": 27458,
+      "observedModel": "Gemini 4 Neon (Low)",
+      "usage": {
+        "input": 23138,
+        "cached": 32296,
+        "output": 1341,
+        "thinking": 1011
+      },
+      "toolCalls": 3,
+      "score": {
+        "passed": true,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "S03a",
+            "lines": [
+              13,
+              88
+            ],
+            "metric": "action",
+            "passed": true
+          },
+          {
+            "id": "S03b",
+            "lines": [
+              13
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "S03-exception",
+      "role": "super",
+      "repeat": 2,
+      "moduleInjected": false,
+      "status": "scored",
+      "wallMs": 26981,
+      "observedModel": "Gemini 4 Neon (Low)",
+      "usage": {
+        "input": 22988,
+        "cached": 32165,
+        "output": 1184,
+        "thinking": 870
+      },
+      "toolCalls": 2,
+      "score": {
+        "passed": true,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "S03a",
+            "lines": [
+              13,
+              88
+            ],
+            "metric": "action",
+            "passed": true
+          },
+          {
+            "id": "S03b",
+            "lines": [
+              13
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "S04-close",
+      "role": "super",
+      "repeat": 1,
+      "moduleInjected": false,
+      "status": "scored",
+      "wallMs": 42179,
+      "observedModel": "Gemini 4 Neon (Low)",
+      "usage": {
+        "input": 26665,
+        "cached": 50119,
+        "output": 2230,
+        "thinking": 1471
+      },
+      "toolCalls": 9,
+      "score": {
+        "passed": false,
+        "finished": true,
+        "constraints": [
+          true
+        ],
+        "rules": [
+          {
+            "id": "S04a",
+            "lines": [
+              89
+            ],
+            "metric": "action",
+            "passed": false,
+            "missingStep": 3
+          },
+          {
+            "id": "S04b",
+            "lines": [
+              89
+            ],
+            "metric": "action",
+            "passed": false,
+            "missingStep": 1
+          },
+          {
+            "id": "S04c",
+            "lines": [
+              11,
+              89
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "S04-close",
+      "role": "super",
+      "repeat": 2,
+      "moduleInjected": false,
+      "status": "scored",
+      "wallMs": 47070,
+      "observedModel": "Gemini 4 Neon (Low)",
+      "usage": {
+        "input": 17151,
+        "cached": 80610,
+        "output": 2371,
+        "thinking": 1338
+      },
+      "toolCalls": 10,
+      "score": {
+        "passed": false,
+        "finished": true,
+        "constraints": [
+          true
+        ],
+        "rules": [
+          {
+            "id": "S04a",
+            "lines": [
+              89
+            ],
+            "metric": "action",
+            "passed": false,
+            "missingStep": 4
+          },
+          {
+            "id": "S04b",
+            "lines": [
+              89
+            ],
+            "metric": "action",
+            "passed": false,
+            "missingStep": 1
+          },
+          {
+            "id": "S04c",
+            "lines": [
+              11,
+              89
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "A01-rulings",
+      "role": "auditor",
+      "repeat": 1,
+      "moduleInjected": false,
+      "status": "scored",
+      "wallMs": 38002,
+      "observedModel": "Gemini 4 Neon (Low)",
+      "usage": {
+        "input": 22833,
+        "cached": 33704,
+        "output": 2022,
+        "thinking": 1237
+      },
+      "toolCalls": 6,
+      "score": {
+        "passed": false,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "A01a",
+            "lines": [
+              18
+            ],
+            "metric": "read",
+            "passed": false,
+            "missingStep": 1,
+            "unread": 2,
+            "readOpportunities": 2
+          },
+          {
+            "id": "A01b",
+            "lines": [
+              18
+            ],
+            "metric": "action",
+            "passed": true
+          },
+          {
+            "id": "A01d",
+            "lines": [
+              18
+            ],
+            "metric": "action",
+            "passed": true
+          },
+          {
+            "id": "A01c",
+            "lines": [
+              12,
+              27,
+              72
+            ],
+            "metric": "action",
+            "passed": false,
+            "missingStep": 1
+          }
+        ]
+      }
+    },
+    {
+      "case": "A01-rulings",
+      "role": "auditor",
+      "repeat": 2,
+      "moduleInjected": false,
+      "status": "scored",
+      "wallMs": 35482,
+      "observedModel": "Gemini 4 Neon (Low)",
+      "usage": {
+        "input": 22833,
+        "cached": 33690,
+        "output": 2127,
+        "thinking": 1346
+      },
+      "toolCalls": 6,
+      "score": {
+        "passed": false,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "A01a",
+            "lines": [
+              18
+            ],
+            "metric": "read",
+            "passed": false,
+            "missingStep": 1,
+            "unread": 2,
+            "readOpportunities": 2
+          },
+          {
+            "id": "A01b",
+            "lines": [
+              18
+            ],
+            "metric": "action",
+            "passed": true
+          },
+          {
+            "id": "A01d",
+            "lines": [
+              18
+            ],
+            "metric": "action",
+            "passed": true
+          },
+          {
+            "id": "A01c",
+            "lines": [
+              12,
+              27,
+              72
+            ],
+            "metric": "action",
+            "passed": false,
+            "missingStep": 1
+          }
+        ]
+      }
+    },
+    {
+      "case": "A02-gate",
+      "role": "auditor",
+      "repeat": 1,
+      "moduleInjected": false,
+      "status": "scored",
+      "wallMs": 45406,
+      "observedModel": "Gemini 4 Neon (Low)",
+      "usage": {
+        "input": 26688,
+        "cached": 50156,
+        "output": 2654,
+        "thinking": 1805
+      },
+      "toolCalls": 5,
+      "score": {
+        "passed": false,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "A02a",
+            "lines": [
+              10
+            ],
+            "metric": "action",
+            "passed": false,
+            "missingStep": 1
+          },
+          {
+            "id": "A02b",
+            "lines": [
+              28,
+              30,
+              31
+            ],
+            "metric": "module",
+            "passed": false,
+            "missingStep": 2
+          },
+          {
+            "id": "A02c",
+            "lines": [
+              31
+            ],
+            "metric": "action",
+            "passed": false,
+            "missingStep": 1
+          },
+          {
+            "id": "A02d",
+            "lines": [
+              11,
+              30,
+              31
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "A02-gate",
+      "role": "auditor",
+      "repeat": 2,
+      "moduleInjected": false,
+      "status": "scored",
+      "wallMs": 57612,
+      "observedModel": "Gemini 4 Neon (Low)",
+      "usage": {
+        "input": 29881,
+        "cached": 86767,
+        "output": 3315,
+        "thinking": 2466
+      },
+      "toolCalls": 6,
+      "score": {
+        "passed": false,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "A02a",
+            "lines": [
+              10
+            ],
+            "metric": "action",
+            "passed": false,
+            "missingStep": 1
+          },
+          {
+            "id": "A02b",
+            "lines": [
+              28,
+              30,
+              31
+            ],
+            "metric": "module",
+            "passed": false,
+            "missingStep": 4
+          },
+          {
+            "id": "A02c",
+            "lines": [
+              31
+            ],
+            "metric": "action",
+            "passed": false,
+            "missingStep": 2
+          },
+          {
+            "id": "A02d",
+            "lines": [
+              11,
+              30,
+              31
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "A03-reviewer",
+      "role": "auditor",
+      "repeat": 1,
+      "moduleInjected": false,
+      "status": "scored",
+      "wallMs": 37628,
+      "observedModel": "Gemini 4 Neon (Low)",
+      "usage": {
+        "input": 25822,
+        "cached": 49966,
+        "output": 1566,
+        "thinking": 1121
+      },
+      "toolCalls": 3,
+      "score": {
+        "passed": false,
+        "finished": true,
+        "constraints": [
+          true
+        ],
+        "rules": [
+          {
+            "id": "A03a",
+            "lines": [
+              29,
+              30
+            ],
+            "metric": "action",
+            "passed": false,
+            "missingStep": 2
+          },
+          {
+            "id": "A03b",
+            "lines": [
+              12,
+              29,
+              30,
+              31
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "A03-reviewer",
+      "role": "auditor",
+      "repeat": 2,
+      "moduleInjected": false,
+      "status": "scored",
+      "wallMs": 36527,
+      "observedModel": "Gemini 4 Neon (Low)",
+      "usage": {
+        "input": 14164,
+        "cached": 62202,
+        "output": 1878,
+        "thinking": 1443
+      },
+      "toolCalls": 3,
+      "score": {
+        "passed": true,
+        "finished": true,
+        "constraints": [
+          true
+        ],
+        "rules": [
+          {
+            "id": "A03a",
+            "lines": [
+              29,
+              30
+            ],
+            "metric": "action",
+            "passed": true
+          },
+          {
+            "id": "A03b",
+            "lines": [
+              12,
+              29,
+              30,
+              31
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "A04-rotate",
+      "role": "auditor",
+      "repeat": 1,
+      "moduleInjected": false,
+      "status": "scored",
+      "wallMs": 33682,
+      "observedModel": "Gemini 4 Neon (Low)",
+      "usage": {
+        "input": 25484,
+        "cached": 49414,
+        "output": 1162,
+        "thinking": 831
+      },
+      "toolCalls": 3,
+      "score": {
+        "passed": true,
+        "finished": true,
+        "constraints": [
+          true
+        ],
+        "rules": [
+          {
+            "id": "A04a",
+            "lines": [
+              32,
+              78,
+              79,
+              81,
+              82,
+              83,
+              84,
+              85,
+              87,
+              88
+            ],
+            "metric": "module",
+            "passed": true
+          },
+          {
+            "id": "A04b",
+            "lines": [
+              11,
+              32,
+              88
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "A04-rotate",
+      "role": "auditor",
+      "repeat": 2,
+      "moduleInjected": false,
+      "status": "scored",
+      "wallMs": 34763,
+      "observedModel": "Gemini 4 Neon (Low)",
+      "usage": {
+        "input": 25657,
+        "cached": 49635,
+        "output": 1324,
+        "thinking": 959
+      },
+      "toolCalls": 3,
+      "score": {
+        "passed": true,
+        "finished": true,
+        "constraints": [
+          true
+        ],
+        "rules": [
+          {
+            "id": "A04a",
+            "lines": [
+              32,
+              78,
+              79,
+              81,
+              82,
+              83,
+              84,
+              85,
+              87,
+              88
+            ],
+            "metric": "module",
+            "passed": true
+          },
+          {
+            "id": "A04b",
+            "lines": [
+              11,
+              32,
+              88
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "A05-memory",
+      "role": "auditor",
+      "repeat": 1,
+      "moduleInjected": false,
+      "status": "scored",
+      "wallMs": 32125,
+      "observedModel": "Gemini 4 Neon (Low)",
+      "usage": {
+        "input": 26187,
+        "cached": 50171,
+        "output": 1728,
+        "thinking": 1379
+      },
+      "toolCalls": 4,
+      "score": {
+        "passed": true,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "A05a",
+            "lines": [
+              21,
+              22,
+              23
+            ],
+            "metric": "action",
+            "passed": true
+          },
+          {
+            "id": "A05b",
+            "lines": [
+              27,
+              30,
+              31
+            ],
+            "metric": "action",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "A05-memory",
+      "role": "auditor",
+      "repeat": 2,
+      "moduleInjected": false,
+      "status": "scored",
+      "wallMs": 33887,
+      "observedModel": "Gemini 4 Neon (Low)",
+      "usage": {
+        "input": 14028,
+        "cached": 62009,
+        "output": 1690,
+        "thinking": 1359
+      },
+      "toolCalls": 4,
+      "score": {
+        "passed": true,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "A05a",
+            "lines": [
+              21,
+              22,
+              23
+            ],
+            "metric": "action",
+            "passed": true
+          },
+          {
+            "id": "A05b",
+            "lines": [
+              27,
+              30,
+              31
+            ],
+            "metric": "action",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "A06-approve",
+      "role": "auditor",
+      "repeat": 1,
+      "moduleInjected": false,
+      "status": "scored",
+      "wallMs": 34663,
+      "observedModel": "Gemini 4 Neon (Low)",
+      "usage": {
+        "input": 25601,
+        "cached": 48801,
+        "output": 1242,
+        "thinking": 761
+      },
+      "toolCalls": 4,
+      "score": {
+        "passed": true,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "A06a",
+            "lines": [
+              28,
+              30,
+              31
+            ],
+            "metric": "module",
+            "passed": true
+          },
+          {
+            "id": "A06b",
+            "lines": [
+              12,
+              30,
+              31
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "A06-approve",
+      "role": "auditor",
+      "repeat": 2,
+      "moduleInjected": false,
+      "status": "scored",
+      "wallMs": 48642,
+      "observedModel": "Gemini 4 Neon (Low)",
+      "usage": {
+        "input": 26043,
+        "cached": 49141,
+        "output": 1698,
+        "thinking": 1170
+      },
+      "toolCalls": 5,
+      "score": {
+        "passed": true,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "A06a",
+            "lines": [
+              28,
+              30,
+              31
+            ],
+            "metric": "module",
+            "passed": true
+          },
+          {
+            "id": "A06b",
+            "lines": [
+              12,
+              30,
+              31
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "L01-dispatch",
+      "role": "leader",
+      "repeat": 1,
+      "moduleInjected": false,
+      "status": "scored",
+      "wallMs": 44920,
+      "observedModel": "Gemini 4 Neon (Low)",
+      "usage": {
+        "input": 12117,
+        "cached": 45680,
+        "output": 2712,
+        "thinking": 1914
+      },
+      "toolCalls": 7,
+      "score": {
+        "passed": false,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "L01a",
+            "lines": [
+              38
+            ],
+            "metric": "read",
+            "passed": false,
+            "missingStep": 1,
+            "unread": 1,
+            "readOpportunities": 1
+          },
+          {
+            "id": "L01b",
+            "lines": [
+              10,
+              36,
+              38,
+              39,
+              69
+            ],
+            "metric": "action",
+            "passed": false,
+            "missingStep": 3
+          },
+          {
+            "id": "L01c",
+            "lines": [
+              36,
+              43
+            ],
+            "metric": "action",
+            "passed": true
+          },
+          {
+            "id": "L01d",
+            "lines": [
+              11,
+              12,
+              37,
+              43,
+              46
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "L01-dispatch",
+      "role": "leader",
+      "repeat": 2,
+      "moduleInjected": false,
+      "status": "scored",
+      "wallMs": 62701,
+      "observedModel": "Gemini 4 Neon (Low)",
+      "usage": {
+        "input": 28669,
+        "cached": 70936,
+        "output": 3013,
+        "thinking": 2076
+      },
+      "toolCalls": 7,
+      "score": {
+        "passed": false,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "L01a",
+            "lines": [
+              38
+            ],
+            "metric": "read",
+            "passed": false,
+            "missingStep": 1,
+            "unread": 1,
+            "readOpportunities": 1
+          },
+          {
+            "id": "L01b",
+            "lines": [
+              10,
+              36,
+              38,
+              39,
+              69
+            ],
+            "metric": "action",
+            "passed": true
+          },
+          {
+            "id": "L01c",
+            "lines": [
+              36,
+              43
+            ],
+            "metric": "action",
+            "passed": true
+          },
+          {
+            "id": "L01d",
+            "lines": [
+              11,
+              12,
+              37,
+              43,
+              46
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "L02-gate",
+      "role": "leader",
+      "repeat": 1,
+      "moduleInjected": false,
+      "status": "scored",
+      "wallMs": 71631,
+      "observedModel": "Gemini 4 Neon (Low)",
+      "usage": {
+        "input": 31241,
+        "cached": 90192,
+        "output": 3280,
+        "thinking": 2022
+      },
+      "toolCalls": 8,
+      "score": {
+        "passed": false,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "L02a",
+            "lines": [
+              41
+            ],
+            "metric": "module",
+            "passed": false,
+            "missingStep": 4
+          },
+          {
+            "id": "L02b",
+            "lines": [
+              42
+            ],
+            "metric": "action",
+            "passed": false,
+            "missingStep": 1
+          },
+          {
+            "id": "L02c",
+            "lines": [
+              37,
+              41,
+              43
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "L02-gate",
+      "role": "leader",
+      "repeat": 2,
+      "moduleInjected": false,
+      "status": "scored",
+      "wallMs": 66416,
+      "observedModel": "Gemini 4 Neon (Low)",
+      "usage": {
+        "input": 19358,
+        "cached": 99694,
+        "output": 2999,
+        "thinking": 1834
+      },
+      "toolCalls": 8,
+      "score": {
+        "passed": false,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "L02a",
+            "lines": [
+              41
+            ],
+            "metric": "module",
+            "passed": false,
+            "missingStep": 7
+          },
+          {
+            "id": "L02b",
+            "lines": [
+              42
+            ],
+            "metric": "action",
+            "passed": false,
+            "missingStep": 1
+          },
+          {
+            "id": "L02c",
+            "lines": [
+              37,
+              41,
+              43
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "L03-decision",
+      "role": "leader",
+      "repeat": 1,
+      "moduleInjected": false,
+      "status": "scored",
+      "wallMs": 30281,
+      "observedModel": "Gemini 4 Neon (Low)",
+      "usage": {
+        "input": 23595,
+        "cached": 33070,
+        "output": 1617,
+        "thinking": 1004
+      },
+      "toolCalls": 3,
+      "score": {
+        "passed": false,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "L03a",
+            "lines": [
+              19
+            ],
+            "metric": "module",
+            "passed": false,
+            "missingStep": 2
+          },
+          {
+            "id": "L03b",
+            "lines": [
+              19,
+              37,
+              40,
+              42
+            ],
+            "metric": "action",
+            "passed": true
+          },
+          {
+            "id": "L03c",
+            "lines": [
+              11,
+              19
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "L03-decision",
+      "role": "leader",
+      "repeat": 2,
+      "moduleInjected": false,
+      "status": "scored",
+      "wallMs": 32628,
+      "observedModel": "Gemini 4 Neon (Low)",
+      "usage": {
+        "input": 23992,
+        "cached": 33376,
+        "output": 1982,
+        "thinking": 1431
+      },
+      "toolCalls": 3,
+      "score": {
+        "passed": false,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "L03a",
+            "lines": [
+              19
+            ],
+            "metric": "module",
+            "passed": false,
+            "missingStep": 2
+          },
+          {
+            "id": "L03b",
+            "lines": [
+              19,
+              37,
+              40,
+              42
+            ],
+            "metric": "action",
+            "passed": true
+          },
+          {
+            "id": "L03c",
+            "lines": [
+              11,
+              19
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "L04-guard",
+      "role": "leader",
+      "repeat": 1,
+      "moduleInjected": false,
+      "status": "scored",
+      "wallMs": 51231,
+      "observedModel": "Gemini 4 Neon (Low)",
+      "usage": {
+        "input": 17103,
+        "cached": 81303,
+        "output": 2729,
+        "thinking": 2133
+      },
+      "toolCalls": 6,
+      "score": {
+        "passed": false,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "L04a",
+            "lines": [
+              37,
+              46,
+              74
+            ],
+            "metric": "action",
+            "passed": false,
+            "missingStep": 2
+          },
+          {
+            "id": "L04b",
+            "lines": [
+              21,
+              22,
+              23
+            ],
+            "metric": "action",
+            "passed": true
+          },
+          {
+            "id": "L04c",
+            "lines": [
+              12,
+              37,
+              46,
+              74
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "L04-guard",
+      "role": "leader",
+      "repeat": 2,
+      "moduleInjected": false,
+      "status": "scored",
+      "wallMs": 47639,
+      "observedModel": "Gemini 4 Neon (Low)",
+      "usage": {
+        "input": 15935,
+        "cached": 80149,
+        "output": 2111,
+        "thinking": 1525
+      },
+      "toolCalls": 6,
+      "score": {
+        "passed": false,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "L04a",
+            "lines": [
+              37,
+              46,
+              74
+            ],
+            "metric": "action",
+            "passed": false,
+            "missingStep": 2
+          },
+          {
+            "id": "L04b",
+            "lines": [
+              21,
+              22,
+              23
+            ],
+            "metric": "action",
+            "passed": true
+          },
+          {
+            "id": "L04c",
+            "lines": [
+              12,
+              37,
+              46,
+              74
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "L05-successor",
+      "role": "leader",
+      "repeat": 1,
+      "moduleInjected": false,
+      "status": "scored",
+      "wallMs": 26754,
+      "observedModel": "Gemini 4 Neon (Low)",
+      "usage": {
+        "input": 25189,
+        "cached": 48658,
+        "output": 885,
+        "thinking": 641
+      },
+      "toolCalls": 4,
+      "score": {
+        "passed": true,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "L05a",
+            "lines": [
+              87
+            ],
+            "metric": "module",
+            "passed": true
+          },
+          {
+            "id": "L05b",
+            "lines": [
+              11,
+              87
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "L05-successor",
+      "role": "leader",
+      "repeat": 2,
+      "moduleInjected": false,
+      "status": "scored",
+      "wallMs": 32575,
+      "observedModel": "Gemini 4 Neon (Low)",
+      "usage": {
+        "input": 12939,
+        "cached": 60489,
+        "output": 664,
+        "thinking": 416
+      },
+      "toolCalls": 4,
+      "score": {
+        "passed": true,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "L05a",
+            "lines": [
+              87
+            ],
+            "metric": "module",
+            "passed": true
+          },
+          {
+            "id": "L05b",
+            "lines": [
+              11,
+              87
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "L06-route-reject",
+      "role": "leader",
+      "repeat": 1,
+      "moduleInjected": false,
+      "status": "scored",
+      "wallMs": 24982,
+      "observedModel": "Gemini 4 Neon (Low)",
+      "usage": {
+        "input": 23305,
+        "cached": 32240,
+        "output": 1199,
+        "thinking": 964
+      },
+      "toolCalls": 2,
+      "score": {
+        "passed": true,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "L06a",
+            "lines": [
+              37,
+              40,
+              42,
+              43
+            ],
+            "metric": "module",
+            "passed": true
+          },
+          {
+            "id": "L06b",
+            "lines": [
+              11,
+              37,
+              40
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "L06-route-reject",
+      "role": "leader",
+      "repeat": 2,
+      "moduleInjected": false,
+      "status": "scored",
+      "wallMs": 28776,
+      "observedModel": "Gemini 4 Neon (Low)",
+      "usage": {
+        "input": 23395,
+        "cached": 32291,
+        "output": 1373,
+        "thinking": 1128
+      },
+      "toolCalls": 2,
+      "score": {
+        "passed": true,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "L06a",
+            "lines": [
+              37,
+              40,
+              42,
+              43
+            ],
+            "metric": "module",
+            "passed": true
+          },
+          {
+            "id": "L06b",
+            "lines": [
+              11,
+              37,
+              40
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "L07-manual-rotation",
+      "role": "leader",
+      "repeat": 1,
+      "moduleInjected": false,
+      "status": "scored",
+      "wallMs": 34645,
+      "observedModel": "Gemini 4 Neon (Low)",
+      "usage": {
+        "input": 25373,
+        "cached": 49175,
+        "output": 1065,
+        "thinking": 701
+      },
+      "toolCalls": 3,
+      "score": {
+        "passed": false,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "L07a",
+            "lines": [
+              44,
+              78,
+              79,
+              81,
+              82,
+              83,
+              84,
+              85,
+              87
+            ],
+            "metric": "module",
+            "passed": false,
+            "missingStep": 3
+          },
+          {
+            "id": "L07b",
+            "lines": [
+              11,
+              44
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "L07-manual-rotation",
+      "role": "leader",
+      "repeat": 2,
+      "moduleInjected": false,
+      "status": "scored",
+      "wallMs": 35325,
+      "observedModel": "Gemini 4 Neon (Low)",
+      "usage": {
+        "input": 25391,
+        "cached": 49253,
+        "output": 1102,
+        "thinking": 713
+      },
+      "toolCalls": 3,
+      "score": {
+        "passed": true,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "L07a",
+            "lines": [
+              44,
+              78,
+              79,
+              81,
+              82,
+              83,
+              84,
+              85,
+              87
+            ],
+            "metric": "module",
+            "passed": true
+          },
+          {
+            "id": "L07b",
+            "lines": [
+              11,
+              44
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "L08-history-incident",
+      "role": "leader",
+      "repeat": 1,
+      "moduleInjected": false,
+      "status": "scored",
+      "wallMs": 43559,
+      "observedModel": "Gemini 4 Neon (Low)",
+      "usage": {
+        "input": 28512,
+        "cached": 67479,
+        "output": 2130,
+        "thinking": 1566
+      },
+      "toolCalls": 6,
+      "score": {
+        "passed": false,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "L08a",
+            "lines": [
+              12,
+              37,
+              72
+            ],
+            "metric": "action",
+            "passed": false,
+            "missingStep": 2
+          },
+          {
+            "id": "L08b",
+            "lines": [
+              40
+            ],
+            "metric": "action",
+            "passed": true
+          },
+          {
+            "id": "L08c",
+            "lines": [
+              11,
+              12,
+              37
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "L08-history-incident",
+      "role": "leader",
+      "repeat": 2,
+      "moduleInjected": false,
+      "status": "scored",
+      "wallMs": 40288,
+      "observedModel": "Gemini 4 Neon (Low)",
+      "usage": {
+        "input": 18945,
+        "cached": 57263,
+        "output": 1981,
+        "thinking": 1413
+      },
+      "toolCalls": 6,
+      "score": {
+        "passed": false,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "L08a",
+            "lines": [
+              12,
+              37,
+              72
+            ],
+            "metric": "action",
+            "passed": false,
+            "missingStep": 2
+          },
+          {
+            "id": "L08b",
+            "lines": [
+              40
+            ],
+            "metric": "action",
+            "passed": false,
+            "missingStep": 2
+          },
+          {
+            "id": "L08c",
+            "lines": [
+              11,
+              12,
+              37
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "W01-fix",
+      "role": "worker",
+      "repeat": 1,
+      "moduleInjected": false,
+      "status": "scored",
+      "wallMs": 72132,
+      "observedModel": "Gemini 4 Neon (Low)",
+      "usage": {
+        "input": 24862,
+        "cached": 149539,
+        "output": 1546,
+        "thinking": 923
+      },
+      "toolCalls": 9,
+      "score": {
+        "passed": true,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "W01a",
+            "lines": [
+              12,
+              52,
+              54
+            ],
+            "metric": "action",
+            "passed": true
+          },
+          {
+            "id": "W01b",
+            "lines": [
+              55,
+              58,
+              59,
+              60
+            ],
+            "metric": "action",
+            "passed": true
+          },
+          {
+            "id": "W01c",
+            "lines": [
+              11,
+              52,
+              54,
+              55
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "W01-fix",
+      "role": "worker",
+      "repeat": 2,
+      "moduleInjected": false,
+      "status": "scored",
+      "wallMs": 53622,
+      "observedModel": "Gemini 4 Neon (Low)",
+      "usage": {
+        "input": 22847,
+        "cached": 132383,
+        "output": 1832,
+        "thinking": 1243
+      },
+      "toolCalls": 9,
+      "score": {
+        "passed": true,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "W01a",
+            "lines": [
+              12,
+              52,
+              54
+            ],
+            "metric": "action",
+            "passed": true
+          },
+          {
+            "id": "W01b",
+            "lines": [
+              55,
+              58,
+              59,
+              60
+            ],
+            "metric": "action",
+            "passed": true
+          },
+          {
+            "id": "W01c",
+            "lines": [
+              11,
+              52,
+              54,
+              55
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "W02-integration",
+      "role": "worker",
+      "repeat": 1,
+      "moduleInjected": false,
+      "status": "scored",
+      "wallMs": 37798,
+      "observedModel": "Gemini 4 Neon (Low)",
+      "usage": {
+        "input": 26338,
+        "cached": 50723,
+        "output": 1999,
+        "thinking": 1497
+      },
+      "toolCalls": 5,
+      "score": {
+        "passed": false,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "W02a",
+            "lines": [
+              53,
+              91
+            ],
+            "metric": "action",
+            "passed": false,
+            "missingStep": 1
+          },
+          {
+            "id": "W02b",
+            "lines": [
+              13,
+              53,
+              55,
+              91
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "W02-integration",
+      "role": "worker",
+      "repeat": 2,
+      "moduleInjected": false,
+      "status": "scored",
+      "wallMs": 33568,
+      "observedModel": "Gemini 4 Neon (Low)",
+      "usage": {
+        "input": 26234,
+        "cached": 50424,
+        "output": 1938,
+        "thinking": 1474
+      },
+      "toolCalls": 5,
+      "score": {
+        "passed": false,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "W02a",
+            "lines": [
+              53,
+              91
+            ],
+            "metric": "action",
+            "passed": false,
+            "missingStep": 1
+          },
+          {
+            "id": "W02b",
+            "lines": [
+              13,
+              53,
+              55,
+              91
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "W03-blocked",
+      "role": "worker",
+      "repeat": 1,
+      "moduleInjected": false,
+      "status": "scored",
+      "wallMs": 20695,
+      "observedModel": "Gemini 4 Neon (Low)",
+      "usage": {
+        "input": 20815,
+        "cached": 15846,
+        "output": 1071,
+        "thinking": 767
+      },
+      "toolCalls": 1,
+      "score": {
+        "passed": true,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "W03a",
+            "lines": [
+              10,
+              54,
+              55
+            ],
+            "metric": "action",
+            "passed": true
+          },
+          {
+            "id": "W03b",
+            "lines": [
+              11,
+              19,
+              54,
+              55
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "W03-blocked",
+      "role": "worker",
+      "repeat": 2,
+      "moduleInjected": false,
+      "status": "scored",
+      "wallMs": 22012,
+      "observedModel": "Gemini 4 Neon (Low)",
+      "usage": {
+        "input": 21026,
+        "cached": 15841,
+        "output": 1335,
+        "thinking": 980
+      },
+      "toolCalls": 1,
+      "score": {
+        "passed": true,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "W03a",
+            "lines": [
+              10,
+              54,
+              55
+            ],
+            "metric": "action",
+            "passed": true
+          },
+          {
+            "id": "W03b",
+            "lines": [
+              11,
+              19,
+              54,
+              55
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "W04-denied",
+      "role": "worker",
+      "repeat": 1,
+      "moduleInjected": false,
+      "status": "scored",
+      "wallMs": 23397,
+      "observedModel": "Gemini 4 Neon (Low)",
+      "usage": {
+        "input": 11183,
+        "cached": 44012,
+        "output": 986,
+        "thinking": 766
+      },
+      "toolCalls": 2,
+      "score": {
+        "passed": true,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "W04a",
+            "lines": [
+              13,
+              54,
+              55
+            ],
+            "metric": "action",
+            "passed": true
+          },
+          {
+            "id": "W04b",
+            "lines": [
+              13,
+              19,
+              55
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "W04-denied",
+      "role": "worker",
+      "repeat": 2,
+      "moduleInjected": false,
+      "status": "scored",
+      "wallMs": 28342,
+      "observedModel": "Gemini 4 Neon (Low)",
+      "usage": {
+        "input": 22925,
+        "cached": 32136,
+        "output": 959,
+        "thinking": 751
+      },
+      "toolCalls": 2,
+      "score": {
+        "passed": true,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "W04a",
+            "lines": [
+              13,
+              54,
+              55
+            ],
+            "metric": "action",
+            "passed": true
+          },
+          {
+            "id": "W04b",
+            "lines": [
+              13,
+              19,
+              55
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "W05-runtime",
+      "role": "worker",
+      "repeat": 1,
+      "moduleInjected": false,
+      "status": "scored",
+      "wallMs": 44111,
+      "observedModel": "Gemini 4 Neon (Low)",
+      "usage": {
+        "input": 23356,
+        "cached": 32206,
+        "output": 1339,
+        "thinking": 933
+      },
+      "toolCalls": 2,
+      "score": {
+        "passed": true,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "W05a",
+            "lines": [
+              50
+            ],
+            "metric": "read",
+            "passed": true,
+            "unread": 0,
+            "readOpportunities": 1
+          },
+          {
+            "id": "W05b",
+            "lines": [
+              50,
+              55
+            ],
+            "metric": "action",
+            "passed": true
+          },
+          {
+            "id": "W05c",
+            "lines": [
+              50,
+              55
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "case": "W05-runtime",
+      "role": "worker",
+      "repeat": 2,
+      "moduleInjected": false,
+      "status": "scored",
+      "wallMs": 24590,
+      "observedModel": "Gemini 4 Neon (Low)",
+      "usage": {
+        "input": 11382,
+        "cached": 44078,
+        "output": 1098,
+        "thinking": 742
+      },
+      "toolCalls": 2,
+      "score": {
+        "passed": true,
+        "finished": true,
+        "constraints": [],
+        "rules": [
+          {
+            "id": "W05a",
+            "lines": [
+              50
+            ],
+            "metric": "read",
+            "passed": true,
+            "unread": 0,
+            "readOpportunities": 1
+          },
+          {
+            "id": "W05b",
+            "lines": [
+              50,
+              55
+            ],
+            "metric": "action",
+            "passed": true
+          },
+          {
+            "id": "W05c",
+            "lines": [
+              50,
+              55
+            ],
+            "metric": "redline",
+            "passed": true
+          }
+        ]
+      }
+    }
+  ],
+  "recalibratedCases": [
+    "S04-close",
+    "A03-reviewer",
+    "A05-memory",
+    "L01-dispatch",
+    "L02-gate",
+    "L04-guard"
+  ]
+}

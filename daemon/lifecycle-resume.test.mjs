@@ -14,6 +14,7 @@ import { readGlobalRegistry, registerGlobalProject, resolveAccountDir, superHand
 import { recoverAllProjects, recoverProject, requireSuperCaller } from './recover.mjs';
 import { createClaudeCcpBridge, defaultCcpClaudeEntry } from './claude-ccp.mjs';
 import { superUp } from './super-up.mjs';
+import { roleCore } from '../lib/role-skill.mjs';
 
 function restartFixture(t, extraOptions = {}) {
   const root = mkdtempSync(join(realpathSync(tmpdir()), 'loom-restart-'));
@@ -346,7 +347,9 @@ test('Super handoff reminders attach a single line after rulings and before sess
 });
 
 test('Super skill documents restart/recovery steps in 3-5 lines', () => {
-  const skill = readFileSync(new URL('../skills/loom/SKILL.md', import.meta.url), 'utf8');
+  const index = readFileSync(new URL('../skills/loom/SKILL.md', import.meta.url), 'utf8');
+  assert.match(index, /roles\/super\.md/);
+  const skill = roleCore('super');
   assert.match(skill, /中断\/重启后的恢复步骤/);
   assert.match(skill, /loom up/);
   assert.match(skill, /loom recover --all-projects/);

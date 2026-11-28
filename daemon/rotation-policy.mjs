@@ -660,6 +660,7 @@ export function rotationPolicy(project, { now, sessions, mail, notifications, po
       text: '换班评估：到达干净边界，请核对语境和已证实错误，再决定是否需要发起换班。' });
     const unseen = unverifiedDecisions(row.addr).filter(item => !shown.has(item.id)).slice(0, 5);
     if (unseen.length) notes.push({ id: key('decisions', ...unseen.map(item => item.id)), aliases: unseen.map(item => item.id),
+      skillModule: 'rotation-verify',
       text: `请核对新任首阶段决定（${unseen.map(item => item.successor + ' ' + item.id + ' ' + item.kind + ' ' + item.summary).join('；')}）。用 rotation-policy verify-decision --target ADDR --id ID --verdict pass|fail --detail TEXT --evidence FILE 登记。` });
     const peer = counterpart(row);
     if (peer) {
